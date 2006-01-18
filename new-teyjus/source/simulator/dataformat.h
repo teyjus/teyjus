@@ -129,12 +129,18 @@ DF_TYPE_PTR DF_TY_Deref(DF_TYPE_PTR);
 
 
 /* type declarations for universe counter, (symbol) table index, 
-   abstraction level and application arity fields for various terms and types*/
+   abstraction level and application arity fields for various terms*/
 typedef unsigned short int DF_UNIVIND;     //universe index
 typedef unsigned short int DF_EMBEDLEV;    //abstraction context
 typedef unsigned short int DF_ARITY;       //arity
-
 typedef unsigned int DF_TABIND;            //symbol table index
+
+
+/* type declarations for pre universe counter, (symbol) table index,
+   and abstraction level fields before overflow detection */
+typedef unsigned int DF_PREUNIVIND;
+typedef unsigned int DF_PREEMBEDLEV;
+typedef unsigned int DF_PREARITY;
 
 
 typedef BYTE DF_TAG;         // term category tag
@@ -316,8 +322,8 @@ DF_ENV_PTR DF_EnvNth(DF_ENV_PTR, int); //extracting the nth item in the env list
 /*********************************************/
 
 //copy atomic terms 
-void DF_CopyAtomic_(DF_TERM_PTR, DF_TERM_PTR);
-DF_TERM_PTR DF_CopyAtomic(DF_TERM_PTR, DF_TERM_PTR);
+void DF_CopyAtom_(DF_TERM_PTR, DF_TERM_PTR);
+DF_TERM_PTR DF_CopyAtom(DF_TERM_PTR, DF_TERM_PTR);
 
 
 //variable
@@ -400,35 +406,41 @@ void DF_ModUnivIndex(DF_TERM_PTR, DF_UNIVIND);
 /* (some are not implemented yet)                                          */
 /***************************************************************************/
 
-//return an address increased by the size of an atomic term from the given one
-DF_TERM_PTR DF_IncAtomic(DF_TERM_PTR);
+//return an address increased by the size of an atomic term from the given
+MEM_PTR DF_IncAtomic(MEM_PTR);
 
-//return an address increased by the size of an app head from the given one
-DF_TERM_PTR DF_IncAppHead(DF_TERM_PTR);
-
+//return an address increased by the size of n atomic term from the given
+MEM_PTR DF_IncNAtomic(MEM_PTR, int);
 
 //return an address increased by the size of a suspension from the given one
-DF_TERM_PTR DF_IncSusp(DF_TERM_PTR);
+MEM_PTR DF_IncSusp(MEM_PTR);
 
-//return an address increased by the size of a dummy env item from the given one
-DF_ENV_PTR DF_IncEnvDummy(DF_ENV_PTR);
+//return an address increased by the size of a dummy env item from the given
+MEM_PTR DF_IncEnvDummy(MEM_PTR);
 
-//return an address increased by the size of a pair env item from the given one
-DF_ENV_PTR DF_IncEnvPair(DF_ENV_PTR);
+//return an address increased by the size of n dummy env items from the given
+MEM_PTR DF_IncNEnvDummy(MEM_PTR, int);
 
+//return an address increased by the size of a pair env item from the given 
+MEM_PTR DF_IncEnvPair(MEM_PTR);
 
-//increasing sizeof(APP)+ n*atomic size, where n is arity
-DF_TERM_PTR DF_IncAppNArgs(DF_TERM_PTR, DF_ARITY n);
+//return an address increased by the size of n pair env items from the given
+MEM_PTR DF_IncNEnvPair(MEM_PTR, int);
 
+//return an address increased by the size of an app head from the given
+MEM_PTR DF_IncApp(MEM_PTR);
 
-//increasing sizeof(SUSP)*n
-DF_TERM_PTR accAddrNSUSP(DF_TERM_PTR, int n);
+//increasing sizeof(APP)+ n*atomic size, where n is arity 
+MEM_PTR DF_IncAppNArgs(MEM_PTR, DF_ARITY);
 
-//increasing sizeof(TCONST)
-DF_TERM_PTR accAddrTCONST(DF_TERM_PTR); //may need ifdef if diff treatment 
-                                        //will be used for TCONST depending 
-                                        //on machine architecture
+//return an address increased by the size of an abstraction from the given
+MEM_PTR DF_IncLam(MEM_PTR);
 
+//return an address increased by the size of lam+susp+(n dummy env items)
+MEM_PTR DF_IncSuspLamNDummyEnv(MEM_PTR, int);
+
+//return an address increased by the size of a cons from the given
+MEM_PTR DF_IncCons(MEM_PTR);
 
 /*********************************************/
 /* term dereference                          */
@@ -436,8 +448,16 @@ DF_TERM_PTR accAddrTCONST(DF_TERM_PTR); //may need ifdef if diff treatment
 DF_TERM_PTR DF_Deref(DF_TERM_PTR);
 
 
+/**********************************************/
+/* constants                                  */
+/**********************************************/
+
+/* empty environment list (in suspension)     */
+#define DF_EMPTYENV NULL
+
+
 /* limits on field values that are changable at runtime : for error checking */
-#define  DF_MAXDBIND    USHRT_MAX   //max de Bruijn index (embedding level)
+#define  DF_MAXBVIND    USHRT_MAX   //max de Bruijn index (embedding level)
 #define  DF_MAXUINVIND  USHRT_MAX   //max universe index
 #define  DF_MAXARITY    USHRT_MAX   //max arity 
 #define  DF_MAXTABIND   UINT_MAX    //max symbol table index
