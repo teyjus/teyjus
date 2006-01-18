@@ -4,6 +4,9 @@
 /* The header file identifies the low-level representation of data objects  */
 /* that are manipulated by the machine, through various structure types.    */ 
 /****************************************************************************/
+#ifndef DATAFORMAT_C
+#define DFTAFORMAT_C
+
 #include <math.h>
 #include <string.h>
 #include "dataformat.h"
@@ -317,7 +320,7 @@ typedef struct             // applications
     DF_TAG        tag;     // DF_TM_TAG_APP
     DF_ARITY      arity;
     void*         dummy;   // place holder enforcing an atomic term size before
-                           // the functor
+                           // functor (protect functor in destructive change)
     DF_TERM       functor;
     DF_TERM_PTR   args;
 } DF_APP;
@@ -448,7 +451,7 @@ BOOLEAN DF_isSusp(DF_TERM_PTR tp)  //is suspension?
 
 BOOLEAN DF_EmptyEnv(DF_ENV_PTR ep) //is empty environment list?
 {
-    return (ep == NULL);
+    return (ep == DF_EMPTYENV);
 }
 
 BOOLEAN DF_IsDummy(DF_ENV_PTR ep) /*for both ENV and DUMMYENV: rely on struct 
@@ -654,12 +657,12 @@ DF_ENV_PTR DF_EnvNth(DF_ENV_PTR ep, int n) //extracting the nth item
 /* Term Construction */
 
 //copy atomic terms
-void DF_CopyAtomic_(DF_TERM_PTR from, DF_TERM_PTR to)
+void DF_CopyAtom_(DF_TERM_PTR from, DF_TERM_PTR to)
 {
     *to = *from;
 }
 
-DF_TERM_PTR DF_CopyAtomic(DF_TERM_PTR from, DF_TERM_PTR to)
+DF_TERM_PTR DF_CopyAtom(DF_TERM_PTR from, DF_TERM_PTR to)
 {
     *to = *from;
     return (to+1);
@@ -965,31 +968,76 @@ DF_TERM_PTR DF_Deref(DF_TERM_PTR tp)
 /***************************************************************************/
 
 //return an address increased by the size of an app head from the given one
-DF_TERM_PTR DF_IncAppHead(DF_TERM_PTR tp)
+MEM_PTR DF_IncAtomic(MEM_PTR tp)
 {
-    return (DF_TERM_PTR)(((DF_APP*)tp)+1);
+    return (MEM_PTR)(((DF_TERM_PTR)tp)+1);
 }
 
-//return an address increased by the size of an app head from the given one
-DF_TERM_PTR DF_IncAtomic(DF_TERM_PTR tp)
+//return an address increased by the size of n atomic term from the given
+MEM_PTR DF_IncNAtomic(MEM_PTR tp, int n)
 {
-    return (tp+1);
+    return (MEM_PTR)(((DF_TERM_PTR)tp)+n);
 }
 
 //return an address increased by the size of a suspension from the given one
-DF_TERM_PTR DF_IncSusp(DF_TERM_PTR tp)
+MEM_PTR DF_IncSusp(MEM_PTR tp)
 {
-    return (DF_TERM_PTR)(((DF_SUSP*)tp)+1);
+    return (MEM_PTR)(((DF_SUSP*)tp)+1);
 }
 
-//return an address increased by the size of a dummy env item from the given one
-DF_ENV_PTR DF_IncEnvDummy(DF_ENV_PTR ep)
+//return an address increased by the size of a dummy env item from the given 
+MEM_PTR DF_IncEnvDummy(MEM_PTR ep)
 {
-    return (DF_ENV_PTR)(((DF_DUMMYENV*)ep)+1);
+    return (MEM_PTR)(((DF_DUMMYENV*)ep)+1);
 }
 
-//return an address increased by the size of a pair env item from the given one
-DF_ENV_PTR DF_IncEnvPair(DF_ENV_PTR ep)
+//return an address increased by the size of n dummy env items from the given
+MEM_PTR DF_IncNEnvDummy(MEM_PTR ep, int n)
 {
-    return (DF_ENV_PTR)(((DF_ENV*)ep)+1);
+    return (MEM_PTR)(((DF_DUMMYENV*)ep)+n);
 }
+
+//return an address increased by the size of a pair env item froms the given 
+MEM_PTR DF_IncEnvPair(MEM_PTR ep)
+{
+    return (MEM_PTR)(((DF_ENV*)ep)+1);
+}
+
+//return an address increased by the size of n pair env items froms the given
+MEM_PTR DF_IncNEnvPair(MEM_PTR ep, int n)
+{
+    return (MEM_PTR)(((DF_ENV*)ep)+n);
+}
+
+//return an address increased by the size of an app head from the given one
+MEM_PTR DF_IncApp(MEM_PTR tp)
+{
+    return (MEM_PTR)(((DF_APP*)tp)+1);
+}
+
+//increasing sizeof(APP)+ n*atomic size, where n is arity 
+MEM_PTR DF_IncAppNArgs(MEM_PTR tp, DF_ARITY n)
+{
+    return (MEM_PTR)(((DF_TERM_PTR)(((DF_APP*)tp)+1))+n);
+}
+
+
+//return an address increased by the size of an abstraction from the given
+MEM_PTR DF_IncLam(MEM_PTR tp)
+{
+    return (MEM_PTR)(((DF_LAM*)tp)+1);
+}
+
+//return an address increased by the size of lam+susp+(n dummy env items)
+MEM_PTR DF_IncSuspLamNDummyEnv(MEM_PTR tp, int n)
+{
+    return (MEM_PTR)(((DF_TERM_PTR)(((DF_LAM*)(((DF_SUSP*)tp)+1))+1))+n);
+}
+
+//return an address increased by the size of a cons from the given
+MEM_PTR DF_IncCons(MEM_PTR tp)
+{
+    return (MEM_PTR)(((DF_CONS*)tp)+1);
+}
+
+#endif //DATAFORMAT_C
