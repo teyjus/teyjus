@@ -1,0 +1,7 @@
+New loader expectations on the output of the compiler.
+
+The loader expects that if a predicate definition is given such that no choice point instructions are used at the top level, that space for a try_me_else instruction is left before the beginning of that code.
+
+Similarly, if the instruction pointed to by the variable term of a switch_on_term instruction is not a try_me_else instruction, that there is space for such an instruction preceding that one.
+
+Also, uses of the call instruction in the bytecode file will refer to the index of called predicate in the constant table.
