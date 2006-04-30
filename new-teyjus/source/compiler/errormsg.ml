@@ -7,17 +7,6 @@
 *
 *	This has not yet been tested almost at all.
 **********************************************************************)
-module type ERRORMSG =
-sig
-		exception InternalError
-		val anyErrors : bool ref
-		val fileName : string ref
-		val linePos : int list ref
-		val log : int -> string -> unit
-		val error : int -> string -> unit
-		val impossible : int -> string -> 'a   (* raises Error *)
-		val reset : unit -> unit
-end
 
 module ErrorMsg : ERRORMSG =
 struct
@@ -71,10 +60,22 @@ struct
 			anyErrors := true;
 			print_string (!fileName);
 			printPosition pos;
-			print_string ":\n";
+			print_string " Error:\n";
 			print_string msg;
 			print_string "\n\n"
 
+	(********************************************************************
+	*warning:
+	* Prints a warning, along with the line and character position.
+	********************************************************************)
+	let warning = fun pos (msg:string) ->
+			anyErrors := true;
+			print_string (!fileName);
+			printPosition pos;
+			print_string " Warning:\n";
+			print_string msg;
+			print_string "\n\n"
+			
 	(********************************************************************
 	*log:
 	*	Outputs logging information.
