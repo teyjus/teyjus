@@ -1,30 +1,46 @@
 #endif _CONST_H_
 #define _CONST_H_
 
+//GConst Header Data
+//Note: Special Top Level Loading
 typedef struct{
-	INT1 fixity;
-	INT1 precedence;
-	INT1 ty_env_size;
-	INT1 ty_preserving_info;
-	Name name;
-	INT2 ty_skel_index;
-}GConst;
+	ConstInd index;
+}LGConst_t;
 
-typedef struct{
-	INT1 fixity;
-	INT1 precedence;
-	INT1 ty_env_size;
-	INT2 ty_skel_index;
-}LConst;
+void InitTGConsts();
+void LoadGConsts();
+void LoadTopGConsts();
+void WriteGConsts();
+
+//LConst Header Data
+//Note: No individual representation in CM.
+/*typedef struct{
+	//Empty
+}LLConst_t;*/
+
+void InitTLConsts();
+void LoadLConsts();
+void WriteLConsts();
+
+//HConst Header Data
+//Note: No individual representation in CM.
+/*typedef struct{
+	//Empty
+}LHConst_t;*/
+
+void InitTHConsts();
+void LoadHConsts();
+void WriteHConsts();
+
+////////////////////////////////////
+//Utility Functions
+////////////////////////////////////
 
 typedef struct{
 	INT1 gl_flag;
 	INT2 index;
 }ConstInd;
 
-void loadTopGConsts();
-void loadGConsts();
-void loadLConsts();
-void readConstInd();
+ConstInd GetConstInd();
 
 #endif
