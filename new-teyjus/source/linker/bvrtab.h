@@ -1,17 +1,14 @@
 #ifndef _BVRTAB_H_
 #define _BVRTAB_H_
 
-typedef struct{
-	INT1 tab_size;
-	INT1 num_entries;
-	bvr_tab_ent* table;
-}BvrTab;
+//BvrTab Header Data
+//Note: No individual representation in CM.
+/*typedef struct{
+	//Empty
+}LBvrTab_t;*/
 
-typedef struct{
-	INT1 index;
-	int code_index;
-}BvrTabEnt;
-
-void loadBvrTab();
+void InitTBvrTabs();
+void LoadBvrTabs();
+void WriteBvrTabs();
 
 #endif //_BVRTAB_H_
