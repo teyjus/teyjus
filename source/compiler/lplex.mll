@@ -1,10 +1,10 @@
 (****************************************************************************
 *
 ****************************************************************************)
-
 {
 open Parsing
-open Lplex
+open Errormsg
+open Lpyacc
 
 let maxStringLength = 257
 
@@ -17,6 +17,8 @@ let strErr = ref false
 let quotedid = ref false
 
 let currentString = ref ""
+
+let string_of_char = String.make 1
 
 (**********************************************************************
 *currentPos:
@@ -34,7 +36,7 @@ let addChar = function s ->
 		(currentString := !currentString ^ s;
 		())
 	else
-		(ErrorMsg.warning (!strPos) ("Maximum string/id length exceeded; truncating to " ^ (string_of_int maxStringLength) ^ " characters");
+		(Errormsg.warning (!strPos) ("Maximum string/id length exceeded; truncating to " ^ (string_of_int maxStringLength) ^ " characters");
 		())
 
 (**********************************************************************
@@ -86,7 +88,7 @@ let NUM = DIGIT+
 
 rule initial = parse
 |	WSPACE				{initial lexbuf}
-|	"\n"					{ErrorMsg.newLine (currentPos ()); initial lexbuf}
+|	"\n"					{Errormsg.newLine (currentPos ()); initial lexbuf}
 
 |	"module"			{MODULE}
 |	"end"					{END}
@@ -143,20 +145,20 @@ rule initial = parse
 |	"|"						{VBAR}
 
 |	(NUM? "." NUM) as num		{REALLIT(float_of_string(num))}
-|	NUM as num						{INTLIT(int_of_string(num))}
+|	NUM as num							{INTLIT(int_of_string(num))}
 
-|	UCASE IDCHAR* as name				{UPCID{name=name, kind=P.CVID}}
-|	LCASE IDCHAR* as name				{ID{name=name, kind=P.ConstID}}
-|	(("/"(IDCHAR1 IDCHAR*))|(SCHAR2 IDCHAR*)) as name {SYID{name=name, kind=P.ConstID}}
+|	UCASE IDCHAR* as name				{UPCID(name, Preabsyn.CVID)}
+|	LCASE IDCHAR* as name				{ID(name, Preabsyn.ConstID)}
+|	(("/"(IDCHAR1 IDCHAR*))|(SCHAR2 IDCHAR*)) as name {SYID(name, Preabsyn.ConstID)}
 
-|	"_"              {VID{name=yytext, kind=P.AVID}}
-|	"_" IDCHAR+     	{VID{name=yytext, kind=P.VID}}
+|	"_" as word					{VID((string_of_char word), Preabsyn.AVID)}
+|	"_" IDCHAR+ as word	{VID(word, Preabsyn.VarID)}
 
-|	"\""             {stringstate lexbuf; }
+|	"\""						{stringstate lexbuf; }
 
-|	"%"              {comment1 lexbuf}
+|	"%"							{comment1 lexbuf}
 
-|	"/*"             {commentPos := currentPos (); commentLev=1; comment2 lexbuf}
+|	"/*"						{commentPos := (currentPos ()); commentLev := 1; comment2 lexbuf}
 
 (**********************************************************************
 *stringstate:
@@ -165,8 +167,8 @@ rule initial = parse
 and stringstate = parse
 |	['^' '"' '\\' '\n']+	{stringstate lexbuf}
 |	'"'										{STRLIT(!currentString)}
-|	'\n'					{ErrorMsg.error strPos "Error: String literal ended with newline";
-								(ErrorMsg.newLine (currentPos ())); STRLIT(!currentString)}
+|	'\n'					{Errormsg.error (!strPos) "Error: String literal ended with newline";
+								(Errormsg.newLine (currentPos ())); STRLIT(!currentString)}
 |	"\\b"					{addChar("\b"); stringstate lexbuf}
 |	"\\t"					{addChar("\t"); stringstate lexbuf}
 |	"\\n"					{addChar("\n"); stringstate lexbuf}
@@ -181,29 +183,29 @@ and stringstate = parse
 |	"\\x" HEX as text								{addHex(text); stringstate lexbuf}
 |	"\\x" HEX HEX as text						{addHex(text); stringstate lexbuf}
 
-|	"\\x" _					{ErrorMsg.error (currentPos ()) "Error: Illegal hex character specification";
+|	"\\x" _					{Errormsg.error (currentPos ()) "Error: Illegal hex character specification";
 									stringstate lexbuf}
 |	"\\" FCHAR			{strflush1 lexbuf}
-|	"\\\n"					{ErrorMsg.newLine (currentPos ()); strflush1 lexbuf}
+|	"\\\n"					{Errormsg.newLine (currentPos ()); strflush1 lexbuf}
 |	"\\c"						{strflush2 lexbuf}
-|	"\\" _					{ErrorMsg.error (charPos ()) "Error: Illegal escape character in string";
+|	"\\" _					{Errormsg.error (currentPos ()) "Error: Illegal escape character in string";
 									stringstate lexbuf}
 
 and strflush1 = parse
 |	FCHAR+		{strflush1 lexbuf}
 |	"\\"			{strflush1 lexbuf}
-| _ as text	{ErrorMsg.error(escapePos, "Error: Unterminated string escape sequence");
-						addChar(text); adjust();
+| _ as text	{Errormsg.error(!escapePos) "Error: Unterminated string escape sequence";
+						addChar(string_of_char text);
 						stringstate lexbuf}
 
 and strflush2 = parse
 |	FCHAR+		{strflush2 lexbuf}
-|	_					{addChar(text); stringstate lexbuf}
+|	_ as text	{addChar(string_of_char text); stringstate lexbuf}
 
 and comment1 = parse
 |	[^ '\n']+ 			{comment1 lexbuf}
-|	"\n"						{ErrorMsg.newLine (currentPos ()); initial lexbuf}
-|	_ as text				{ErrorMsg.Error("Illegal character " ^ text ^ " in input");
+|	"\n"						{Errormsg.newLine (currentPos ()); initial lexbuf}
+|	_ as text				{Errormsg.error (currentPos ()) ("Illegal character " ^ (string_of_char text) ^ " in input");
 									comment1 lexbuf}
 
 and comment2 = parse
@@ -215,5 +217,5 @@ and comment2 = parse
 							else
 								comment2 lexbuf}
 |	"/*"				{comment2 lexbuf}
-|	_ as text		{ErrorMsg.Error("Illegal character " ^ text ^ " in input");
+|	_ as text		{Errormsg.error (currentPos ()) ("Illegal character " ^ (string_of_char text) ^ " in input");
 							comment2 lexbuf}
