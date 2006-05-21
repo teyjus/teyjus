@@ -18,7 +18,7 @@ typedef struct{
 	int entries;
 	int dead_entries;
 	int size;
-	TX_t* entry;
+	THashTab_t* entry;
 }HashTab_Vec;
 
 HashTab_Vec HashTabs;
