@@ -14,7 +14,7 @@ typedef struct{
 typedef struct{
 	int entries;
 	int size;
-	TX_t* entry;
+	TGKind_t* entry;
 }GKind_Vec;
 
 GKind_Vec GKinds;
@@ -124,7 +124,7 @@ typedef struct{
 typedef struct{
 	int entries;
 	int size;
-	TX_t* entry;
+	TLKind_t* entry;
 }LKind_Vec;
 
 LKind_Vec LKinds;

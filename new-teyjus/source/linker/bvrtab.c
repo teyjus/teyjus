@@ -16,7 +16,7 @@ typedef struct{
 typedef struct{
 	int entries;
 	int size;
-	TX_t* entry;
+	TBvrTab_t* entry;
 }BvrTab_Vec;
 
 BvrTab_Vec BvrTabs;
@@ -89,7 +89,7 @@ void LoadBvrTab(int i)
 	for(int j=0;j<count;j++)
 	{
 		BvrTabs.entry[i].table[j].index=GET1();
-		BvrTabs.entry[i].table[j].addr=GET4()+CM.Codeoffset;
+		BvrTabs.entry[i].table[j].addr=GetCodeInd();
 	}
 	
 }

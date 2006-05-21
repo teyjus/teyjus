@@ -18,7 +18,7 @@ typedef struct{
 typedef struct{
 	int entries;
 	int size;
-	TX_t* entry;
+	TGConst_t* entry;
 }GConst_Vec;
 
 GConst_Vec GConsts;
@@ -75,7 +75,7 @@ LGConst_t LoadGConst()
 	tmp.ty_env_size=GET1();;
 	tmp.ty_preserving_info=GET1();
 	ConstInd index=RenameConst(GetName());
-	tmp.ty_skel_index=GET2()+TySkeloffset;
+	tmp.ty_skel_index=GetTySkelInd();
 	if(!CheckGConstEqv(index,tmp))
 	{
 		perror("Constant parameter mismatch");
@@ -106,7 +106,7 @@ LGConst_t LoadTopGConst(int i)
 	GConst_Vec.entry[i].ty_env_size=GET1();;
 	GConst_Vec.entry[i].ty_preserving_info=GET1();
 	GConst_Vec.entry[i].name=GetName();
-	GConst_Vec.entry[i].ty_skel_index=GET2()+TySkeloffset;
+	GConst_Vec.entry[i].ty_skel_index=GetTySkelInd();
 	
 	return tmp;
 }
@@ -144,7 +144,7 @@ typedef struct{
 typedef struct{
 	int entries;
 	int size;
-	TX_t* entry;
+	TLConst_t* entry;
 }LConst_Vec;
 
 LConst_Vec LConsts;
@@ -228,7 +228,7 @@ typedef struct{
 typedef struct{
 	int entries;
 	int size;
-	TX_t* entry;
+	THConst_t* entry;
 }HConst_Vec;
 
 HConst_Vec HConsts;
