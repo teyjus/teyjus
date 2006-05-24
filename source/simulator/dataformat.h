@@ -10,35 +10,41 @@
 #include <limits.h>
 #include <stdlib.h>
 #include "mctypes.h"
+#include "../system/memory.h"
 
 /********************************************************************/
 /*                                                                  */
-/*          Type Representation                                     */
+/*                         TYPE REPRESENTATION                      */
 /*                                                                  */
 /********************************************************************/
 
-/*type declarations for kind table index and type structure arity   */
-typedef unsigned short int DF_TY_TABIND;  //kind table index
-typedef unsigned short int DF_TY_ARITY;   //type structure arity
+/********************************************************************/
+/* Only generic types are visible from outside.                     */
+/* The "public" information for each specific type category is their*/
+/* sizes. Their structure declarations are hidden in dataformat.c.  */
+/* Construction, recognization and decomposition of types should be */
+/* performed through interface functions with declarations present  */
+/* in this file.                                                    */
+/********************************************************************/
 
-
-typedef BYTE  DF_TY_TAG;
+//type category tag
+typedef BYTE DF_TY_TAG;
 
 //type categories
 enum DF_TypeCategory
 {
     DF_TY_TAG_SORT,  //sort
     DF_TY_TAG_REF,   //reference
+    DF_TY_TAG_SKVAR, //skeleton variable
     DF_TY_TAG_ARROW, //type arrow
     DF_TY_TAG_STR    //type structure
 };
 
-
 //generic type (head) for every category
 typedef struct               
 {
-    DF_TY_TAG       tag;    /* the common field for every type (head); can 
-                               be any one of enum TypeCategory.
+    DF_TY_TAG       tag;     /* the common field for every type (head); can 
+                                be any one of enum TypeCategory.
                                 rely on struct alignment */ 
     void            *dummy;  /* a place holder which enforces the size of the 
                                 generic term to be 2 words. */
@@ -46,105 +52,67 @@ typedef struct
 
 typedef DF_TYPE *DF_TYPE_PTR; //type pointer
 
-/***********************************************/
-/* interface functions for type recognization  */
-/***********************************************/
+//sizes of different type items
+#define DF_TY_ATOMICSIZE    2    //atomic size
 
-BOOLEAN DF_TY_IsSort(DF_TYPE_PTR);  // is sort?
+//attributes of special type constructors
+#define DF_TY_ARROWARITY    2    //arity of type arrow
 
-BOOLEAN DF_TY_IsRef(DF_TYPE_PTR);   // is reference? (including free var)
+/******************************************************************/
+/*                      Interface functions                       */
+/******************************************************************/
 
-BOOLEAN DF_TY_IsFreeVar(DF_TYPE_PTR);  // is free var?
+/* TYPE DEREFERENCE */
+DF_TYPE_PTR DF_typeDeref(DF_TYPE_PTR);
 
-BOOLEAN DF_TY_IsArrow(DF_TYPE_PTR);   // is type arrow?
+/* TYPE RECOGNITION */
+BOOLEAN DF_TY_isSort(DF_TYPE_PTR);     // is sort?
+BOOLEAN DF_TY_isRef(DF_TYPE_PTR);      // is reference? (including free var)
+BOOLEAN DF_TY_isFreeVar(DF_TYPE_PTR);  // is free var?
+BOOLEAN DF_TY_isSkelVar(DF_TYPE_PTR);  // is skeleton var?
+BOOLEAN DF_TY_isArrow(DF_TYPE_PTR);    // is type arrow?
+BOOLEAN DF_TY_isStr(DF_TYPE_PTR);      // is type structure?
 
-BOOLEAN DF_TY_IsStr(DF_TYPE_PTR);     // is type structure?
+/* TYPE DECOMPOSITION */
+DF_TY_TAG DF_TY_tag(DF_TYPE_PTR);                      //generic type
+MEM_KSTTABIND DF_TY_kindTabIndex(DF_TYPE_PTR);         //sorts
+MEM_SKELIND DF_TY_skelVarIndex(DF_TYPE_PTR);           //skel var
+DF_TYPE_PTR DF_TY_refTarget(DF_TYPE_PTR);              //reference
+DF_TYPE_PTR DF_TY_arrowArgs(DF_TYPE_PTR);              //arrows
+DF_TYPE_PTR DF_TY_strFuncAndArgs(DF_TYPE_PTR);         //structures
+MEM_KSTTABIND DF_TY_strFuncInd(DF_TYPE_PTR);           
+MEM_TY_ARITY DF_TY_strFuncArity(DF_TYPE_PTR); 
+DF_TYPE_PTR DF_TY_strArgs(DF_TYPE_PTR);
 
-/*********************************************/
-/*interface functions for type decomposition */
-/*********************************************/
-//generic type
-DF_TY_TAG DF_TY_Tag(DF_TYPE_PTR);   // extracting tag
-
-//sorts
-DF_TY_TABIND DF_TY_KTableIndex(DF_TYPE_PTR); // extracting kind table index
-
-//reference
-DF_TYPE_PTR DF_TY_RefTarget(DF_TYPE_PTR); // extracting target
-
-//arrows
-DF_TYPE_PTR DF_TY_ArrowArgs(DF_TYPE_PTR); //extracting addr of args
-
-//structures
-//extracting kind table index of functor
-DF_TY_TABIND DF_TY_StrFunc(DF_TYPE_PTR); 
-DF_TY_ARITY DF_TY_StrArity(DF_TYPE_PTR); //extracting arity of functor
-DF_TYPE_PTR DF_TY_StrArgs(DF_TYPE_PTR); //extracting address of arg vector
-//extracting address of func which is immediately followed by arg vector 
-DF_TYPE_PTR DF_TY_StrFuncAndArgs(DF_TYPE_PTR);
-
-
-/*********************************************/
-/* interface functions for type cobstruction */
-/*********************************************/
-//sort
-void DF_TY_MkSort_(DF_TYPE_PTR, DF_TY_TABIND);
-DF_TYPE_PTR DF_TY_MkSort(DF_TYPE_PTR, DF_TY_TABIND);
-
-//reference
-void DF_TY_MkRef_(DF_TYPE_PTR, DF_TYPE_PTR);
-DF_TYPE_PTR DF_TY_MkRef(DF_TYPE_PTR, DF_TYPE_PTR);
-
-//free variable
-void DF_TY_MkFreeVar_(DF_TYPE_PTR);
-DF_TYPE_PTR DF_TY_MkFreeVar(DF_TYPE_PTR);
-
-//arrows
-void DF_TY_MkArrow_(DF_TYPE_PTR, DF_TYPE_PTR);
-DF_TYPE_PTR DF_TY_MkArrow(DF_TYPE_PTR, DF_TYPE_PTR);
-
-//structures
-void DF_TY_MkStr_(DF_TYPE_PTR, DF_TYPE_PTR);
-DF_TYPE_PTR DF_TY_MkStr(DF_TYPE_PTR, DF_TYPE_PTR);
-
-//functor can only be created on the heap
-DF_TYPE_PTR DF_TY_MkFunc(DF_TYPE_PTR, DF_TY_TABIND, DF_TY_ARITY);
-
-/********************/
-/* type dereference */
-/********************/
-DF_TYPE_PTR DF_TY_Deref(DF_TYPE_PTR);
+/* TYPE CONSTRUCTION */
+void DF_TY_copyAtomic(MEM_PTR sou, MEM_PTR des);
+void DF_TY_mkSort(MEM_PTR loc, MEM_KSTTABIND ind);
+void DF_TY_mkRef(MEM_PTR loc, DF_TYPE_PTR target);
+void DF_TY_mkFreeVar(MEM_PTR loc);
+void DF_TY_mkSkelVar(MEM_PTR loc, MEM_SKELIND offset);
+void DF_TY_mkArrow(MEM_PTR loc, DF_TYPE_PTR args);
+void DF_TY_mkStr(MEM_PTR loc, DF_TYPE_PTR funcAndArgs);
+void DF_TY_mkStrFunc(MEM_PTR loc, MEM_KSTTABIND ind, MEM_TY_ARITY n);
 
 
-/****************************************************************************
- *                                                                          *
- *                         TERM REPRESENTATION                              *
- *                                                                          *
- ****************************************************************************/
-/* Only generic terms are visible to other functions.
-   The structures of specific terms are hidden in dataformat.c.
-   The construction, recognization and decomposition (and copy) 
-   of term structures should be performed through the interface functions.
-*/
+/********************************************************************/
+/*                                                                  */
+/*                         TERM REPRESENTATION                      */
+/*                                                                  */
+/********************************************************************/
 
+/********************************************************************/
+/* Only generic terms (environment items) are visible from outside. */
+/* The "public" information for each specific term category is their*/
+/* sizes. Their structure declarations are hidden in dataformat.c.  */
+/* Construction, recognization and decomposition of terms should be */
+/* performed through interface functions with declarations present  */
+/* in this file.                                                    */
+/********************************************************************/
 
-/* type declarations for universe counter, (symbol) table index, 
-   abstraction level and application arity fields for various terms*/
-typedef unsigned short int DF_UNIVIND;     //universe index
-typedef unsigned short int DF_EMBEDLEV;    //abstraction context
-typedef unsigned short int DF_ARITY;       //arity
-typedef unsigned int DF_TABIND;            //symbol table index
-
-
-/* type declarations for pre universe counter, (symbol) table index,
-   and abstraction level fields before overflow detection */
-typedef unsigned int DF_PREUNIVIND;
-typedef unsigned int DF_PREEMBEDLEV;
-typedef unsigned int DF_PREARITY;
-
-
-typedef BYTE DF_TAG;         // term category tag
-
+//term category tag
+typedef BYTE DF_TM_TAG;
+ 
 //term categories
 enum DF_TermCategory 
 { 
@@ -154,20 +122,22 @@ enum DF_TermCategory
     DF_TM_TAG_FLOAT,          // floats
     DF_TM_TAG_NIL,            // empty lists
     DF_TM_TAG_STR,            // strings
-    DF_TM_TAG_BVAR,           // lambda bound variables (de Bruijn index)
     DF_TM_TAG_STREAM,         // streams
-    DF_TM_TAG_REF,            // references 
-                             // all categories above are atomic terms 
+    DF_TM_TAG_BVAR,           // lambda bound variables (de Bruijn index)
+                              // -- atoms above
+    DF_TM_TAG_REF,            // references
+                              // -- complex terms below
     DF_TM_TAG_CONS,           // list constructors
     DF_TM_TAG_LAM,            // abstractions
     DF_TM_TAG_APP,            // applications
     DF_TM_TAG_SUSP            // suspensions
 };
 
+
 // a generic term (head) for every category
 typedef struct               
 {
-    DF_TAG        tag;       /* the common field for every term (head); can 
+    DF_TM_TAG    tag;        /* the common field for every term (head); can 
                                 be any one of enum TermCategory.
                                 rely on struct alignment */ 
     void         *dummy;     /* a place holder which enforces the size of the 
@@ -177,302 +147,139 @@ typedef struct
 typedef DF_TERM *DF_TERM_PTR; //term pointer
 
 
+//sizes of different term items
+#define DF_TM_ATOMICSIZE  2       // atomic size
+#define DF_TM_TCONSTSIZE  3       // type associated constant   
+#define DF_TM_APPSIZE     3       // application head
+#define DF_TM_LAMSIZE     2       // abstraction
+#define DF_TM_CONSSIZE    2       // cons 
+#define DF_TM_SUSPSIZE    4       // suspension 
 
-// environment items (list) in suspension
+// attributes of some special constants 
+#define  DF_CONSARITY  2          //arity of cons
 
-/* The common fields of ENV and DUMMYENV have to be put in same places with 
-   respect to the structures: rely on struct alignment. */
-typedef struct DF_env               // pair environment item
+//a generic environment item in suspension
+typedef struct DF_env
 {
-    struct DF_env      *rest;
-    BOOLEAN            isDummy;   // isDummy = 0
-    DF_EMBEDLEV        embedLevel;
-    DF_TERM_PTR        term;
+    BOOLEAN          isDummy;
+    MEM_EMBEDLEV     embedLevel;
+    struct DF_env    *rest;    //the tail of the list
 } DF_ENV;
-
-
-typedef struct           // dummy environment item
-{
-    DF_ENV       *rest;
-    BOOLEAN      isDummy;   // isDummy = 1
-    DF_EMBEDLEV  embedLevel;
-    
-} DF_DUMMYENV;
 
 typedef DF_ENV *DF_ENV_PTR;
 
-/*********************************************/
-/*interface functions for term recognition   */
-/*********************************************/
-
-BOOLEAN DF_IsAtomic(DF_TERM_PTR);      
-
-BOOLEAN DF_IsNAtomic(DF_TERM_PTR);  /* whether a term is atomic: ref is not
-                                    included in atomic terms nor non-atomic
-                                    ones */
-BOOLEAN DF_IsFV(DF_TERM_PTR);     // is variable?
-
-BOOLEAN DF_IsConst(DF_TERM_PTR);   // is constant (typed and untyped)?
-
-BOOLEAN DF_IsInt(DF_TERM_PTR);     // is integer?
-
-BOOLEAN DF_IsFloat(DF_TERM_PTR);   // is float?
-
-BOOLEAN DF_IsNil(DF_TERM_PTR);     // is empty list?
-
-BOOLEAN DF_IsStr(DF_TERM_PTR);     // is string?
-
-BOOLEAN DF_IsBV(DF_TERM_PTR);    // is lambda bound variable?
-
-BOOLEAN DF_IsStream(DF_TERM_PTR);  // is stream?
-
-BOOLEAN DF_IsRef(DF_TERM_PTR);     // is reference?
-
-BOOLEAN DF_IsCons(DF_TERM_PTR);    // is list cons?
-
-BOOLEAN DF_IsLam(DF_TERM_PTR);     // is abstraction?
-
-BOOLEAN DF_IsApp(DF_TERM_PTR);     // is application?
-
-BOOLEAN DF_IsSusp(DF_TERM_PTR);    // is suspension?
-
-//environment item (list)
-BOOLEAN DF_EmpEnv(DF_ENV_PTR);     // is empty environment?
-
-BOOLEAN DF_IsDummy(DF_ENV_PTR);    // is dummy environment item?
-
-
-
-
-/*********************************************/
-/*interface functions for term decomposition */
-/*********************************************/
-
-//generic term
-DF_TAG DF_Tag(DF_TERM_PTR);        // extracting tag from a generic term
-
-//constants (typed/untyped) and variable
-DF_UNIVIND DF_UnivIndex(DF_TERM_PTR);  // exacting universe index
-
-//constants (typed/untyped)
-DF_UNIVIND DF_ConstUnivIndex(DF_TERM_PTR); //extracting universe index
-DF_TABIND DF_ConstTabIndex(DF_TERM_PTR);   //extracting symbol table index
-
-//typed constants
-DF_TYPE_PTR DF_TConstType(DF_TERM_PTR);    //extracting the address of type env
-
-//integer
-long DF_IntValue(DF_TERM_PTR);             //extracting integer value (long)
-long DF_IntABS(DF_TERM_PTR);               //absolute value
-long DF_IntNEG(DF_TERM_PTR);               //negation
-
-//float
-float DF_FloatValue(DF_TERM_PTR);          //extracting float value
-float DF_FloatABS(DF_TERM_PTR);            //absolute value
-float DF_FloatNEG(DF_TERM_PTR);            //negation
-
-//string
-char* DF_StrValue(DF_TERM_PTR);            //extracting string value
-int   DF_StrLength(DF_TERM_PTR);           //extracting string length
-
-//stream
-DF_TABIND DF_StreamTabIndex(DF_TERM_PTR);  //extracting stream index
-
-//lambda bound variable
-DF_EMBEDLEV DF_BVIndex(DF_TERM_PTR);       //extracting de Bruijn index
-
-//reference
-DF_TERM_PTR DF_RefTarget(DF_TERM_PTR);     //extracting the address of target
-
-//list cons
-DF_TERM_PTR DF_ConsArgs(DF_TERM_PTR);   //extracting the address of args of cons
-
-//abstractions
-DF_EMBEDLEV DF_LamEmbedLev(DF_TERM_PTR); //extracting abstraction level
-DF_TERM_PTR DF_LamBody(DF_TERM_PTR);     //extracting the address of lambda body
-
-//application
-DF_ARITY DF_AppArity(DF_TERM_PTR);     //extracting arity
-DF_TERM_PTR DF_AppFunc(DF_TERM_PTR);   //extracting the address of functor
-DF_TERM  DF_AppFuncTerm(DF_TERM_PTR);  //extracting the functor
-DF_TERM_PTR DF_AppArgs(DF_TERM_PTR);   //extracting the address of arg vector
-
-//suspension
-DF_EMBEDLEV DF_SuspOL(DF_TERM_PTR);        //extracting ol
-DF_EMBEDLEV DF_SuspNL(DF_TERM_PTR);        //extracting nl
-DF_TERM_PTR DF_SuspTermSkel(DF_TERM_PTR);  //extracting the address of term skel
-DF_ENV_PTR  DF_SuspEnv(DF_TERM_PTR);       //extracting the environment list
-
-
-//environment item (dummy/pair)
-DF_EMBEDLEV DF_EnvIndex(DF_ENV_PTR);           //extracting l in @l or (t,l)
-
-//pair environment item 
-DF_TERM_PTR DF_EnvTerm(DF_ENV_PTR);    //extracting the address of t in (t,l)
-
-//environment item (list) (dummy/pair)
-DF_ENV_PTR DF_EnvListRest(DF_ENV_PTR); //extracting the tail of env list
-
-//environment list 
-DF_ENV_PTR DF_EnvNth(DF_ENV_PTR, int); //extracting the nth item in the env list
-
-
-/*********************************************/
-/*interface functions for term construction  */
-/*********************************************/
-
-//copy atomic terms 
-void DF_CopyAtom_(DF_TERM_PTR, DF_TERM_PTR);
-DF_TERM_PTR DF_CopyAtom(DF_TERM_PTR, DF_TERM_PTR);
-
-
-//variable
-void DF_MkVar_(DF_TERM_PTR, DF_UNIVIND);
-DF_TERM_PTR DF_MkVar(DF_TERM_PTR, DF_UNIVIND);
-
-//lambda bound variable
-void DF_MkBV_(DF_TERM_PTR, DF_EMBEDLEV);
-DF_TERM_PTR DF_MkBV(DF_TERM_PTR, DF_EMBEDLEV);
-
-//untyped constant
-void DF_MkConst_(DF_TERM_PTR, DF_UNIVIND, DF_TABIND);
-DF_TERM_PTR DF_MkConst(DF_TERM_PTR, DF_UNIVIND, DF_TABIND);
-
-//typed constant
-void DF_MkTConst_(DF_TERM_PTR, DF_UNIVIND, DF_TABIND, DF_TYPE_PTR); 
-DF_TERM_PTR DF_MkTConst(DF_TERM_PTR, DF_UNIVIND, DF_TABIND, DF_TYPE_PTR);
-
-//integer
-void DF_MkInt_(DF_TERM_PTR, long);
-DF_TERM_PTR DF_MkInt(DF_TERM_PTR, long);
-
-//float
-void DF_MkFloat_(DF_TERM_PTR, float);
-DF_TERM_PTR DF_MkFloat(DF_TERM_PTR, float);
-
-//string
-void DF_MkStr_(DF_TERM_PTR, char*);
-DF_TERM_PTR DF_MkStr(DF_TERM_PTR, char*);
-
-//stream
-void DF_MkStream_(DF_TERM_PTR, DF_TABIND);
-DF_TERM_PTR DF_MkStream(DF_TERM_PTR, DF_TABIND);
-
-//empty list
-void DF_MkNil_(DF_TERM_PTR);
-DF_TERM_PTR DF_MkNil(DF_TERM_PTR);
-
-//reference
-void DF_MkRef_(DF_TERM_PTR, DF_TERM_PTR);
-DF_TERM_PTR DF_MkRef(DF_TERM_PTR, DF_TERM_PTR);
-
-//list cons
-void DF_MkCons_(DF_TERM_PTR, DF_TERM_PTR);
-DF_TERM_PTR DF_MkCons(DF_TERM_PTR, DF_TERM_PTR);
-
-//abstraction
-void DF_MkLam_(DF_TERM_PTR, DF_EMBEDLEV, DF_TERM_PTR);
-DF_TERM_PTR DF_MkLam(DF_TERM_PTR, DF_EMBEDLEV, DF_TERM_PTR);
-
-//application
-void DF_MkApp_(DF_TERM_PTR, DF_ARITY, DF_TERM_PTR, DF_TERM_PTR); 
-DF_TERM_PTR DF_MkApp(DF_TERM_PTR, DF_ARITY, DF_TERM_PTR, DF_TERM_PTR);
-
-//suspension
-void DF_MkSusp_(DF_TERM_PTR, DF_EMBEDLEV, DF_EMBEDLEV, DF_TERM_PTR, DF_ENV_PTR);
-DF_TERM_PTR DF_MkSusp(DF_TERM_PTR, DF_EMBEDLEV, DF_EMBEDLEV, DF_TERM_PTR, 
-                      DF_ENV_PTR);
-
-//pair environment item
-void DF_MkEnv_(DF_ENV_PTR, DF_ENV_PTR, DF_EMBEDLEV, DF_TERM_PTR); 
-DF_ENV_PTR DF_MkEnv(DF_ENV_PTR, DF_ENV_PTR, DF_EMBEDLEV, DF_TERM_PTR);
-
-//dummy environment item
-void DF_MkDummyEnv_(DF_ENV_PTR, DF_ENV_PTR, DF_EMBEDLEV); 
-DF_ENV_PTR DF_MkDummyEnv(DF_ENV_PTR, DF_ENV_PTR, DF_EMBEDLEV);
-
-
-/***********************************************************/
-/*interface functions for in-place updating certain fields */
-/***********************************************************/
-
-//updating universe index
-void DF_ModUnivIndex(DF_TERM_PTR, DF_UNIVIND);
-
-
-/***************************************************************************/
-/*interface functions for addr calculation, may be needed for detecting    */
-/*memory error                                                             */
-/* (some are not implemented yet)                                          */
-/***************************************************************************/
-
-//return an address increased by the size of an atomic term from the given
-MEM_PTR DF_IncAtomic(MEM_PTR);
-
-//return an address increased by the size of n atomic term from the given
-MEM_PTR DF_IncNAtomic(MEM_PTR, int);
-
-//return an address increased by the size of a suspension from the given one
-MEM_PTR DF_IncSusp(MEM_PTR);
-
-//return an address increased by the size of a dummy env item from the given
-MEM_PTR DF_IncEnvDummy(MEM_PTR);
-
-//return an address increased by the size of n dummy env items from the given
-MEM_PTR DF_IncNEnvDummy(MEM_PTR, int);
-
-//return an address increased by the size of a pair env item from the given 
-MEM_PTR DF_IncEnvPair(MEM_PTR);
-
-//return an address increased by the size of n pair env items from the given
-MEM_PTR DF_IncNEnvPair(MEM_PTR, int);
-
-//return an address increased by the size of an app head from the given
-MEM_PTR DF_IncApp(MEM_PTR);
-
-//increasing sizeof(APP)+ n*atomic size, where n is arity 
-MEM_PTR DF_IncAppNArgs(MEM_PTR, DF_ARITY);
-
-//return an address increased by the size of an abstraction from the given
-MEM_PTR DF_IncLam(MEM_PTR);
-
-//return an address increased by the size of lam+susp+(n dummy env items)
-MEM_PTR DF_IncSuspLamNDummyEnv(MEM_PTR, int);
-
-//return an address increased by the size of a cons from the given
-MEM_PTR DF_IncCons(MEM_PTR);
-
-/*********************************************/
-/* term dereference                          */
-/*********************************************/
-DF_TERM_PTR DF_Deref(DF_TERM_PTR);
-
-
-/**********************************************/
-/* constants                                  */
-/**********************************************/
-
-/* empty environment list (in suspension)     */
+// empty environment list 
 #define DF_EMPTYENV NULL
 
+//sizes of different environment items
+#define DF_ENV_DUMMYSIZE  2      // dummy environment item
+#define DF_ENV_PAIRSIZE   3      // pair environment item
 
-/* limits on field values that are changable at runtime : for error checking */
-#define  DF_MAXBVIND    USHRT_MAX   //max de Bruijn index (embedding level)
-#define  DF_MAXUINVIND  USHRT_MAX   //max universe index
-#define  DF_MAXARITY    USHRT_MAX   //max arity 
-#define  DF_MAXTABIND   UINT_MAX    //max symbol table index
-#define  DF_MAXINT      LONG_MAX    //max integer
-#define  DF_MININT      LONG_MIN    //min integer
+/******************************************************************/
+/*                      Interface functions                       */
+/******************************************************************/
 
-    
-/* Attributes of some special constants */
-#define  DF_CONSARITY  2         //arity of cons
+/* DEREFERENCE      */
+DF_TERM_PTR DF_termDeref(DF_TERM_PTR); // term dereference
 
- 
-#endif // DATAFORMAT_H
-    
+/* TERM RECOGNITION */
+BOOLEAN DF_isAtomic(DF_TERM_PTR); //note ref is neither atomic nor complex
+BOOLEAN DF_isNAtomic(DF_TERM_PTR);                                    
+BOOLEAN DF_isFV(DF_TERM_PTR);     // is unbound variable?
+BOOLEAN DF_isConst(DF_TERM_PTR);  // is constant (typed and untyped)?
+BOOLEAN DF_isTConst(DF_TERM_PTR); // is a type associated constant? 
+                                  // Note we assume the arg is known to be const
+BOOLEAN DF_isInt(DF_TERM_PTR);    // is integer?
+BOOLEAN DF_isFloat(DF_TERM_PTR);  // is float?
+BOOLEAN DF_isNil(DF_TERM_PTR);    // is list nil?
+BOOLEAN DF_isStr(DF_TERM_PTR);    // is string?
+BOOLEAN DF_isBV(DF_TERM_PTR);     // is de Bruijn index?
+BOOLEAN DF_isStream(DF_TERM_PTR); // is stream?
+BOOLEAN DF_isRef(DF_TERM_PTR);    // is reference?
+BOOLEAN DF_isCons(DF_TERM_PTR);   // is list cons?
+BOOLEAN DF_isLam(DF_TERM_PTR);    // is abstraction?
+BOOLEAN DF_isApp(DF_TERM_PTR);    // is application?
+BOOLEAN DF_isSusp(DF_TERM_PTR);   // is suspension?
+
+BOOLEAN DF_isEmpEnv(DF_ENV_PTR);  // is empty environment?
+BOOLEAN DF_isDummyEnv(DF_ENV_PTR);// is dummy environment item?
+
+/* TERM DECOMPOSITION */
+//generic term
+DF_TM_TAG DF_tag(DF_TERM_PTR);               // term category tag
+//unbound variable
+MEM_UNIVIND DF_FVUnivCount(DF_TERM_PTR);     // universe count
+//constants (w/oc type associations)
+MEM_UNIVIND DF_constUnivCount(DF_TERM_PTR);  // universe index
+MEM_CSTTABIND DF_constTabIndex(DF_TERM_PTR); // symbol table index
+//constants with type associations
+DF_TYPE_PTR DF_TConstType(DF_TERM_PTR);      // type environment
+//integer
+long DF_intValue(DF_TERM_PTR);               // integer value (long)
+long DF_intABS(DF_TERM_PTR);                 // absolute value
+long DF_intNEG(DF_TERM_PTR);                 // negation
+//float
+float DF_floatValue(DF_TERM_PTR);            // float value
+float DF_floatABS(DF_TERM_PTR);              // absolute value
+float DF_floatNEG(DF_TERM_PTR);              // negation
+//string
+char* DF_strValue(DF_TERM_PTR);              // string value
+int   DF_strLength(DF_TERM_PTR);             // string length
+//stream
+MEM_STREAMTABIND DF_streamTabIndex(DF_TERM_PTR);  // stream table index
+//de Bruijn indices
+MEM_EMBEDLEV DF_BVIndex(DF_TERM_PTR);         // de Bruijn index
+//reference
+DF_TERM_PTR DF_refTarget(DF_TERM_PTR);       // target
+//list cons
+DF_TERM_PTR DF_consArgs(DF_TERM_PTR);        // arg vector
+//abstractions
+MEM_EMBEDLEV DF_lamEmbedLev(DF_TERM_PTR);    // embedding level
+DF_TERM_PTR DF_lamBody(DF_TERM_PTR);         // lambda body
+//application
+MEM_ARITY DF_appArity(DF_TERM_PTR);          // arity
+DF_TERM_PTR DF_appFunc(DF_TERM_PTR);         // functor
+DF_TERM_PTR DF_appArgs(DF_TERM_PTR);         // arg vector
+//suspension
+MEM_EMBEDLEV DF_suspOL(DF_TERM_PTR);         // ol
+MEM_EMBEDLEV DF_suspNL(DF_TERM_PTR);         // nl
+DF_TERM_PTR DF_suspTermSkel(DF_TERM_PTR);    // term skel
+DF_ENV_PTR  DF_suspEnv(DF_TERM_PTR);         // environment list
+
+//environment item (dummy/pair)
+DF_ENV_PTR DF_envListRest(DF_ENV_PTR);       // next env item
+DF_ENV_PTR DF_envListNth(DF_ENV_PTR, int);   // the nth item 
+MEM_EMBEDLEV DF_envIndex(DF_ENV_PTR);        // l in @l or (t,l)
+//pair environment item 
+DF_TERM_PTR DF_envPairTerm(DF_ENV_PTR);      // t in (t,l)
 
 
+/* TERM CONSTRUCTION */
+void DF_copyAtomic(MEM_PTR sou, MEM_PTR des);    //copy atomic 
+void DF_mkVar(MEM_PTR loc, MEM_UNIVIND uc);      //unbound variable
+void DF_mkBV(MEM_PTR loc, MEM_EMBEDLEV ind);     //de Bruijn index
+void DF_mkConst(MEM_PTR loc, MEM_UNIVIND uc, MEM_CSTTABIND ind); //const 
+void DF_mkTConst(MEM_PTR loc, MEM_UNIVIND uc, MEM_CSTTABIND ind, 
+                 DF_TYPE_PTR typeEnv);           //const with type association
+void DF_mkInt(MEM_PTR loc, long value);          //int
+void DF_mkFloat(MEM_PTR loc, float value);       //float
+void DF_mkStr(MEM_PTR loc, char *value);         //string
+void DF_mkStream(MEM_PTR loc, MEM_STREAMTABIND ind);  //stream
+void DF_mkNil(MEM_PTR loc);                      //nil
+void DF_mkRef(MEM_PTR loc, DF_TERM_PTR target);  //reference
+void DF_mkCons(MEM_PTR loc, DF_TERM_PTR args);   //cons
+void DF_mkLam(MEM_PTR loc, MEM_EMBEDLEV n, DF_TERM_PTR body);    //abstraction
+void DF_mkApp(MEM_PTR loc, MEM_ARITY n, DF_TERM_PTR func, DF_TERM_PTR args); 
+                                                 //application
+void DF_mkSusp(MEM_PTR loc, MEM_EMBEDLEV ol, MEM_EMBEDLEV nl, DF_TERM_PTR tp,
+               DF_ENV_PTR env);                  //suspension
+void DF_mkDummyEnv(MEM_PTR loc, MEM_EMBEDLEV l, DF_ENV_PTR rest); //@l env item
+void DF_mkPairEnv(MEM_PTR loc, MEM_EMBEDLEV l, DF_TERM_PTR t, DF_ENV_PTR rest);
+                                                 // (t, l) env item
 
+/* SPECIAL CONSTANTS */
+BOOLEAN DF_sameStr(DF_TERM_PTR str1, DF_TERM_PTR str2);         //same string?
+
+#endif  //DATAFORMAT_H
 
 
