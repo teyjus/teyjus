@@ -1,3 +1,5 @@
+/* Note that this file may need to be moved to ../system/ */
+
 /****************************************************************************/
 /*                                                                          */
 /*                                                                          */
@@ -24,8 +26,6 @@ typedef void           *WORD;
 
 #define WORDSIZE       sizeof(WORD)               /* 4: 32-bits machine */   
                                                   /* 8  64-bits machine */
-
-
 
 typedef WORD           MEM;
 typedef MEM            *MEM_PTR;

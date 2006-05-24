@@ -5,7 +5,7 @@
 /* that are manipulated by the machine, through various structure types.    */ 
 /****************************************************************************/
 #ifndef DATAFORMAT_C
-#define DFTAFORMAT_C
+#define DATAFORMAT_C
 
 #include <math.h>
 #include <string.h>
@@ -14,1030 +14,573 @@
 
 /********************************************************************/
 /*                                                                  */
-/*          Type Representation                                     */
+/*                         TYPE REPRESENTATION                      */
 /*                                                                  */
 /********************************************************************/
-typedef struct                  //sorts
+
+typedef struct                         //type sort
 {
-    DF_TY_TAG         tag;       //DF_TY_TAG_SORT
-    DF_TY_TABIND      kindTableIndex;
+    DF_TY_TAG         tag;
+    MEM_KSTTABIND     kindTabIndex;
 } DF_TY_SORT;
 
-
-typedef struct                  //reference
+typedef struct                         //type reference
 {
-    DF_TY_TAG         tag;       //DF_TY_TAG_REF
+    DF_TY_TAG         tag;      
     DF_TYPE_PTR       target;
 } DF_TY_REF;
 
-
-typedef struct                  //type arrows
+typedef struct                         //variables in type skeletons
 {
-    DF_TY_TAG         tag;       //DF_TY_TAG_ARROW
+    DF_TY_TAG         tag;
+    MEM_SKELIND       offset;
+} DF_TY_SKVAR;
+
+typedef struct                         //type arrows
+{
+    DF_TY_TAG         tag;       
     DF_TYPE_PTR       args;
 } DF_TY_ARROW;
 
-//type functors
+/*
+// an alternative of encoding type arrow 
 typedef struct
 {
-    DF_TY_ARITY       arity;
-    DF_TY_TABIND      kindTableIndex;
+    DF_TY_TAG         tag;
+    MEM_TY_ARITY      arity;
+    DF_TYPE_PTR       targetAndArgs;
+}
+*/
+
+typedef struct                         //type functors
+{
+    MEM_TY_ARITY       arity;
+    MEM_KSTTABIND      kindTabIndex;
 } DF_TY_FUNC;
 
-typedef struct                   //types structures
+typedef struct                         //type structures
 {
-    DF_TY_TAG         tag;       //DF_TY_TAG_STR
-    DF_TY_FUNC        *funcArgs;
+    DF_TY_TAG         tag;       
+    DF_TY_FUNC        *funcAndArgs;
 } DF_TY_STR;
 
+/******************************************************************/
+/*                      Interface functions                       */
+/******************************************************************/
 
-/*interface functions for type recognization */
-
-BOOLEAN DF_TY_IsSort(DF_TYPE_PTR tp)  // is sort?
+/* TYPE DEREFERENCE */
+DF_TYPE_PTR DF_typeDeref(DF_TYPE_PTR typ)
 {
-    return (tp -> tag == DF_TY_TAG_SORT);
+    DF_TYPE ty = *typ;
+    while ((ty.tag == DF_TY_TAG_REF)){
+        DF_TYPE_PTR target = (DF_TYPE_PTR)(ty.dummy);
+        if (typ == target) return typ;
+        typ = target;
+        ty = *typ;
+    }
+    return typ;
 }
 
-BOOLEAN DF_TY_IsRef(DF_TYPE_PTR tp)   // is reference? (including free var)
+/* TYPE RECOGNITION */
+
+BOOLEAN DF_TY_isSort(DF_TYPE_PTR typ)    {return (typ->tag == DF_TY_TAG_SORT); }
+BOOLEAN DF_TY_isRef(DF_TYPE_PTR typ)     {return (typ->tag == DF_TY_TAG_REF);  }
+BOOLEAN DF_TY_isSkelVar(DF_TYPE_PTR typ) {return (typ->tag == DF_TY_TAG_SKVAR);}
+BOOLEAN DF_TY_isArrow(DF_TYPE_PTR typ)   {return (typ->tag == DF_TY_TAG_ARROW);}
+BOOLEAN DF_TY_isStr(DF_TYPE_PTR typ)     {return (typ->tag == DF_TY_TAG_STR);  }
+BOOLEAN DF_TY_isFreeVar(DF_TYPE_PTR typ)
 {
-    return (tp -> tag == DF_TY_TAG_REF);
+    return ((typ->tag == DF_TY_TAG_REF) && ((DF_TY_REF*)typ)->target == typ);
 }
 
-BOOLEAN DF_TY_IsFreeVar(DF_TYPE_PTR tp)  // is free var?
+/* TYPE DECOMPOSITION */
+DF_TY_TAG DF_TY_tag(DF_TYPE_PTR typ)                     //generic type
 {
-    return ((tp -> tag == DF_TY_TAG_REF) && (((DF_TY_REF*)tp) -> target == tp));
+    return typ -> tag;
+}
+MEM_KSTTABIND DF_TY_kindTabIndex(DF_TYPE_PTR typ)        //sorts
+{
+    return ((DF_TY_SORT*)typ) -> kindTabIndex;
+}
+MEM_SKELIND DF_TY_skelVarIndex(DF_TYPE_PTR typ)          //skel var
+{
+    return ((DF_TY_SKVAR*)typ) -> offset;
+}
+DF_TYPE_PTR DF_TY_refTarget(DF_TYPE_PTR typ)             //reference
+{
+    return ((DF_TY_REF*)typ) -> target;
+}
+DF_TYPE_PTR DF_TY_arrowArgs(DF_TYPE_PTR typ)             //arrows
+{
+    return ((DF_TY_ARROW*)typ) -> args;
+}
+DF_TYPE_PTR DF_TY_strFuncAndArgs(DF_TYPE_PTR typ)        //structures
+{
+    return (DF_TYPE_PTR)(((DF_TY_STR*)typ)->funcAndArgs);
+}
+MEM_KSTTABIND DF_TY_strFuncInd(DF_TYPE_PTR typ) 
+{//Note typ must refer to funcAndArgs field
+    return ((DF_TY_FUNC*)typ)->kindTabIndex;
+}
+MEM_TY_ARITY DF_TY_strFuncArity(DF_TYPE_PTR typ)
+{//Note typ must refer to funcAndArgs field
+    return ((DF_TY_FUNC*)typ)->arity;
+}   
+DF_TYPE_PTR DF_TY_strArgs(DF_TYPE_PTR typ)
+{//Note typ must refer to funcAndArgs field
+    return (DF_TYPE_PTR)(((MEM_PTR)typ) + DF_TY_ATOMICSIZE);
 }
 
-BOOLEAN DF_TY_IsArrow(DF_TYPE_PTR tp)   // is type arrow?
+/* TYPE CONSTRUCTION */
+void DF_TY_copyAtomic(MEM_PTR sou, MEM_PTR des)
 {
-    return (tp -> tag == DF_TY_TAG_ARROW);
+    *((DF_TYPE_PTR)des) = *((DF_TYPE_PTR)sou);
+}
+void DF_TY_mkSort(MEM_PTR loc, MEM_KSTTABIND ind)
+{
+    ((DF_TY_SORT*)loc)->tag = DF_TY_TAG_SORT;
+    ((DF_TY_SORT*)loc)->kindTabIndex = ind;
+}
+void DF_TY_mkRef(MEM_PTR loc, DF_TYPE_PTR target)
+{
+    ((DF_TY_REF*)loc)->tag = DF_TY_TAG_REF;
+    ((DF_TY_REF*)loc)->target = target;
+}
+void DF_TY_mkFreeVar(MEM_PTR loc)
+{
+    ((DF_TY_REF*)loc)->tag = DF_TY_TAG_REF;
+    ((DF_TY_REF*)loc)->target = (DF_TYPE_PTR)loc;
+}
+void DF_TY_mkSkelVar(MEM_PTR loc, MEM_SKELIND offset)
+{
+    ((DF_TY_SKVAR*)loc)->tag = DF_TY_TAG_SKVAR;
+    ((DF_TY_SKVAR*)loc)->offset = offset;
+}
+void DF_TY_mkArrow(MEM_PTR loc, DF_TYPE_PTR args)
+{
+    ((DF_TY_ARROW*)loc)->tag = DF_TY_TAG_ARROW;
+    ((DF_TY_ARROW*)loc)->args = args;
+}
+void DF_TY_mkStr(MEM_PTR loc, DF_TYPE_PTR funcAndArgs)
+{
+    ((DF_TY_STR*)loc)->tag = DF_TY_TAG_STR;
+    ((DF_TY_STR*)loc)->funcAndArgs = (DF_TY_FUNC*)funcAndArgs;
+}
+void DF_TY_mkStrFunc(MEM_PTR loc, MEM_KSTTABIND ind, MEM_TY_ARITY n)
+{
+    ((DF_TY_FUNC*)loc)->kindTabIndex = ind;
+    ((DF_TY_FUNC*)loc)->arity = n;
 }
 
-BOOLEAN DF_TY_IsStr(DF_TYPE_PTR tp)     // is type structure?
+/********************************************************************/
+/*                                                                  */
+/*                         TERM REPRESENTATION                      */
+/*                                                                  */
+/********************************************************************/
+
+typedef struct                  //logic variables          
 {
-    return (tp -> tag == DF_TY_TAG_STR);
-}
+    DF_TM_TAG       tag;
+    MEM_UNIVIND     univCount;
+} DF_TM_VAR;
 
-/*interface functions for type decomposition */
-//generic type
-DF_TY_TAG DF_TY_Tag(DF_TYPE_PTR tp)   // extracting tag
+typedef struct                  //de Bruijn indices
 {
-    return tp -> tag;
-}
+    DF_TM_TAG       tag;
+    MEM_EMBEDLEV    index;
+} DF_TM_BV;
 
-//sorts
-DF_TY_TABIND DF_TY_KTableIndex(DF_TYPE_PTR tp) // extracting kind table index
+typedef struct {                //name and universe count field for constants
+    MEM_UNIVIND     univCount;        
+    MEM_CSTTABIND   symTabIndex; 
+} NAMEANDUC;
+
+typedef struct {                //constant without type association
+    DF_TM_TAG       tag; 
+    BOOLEAN         withType;        
+    union {
+        unsigned int    value;
+        NAMEANDUC       nameAndUC;
+    } data;
+} DF_TM_CONST;
+
+typedef struct {                //constant with type association
+    DF_TM_TAG       tag; 
+    BOOLEAN         withType;        
+    union {
+        unsigned int    value;
+        NAMEANDUC       nameAndUC;
+    } data;
+    DF_TYPE_PTR     typeEnv;
+} DF_TM_TCONST;
+
+typedef struct                  //integers
 {
-    return ((DF_TY_SORT*)tp) -> kindTableIndex;
-}
+    DF_TM_TAG        tag;     
+    long int         value;
+} DF_TM_INT;
 
-//reference
-DF_TYPE_PTR DF_TY_RefTarget(DF_TYPE_PTR tp) //extracting reference target
+typedef struct                  //floats
 {
-    return ((DF_TY_REF*)tp) -> target;
-}
+    DF_TM_TAG        tag;     
+    float            value;
+} DF_TM_FLOAT;
 
-
-//arrows
-DF_TYPE_PTR DF_TY_ArrowArgs(DF_TYPE_PTR tp) //extracting addr of args
+typedef struct                  //string
 {
-    return ((DF_TY_ARROW*)tp) -> args;
-}
+    DF_TM_TAG        tag;
+    char             *charList;
+} DF_TM_STR;
 
-//structures
-
-DF_TY_TABIND DF_TY_StrFunc(DF_TYPE_PTR tp) //extracting kind table index of 
-                                          //functor
+typedef struct                  //stream
 {
-    return (((DF_TY_STR*)tp) -> funcArgs) -> kindTableIndex;
-}
+    DF_TM_TAG        tag;     
+    MEM_STREAMTABIND index;
+} DF_TM_STREAM;
 
-DF_TY_ARITY DF_TY_StrArity(DF_TYPE_PTR tp) //extracting arity of functor
+typedef struct                  //empty list
 {
-    return (((DF_TY_STR*)tp) -> funcArgs) -> arity;
-}
+    DF_TM_TAG        tag;     
+} DF_TM_NIL;
 
-
-DF_TYPE_PTR DF_TY_StrArgs(DF_TYPE_PTR tp) //extracting address of arg vector
+typedef struct                  //reference
 {
-    return (DF_TYPE_PTR)((((DF_TY_STR*)tp) -> funcArgs)) + 1;
-}
+    DF_TM_TAG        tag;     
+    DF_TERM_PTR      target;
+} DF_TM_REF;
 
-//extracting the address of functor which is immediately followed by arg vector
-DF_TYPE_PTR DF_TY_StrFuncAndArgs(DF_TYPE_PTR tp) 
+typedef struct                  //list cons
 {
-    return (DF_TYPE_PTR)(((DF_TY_STR*)tp) -> funcArgs);
-}
+    DF_TM_TAG        tag;     
+    DF_TERM_PTR      args;
+} DF_TM_CONS;
 
-/********************************************/
-/* interface functions for type composition */
-/********************************************/
-//sort
-void DF_TY_MkSort_(DF_TYPE_PTR tp, DF_TY_TABIND kindTableIndex)
+typedef struct                  //abstractions
 {
-    ((DF_TY_SORT*)tp) -> tag = DF_TY_TAG_SORT;
-    ((DF_TY_SORT*)tp) -> kindTableIndex = kindTableIndex;
-}
+    DF_TM_TAG        tag;     
+    MEM_EMBEDLEV     embedLevel; 
+    DF_TERM_PTR      body;
+} DF_TM_LAM;
 
-DF_TYPE_PTR DF_TY_MkSort(DF_TYPE_PTR tp, DF_TY_TABIND kindTableIndex)
+typedef struct                  //applications
 {
-    ((DF_TY_SORT*)tp) -> tag = DF_TY_TAG_SORT;
-    ((DF_TY_SORT*)tp) -> kindTableIndex = kindTableIndex;
-    return (tp + 1);
-}
+    DF_TM_TAG        tag;     
+    MEM_ARITY        arity;
+    DF_TERM_PTR      functor;
+    DF_TERM_PTR      args;
+} DF_TM_APP;
 
-//reference
-void DF_TY_MkRef_(DF_TYPE_PTR tp, DF_TYPE_PTR target) 
+typedef struct                  //suspensions
 {
-    ((DF_TY_REF*)tp) -> tag = DF_TY_TAG_REF;
-    ((DF_TY_REF*)tp) -> target = target;
-}
+    DF_TM_TAG         tag;   
+    MEM_EMBEDLEV      ol;
+    MEM_EMBEDLEV      nl;
+    DF_TERM_PTR       termSkel;
+    DF_ENV_PTR        envList;
+} DF_TM_SUSP;
 
-DF_TYPE_PTR DF_TY_MkRef(DF_TYPE_PTR tp, DF_TYPE_PTR target)
+
+//environment items
+typedef struct                  //dummy environment item
 {
-    ((DF_TY_REF*)tp) -> tag = DF_TY_TAG_REF;
-    ((DF_TY_REF*)tp) -> target = target;
-    return (tp + 1);
-}
+    BOOLEAN           isDummy;
+    MEM_EMBEDLEV      embedLevel;
+    DF_ENV_PTR        rest;
+} DF_ENV_DUMMY;
 
-//free variable
-void DF_TY_MkFreeVar_(DF_TYPE_PTR tp)
+typedef struct                  //pair environment item
 {
-    ((DF_TY_REF*)tp) -> tag = DF_TY_TAG_REF;
-    ((DF_TY_REF*)tp) -> target = tp;
-}
+    BOOLEAN          isDummy;
+    MEM_EMBEDLEV     embedLevel;
+    DF_ENV_PTR       rest;
+    DF_TERM_PTR      term;
+} DF_ENV_PAIR;
 
-DF_TYPE_PTR DF_TY_MkFreeVar(DF_TYPE_PTR tp)
+
+/******************************************************************/
+/*                      Interface functions                       */
+/******************************************************************/
+
+/* DEREFERENCE      */
+DF_TERM_PTR DF_termDeref(DF_TERM_PTR tp)
 {
-    ((DF_TY_REF*)tp) -> tag = DF_TY_TAG_REF;
-    ((DF_TY_REF*)tp) -> target = tp;
-    return (tp + 1);
-}
-
-//arrows
-void DF_TY_MkArrow_(DF_TYPE_PTR tp, DF_TYPE_PTR args)
-{
-    ((DF_TY_ARROW*)tp) -> tag = DF_TY_TAG_ARROW;
-    ((DF_TY_ARROW*)tp) -> args = args;
-}
-
-DF_TYPE_PTR DF_TY_MkArrow(DF_TYPE_PTR tp, DF_TYPE_PTR args)
-{
-    ((DF_TY_ARROW*)tp) -> tag = DF_TY_TAG_ARROW;
-    ((DF_TY_ARROW*)tp) -> args = args;
-    return (tp + 1);
-}
-
-
-//structures
-void DF_TY_MkStr_(DF_TYPE_PTR tp, DF_TYPE_PTR func)
-{
-    ((DF_TY_STR*)tp) -> tag = DF_TY_TAG_STR;
-    ((DF_TY_STR*)tp) -> funcArgs = (DF_TY_FUNC*)func;
-}
-
-DF_TYPE_PTR DF_TY_MkStr(DF_TYPE_PTR tp, DF_TYPE_PTR func)
-{
-    ((DF_TY_STR*)tp) -> tag = DF_TY_TAG_STR;
-    ((DF_TY_STR*)tp) -> funcArgs = (DF_TY_FUNC*)func;
-    return (tp + 1);
-}
-
-
-//functor can only be created on the heap
-DF_TYPE_PTR DF_TY_MkFunc(DF_TYPE_PTR func, DF_TY_TABIND index, 
-                         DF_TY_ARITY arity)
-{
-    ((DF_TY_FUNC*)func) -> arity = arity;
-    ((DF_TY_FUNC*)func) -> kindTableIndex = index;
-    return (DF_TYPE_PTR)(func + 1);
-}
-
-/********************/ 
-/* type dereference */
-/********************/
-DF_TYPE_PTR DF_TY_Deref(DF_TYPE_PTR tp)
-{
-    while ((DF_TY_IsRef(tp)) && (tp != ((DF_TY_REF*)tp) -> target)) 
-        tp = ((DF_TY_REF*)tp) -> target;
+    while (DF_isRef(tp)) tp = ((DF_TM_REF*)tp)->target;
     return tp;
 }
 
-  
-/****************************************************************************
- *                                                                          *
- *                         TERM REPRESENTATION                              *
- *                                                                          *
- ****************************************************************************/
-typedef struct                  //existential variable
-{
-    DF_TAG           tag;      // DF_TM_TAG_VAR
-    DF_UNIVIND       univIndex;
-} DF_VAR;
+/* TERM RECOGNITION */
+//note ref is neither atomic nor complex
+BOOLEAN DF_isAtomic(DF_TERM_PTR tp)  { return (tp -> tag < DF_TM_TAG_REF);    }
+BOOLEAN DF_isNAtomic(DF_TERM_PTR tp) { return (tp -> tag > DF_TM_TAG_REF);    }
+BOOLEAN DF_isFV(DF_TERM_PTR tp)      { return (tp -> tag == DF_TM_TAG_VAR);   }
+BOOLEAN DF_isConst(DF_TERM_PTR tp)   { return (tp -> tag == DF_TM_TAG_CONST); }
+/*assume the tp is known to be a constant */
+BOOLEAN DF_isTConst(DF_TERM_PTR tp)  { return ((DF_TM_CONST*)tp) -> withType; }
+BOOLEAN DF_isInt(DF_TERM_PTR tp)     { return (tp -> tag == DF_TM_TAG_INT);   }
+BOOLEAN DF_isFloat(DF_TERM_PTR tp)   { return (tp -> tag == DF_TM_TAG_FLOAT); }
+BOOLEAN DF_isNil(DF_TERM_PTR tp)     { return (tp -> tag == DF_TM_TAG_NIL);   }
+BOOLEAN DF_isStr(DF_TERM_PTR tp)     { return (tp -> tag == DF_TM_TAG_STR);   }
+BOOLEAN DF_isBV(DF_TERM_PTR tp)      { return (tp -> tag == DF_TM_TAG_BVAR);  }
+BOOLEAN DF_isStream(DF_TERM_PTR tp)  { return (tp -> tag == DF_TM_TAG_STREAM);}
+BOOLEAN DF_isRef(DF_TERM_PTR tp)     { return (tp -> tag == DF_TM_TAG_REF);   }
+BOOLEAN DF_isCons(DF_TERM_PTR tp)    { return (tp -> tag == DF_TM_TAG_CONS);  }
+BOOLEAN DF_isLam(DF_TERM_PTR tp)     { return (tp -> tag == DF_TM_TAG_LAM);   }
+BOOLEAN DF_isApp(DF_TERM_PTR tp)     { return (tp-> tag == DF_TM_TAG_APP);    }
+BOOLEAN DF_isSusp(DF_TERM_PTR tp)    { return (tp-> tag == DF_TM_TAG_SUSP);   }
+BOOLEAN DF_isEmpEnv(DF_ENV_PTR ep)   { return (ep == DF_EMPTYENV);            }
+BOOLEAN DF_isDummyEnv(DF_ENV_PTR ep) { return ep -> isDummy;                  }
 
 
-typedef struct              //de Bruijn index 
-{  
-    DF_TAG        tag;      // DF_TM_TAG_BV
-    DF_EMBEDLEV   index;
-} DF_BV;
-
-/*Note that the first three common fields of un-typed and typed constant have
-  to be kept in the same places. This relies on the common struct alignment
-  rules of C. */
-typedef struct              //(un-typed) constant
-{
-    DF_TAG        tag;      // DF_TM_TAG_CONST
-    DF_UNIVIND    univIndex;
-    DF_TABIND     symbolTableIndex;
-} DF_CONST;
-
-typedef struct              // typed constant: TERM_DF_TAG_CONST
-{
-    DF_TAG        tag;      // DF_TM_TAG_CONST
-    DF_UNIVIND    univIndex;
-    DF_TABIND     symbolTableIndex;
-    DF_TYPE       *typeEnv;
-} DF_TCONST;
-
-
-typedef struct             // integers
-{
-    DF_TAG        tag;     // DF_TM_TAG_INT
-    long int      value;
-} DF_INT;
-
-
-typedef struct             // floats
-{
-    DF_TAG        tag;     // DF_TM_TAG_FLOAT
-    float         value;
-} DF_FLOAT;
-
-
-typedef struct             // string
-{
-    DF_TAG             tag;     // DF_TM_TAG_STR
-    unsigned short int length; 
-    char               *value;
-} DF_STR;
-
-
-typedef struct             // stream
-{
-    DF_TAG        tag;     // DF_TM_TAG_STREAM
-    DF_TABIND     index;
-} DF_STREAM;
-
-typedef struct             // empty list 
-{
-    DF_TAG        tag;     // DF_TM_TAG_NIL
-} DF_NIL;
-
-
-typedef struct             // reference  
-{
-    DF_TAG        tag;     // DF_TM_TAG_REF
-    DF_TERM_PTR   target;
-} DF_REF;
-
-typedef struct             // list constructor
-{
-    DF_TAG        tag;     // DF_TM_TAG_CONS
-    DF_TERM_PTR   args;
-} DF_CONS;
-
-
-typedef struct             // abstractions
-{
-    DF_TAG        tag;     // DF_TM_TAG_LAM
-    DF_EMBEDLEV   embedLevel; 
-    DF_TERM_PTR   body;
-} DF_LAM;
-
-typedef struct             // applications
-{
-    DF_TAG        tag;     // DF_TM_TAG_APP
-    DF_ARITY      arity;
-    void*         dummy;   // place holder enforcing an atomic term size before
-                           // functor (protect functor in destructive change)
-    DF_TERM       functor;
-    DF_TERM_PTR   args;
-} DF_APP;
-
-
-typedef struct            //suspensions 
-{
-    DF_TAG         tag;   // DF_TM_TAG_SUSP
-    DF_EMBEDLEV    ol;
-    DF_EMBEDLEV    nl;
-    DF_TERM_PTR    termSkel;
-    DF_ENV_PTR     envList;
-} DF_SUSP;
-
-
-/* The sizes in words of various terms (may be redudant) */
-
-/* atomic terms and cons: their sizes are enforced to be two words */
-/*
-#define  DF_ATOMSIZE   2
-
-#define  DF_VARSIZE    2
-#define  DF_BVSIZE     2
-#define  DF_CONSTSIZE  2
-#define  DF_INTSIZE    2
-#define  DF_FLOATSIZE  2
-#define  DF_STRSIZE    2
-#define  DF_STREAMSIZE 2
-#define  DF_NILSIZE    2
-#define  DF_REFSIZE    2
-
-#define  DF_CONSSIZE   2
-*/
-/* The sizes of TCONST and SUSP are different on 32- and 64-bits machines */
-/*
-#define  DF_TCONSTSIZE (int)ceil(sizeof(DF_TCONST)/WORDSIZE)
-#define  DF_SUSPSIZE   (int)ceil(sizeof(DF_SUSP)/WORDSIZE)
-#define  DF_APPSIZE    4
-#define  DF_LAMSIZE    2
-*/
-/* The sizes of enviroment items */
-/*
-#define  DF_ENVSIZE        3
-#define  DF_DUMMYENVSIZE   2
-*/
-
-/*Recognizers for terms */
-BOOLEAN DF_IsAtomic(DF_TERM_PTR tp) /* whether a term is atomic: ref is not
-                                       included in atomic terms nor non-atomic
-                                       ones */
-{
-    return (tp -> tag < DF_TM_TAG_REF);
-}
-
-BOOLEAN DF_IsNAtomic(DF_TERM_PTR tp)
-{
-    return (tp -> tag > DF_TM_TAG_REF);
-}
-
-
-BOOLEAN DF_IsFV(DF_TERM_PTR tp)   //is var?
-{
-    return (tp -> tag == DF_TM_TAG_VAR);
-}
-
-BOOLEAN DF_IsConst(DF_TERM_PTR tp) //is constant (typed/untyped)?
-{
-    return (tp -> tag == DF_TM_TAG_CONST);
-}
-
-BOOLEAN DF_IsInt(DF_TERM_PTR tp)   //is integer?
-{
-    return (tp -> tag == DF_TM_TAG_INT);
-}
-
-BOOLEAN DF_IsFloat(DF_TERM_PTR tp) //is float?
-{
-    return (tp -> tag == DF_TM_TAG_FLOAT);
-}
-
-BOOLEAN DF_IsNil(DF_TERM_PTR tp)   //is empty list?
-{
-    return (tp -> tag == DF_TM_TAG_NIL);
-}
-
-BOOLEAN DF_IsStr(DF_TERM_PTR tp)   //is string?
-{
-    return (tp -> tag == DF_TM_TAG_STR);
-}
-
-BOOLEAN DF_IsBV(DF_TERM_PTR tp)  //is lambda bound variable?
-{
-    return (tp -> tag == DF_TM_TAG_BVAR);
-}
-
-
-BOOLEAN DF_IsStream(DF_TERM_PTR tp) //is stream?
-{
-    return (tp -> tag == DF_TM_TAG_STREAM);
-}
-
-BOOLEAN DF_IsRef(DF_TERM_PTR tp)   //is reference?
-{
-    return (tp -> tag == DF_TM_TAG_REF);
-}
-
-BOOLEAN DF_IsCons(DF_TERM_PTR tp)  //is list cons?
-{
-    return (tp -> tag == DF_TM_TAG_CONS);
-}
-
-BOOLEAN DF_IsLam(DF_TERM_PTR tp)   //is abstraction?
-{
-    return (tp -> tag == DF_TM_TAG_LAM);
-}
-
-BOOLEAN DF_IsApp(DF_TERM_PTR tp)   //is application?
-{
-    return (tp-> tag == DF_TM_TAG_APP);
-}
-
-BOOLEAN DF_isSusp(DF_TERM_PTR tp)  //is suspension?
-{
-    return (tp-> tag == DF_TM_TAG_SUSP);
-}
-
-//environment item (list)
-
-BOOLEAN DF_EmptyEnv(DF_ENV_PTR ep) //is empty environment list?
-{
-    return (ep == DF_EMPTYENV);
-}
-
-BOOLEAN DF_IsDummy(DF_ENV_PTR ep) /*for both ENV and DUMMYENV: rely on struct 
-                                    alignment rules */
-{
-    return ep -> isDummy;
-}
-
-
-/* Term decomposition */
-
-//generic terms
-DF_TAG DF_Tag(DF_TERM_PTR tp) // exacting tag 
+/* TERM DECOMPOSITION */
+DF_TM_TAG DF_tag(DF_TERM_PTR tp)              // tag 
 {
     return tp -> tag;
 }
-
-
-//variable and constant (typed/untyped)
-DF_UNIVIND DF_UnivIndex(DF_TERM_PTR tp)  /*extracting universe index
-                                           for VAR, CONST and TCONST: 
-                                           rely on struct alignment rules */
+//unbound variables
+MEM_UNIVIND DF_FVUnivCount(DF_TERM_PTR tp)    //universe count
 {
-    return ((DF_VAR*)tp)->univIndex;
+    return ((DF_TM_VAR*)tp)->univCount;
 }
-
-
-//constant (typed/untyped)
-DF_UNIVIND DF_ConstUnivIndex(DF_TERM_PTR tp) /*extracting universe index
-                                               for both CONST and TCONST: 
-                                               rely on struct alignment rules */
+//constant (w/oc type associations)
+MEM_UNIVIND DF_constUnivCount(DF_TERM_PTR tp) //universe count
 {
-    return ((DF_CONST*)tp)->univIndex;
+    return ((DF_TM_CONST*)tp)->data.nameAndUC.univCount;
 }
-
-DF_TABIND DF_ConstTabIndex(DF_TERM_PTR tp) /*extracting symbol table index 
-                                             for both CONST and TCONST: rely on
-                                             struct alignment rules   */
+MEM_CSTTABIND DF_constTabIndex(DF_TERM_PTR tp)
 {
-    return ((DF_CONST*)tp)->symbolTableIndex;
+    return ((DF_TM_CONST*)tp)->data.nameAndUC.symTabIndex;
 }
-
-
-//typed constants
-DF_TYPE* DF_TConstType(DF_TERM_PTR tp) //extracting the address of type env
+//constants with type associations
+DF_TYPE_PTR DF_TConstType(DF_TERM_PTR tp)     //type env
 {
-    return ((DF_TCONST*)tp)->typeEnv;
+    return ((DF_TM_TCONST*)tp)->typeEnv;
 }
-
-
 //integer
-long DF_IntValue(DF_TERM_PTR tp)       //extracting integer value
+long DF_intValue(DF_TERM_PTR tp)              //integer value
 {
-    return ((DF_INT*)tp)->value;
+    return ((DF_TM_INT*)tp)->value;
 }
-long DF_IntABS(DF_TERM_PTR tp)         //absolute value
+long DF_intABS(DF_TERM_PTR tp)                //absolute value
 {
-    return labs(((DF_INT*)tp)->value);
+    return labs(((DF_TM_INT*)tp)->value);
 }
-long DF_IntNEG(DF_TERM_PTR tp)      //negation
+long DF_intNEG(DF_TERM_PTR tp)                //negation
 {
-    return -(((DF_INT*)tp)->value);
+    return -(((DF_TM_INT*)tp)->value);
 }
-
 //float
-float DF_FloatValue(DF_TERM_PTR tp)    //extracting float value
+float DF_floatValue(DF_TERM_PTR tp)           //float value
 {
-    return ((DF_FLOAT*)tp)->value;
+    return ((DF_TM_FLOAT*)tp)->value;
 }
-float DF_FloatABS(DF_TERM_PTR tp)      //absolute value
+float DF_floatABS(DF_TERM_PTR tp)             //absolute value
 {
-    return fabs(((DF_FLOAT*)tp)->value);
+    return fabs(((DF_TM_FLOAT*)tp)->value);
 }
-float DF_FloatNEG(DF_TERM_PTR tp)      //negation
+float DF_floatNEG(DF_TERM_PTR tp)             //negation
 {
-    return -(((DF_FLOAT*)tp)->value);
+    return -(((DF_TM_FLOAT*)tp)->value);
 }
-
 //string
-char* DF_StrValue(DF_TERM_PTR tp)      //extracting string value
+char* DF_strValue(DF_TERM_PTR tp)             //string value
 {
-    return ((DF_STR*)tp)->value;
+    return ((DF_TM_STR*)tp)->charList;
 }
-int   DF_StrLength(DF_TERM_PTR tp)     //extracting string length
+int   DF_StrLength(DF_TERM_PTR tp)            //string length
 {
-    return (int)(((DF_STR*)tp)->length);
+    return strlen(((DF_TM_STR*)tp)->charList);
 }
-
-    
 //stream
-DF_TABIND DF_StreamTabIndex(DF_TERM_PTR tp)  //extracting stream index
+MEM_STREAMTABIND DF_streamTabIndex(DF_TERM_PTR tp)  //stream table index
 {
-    return ((DF_STREAM*)tp)->index;
+    return ((DF_TM_STREAM*)tp)->index;
 }
-
-
-//lambda bound variable 
-DF_EMBEDLEV DF_BVIndex(DF_TERM_PTR tp)      //extracting de Bruijn index
+//de Bruijn index
+MEM_EMBEDLEV DF_BVIndex(DF_TERM_PTR tp)       //de Bruijn index
 {
-    return ((DF_BV*)tp)->index;
+    return ((DF_TM_BV*)tp)->index;
 }
-
-
 //reference
-DF_TERM_PTR DF_RefTarget(DF_TERM_PTR tp)    //extracting the address of target
+DF_TERM_PTR DF_refTarget(DF_TERM_PTR tp)      //target
 { 
-    return ((DF_REF*)tp)->target;
+    return ((DF_TM_REF*)tp)->target;
 }
-
 //list cons
-DF_TERM_PTR DF_ConsArgs(DF_TERM_PTR tp)    //extracting the address of cons args
+DF_TERM_PTR DF_consArgs(DF_TERM_PTR tp)       //arg vector
 {
-    return ((DF_CONS*)tp)->args;
+    return ((DF_TM_CONS*)tp)->args;
 }
-
-
 //abstraction
-DF_EMBEDLEV DF_LamEmbedLev(DF_TERM_PTR tp)  //extracting abstraction level
+MEM_EMBEDLEV DF_lamEmbedLev(DF_TERM_PTR tp)   //embedding level
 {
-    return ((DF_LAM*)tp)->embedLevel;
+    return ((DF_TM_LAM*)tp)->embedLevel;
 }
-
-DF_TERM_PTR DF_LamBody(DF_TERM_PTR tp)   //extracting addr of abstraction body
+DF_TERM_PTR DF_lamBody(DF_TERM_PTR tp)        //abstraction body
 {
-    return ((DF_LAM*)tp)->body;
+    return ((DF_TM_LAM*)tp)->body;
 }
-
 //application
-DF_ARITY DF_AppArity(DF_TERM_PTR tp)    //extracting arity
+MEM_ARITY DF_appArity(DF_TERM_PTR tp)         //arity
 {
-    return ((DF_APP*)tp)->arity;
+    return ((DF_TM_APP*)tp)->arity;
 }
-
-DF_TERM_PTR DF_AppFunc(DF_TERM_PTR tp) //extracting addr of functor
+DF_TERM_PTR DF_appFunc(DF_TERM_PTR tp)        //functor
 {
-    return &(((DF_APP*)tp)->functor);
+    return ((DF_TM_APP*)tp)->functor;
 }
-
-DF_TERM DF_AppFuncTerm(DF_TERM_PTR tp)       //extracting the functor
+DF_TERM_PTR DF_appArgs(DF_TERM_PTR tp)        //arg vector
 {
-    return ((DF_APP*)tp)->functor;
+    return ((DF_TM_APP*)tp)->args;
 }
-
-
-DF_TERM_PTR DF_AppArgs(DF_TERM_PTR tp)   //extracting addr of arg vector
-{
-    return ((DF_APP*)tp)->args;
-}
-
-
 //suspension
-DF_EMBEDLEV DF_SuspOL(DF_TERM_PTR tp)    //extracting ol
+MEM_EMBEDLEV DF_suspOL(DF_TERM_PTR tp)       //ol
 {
-    return ((DF_SUSP*)tp)->ol;
+    return ((DF_TM_SUSP*)tp)->ol;
+}
+MEM_EMBEDLEV DF_suspNL(DF_TERM_PTR tp)       //nl
+{
+    return ((DF_TM_SUSP*)tp)->nl;
+}
+DF_TERM_PTR DF_suspTermSkel(DF_TERM_PTR tp)  //term skeleton
+{
+    return ((DF_TM_SUSP*)tp)->termSkel;
+}
+DF_ENV_PTR DF_suspEnv(DF_TERM_PTR tp)        //environment list
+{
+    return ((DF_TM_SUSP*)tp)->envList;
 }
 
-DF_EMBEDLEV DF_SuspNL(DF_TERM_PTR tp)    //extracting nl
-{
-    return ((DF_SUSP*)tp)->nl;
-}
-
-DF_TERM_PTR DF_SuspTermSkel(DF_TERM_PTR tp)  //extracting addr of term skel
-{
-    return ((DF_SUSP*)tp)->termSkel;
-}
-
-DF_ENV_PTR DF_SuspEnv(DF_TERM_PTR tp)  //extracting addr of environment list
-{
-    return ((DF_SUSP*)tp)->envList;
-}
-
-
-//environment item (dummy/pair) 
-DF_EMBEDLEV DF_EnvIndex(DF_ENV_PTR ep)  /*extracting l in @l or (t,l)
-                                        for both ENV and DUMMYENV: rely on 
-                                        struct alignment rules */
-{
-    return ep -> embedLevel;
-}
-
-//pair environment item
-DF_TERM_PTR DF_EnvTerm(DF_ENV_PTR ep) //extracting t in (t,l)
-{
-    return ep -> term;
-}
-
-//environment list
-DF_ENV_PTR DF_EnvListRest(DF_ENV_PTR ep) /* extracting the tail of env list
-                                            for both ENV and DUMMYENV: 
-                                            rely on struct alignment rules */
+//environment item (dummy/pair)
+DF_ENV_PTR DF_envListRest(DF_ENV_PTR ep)     //next env item
 {
     return ep->rest;
 }
-
-DF_ENV_PTR DF_EnvNth(DF_ENV_PTR ep, int n) //extracting the nth item 
+DF_ENV_PTR DF_envListNth(DF_ENV_PTR ep, int n) //nth item 
 {
     int i; 
     for (i=n; (i!=1); i--) ep = ep -> rest;
     return ep;
 }
-
-
-/* Term Construction */
-
-//copy atomic terms
-void DF_CopyAtom_(DF_TERM_PTR from, DF_TERM_PTR to)
+MEM_EMBEDLEV DF_envIndex(DF_ENV_PTR ep)      //l in @l or (t,l) 
 {
-    *to = *from;
+    return ep -> embedLevel;
 }
-
-DF_TERM_PTR DF_CopyAtom(DF_TERM_PTR from, DF_TERM_PTR to)
-{
-    *to = *from;
-    return (to+1);
-}
-
-
-//variable
-void DF_MkVar_(DF_TERM_PTR tp, DF_UNIVIND univIndex)
-{
-    ((DF_VAR*)tp) -> tag = DF_TM_TAG_VAR;    
-    ((DF_VAR*)tp) -> univIndex = univIndex;
-}
-
-
-DF_TERM_PTR DF_MkVar(DF_TERM_PTR tp, DF_UNIVIND univIndex)
-{
-    ((DF_VAR*)tp) -> tag = DF_TM_TAG_VAR;
-    ((DF_VAR*)tp) -> univIndex = univIndex;
-    return tp + 1;
-}
-
-//lambda bound variable
-void DF_MkBV_(DF_TERM_PTR tp, DF_EMBEDLEV index)
-{
-    ((DF_BV*)tp) -> tag = DF_TM_TAG_BVAR;
-    ((DF_BV*)tp) -> index = index;
-}
-
-DF_TERM_PTR DF_MkBV(DF_TERM_PTR tp, DF_EMBEDLEV index)
-{
-    ((DF_BV*)tp) -> tag = DF_TM_TAG_BVAR;
-    ((DF_BV*)tp) -> index = index;
-    return tp + 1;
-}
-
-//untyped constant
-void DF_MkConst_(DF_TERM_PTR tp, DF_UNIVIND univIndex, 
-                 DF_TABIND symbolTableIndex)
-{
-    ((DF_CONST*)tp) -> tag = DF_TM_TAG_CONST;
-    ((DF_CONST*)tp) -> univIndex = univIndex;
-    ((DF_CONST*)tp) -> symbolTableIndex = symbolTableIndex;
-}
-
-DF_TERM_PTR DF_MkConst(DF_TERM_PTR tp, DF_UNIVIND univIndex, 
-                       DF_TABIND symbolTableIndex)
-{
-    ((DF_CONST*)tp) -> tag = DF_TM_TAG_CONST;
-    ((DF_CONST*)tp) -> univIndex = univIndex;
-    ((DF_CONST*)tp) -> symbolTableIndex = symbolTableIndex;
-    return tp + 1;
-}
-
-//typed constant
-void DF_MkTConst_(DF_TERM_PTR tp, DF_UNIVIND univIndex, 
-                  DF_TABIND symbolTableIndex, DF_TYPE* typeEnv)
-{
-    ((DF_TCONST*)tp) -> tag = DF_TM_TAG_CONST;
-    ((DF_TCONST*)tp) -> univIndex = univIndex;
-    ((DF_TCONST*)tp) -> symbolTableIndex = symbolTableIndex;
-    ((DF_TCONST*)tp) -> typeEnv = typeEnv;
-}
-
-DF_TERM_PTR DF_MkTConst(DF_TERM_PTR tp, DF_UNIVIND univIndex, 
-                   DF_TABIND symbolTableIndex, DF_TYPE* typeEnv)
-{
-    ((DF_TCONST*)tp) -> tag = DF_TM_TAG_CONST;
-    ((DF_TCONST*)tp) -> univIndex = univIndex;
-    ((DF_TCONST*)tp) -> symbolTableIndex = symbolTableIndex;
-    ((DF_TCONST*)tp) -> typeEnv = typeEnv;
-    
-    tp = (DF_TERM_PTR)(((DF_TCONST*)tp) + 1);
-    return tp;
-}
-
-//integer
-void DF_MkInt_(DF_TERM_PTR tp, long value)
-{
-    ((DF_INT*)tp) -> tag = DF_TM_TAG_INT;
-    ((DF_INT*)tp) -> value = value;
-}
-
-DF_TERM_PTR DF_MkInt(DF_TERM_PTR tp, long value)
-{
-    ((DF_INT*)tp) -> tag = DF_TM_TAG_INT;
-    ((DF_INT*)tp) -> value = value;
-    return tp + 1;
-}
-
-
-//float
-void DF_MkFloat_(DF_TERM_PTR tp, float value)
-{
-    ((DF_FLOAT*)tp) -> tag = DF_TM_TAG_FLOAT;
-    ((DF_FLOAT*)tp) -> value = value;
-}
-
-DF_TERM_PTR DF_MkFloat(DF_TERM_PTR tp, float value)
-{
-    ((DF_FLOAT*)tp) -> tag = DF_TM_TAG_FLOAT;
-    ((DF_FLOAT*)tp) -> value = value;
-    return tp + 1;
-}
-
-//string
-void DF_MkStr_(DF_TERM_PTR tp, char* value)
-{
-    ((DF_STR*)tp) -> tag = DF_TM_TAG_STR;
-    ((DF_STR*)tp) -> length = strlen(value);
-    ((DF_STR*)tp) -> value = value;
-}
-
-DF_TERM_PTR DF_MkStr(DF_TERM_PTR tp, char* value)
-{
-    ((DF_STR*)tp) -> tag = DF_TM_TAG_STR;
-    ((DF_STR*)tp) -> length = strlen(value);
-    ((DF_STR*)tp) -> value = value;
-    return tp + 1;
-}
-                
-//stream
-void DF_MkStream_(DF_TERM_PTR tp, DF_TABIND index)
-{
-    ((DF_STREAM*)tp) -> tag = DF_TM_TAG_STREAM;
-    ((DF_STREAM*)tp) -> index = index;
-}
-
-DF_TERM_PTR DF_MkStream(DF_TERM_PTR tp, DF_TABIND index)
-{
-    ((DF_STREAM*)tp) -> tag = DF_TM_TAG_STREAM;
-    ((DF_STREAM*)tp) -> index = index;
-    return tp + 1;
-}
-
-
-//empty list
-void DF_MkNil_(DF_TERM_PTR tp)
-{
-    ((DF_NIL*)tp) -> tag = DF_TM_TAG_NIL;
-}
-
-DF_TERM_PTR DF_MkNil(DF_TERM_PTR tp)
-{
-    ((DF_NIL*)tp) -> tag = DF_TM_TAG_NIL;
-    return tp + 1;
-}
-
-
-//reference
-void DF_MkRef_(DF_TERM_PTR tp, DF_TERM_PTR target)
-{
-    ((DF_REF*)tp) -> tag = DF_TM_TAG_REF;
-    ((DF_REF*)tp) -> target = target;
-}
-
-DF_TERM_PTR DF_MkRef(DF_TERM_PTR tp, DF_TERM_PTR target)
-{
-    ((DF_REF*)tp) -> tag = DF_TM_TAG_REF;
-    ((DF_REF*)tp) -> target = target;
-    return tp + 1;
-}
-
-//list cons
-void DF_MkCons_(DF_TERM_PTR tp, DF_TERM_PTR args)
-{
-    ((DF_CONS*)tp) -> tag = DF_TM_TAG_CONS;
-    ((DF_CONS*)tp) -> args = args;
-}
-
-DF_TERM_PTR DF_MkCons(DF_TERM_PTR tp, DF_TERM_PTR args)
-{
-    ((DF_CONS*)tp) -> tag = DF_TM_TAG_CONS;
-    ((DF_CONS*)tp) -> args = args;
-    return tp + 1;
-}
-
-//abstraction
-void DF_MkLam_(DF_TERM_PTR tp, DF_EMBEDLEV embedLevel, DF_TERM_PTR body)
-{
-    ((DF_LAM*)tp) -> tag = DF_TM_TAG_LAM;
-    ((DF_LAM*)tp) -> embedLevel = embedLevel;
-    ((DF_LAM*)tp) -> body = body;
-}
-
-DF_TERM_PTR DF_MkLam(DF_TERM_PTR tp, DF_EMBEDLEV embedLevel, DF_TERM_PTR body)
-{
-    ((DF_LAM*)tp) -> tag = DF_TM_TAG_LAM;
-    ((DF_LAM*)tp) -> embedLevel = embedLevel;
-    ((DF_LAM*)tp) -> body = body;
-    return tp + 1;
-}
-
-//application
-void DF_MkApp_(DF_TERM_PTR tp, DF_ARITY arity, DF_TERM_PTR func, 
-               DF_TERM_PTR args)
-{
-    ((DF_APP*)tp) -> tag = DF_TM_TAG_APP;
-    ((DF_APP*)tp) -> arity = arity;
-    ((DF_APP*)tp) -> functor = *func;
-    
-    ((DF_APP*)tp) -> args = args;
-}
-
-DF_TERM_PTR DF_MkApp(DF_TERM_PTR tp, DF_ARITY arity, DF_TERM_PTR func, 
-                     DF_TERM_PTR args)
-{
-    ((DF_APP*)tp) -> tag = DF_TM_TAG_APP;
-    ((DF_APP*)tp) -> arity = arity;
-    ((DF_APP*)tp) -> functor = *func;    
-    ((DF_APP*)tp) -> args = args;
-    
-    tp = (DF_TERM_PTR)(((DF_APP*)tp) + 1);
-    return tp;
-}
-
-
-//suspension
-void DF_MkSusp_(DF_TERM_PTR tp, DF_EMBEDLEV ol, DF_EMBEDLEV nl, 
-                DF_TERM_PTR termSkel, DF_ENV_PTR envList)
-{
-    ((DF_SUSP*)tp) -> tag = DF_TM_TAG_SUSP;
-    ((DF_SUSP*)tp) -> ol = ol;
-    ((DF_SUSP*)tp) -> nl = nl;
-    ((DF_SUSP*)tp) -> termSkel = termSkel;
-    ((DF_SUSP*)tp) -> envList = envList;
-}
-
-DF_TERM_PTR DF_MkSusp(DF_TERM_PTR tp, DF_EMBEDLEV ol, DF_EMBEDLEV nl, 
-                      DF_TERM_PTR termSkel, DF_ENV_PTR envList)
-{
-    ((DF_SUSP*)tp) -> tag = DF_TM_TAG_SUSP;
-    ((DF_SUSP*)tp) -> ol = ol;
-    ((DF_SUSP*)tp) -> nl = nl;
-    ((DF_SUSP*)tp) -> termSkel = termSkel;
-    ((DF_SUSP*)tp) -> envList = envList;
-    
-    tp = (DF_TERM_PTR)(((DF_SUSP*)tp) + 1);
-    return tp;
-}
-
 //pair environment item
-void DF_MkEnv_(DF_ENV_PTR ep, DF_ENV_PTR rest, DF_EMBEDLEV embedLevel,
-               DF_TERM_PTR term)
+DF_TERM_PTR DF_envPairTerm(DF_ENV_PTR ep)    //t in (t,l)
 {
-    ep -> rest = rest;
-    ep -> isDummy = 0;
-    ep -> embedLevel = embedLevel;
-    ep -> term = term;
+    return ((DF_ENV_PAIR*)ep) -> term;
 }
 
-DF_ENV_PTR DF_MkEnv(DF_ENV_PTR ep, DF_ENV_PTR rest, DF_EMBEDLEV embedLevel,
-                    DF_TERM_PTR term)
+/* TERM CONSTRUCTION */
+void DF_copyAtomic(MEM_PTR sou, MEM_PTR des)                  //copy atomic 
 {
-    ep -> rest = rest;
-    ep -> isDummy = 0;
-    ep -> embedLevel = embedLevel;
-    ep -> term = term;
-    return ep + 1;
+    *((DF_TERM_PTR)des) = *((DF_TERM_PTR)sou);
+}
+void DF_mkVar(MEM_PTR loc, MEM_UNIVIND uc)                    //unbound variable
+{
+    ((DF_TM_VAR*)loc) -> tag = DF_TM_TAG_VAR;
+    ((DF_TM_VAR*)loc) -> univCount = uc;
+}
+void DF_mkBV(MEM_PTR loc, MEM_EMBEDLEV ind)                   //de Bruijn index
+{
+    ((DF_TM_BV*)loc) -> tag = DF_TM_TAG_BVAR;
+    ((DF_TM_BV*)loc) -> index = ind;
+}
+void DF_mkConst(MEM_PTR loc, MEM_UNIVIND uc, MEM_CSTTABIND ind) //const 
+{
+    ((DF_TM_CONST*)loc) -> tag = DF_TM_TAG_CONST;
+    ((DF_TM_CONST*)loc) -> withType = FALSE;
+    (((DF_TM_CONST*)loc) -> data).nameAndUC.univCount = uc;
+    (((DF_TM_CONST*)loc) -> data).nameAndUC.symTabIndex = ind;
+}
+void DF_mkTConst(MEM_PTR loc, MEM_UNIVIND uc, MEM_CSTTABIND ind, 
+                 DF_TYPE_PTR typeEnv)        //const with type association
+{
+    ((DF_TM_TCONST*)loc) -> tag = DF_TM_TAG_CONST;
+    ((DF_TM_TCONST*)loc) -> withType = TRUE;
+    (((DF_TM_TCONST*)loc) -> data).nameAndUC.univCount = uc;
+    (((DF_TM_TCONST*)loc) -> data).nameAndUC.symTabIndex = ind;
+    ((DF_TM_TCONST*)loc) -> typeEnv = typeEnv;
+}
+void DF_mkInt(MEM_PTR loc, long value)                        //int
+{
+    ((DF_TM_INT*)loc) -> tag = DF_TM_TAG_INT;
+    ((DF_TM_INT*)loc) -> value = value;
+}
+void DF_mkFloat(MEM_PTR loc, float value)                     //float
+{
+    ((DF_TM_FLOAT*)loc) -> tag = DF_TM_TAG_FLOAT;
+    ((DF_TM_FLOAT*)loc) -> value = value;
+}
+void DF_mkStr(MEM_PTR loc, char *value)                       //string
+{
+    ((DF_TM_STR*)loc) -> tag = DF_TM_TAG_STR;
+    ((DF_TM_STR*)loc) -> charList = value;
+}
+void DF_mkStream(MEM_PTR loc, MEM_STREAMTABIND ind)           //stream
+{
+    ((DF_TM_STREAM*)loc) -> tag = DF_TM_TAG_STREAM;
+    ((DF_TM_STREAM*)loc) -> index = ind;
+}
+void DF_mkNil(MEM_PTR loc)                                    //nil
+{
+    ((DF_TM_NIL*)loc) -> tag = DF_TM_TAG_NIL;
+}
+void DF_mkRef(MEM_PTR loc, DF_TERM_PTR target)                //reference
+{
+    ((DF_TM_REF*)loc) -> tag = DF_TM_TAG_REF;
+    ((DF_TM_REF*)loc) -> target = target;
+}
+void DF_mkCons(MEM_PTR loc, DF_TERM_PTR args)                 //cons
+{
+    ((DF_TM_CONS*)loc) -> tag = DF_TM_TAG_CONS;
+    ((DF_TM_CONS*)loc) -> args = args;
+}
+void DF_mkLam(MEM_PTR loc, MEM_EMBEDLEV n, DF_TERM_PTR body)  //abstraction
+{
+    ((DF_TM_LAM*)loc) -> tag = DF_TM_TAG_LAM;
+    ((DF_TM_LAM*)loc) -> embedLevel = n;
+    ((DF_TM_LAM*)loc) -> body = body;
+}
+void DF_mkApp(MEM_PTR loc, MEM_ARITY n, DF_TERM_PTR func, DF_TERM_PTR args) 
+{                                                             //application
+    ((DF_TM_APP*)loc) -> tag = DF_TM_TAG_APP;
+    ((DF_TM_APP*)loc) -> arity = n;
+    ((DF_TM_APP*)loc) -> functor = func;
+    ((DF_TM_APP*)loc) -> args = args;
+}
+void DF_mkSusp(MEM_PTR loc, MEM_EMBEDLEV ol, MEM_EMBEDLEV nl, DF_TERM_PTR tp,
+               DF_ENV_PTR env)                                //suspension
+{
+    ((DF_TM_SUSP*)loc) -> tag = DF_TM_TAG_SUSP;
+    ((DF_TM_SUSP*)loc) -> ol = ol;
+    ((DF_TM_SUSP*)loc) -> nl = nl;
+    ((DF_TM_SUSP*)loc) -> termSkel = tp;
+    ((DF_TM_SUSP*)loc) -> envList = env;
 }
 
-//dummy environment item
-void DF_MkDummyEnv_(DF_ENV_PTR ep, DF_ENV_PTR rest, DF_EMBEDLEV embedLevel)
+void DF_mkDummyEnv(MEM_PTR loc, MEM_EMBEDLEV l, DF_ENV_PTR rest) //@l env item
 {
-    ((DF_DUMMYENV*)ep) -> rest = rest;
-    ((DF_DUMMYENV*)ep) -> isDummy = 1;
-    ((DF_DUMMYENV*)ep) -> embedLevel = embedLevel;
+    ((DF_ENV_DUMMY*)loc) -> isDummy = TRUE;
+    ((DF_ENV_DUMMY*)loc) -> embedLevel = l;
+    ((DF_ENV_DUMMY*)loc) -> rest = rest;
 }
-
-DF_ENV_PTR DF_MkDummyEnv(DF_ENV_PTR ep, DF_ENV_PTR rest, 
-                         DF_EMBEDLEV embedLevel)
-{
-    ((DF_DUMMYENV*)ep) -> rest = rest;
-    ((DF_DUMMYENV*)ep) -> isDummy = 1;
-    ((DF_DUMMYENV*)ep) -> embedLevel = embedLevel;
-    
-    return (DF_ENV_PTR)(((DF_DUMMYENV*)ep) + 1);
-}
-
-/***********************************************************/
-/*interface functions for in-place updating certain fields */
-/***********************************************************/
-
-//updating unverse index
-void DF_ModUnivIndex(DF_TERM_PTR tp, DF_UNIVIND univIndex)
-{
-    ((DF_VAR*)tp) -> univIndex = univIndex;
-}
-
-
-/*********************************************/
-/* term dereference                          */
-/*********************************************/
-DF_TERM_PTR DF_Deref(DF_TERM_PTR tp)
-{
-    while (DF_IsRef(tp)) tp = ((DF_REF*)tp) -> target;
-    return tp;
-}
-
-/***************************************************************************/
-/*interface functions for addr calculation, may be needed for detecting    */
-/*memory error                                                             */
-/* (some are not implemented yet)                                          */
-/***************************************************************************/
-
-//return an address increased by the size of an app head from the given one
-MEM_PTR DF_IncAtomic(MEM_PTR tp)
-{
-    return (MEM_PTR)(((DF_TERM_PTR)tp)+1);
-}
-
-//return an address increased by the size of n atomic term from the given
-MEM_PTR DF_IncNAtomic(MEM_PTR tp, int n)
-{
-    return (MEM_PTR)(((DF_TERM_PTR)tp)+n);
-}
-
-//return an address increased by the size of a suspension from the given one
-MEM_PTR DF_IncSusp(MEM_PTR tp)
-{
-    return (MEM_PTR)(((DF_SUSP*)tp)+1);
-}
-
-//return an address increased by the size of a dummy env item from the given 
-MEM_PTR DF_IncEnvDummy(MEM_PTR ep)
-{
-    return (MEM_PTR)(((DF_DUMMYENV*)ep)+1);
-}
-
-//return an address increased by the size of n dummy env items from the given
-MEM_PTR DF_IncNEnvDummy(MEM_PTR ep, int n)
-{
-    return (MEM_PTR)(((DF_DUMMYENV*)ep)+n);
-}
-
-//return an address increased by the size of a pair env item froms the given 
-MEM_PTR DF_IncEnvPair(MEM_PTR ep)
-{
-    return (MEM_PTR)(((DF_ENV*)ep)+1);
-}
-
-//return an address increased by the size of n pair env items froms the given
-MEM_PTR DF_IncNEnvPair(MEM_PTR ep, int n)
-{
-    return (MEM_PTR)(((DF_ENV*)ep)+n);
-}
-
-//return an address increased by the size of an app head from the given one
-MEM_PTR DF_IncApp(MEM_PTR tp)
-{
-    return (MEM_PTR)(((DF_APP*)tp)+1);
-}
-
-//increasing sizeof(APP)+ n*atomic size, where n is arity 
-MEM_PTR DF_IncAppNArgs(MEM_PTR tp, DF_ARITY n)
-{
-    return (MEM_PTR)(((DF_TERM_PTR)(((DF_APP*)tp)+1))+n);
+void DF_mkPairEnv(MEM_PTR loc, MEM_EMBEDLEV l, DF_TERM_PTR t, DF_ENV_PTR rest)
+{                                                            // (t, l) env item
+    ((DF_ENV_PAIR*)loc) -> isDummy = FALSE;
+    ((DF_ENV_PAIR*)loc) -> embedLevel = l;
+    ((DF_ENV_PAIR*)loc) -> term = t;
+    ((DF_ENV_PAIR*)loc) -> rest = rest;
 }
 
 
-//return an address increased by the size of an abstraction from the given
-MEM_PTR DF_IncLam(MEM_PTR tp)
+/* SPECIAL CONSTANTS  */
+
+BOOLEAN DF_sameStr(DF_TERM_PTR str1, DF_TERM_PTR str2)      //same string?
 {
-    return (MEM_PTR)(((DF_LAM*)tp)+1);
+    if (str1 == str2) return TRUE;
+    return (strcmp(((DF_TM_STR*)str1)->charList, (((DF_TM_STR*)str2)->charList))
+            == 0);
 }
 
-//return an address increased by the size of lam+susp+(n dummy env items)
-MEM_PTR DF_IncSuspLamNDummyEnv(MEM_PTR tp, int n)
-{
-    return (MEM_PTR)(((DF_TERM_PTR)(((DF_LAM*)(((DF_SUSP*)tp)+1))+1))+n);
-}
-
-//return an address increased by the size of a cons from the given
-MEM_PTR DF_IncCons(MEM_PTR tp)
-{
-    return (MEM_PTR)(((DF_CONS*)tp)+1);
-}
-
-#endif //DATAFORMAT_C
+#endif  //DATAFORMAT_C
