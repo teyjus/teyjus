@@ -4,54 +4,51 @@
 #define ABSTMACHINE_H
 
 #include   "mctypes.h"
-#include   "dataformat.h"
-
-
-typedef  enum {OFF,ON}    AM_FLAG_TYPES; //type for flags
-
-
-extern MEM_PTR     AM_hreg;     //heap top
-
-extern DF_TERM_PTR AM_vbbreg;   // variable being bound (for occ chk)
-  
-
-
-extern FLAG        AM_consflag; //is term a cons? (set in head normalization)
-extern FLAG        AM_rigflag;  //is term rigid? (set in head normalization)
-
-extern DF_EMBEDLEV AM_numabs;  //number of abstractions in hnf
-extern DF_ARITY    AM_numargs; //number of arguments in hnf
-
-
-
-extern DF_TERM_PTR AM_head;  //pointing to the head of a hnf (set in hnorm)
-extern DF_TERM_PTR AM_argvec;//pointing to the args of a hnf (set in hnorm)
-
-
+#include   "dataformats.h"
 
 /****************************************************************************/
-/*                                                                          */
-/*      Stack, heap, trail and pdl guard                                    */
-/*                                                                          */
+/*                ABSTRACT MACHINE REGISTERS (AND FLAGS)                    */
 /****************************************************************************/
 
+typedef enum {OFF,ON}     AM_FlagTypes;     //FLAG type
+typedef Byte              Flag;                       
 
 
-extern MEM_PTR   AM_heapbeg,   //beginning of the heap
-                 AM_heapend;   //end of the heap
+extern MemPtr       AM_hreg;                //heap top
+
+extern Flag         AM_consFlag;            //cons? 
+extern Flag         AM_rigFlag;             //rigid? 
 
 
+extern TwoBytes     AM_numAbs;              //number of abstractions in hnf
+extern TwoBytes     AM_numArgs;             //number of arguments in hnf
 
+extern DF_TermPtr   AM_head;                //head of a hnf 
+extern DF_TermPtr   AM_argVec;              //argument vector of a hnf 
+
+extern DF_TermPtr   AM_vbbreg;              //variable being bound for occ
 /****************************************************************************/
-/*       Memory overflow error detection                                    */
+/*               STACK, HEAP, TRAIL AND PDL RELATED STUFF                   */
 /****************************************************************************/
-void AM_heapError(MEM_PTR);
 
-void AM_embedError(DF_PREEMBEDLEV);
+extern MemPtr    AM_heapBeg,                //beginning of the heap
+                 AM_heapEnd;                //end of the heap
 
-void AM_arityError(DF_PREARITY);
 
+/****************************************************************************
+ *                         OVERFLOW ERROR FUNCTIONS                         *
+ ****************************************************************************/
+void AM_heapError(MemPtr);                 //heap overflow
+
+
+/****************************************************************************
+ *                     MISCELLANEOUS OTHER ERRORS                           *
+ ****************************************************************************/
+
+/* violation of max number of lambda embeddings */
+void AM_embedError(int);
+
+/* violation of max number of arity in applications */
+void AM_arityError(int);
 
 #endif //ABSTMACHINE_H
-
-

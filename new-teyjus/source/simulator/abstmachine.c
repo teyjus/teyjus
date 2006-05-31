@@ -1,83 +1,77 @@
 /*temp */
 
 #ifndef ABSTMACHINE_C
-#define ASBTMACHINE_C
+#define ABSTMACHINE_C
 
-#include  "mctypes.h"
-#include  "dataformat.h"
-#include  "abstmachine.h"
+#include   "mctypes.h"
+#include   "dataformats.h"
+#include   "abstmachine.h"
 
-//to be removed: temp for exception handling
-#include  <stdio.h>
-#include  <stdlib.h>
-
-MEM_PTR        AM_hreg;    //heap top
-
-
-DF_TERM_PTR    AM_vbbreg;        /* variable being bound (for occ chk)     */
-  
-
-FLAG           AM_consflag;  // is term a cons? (set in hnorm)
-FLAG           AM_rigflag;   // is term rigid? (set in hnorm)
-
-
-DF_EMBEDLEV    AM_numabs;   //number of abstraction in hnf
-DF_ARITY       AM_numargs;  //number of arguments in hnf
-
-DF_TERM_PTR    AM_head;  //pointing to the head of a hnf (set in hnorm)
-DF_TERM_PTR    AM_argvec;//pointing to the args of a hnf (set in hnorm)
-
+//for debugging -- to be removed
+#include   <stdio.h> 
 
 /****************************************************************************/
-/*                                                                          */
-/*      Stack, heap, trail and pdl guard                                    */
-/*                                                                          */
+/*                ABSTRACT MACHINE REGISTERS (AND FLAGS)                    */
+/****************************************************************************/
+MemPtr       AM_hreg;                //heap top
+
+Flag         AM_consFlag;            //cons?
+Flag         AM_rigFlag;             //rigid?
+
+//The size of AM_numAbs is decided by that of relevant fields in term
+//representations which can be found in dataformats.c
+TwoBytes     AM_numAbs;              //number of abstractions in hnf
+//The size of AM_numArgs is decided by that of relevant fields in term
+//representations which can be found in dataformats.c
+TwoBytes     AM_numArgs;             //number of arguments in hnf
+
+DF_TermPtr   AM_head;                //head of a hnf
+DF_TermPtr   AM_argVec;              //argument vector of a hnf 
+
+DF_TermPtr   AM_vbbreg;              //variable being bound for occ
+
+/****************************************************************************/
+/*               STACK, HEAP, TRAIL AND PDL RELATED STUFF                  */
 /****************************************************************************/
 
+MemPtr     AM_heapBeg,                //beginning of the heap
+           AM_heapEnd;                //end of the heap
 
 
-MEM_PTR   AM_heapbeg,   //beginning of the heap
-          AM_heapend;   //end of the heap
-
-
-/****************************************************************************/
-/*       Memory overflow error detection                                    */
-/****************************************************************************/
-
-//heap overflow
-void AM_heapError(MEM_PTR p)
+/****************************************************************************
+ *                         OVERFLOW ERROR FUNCTIONS                         *
+ ****************************************************************************/
+void AM_heapError(MemPtr p)                 //heap overflow
 {
-    if (AM_heapend < p) {
-        // to be replaced by real exception handling functions
+    if (AM_heapEnd < p) {
+         // to be replaced by real exception handling functions
         printf("heap over flow\n");
         exit(1);
     }
 }
 
-/***************************************************************************/
-/*       Other errors                                                      */
-/***************************************************************************/
+/****************************************************************************
+ *                     MISCELLANEOUS OTHER ERRORS                           *
+ ****************************************************************************/
 
-//exceed max number of lambda embeddings
-void AM_embedError(DF_PREEMBEDLEV i) 
+/* violation of max number of lambda embeddings */
+void AM_embedError(int n)
 {
-    if (i > DF_MAXBVIND) {
+    if (n > DF_MAX_BV_IND){
         // to be replaced by real exception handling functions
         printf("exceed the max number of lambda embeddings\n");
         exit(0);
     }
 }
 
-//exceed max numbder of arity
-void AM_arityError(DF_PREARITY i)
+/* violation of max number of arity in applications */
+void AM_arityError(int n)
 {
-    if (i > DF_MAXARITY){
+    if (n > DF_TM_MAX_ARITY){
          // to be replaced by real exception handling functions
         printf("exceed the max number of term arity\n");
         exit(0);
     }
 }
 
-
 #endif //ABSTMACHINE_C
-
