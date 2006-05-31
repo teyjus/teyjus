@@ -1,5 +1,3 @@
-/* Note that this file may need to be moved to ../system/ */
-
 /****************************************************************************/
 /*                                                                          */
 /*                                                                          */
@@ -13,21 +11,21 @@
 #ifndef MCTYPES_H
 #define MCTYPES_H
 
-typedef unsigned char  BYTE;                       /* 8 bits      */
-typedef unsigned char  BOOLEAN;                    /* 8 bits: 0/1 */
-typedef unsigned char  FLAG;                       /* 8 bits: ON/OFF */
+typedef unsigned char  Byte;                       /* 8 bits              */
+typedef unsigned short TwoBytes;                   /* 16 bits             */
 
 
+typedef unsigned char  Boolean;                    /* 8 bits: FALSE/TRUE  */
 #define TRUE           1  
 #define FALSE          0
 
 
-typedef void           *WORD;                       
+typedef void           *Word;                       
 
-#define WORDSIZE       sizeof(WORD)               /* 4: 32-bits machine */   
-                                                  /* 8  64-bits machine */
+#define WORD_SIZE      sizeof(Word)               /* 4: 32-bits machine  */   
+                                                  /* 8  64-bits machine  */
 
-typedef WORD           MEM;
-typedef MEM            *MEM_PTR;
+typedef Word           Mem;                       /* generic memory type */
+typedef Mem            *MemPtr;                   /* pointer to memory   */
 
 #endif //MCTYPES_H
