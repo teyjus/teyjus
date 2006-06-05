@@ -19,6 +19,14 @@ typedef struct{
 
 GKind_Vec GKinds;
 
+void InitTGKinds();
+int AllocateTGKinds(int count);
+LGKind_t* AllocateLGKinds(int count);
+LGKind_t LoadGKind(int i);
+void LoadGKinds();
+void WriteGKind(int i);
+void WriteGKinds();
+
 void InitTGKinds()
 {
 	GKinds.entries=0;
@@ -54,12 +62,12 @@ LGKind_t* AllocateLGKinds(int count)
 
 void LoadGKinds()
 {
-	int count=CM.GKindcount=GET1();
-	//int offset=CM.GKindoffset=AllocateTGKinds(count);
-	CM.GKind=AllocateLGKinds(count);
+	int count=CM->GKindcount=GET1();
+	//int offset=CM->GKindoffset=AllocateTGKinds(count);
+	CM->GKind=AllocateLGKinds(count);
 	for(int i=0;i<count;i++)
 	{
-		CM.GKind[i]=LoadGKind();
+		CM->GKind[i]=LoadGKind();
 	}
 }
 
@@ -77,12 +85,12 @@ LGKind_t LoadGKind()
 
 void LoadTopGKinds()
 {
-	int count=CM.GKindcount=GET1();
+	int count=CM->GKindcount=GET1();
 	AllocateTGKinds(count);
-	CM.GKind=AllocateLGKinds(count);
+	CM->GKind=AllocateLGKinds(count);
 	for(int i=0;i<count;i++)
 	{
-		CM.GKind[i]=LoadTopGKind(i);
+		CM->GKind[i]=LoadTopGKind(i);
 	}
 }
 
@@ -129,6 +137,14 @@ typedef struct{
 
 LKind_Vec LKinds;
 
+void InitTLKinds();
+int AllocateTLKinds(int count);
+LLKind_t* AllocateLLKinds(int count);
+LLKind_t LoadLKind(int i);
+void LoadLKinds();
+void WriteLKind(int i);
+void WriteLKinds();
+
 void InitTLKinds()
 {
 	LKinds.entries=0;
@@ -163,9 +179,9 @@ int AllocateTLKinds(int count)
 
 void LoadLKinds()
 {
-	int count=CM.LKindcount=GET1();
-	int offset=CM.LKindoffset=AllocateTLKinds(count);
-	//CM.LKind=AllocateLLKinds(count);
+	int count=CM->LKindcount=GET1();
+	int offset=CM->LKindoffset=AllocateTLKinds(count);
+	//CM->LKind=AllocateLLKinds(count);
 	for(int i=0;i<count;i++)
 	{
 		LoadLKind(offset+i);
@@ -200,16 +216,16 @@ KindInd GetKindInd(){
 	tmp.index=GET1();
 	if(tmp.gl_flag==LOCAL_KIND)
 	{
-		tmp.index+=CM.LKindOffset;
+		tmp.index+=CM->LKindOffset;
 		return tmp;
 	}
 	//GLOBAL_KIND
-	return CM.GKind[index];
+	return CM->GKind[index];
 }
 
 KindInd RenameKind(Name name)
 {
-	//TODO Lookup name in CM.KindRenameTable
+	//TODO Lookup name in CM->KindRenameTable
 }
 
 int CheckKindArity(KindInd i)

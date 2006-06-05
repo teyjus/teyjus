@@ -23,6 +23,14 @@ typedef struct{
 
 GConst_Vec GConsts;
 
+void InitTGConsts();
+int AllocateTGConsts(int count);
+LGConst_t* AllocateLGConsts(int count);
+LGConst_t LoadGConst(int i);
+void LoadGConsts();
+void WriteGConst(int i);
+void WriteGConsts();
+
 void InitTGConsts()
 {
 	GConsts.entries=0;
@@ -58,12 +66,11 @@ LGConst_t* AllocateLGConsts(int count)
 
 void LoadGConsts()
 {
-	int count=CM.GConstcount=GET1();
-	//int offset=CM.GConstoffset=AllocateTGConsts(count);
-	CM.GConst=AllocateLGConsts(count);
+	int count=CM->GConstcount=GET1();
+	CM->GConst=AllocateLGConsts(count);
 	for(int i=0;i<count;i++)
 	{
-		CM.GConst[i]=LoadGConst();
+		CM->GConst[i]=LoadGConst();
 	}
 }
 
@@ -86,12 +93,12 @@ LGConst_t LoadGConst()
 
 void LoadTopGConsts()
 {
-	int count=CM.GConstcount=GET1();
+	int count=CM->GConstcount=GET1();
 	AllocateTGConsts(count);
-	CM.GConst=AllocateLGConsts(count);
+	CM->GConst=AllocateLGConsts(count);
 	for(int i=0;i<count;i++)
 	{
-		CM.GConst[i]=LoadTopGConst(i);
+		CM->GConst[i]=LoadTopGConst(i);
 	}
 }
 
@@ -149,6 +156,14 @@ typedef struct{
 
 LConst_Vec LConsts;
 
+void InitTLConsts();
+int AllocateTLConsts(int count);
+LLConst_t* AllocateLLConsts(int count);
+LLConst_t LoadLConst(int i);
+void LoadLConsts();
+void WriteLConst(int i);
+void WriteLConsts();
+
 void InitTLConsts()
 {
 	LConsts.entries=0;
@@ -183,9 +198,8 @@ int AllocateTLConsts(int count)
 
 void LoadLConsts()
 {
-	int count=CM.LConstcount=GET1();
-	int offset=CM.LConstoffset=AllocateTLConsts(count);
-	//CM.LConst=AllocateLLConsts(count);
+	int count=CM->LConstcount=GET1();
+	int offset=CM->LConstoffset=AllocateTLConsts(count);
 	for(int i=0;i<count;i++)
 	{
 		LoadLConst(offset+i);
@@ -233,6 +247,14 @@ typedef struct{
 
 HConst_Vec HConsts;
 
+void InitTHConsts();
+int AllocateTHConsts(int count);
+LHConst_t* AllocateLHConsts(int count);
+LHConst_t LoadHConst(int i);
+void LoadHConsts();
+void WriteHConst(int i);
+void WriteHConsts();
+
 void InitTHConsts()
 {
 	HConsts.entries=0;
@@ -267,9 +289,8 @@ int AllocateTHConsts(int count)
 
 void LoadHConsts()
 {
-	int count=CM.HConstcount=GET1();
-	int offset=CM.HConstoffset=AllocateTHConsts(count);
-	//CM.HConst=AllocateLHConsts(count);
+	int count=CM->HConstcount=GET1();
+	int offset=CM->HConstoffset=AllocateTHConsts(count);
 	for(int i=0;i<count;i++)
 	{
 		LoadHConst(offset+i);
@@ -306,17 +327,17 @@ ConstInd GetConstInd(){
 	tmp.index=GET1();
 	if(tmp.gl_flag==LOCAL_CONST)
 	{
-		tmp.index+=CM.LConstOffset;
+		tmp.index+=CM->LConstOffset;
 		return tmp;
 	}
 	else if(tmp.gl_flag==HIDDEN_CONST)
 	{
-		tmp.index+=CM.HConstOffset;
+		tmp.index+=CM->HConstOffset;
 		return tmp;
 	}
 	else if(tmp.gl_flag==GLOBAL_CONST)
 	{
-		return CM.GConst[index];
+		return CM->GConst[index];
 	}
 	//PERVASIVE_CONST
 	return tmp;
@@ -324,7 +345,7 @@ ConstInd GetConstInd(){
 
 ConstInd RenameConst(Name name)
 {
-	//TODO Lookup name in CM.ConstRenameTable
+	//TODO Lookup name in CM->ConstRenameTable
 }
 
 int CheckGConstEqv(ConstInd i,TGConst_t new)

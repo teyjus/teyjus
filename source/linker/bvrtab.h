@@ -2,10 +2,8 @@
 #define _BVRTAB_H_
 
 //BvrTab Header Data
-//Note: No individual representation in CM.
-/*typedef struct{
-	//Empty
-}LBvrTab_t;*/
+//Note: Uses CM->BvrTaboffset & CM->BvrTabcount
+
 
 void InitTBvrTabs();
 void LoadBvrTabs();

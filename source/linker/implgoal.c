@@ -24,6 +24,14 @@ typedef struct{
 
 ImplGoal_Vec ImplGoals;
 
+void InitTImplGoals();
+int AllocateTImplGoals(int count);
+LImplGoal_t* AllocateLImplGoals(int count);
+LImplGoal_t LoadImplGoal(int i);
+void LoadImplGoals();
+void WriteImplGoal(int i);
+void WriteImplGoals();
+
 void InitTImplGoals()
 {
 	ImplGoals.entries=0;
@@ -56,23 +64,23 @@ int AllocateTImplGoals(int count)
 	return tmp;
 }
 
-LImplGoal_t* AllocateLImplGoals(int count)
-{
-	LImplGoal_t* tmp=(LImplGoal_t*)malloc(count*sizeof(LImplGoal_t));
-	if(tmp==NULL)
-	{
-		perror("Memory Allocation Failed");
-		exit(0);
-	}
-	
-	return tmp;
-}
+// LImplGoal_t* AllocateLImplGoals(int count)
+// {
+// 	LImplGoal_t* tmp=(LImplGoal_t*)malloc(count*sizeof(LImplGoal_t));
+// 	if(tmp==NULL)
+// 	{
+// 		perror("Memory Allocation Failed");
+// 		exit(0);
+// 	}
+// 	
+// 	return tmp;
+// }
 
 void LoadImplGoals()
 {
-	int count=CM.ImplGoalcount=GET1();
-	int offset=CM.ImplGoaloffset=AllocateTImplGoals(count);
-	//CM.ImplGoal=AllocateLImplGoals(count);
+	int count=CM->ImplGoalcount=GET1();
+	int offset=CM->ImplGoaloffset=AllocateTImplGoals(count);
+	//CM->ImplGoal=AllocateLImplGoals(count);
 	for(int i=0;i<count;i++)
 	{
 		LoadImplGoal(offset+i);
