@@ -1,13 +1,20 @@
+#include <stdlib.h>
+#include "module.h"
+#include "tyskel.h"
+#include "kind.h"
+#include "file.h"
 
 //////////////////////////////////////////////////////
 //TySkel Load and Write Code
 //////////////////////////////////////////////////////
-typedef struct{
+
+struct TTySkel_st{
 	INT1 type;
 	INT2 value;
-	TTySkel_t* args;
-}TTySkel_t;
+	struct TTySkel_st* args;
+};
 
+typedef struct TTySkel_st TTySkel_t;
 #define ARROW 0
 #define PKIND 1
 #define LKIND 2
@@ -21,6 +28,18 @@ typedef struct{
 }TySkel_Vec;
 
 TySkel_Vec TySkels;
+
+void InitTTySkels();
+TTySkel_t GetTySkel();
+int AllocateTTySkels(int count);
+void LoadTySkel(int i);
+void LoadTySkels();
+TTySkel_t GetTySkel();
+void WriteTySkels();
+void WriteTySkel(int i);
+void PutTySkel(TTySkel_t tyskel);
+
+
 
 void InitTTySkels()
 {
@@ -42,44 +61,45 @@ int AllocateTTySkels(int count)
 	{
 		do{
 			TySkels.size*=2;
-		}while(TySkels.entries>TySkels.size)
+		}while(TySkels.entries>TySkels.size);
 		
-			TySkels.entry=(TTySkel_t*)realloc((void*)TySkels.entry,TySkels.size*sizeof(TTySkel_t));
-			if(TySkels.entry==NULL)
-			{
-				perror("Memory Allocation Failed");
-				exit(0);
-			}
+		TySkels.entry=(TTySkel_t*)realloc((void*)TySkels.entry,TySkels.size*sizeof(TTySkel_t));
+		if(TySkels.entry==NULL)
+		{
+			perror("Memory Allocation Failed");
+			exit(0);
+		}
 	}
 	return tmp;
 }
 
-LTySkel_t* AllocateLTySkels(int count)
+// LTySkel_t* AllocateLTySkels(int count)
+// {
+// 	LTySkel_t* tmp=(LTySkel_t*)malloc(count*sizeof(LTySkel_t));
+// 	if(tmp==NULL)
+// 	{
+// 		perror("Memory Allocation Failed");
+// 		exit(0);
+// 	}
+// 	
+// 	return tmp;
+// }
+
+void LoadTySkel(int i)
 {
-	LTySkel_t* tmp=(LTySkel_t*)malloc(count*sizeof(LTySkel_t));
-	if(tmp==NULL)
-	{
-		perror("Memory Allocation Failed");
-		exit(0);
-	}
-	
-	return tmp;
+	TySkels.entry[i]=GetTySkel();
 }
 
 void LoadTySkels()
 {
-	int count=CM.TySkelcount=GET1();
-	int offset=CM.TySkeloffset=AllocateTTySkels(count);
-	//CM.TySkel=AllocateLTySkels(count);
-	for(int i=0;i<count;i++)
+	int i;
+	int count=CM->TySkelcount=GET1();
+	int offset=CM->TySkeloffset=AllocateTTySkels(count);
+	//CM->TySkel=AllocateLTySkels(count);
+	for(i=0;i<count;i++)
 	{
 		LoadTySkel(offset+i);
 	}
-}
-
-LTySkel_t LoadTySkel(int i)
-{
-	TySkels.entry[i]=GetTySkel();
 }
 
 TTySkel_t GetTySkel()
@@ -129,14 +149,15 @@ TTySkel_t GetTySkel()
 
 void WriteTySkels()
 {
+	int i;
 	PUT1(TySkels.entries);
-	for(int i=0;i<TySkels.entries;i++)
+	for(i=0;i<TySkels.entries;i++)
 	{
 		WriteTySkel(i);
 	}
 }
 
-void WriteTySkel(i)
+void WriteTySkel(int i)
 {
 	PutTySkel(TySkels.entry[i]);
 }
@@ -150,7 +171,7 @@ void PutTySkel(TTySkel_t tyskel)
 	{
 		case ARROW:
 			PUT1((INT1)tyskel.value);
-			for(i=0;i<tmp.value;i++)
+			for(i=0;i<tyskel.value;i++)
 			{
 				PutTySkel(tyskel.args[i]);
 			}

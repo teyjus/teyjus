@@ -11,7 +11,7 @@ typedef struct{
 
 typedef struct{
 	ConstInd index;
-	int addr;
+	CodeInd addr;
 }HashTabEnt;
 
 typedef struct{
@@ -22,6 +22,14 @@ typedef struct{
 }HashTab_Vec;
 
 HashTab_Vec HashTabs;
+
+void InitTHashTabs();
+int AllocateTHashTabs(int count);
+LHashTab_t* AllocateLHashTabs(int count);
+LHashTab_t LoadHashTab(int i);
+void LoadHashTabs();
+void WriteHashTab(int i);
+void WriteHashTabs();
 
 void InitTHashTabs()
 {
@@ -56,23 +64,23 @@ int AllocateTHashTabs(int count)
 	return tmp;
 }
 
-LHashTab_t* AllocateLHashTabs(int count)
-{
-	LHashTab_t* tmp=(LHashTab_t*)malloc(count*sizeof(LHashTab_t));
-	if(tmp==NULL)
-	{
-		perror("Memory Allocation Failed");
-		exit(0);
-	}
-	
-	return tmp;
-}
+// LHashTab_t* AllocateLHashTabs(int count)
+// {
+// 	LHashTab_t* tmp=(LHashTab_t*)malloc(count*sizeof(LHashTab_t));
+// 	if(tmp==NULL)
+// 	{
+// 		perror("Memory Allocation Failed");
+// 		exit(0);
+// 	}
+// 	
+// 	return tmp;
+// }
 
 void LoadHashTabs()
 {
-	int count=CM.HashTabcount=GET1();
-	int offset=CM.HashTaboffset=AllocateTHashTabs(count);
-	//CM.HashTab=AllocateLHashTabs(count);
+	int count=CM->HashTabcount=GET1();
+	int offset=CM->HashTaboffset=AllocateTHashTabs(count);
+	//CM->HashTab=AllocateLHashTabs(count);
 	for(int i=0;i<count;i++)
 	{
 		LoadHashTab(offset+i);
@@ -124,7 +132,7 @@ void WriteHashTab(i)
 
 int GetHashTabInd()
 {
-	return CM.HashTaboffset+GET1();
+	return CM->HashTaboffset+GET1();
 }
 
 int MergeHashTabs(int a, int b)

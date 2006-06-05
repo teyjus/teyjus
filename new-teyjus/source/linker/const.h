@@ -1,8 +1,14 @@
-#endif _CONST_H_
+#ifndef _CONST_H_
 #define _CONST_H_
+
+typedef struct{
+	INT1 gl_flag;
+	INT2 index;
+}ConstInd;
 
 //GConst Header Data
 //Note: Special Top Level Loading
+//Note: Uses CM->GConst & CM->GConstcount
 typedef struct{
 	ConstInd index;
 }LGConst_t;
@@ -13,20 +19,14 @@ void LoadTopGConsts();
 void WriteGConsts();
 
 //LConst Header Data
-//Note: No individual representation in CM.
-/*typedef struct{
-	//Empty
-}LLConst_t;*/
+//Note: Uses CM->LConstoffset & CM->LConstcount
 
 void InitTLConsts();
 void LoadLConsts();
 void WriteLConsts();
 
 //HConst Header Data
-//Note: No individual representation in CM.
-/*typedef struct{
-	//Empty
-}LHConst_t;*/
+//Note: Uses CM->HConstoffset & CM->HConstcount
 
 void InitTHConsts();
 void LoadHConsts();
@@ -35,11 +35,6 @@ void WriteHConsts();
 ////////////////////////////////////
 //Utility Functions
 ////////////////////////////////////
-
-typedef struct{
-	INT1 gl_flag;
-	INT2 index;
-}ConstInd;
 
 ConstInd GetConstInd();
 

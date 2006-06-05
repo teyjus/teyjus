@@ -10,7 +10,7 @@ typedef struct{
 
 typedef struct{
 	INT1 index;
-	int addr;
+	CodeInd addr;
 }BvrTabEnt;
 
 typedef struct{
@@ -20,6 +20,14 @@ typedef struct{
 }BvrTab_Vec;
 
 BvrTab_Vec BvrTabs;
+
+void InitTBvrTabs();
+int AllocateTBvrTabs(int count);
+LBvrTab_t* AllocateLBvrTabs(int count);
+LBvrTab_t LoadBvrTab(int i);
+void LoadBvrTabs();
+void WriteBvrTab(int i);
+void WriteBvrTabs();
 
 void InitTBvrTabs()
 {
@@ -53,22 +61,22 @@ int AllocateTBvrTabs(int count)
 	return tmp;
 }
 
-LBvrTab_t* AllocateLBvrTabs(int count)
-{
-	LBvrTab_t* tmp=(LBvrTab_t*)malloc(count*sizeof(LBvrTab_t));
-	if(tmp==NULL)
-	{
-		perror("Memory Allocation Failed");
-		exit(0);
-	}
-	
-	return tmp;
-}
+// LBvrTab_t* AllocateLBvrTabs(int count)
+// {
+// 	LBvrTab_t* tmp=(LBvrTab_t*)malloc(count*sizeof(LBvrTab_t));
+// 	if(tmp==NULL)
+// 	{
+// 		perror("Memory Allocation Failed");
+// 		exit(0);
+// 	}
+// 	
+// 	return tmp;
+// }
 
 void LoadBvrTabs()
 {
-	int count=CM.BvrTabcount=GET1();
-	int offset=CM.BvrTaboffset=AllocateTBvrTabs(count);
+	int count=CM->BvrTabcount=GET1();
+	int offset=CM->BvrTaboffset=AllocateTBvrTabs(count);
 	for(int i=0;i<count;i++)
 	{
 		LoadBvrTab(offset+i);

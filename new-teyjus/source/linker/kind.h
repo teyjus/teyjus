@@ -5,8 +5,13 @@
 //This file defines the outside view of GKinds and LKinds/////
 ////////////////////////////////////////////////////////////////////////////////////*/
 
+typedef struct{
+	INT1 gl_flag;
+	INT2 index;
+}KindInd;
+
 //GKind Header Data
-//Note: Special Top Level Loading
+//Note: Uses CM->GKind & CM->GKindcount
 typedef struct{
 	KindInd index;
 }LGKind_t;
@@ -17,10 +22,8 @@ void LoadTopGKinds();
 void WriteGKinds();
 
 //LKind Header Data
-//Note: No individual representation in CM.
-/*typedef struct{
-	//Empty
-}LLKind_t;*/
+//Note: Uses CM->LKindoffset & CM->LKindcount
+
 
 void InitTLKinds();
 void LoadLKinds();
@@ -31,11 +34,6 @@ void WriteLKinds();
 ////////////////////////////////////////////
 #define GLOBAL_KIND 1
 #define LOCAL_KIND 0
-
-typedef struct{
-	INT1 gl_flag;
-	INT2 index;
-}KindInd;
 
 KindInd GetKindInd();
 
