@@ -4,7 +4,7 @@
 //////////////////////////////////////////////////////
 typedef struct{
 	INT2 num_ext_pred;
-	ConstInd* indexes;
+	ConstInd* index;
 	INT1 find_code_fun;
 	INT1 tab_size;
 	INT2 num_entries;
@@ -91,8 +91,8 @@ LImplGoal_t LoadImplGoal(int i)
 {
 	int count=ImplGoals.entry[i].num_ext_pred=GET2();
 	
-	ImplGoals.entry[i].indexes=malloc(count*sizeof(ConstInd));
-	if(ImplGoals.entry[i].indexes==NULL)
+	ImplGoals.entry[i].index=malloc(count*sizeof(ConstInd));
+	if(ImplGoals.entry[i].index==NULL)
 	{
 		perror("Memory Allocation Failed");
 		exit(0);
@@ -100,7 +100,7 @@ LImplGoal_t LoadImplGoal(int i)
 	
 	for(int j=0;j<count;j++)
 	{
-		ImplGoals.entry[i].indexes[j]=GetConstInd();
+		ImplGoals.entry[i].index[j]=GetConstInd();
 		//FlagDynamicPred(ImplGoals.entry[i].indexes[j]);
 	}
 	

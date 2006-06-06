@@ -29,6 +29,8 @@ typedef struct{
 
 TySkel_Vec TySkels;
 
+int TySkelSpace=0;
+
 void InitTTySkels();
 TTySkel_t GetTySkel();
 int AllocateTTySkels(int count);
@@ -38,8 +40,7 @@ TTySkel_t GetTySkel();
 void WriteTySkels();
 void WriteTySkel(int i);
 void PutTySkel(TTySkel_t tyskel);
-
-
+void LoadTySkelSpace();
 
 void InitTTySkels()
 {
@@ -84,6 +85,11 @@ int AllocateTTySkels(int count)
 // 	
 // 	return tmp;
 // }
+
+void LoadTySkelSpace()
+{
+	TySkelSpace+=GETWORD();
+}
 
 void LoadTySkel(int i)
 {
