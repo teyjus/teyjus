@@ -4,6 +4,7 @@
 void PushInput(char* modname);
 void PopInput();
 
+int GETWORD();
 INT4 GET4();
 INT2 GET2();
 INT1 GET1();

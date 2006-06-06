@@ -10,5 +10,6 @@
 void InitTTySkels();
 void LoadTySkels();
 void WriteTySkels();
+void LoadTySkelSpace();
 
 #endif //_TYSKEL_H_

@@ -48,6 +48,7 @@ struct Module_st{
 	int Codeoffset;
 	int Codesize;
 
+	int FindCodeFun;
 	LImportTab_t ImportTab;
 };
 
