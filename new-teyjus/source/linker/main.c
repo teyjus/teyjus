@@ -11,4 +11,5 @@ int main(int argc, char* argv[])
 	
 	InitAll();
 	LoadTopModule(argv[1]);
+	WriteAll();
 }

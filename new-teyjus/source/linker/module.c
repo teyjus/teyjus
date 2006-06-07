@@ -232,3 +232,20 @@ void LoadFindCodeFun()
 {
 	CM->FindCodeFun=GET1();
 }
+
+void WriteAll()
+{
+	WriteDependencies();
+	WriteTGKinds();
+	WriteTLKinds();
+	WriteTTySkels();
+	WriteTGConsts();
+	WriteTLConsts();
+	WriteTHConsts();
+	WriteTStringSpaces();
+	WriteTImplGoals();
+	WriteTHashTabs();
+	WriteTBvrTabs();
+	WriteTImportTabs();
+	WriteTCode();
+}
