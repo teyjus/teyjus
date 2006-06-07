@@ -57,4 +57,7 @@ typedef Module Module_st;
 Module* CM; 		//The module currently being loaded
 
 void LoadTopModule(char* filename);
+void InitAll();
+void WriteAll();
+
 #endif //_MODULE_H_

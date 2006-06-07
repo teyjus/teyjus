@@ -4,7 +4,7 @@
 void LoadConstRNTable();
 void LoadKindRNTable();
 
-ConstInd RenameConst();
-KindInd RenameKind();
+ConstInd RenameConst(Name name);
+KindInd RenameKind(Name name);
 
 #endif

@@ -3,6 +3,7 @@
 
 void PushInput(char* modname);
 void PopInput();
+void WriteDependencies();
 
 int GETWORD();
 INT4 GET4();
