@@ -14,4 +14,24 @@ struct
 			else
 				0
 end
+
 module SymbolTable = Map.Make(OrderedSymbol)
+
+let find =
+	fun k table ->
+		try
+			let v = SymbolTable.find k table in
+			Some v
+		with Not_found -> None
+
+let add =
+	fun k v table ->
+		(SymbolTable.add k v table)
+
+let remove =
+	fun k table ->
+		(SymbolTable.remove k table)
+
+let iter = 
+	fun f table ->
+		SymbolTable.iter f table

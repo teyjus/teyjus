@@ -36,10 +36,9 @@ and ptype =
 		Atom of (symbol * pidkind * pos)
 	|	App of (ptype * ptype * pos)
 	|	Arrow of (ptype * ptype * pos)
-	|	TypeAbbrevCall of (symbol * ptype list * pos)
 	|	ErrorType
 
-and ptypeabbrev = TypeAbbrev of (symbol * symbol list * ptype * pos)
+and ptypeabbrev = TypeAbbrev of (psymbol * psymbol list * ptype * pos)
 
 (*	Terms	*)
 and pterm =
@@ -51,6 +50,9 @@ and pterm =
 	|	IntTerm of (int * pos)
 	|	StringTerm of (string * pos)
 	|	OpTerm of (poperation * pos)
+	|	ErrorTerm
+
+and pclause = Clause of (pterm list)
 
 (*	Constants	*)
 and pconstant = Constant of (psymbol list * ptype option * pos)
@@ -75,21 +77,40 @@ and poperation =
 (********************************************************************
 *Module:
 *	This type stores information about a preabsyn module.
-*	Its fields are:
+*	Module:
 *		Name: string
 *		Global Constants: pconstant list
 *		Local Constants: pconstant list
 *		Closed Constants: pconstant list
+*		Fixities:	pfixity list
 *
-*		Accumulated Modules:
-*		Accumulated Signatures:
+*		Global Kinds: pkind list
+*		Local Kinds: pkind list
+*
+*		Type Abbreviations: ptypeabbrev list
+*
+*		Clauses: pterm list
+*
+*		Accumulated Modules: psymbol list
+*		Accumulated Signatures: psymbol list
+*		Used Signatures: psymbol list
+*	Signature:
+*		Name: string
+*		Global Constants: pconstant list
+*		Global Kinds:	pkind list
+*
+*		Type Abbreviations: ptypeabbrevlist
+*
+*		Accumulated Signatures: psymbol list
 ********************************************************************)
 type pmodule =
-		Module of (string * pconstant list * pconstant list * pconstant list * pterm list)
-	|	Signature of (string * pconstant list)
+		Module of (string * pconstant list * pconstant list * 
+			pconstant list * pfixity list * pkind list * pkind list * ptypeabbrev list *
+			pclause list * psymbol list * psymbol list * psymbol list)
+	|	Signature of (string * pconstant list * pkind list *
+			ptypeabbrev list * pfixity list * psymbol list)
 
-val printPreAbsyn : pmodule -> unit
+val printPreAbsyn : pmodule -> out_channel -> unit
 
 (*	Accessors	*)
 val fixityGetPos : pfixitykind -> pos
-

@@ -9,14 +9,17 @@
 **********************************************************************)
 exception InternalError
 
-type pos = int
+type pos = (string * int)
 
-val newLine : int -> unit
+val string_of_pos : pos -> string
+
+val newLine : pos -> unit
 val anyErrors : bool ref
-val fileName : string ref
-val linePos : int list ref
-val log : int -> string -> unit
-val warning : int -> string -> unit
-val error : int -> string -> unit
-val impossible : int -> string -> 'a   (* raises InternalError *)
+
+val log : pos -> string -> unit
+val warning : pos -> string -> unit
+val error : pos -> string -> unit
+val impossible : pos -> string -> 'a   (* raises InternalError *)
+val see : pos -> string -> string
+val addFile : string -> unit
 val reset : unit -> unit
