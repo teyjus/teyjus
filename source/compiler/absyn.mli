@@ -1,8 +1,12 @@
-type symbol = Symbol.symbol
+(**********************************************************************
+*Absyn:
+*	The abstract syntax representation.
+**********************************************************************)
 type pos = Errormsg.pos
+type symbol = Symbol.symbol
 
 (********************************************************************
-*atypevardata
+*atypevar:
 *	Information about a type variable.
 ********************************************************************)
 type atypevar = 
@@ -17,18 +21,16 @@ and akindmap =
 	|	KindMapping of akindmap
 
 and akind =
-		LocalKind of (int * symbol * akindmap)
-	|	GlobalKind of (int * symbol * akindmap)
-	|	PervasiveKind of (int * symbol * akindmap)
-	|	NewKind of (int * symbol * akindmap)
-	|	HiddenKind of (int * symbol * akindmap)
-	|	AnonymousKind of (int * symbol * akindmap)
+		LocalKind of (symbol * int option * akindmap * pos)
+	|	GlobalKind of (symbol * int option * akindmap * pos)
+	|	PervasiveKind of (symbol * int option * akindmap * pos)
+
 
 (********************************************************************
 *Type Abbreviations:
 ********************************************************************)
 and atypeabbrev =
-		TypeAbbrev of (symbol * atype list * atype)
+	TypeAbbrev of (symbol * symbol list * atype * pos)
 
 (********************************************************************
 *Type Skeleton:
@@ -39,50 +41,61 @@ and askeleton = Skeleton of (atype * int * bool)
 *Types:
 ********************************************************************)
 and atype =
-		ArrowType of (atype * atype list)
-	|	TypeVarType of (atypevar * bool)
-	| FuncType of (int * akind * atype list)
+		ArrowType of (atype * atype)
+	|	TypeVarType of (atypevar option * bool)
+	| AppType of (akind * atype list)
 	|	SkeletonVarType of (int)
 	|	TypeRefType of (atype)
 	|	ErrorType
+
+(********************************************************************
+*Constants:
+*	Symbol
+*	Fixity
+*	Precedence
+*	Export
+*	Use Only
+*	No Defs
+*	Closed
+*	Type Preserving
+*	Skeleton
+*	Type
+*	Code Info
+*	Constant Type
+********************************************************************)
+and acodeinfo =
+		BuiltinIndex of int
+	|	Clauses of aclause list
+	
+and aconstant =
+		Constant of (symbol * afixity * int * bool * bool * bool * bool * bool * askeleton list * atype list * acodeinfo * aconstanttype * pos)
+
+and aconstanttype = 
+		GlobalConstant
+	|	LocalConstant
+	|	PervasiveConstant
+	|	NewConstant
+	| HiddenConstant
+	|	AnonymousConstant
+
+and atypesymboltype =
+		RawType of atype
+	|	SkeletonType of (askeleton list * atype list * int)
+
+and atypesymbol =
+		ImplicitTypeSymbol of (bool * aconstant * symbol * atypesymboltype)
+	|	AnonymousTypeSymbol of (bool * aconstant * symbol * atypesymboltype)
+	|	BoundTypeSymbol of (bool * aconstant * symbol * atypesymboltype)
 
 and afixity =
 		Infix
 	|	Infixl
 	|	Infixr
 	|	Prefix
-	|	Prefixl
+	|	Prefixr
 	|	Postfix
-	|	Postfixr
-
-(********************************************************************
-*Constants:
-********************************************************************)
-and aconstantmap =
-		ConstantIndex of int
-	|	ConstantMapping of aconstantmap
-
-and acodeinfo =
-		BuiltinIndex of int
-	|	Clauses of aclause list
-	
-and aconstant =
-		GlobalConstant of (afixity * bool * bool * bool * string * int * askeleton list * int * atype list * aconstantmap * acodeinfo)
-	|	LocalConstant of (afixity * bool * bool * bool * string * int * askeleton list * int * atype list * aconstantmap * acodeinfo)
-	|	PervasiveConstant of (afixity * bool * bool * bool * string * int * askeleton list * int * atype list * aconstantmap * acodeinfo)
-	|	NewConstant of (afixity * bool * bool * bool * string * int * askeleton list * int * atype list * aconstantmap * acodeinfo)
-	| HiddenConstant of (afixity * bool * bool * bool * string * int * askeleton list * int * atype list * aconstantmap * acodeinfo)
-	|	AnonymousConstant of (afixity * bool * bool * bool * string * int * askeleton list * int * atype list * aconstantmap * acodeinfo)
-
-
-and asymboltype =
-		RawType of atype
-	|	SkeletonType of (askeleton list * atype list * int)
-
-and atypesymbol =
-		ImplicitTypeSymbol of (bool * aconstant * symbol * asymboltype)
-	|	AnonymousTypeSymbol of (bool * aconstant * symbol * asymboltype)
-	|	BoundTypeSymbol of (bool * aconstant * symbol * asymboltype)
+	|	Postfixl
+	|	NoFixity
 
 (********************************************************************
 *Variables:
@@ -149,18 +162,11 @@ and agoal =
 and atermvarmap =  TermVarMap of (avar * avar) list
 
 (********************************************************************
-*Imported/Accumulated Module Information:
-********************************************************************)
-and aannimpmodule = (int * aimpmodule list)
-and aimpmodule = (int * amodule)
-
-(********************************************************************
 *Clauses:
 ********************************************************************)
 and aclause =
 		Clause of (aconstant * aterm list * atype list * int * int *
-			agoal * int * agoal list * atermvarmap * atermvarmap * bool *
-			aannimpmodule list)
+			agoal * int * agoal list * atermvarmap * atermvarmap * bool)
 
 (********************************************************************
 *String:
@@ -171,6 +177,15 @@ and astring = (string * int * bool)
 *Module:
 ********************************************************************)
 and amodule =
-		Module of (string * amodule list * atype Table.SymbolTable.t * atype Table.SymbolTable.t *
-			astring list * akind list * aconstant list * askeleton list *
-			askeleton list * aclause list)
+		Module of (string * aconstant Table.SymbolTable.t *
+			akind Table.SymbolTable.t * atypeabbrev Table.SymbolTable.t * 
+			astring list * aconstant list * 
+			aconstant list * aconstant list * akind list * akind list *
+			askeleton list * askeleton list * aclause list)
+|		Signature
+
+val getKindArity : akind -> int
+val getKindPos : akind -> pos
+val printAbsyn : amodule -> out_channel -> unit
+
+val string_of_fixity : afixity -> string

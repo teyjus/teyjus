@@ -3,8 +3,15 @@
 ****************************************************************************)
 {
 open Parsing
+open Lexing
 open Errormsg
 open Lpyacc
+
+let currentFile = ref ""
+let currentModuleName = ref ""
+let setCurrentFile = fun s ->
+	(currentFile := s;
+	currentModuleName := (Filename.chop_extension s))
 
 let maxStringLength = 257
 
@@ -24,8 +31,8 @@ let string_of_char = String.make 1
 *currentPos:
 *	Returns current character position.
 **********************************************************************)
-let currentPos = function () ->
-	0
+let currentPos = function buf ->
+	buf.lex_curr_p.pos_cnum
 
 (**********************************************************************
 *addChar:
@@ -36,7 +43,7 @@ let addChar = function s ->
 		(currentString := !currentString ^ s;
 		())
 	else
-		(Errormsg.warning (!strPos) ("Maximum string/id length exceeded; truncating to " ^ (string_of_int maxStringLength) ^ " characters");
+		(Errormsg.warning (!currentFile, !strPos) ("Maximum string/id length exceeded; truncating to " ^ (string_of_int maxStringLength) ^ " characters");
 		())
 
 (**********************************************************************
@@ -76,7 +83,7 @@ let LCASE = ['a' - 'z']
 let UCASE = ['A' - 'Z']
 let IDCHAR = (LCASE|UCASE|DIGIT|SCHAR)
 let IDCHAR1 = (LCASE|UCASE|DIGIT|SCHAR1)
-let WSPACE = [' ' '\011' '\013' '\015']+
+let WSPACE = [' ' '\t' '\r']+
 let NUM = DIGIT+
 
 
@@ -88,7 +95,7 @@ let NUM = DIGIT+
 
 rule initial = parse
 |	WSPACE				{initial lexbuf}
-|	"\n"					{Errormsg.newLine (currentPos ()); initial lexbuf}
+|	'\n'					{Errormsg.newLine (!currentFile, currentPos lexbuf); initial lexbuf}
 
 |	"module"			{MODULE}
 |	"end"					{END}
@@ -102,6 +109,7 @@ rule initial = parse
 |	"sig"					{SIG}
 |	"kind"				{KIND}
 |	"type"				{TYPE}
+|	"typeabbrev"	{TYPEABBREV}
 |	"exportdef"		{EXPORTDEF}
 |	"useonly"			{USEONLY}
 |	"infixl"			{INFIXL}
@@ -158,7 +166,9 @@ rule initial = parse
 
 |	"%"							{comment1 lexbuf}
 
-|	"/*"						{commentPos := (currentPos ()); commentLev := 1; comment2 lexbuf}
+|	"/*"						{commentPos := (currentPos lexbuf); commentLev := 1; comment2 lexbuf}
+|	_ as c					{raise (Failure("Invalid token: " ^ string_of_char c));}
+|	eof							{END}
 
 (**********************************************************************
 *stringstate:
@@ -167,8 +177,8 @@ rule initial = parse
 and stringstate = parse
 |	['^' '"' '\\' '\n']+	{stringstate lexbuf}
 |	'"'										{STRLIT(!currentString)}
-|	'\n'					{Errormsg.error (!strPos) "Error: String literal ended with newline";
-								(Errormsg.newLine (currentPos ())); STRLIT(!currentString)}
+|	'\n'					{Errormsg.error (!currentFile,!strPos) "Error: String literal ended with newline";
+								(Errormsg.newLine (!currentFile, currentPos lexbuf)); STRLIT(!currentString)}
 |	"\\b"					{addChar("\b"); stringstate lexbuf}
 |	"\\t"					{addChar("\t"); stringstate lexbuf}
 |	"\\n"					{addChar("\n"); stringstate lexbuf}
@@ -183,18 +193,18 @@ and stringstate = parse
 |	"\\x" HEX as text								{addHex(text); stringstate lexbuf}
 |	"\\x" HEX HEX as text						{addHex(text); stringstate lexbuf}
 
-|	"\\x" _					{Errormsg.error (currentPos ()) "Error: Illegal hex character specification";
+|	"\\x" _					{Errormsg.error (!currentFile, currentPos lexbuf) "Error: Illegal hex character specification";
 									stringstate lexbuf}
 |	"\\" FCHAR			{strflush1 lexbuf}
-|	"\\\n"					{Errormsg.newLine (currentPos ()); strflush1 lexbuf}
+|	"\\\n"					{Errormsg.newLine (!currentFile, currentPos lexbuf); strflush1 lexbuf}
 |	"\\c"						{strflush2 lexbuf}
-|	"\\" _					{Errormsg.error (currentPos ()) "Error: Illegal escape character in string";
+|	"\\" _					{Errormsg.error (!currentFile, currentPos lexbuf) "Error: Illegal escape character in string";
 									stringstate lexbuf}
 
 and strflush1 = parse
 |	FCHAR+		{strflush1 lexbuf}
 |	"\\"			{strflush1 lexbuf}
-| _ as text	{Errormsg.error(!escapePos) "Error: Unterminated string escape sequence";
+| _ as text	{Errormsg.error (!currentFile, !escapePos) "Error: Unterminated string escape sequence";
 						addChar(string_of_char text);
 						stringstate lexbuf}
 
@@ -204,8 +214,8 @@ and strflush2 = parse
 
 and comment1 = parse
 |	[^ '\n']+ 			{comment1 lexbuf}
-|	"\n"						{Errormsg.newLine (currentPos ()); initial lexbuf}
-|	_ as text				{Errormsg.error (currentPos ()) ("Illegal character " ^ (string_of_char text) ^ " in input");
+|	"\n"						{Errormsg.newLine (!currentFile, currentPos lexbuf); initial lexbuf}
+|	_ as text				{Errormsg.error (!currentFile, currentPos lexbuf) ("Illegal character " ^ (string_of_char text) ^ " in input");
 									comment1 lexbuf}
 
 and comment2 = parse
@@ -217,5 +227,5 @@ and comment2 = parse
 							else
 								comment2 lexbuf}
 |	"/*"				{comment2 lexbuf}
-|	_ as text		{Errormsg.error (currentPos ()) ("Illegal character " ^ (string_of_char text) ^ " in input");
+|	_ as text		{Errormsg.error (!currentFile, currentPos lexbuf) ("Illegal character " ^ (string_of_char text) ^ " in input");
 							comment2 lexbuf}

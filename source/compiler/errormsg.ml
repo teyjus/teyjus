@@ -8,38 +8,60 @@
 *	This has not yet been tested almost at all.
 **********************************************************************)
 exception InternalError
-
-type pos = int
+type pos = (string * int)
 
 let anyErrors = ref false
-let fileName = ref ""
+
+(**********************************************************************
+*File Table:
+**********************************************************************)
+module Ordered =
+struct
+	type t = string
+	let compare = compare
+end
+module FileTable = Map.Make(Ordered)
+
+let fileTable = ref FileTable.empty
+
+let find =
+	fun f table ->
+		try
+			let v = FileTable.find f table in
+			Some v
+		with Not_found -> None
 
 (********************************************************************
-* Note that line numbers are assumed to start at 1 instead of 0.
+*string_of_pos:
+*	Convert a pos to a string.
 ********************************************************************)
-let linePos = ref [1]
+let string_of_pos = function (file, pos) ->
+	let rec p = fun lines num ->
+		match lines with
+			a::rest ->
+				if a < pos then
+					(file ^ ":" ^ (string_of_int num) ^ "." ^ (string_of_int (pos - a)))
+				else
+					p rest (num - 1)
+			| [] -> (file ^ "0.0")
+	in
+	let Some(lines) = (find file (!fileTable)) in
+	p (!lines) (List.length (!lines))
 
 (********************************************************************
 *printPosition:
 *	Prints position information.
 ********************************************************************)
-let rec printPosition = fun pos ->
-	let rec p = function
-			(a::rest, n) ->
-				if a < pos then
-					List.iter print_string [":"; string_of_int n; "."; string_of_int (pos - a)]
-				else
-					p(rest, n - 1)
-			| _ -> (print_string "0.0")
-	in
-		p(!linePos, List.length(!linePos))
+let rec printPosition = fun p ->
+	print_string (string_of_pos p)
 
 (********************************************************************
-*linePos:
+*newLine:
 * Call with a character position when a newline is reached.
 ********************************************************************)
-let newLine(i) =
-	linePos := i :: !linePos
+let newLine = function (file, pos) ->
+	let Some(lines) = (find file (!fileTable)) in
+	lines := pos :: !lines
 
 (********************************************************************
 *reset:
@@ -47,21 +69,18 @@ let newLine(i) =
 ********************************************************************)
 let reset = fun () ->
 		(anyErrors:=false;
-		fileName:="";
-		linePos:=[1])
-
+		fileTable := FileTable.empty)
 
 (********************************************************************
 *error:
 * Prints an error, along with the line and character position.
 ********************************************************************)
 let error = fun pos (msg:string) ->
-		anyErrors := true;
-		print_string (!fileName);
+		(anyErrors := true;
 		printPosition pos;
-		print_string " Error:\n";
+		print_string " Error: ";
 		print_string msg;
-		print_string "\n\n"
+		print_string ".\n\n")
 
 (********************************************************************
 *warning:
@@ -69,23 +88,21 @@ let error = fun pos (msg:string) ->
 ********************************************************************)
 let warning = fun pos (msg:string) ->
 		anyErrors := true;
-		print_string (!fileName);
 		printPosition pos;
-		print_string " Warning:\n";
+		print_string " Warning:\n\t";
 		print_string msg;
-		print_string "\n\n"
+		print_string ".\n\n"
 		
 (********************************************************************
 *log:
 *	Outputs logging information.
 ********************************************************************)
 let log = fun pos msg ->
-		(print_string "Log: ";
-		print_string (!fileName);
-		print_string ":\n";
+		(printPosition pos;
+		print_string "Log:\n\t";
 		print_string msg;
-		print_string "\n\n")
-	
+		print_string ".\n\n")
+
 (********************************************************************
 *impossible:
 * Prints an internal compiler error, then throws an exception
@@ -93,8 +110,22 @@ let log = fun pos msg ->
 ********************************************************************)
 let impossible = fun pos msg ->
 		anyErrors := true;
-		print_string (!fileName);
 		printPosition pos;
 		print_string ":\n";
-		List.iter print_string ["Internal Error:\n"; msg; "\n\n"];
+		List.iter print_string ["Internal Error:\n\t"; msg; ".\n\n"];
 		raise InternalError
+
+let see = fun pos msg ->
+	(".\n\tSee " ^ msg ^ " at " ^ (string_of_pos pos))
+	
+(********************************************************************
+*addFile:
+*	Set the current file.  If the file hasn't been seen yet, add it to
+*	the table.
+********************************************************************)
+let addFile = fun file ->
+	match (find file (!fileTable)) with
+		Some f -> ()
+	|	None ->
+			let lines = ref [1] in
+			(fileTable := (FileTable.add file lines (!fileTable)))

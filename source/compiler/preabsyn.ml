@@ -30,16 +30,14 @@ type psymbol = Symbol of (symbol * pidkind * pos)
 (*	Type Symbols	*)
 and ptypesymbol = TypeSymbol of (symbol * ptype option * pidkind * pos)
 
-
 (*	Types	*)
 and ptype =
 		Atom of (symbol * pidkind * pos)
 	|	App of (ptype * ptype * pos)
 	|	Arrow of (ptype * ptype * pos)
-	|	TypeAbbrevCall of (symbol * ptype list * pos)
 	|	ErrorType
 
-and ptypeabbrev = TypeAbbrev of (symbol * symbol list * ptype * pos)
+and ptypeabbrev = TypeAbbrev of (psymbol * psymbol list * ptype * pos)
 
 (*	Terms	*)
 and pterm =
@@ -51,6 +49,9 @@ and pterm =
 	|	IntTerm of (int * pos)
 	|	StringTerm of (string * pos)
 	|	OpTerm of (poperation * pos)
+	|	ErrorTerm
+	
+and pclause = Clause of (pterm list)
 
 (*	Constants	*)
 and pconstant = Constant of (psymbol list * ptype option * pos)
@@ -75,192 +76,274 @@ and poperation =
 (********************************************************************
 *Module:
 *	This type stores information about a preabsyn module.
-*	Its fields are:
-*		Name: string
-*		Global Constants: pconstant list
-*		Local Constants: pconstant list
-*		Closed Constants: pconstant list
-*
-*		Accumulated Modules:
-*		Accumulated Signatures:
+*	See interface for details.
 ********************************************************************)
 type pmodule =
-		Module of (string * pconstant list * pconstant list * pconstant list * pterm list)
-	|	Signature of (string * pconstant list)
+		Module of (string * pconstant list * pconstant list * 
+			pconstant list * pfixity list * pkind list * pkind list * ptypeabbrev list *
+			pclause list * psymbol list * psymbol list * psymbol list)
+	|	Signature of (string * pconstant list * pkind list *
+			ptypeabbrev list * pfixity list * psymbol list)
 				
 (********************************************************************
 *printPreAbsyn:
 *	Prints all information about a preabsyn module.
 ********************************************************************)
-let printPreAbsyn = fun m ->
-	let newLine = function () -> (print_endline "") in
-	let rec
-		printConstant = function
-				Constant(symlist, Some t, pos) ->
-					(List.map printSymbol symlist;
-					printType t;
-					printPos pos)
-			|	Constant(symlist, None, pos) ->
-					(List.map printSymbol symlist;
-					printPos pos)
+let printPreAbsyn = fun m out ->
+	(*	Text output functions	*)
+	let output = function s -> (output_string out s) in
+	let output_line = function s -> (output_string out (s ^ "\n")) in
+	
+	let rec printWithCommas : ('a -> unit) -> 'a list -> unit = 
+		fun f ls ->
+			match ls with
+				(l::[]) -> (f l)
+			|	(l::ls) ->
+					((f l);
+					output ", ";
+					printWithCommas f ls)
+			|	([]) -> ()
 
-		and printSymbol = function
-			 Symbol(sym, k, pos) ->
-				(print_string (Symbol.name sym);
-				printIdKind k;
+	(*	Print constant to output channel	*)
+	and printConstant = function
+			Constant(symlist, Some t, pos) ->
+				(output "Constant(";
+				printWithCommas printSymbol symlist;
+				output ", ";
+				printType t;
+				output ", ";
+				printPos pos;
+				output_line ")";)
+		|	Constant(symlist, None, pos) ->
+				(List.map printSymbol symlist;
 				printPos pos)
-		
+
+	and printSymbol = function
+			Symbol(sym, k, pos) ->
+				(output "Symbol(";
+				output (Symbol.name sym);
+				output ", ";
+				printIdKind k;
+				output ", ";
+				printPos pos;
+				output ")")
+
 		and printPos = function
-				p -> (print_string ("Pos(" ^ (string_of_int p) ^ ")"))
+			p ->
+				(output "Pos(";
+				output (Errormsg.string_of_pos p);
+				output ")")
+		
+		and printTypeAbbrev = function
+			TypeAbbrev(name, arglist, ty, pos) ->
+				(output "TypeAbbrev(";
+				printSymbol name;
+				printWithCommas printSymbol arglist;
+				output ", ";
+				printType ty;
+				output ", ";
+				printPos pos;
+				output_line ")";)
+
+		and printFixity = function
+				Fixity(names, k, prec, pos) ->
+					(output "Fixity(";
+					printWithCommas printSymbol names;
+					output ", ";
+					printFixityKind k;
+					output ", ";
+					output (string_of_int prec);
+					output ", ";
+					printPos pos;
+					output_line ")")
 					
 		and printFixityKind = function
 				Infix(pos) ->
-					(print_string "Infix(";
+					(output "Infix(";
 					printPos pos;
-					print_string ")")
+					output ")")
 			|	Infixl(pos) ->
-					(print_string "Infixl(";
+					(output "Infixl(";
 					printPos pos;
-					print_string ")")
+					output ")")
 			|	Infixr(pos) ->
-					(print_string "Infixr(";
+					(output "Infixr(";
 					printPos pos;
-					print_string ")")
+					output ")")
 			|	Prefix(pos) ->
-						(print_string "Prefix(";
+						(output "Prefix(";
 						printPos pos;
-						print_string ")")
+						output ")")
 			|	Prefixr(pos) ->
-					(print_string "Prefixr(";
+					(output "Prefixr(";
 					printPos pos;
-					print_string ")")
+					output ")")
 			|	Postfix(pos) ->
-					(print_string "Postfix(";
+					(output "Postfix(";
 					printPos pos;
-					print_string ")")
+					output ")")
 			|	Postfixl(pos) ->
-					(print_string "Postfixl(";
+					(output "Postfixl(";
 					printPos pos;
-					print_string ")")
+					output ")")
 	
 		and printIdKind = function
-				CVID -> print_string "CVID"
-			|	ConstID -> print_string "ConstID"
-			|	AVID -> print_string "AVID"
-			|	VarID -> print_string "VarID"
+				CVID -> output "CVID"
+			|	ConstID -> output "ConstID"
+			|	AVID -> output "AVID"
+			|	VarID -> output "VarID"
 		
 		and printKind = function
 				Kind(symlist, Some i, pos) ->
-					(print_string "Kind(";
-					List.map printSymbol symlist;
-					print_string ("Arity: " ^ (string_of_int i));
-					print_string ")")
+					(output "Kind(";
+					printWithCommas printSymbol symlist;
+					output ",";
+					output (string_of_int i);
+					output_line ")")
 			|	Kind(symlist, None, pos) ->
-					(print_string "Kind(";
-					List.map printSymbol symlist;
-					print_string ")")
+					(output "Kind(";
+					printWithCommas printSymbol symlist;
+					output_line ")")
+
 		and printType = function
 				Atom(sym, k, pos) ->
-					(print_string (Symbol.name sym);
+					(output "Atom(";
+					output (Symbol.name sym);
+					output ", ";
 					printIdKind k;
-					printPos pos)
+					output ", ";
+					printPos pos;
+					output ")")
 			|	App(t1, t2, pos) ->
-					(print_string "App(";
+					(output "App(";
 					printType t1;
-					print_string ", ";
+					output ", ";
 					printType t2;
-					print_string ")";
+					output ")";
 					printPos pos)
 			|	Arrow(t1, t2, pos) ->
-					(printType t1;
-					print_string "->";
+					(output "Arrow(";
+					printType t1;
+					output ", ";
 					printType t2;
-					printPos pos)
+					output ", ";
+					printPos pos;
+					output ")")
 
 		and printTypeSymbol = function
 				TypeSymbol(tsym, Some t, idk, pos) ->
-					(print_string "TypeSymbol(";
-					print_string (Symbol.name tsym);
+					(output "TypeSymbol(";
+					output (Symbol.name tsym);
 					printType t;
 					printIdKind idk;
 					printPos pos)
 			|	TypeSymbol(tsym, None, idk, pos) ->
-					(print_string "TypeSymbol(";
-					print_string (Symbol.name tsym);
+					(output "TypeSymbol(";
+					output (Symbol.name tsym);
 					printIdKind idk;
 					printPos pos)
 
 		(*	Print a Preabstract Syntax Term	*)
 		and printTerm = function
 				SeqTerm(tlist, pos) ->
-					(print_string "SeqTerm(";
-					List.map printTerm tlist;
+					(output "SeqTerm(";
+					List.iter printTerm tlist;
 					printPos pos;
-					print_string ")";
-					newLine())
+					output_line ")")
 			|	ListTerm(tlist, pos) ->
-					(print_string "ListTerm(";
+					(output "ListTerm(";
 					List.map printTerm tlist;
 					printPos pos;
-					print_string ")";
-					newLine())
+					output_line ")")
 			|	ConsTerm(tlist, t, pos) ->
-					(print_string "ConsTerm(";
+					(output "ConsTerm(";
 					List.map printTerm tlist;
 					printTerm t;
 					printPos pos;
-					print_string ")";
-					newLine())
+					output_line ")")
 			|	IdTerm(sym, None, k, pos) ->
-					(print_string (Symbol.name sym);
+					(output "IdTerm(";
+					output (Symbol.name sym);
+					output ", ";
 					printIdKind k;
+					output ", ";
 					printPos pos;
-					newLine())
+					output_line ")")
 			|	IdTerm(sym, Some t, k, pos) ->
-					(print_string (Symbol.name sym);
+					(output "IdTerm(";
+					output (Symbol.name sym);
 					printType t;
+					output ", ";
 					printIdKind k;
+					output ", ";
 					printPos pos;
-					newLine())
+					output_line ")")
 			|	RealTerm(r, pos) ->
-					((print_string (string_of_float r));
+					(output "RealTerm(";
+					output (string_of_float r);
+					output ", ";
 					printPos pos;
-					newLine())
+					output_line ")")
 			|	IntTerm(i, pos) ->
-					((print_string (string_of_int i));
+					(output "RealTerm(";
+					output (string_of_int i);
 					printPos pos;
-					newLine())
+					output_line ")")
 			|	StringTerm(s, pos) ->
-					(print_string s;
+					(output "StringTerm(";
+					output s;
 					printPos pos;
-					newLine())
+					output_line ")")
 			|	OpTerm(o, pos) ->
-					(printOperation o;
+					(output "OpTerm(";
+					printOperation o;
 					printPos pos;
-					newLine())
+					output_line ")")
 		
+		and printClause = function
+				Clause(ts) ->
+					(output "Clause(";
+					List.map printTerm ts;
+					output_line ")")
+
 		and printOperation = function
-				COMMA -> print_string ","
-			|	PLUS -> print_string "+"
-			|	MINUS -> print_string "-"
-			|	TIMES -> print_string "*"
-			|	UMINUS -> print_string "-"
-			|	GE -> print_string ">="
-			|	GT -> print_string ">"
-			|	LE -> print_string "<="
-			|	LT -> print_string "<"
+				COMMA -> output ","
+			|	PLUS -> output "+"
+			|	MINUS -> output "-"
+			|	TIMES -> output "*"
+			|	UMINUS -> output "-"
+			|	GE -> output ">="
+			|	GT -> output ">"
+			|	LE -> output "<="
+			|	LT -> output "<"
 
 		and printPreAbsyn' = function
-				Module(name, gconstants, lconstants, cconstants, tlist) ->
-					(print_endline ("Module: " ^ name);
+				Module(name, gconstants, lconstants, cconstants, fixities, gkinds, lkinds, tabbrevs, clauses, accummod, accumsig, usesig) ->
+					(output_line ("Module:" ^ name);
+					output_line "Constants:";
 					List.map printConstant gconstants;
 					List.map printConstant lconstants;
 					List.map printConstant cconstants;
-					List.map printTerm tlist;
+					output_line "";
+					output_line "Kinds:";
+					List.map printKind gkinds;
+					output_line "";
+					List.map printKind lkinds;
+					output_line "Type Abbrevs:";
+					List.map printTypeAbbrev tabbrevs;
+					output_line "Clauses:";
+					List.map printClause clauses;
+					output_line "Fixities:";
+					List.map printFixity fixities;
 					())
-			|	Signature(name, gconstants) ->
-					(print_endline ("Signature: " ^ name);
+			|	Signature(name, gconstants, gkinds, tabbrevs, fixities, accumsig) ->
+					(output_line ("Signature: " ^ name);
+					output_line "Constants:";
 					List.map printConstant gconstants;
+					output_line "Kinds:";
+					List.map printKind gkinds;
+					output_line "Type Abbrevs:";
+					List.map printTypeAbbrev tabbrevs;
 					())
 	in
 		printPreAbsyn' m
