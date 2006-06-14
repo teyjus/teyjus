@@ -1,0 +1,155 @@
+<linkcode version number> --- 1 word
+[Module Name]
+<name size> --- 1 byte
+{
+	<ith character of name> --- 1 byte
+}
+
+[Dependency List]
+<number of module files> --- 2 bytes
+{
+	[Module Name]
+	<name size> --- 1 byte
+	{
+		<ith character of name> --- 1 byte
+	}
+}
+
+[Global Kinds]
+<number of global kinds> --- 2 bytes
+{
+	[Global Kind]
+	<arity> --- 1 byte
+	<name size> --- 1 byte
+	{
+		<ith character of name> --- 1 byte
+	}
+}
+
+[Local Kinds]
+<number of local kinds> --- 2 bytes
+{
+	[Local Kind]
+	<arity> --- 1 byte
+}
+
+[Type Skeletons]
+<number of type skeletons> --- 2 bytes
+{
+	[Type Skeleton]
+	<prefix representation of type skeleton> (see bytecode.txt)
+}
+
+[Global Constants]
+<number of global constants> --- 2 bytes
+{
+	[Global Constant]
+	<fixity> --- 1 byte
+	<precedence> --- 1 byte
+	<type env size> --- 1 byte
+	<type preserving info> --- 1 byte  (0 if not type preserving, 1 otherwise)
+	<name size> --- 1 byte
+	{
+		<ith character of name> --- 1 byte
+	}
+	<index into type skeleton list> --- 2 bytes
+}
+	
+[Local Constants]
+<number of local constants> --- 2 bytes
+{
+	[Local Constant]
+	<fixity> --- 1 byte
+	<precedence> --- 1 byte
+	<type env size> --- 1 byte
+	<index into type skeleton list> --- 2 bytes
+}
+
+[Hidden Constants]
+<number of hidden constants> --- 2 bytes
+{
+	[Local Constant]
+	<type env size> --- 1 byte
+	<index into type skeleton list> --- 2 bytes
+}
+
+[Implication Goal Tables]
+<number of implication goals> --- 2 bytes
+{
+	[Implication goal]
+	<number of entries in next clause table>
+	{
+		<mark local/global/hidden> --- 1 byte
+		<index into constant table> --- 2 bytes
+	}
+	<find function code> --- 1 byte
+	<search table size> --- 1 word
+	<number of predicates> --- 2 bytes
+	{
+		<mark local/global/hidden> --- 1 byte
+		<index into constant table> --- 2 bytes
+		<relative address of code> --- 1 word
+	}
+}
+
+[Hash Tables]
+<number of hash tables> --- 2 bytes
+{
+	[Hash Table]
+	<size>	--- 1 word
+	<number of entries> --- 2 bytes
+	{
+		<mark local/global/hidden> --- 1 byte
+		<index into constant table> --- 2 bytes
+		<relative address of code> --- 1 word
+	}
+}
+
+[Bound Variable Tables]
+<number of bound variable tables>
+{
+	[Bound Variable Table]
+	<size>	--- 1 word
+	<number of entries> --- 2 bytes
+	{
+		<index> --- 1 byte
+		<relative address of code> --- 1 word
+	}
+}
+
+[Add Code Table]
+<find function code> --- 1 byte
+<number of predicates> --- 2 bytes
+<table size> --- 1 word
+{
+	<mark local/global/hidden> --- 1 byte
+	<index into constant table> --- 2 bytes
+	<relative address of code> --- 1 word
+}
+
+[Import Tables]
+<number of import tables> --- 1 byte
+{
+	[Import Table]
+	<number of code segments> --- 1 byte
+	<count of local constants> --- 2 bytes
+	{
+		<index into local constant table> --- 2 bytes
+	}
+	<count of 'global' predicates> --- 1 byte
+	{
+		<mark local/global> --- 1 byte
+		<index into constant table> --- 2 bytes
+	}
+	<find function code> --- 1 byte
+	<number of predicates> --- 2 bytes
+	<table size> --- 1 word
+	{
+		<mark local/global/hidden> --- 1 byte
+		<index into constant table> --- 2 bytes
+		<relative address of code> --- 1 word
+	}
+}
+
+[Bytecode]
+<Bytecode in a form identical to that in the bytecode files>
