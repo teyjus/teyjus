@@ -1,0 +1,66 @@
+--Recompilation scheme
+
+As the linker runs, it maintains a list of all of the module bytecode files it uses to construct a linked program.  This list is output in the linked the bytecode (see linkcode.txt) and the loader can compare the modification timestamps of these files to that of the linked bytecode to determine if the linked code is up to date.  The linker does not check if a linked bytecode file exists when it is called.  Version checking is left to the loader.
+
+--Data structure overview.
+
+The data structures in the linker can be catagorized by the lifetime of the data they contain.  I will refer to these lifetimes as program, import point, module, and temporary lifetimes respectively.
+
+The structures that have program lifetimes contain data that needs to be written out to the link code files.  These structures grow as new files are loaded, and the data in them may be altered to allow the code for modules to be defined, but thier size is never reduced.
+
+A vector listing the loaded bytecode files.
+A global kind vector.		(GKinds)
+A local kind vector.		(LKinds)
+A type skeleton vector.		(TySkels)
+A global constant vector.	(GConsts)
+A local contant vector.		(LConsts)
+A hidden constants vector.	(HConsts)
+A strings vector.			(StringSpaces)
+A hash table vector.		(HashTabs)
+A bound variable table vector.	(BvrTabs)
+An implication goal vector. (ImplGoals)
+A code vector.				(Code)
+and a import table list.	(ImportTabs)
+
+The structures that have import lifetime are references to entries in the program lifetime structures which cannot be properly resolved at the time they are read from file.  These are corrected after the entire import point has been loaded.
+
+A predicate call list.
+A predicate collision list.
+
+The structures that have module lifetimes hold information necessary to resolve content being read from the current module.  These are collected into a 'Module' structure.  A stack of these structures is maintained and is globally accessable.  The top of the stack is the entry currently relevant, and is pointed to by the CM variable.
+
+A open file descriptor.
+A global kind map.
+A local kind size and offset.
+A type skeleton size and offset. (May be replaced by a full map)
+A global constant map.
+A local constant size and offset.
+A hidden constant size and offset.
+A string size and offset.
+A hash table size and offset.
+A bound variable table size and offset.
+An implication goal size and offset.
+A code size and offset.
+
+The temporary data structures hold information which will be used in loading something in the current module, but can be discarded once we begin loading another module.  These structures are:
+
+A constant renaming table.
+A kind renaming table.
+
+--Flow of execution
+
+The linker runs as an independent program that takes the name of the top level module as input.  After initializing it's global data structures (InitAll()), the linker proceeds by loading in the top level module description (LoadTopModule()).  
+
+This function creates an import point for the top level context, sets the open file descriptor for CM, and walks through the bytecode file loading the data structures.  Each data structure is loaded by a call to the appropriate loader function.  Since this is the top level module, LoadTopGConsts and LoadTopGKinds are called instead of LoadGConsts and LoadGKinds.
+
+When the linker is loading the imported modules field, it first checks if there is a non-zero number of imported modules, in which case it increments the number of code segments and sets the code segment id of CM to the old value.  This value will be used later in loading the code of that module.
+
+For each imported module we push a new module frame on our module stack and tell it to use a new import table, reset the constant and kind renaming tables with the provided information, call LoadModule() to extend the module space, then finish the import table and restore the CM.
+
+The process for accumulated modules is the same, except that the number of code segments is never incremented, and we do not create a new import table, we simply keep using the current one.
+
+When we load the import table for a module, we extend the import table that corresponds with the module.  In doing so, we may find multiple definitions for the same predicate.  The collisions are marked in the collisions list of the predicate in that import table.  Since imported modules create new import tables, they create no collisions with the importing module.
+
+When code is loaded names (of kinds, constants, hash tables, etc.) are resolved using information stored in CM.  In the bytecode the call instruction uses a constant index that must be resolved to a code label.  Whenever we encounter such an instruction, we mark it's occurence in the predicate call list of the current import module.
+
+When we finish an import table, we first resolve all of the collisions in the predicate collision list.  This entails repeated calls the merge_defs() procedure which will be described elsewhere.  The ordering of the clauses is set by the order the entries appear in the collision list, which is determined by the order the import tables providing those definitions are read.  After the collisions are resolved, we resolve the calls in the predicate call list, to offsets into the bytecode where possible, to constant indexes otherwise.

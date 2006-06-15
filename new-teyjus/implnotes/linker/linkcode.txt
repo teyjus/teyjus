@@ -127,11 +127,12 @@
 	<relative address of code> --- 1 word
 }
 
+<number of code segments> --- 1 byte
+
 [Import Tables]
 <number of import tables> --- 1 byte
 {
 	[Import Table]
-	<number of code segments> --- 1 byte
 	<count of local constants> --- 2 bytes
 	{
 		<index into local constant table> --- 2 bytes
