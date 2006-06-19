@@ -1,4 +1,6 @@
 
+#include <stdlib.h>
+#include "tables/instructions.h"
 //////////////////////////////////////////////////////
 //Code Load and Write Code
 //////////////////////////////////////////////////////
@@ -55,14 +57,99 @@ void LoadCode()
 	int size=CM->Codesize;
 	int offset=CM->offset;
 	int limit=size+offset;
-	int opcode
+	int opcode=-1;
+	argcode
+	INSTR_operand_type argtype=INSTR_X;
+	int argid=0;
 	while(offset<limit)
 	{
-		opcode=Code.entry[offset]=GET1();
-		switch(opcode)
-		{
-			
+		opcode=Code.entry[offset++]=GET1();
+		argcode=INSTR_info[opcode];
+		argid=0;
+		do{
+			argtype=INSTR_operand_types[argcode][argid++];
+			switch(argtype)
+			{
+				case INSTR_P:
+					offset++;
+					break;
+					
+				case INSTR_R:
+				case INSTR_E:
+				case INSTR_N:
+				case INSTR_I1:
+				case INSTR_CE:
+					*(INT1*)(Code.entry+offset)=GET1();
+					offset+=sizeof(INT1);
+					break;
+
+				case INSTR_I2:
+					*(INT2*)(Code.entry+offset)=GET2();
+					offset+=sizeof(INT2);
+					break;
+					
+				case INSTR_T:
+					*(TySkelInd*)(Code.entry+offset)=GetTySkelInd();
+					offset+=sizeof(TySkelInd);
+					break;
+					
+				case INSTR_C:
+					*(ConstInd*)(Code.entry+offset)=GetConstInd();
+					offset+=sizeof(ConstInd);
+					break;
+					
+				case INSTR_K:
+					*(KindInd*)(Code.entry+offset)=GetKindInd();
+					offset+=sizeof(KindInd);
+					break;
+					
+				case INSTR_MT:
+					*(ImportTabInd*)(Code.entry+offset)=GetImportTabInd();
+					offset+=sizeof(ImportTabInd);
+					break;
+					
+				case INSTR_IT:
+					*(ImplTabInd*)(Code.entry+offset)=GetImplTabInd();
+					offset+=sizeof(ImplTabInd);
+					break;
+					
+				case INSTR_HT:
+					*(HashTabInd*)(Code.entry+offset)=GetHashTabInd();
+					offset+=sizeof(HashTabInd);
+					break;
+					
+				case INSTR_BVT:
+					*(BvrTabInd*)(Code.entry+offset)=GetBvrTabInd();
+					offset+=sizeof(BvrTabInd);
+					break;
+					
+				case INSTR_S:
+				case INSTR_SL:
+					*(StringSpaceInd*)(Code.entry+offset)=GetStringSpaceInd();
+					offset+=sizeof(StringSpaceInd);
+					break;
+				
+				case INSTR_L:
+					*(CodeInd*)(Code.entry+offset)=GetCodeInd();
+					offset+=sizeof(CodeInd);
+					break;
+					
+				case INSTR_I:
+					*(INT4*)(Code.entry+offset)=GET4();
+					offset+=sizeof(INT4);
+					break;
+
+				case INSTR_F:
+					*(LFloat*)(Code.entry+offset)=GetFloat();
+					offset+=sizeof(LFloat);
+					break;
+
+				default:
+				case INSTR_X:
+					;			/* null instruction */
+			}
 		}
+		while(argtype!=INSTR_X)
 	}
 }
 
