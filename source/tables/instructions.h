@@ -7,10 +7,9 @@
 /*   instruction.                                                           */
 /*                                                                          */
 /****************************************************************************/
-
-
 #ifndef INSTRUCTIONS_H
 #define INSTRUCTIONS_H
+
 
 /***************************************************************************/
 /*              OPERAND TYPES                                              */
@@ -113,31 +112,8 @@ typedef enum INSTR_InstrCategory
 /*               OPERAND TYPES TABLE                                        */
 /****************************************************************************/
 
-/* Max number of operand that could be taken by instructions including the  */
-/* padding bytes and one to terminate the list. (machine dependent)         */
-#ifdef MACH_64
-
-#define INSTR_MAX_OPERAND     12  //temp
-
-#else  //MACH_64 (32-bit machine)
-
-#define INSTR_MAX_OPERAND     8  
-
-#endif //MACH_64
-
-
-/* this array is indexed by instruction category.  For each category,
-   INSTR_operandTypeTab contains a string of values indicating the type
-   of the operand at that position, terminated by INSTR_X.  This
-   information is useful when parsing instruction streams. */
-typedef INSTR_OperandType 
-        INSTR_OperandTypeTab[INSTR_NUM_INSTR_CATS][INSTR_MAX_OPERAND];
-/*
-typedef INSTR_OperandType 
-        INSTR_OperandTypeTab[1][12];
-*/
-extern INSTR_OperandTypeTab INSTR_operandTypeTable;
-
+//the operand types array in a given entry
+INSTR_OperandType* INSTR_operandTypes(INSTR_InstrCategory index);
 
 /***************************************************************************/
 /*              OPCODES OF INSTRUCTIONS                                    */
@@ -169,19 +145,13 @@ extern INSTR_OperandTypeTab INSTR_operandTypeTable;
 
 #define   instr_end                           181
 #define   INSTR_NUM_INSTRS                    182 
+
 /***************************************************************************/
 /*              INSTRUCTION INFORMATION TABLE                              */
 /***************************************************************************/
-typedef struct                        //entry of the instruction info table
-{
-    char* name;
-    INSTR_InstrCategory type;
-    int   size;
-} INSTR_InstrInfoTab_;
-
-typedef INSTR_InstrInfoTab_ INSTR_InstrInfoTab[INSTR_NUM_INSTRS]; 
-
-extern INSTR_InstrInfoTab INSTR_instrInfoTable;    //instruction info table
+INSTR_InstrCategory INSTR_instrType(int index);  //instr type in a given entry 
+char*               INSTR_instrName(int index);  //instr name in a given entry
+int                 INSTR_instrSize(int index);  //instr size in a given entry
 
 
 #endif //INSTRUCTIONS_H
