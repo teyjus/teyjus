@@ -37,6 +37,13 @@ DF_TermPtr   AM_argVec;              //argument vector of a hnf
 
 DF_TermPtr   AM_vbbreg;              //variable being bound for occ
 DF_TypePtr   AM_tyvbbreg;            //type var being bound for occ
+
+//The size of AM_adjreg is decided by that of relevant fields in term
+//representations which can be found in dataformats.c
+TwoBytes     AM_adjreg;              //univ count of variable being bound
+
+DF_DisPairPtr AM_llreg;              //ptr to the live list
+
 /****************************************************************************/
 /*               STACK, HEAP, TRAIL AND PDL RELATED STUFF                  */
 /****************************************************************************/
@@ -45,6 +52,50 @@ MemPtr     AM_heapBeg,                //beginning of the heap
            AM_heapEnd,                //end of the heap
            AM_pdlBeg,                 //beginning of pdl
            AM_pdlEnd;                 //end of pdl
+
+
+/***************************************************************************/
+/*                     LIVE LIST OPERATIONS                                */
+/***************************************************************************/
+//live list is empty?
+Boolean AM_empLiveList() { return (AM_llreg == DF_EMPTY_DIS_SET);}
+
+//live list not empty?
+Boolean AM_nempLiveList(){ return (AM_llreg != DF_EMPTY_DIS_SET);}
+
+//add a dis pair to the live list when not knowning it is empty or not
+void    AM_addDisPair(DF_TermPtr tPtr1, DF_TermPtr tPtr2)
+{
+    MemPtr nhtop = AM_hreg + DF_DISPAIR_SIZE;
+    AM_heapError(nhtop);
+    if (AM_nempLiveList()) DF_modDisPairPrev(AM_llreg, (DF_DisPairPtr)AM_hreg);
+    DF_mkDisPair(AM_hreg, DF_EMPTY_DIS_SET, AM_llreg, tPtr1, tPtr2);
+    AM_llreg = (DF_DisPairPtr)AM_hreg;
+    AM_hreg = nhtop;
+}
+
+//add a dis pair to the live list when knowning it is noempty 
+void    AM_addDisPairToNEmp(DF_TermPtr tPtr1, DF_TermPtr tPtr2)
+{
+    MemPtr nhtop = AM_hreg + DF_DISPAIR_SIZE;
+    AM_heapError(nhtop);
+    DF_modDisPairPrev(AM_llreg, (DF_DisPairPtr)AM_hreg);
+    DF_mkDisPair(AM_hreg, DF_EMPTY_DIS_SET, AM_llreg, tPtr1, tPtr2);
+    AM_llreg = (DF_DisPairPtr)AM_hreg;
+    AM_hreg = nhtop;
+}
+
+//delete a given dis pair from the live list
+void    AM_deleteDisPair(DF_DisPairPtr disPtr)
+{
+    DF_DisPairPtr prevPtr = DF_disPairPrev(disPtr);
+    DF_DisPairPtr nextPtr = DF_disPairNext(disPtr);
+    //trail (disPtr)
+    if (DF_isNEmpDisSet(nextPtr)) DF_modDisPairPrev(nextPtr, prevPtr);
+    if (DF_isNEmpDisSet(prevPtr)) DF_modDisPairNext(prevPtr, nextPtr);
+    else AM_llreg = nextPtr;
+}
+
 
 /***************************************************************************/
 /*                        PDL OPERATIONS                                   */
@@ -63,6 +114,9 @@ Boolean AM_emptyTypesPDL()       { return (AM_pdlTop == AM_typespdlBot); }
 Boolean AM_nemptyTypesPDL()      { return (AM_pdlTop > AM_typespdlBot);  }
 //initialize type PDL
 void    AM_initTypesPDL()        { AM_typespdlBot = AM_pdlTop;           }
+//recover type PDL to the status before type unification 
+void    AM_resetTypesPDL()       { AM_pdlTop = AM_typespdlBot;           }
+
 
 /****************************************************************************
  *                         OVERFLOW ERROR FUNCTIONS                         *
@@ -72,7 +126,7 @@ void AM_heapError(MemPtr p)                 //heap overflow
     if (AM_heapEnd < p) {
          // to be replaced by real exception handling functions
         printf("heap over flow\n");
-        exit(1);
+        EM_error();
     }
 }
 
@@ -81,7 +135,7 @@ void AM_pdlError(int n)                    //pdl overflow for n pairs
     if (AM_pdlEnd < (AM_pdlTop + n)){
         // to be replaced by real exception handling functions
         printf("pdl over flow\n");
-        EM_throw();
+        EM_error();
     }
 }   
   
@@ -93,7 +147,7 @@ void AM_embedError(int n)     //violation of max number of lambda embeddings
     if (n > DF_MAX_BV_IND){
         // to be replaced by real exception handling functions
         printf("exceed the max number of lambda embeddings\n");
-        EM_throw();
+        EM_error();
     }
 }
 
@@ -102,7 +156,7 @@ void AM_arityError(int n)    // violation of max number of arity in applications
     if (n > DF_TM_MAX_ARITY){
          // to be replaced by real exception handling functions
         printf("exceed the max number of term arity\n");
-        EM_throw();
+        EM_error();
     }
 }
 
