@@ -1,145 +1,123 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include "module.h"
 #include "rename.h"
+#include "vector.h"
+#include "tree.h"
+#include "file.h"
 
-struct ConstRNTabEnt{
-	Name name;
-	ConstInd index;
-	struct ConstRNTabEnt* next;
-	struct ConstRNTabEnt* last;
-};
+struct Vector ConstRNTab;
+struct Tree ConstRNTree;
 
-struct ConstRNTabEnt* ConstRNTab;
+void LoadConstRNTabEnt(int i);
 
 void LoadConstRNTable()
 {
-	if(ConstRNTab!=NULL)
+	if(ConstRNTree.root!=NULL)
 	{
-		printf("Const renaming table should be empty.");
+		printf("Const renaming table should be empty.\n");
 		exit(0);
 	}
-	
-	int size=GET1();
+	Destroy(&ConstRNTab);
+	INT2 size=GET2();
+	InitVec(&ConstRNTab,(int)size,sizeof(ConstInd));
+	Extend(&ConstRNTab,(int)size);
 	int i;
 	for(i=0;i<size;i++)
 	{
-		LoadConstRNTabEnt();
+		LoadConstRNTabEnt(i);
 	}
 }
 
-void LoadConstRNTabEnt()
+void LoadConstRNTabEnt(int i)
 {
-	struct ConstRNTabEnt* ent=malloc(sizeof(struct ConstRNTabEnt));
-	if(ent==NULL)
+	ConstInd* tmp=(ConstInd*)Fetch(&ConstRNTab,i);
+	
+	Name name;
+	GetName(&name);
+	*tmp=GetConstInd();
+	if(i!=Add(&ConstRNTree,name.string))
 	{
-		perror("Memory Allocation Failed");
+		printf("Duplicate name in rename table\n");
 		exit(0);
 	}
 	
-	ent->string=GetName();
-	ent->index=GetConstInd();
-	ent->next=ConstRNTab;
-	ConstRNTab->last=ent;
-	ConstRNTab=ent;
+	Clear(name);
 }
 
 ConstInd RenameConst(Name name)
 {
-	ConstInt ret;
-	struct ConstRNTabEnt* tmp=ConstRNTab;
-	while(tmp!=NULL)
+	int tmp=Remove(&ConstRNTree,name.string);
+	if(-1==tmp)
 	{
-		if(strcmp(tmp.name.string,name.string)==0)
-		{
-			if(tmp.next!=NULL)
-				tmp.next.last=tmp.last;
-			
-			if(tmp.last!=NULL)
-			{
-				tmp.last.next=tmp.next;
-			}
-			else
-			{
-				ConstRNTab=tmp.next;
-			}
-			
-			ret=tmp.index;
-			free(tmp);
-			return ret;
-		}
+		printf("Unrecognized global constant %s\n",name.string);
+		exit(0);
 	}
-	
-	printf("Unable to find name in rename table");
-	exit(0);
+	else
+	{
+		return *(ConstInd*)Fetch(&ConstRNTab,tmp);
+	}
 }
 
 
-struct KindRNTabEnt{
-	Name name;
-	KindInd index;
-	struct KindRNTabEnt* next;
-	struct KindRNTabEnt* last;
-};
+struct Vector KindRNTab;
+struct Tree KindRNTree;
 
-struct KindRNTabEnt* KindRNTab;
+void LoadKindRNTabEnt(int i);
 
 void LoadKindRNTable()
 {
-	if(KindRNTab!=NULL)
+	if(KindRNTree.root!=NULL)
 	{
-		printf("Kind renaming table should be empty.");
+		printf("Kind renaming table should be empty.\n");
 		exit(0);
 	}
-	
-	int size=GET1();
+	Destroy(&KindRNTab);
+	INT2 size=GET2();
+	InitVec(&KindRNTab,(int)size,sizeof(KindInd));
+	Extend(&KindRNTab,(int)size);
 	int i;
 	for(i=0;i<size;i++)
 	{
-		LoadKindRNTabEnt();
+		LoadKindRNTabEnt(i);
 	}
 }
 
-void LoadKindRNTabEnt()
+void LoadKindRNTabEnt(int i)
 {
-	struct KindRNTabEnt* ent=malloc(sizeof(struct KindRNTabEnt));
-	if(ent==NULL)
+	KindInd* tmp=(KindInd*)Fetch(&KindRNTab,i);
+	
+	Name name;
+	GetName(&name);
+	*tmp=GetKindInd();
+	
+	if(i!=Add(&KindRNTree,name.string))
 	{
-		perror("Memory Allocation Failed");
+		printf("Duplicate name in rename table\n");
 		exit(0);
 	}
 	
-	ent->string=GetName();
-	ent->index=GetKindInd();
-	ent->next=KindRNTab;
-	KindRNTab->last=ent;
-	KindRNTab=ent;
+	Clear(name);
 }
 
 KindInd RenameKind(Name name)
 {
-	KindInt ret;
-	struct KindRNTabEnt* tmp=KindRNTab;
-	while(tmp!=NULL)
+	int tmp=Remove(&KindRNTree,name.string);
+	if(-1==tmp)
 	{
-		if(strcmp(tmp.name.string,name.string)==0)
-		{
-			if(tmp.next!=NULL)
-				tmp.next.last=tmp.last;
-			
-			if(tmp.last!=NULL)
-			{
-				tmp.last.next=tmp.next;
-			}
-			else
-			{
-				KindRNTab=tmp.next;
-			}
-			
-			ret=tmp.index;
-			free(tmp);
-			return ret;
-		}
+		printf("Unrecognized global kind %s\n",name.string);
+		exit(0);
 	}
-	
-	printf("Unable to find name in rename table");
-	exit(0);
+	else
+	{
+		return *(KindInd*)Fetch(&KindRNTab,tmp);
+	}
 }
 
+void InitRNTables()
+{
+	InitVec(&ConstRNTab,0,sizeof(ConstInd));
+	InitTree(&ConstRNTree);
+	InitVec(&KindRNTab,0,sizeof(KindInd));
+	InitTree(&KindRNTree);
+}

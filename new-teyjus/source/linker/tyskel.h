@@ -1,6 +1,6 @@
 #ifndef _TYSKEL_H_
 #define _TYSKEL_H_
-
+#include "datatypes.h"
 //TySkel Header Data
 //Note: No individual representation in CM.
 /*typedef struct{
@@ -10,6 +10,6 @@
 void InitTTySkels();
 void LoadTySkels();
 void WriteTySkels();
-void LoadTySkelSpace();
+int TySkelCmp(TySkelInd a, TySkelInd b);
 
 #endif //_TYSKEL_H_
