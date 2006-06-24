@@ -289,10 +289,60 @@ void DF_mkDummyEnv(MemPtr loc, int l, DF_EnvPtr rest);    //@l env item
 void DF_mkPairEnv(MemPtr loc, int l, DF_TermPtr t, DF_EnvPtr rest);
                                                           // (t, l) env item
 
-/* SPECIAL CONSTANTS */
-Boolean DF_sameConst(DF_TermPtr const1, DF_TermPtr const2);   //same const?
+/* TERM MODIFICATION */
+void DF_modVarUC(DF_TermPtr vPtr, int uc);         
 
-Boolean DF_sameStr(DF_TermPtr str1, DF_TermPtr str2);         //same string?
+/* SPECIAL CONSTANTS */
+Boolean DF_sameConsts(DF_TermPtr const1, DF_TermPtr const2);   //same const?
+
+Boolean DF_sameStrs(DF_TermPtr str1, DF_TermPtr str2);         //same string?
+
+
+/********************************************************************/
+/*                                                                  */
+/*                    DISAGREEMENT SET REPRESENTATION               */
+/*                                                                  */
+/*                    A double linked list                          */
+/********************************************************************/
+
+typedef struct DF_disPair   //each node in the disagreement set
+{
+    struct DF_disPair    *prev;
+    struct DF_disPair    *next;
+    DF_TermPtr           firstTerm;
+    DF_TermPtr           secondTerm;
+} DF_DisPair;
+
+typedef DF_DisPair  *DF_DisPairPtr; //pointer to a disagreement pair
+
+#define DF_DISPAIR_SIZE   sizeof(DF_DisPair)
+
+#define DF_EMPTY_DIS_SET  NULL      //empty disagreement set
+
+/******************************************************************/
+/*                      Interface functions                       */
+/******************************************************************/
+
+//create a new node at the given location
+void DF_mkDisPair(MemPtr loc, DF_DisPairPtr prev, DF_DisPairPtr next, 
+                  DF_TermPtr first, DF_TermPtr second);
+
+//modify the prev field of a given disagreement pair
+void DF_modDisPairPrev(DF_DisPairPtr loc, DF_DisPairPtr newPrev);
+//modify the next field of a given disagreement pair
+void DF_modDisPairNext(DF_DisPairPtr loc, DF_DisPairPtr newNext);
+
+
+//decomposition
+DF_DisPairPtr DF_disPairPrev(DF_DisPairPtr disPtr);
+DF_DisPairPtr DF_disPairNext(DF_DisPairPtr disPtr);
+DF_TermPtr    DF_disPairFirstTerm(DF_DisPairPtr disPtr);
+DF_TermPtr    DF_disPairSecondTerm(DF_DisPairPtr disPtr);
+
+//whether a given disagreement set is empty
+Boolean       DF_isEmpDisSet(DF_DisPairPtr disPtr);
+Boolean       DF_isNEmpDisSet(DF_DisPairPtr disPtr);
+
 
 #endif  //DATAFORMATS_H
 

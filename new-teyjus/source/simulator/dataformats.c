@@ -601,19 +601,78 @@ void DF_mkPairEnv(MemPtr loc, int l, DF_TermPtr t, DF_EnvPtr rest)
 }
 
 
+/* TERM MODIFICATION  */
+void DF_modVarUC(DF_TermPtr vPtr, int uc)
+{
+    ((DF_VarTerm*)vPtr) -> univCount = uc;
+}
+
 /* SPECIAL CONSTANTS  */
 
-Boolean DF_sameConst(DF_TermPtr const1, DF_TermPtr const2)   //same constant?
+Boolean DF_sameConsts(DF_TermPtr const1, DF_TermPtr const2)   //same constant?
 {
     return (((DF_ConstTerm*)const1)->data.value == 
             ((DF_ConstTerm*)const2)->data.value);
 }
 
-Boolean DF_sameStr(DF_TermPtr str1, DF_TermPtr str2)         //same string?
+Boolean DF_sameStrs(DF_TermPtr str1, DF_TermPtr str2)         //same string?
 {
     if (str1 == str2) return TRUE;
     return (strcmp(((DF_StrTerm*)str1)->charList, 
                    (((DF_StrTerm*)str2)->charList)) == 0);
 }
+
+/********************************************************************/
+/*                                                                  */
+/*                     DISAGREEMENT SET REPRESENTATION              */
+/*                                                                  */
+/*                    A double linked list                          */
+/********************************************************************/
+
+//create a new node at the given location
+void DF_mkDisPair(MemPtr loc, DF_DisPairPtr prev, DF_DisPairPtr next, 
+                  DF_TermPtr first, DF_TermPtr second)
+{
+    ((DF_DisPairPtr)(loc)) -> prev       = prev;
+    ((DF_DisPairPtr)(loc)) -> next       = next;
+    ((DF_DisPairPtr)(loc)) -> firstTerm  = first;
+    ((DF_DisPairPtr)(loc)) -> secondTerm = second;
+}
+
+//modify the prev field of a given disagreement pair
+void DF_modDisPairPrev(DF_DisPairPtr loc, DF_DisPairPtr newPrev)
+{
+    loc -> prev = newPrev;
+}
+
+//modify the next field of a given disagreement pair
+void DF_modDisPairNext(DF_DisPairPtr loc, DF_DisPairPtr newNext)
+{
+    loc -> next = newNext;
+}
+
+//decomposition
+DF_DisPairPtr DF_disPairPrev(DF_DisPairPtr disPtr){return disPtr -> prev;      }
+DF_DisPairPtr DF_disPairNext(DF_DisPairPtr disPtr){return disPtr -> next;      }
+DF_TermPtr    DF_disPairFirstTerm(DF_DisPairPtr disPtr)
+{
+    return disPtr -> firstTerm; 
+}
+DF_TermPtr    DF_disPairSecondTerm(DF_DisPairPtr disPtr)
+{
+    return disPtr -> secondTerm;
+}
+
+//whether a given disagreement set is empty
+Boolean       DF_isEmpDisSet(DF_DisPairPtr disPtr)
+{
+    return (disPtr == DF_EMPTY_DIS_SET);
+}
+
+Boolean       DF_isNEmpDisSet(DF_DisPairPtr disPtr)
+{
+    return (disPtr != DF_EMPTY_DIS_SET);
+}
+
 
 #endif  //DATAFORMATS_C
