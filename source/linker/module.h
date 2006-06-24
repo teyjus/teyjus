@@ -1,22 +1,13 @@
 #ifndef _MODULE_H_
 #define _MODULE_H_
 
-#define INT1 char
-#define INT2 short
-#define INT4 int
-
-#include "kind.h"
-#include "const.h"
-#include "tyskel.h"
-#include "implgoal.h"
-#include "hashtab.h"
-#include "bvrtab.h"
+#include "datatypes.h"
 
 struct Module_st{
 	struct Module_st* parent;
 
 	int GKindcount;
-	LGKind_t*	GKind;
+	KindInd* GKind;
 	
 	int LKindcount;
 	int LKindoffset;
@@ -25,7 +16,7 @@ struct Module_st{
 	int TySkeloffset;
 	
 	int GConstcount;
-	LGConst_t*	GConst;
+	ConstInd* GConst;
 	
 	int LConstcount;
 	int LConstoffset;
@@ -49,15 +40,27 @@ struct Module_st{
 	int Codesize;
 
 	int FindCodeFun;
-	LImportTab_t ImportTab;
+	ImportTabInd ImportTab;
 };
 
-typedef Module Module_st;
-
-Module* CM; 		//The module currently being loaded
+struct Module_st* CM; 		//The module currently being loaded
 
 void LoadTopModule(char* filename);
 void InitAll();
 void WriteAll();
+
+//////////////////////
+//Utility Functions///
+//////////////////////
+
+ConstInd GetConstInd();
+TySkelInd GetTySkelInd();
+KindInd GetKindInd();
+KindInd FindKindInd(INT1 gl_flag,INT2 index);
+ImplGoalInd GetImplGoalInd();
+HashTabInd GetHashTabInd();
+BvrTabInd GetBvrTabInd();
+StringSpaceInd GetStringSpaceInd();
+CodeInd GetCodeInd();
 
 #endif //_MODULE_H_

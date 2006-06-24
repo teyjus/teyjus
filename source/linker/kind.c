@@ -1,4 +1,11 @@
-#include "toplevel.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include "datatypes.h"
+#include "module.h"
+#include "kind.h"
+#include "vector.h"
+#include "rename.h"
+
 /*/////////////////////////////////////////////////////////////////////////////////////
 //This file defines the code for using GKinds and LKinds/////
 ////////////////////////////////////////////////////////////////////////////////////*/
@@ -11,50 +18,33 @@ typedef struct{
 	Name name;
 }TGKind_t;
 
-typedef struct{
-	int entries;
-	int size;
-	TGKind_t* entry;
-}GKind_Vec;
+struct Vector GKinds;
 
-GKind_Vec GKinds;
-
-void InitTGKinds();
-int AllocateTGKinds(int count);
-LGKind_t* AllocateLGKinds(int count);
-LGKind_t LoadGKind(int i);
-void LoadGKinds();
+KindInd* AllocateLGKinds(int count);
+KindInd LoadTopGKind(int i);
+KindInd LoadGKind();
 void WriteGKind(int i);
-void WriteGKinds();
 
 void InitTGKinds()
 {
-	GKinds.entries=0;
-	GKinds.size=0;
-	GKinds.entry=NULL;
+	InitVec(&GKinds,128,sizeof(TGKind_t));
 }
 
-int AllocateTGKinds(int count)
+KindInd* AllocateLGKinds(int count)
 {
-	GKinds.entries=count;
-	GKinds.size=count;
-	malloc(count*sizeof(TGKind_t));
-	if(GKinds.entry==NULL)
+	KindInd* tmp;
+	if(count>0)
 	{
-		perror("Memory Allocation Failed");
-		exit(0);
+		tmp=(KindInd*)malloc(count*sizeof(KindInd));
+		if(tmp==NULL)
+		{
+			perror("Memory Allocation Failed");
+			exit(0);
+		}
 	}
-	
-	return 0;
-}
-
-LGKind_t* AllocateLGKinds(int count)
-{
-	LGKind_t* tmp=(LGKind_t*)malloc(count*sizeof(LGKind_t));
-	if(tmp==NULL)
+	else
 	{
-		perror("Memory Allocation Failed");
-		exit(0);
+		tmp=NULL;
 	}
 	
 	return tmp;
@@ -62,54 +52,64 @@ LGKind_t* AllocateLGKinds(int count)
 
 void LoadGKinds()
 {
-	int count=CM->GKindcount=GET1();
-	//int offset=CM->GKindoffset=AllocateTGKinds(count);
+	int i;
+	
+	INT2 count=CM->GKindcount=GET2();
 	CM->GKind=AllocateLGKinds(count);
-	for(int i=0;i<count;i++)
+	for(i=0;i<count;i++)
 	{
 		CM->GKind[i]=LoadGKind();
 	}
 }
 
-LGKind_t LoadGKind()
+KindInd LoadGKind()
 {
 	int arity=GET1();
-	KindInd index=RenameKind(GetName());
-	if(arity!=CheckKindArity(index))
+	int oldarity;
+	Name name;
+	GetName(&name);
+	KindInd index=RenameKind(name);
+	oldarity=CheckKindArity(index);
+	if(arity!=oldarity)
 	{
-		perror("Kind Arity Mismatch");
+		printf("Kind Arity Mismatch: Kind %s should have arity %d, has arity %d.\n",name.string,oldarity,arity);
 		exit(0);
 	}
-	return (LGKind_t)index;
+	Clear(name);
+	return index;
 }
 
 void LoadTopGKinds()
 {
-	int count=CM->GKindcount=GET1();
-	AllocateTGKinds(count);
+	int i;
+	INT2 count=CM->GKindcount=GET2();
+	Extend(&GKinds,(int)count);
 	CM->GKind=AllocateLGKinds(count);
-	for(int i=0;i<count;i++)
+	for(i=0;i<count;i++)
 	{
 		CM->GKind[i]=LoadTopGKind(i);
 	}
 }
 
-LGKind_t LoadTopGKind(int i)
+KindInd LoadTopGKind(int i)
 {
-	LGKind_t tmp;
-	tmp.index.index=i;
-	tmp.index.gl_flag=GLOBAL_KIND;
-
-	GKind_Vec.entry[i].arity=GET1();
-	GKind_Vec.entry[i].name=GetName();
+	KindInd tmp;
+	TGKind_t* tmp2=Fetch(&GKinds,i);
+	tmp.index=i;
+	tmp.gl_flag=GLOBAL;
+	
+	tmp2->arity=GET1();
+	GetName(&(tmp2->name));
 	
 	return tmp;
 }
 
 void WriteGKinds()
 {
-	PUT1(GKinds.entries);
-	for(int i=0;i<GKinds.entries;i++)
+	int i;
+	INT2 tmp=GKinds.numEntries;
+	PUT2(tmp);
+	for(i=0;i<tmp;i++)
 	{
 		WriteGKind(i);
 	}
@@ -117,8 +117,9 @@ void WriteGKinds()
 
 void WriteGKind(i)
 {
-	PUT1(GKinds.entry[i].arity);
-	PutName(GKinds.entry[i].name);
+	TGKind_t* tmp=Fetch(&GKinds,i);
+	PUT1(tmp->arity);
+	PutName(tmp->name);
 }
 
 
@@ -129,60 +130,23 @@ typedef struct{
 	int arity;
 }TLKind_t;
 
-typedef struct{
-	int entries;
-	int size;
-	TLKind_t* entry;
-}LKind_Vec;
+struct Vector LKinds;
 
-LKind_Vec LKinds;
-
-void InitTLKinds();
-int AllocateTLKinds(int count);
-LLKind_t* AllocateLLKinds(int count);
-LLKind_t LoadLKind(int i);
-void LoadLKinds();
+void LoadLKind(int i);
 void WriteLKind(int i);
-void WriteLKinds();
 
 void InitTLKinds()
 {
-	LKinds.entries=0;
-	LKinds.size=128;
-	LKinds.entry=malloc(LKinds.size*sizeof(TLKind_t));
-	if(LKinds.entry==NULL)
-	{
-		perror("Memory Allocation Failed");
-		exit(0);
-	}
-}
-
-int AllocateTLKinds(int count)
-{
-	int tmp=LKinds.entries;
-	LKinds.entries=LKinds.entries+count;
-	if(LKinds.entries>LKinds.size)
-	{
-		do{
-			LKinds.size*=2;
-		}while(LKinds.entries>LKinds.size)
-		
-			LKinds.entry=(TLKind_t*)realloc((void*)LKinds.entry,LKinds.size*sizeof(TLKind_t));
-			if(LKinds.entry==NULL)
-			{
-				perror("Memory Allocation Failed");
-				exit(0);
-			}
-	}
-	return tmp;
+	InitVec(&LKinds,128,sizeof(TLKind_t));
 }
 
 void LoadLKinds()
 {
-	int count=CM->LKindcount=GET1();
-	int offset=CM->LKindoffset=AllocateTLKinds(count);
+	int i;
+	INT2 count=CM->LKindcount=GET2();
+	int offset=CM->LKindoffset=Extend(&LKinds,count);
 	//CM->LKind=AllocateLLKinds(count);
-	for(int i=0;i<count;i++)
+	for(i=0;i<count;i++)
 	{
 		LoadLKind(offset+i);
 	}
@@ -190,13 +154,16 @@ void LoadLKinds()
 
 void LoadLKind(int i)
 {
-	LKinds.entry[i].arity=GET1();
+	TLKind_t* tmp=Fetch(&LKinds,i);
+	tmp->arity=GET1();
 }
 
 void WriteLKinds()
 {
-	PUT1(LKinds.entries);
-	for(int i=0;i<LKinds.entries;i++)
+	int i;
+	INT2 tmp=LKinds.numEntries;
+	PUT2(tmp);
+	for(i=0;i<tmp;i++)
 	{
 		WriteLKind(i);
 	}
@@ -204,36 +171,19 @@ void WriteLKinds()
 
 void WriteLKind(i)
 {
-	PUT1(LKinds.entry[i].arity);
+	TLKind_t* tmp=Fetch(&LKinds,i);
+	PUT1(tmp->arity);
 }
 
 /////////////////////////////////////////////////////////////
 //Utility Functions
 ////////////////////////////////////////////////////////////
-KindInd GetKindInd(){
-	KindInd tmp;
-	tmp.gl_flag=GET1();
-	tmp.index=GET1();
-	if(tmp.gl_flag==LOCAL_KIND)
-	{
-		tmp.index+=CM->LKindOffset;
-		return tmp;
-	}
-	//GLOBAL_KIND
-	return CM->GKind[index];
-}
-
-KindInd RenameKind(Name name)
-{
-	//TODO Lookup name in CM->KindRenameTable
-}
-
 int CheckKindArity(KindInd i)
 {
-	if(i.gl_flag==LOCAL_KIND)
+	if(i.gl_flag==LOCAL)
 	{
-		return LKinds.entry[i.index].arity;
+		return ((TLKind_t*)Fetch(&LKinds,i.index))->arity;
 	}
 	//GLOBAL_KIND
-	return GKinds.entry[i.index].arity;
+	return ((TGKind_t*)Fetch(&GKinds,i.index))->arity;
 }

@@ -5,36 +5,27 @@
 //This file defines the outside view of GKinds and LKinds/////
 ////////////////////////////////////////////////////////////////////////////////////*/
 
-typedef struct{
-	INT1 gl_flag;
-	INT2 index;
-}KindInd;
-
 //GKind Header Data
 //Note: Uses CM->GKind & CM->GKindcount
-typedef struct{
-	KindInd index;
-}LGKind_t;
 
+//Initializes the Global Kind Vector
 void InitTGKinds();
+//Loads the global kinds of a bytecode file.
 void LoadGKinds();
+//Loads the global kinds of the top-level bytecode file.
 void LoadTopGKinds();
+//Writes out the contents of the Global Kind Vector.
 void WriteGKinds();
+
 
 //LKind Header Data
 //Note: Uses CM->LKindoffset & CM->LKindcount
 
-
+//Initializes the Local Kind Vector
 void InitTLKinds();
+//Loads the local kinds of a bytecode file.
 void LoadLKinds();
+//Writes out the contents of the Local Kind Vector.
 void WriteLKinds();
-
-////////////////////////////////////////////
-//Utility functions for Kinds
-////////////////////////////////////////////
-#define GLOBAL_KIND 1
-#define LOCAL_KIND 0
-
-KindInd GetKindInd();
 
 #endif //_KIND_H_
