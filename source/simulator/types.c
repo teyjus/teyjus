@@ -10,6 +10,7 @@
 
 #include "dataformats.h"
 #include "abstmachine.h"
+#include "../system/error.h" //to be changed
 
 /* Push n types onto PDL                                           */
 static void TY_pushTypesToPDL(MemPtr tyPtr, int n)
@@ -41,7 +42,7 @@ static void TY_typesOcc()
         tyPtr = DF_typeDeref((DF_TypePtr)AM_popPDL());
         switch (DF_typeTag(tyPtr)){
         case DF_TY_TAG_REF: {
-            if (AM_tyvbbreg == tyPtr) EM_throw();
+            if (AM_tyvbbreg == tyPtr) EM_throw(EM_TY_UNI_FAIL);
             break;
         }
         case DF_TY_TAG_SORT: break;
@@ -105,11 +106,11 @@ void TY_typesUnify()
                 case DF_TY_TAG_SORT: {
                 if (!(DF_isSortType(tyPtr1) &&  
                       DF_typeKindTabIndex(tyPtr1)==DF_typeKindTabIndex(tyPtr2)))
-                    EM_throw();
+                    EM_throw(EM_TY_UNI_FAIL);
                 break;
                 }
                 case DF_TY_TAG_ARROW:{
-                if (!DF_isArrowType(tyPtr1)) EM_throw();
+                if (!DF_isArrowType(tyPtr1)) EM_throw(EM_TY_UNI_FAIL);
                 TY_pushPairsToPDL((MemPtr)DF_typeArrowArgs(tyPtr1),
                                   (MemPtr)DF_typeArrowArgs(tyPtr2), 
                                   DF_TY_ARROW_ARITY);
@@ -123,8 +124,8 @@ void TY_typesUnify()
                         TY_pushPairsToPDL((MemPtr)DF_typeStrArgs(fPtr1),
                                           (MemPtr)DF_typeStrArgs(fPtr2),
                                           DF_typeStrFuncArity(fPtr1));
-                    else EM_throw(); //different function
-                } else EM_throw(); //tyPtr1 not str or ref
+                    else EM_throw(EM_TY_UNI_FAIL); //different function
+                } else EM_throw(EM_TY_UNI_FAIL); //tyPtr1 not str or ref
                 break;
                 }
                 } //switch
