@@ -271,7 +271,7 @@ KindInd FindKindInd(INT1 gl_flag,INT2 index)
 		case LOCAL:
 			if(tmp.index>=CM->LKindcount)
 			{
-				printf("Invalid Local Kind");
+				printf("Invalid Local Kind %d\n",index);
 				exit(0);
 			}
 			tmp.index+=CM->LKindoffset;
@@ -280,17 +280,27 @@ KindInd FindKindInd(INT1 gl_flag,INT2 index)
 		case GLOBAL:
 			if(tmp.index>=CM->GKindcount)
 			{
-				printf("Invalid Global Kind");
+				printf("Invalid Global Kind %d\n",index);
 				exit(0);
 			}
 			tmp=CM->GKind[tmp.index];
 			
 		case PERVASIVE:
+			break;
+			
 		default:
+			printf("Invalid Kind Flag %d\n",tmp.gl_flag);
+			exit(0);
 			break;
 	}
 	printf("(%d,%d)\n",tmp.gl_flag,tmp.index);
 	return tmp;
+}
+
+void PutKindInd(KindInd x)
+{
+	PUT1(x.gl_flag);
+	PUT2(x.index);
 }
 
 ConstInd GetConstInd(){
@@ -303,7 +313,7 @@ ConstInd GetConstInd(){
 		case LOCAL:
 			if(tmp.index>=CM->LConstcount)
 			{
-				printf("Invalid Local Constant %d",tmp.index);
+				printf("Invalid Local Constant %d\n",tmp.index);
 				exit(0);
 			}
 			tmp.index+=CM->LConstoffset;
@@ -312,7 +322,7 @@ ConstInd GetConstInd(){
 		case HIDDEN:
 			if(tmp.index>=CM->HConstcount)
 			{
-				printf("Invalid Hidden Constant %d",tmp.index);
+				printf("Invalid Hidden Constant %d\n",tmp.index);
 				exit(0);
 			}
 			tmp.index+=CM->HConstoffset;
@@ -321,18 +331,28 @@ ConstInd GetConstInd(){
 		case GLOBAL:
 			if(tmp.index>=CM->GConstcount)
 			{
-				printf("Invalid Global Constant %d",tmp.index);
+				printf("Invalid Global Constant %d\n",tmp.index);
 				exit(0);
 			}
 			tmp=CM->GConst[tmp.index];
 			break;
 			
 		case PERVASIVE:
+			break;
+			
 		default:
+			printf("Invalid Constant Flag %d\n",tmp.gl_flag);
+			exit(0);
 			break;
 	}
 	printf("(%d,%d)\n",tmp.gl_flag,tmp.index);
 	return tmp;
+}
+
+void PutConstInd(ConstInd x)
+{
+	PUT1(x.gl_flag);
+	PUT2(x.index);
 }
 
 TySkelInd GetTySkelInd(){
@@ -340,10 +360,33 @@ TySkelInd GetTySkelInd(){
 	printf("TySkel:%d->",tmp);
 	if(tmp>=CM->TySkelcount)
 	{
-		printf("Invalid Type Skeleton %d",tmp);
+		printf("Invalid Type Skeleton %d\n",tmp);
 		exit(0);
 	}
 	tmp+=CM->TySkeloffset;
 	printf("%d\n",tmp);
 	return tmp;
+}
+
+void PutTySkelInd(TySkelInd x)
+{
+	PUT2(x);
+}
+
+CodeInd GetCodeInd(){
+	CodeInd tmp=GETWORD();
+	printf("CodeInd:%d->",tmp);
+	if(tmp>=CM->CodeSize)
+	{
+		printf("Invalid Code Address %d\n",tmp);
+		exit(0);
+	}
+	tmp+=CM->CodeOffset;
+	printf("%d\n",tmp);
+	return tmp;
+}
+
+void PutCodeInd(CodeInd x)
+{
+	PUTWORD(x);
 }

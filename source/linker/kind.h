@@ -28,4 +28,7 @@ void LoadLKinds();
 //Writes out the contents of the Local Kind Vector.
 void WriteLKinds();
 
+
+int CheckKindArity(KindInd i);
+
 #endif //_KIND_H_

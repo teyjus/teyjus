@@ -1,153 +1,104 @@
-
+#include <stdio.h>
+#include "vector.h"
+#include "file.h"
+#include "module.h"
+#include "datatypes.h"
 //////////////////////////////////////////////////////
 //ImplGoal Load and Write Code
 //////////////////////////////////////////////////////
 typedef struct{
-	INT2 num_ext_pred;
-	ConstInd* index;
-	INT1 find_code_fun;
-	INT1 tab_size;
-	INT2 num_entries;
-	HashTabEnt* table;
+	struct Vector extPred;
+	INT1 findCodeFun;
+	struct Vector findCodeTab;
 }TImplGoal_t;
 
 typedef struct{
 	ConstInd index;
-	int addr;
+	CodeInd addr;
 }HashTabEnt;
 
-typedef struct{
-	int entries;
-	int size;
-	TImplGoal_t* entry;
-}ImplGoal_Vec;
+struct Vector ImplGoals;
 
-ImplGoal_Vec ImplGoals;
-
-void InitTImplGoals();
-int AllocateTImplGoals(int count);
-LImplGoal_t* AllocateLImplGoals(int count);
-LImplGoal_t LoadImplGoal(int i);
-void LoadImplGoals();
-void WriteImplGoal(int i);
-void WriteImplGoals();
+void LoadImplGoal(TImplGoal_t* ImplGoal);
+void WriteImplGoal(TImplGoal_t* ImplGoal);
 
 void InitTImplGoals()
 {
-	ImplGoals.entries=0;
-	ImplGoals.size=128;
-	ImplGoals.entry=malloc(ImplGoals.size*sizeof(TImplGoal_t));
-	if(ImplGoals.entry==NULL)
-	{
-		perror("Memory Allocation Failed");
-		exit(0);
-	}
+	InitVec(&ImplGoals,32,sizeof(TImplGoal_t));
 }
-
-int AllocateTImplGoals(int count)
-{
-	int tmp=ImplGoals.entries;
-	ImplGoals.entries=ImplGoals.entries+count;
-	if(ImplGoals.entries>ImplGoals.size)
-	{
-		do{
-			ImplGoals.size*=2;
-		}while(ImplGoals.entries>ImplGoals.size)
-		
-		ImplGoals.entry=(TImplGoal_t*)realloc((void*)ImplGoals.entry,ImplGoals.size*sizeof(TImplGoal_t));
-		if(ImplGoals.entry==NULL)
-		{
-			perror("Memory Allocation Failed");
-			exit(0);
-		}
-	}
-	return tmp;
-}
-
-// LImplGoal_t* AllocateLImplGoals(int count)
-// {
-// 	LImplGoal_t* tmp=(LImplGoal_t*)malloc(count*sizeof(LImplGoal_t));
-// 	if(tmp==NULL)
-// 	{
-// 		perror("Memory Allocation Failed");
-// 		exit(0);
-// 	}
-// 	
-// 	return tmp;
-// }
 
 void LoadImplGoals()
 {
-	int count=CM->ImplGoalcount=GET1();
-	int offset=CM->ImplGoaloffset=AllocateTImplGoals(count);
-	//CM->ImplGoal=AllocateLImplGoals(count);
-	for(int i=0;i<count;i++)
+	int i;
+	int count=CM->ImplGoalcount=GET2();
+	int offset=CM->ImplGoaloffset=Extend(&ImplGoals,count);
+	TImplGoal_t* tmp=(TImplGoal_t*)Fetch(&ImplGoals,offset);
+	for(i=0;i<count;i++)
 	{
-		LoadImplGoal(offset+i);
+		LoadImplGoal(tmp+i);
 	}
 }
 
-LImplGoal_t LoadImplGoal(int i)
+void LoadImplGoal(TImplGoal_t* ImplGoal)
 {
-	int count=ImplGoals.entry[i].num_ext_pred=GET2();
-	
-	ImplGoals.entry[i].index=malloc(count*sizeof(ConstInd));
-	if(ImplGoals.entry[i].index==NULL)
+	int j;
+	INT2 count=GET2();
+	struct Vector* vec=&(ImplGoal->extPred);
+	InitVec(vec,(int)count,sizeof(ConstInd));
+	Extend(vec,(int)count);
+	ConstInd* tmp=(ConstInd*)Fetch(vec,0);
+	for(j=0;j<count;j++)
 	{
-		perror("Memory Allocation Failed");
-		exit(0);
+		tmp[j]=GetConstInd();
+		//FlagDynamicPred(tmp[j]);
 	}
 	
-	for(int j=0;j<count;j++)
-	{
-		ImplGoals.entry[i].index[j]=GetConstInd();
-		//FlagDynamicPred(ImplGoals.entry[i].indexes[j]);
-	}
+	ImplGoal->findCodeFun=GET1();
 	
-	ImplGoals.entry[i].find_code_fun=GET1();
-	ImplGoals.entry[i].tab_size=GET1();
-	int count = ImplGoals.entry[i].num_entries=GET2();
-	
-	ImplGoals.entry[i].table=malloc(count*sizeof(HashTabEnt));
-	if(ImplGoals.entry[i].table==NULL)
+	count=GET2();
+	vec=&(ImplGoal->findCodeTab);
+	InitVec(vec,(int)count,sizeof(HashTabEnt));
+	Extend(vec,(int)count);
+	HashTabEnt* tmp2=(HashTabEnt*)Fetch(vec,0);
+	for(j=0;j<count;j++)
 	{
-		perror("Memory Allocation Failed");
-		exit(0);
-	}
-	
-	for(int j=0;j<count;j++)
-	{
-		ImplGoals.entry[i].table[j].index=GetConstInd();
-		ImplGoals.entry[i].table[j].addr=GetCodeInd();
+		tmp2[j].index=GetConstInd();
+		tmp2[j].addr=GetCodeInd();
 	}
 }
 
 void WriteImplGoals()
 {
-	PUT1(ImplGoals.entries);
-	for(int i=0;i<ImplGoals.entries;i++)
+	int i;
+	PUT2(ImplGoals.numEntries);
+	TImplGoal_t* tmp=Fetch(&ImplGoals,0);
+	for(i=0;i<ImplGoals.numEntries;i++)
 	{
-		WriteImplGoal(i);
+		WriteImplGoal(tmp+i);
 	}
 }
 
-void WriteImplGoal(i)
+void WriteImplGoal(TImplGoal_t* ImplGoal)
 {
-	int count=ImplGoals.entry[i].num_ext_pred;
+	int j;
+	INT2 count=(ImplGoal->extPred).numEntries;
 	PUT2(count);
 	
-	for(int j=0;j<count;j++)
+	ConstInd* tmp=(ConstInd*)Fetch(&(ImplGoal->extPred),0);
+	for(j=0;j<count;j++)
 	{
-		PutConstInd(ImplGoals.entry[i].indexes[j]);
+		PutConstInd(tmp[j]);
 	}
-	PUT1(ImplGoals.entry[i].find_code_fun);
-	PUT1(ImplGoals.entry[i].tab_size);
-	int count = ImplGoals.entry[i].num_entries;
+	
+	PUT1(ImplGoal->findCodeFun);
+	
+	count = (ImplGoal->findCodeTab).numEntries;
 	PUT2(count);
 	
-	for(int j=0;j<count;j++)
+	HashTabEnt* tmp2=(HashTabEnt*)Fetch(&(ImplGoal->findCodeTab),0);
+	for(j=0;j<count;j++)
 	{
-		PutConstInd(ImplGoals.entry[i].table[j].index);
-		PutCodeInd(ImplGoals.entry[i].table[j].addr);
+		PutConstInd(tmp2[j].index);
+		PutCodeInd(tmp2[j].addr);
 	}
 }

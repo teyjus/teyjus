@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <stdio.h>
 #include "vector.h"
 
 int InitVec(struct Vector* vec,int max,size_t size)
@@ -17,7 +18,10 @@ int InitVec(struct Vector* vec,int max,size_t size)
 		}
 	}
 	else
-		vec->entry=NULL;
+	{
+		perror("Vector element size is zero");
+		exit(0);
+	}
 }
 
 int Extend(struct Vector* vec, int count)
@@ -26,6 +30,11 @@ int Extend(struct Vector* vec, int count)
 	vec->numEntries+=count;
 	if(vec->numEntries>vec->maxEntries)
 	{
+		if(vec->maxEntries<=0)
+		{
+			perror("Extending Uninitialized Vector");
+			exit(0);
+		}
 		do{
 			vec->maxEntries*=2;
 		}while(vec->numEntries>vec->maxEntries);

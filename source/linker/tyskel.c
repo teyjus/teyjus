@@ -28,6 +28,7 @@ void InitTTySkels()
 
 int LoadTySkel(struct Vector* TySkel,int i)
 {
+	int arity,j;
 	KindInd KTMP;
 	INT1 type;
 	INT1* tyStr=(INT1*)Fetch(TySkel,i++);
@@ -42,28 +43,34 @@ int LoadTySkel(struct Vector* TySkel,int i)
 			
 		case PKIND:
 		case LKIND:
-			Extend(TySkel,1);
-			tyStr=(INT1*)Fetch(TySkel,i);
 			if(type==PKIND)
 				type=PERVASIVE;
 			else
 				type=LOCAL;
 			KTMP=FindKindInd(type,GET2());
+			arity=CheckKindArity(KTMP);
+			Extend(TySkel,1+arity*2);
+			tyStr=(INT1*)Fetch(TySkel,i);
 			*(INT2*)tyStr=KTMP.index;
 			i+=2;
+			for(j=0;j<arity;j++)
+				i=LoadTySkel(TySkel,i);
 			break;
 			
 		case GKIND:
-			Extend(TySkel,1);
-			tyStr=(INT1*)Fetch(TySkel,i);
 			type=GLOBAL;
 			KTMP=FindKindInd(type,GET2());
+			arity=CheckKindArity(KTMP);
+			Extend(TySkel,1+arity*2);
+			tyStr=(INT1*)Fetch(TySkel,i);
 			*(INT2*)tyStr=KTMP.index;
 			if(KTMP.gl_flag==GLOBAL)
 				*(tyStr-1)=GKIND;
 			else
 				*(tyStr-1)=LKIND;
 			i+=2;
+			for(j=0;j<arity;j++)
+				i=LoadTySkel(TySkel,i);
 			break;
 			
 		case VARIABLE:
