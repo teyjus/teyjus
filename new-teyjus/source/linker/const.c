@@ -15,7 +15,7 @@ typedef struct{
 	INT1 ty_env_size;
 	INT1 ty_preserving_info;
 	Name name;
-	INT2 ty_skel_index;
+	TySkelInd ty_skel_index;
 }TGConst_t;
 
 struct Vector GConsts;
@@ -119,7 +119,7 @@ void WriteGConst(i)
 	PUT1(tmp->ty_env_size);
 	PUT1(tmp->ty_preserving_info);
 	PutName(tmp->name);
-	PUT2(tmp->ty_skel_index);
+	PutTySkelInd(tmp->ty_skel_index);
 }
 
 
@@ -179,7 +179,7 @@ void WriteLConst(i)
 	PUT1(tmp->fixity);
 	PUT1(tmp->precedence);
 	PUT1(tmp->ty_env_size);
-	PUT2(tmp->ty_skel_index);
+	PutTySkelInd(tmp->ty_skel_index);
 }
 
 //////////////////////////////////////////////////////
@@ -234,7 +234,7 @@ void WriteHConst(i)
 	THConst_t* tmp=(THConst_t*)Fetch(&HConsts,i);
 	
 	PUT1(tmp->ty_env_size);
-	PUT2(tmp->ty_skel_index);
+	PutTySkelInd(tmp->ty_skel_index);
 }
 
 /////////////////////////////////////////////////////////////

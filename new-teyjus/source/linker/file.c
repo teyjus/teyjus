@@ -143,14 +143,13 @@ Name* GetName(Name* name)
 	INT1 size=name->size=GET1();
 	printf("Name:%d ",size);
 	fflush(stdout);
-	tmp=name->string=malloc(size+1);
+	tmp=name->string=malloc(size);
 	if(tmp==NULL)
 	{
 		perror("Memory Allocation Failed");
 		exit(0);
 	}
 	read(InFile->fd,tmp,size);
-	tmp[size]='\0';
 	printf("\"%s\"\n",tmp);
 	return name;
 }

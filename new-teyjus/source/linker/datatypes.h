@@ -4,6 +4,7 @@
 #define INT1 unsigned char
 #define INT2 unsigned short
 #define INT4 unsigned int
+#define WORD int
 
 #define GLOBAL 0
 #define LOCAL 1
@@ -34,7 +35,7 @@ typedef INT2 HashTabInd;
 typedef INT2 StringSpaceInd;
 typedef INT2 BvrTabInd;
 typedef INT2 ImplGoalInd;
-typedef int CodeInd;
-typedef int ImportTabInd;
+typedef unsigned int CodeInd;
+typedef unsigned int ImportTabInd;
 
 #endif //_DATATYPES_H_

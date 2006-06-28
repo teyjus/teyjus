@@ -1,124 +1,104 @@
-
+#include "vector.h"
+#include "file.h"
+#include "datatypes.h"
+#include "module.h"
 //////////////////////////////////////////////////////
 //BvrTab Load and Write Code
 //////////////////////////////////////////////////////
-typedef struct{
-	INT1 tab_size;
-	INT1 num_entries;
-	BvrTabEnt* table;
-}TBvrTab_t;
-
 typedef struct{
 	INT1 index;
 	CodeInd addr;
 }BvrTabEnt;
 
-typedef struct{
-	int entries;
-	int size;
-	TBvrTab_t* entry;
-}BvrTab_Vec;
+struct Vector BvrTabs;
 
-BvrTab_Vec BvrTabs;
-
-void InitTBvrTabs();
-int AllocateTBvrTabs(int count);
-LBvrTab_t* AllocateLBvrTabs(int count);
-LBvrTab_t LoadBvrTab(int i);
-void LoadBvrTabs();
-void WriteBvrTab(int i);
-void WriteBvrTabs();
+void BVR_AddEntry(struct Vector* BvrTab, BvrTabEnt* entry);
+void LoadBvrTab(struct Vector* BvrTab);
+void WriteBvrTab(struct Vector* BvrTab);
 
 void InitTBvrTabs()
 {
-	BvrTabs.entries=0;
-	BvrTabs.size=128;
-	BvrTabs.entry=malloc(BvrTabs.size*sizeof(TBvrTab_t));
-	if(BvrTabs.entry==NULL)
-	{
-		perror("Memory Allocation Failed");
-		exit(0);
-	}
+	InitVec(&BvrTabs,32,sizeof(struct Vector));
 }
-
-int AllocateTBvrTabs(int count)
-{
-	int tmp=BvrTabs.entries;
-	BvrTabs.entries=BvrTabs.entries+count;
-	if(BvrTabs.entries>BvrTabs.size)
-	{
-		do{
-			BvrTabs.size*=2;
-		}while(BvrTabs.entries>BvrTabs.size)
-		
-			BvrTabs.entry=(TBvrTab_t*)realloc((void*)BvrTabs.entry,BvrTabs.size*sizeof(TBvrTab_t));
-			if(BvrTabs.entry==NULL)
-			{
-				perror("Memory Allocation Failed");
-				exit(0);
-			}
-	}
-	return tmp;
-}
-
-// LBvrTab_t* AllocateLBvrTabs(int count)
-// {
-// 	LBvrTab_t* tmp=(LBvrTab_t*)malloc(count*sizeof(LBvrTab_t));
-// 	if(tmp==NULL)
-// 	{
-// 		perror("Memory Allocation Failed");
-// 		exit(0);
-// 	}
-// 	
-// 	return tmp;
-// }
 
 void LoadBvrTabs()
 {
-	int count=CM->BvrTabcount=GET1();
-	int offset=CM->BvrTaboffset=AllocateTBvrTabs(count);
-	for(int i=0;i<count;i++)
+	int i;
+	INT2 count=CM->BvrTabcount=GET2();
+	int offset=CM->BvrTaboffset=Extend(&BvrTabs,(int)count);
+	struct Vector* tmp=(struct Vector*)Fetch(&BvrTabs,offset);
+	for(i=0;i<count;i++)
 	{
-		LoadBvrTab(offset+i);
+		LoadBvrTab(tmp+i);
 	}
 }
 
-void LoadBvrTab(int i)
+void LoadBvrTab(struct Vector* BvrTab)
 {
-	BvrTabs.entry[i].tab_size=GET1();
-	int count = BvrTabs.entry[i].num_entries=GET1();
-	BvrTabs.entry[i].table=malloc(count*sizeof(BvrTabEnt));
-	if(BvrTabs.entry[i].table==NULL)
+	int j;
+	INT1 count=GET1();
+	InitVec(BvrTab,(int)count,sizeof(BvrTabEnt));
+	Extend(BvrTab,(int)count);
+	BvrTabEnt* tmp=(BvrTabEnt*)Fetch(BvrTab,0);
+	for(j=0;j<count;j++)
 	{
-		perror("Memory Allocation Failed");
-		exit(0);
-	}
-	
-	for(int j=0;j<count;j++)
-	{
-		BvrTabs.entry[i].table[j].index=GET1();
-		BvrTabs.entry[i].table[j].addr=GetCodeInd();
+		tmp[j].index=GET1();
+		tmp[j].addr=GetCodeInd();
 	}
 	
 }
 
 void WriteBvrTabs()
 {
-	PUT1(BvrTabs.entries);
-	for(int i=0;i<BvrTabs.entries;i++)
+	int i;
+	PUT2(BvrTabs.numEntries);
+	struct Vector* tmp=Fetch(&BvrTabs,0);
+	for(i=0;i<BvrTabs.numEntries;i++)
 	{
-		WriteBvrTab(i);
+		WriteBvrTab(tmp+i);
 	}
 }
 
-void WriteBvrTab(i)
+void WriteBvrTab(struct Vector* BvrTab)
 {
-	PUT1(BvrTabs.entry[i].tab_size);
-	int count=BvrTabs.entry[i].num_entries;
+	int j;
+	INT1 count=BvrTab->numEntries;
 	PUT1(count);
-	for(int j=0;j<count;j++)
+	BvrTabEnt* tmp=(BvrTabEnt*)Fetch(BvrTab,0);
+	for(j=0;j<count;j++)
 	{
-		PUT1(BvrTabs.entry[i].table[j].index);
-		PUT4(BvrTabs.entry[i].table[j].addr);
+		PUT1(tmp[j].index);
+		PutCodeInd(tmp[j].addr);
 	}
+}
+
+void MergeBvrTabs(BvrTabInd a, BvrTabInd b,INT1 n)
+{
+	struct Vector* pa=(struct Vector*)Fetch(&BvrTabs,a);
+	struct Vector* pb=(struct Vector*)Fetch(&BvrTabs,b);
+	
+	int size=pb->numEntries;
+	int i,j;
+	BvrTabEnt* tmpa=(BvrTabEnt*)Fetch(pa,0);
+	BvrTabEnt* tmpb=(BvrTabEnt*)Fetch(pb,0);
+	for(i=0;i<size;i++)
+	{
+		j=BvrTabSearch(pa,tmpb[i].index);
+		if(j!=-1)
+		{
+			tmpa[j].addr=MergeSubSequence(tmpa[j].addr,tmpb[i].addr,n);
+		}
+		else
+		{
+			BVR_AddEntry(pa,tmpb+i);
+			tmpa=(BvrTabEnt*)Fetch(pa,0);
+		}
+	}
+}
+
+void BVR_AddEntry(struct Vector* BvrTab, BvrTabEnt* entry)
+{
+	BvrTabEnt* new=Fetch(BvrTab,Extend(BvrTab,1));
+	new->index=entry->index;
+	new->addr=entry->addr;
 }

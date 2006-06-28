@@ -1,9 +1,15 @@
-//ImportTab Header Data
-//Note: Uses CM->ImportTab
+#ifndef _IMPORTTAB_H_
+#define _IMPORTTAB_H_
 
-typedef void* LImportTab_t;
+#include "datatypes.h"
+
 void InitTImportTabs();
 void NewImportTab();
+void RestoreImportTab();
 void ExtImportTab();
+void GetImportTab();
 void WriteImportTabs();
-void RestoreImportTab(LImportTab_t Tab);
+
+void PushCall(ConstInd index,CodeInd addr);
+
+#endif //_IMPORTTAB_H_

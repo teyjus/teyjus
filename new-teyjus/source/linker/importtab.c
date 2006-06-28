@@ -1,164 +1,153 @@
-
+#include "importtab.h"
+#include "datatypes.h"
+#include "vector.h"
+#include "file.h"
+#include "module.h"
+#include "hashtab.h"
 //////////////////////////////////////////////////////
 //ImportTab Load and Write Code
 //////////////////////////////////////////////////////
-struct ImportTabEnt_st{
+typedef struct{
 	ConstInd index;
 	CodeInd addr;
-	struct ImportTabEnt_st* next;
-	struct ImportTabEnt_st* last;
-};
-
-typedef struct ImportTabEnt_st ImportTabEnt;
-
-struct ImportTab_Node{
-	INT2 num_ext_pred;
-	ConstInd* index;	//Next Clause Table
-	INT1 find_code_fun;	//Find Code Fun.
-	int tab_size;
-	ImportTabEnt* tab_front;
-	ImportTabEnt* tab_back;
-	struct ImportTab_Node* next;
-}
-
-typedef struct ImportTab_Node TImportTab_t;
+}PCallEnt;
 
 typedef struct{
-	int size;
-	TImportTab_t* front;
-	TImportTab_t* back;
-}ImportTab_List;
+	struct Vector LConstInds;
+	struct Vector extPred;
+	INT1 findCodeFun;
+	struct Vector findCodeTabs;
+}TImportTab_t;
 
-ImportTab_List ImportTabs;
 TImportTab_t* CT;	//Import Table of CM.
 
-void InitTImportTabs();
-void NewImportTab();
-void ExtImportTab();
-void WriteImportTabs();
+struct Vector DynamicPreds;
+struct Vector predCalls;
+struct Vector ImportTabs;
+ImportTabInd CTID;
 
-void LoadImportTab();
-void LoadImportTabEnt();
-void WriteImportTab(int i);
+void WriteImportTab(TImportTab_t* ImportTab);
 
-void RestoreImportTab(LImportTab_t Tab)
+void MarkDynamic(ConstInd index)
 {
-	CT=Tab;
+	//TODO
+}
+
+void ResolvePredCalls()
+{
+	//TODO
+}
+
+void RestoreImportTab()
+{
+	//Resolve predicate collisions
+	int i;
+	int size=(CT->findCodeTabs).numEntries;
+	struct Vector* tmp=(struct Vector*)Fetch(&(CT->findCodeTabs),i);
+	for(i=1;i<size;i++)
+		MergeFindCodeTabs(tmp,tmp+i);
+		
+	//Restore CTID and CT
+	CTID=CM->ImportTabID;
+	CT=Fetch(&ImportTabs,CTID);
 }
 
 void InitTImportTabs()
 {
-	ImportTabs.size=0;
-	ImportTabs.front=NULL;
-	ImportTabs.back=NULL;
+	InitVec(&ImportTabs,8,sizeof(TImportTab_t));
+	InitVec(&predCalls,128,sizeof(PCallEnt));
 }
 
 void NewImportTab()
 {
-	TImportTab_t* tmp=malloc(sizeof(TImportTab_t));
-	if(tmp==NULL)
-	{
-		perror("Memory Allocation Failed");
-		exit(0);
-	}
-	
-	CT=tmp;
-	CM->ImportTab=(LImportTab_t)tmp;
-	
-	int i;
-	int count=tmp->num_ext_pred=GET2();
-	tmp.index=malloc(count*sizeof(ConstInd));
-	for(i=0;i<count;i++)
-	{
-		tmp.index[i]=GetConstInd();
-	}
-	
-	tmp->tab_size=0;
-	tmp->tab_front=NULL;
-	tmp->tab_back=NULL;
-	tmp->next=NULL;
-	
-	if(ImportTabs.front==NULL)
-	{
-		ImportTabs.front=tmp;
-	}
-	
-	ImportTabs.back->next=tmp;
-	ImportTabs.back=tmp;
-	
-	LoadImportTab();
+	CM->ImportTabID=CTID;
+	CTID=Extend(&ImportTabs,1);
+	CT=Fetch(&ImportTabs,CTID);
+	InitVec(&(CT->LConstInds),32,sizeof(ConstInd));
+	InitVec(&(CT->findCodeTabs),1,sizeof(struct Vector));
 }
 
 void ExtImportTab()
 {
 	int i;
-	int count=GET2();
+	//Ignore next clause table
+	INT2 count=GET2();
 	for(i=0;i<count;i++)
 	{
 		GetConstInd();
 	}
-	CM->ImportTab=(LImportTab_t)CT;
-	LoadImportTab();
+	
+	//Ignore findCodeFun
+	GET1();
+	
+	//Load another findCodeTable
+	struct Vector* vec=&(CT->findCodeTabs);
+	LoadHashTab((struct Vector*)Fetch(vec,Extend(vec,1)));
 }
 
-void LoadImportTab()
+void GetImportTab()
 {
-	int count=GET1();
-	for(int i=0;i<count;i++)
+	int i;
+	ConstInd* tmp;
+	struct Vector* vec;
+	
+	//Set next clause table
+	INT2 count=GET2();
+	
+	vec=&(CT->extPred);
+	InitVec(vec,(int)count,sizeof(ConstInd));
+	Extend(vec,(int)count);
+	tmp=Fetch(vec,0);
+		
+	for(i=0;i<count;i++)
 	{
-		LoadImportTabEnt();
+		tmp[i]=GetConstInd();
+	}
+		
+	//Set findCodeFun
+	CT->findCodeFun=GET1();
+		
+	//Load find code table
+	vec=&(CT->findCodeTabs);
+	LoadHashTab((struct Vector*)Fetch(vec,Extend(vec,1)));
+}
+
+void WriteImportTabs()
+{
+	int i;
+	PUT2(ImportTabs.numEntries);
+	TImportTab_t* tmp=(TImportTab_t*)Fetch(&ImportTabs,0);
+	for(i=0;i<ImportTabs.numEntries;i++)
+	{
+		WriteImportTab(tmp+i);
 	}
 }
 
-void LoadImportTabEnt()
+void WriteImportTab(TImportTab_t* ImportTab)
 {
-	ConstInd index=GetConstInd();
-	CodeAddr addr=GetCodeInd();
-	ImportTabEnt* tmp=CT->tab_front;
-	ImportTabEnt* tmp2=NULL;
-	while(tmp!=NULL&&0>ConstIndCmp(index,tmp->index))
+	int i;
+	struct Vector* vec=&(ImportTab->LConstInds);
+	int count=vec->numEntries;
+	ConstInd* tmp=Fetch(vec,0);
+	for(i=0;i<count;i++)
 	{
-		tmp=tmp->next;
+		PutConstInd(tmp[i]);
 	}
 	
-	if(tmp==NULL)
+	vec=&(ImportTab->extPred);
+	count=vec->numEntries;
+	tmp=Fetch(vec,0);
+	for(i=0;i<count;i++)
 	{
-		tmp=malloc(sizeof(ImportTabEnt));
-		if(tmp==NULL)
-		{
-			perror("Memory Allocation Failed");
-			exit(0);
-		}
-		CT->size++;
-		
-		tmp->last=CT->tab_back;
-		CT->tab_back->next=tmp;
-		CT->tab_back=tmp;
-		tmp->next=NULL;
-		
-		tmp->index=index;
-		tmp->addr=addr;
+		PutConstInd(tmp[i]);
 	}
-	else if(0<ConstIndCmp(index,tmp->index))
-	{
-		tmp2=malloc(sizeof(ImportTabEnt));
-		if(tmp2==NULL)
-		{
-			perror("Memory Allocation Failed");
-			exit(0);
-		}
-		CT->size++;
-		
-		tmp2->last=tmp->last;
-		tmp->last=tmp2;
-		tmp2->last->next=tmp2;
-		tmp2->next=tmp;
-		
-		tmp2->index=index;
-		tmp2->addr=addr;
-	}
-	else
-	{
-		tmp->addr=MergeDefs(tmp->addr,addr);
-	}
+	
+	WriteHashTab((struct Vector*)Fetch(&(ImportTab->findCodeTabs),0));
+}
+
+void PushCall(ConstInd index,CodeInd addr)
+{
+	PCallEnt* pCall=(PCallEnt*)Fetch(&predCalls,Extend(&predCalls,1));
+	pCall->index=index;
+	pCall->addr=addr;
 }

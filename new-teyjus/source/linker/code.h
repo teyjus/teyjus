@@ -1,13 +1,14 @@
 #ifndef _CODE_H_
 #define _CODE_H_
 
-typedef int CodeInd;
+#include "datatypes.h"
 
 void InitTCode();
 void LoadCode();
 void WriteCode();
 void LoadCodeSize();
 
-CodeInd GetCodeInd();
+CodeInd MergeSubSequence(CodeInd a, CodeInd b,INT1 n);
+CodeInd MergeDefs(CodeInd a, CodeInd b);
 
 #endif
