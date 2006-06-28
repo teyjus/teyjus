@@ -85,7 +85,7 @@ typedef enum INSTR_InstrCategory
 #define INSTR_CAT_I1_L_X_LEN                2
 
 //ADDED length
-#define INSTR_CAT_L_X                       2
+#define INSTR_CAT_L_X_LEN                   2
 
 #define INSTR_CAT_I1_HT_X_LEN               2
 #define INSTR_CAT_N_L_L_X_LEN               3
