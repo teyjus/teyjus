@@ -28,8 +28,22 @@ INSTR_InstrInfoTab INSTR_instrInfoTable ={
 { "unify_nil",            INSTR_CAT_X,          INSTR_CAT_X_LEN},
 //... to be filled in
 
+//To be moved
+[call]=
+{ "call",                 INSTR_CAT_I1_L_X,     INSTR_CAT_I1_L_X_LEN},
+[call_name]=
+{ "call_name",            INSTR_CAT_I1_C_X,     INSTR_CAT_I1_L_X_LEN},
+
+[execute]=
+{ "call",                 INSTR_CAT_L_X,        INSTR_CAT_L_X_LEN},
+[execute_name]=
+{ "call_name",            INSTR_CAT_C_X,        INSTR_CAT_L_X_LEN},
+
+[fail]=
+{ "fail",                 INSTR_CAT_X,          INSTR_CAT_X_LEN},
+
 [140] = //C99 feature (not needed when the table is fully filled in)
-{ "trust_me",             INSTR_CAT_I1_X,       INSTR_CAT_I1_X_LEN},
+{ "trust_me",             INSTR_CAT_I1_X,       INSTR_CAT_I1_L_X_LEN},
 [142] =
 { "trust_ext",            INSTR_CAT_I1_N_X,     INSTR_CAT_I1_N_X_LEN},
 [143] =
@@ -37,7 +51,7 @@ INSTR_InstrInfoTab INSTR_instrInfoTable ={
 [144] =
 { "retry",                INSTR_CAT_I1_L_X,     INSTR_CAT_I1_L_X_LEN},
 [145] =
-{ "trust",                INSTR_CAT_I1_L_X,     INSTR_CAT_I1_L_X_LEN},
+{ "trust",                INSTR_CAT_I1_L_X,     INSTR_CAT_I1_L_L_X_LEN},
 [146] =
 { "try_me_else",          INSTR_CAT_I1_L_X,     INSTR_CAT_I1_L_X_LEN},
 [147] =
@@ -120,6 +134,17 @@ INSTR_OperandTypeTab INSTR_operandTypeTable ={
     {INSTR_R, INSTR_C, INSTR_I2, INSTR_P, INSTR_P, INSTR_X, INSTR_X, INSTR_X,
      INSTR_X, INSTR_X, INSTR_X, INSTR_X},  //INSTR_CAT_R_C_I2_X
 
+    //ADDED
+    [21] = 
+    {INSTR_P, INSTR_C, INSTR_X, INSTR_X, INSTR_X, INSTR_X, INSTR_X, INSTR_X,
+    INSTR_X, INSTR_X, INSTR_X, INSTR_X},  //INSTR_CAT_C_X
+    [22] = 
+    {INSTR_P, INSTR_P, INSTR_P, INSTR_P, INSTR_P, INSTR_P, INSTR_P, INSTR_L,
+    INSTR_X, INSTR_X, INSTR_X, INSTR_X},  //INSTR_CAT_L_X
+    [23] = 
+    {INSTR_I1, INSTR_C, INSTR_X, INSTR_X, INSTR_X, INSTR_X, INSTR_X, INSTR_X,
+    INSTR_X, INSTR_X, INSTR_X, INSTR_X},  //INSTR_CAT_I1_C_X
+
     [24] = 
     {INSTR_I1, INSTR_P, INSTR_P, INSTR_P, INSTR_P, INSTR_P, INSTR_P, INSTR_L,
      INSTR_X, INSTR_X, INSTR_X, INSTR_X},  //INSTR_CAT_I1_L_X
@@ -163,6 +188,13 @@ INSTR_OperandTypeTab INSTR_operandTypeTable ={
     [17] = //C99 feature (not needed when the table is fully filled in)
     {INSTR_R, INSTR_C, INSTR_I2, INSTR_P, INSTR_P, INSTR_X, INSTR_X, INSTR_X},
 
+    //ADDED
+	[21] = //INSTR_CAT_C_X
+	{INSTR_C, INSTR_X, INSTR_X, INSTR_X, INSTR_X, INSTR_X, INSTR_X, INSTR_X},
+	[22] = //INSTR_CAT_L_X
+	{INSTR_P, INSTR_P, INSTR_P, INSTR_L, INSTR_X, INSTR_X, INSTR_X, INSTR_X},
+	[23] = //INSTR_CAT_I1_C_X
+	{INSTR_I1, INSTR_C, INSTR_X, INSTR_X, INSTR_X, INSTR_X, INSTR_X, INSTR_X},
 
     //INSTR_CAT_I1_L_X
     [24] =

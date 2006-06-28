@@ -54,7 +54,11 @@ typedef enum INSTR_InstrCategory
     INSTR_CAT_I1_X        = 3,
     // ...
     INSTR_CAT_R_C_I2_X    = 17,
-    // ...
+    //ADDED categories
+	INSTR_CAT_C_X         = 21,
+	INSTR_CAT_L_X         = 22,
+	INSTR_CAT_I1_C_X      = 23,
+	//...
     INSTR_CAT_I1_L_X      = 24,
     // ...
     INSTR_CAT_I1_HT_X     = 26,
@@ -79,6 +83,10 @@ typedef enum INSTR_InstrCategory
 #define INSTR_CAT_E_X_LEN                   1
 #define INSTR_CAT_I1_X_LEN                  1
 #define INSTR_CAT_I1_L_X_LEN                2
+
+//ADDED length
+#define INSTR_CAT_L_X                       2
+
 #define INSTR_CAT_I1_HT_X_LEN               2
 #define INSTR_CAT_N_L_L_X_LEN               3
 #define INSTR_CAT_L_L_L_L_X_LEN             5
@@ -120,6 +128,13 @@ INSTR_OperandType* INSTR_operandTypes(INSTR_InstrCategory index);
 /***************************************************************************/
 #define   unify_nil                           0
 //...to be filled in
+
+//ADDED Instructions
+#define   call                                50
+#define   call_name                           51
+#define   execute                             52
+#define   execute_name                        53
+#define   fail                                54
 
 /* Choice Instructions  */
 
