@@ -50,13 +50,21 @@ void LoadCode()
 		opcode=code[j++]=GET1();
 		if(opcode==call)
 		{
+			code[j]=GET1();
 			tmpIndex=GetConstInd();
-			PushCall(tmpIndex,offset+i);
+			PushCall(tmpIndex,offset+i,0);
+			i+=(INSTR_instrSize(opcode)*sizeof(WORD));
+			continue;
+		}
+		else if(opcode==execute)
+		{
+			tmpIndex=GetConstInd();
+			PushCall(tmpIndex,offset+i,1);
 			i+=(INSTR_instrSize(opcode)*sizeof(WORD));
 			continue;
 		}
 		
-		instrCat=INSTR_InstrType(opcode);
+		instrCat=INSTR_instrType(opcode);
 		opType=INSTR_operandTypes(instrCat);
 		argid=0;
 		do{
@@ -170,7 +178,7 @@ void WriteCode()
 		j=i;
 		
 		opcode=code[j++];
-		instrCat=INSTR_InstrType(opcode);
+		instrCat=INSTR_instrType(opcode);
 		opType=INSTR_operandTypes(instrCat);
 		argid=-1;
 		do{
@@ -255,6 +263,37 @@ void WriteCode()
 		i+=INSTR_instrSize(opcode)*sizeof(WORD);
 	}
 }
+
+void MakeCallName(CodeInd from, int exec_flag, ConstInd to)
+{
+	INT1* tmp=Fetch(&Code,from);
+	if(exec_flag)
+	{
+		tmp[0]=execute_name;
+		*(ConstInd*)(tmp+1)=to;
+	}
+	else
+	{
+		tmp[0]=call_name;
+		*(ConstInd*)(tmp+2)=to;
+	}
+}
+	
+void MakeCall(CodeInd from, int exec_flag, CodeInd to)
+{
+	INT1* tmp=Fetch(&Code,from);
+	if(exec_flag)
+	{
+		tmp[0]=execute;
+		*(CodeInd*)(tmp+1)=to;
+	}
+	else
+	{
+		tmp[0]=call;
+		*(CodeInd*)(tmp+2)=to;
+	}
+}
+
 
 INT4 GetFloat()
 {

@@ -390,3 +390,83 @@ void PutCodeInd(CodeInd x)
 {
 	PUTWORD(x);
 }
+
+ImportTabInd GetImportTabInd()
+{
+	INT2 x=GET2();
+	if(x>=CM->ImportCount)
+	{
+		printf("Invalid Import Table %d\n",x);
+		exit(0);
+	}
+	return CM->Import[x];
+}
+
+ImplGoalInd GetImplGoalInd()
+{
+	INT2 x=GET2();
+	if(x>=CM->ImplGoalcount)
+	{
+		printf("Invalid Implication Goal %d\n",x);
+		exit(0);
+	}
+	return CM->ImplGoaloffset+x;
+}
+
+HashTabInd GetHashTabInd()
+{
+	INT2 x=GET2();
+	if(x>=CM->HashTabcount)
+	{
+		printf("Invalid Hash Table %d\n",x);
+		exit(0);
+	}
+	return CM->HashTaboffset+x;
+}
+
+BvrTabInd GetBvrTabInd()
+{
+	INT2 x=GET2();
+	if(x>=CM->BvrTabcount)
+	{
+		printf("Invalid Bound Variable Table %d\n",x);
+		exit(0);
+	}
+	return CM->BvrTaboffset+x;
+}
+
+StringSpaceInd GetStringSpaceInd()
+{
+	INT2 x=GET2();
+	if(x>=CM->StringSpacecount)
+	{
+		printf("Invalid String %d\n",x);
+		exit(0);
+	}
+	return CM->StringSpaceoffset+x;
+}
+
+void PutImplGoalInd(ImplGoalInd x)
+{
+	PUT2(x);
+}
+
+void PutHashTabInd(HashTabInd x)
+{
+	PUT2(x);
+}
+
+void PutBvrTabInd(BvrTabInd x)
+{
+	PUT2(x);
+}
+
+void PutStringSpaceInd(StringSpaceInd x)
+{
+	PUT2(x);
+}
+
+void PutImportTabInd(ImportTabInd x)
+{
+	PUT2(x);
+}

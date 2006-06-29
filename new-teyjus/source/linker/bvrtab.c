@@ -72,6 +72,18 @@ void WriteBvrTab(struct Vector* BvrTab)
 	}
 }
 
+int BvrTabSearch(struct Vector* BvrTab,INT1 index)
+{
+	BvrTabEnt* tmp=Fetch(BvrTab,0);
+	int i;
+	for(i=0;i<BvrTab->numEntries;i++)
+	{
+		if(tmp[i].index==index)
+			return i;
+	}
+	return -1;
+}
+
 void MergeBvrTabs(BvrTabInd a, BvrTabInd b,INT1 n)
 {
 	struct Vector* pa=(struct Vector*)Fetch(&BvrTabs,a);

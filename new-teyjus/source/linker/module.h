@@ -38,9 +38,9 @@ struct Module_st{
 
 	int CodeOffset;
 	int CodeSize;
-
-	int FindCodeFun;
-	ImportTabInd ImportTabID;
+	
+	int ImportCount;
+	ImportTabInd* Import;
 };
 
 struct Module_st* CM; 		//The module currently being loaded
@@ -62,6 +62,7 @@ HashTabInd GetHashTabInd();
 BvrTabInd GetBvrTabInd();
 StringSpaceInd GetStringSpaceInd();
 CodeInd GetCodeInd();
+ImportTabInd GetImportTabInd();
 
 void PutConstInd(ConstInd x);
 void PutTySkelInd(TySkelInd x);
@@ -71,5 +72,6 @@ void PutHashTabInd(HashTabInd x);
 void PutBvrTabInd(BvrTabInd x);
 void PutStringSpaceInd(StringSpaceInd x);
 void PutCodeInd(CodeInd x);
+void PutImportTabInd(ImportTabInd x);
 
 #endif //_MODULE_H_
