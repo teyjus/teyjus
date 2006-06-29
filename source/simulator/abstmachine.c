@@ -12,6 +12,7 @@
 #include   "dataformats.h"
 #include   "abstmachine.h"
 #include   "../system/error.h"   //to be changed
+#include   "../system/memory.h"  //to be changed
 
 //to be removed:
 #include   <stdio.h>
@@ -158,6 +159,59 @@ void AM_arityError(int n)    // violation of max number of arity in applications
         printf("exceed the max number of term arity\n");
         EM_error();
     }
+}
+
+/****************************************************************************/
+/*                   RUN-TIME SYMBOL TABLES                                 */
+/****************************************************************************/
+MEM_KstPtr   AM_kstBase;     //starting addr of the kind symbol table
+MEM_TstPtr   AM_tstBase;     //starting addr of the type skel table
+MEM_CstPtr   AM_cstBase;     //starting addr of the const symbol table
+
+/* Kind symbol table                                                        */
+char* AM_kstName(int n)        //name of a type constructor in a given entry
+{
+    return ((MEM_KstPtr)(((MemPtr)AM_kstBase) + n*MEM_KST_ENTRY_SIZE)) -> name;
+}
+
+int   AM_kstArity(int n)       //arity of a type constructor in a given entry
+{
+    return ((MEM_KstPtr)(((MemPtr)AM_kstBase) + n*MEM_KST_ENTRY_SIZE)) -> arity;
+}
+
+/* Type skeleton table                                                      */
+DF_TypePtr AM_tstSkel(int n)   //type skeleton in a given entry
+{
+    return (DF_TypePtr)(((MemPtr)AM_tstBase) + n*MEM_TST_ENTRY_SIZE);
+}
+
+/* Constant symbol table                                                    */
+char* AM_cstName(int n)        //name of a constant in a given entry
+{
+    return ((MEM_CstPtr)(((MemPtr)AM_cstBase) + n*MEM_CST_ENTRY_SIZE)) -> name;
+}
+int   AM_cstTyEnvSize(int n)   //type environment size 
+{
+    return ((MEM_CstPtr)(((MemPtr)AM_cstBase)+n*MEM_CST_ENTRY_SIZE))->
+        typeEnvSize;
+}    
+int   AM_cstUnivCount(int n)   //universe count 
+{
+    return ((MEM_CstPtr)(((MemPtr)AM_cstBase)+n*MEM_CST_ENTRY_SIZE))->univCount;
+}
+int   AM_cstPrecedence(int n)  //precedence
+{
+    return ((MEM_CstPtr)(((MemPtr)AM_cstBase)+n*MEM_CST_ENTRY_SIZE))->
+        precedence;
+}
+int   AM_cstFixity(int n)      //fixity
+{
+    return ((MEM_CstPtr)(((MemPtr)AM_cstBase)+n*MEM_CST_ENTRY_SIZE))->fixity;
+}
+int   AM_cstTySkelInd(int n)   //type skeleton index
+{
+    return ((MEM_CstPtr)(((MemPtr)AM_cstBase)+n*MEM_CST_ENTRY_SIZE))->
+        tskTabIndex;
 }
 
 #endif //ABSTMACHINE_C

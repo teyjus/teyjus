@@ -20,12 +20,14 @@ typedef unsigned char  Boolean;                    /* 8 bits: FALSE/TRUE  */
 #define FALSE          0
 
 
-typedef void           *Word;                       
+typedef void           *Word;      
+typedef Word           *WordPtr;
 
 #define WORD_SIZE      sizeof(Word)               /* 4: 32-bits machine  */   
                                                   /* 8  64-bits machine  */
 
 typedef Word           Mem;                       /* generic memory type */
 typedef Mem            *MemPtr;                   /* pointer to memory   */
+typedef Byte           *CSpacePtr;                /* code space pointer  */
 
 #endif //MCTYPES_H
