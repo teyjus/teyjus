@@ -70,7 +70,7 @@ static Boolean HOPU_uniqueConst(DF_TermPtr cPtr, DF_TermPtr args, int n)
             if (DF_isTConst(tPtr)) {
                 EM_try { 
                     HOPU_typesUnify(DF_constType(tPtr), DF_constType(cPtr), 
-                                    MEM_cstTyEnvSize(DF_constTabIndex(cPtr)));
+                                    AM_cstTyEnvSize(DF_constTabIndex(cPtr)));
                 } EM_catch {
                     if (EM_CurrentExnType == EM_TY_UNI_FAIL) {
                         AM_resetTypesPDL();
@@ -201,7 +201,7 @@ static int HOPU_constIndex(DF_TermPtr cPtr, DF_TermPtr args, int nargs, int lev)
                if (DF_isTConst(tPtr)) {
                 EM_try { 
                     HOPU_typesUnify(DF_constType(tPtr), DF_constType(cPtr), 
-                                    MEM_cstTyEnvSize(DF_constTabIndex(cPtr)));
+                                    AM_cstTyEnvSize(DF_constTabIndex(cPtr)));
                     return (ind+lev);
                 } EM_catch {
                     if (EM_CurrentExnType == EM_TY_UNI_FAIL) AM_resetTypesPDL();
@@ -407,7 +407,7 @@ static int HOPU_pruneSameVar(DF_TermPtr args1, int nargs1, DF_TermPtr args2,
                     if (DF_isTConst(tPtr2)) {
                         EM_try {
                         HOPU_typesUnify(DF_constType(tPtr1),DF_constType(tPtr2),
-                                     MEM_cstTyEnvSize(DF_constTabIndex(tPtr1)));
+                                     AM_cstTyEnvSize(DF_constTabIndex(tPtr1)));
                         DF_mkBV(AM_hreg, nargs2); AM_hreg += DF_TM_ATOMIC_SIZE;
                         numNotPruned++;
                         HOPU_copyFlagGlb = TRUE;
@@ -1019,7 +1019,7 @@ static void HOPU_matchHeads(DF_TermPtr hPtr1, DF_TermPtr hPtr2, int nabs)
         if (DF_isTConst(hPtr1)){ //(first-order) unify type environments
             EM_try {
                 HOPU_typesUnify(DF_constType(hPtr1), DF_constType(hPtr2), 
-                                MEM_cstTyEnvSize(DF_constTabIndex(hPtr1)));
+                                AM_cstTyEnvSize(DF_constTabIndex(hPtr1)));
             } EM_catch {
                 if (EM_CurrentExnType == EM_TY_UNI_FAIL) EM_throw(EM_HOPU_FAIL);
                 else EM_reThrow();

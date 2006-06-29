@@ -9,6 +9,7 @@
 
 #include   "mctypes.h"
 #include   "dataformats.h"
+#include   "../system/memory.h"
 
 /****************************************************************************/
 /*                ABSTRACT MACHINE REGISTERS (AND FLAGS)                    */
@@ -86,5 +87,28 @@ void AM_pdlError(int);                      //pdl stack overflow for n cells
  ****************************************************************************/
 void AM_embedError(int);    // violation of max number of lambda embeddings
 void AM_arityError(int);    // violation of max number of arity in applications
+
+
+/****************************************************************************/
+/*                   RUN-TIME SYMBOL TABLES                                 */
+/****************************************************************************/
+extern  MEM_KstPtr   AM_kstBase;     //starting addr of the kind symbol table
+extern  MEM_TstPtr   AM_tstBase;     //starting addr of the type skel table
+extern  MEM_CstPtr   AM_cstBase;     //starting addr of the const symbol table
+
+/* Kind symbol table                                                        */
+char* AM_kstName(int n);        //name of a type constructor in a given entry
+int   AM_kstArity(int n);       //arity of a type constructor in a given entry
+
+/* Type skeleton table                                                      */
+DF_TypePtr AM_tstSkel(int n);   //type skeleton in a given entry
+
+/* Constant symbol table                                                    */
+char* AM_cstName(int n);        //name of a constant in a given entry
+int   AM_cstTyEnvSize(int n);   //type environment size 
+int   AM_cstUnivCount(int n);   //universe count 
+int   AM_cstPrecedence(int n);  //precedence
+int   AM_cstFixity(int n);      //fixity
+int   AM_cstTySkelInd(int n);   //type skeleton index
 
 #endif //ABSTMACHINE_H
