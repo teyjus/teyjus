@@ -5,23 +5,23 @@
 //Note: Special Top Level Loading
 //Note: Uses CM->GConst & CM->GConstcount
 
-void InitTGConsts();
-void LoadGConsts();
-void LoadTopGConsts();
-void WriteGConsts();
+extern void InitTGConsts();
+extern void LoadGConsts();
+extern void LoadTopGConsts();
+extern void WriteGConsts();
 
 //LConst Header Data
 //Note: Uses CM->LConstoffset & CM->LConstcount
 
-void InitTLConsts();
-void LoadLConsts();
-void WriteLConsts();
+extern void InitTLConsts();
+extern void LoadLConsts();
+extern void WriteLConsts();
 
 //HConst Header Data
 //Note: Uses CM->HConstoffset & CM->HConstcount
 
-void InitTHConsts();
-void LoadHConsts();
-void WriteHConsts();
+extern void InitTHConsts();
+extern void LoadHConsts();
+extern void WriteHConsts();
 
 #endif

@@ -9,26 +9,26 @@
 //Note: Uses CM->GKind & CM->GKindcount
 
 //Initializes the Global Kind Vector
-void InitTGKinds();
+extern void InitTGKinds();
 //Loads the global kinds of a bytecode file.
-void LoadGKinds();
+extern void LoadGKinds();
 //Loads the global kinds of the top-level bytecode file.
-void LoadTopGKinds();
+extern void LoadTopGKinds();
 //Writes out the contents of the Global Kind Vector.
-void WriteGKinds();
+extern void WriteGKinds();
 
 
 //LKind Header Data
 //Note: Uses CM->LKindoffset & CM->LKindcount
 
 //Initializes the Local Kind Vector
-void InitTLKinds();
+extern void InitTLKinds();
 //Loads the local kinds of a bytecode file.
-void LoadLKinds();
+extern void LoadLKinds();
 //Writes out the contents of the Local Kind Vector.
-void WriteLKinds();
+extern void WriteLKinds();
 
 
-int CheckKindArity(KindInd i);
+extern int CheckKindArity(KindInd i);
 
 #endif //_KIND_H_

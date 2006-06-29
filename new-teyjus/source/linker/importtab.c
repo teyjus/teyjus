@@ -157,6 +157,8 @@ void ImpImportTab()
 	for(i=0;i<count;i++)
 	{
 		tmp[i]=GetConstInd();
+		AddInfo(info,tmp[i]);
+		MarkDynamic(CTID,tmp[i]);
 		MarkDynamic(par,tmp[i]);
 	}
 	

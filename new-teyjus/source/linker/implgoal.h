@@ -7,8 +7,8 @@
 	//Empty
 }LImplGoal_t;*/
 
-void InitTImplGoals();
-void LoadImplGoals();
-void WriteImplGoals();
+extern void InitTImplGoals();
+extern void LoadImplGoals();
+extern void WriteImplGoals();
 
 #endif //_IMPLGOAL_H_

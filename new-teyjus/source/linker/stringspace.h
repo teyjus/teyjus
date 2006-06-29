@@ -8,8 +8,8 @@
 //StringSpace Header Data
 //Note: Uses CM->StringSpacecount && CM->StringSpaceoffset
 
-void InitTStringSpaces();
-void LoadStringSpaces();
-void WriteStringSpaces();
+extern void InitTStringSpaces();
+extern void LoadStringSpaces();
+extern void WriteStringSpaces();
 
 #endif

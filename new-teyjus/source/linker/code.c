@@ -24,8 +24,7 @@ void PutFloat(INT4);
 CodeInd MergeSequence(CodeInd younger, CodeInd older, INT1 n);
 void MergeTerm(CodeInd younger, CodeInd older,INT1 n);
 
-
-void InitTCodes()
+void InitTCode()
 {
 	InitVec(&Code,1024,sizeof(char));
 	InitVec(&Floats,32,sizeof(struct BCFloat));
