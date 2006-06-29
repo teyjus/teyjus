@@ -1,3 +1,5 @@
+#include <stdio.h>
+#include <stdlib.h>
 #include "importtab.h"
 #include "datatypes.h"
 #include "vector.h"
@@ -9,67 +11,102 @@
 //////////////////////////////////////////////////////
 typedef struct{
 	ConstInd index;
+	int dynamic_flag;
+	struct Vector predCalls;
+}PredInfo;
+
+typedef struct Vector PredInfoTab;
+
+typedef struct{
+	int exec_flag;
 	CodeInd addr;
 }PCallEnt;
 
 typedef struct{
+	ImportTabInd parent;
 	struct Vector LConstInds;
-	struct Vector extPred;
+	struct Vector extPred; //ConstInd vector 
+	PredInfoTab newPred;
 	INT1 findCodeFun;
 	struct Vector findCodeTabs;
 }TImportTab_t;
 
 TImportTab_t* CT;	//Import Table of CM.
 
-struct Vector DynamicPreds;
-struct Vector predCalls;
 struct Vector ImportTabs;
 ImportTabInd CTID;
 
 void WriteImportTab(TImportTab_t* ImportTab);
+void ResolvePredCalls(PredInfo* pred);
+PredInfo* FindPredInfo(PredInfoTab* newPred, ConstInd index);
 
-void MarkDynamic(ConstInd index)
-{
-	//TODO
-}
+void InitInfoTab(PredInfoTab* newPred);
+void AddInfo(PredInfoTab* newPred, ConstInd index);
+void AddPredCall(PredInfo* pred, CodeInd addr, int exec_flag);
 
-void ResolvePredCalls()
-{
-	//TODO
-}
-
-void RestoreImportTab()
-{
-	//Resolve predicate collisions
-	int i;
-	int size=(CT->findCodeTabs).numEntries;
-	struct Vector* tmp=(struct Vector*)Fetch(&(CT->findCodeTabs),i);
-	for(i=1;i<size;i++)
-		MergeFindCodeTabs(tmp,tmp+i);
-		
-	//Restore CTID and CT
-	CTID=CM->ImportTabID;
-	CT=Fetch(&ImportTabs,CTID);
-}
-
+//Initialize the list of import tables
 void InitTImportTabs()
 {
+	CT=NULL;
 	InitVec(&ImportTabs,8,sizeof(TImportTab_t));
-	InitVec(&predCalls,128,sizeof(PCallEnt));
+	CTID=-1;
 }
 
-void NewImportTab()
+//Add a new import table to the list.
+ImportTabInd NewImportTab()
 {
-	CM->ImportTabID=CTID;
+	ImportTabInd tmp=CTID;
 	CTID=Extend(&ImportTabs,1);
 	CT=Fetch(&ImportTabs,CTID);
+	CT->parent=tmp;
 	InitVec(&(CT->LConstInds),32,sizeof(ConstInd));
-	InitVec(&(CT->findCodeTabs),1,sizeof(struct Vector));
+	InitVec(&(CT->findCodeTabs),1,sizeof(HashTab_t));
+	InitInfoTab(&(CT->newPred));
+	return CTID;
 }
 
-void ExtImportTab()
+//Load the Import tab of the top level module.
+void TopImportTab()
 {
 	int i;
+	int offset;
+	//Use next clause table for top level predicate names.
+	INT2 count=GET2();
+	PredInfoTab* info=&(CT->newPred);
+	
+	for(i=0;i<count;i++)
+	{
+		AddInfo(info,GetConstInd());
+	}
+	
+	//Add exportdef global predicates to info table.
+	count=GET2();
+	for(i=0;i<count;i++)
+	{
+		AddInfo(info,GetConstInd());
+	}
+	
+	//Add local predicates to info table.
+	count=GET2();
+	for(i=0;i<count;i++)
+	{
+		AddInfo(info,GetConstInd());
+	}
+	
+	//Set findCodeFun
+	CT->findCodeFun=GET1();
+	
+	//Load the findCodeTable
+	struct Vector* vec=&(CT->findCodeTabs);
+	LoadHashTab((HashTab_t*)Fetch(vec,Extend(vec,1)));
+}
+
+//Load the Import tab of an accumulated module.
+void AccImportTab()
+{
+	int i;
+	PredInfoTab* info=&(CT->newPred);
+	
 	//Ignore next clause table
 	INT2 count=GET2();
 	for(i=0;i<count;i++)
@@ -77,41 +114,94 @@ void ExtImportTab()
 		GetConstInd();
 	}
 	
+	//Ignore exportdef global predicates
+	count=GET2();
+	for(i=0;i<count;i++)
+	{
+		GetConstInd();
+	}
+	
+	//Add local predicates to info table.
+	count=GET2();
+	for(i=0;i<count;i++)
+	{
+		AddInfo(info,GetConstInd());
+	}
+	
 	//Ignore findCodeFun
 	GET1();
 	
 	//Load another findCodeTable
 	struct Vector* vec=&(CT->findCodeTabs);
-	LoadHashTab((struct Vector*)Fetch(vec,Extend(vec,1)));
+	LoadHashTab((HashTab_t*)Fetch(vec,Extend(vec,1)));
 }
 
-void GetImportTab()
+//Load the Import tab of an imported module.
+void ImpImportTab()
 {
 	int i;
-	ConstInd* tmp;
 	struct Vector* vec;
+	ImportTabInd par=CT->parent;
+	PredInfoTab* info=&(CT->newPred);
 	
-	//Set next clause table
+	//Set next clause table and mark contents dynamic
 	INT2 count=GET2();
 	
 	vec=&(CT->extPred);
 	InitVec(vec,(int)count,sizeof(ConstInd));
 	Extend(vec,(int)count);
+	
+	ConstInd* tmp;
 	tmp=Fetch(vec,0);
 		
 	for(i=0;i<count;i++)
 	{
 		tmp[i]=GetConstInd();
+		MarkDynamic(par,tmp[i]);
+	}
+	
+	//Mark exportdef global predicates dynamic in the parent,
+	//and add them to the predicate info table as new statics.
+	ConstInd index;
+	for(i=0;i<count;i++)
+	{
+		index=GetConstInd();
+		MarkDynamic(par,index);
+		AddInfo(info,index);
 	}
 		
+	//Add local constants to the predicate info table.
+	for(i=0;i<count;i++)
+	{
+		AddInfo(info,GetConstInd());
+	}
+	
 	//Set findCodeFun
 	CT->findCodeFun=GET1();
 		
 	//Load find code table
 	vec=&(CT->findCodeTabs);
-	LoadHashTab((struct Vector*)Fetch(vec,Extend(vec,1)));
+	LoadHashTab((HashTab_t*)Fetch(vec,Extend(vec,1)));
 }
 
+//Resolve the current import table and restore the current table pointer
+//and current table ID to thier previous values.
+void RestoreImportTab()
+{
+	//Resolve predicate collisions
+	int i;
+	int size=(CT->findCodeTabs).numEntries;
+	HashTab_t* tmp=(HashTab_t*)Fetch(&(CT->findCodeTabs),i);
+	for(i=1;i<size;i++)
+		MergeFindCodeTabs(tmp,tmp+i);
+		
+	//Restore CTID and CT
+	CTID=CT->parent;
+	if(CTID!=-1)
+		CT=Fetch(&ImportTabs,CTID);
+}
+
+//Write out all import tables to file.
 void WriteImportTabs()
 {
 	int i;
@@ -123,6 +213,7 @@ void WriteImportTabs()
 	}
 }
 
+//Write out a single import table to file.
 void WriteImportTab(TImportTab_t* ImportTab)
 {
 	int i;
@@ -142,12 +233,92 @@ void WriteImportTab(TImportTab_t* ImportTab)
 		PutConstInd(tmp[i]);
 	}
 	
-	WriteHashTab((struct Vector*)Fetch(&(ImportTab->findCodeTabs),0));
+	WriteHashTab((HashTab_t*)Fetch(&(ImportTab->findCodeTabs),0));
 }
 
-void PushCall(ConstInd index,CodeInd addr)
+///////////////////////////////////////////////////////////////////////////////
+//Definitions of functions used to manage the Predicate Info Tables////////////
+///////////////////////////////////////////////////////////////////////////////
+
+void InitInfoTab(PredInfoTab* newPred)
 {
-	PCallEnt* pCall=(PCallEnt*)Fetch(&predCalls,Extend(&predCalls,1));
-	pCall->index=index;
-	pCall->addr=addr;
+	InitVec(newPred,16,sizeof(PredInfo));
+}
+
+//Add the predicate with index 'index' to the predicate info table,
+//and mark the new entry as a static with no calls.
+void AddInfo(PredInfoTab* newPred, ConstInd index)
+{
+	PredInfo* tmp=(PredInfo*)Fetch(newPred,Extend(newPred,1));
+	tmp->index=index;
+	tmp->dynamic_flag=0;
+	InitVec(&(tmp->predCalls),8,sizeof(PCallEnt));
+}
+
+void AddPredCall(PredInfo* pred, CodeInd addr, int exec_flag)
+{
+	PCallEnt* tmp = (PCallEnt*)Fetch(&(pred->predCalls),Extend(&(pred->predCalls),1));
+	tmp->addr=addr;
+	tmp->exec_flag=exec_flag;
+}
+
+//Return a pointer to the Predicate info table entry for the constant with index 'index'.
+PredInfo* FindPredInfo(PredInfoTab* newPred, ConstInd index)
+{
+	PredInfo* tmp=Fetch(newPred,0);
+	int i;
+	int size=newPred->numEntries;
+	
+	for(i=0;i<size;i++)
+	{
+		if((tmp[i].index.gl_flag==index.gl_flag)&&(tmp[i].index.index==index.index))
+			return tmp+i;
+	}
+	
+	return NULL;
+}
+
+//Mark the constant with index 'index' as a dynamic predicate in the import tables
+//that has index 'tab'.
+void MarkDynamic(ImportTabInd tab, ConstInd index)
+{
+	PredInfo* tmp=FindPredInfo(&(((TImportTab_t*)Fetch(&ImportTabs,tab))->newPred),index);
+	if(tmp==NULL)
+	{
+		printf("Error couldn't find predicate to mark dynamic.");
+		exit(0);
+	}
+	tmp->dynamic_flag++;
+}
+
+//Resolve all of the predicate call listed in the predicate table entry at 'pred'.
+void ResolvePredCalls(PredInfo* pred)
+{
+	int i;
+	int size=(pred->predCalls).numEntries;
+	PCallEnt* tmp=Fetch(&(pred->predCalls),0);
+	CodeInd addr;
+	if(pred->dynamic_flag>0)
+	{
+		for(i=0;i<size;i++)
+		{
+			MakeCallName(tmp[i].addr,tmp[i].exec_flag,pred->index);
+		}
+	}
+	else
+	{
+		
+		addr=HashCodeAddr((HashTab_t*)Fetch(&(CT->findCodeTabs),0),pred->index);
+		for(i=0;i<size;i++)
+		{
+			MakeCall(tmp[i].addr,tmp[i].exec_flag,addr);
+		}
+	}
+}
+
+//Add a call to the predicate with index 'index' at code offset 'addr' and specify
+//call style with exec_flag to the current import table's predicate info table.
+void PushCall(ConstInd index,CodeInd addr,int exec_flag)
+{
+	AddPredCall(FindPredInfo(&(CT->newPred),index),addr,exec_flag);
 }

@@ -2,6 +2,7 @@
 #include "datatypes.h"
 #include "module.h"
 #include "file.h"
+#include "hashtab.h"
 //////////////////////////////////////////////////////
 //HashTab Load and Write Code
 //////////////////////////////////////////////////////
@@ -12,13 +13,11 @@ typedef struct{
 
 struct Vector HashTabs;
 
-void LoadHashTab(struct Vector* HashTab);
-void WriteHashTab(struct Vector* HashTab);
-void HASH_AddEntry(struct Vector* HashTab, HashTabEnt* entry);
+void HASH_AddEntry(HashTab_t* HashTab, HashTabEnt* entry);
 
 void InitTHashTabs()
 {
-	InitVec(&HashTabs,32,sizeof(struct Vector));
+	InitVec(&HashTabs,32,sizeof(HashTab_t));
 }
 
 void LoadHashTabs()
@@ -26,20 +25,20 @@ void LoadHashTabs()
 	int i;
 	INT2 count=CM->HashTabcount=GET2();
 	int offset=CM->HashTaboffset=Extend(&HashTabs,(int)count);
-	struct Vector* tmp=(struct Vector*)Fetch(&HashTabs,offset);
+	HashTab_t* tmp=(HashTab_t*)Fetch(&HashTabs,offset);
 	for(i=0;i<count;i++)
 	{
 		LoadHashTab(tmp+i);
 	}
 }
 
-void LoadHashTab(struct Vector* HashTab)
+void LoadHashTab(HashTab_t* HashTab)
 {
 	int j;
 	INT2 count=GET2();
-	InitVec(HashTab,(int)count,sizeof(HashTabEnt));
-	Extend(HashTab,(int)count);
-	HashTabEnt* tmp=Fetch(HashTab,0);
+	InitVec((struct Vector*)HashTab,(int)count,sizeof(HashTabEnt));
+	Extend((struct Vector*)HashTab,(int)count);
+	HashTabEnt* tmp=Fetch((struct Vector*)HashTab,0);
 	for(j=0;j<count;j++)
 	{
 		tmp[j].index=GetConstInd();
@@ -51,19 +50,19 @@ void WriteHashTabs()
 {
 	int i;
 	PUT2(HashTabs.numEntries);
-	struct Vector* tmp=(struct Vector*)Fetch(&HashTabs,0);
+	HashTab_t* tmp=(HashTab_t*)Fetch(&HashTabs,0);
 	for(i=0;i<HashTabs.numEntries;i++)
 	{
 		WriteHashTab(tmp+i);
 	}
 }
 
-void WriteHashTab(struct Vector* HashTab)
+void WriteHashTab(HashTab_t* HashTab)
 {
 	int i;
-	INT2 count=HashTab->numEntries;
+	INT2 count=((struct Vector*)HashTab)->numEntries;
 	PUT2(count);
-	HashTabEnt* tmp=Fetch(HashTab,0);
+	HashTabEnt* tmp=Fetch((struct Vector*)HashTab,0);
 	for(i=0;i<count;i++)
 	{
 		PutConstInd(tmp[i].index);
@@ -71,11 +70,12 @@ void WriteHashTab(struct Vector* HashTab)
 	}
 }
 
-int HashTabSearch(struct Vector* HashTab, ConstInd x)
+int HashTabSearch(HashTab_t* HashTab, ConstInd x)
 {
-	HashTabEnt* tmp=Fetch(HashTab,0);
+	HashTabEnt* tmp=Fetch((struct Vector*)HashTab,0);
 	int i;
-	for(i=0;i<HashTab->numEntries;i++)
+	int size=((struct Vector*)HashTab)->numEntries;
+	for(i=0;i<size;i++)
 	{
 		if((tmp[i].index.gl_flag==x.gl_flag)&&(tmp[i].index.index==x.index))
 			return i;
@@ -85,13 +85,13 @@ int HashTabSearch(struct Vector* HashTab, ConstInd x)
 
 INT1 MergeHashTabs(HashTabInd a, HashTabInd b,INT1 n)
 {
-	struct Vector* pa=(struct Vector*)Fetch(&HashTabs,a);
-	struct Vector* pb=(struct Vector*)Fetch(&HashTabs,b);
+	HashTab_t* pa=(HashTab_t*)Fetch(&HashTabs,a);
+	HashTab_t* pb=(HashTab_t*)Fetch(&HashTabs,b);
 	
-	int size=pb->numEntries;
+	int size=((struct Vector*)pb)->numEntries;
 	int i,j;
-	HashTabEnt* tmpa=(HashTabEnt*)Fetch(pa,0);
-	HashTabEnt* tmpb=(HashTabEnt*)Fetch(pb,0);
+	HashTabEnt* tmpa=(HashTabEnt*)Fetch((struct Vector*)pa,0);
+	HashTabEnt* tmpb=(HashTabEnt*)Fetch((struct Vector*)pb,0);
 	for(i=0;i<size;i++)
 	{
 		j=HashTabSearch(pa,tmpb[i].index);
@@ -102,19 +102,19 @@ INT1 MergeHashTabs(HashTabInd a, HashTabInd b,INT1 n)
 		else
 		{
 			HASH_AddEntry(pa,tmpb+i);
-			tmpa=(HashTabEnt*)Fetch(pa,0);
+			tmpa=(HashTabEnt*)Fetch((struct Vector*)pa,0);
 		}
 	}
-	Destroy(pb);
-	return pa->numEntries;
+	Destroy((struct Vector*)pb);
+	return ((struct Vector*)pa)->numEntries;
 }
 
-void MergeFindCodeTabs(struct Vector* pa, struct Vector* pb)
+void MergeFindCodeTabs(HashTab_t* pa, HashTab_t* pb)
 {
-	int size=pb->numEntries;
+	int size=((struct Vector*)pb)->numEntries;
 	int i,j;
-	HashTabEnt* tmpa=(HashTabEnt*)Fetch(pa,0);
-	HashTabEnt* tmpb=(HashTabEnt*)Fetch(pb,0);
+	HashTabEnt* tmpa=(HashTabEnt*)Fetch((struct Vector*)pa,0);
+	HashTabEnt* tmpb=(HashTabEnt*)Fetch((struct Vector*)pb,0);
 	for(i=0;i<size;i++)
 	{
 		j=HashTabSearch(pa,tmpb[i].index);
@@ -125,14 +125,29 @@ void MergeFindCodeTabs(struct Vector* pa, struct Vector* pb)
 		else
 		{
 			HASH_AddEntry(pa,tmpb+i);
-			tmpa=(HashTabEnt*)Fetch(pa,0);
+			tmpa=(HashTabEnt*)Fetch((struct Vector*)pa,0);
 		}
 	}
+	Destroy((struct Vector*)pb);
 }
 
-void HASH_AddEntry(struct Vector* HashTab, HashTabEnt* entry)
+void HASH_AddEntry(HashTab_t* HashTab, HashTabEnt* entry)
 {
-	HashTabEnt* new=Fetch(HashTab,Extend(HashTab,1));
+	HashTabEnt* new=Fetch((struct Vector*)HashTab,Extend((struct Vector*)HashTab,1));
 	new->index=entry->index;
 	new->addr=entry->addr;
+}
+
+CodeInd HashCodeAddr(HashTab_t* HashTab, ConstInd x)
+{
+	
+	HashTabEnt* tmp=Fetch((struct Vector*)HashTab,0);
+	int i;
+	int size=((struct Vector*)HashTab)->numEntries;
+	for(i=0;i<size;i++)
+	{
+		if((tmp[i].index.gl_flag==x.gl_flag)&&(tmp[i].index.index==x.index))
+			return tmp[i].addr;
+	}
+	return -1;
 }

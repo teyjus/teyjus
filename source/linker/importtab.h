@@ -4,12 +4,14 @@
 #include "datatypes.h"
 
 void InitTImportTabs();
-void NewImportTab();
+ImportTabInd NewImportTab();
 void RestoreImportTab();
 void ExtImportTab();
 void GetImportTab();
 void WriteImportTabs();
 
-void PushCall(ConstInd index,CodeInd addr);
+void PushCall(ConstInd index,CodeInd addr,int exec_flag);
+void MarkDynamic(ImportTabInd tab, ConstInd index);
+
 
 #endif //_IMPORTTAB_H_
