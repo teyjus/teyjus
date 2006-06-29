@@ -7,9 +7,9 @@
 	//Empty
 }LTySkel_t;*/
 
-void InitTTySkels();
-void LoadTySkels();
-void WriteTySkels();
-int TySkelCmp(TySkelInd a, TySkelInd b);
+extern void InitTTySkels();
+extern void LoadTySkels();
+extern void WriteTySkels();
+extern int TySkelCmp(TySkelInd a, TySkelInd b);
 
 #endif //_TYSKEL_H_

@@ -45,33 +45,33 @@ struct Module_st{
 
 struct Module_st* CM; 		//The module currently being loaded
 
-void LoadTopModule(char* filename);
-void InitAll();
-void WriteAll();
+extern void LoadTopModule(char* filename);
+extern void InitAll();
+extern void WriteAll();
 
 //////////////////////
 //Utility Functions///
 //////////////////////
 
-ConstInd GetConstInd();
-TySkelInd GetTySkelInd();
-KindInd GetKindInd();
-KindInd FindKindInd(INT1 gl_flag,INT2 index);
-ImplGoalInd GetImplGoalInd();
-HashTabInd GetHashTabInd();
-BvrTabInd GetBvrTabInd();
-StringSpaceInd GetStringSpaceInd();
-CodeInd GetCodeInd();
-ImportTabInd GetImportTabInd();
+extern ConstInd GetConstInd();
+extern TySkelInd GetTySkelInd();
+extern KindInd GetKindInd();
+extern KindInd FindKindInd(INT1 gl_flag,INT2 index);
+extern ImplGoalInd GetImplGoalInd();
+extern HashTabInd GetHashTabInd();
+extern BvrTabInd GetBvrTabInd();
+extern StringSpaceInd GetStringSpaceInd();
+extern CodeInd GetCodeInd();
+extern ImportTabInd GetImportTabInd();
 
-void PutConstInd(ConstInd x);
-void PutTySkelInd(TySkelInd x);
-void PutKindInd(KindInd x);
-void PutImplGoalInd(ImplGoalInd x);
-void PutHashTabInd(HashTabInd x);
-void PutBvrTabInd(BvrTabInd x);
-void PutStringSpaceInd(StringSpaceInd x);
-void PutCodeInd(CodeInd x);
-void PutImportTabInd(ImportTabInd x);
+extern void PutConstInd(ConstInd x);
+extern void PutTySkelInd(TySkelInd x);
+extern void PutKindInd(KindInd x);
+extern void PutImplGoalInd(ImplGoalInd x);
+extern void PutHashTabInd(HashTabInd x);
+extern void PutBvrTabInd(BvrTabInd x);
+extern void PutStringSpaceInd(StringSpaceInd x);
+extern void PutCodeInd(CodeInd x);
+extern void PutImportTabInd(ImportTabInd x);
 
 #endif //_MODULE_H_

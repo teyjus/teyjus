@@ -2,11 +2,11 @@
 #define _RENAME_H_
 #include "datatypes.h"
 
-void InitRNTables();
-void LoadConstRNTable();
-void LoadKindRNTable();
+extern void InitRNTables();
+extern void LoadConstRNTable();
+extern void LoadKindRNTable();
 
-ConstInd RenameConst(Name name);
-KindInd RenameKind(Name name);
+extern ConstInd RenameConst(Name name);
+extern KindInd RenameKind(Name name);
 
 #endif //_RENAME_H_

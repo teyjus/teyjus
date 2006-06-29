@@ -3,15 +3,15 @@
 
 #include "datatypes.h"
 
-void InitTCode();
-void LoadCode();
-void WriteCode();
-void LoadCodeSize();
+extern void InitTCode();
+extern void LoadCode();
+extern void WriteCode();
+extern void LoadCodeSize();
 
-CodeInd MergeSubSequence(CodeInd a, CodeInd b,INT1 n);
-CodeInd MergeDefs(CodeInd a, CodeInd b);
+extern CodeInd MergeSubSequence(CodeInd a, CodeInd b,INT1 n);
+extern CodeInd MergeDefs(CodeInd a, CodeInd b);
 
-void MakeCallName(CodeInd from, int exec_flag, ConstInd to);
-void MakeCall(CodeInd from, int exec_flag, CodeInd to);
+extern void MakeCallName(CodeInd from, int exec_flag, ConstInd to);
+extern void MakeCall(CodeInd from, int exec_flag, CodeInd to);
 
 #endif

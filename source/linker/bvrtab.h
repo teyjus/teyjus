@@ -1,14 +1,10 @@
 #ifndef _BVRTAB_H_
 #define _BVRTAB_H_
 
-//BvrTab Header Data
-//Note: Uses CM->BvrTaboffset & CM->BvrTabcount
+extern void InitTBvrTabs();
+extern void LoadBvrTabs();
+extern void WriteBvrTabs();
 
-
-void InitTBvrTabs();
-void LoadBvrTabs();
-void WriteBvrTabs();
-
-void MergeBvrTabs(BvrTabInd a, BvrTabInd b,INT1 n);
+extern void MergeBvrTabs(BvrTabInd a, BvrTabInd b,INT1 n);
 
 #endif //_BVRTAB_H_

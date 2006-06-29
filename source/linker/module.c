@@ -1,215 +1,198 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include "module.h"
+#include "kind.h"
+#include "tyskel.h"
+#include "const.h"
+#include "stringspace.h"
+#include "implgoal.h"
+#include "hashtab.h"
+#include "bvrtab.h"
+#include "code.h"
+#include "importtab.h"
 
 #define BC_VER 3
 
-// void LoadAccModule(char* modname);
-// void LoadAccModules();
-// void LoadImpModule(char* modname);
-// void LoadImpModules();
-// void InitAll();
+void LoadAccModule(char* modname);
+void LoadAccModules();
+void LoadImpModule(char* modname);
+void LoadImpModules();
+void PushModule(char* modname);
+void PopModule();
 
-// void InitAll()
-// {
-// 	CM=malloc(sizeof(Module));
-// 	if(CM==NULL)
-// 	{
-// 		perror("Memory Allocation Failed");
-// 		exit(0);
-// 	}
-// 	CM->parent=NULL;
-// 	
-// 	InitTGKinds();
-// 	InitTLKinds();
-// 	InitTTySkels();
-// 	InitTGConsts();
-// 	InitTLConsts();
-// 	InitTHConsts();
-// 	InitTStringSpaces();
-// 	InitTImplGoals();
-// 	InitTHashTabs();
-// 	InitTBvrTabs();
-// 	InitTCode();
-// 	InitTImportTabs();
-// }
+void CheckBytecodeVersion();
+void CheckModuleName(char* modname);
 
-// void LoadTopModule(char* modname)
-// {
-// 	PushInput(modname);
-// 	CheckBytecodeVersion();
-// 	CheckModuleName(modname);
-// 	
-// 	LoadStringSpaceSize();
-// 	LoadTySkelSpace();
-// 	GETWORD(); //Other Header Info?
-// 	LoadCodeSize();
-// 	
-// 	LoadFindCodeFun();
-// 	
-// 	LoadTopGKinds();
-// 	LoadLKinds();
-// 	
-// 	LoadTySkels();
-// 	
-// 	LoadTopGConsts();
-// 	LoadLConsts();
-// 	LoadHConsts();
-// 	
-// 	GET1();  //Clause segments
-// 	
-// 	LoadStringSpaces();
-// 	LoadImplGoals();
-// 	
-// 	LoadHashTabs();
-// 	LoadBvrTabs();
-// 	
-// 	LoadImpModules();
-// 	
-// 	LoadCode();
-// 	
-// 	NewImportTab();
-// 	
-// 	LoadAccModules();
-// 	
-// 	PopInput();
-// }
+void PushModule(char* modname)
+{
+	struct Module_st* tmp=calloc(1,sizeof(struct Module_st));
+	if(tmp==NULL)
+	{
+		perror("Memory Allocation Failed");
+		exit(0);
+	}
+	tmp->parent=CM;
+	CM=tmp;
+	PushInput(modname);
+	CheckBytecodeVersion();
+	CheckModuleName(modname);
+}
 
-// void LoadImpModule(char* modname)
-// {
-// 	PushInput(modname);
-// 	CheckBytecodeVersion();
-// 	CheckModuleName(modname);
-// 	
-// 	LoadStringSpaceSize();
-// 	LoadTySkelSpace();
-// 	GETWORD(); //Other Header Info?
-// 	LoadCodeSize();
-// 	
-// 	LoadFindCodeFun();
-// 	
-// 	LoadGKinds();
-// 	LoadLKinds();
-// 	
-// 	LoadTySkels();
-// 	
-// 	LoadGConsts();
-// 	LoadLConsts();
-// 	LoadHConsts();
-// 	
-// 	GET1();  //Clause segments
-// 	
-// 	LoadStringSpaces();
-// 	LoadImplGoals();
-// 	
-// 	LoadHashTabs();
-// 	LoadBvrTabs();
-// 	
-// 	LoadImpModules();
-// 	
-// 	LoadCode();
-// 	
-// 	NewImportTab();
-// 	
-// 	LoadAccModules();
-// 	
-// 	PopInput();
-// }
-// 
-// void LoadAccModule(char* modname)
-// {
-// 	PushInput(modname);
-// 	CheckBytecodeVersion();
-// 	CheckModuleName(modname);
-// 	
-// 	LoadStringSpaceSize();
-// 	LoadTySkelSpace();
-// 	GETWORD(); //Other Header Info?
-// 	LoadCodeSize();
-// 	
-// 	LoadFindCodeFun();
-// 	
-// 	LoadGKinds();
-// 	LoadLKinds();
-// 	
-// 	LoadTySkels();
-// 	
-// 	LoadGConsts();
-// 	LoadLConsts();
-// 	LoadHConsts();
-// 	
-// 	GET1();  //Clause segments
-// 	
-// 	LoadStringSpaces();
-// 	LoadImplGoals();
-// 	
-// 	LoadHashTabs();
-// 	LoadBvrTabs();
-// 	
-// 	LoadImpModules();
-// 	
-// 	LoadCode();
-// 	
-// 	ExtImportTab();
-// 	
-// 	LoadAccModules();
-// 	
-// 	PopInput();
-// }
-// 
-// void LoadImpModules()
-// {
-// 	Module* tmp;
-// 	int count=GET1();
-// 	int i;
-// 	
-// 	for(i=0;i<count;i++)
-// 	{
-// 		tmp=malloc(sizeof(Module));
-// 		if(tmp==NULL)
-// 		{
-// 			perror("Memory Allocation Failed");
-// 			exit(0);
-// 		}
-// 		tmp->parent=CM;
-// 		CM=tmp;
-// 		Name name=GetName();
-// 		LoadConstRNTable();
-// 		LoadKindRNTable();
-// 		LoadImpModule(name.string);
-// 		CM=CM->parent;
-// 		free(tmp);
-// 		RestoreImportTab(CM->ImportTab);
-// 	}
-// }
-// 
-// void LoadAccModules()
-// {
-// 	Module* tmp;
-// 	int count=GET1();
-// 	int i;
-// 	
-// 	for(i=0;i<count;i++)
-// 	{
-// 		tmp=malloc(sizeof(Module));
-// 		if(tmp==NULL)
-// 		{
-// 			perror("Memory Allocation Failed");
-// 			exit(0);
-// 		}
-// 		
-// 		tmp->parent=CM;
-// 		CM=tmp;
-// 		
-// 		Name name=GetName();
-// 		LoadConstRNTable();
-// 		LoadKindRNTable();
-// 		LoadAccModule(name.string);
-// 		
-// 		CM=CM->parent;
-// 		free(tmp);
-// 	}
-// }
+void PopModule()
+{
+	PopInput();
+	struct Module_st* tmp=CM->parent;
+	free(CM);
+	CM=tmp;
+}
+
+void InitAll()
+{
+	CM=NULL;
+	InitTGKinds();
+	InitTLKinds();
+	InitTTySkels();
+	InitTGConsts();
+	InitTLConsts();
+	InitTHConsts();
+	InitTStringSpaces();
+	InitTImplGoals();
+	InitTHashTabs();
+	InitTBvrTabs();
+	InitTCode();
+	InitTImportTabs();
+}
+
+void LoadTopModule(char* modname)
+{
+	PushModule(modname);
+	
+	NewImportTab();
+	LoadCodeSize();
+	
+	LoadTopGKinds();
+	LoadLKinds();
+	
+	LoadTySkels();
+	
+	LoadTopGConsts();
+	LoadLConsts();
+	LoadHConsts();
+	
+	LoadStringSpaces();
+	LoadImplGoals();
+	
+	LoadHashTabs();
+	LoadBvrTabs();
+	
+	TopImportTab();
+	LoadAccModules();
+	LoadImpModules();
+	
+	LoadCode();
+	
+	RestoreImportTab();
+	PopModule();
+}
+
+void LoadAccModule(char* modname)
+{
+	PushModule(modname);
+	
+	LoadCodeSize();
+	
+	LoadGKinds();
+	LoadLKinds();
+	
+	LoadTySkels();
+	
+	LoadGConsts();
+	LoadLConsts();
+	LoadHConsts();
+	
+	LoadStringSpaces();
+	LoadImplGoals();
+	
+	LoadHashTabs();
+	LoadBvrTabs();
+	
+	AccImportTab();
+	LoadAccModules();
+	LoadImpModules();
+	
+	LoadCode();
+	PopModule();
+}
+
+void LoadImpModule(char* modname)
+{
+	PushModule(modname);
+	
+	LoadCodeSize();
+	
+	LoadGKinds();
+	LoadLKinds();
+	
+	LoadTySkels();
+	
+	LoadGConsts();
+	LoadLConsts();
+	LoadHConsts();
+	
+	LoadStringSpaces();
+	LoadImplGoals();
+	
+	LoadHashTabs();
+	LoadBvrTabs();
+	
+	ImpImportTab();
+	LoadAccModules();
+	LoadImpModules();
+	
+	LoadCode();
+	
+	PopModule();
+}
+
+void LoadImpModules()
+{
+	int count=CM->ImportCount=GET1();
+	int i;
+	CM->Import=malloc(sizeof(ImportTabInd)*count);
+	if(CM->Import==NULL)
+	{
+		printf("Malloc failure\n");
+		exit(0);
+	}
+	
+	for(i=0;i<count;i++)
+	{
+		Name name;
+		GetName(&name);
+		LoadConstRNTable();
+		LoadKindRNTable();
+		CM->Import[i]=NewImportTab();
+		LoadImpModule(name.string);
+		RestoreImportTab();
+		Clear(name);
+	}
+}
+
+void LoadAccModules()
+{
+	int count=GET1();
+	int i;
+	
+	for(i=0;i<count;i++)
+	{
+		Name name;
+		GetName(&name);
+		LoadConstRNTable();
+		LoadKindRNTable();
+		LoadAccModule(name.string);
+		Clear(name);
+	}
+}
 
 void CheckBytecodeVersion()
 {
@@ -232,27 +215,22 @@ void CheckModuleName(char* modname)
 	Clear(name);
 }
 
-void LoadFindCodeFun()
+void WriteAll()
 {
-	CM->FindCodeFun=GET1();
+	WriteDependencies();
+	WriteGKinds();
+	WriteLKinds();
+	WriteTySkels();
+	WriteGConsts();
+	WriteLConsts();
+	WriteHConsts();
+	WriteStringSpaces();
+	WriteImplGoals();
+	WriteHashTabs();
+	WriteBvrTabs();
+	WriteImportTabs();
+	WriteCode();
 }
-
-// void WriteAll()
-// {
-// 	WriteDependencies();
-// 	WriteTGKinds();
-// 	WriteTLKinds();
-// 	WriteTTySkels();
-// 	WriteTGConsts();
-// 	WriteTLConsts();
-// 	WriteTHConsts();
-// 	WriteTStringSpaces();
-// 	WriteTImplGoals();
-// 	WriteTHashTabs();
-// 	WriteTBvrTabs();
-// 	WriteTImportTabs();
-// 	WriteTCode();
-// }
 
 KindInd GetKindInd(){
 	INT1 tmp=GET1();

@@ -3,15 +3,15 @@
 
 #include "datatypes.h"
 
-void InitTImportTabs();
-ImportTabInd NewImportTab();
-void RestoreImportTab();
-void ExtImportTab();
-void GetImportTab();
-void WriteImportTabs();
+extern void InitTImportTabs();
+extern ImportTabInd NewImportTab();
+extern void RestoreImportTab();
+extern void ExtImportTab();
+extern void GetImportTab();
+extern void WriteImportTabs();
 
-void PushCall(ConstInd index,CodeInd addr,int exec_flag);
-void MarkDynamic(ImportTabInd tab, ConstInd index);
+extern void PushCall(ConstInd index,CodeInd addr,int exec_flag);
+extern void MarkDynamic(ImportTabInd tab, ConstInd index);
 
 
 #endif //_IMPORTTAB_H_
