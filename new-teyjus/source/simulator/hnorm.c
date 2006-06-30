@@ -404,7 +404,7 @@ void HN_hnorm(DF_TermPtr tmPtr)
 {    
     HN_setEmptyEnv();            
     HNL_initRegs();
-    HN_hnormDispatch(tmPtr, FALSE);
+    HN_hnormDispatch(DF_termDeref(tmPtr), FALSE);
 }
 
 
@@ -665,7 +665,7 @@ void HN_hnormOcc(DF_TermPtr tmPtr)
 {    
     HN_setEmptyEnv();            
     HNL_initRegs();
-    tmPtr = HN_hnormDispatchOcc(tmPtr, FALSE);
+    tmPtr = HN_hnormDispatchOcc(DF_termDeref(tmPtr), FALSE);
 }
 
 
@@ -1067,7 +1067,7 @@ void HN_lnorm(DF_TermPtr tmPtr)
 {    
     HN_setEmptyEnv();            
     HNL_initRegs();
-    tmPtr = HN_lnormDispatch(tmPtr, FALSE);
+    tmPtr = HN_lnormDispatch(DF_termDeref(tmPtr), FALSE);
 }
 
 #endif //HNORM_C
