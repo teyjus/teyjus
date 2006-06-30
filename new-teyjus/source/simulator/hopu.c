@@ -21,7 +21,7 @@
 #include <stdio.h>
 #include "print.h"
 
-/* Unify types associated with constant heads.                             */
+/* Unify types associated with constants.                                 */
 static void HOPU_typesUnify(DF_TypePtr tyEnv1, DF_TypePtr tyEnv2, int n)
 {
     AM_pdlError(2*n);
@@ -36,6 +36,47 @@ static DF_TermPtr HOPU_lamBody(DF_TermPtr tmPtr)
     tmPtr = DF_termDeref(tmPtr);
     while (DF_isLam(tmPtr)) tmPtr = DF_termDeref(DF_lamBody(tmPtr));
     return tmPtr;
+}
+
+/* Eta expands a rigid term whose term pointer and decomposition are given */
+/* by arguments. The new lambda body is returned. (It is unnecessary to    */
+/* create a new lambda term for the abstractions in the front of the eta   */
+/* expanded form. Note that the term head and argument vector are updated  */
+/* as side-effect.                                                         */
+static DF_TermPtr HOPU_etaExpand(DF_TermPtr *h, DF_TermPtr *args, int nargs, 
+                                 int nabs)
+{
+    DF_TermPtr hPtr = *h, oldArgs = *args, rtPtr;
+    MemPtr     suspLoc;  //where susps are to be created
+    int        newArity = nargs + nabs;
+    if (DF_isBV(hPtr)){  //lift index by nabs if the head is a bound variable
+        int ind = DF_bvIndex(hPtr) + nabs;
+        AM_embedError(ind);
+        AM_heapError(AM_hreg + DF_TM_ATOMIC_SIZE);
+        *h = hPtr =(DF_TermPtr)AM_hreg; //update head pointer
+        DF_mkBV(AM_hreg,ind);
+        AM_hreg += DF_TM_ATOMIC_SIZE;
+    }
+    AM_arityError(newArity);
+    AM_heapError(AM_hreg + nargs * DF_TM_SUSP_SIZE + newArity*DF_TM_ATOMIC_SIZE
+                 + DF_TM_APP_SIZE);
+    suspLoc = AM_hreg;
+    AM_hreg += nargs * DF_TM_SUSP_SIZE;  //allocate space for nargs suspensions
+    rtPtr   = (DF_TermPtr)AM_hreg;       //new application
+    DF_mkApp(AM_hreg, newArity, hPtr, (DF_TermPtr)(AM_hreg + DF_TM_APP_SIZE));
+    AM_hreg += DF_TM_APP_SIZE;
+    *args = (DF_TermPtr)AM_hreg;         //update arg vector pointer
+    for (; nargs > 0; nargs--){//create suspensions over original arguments 
+        DF_mkSusp(suspLoc, 0, nabs, DF_termDeref(oldArgs), DF_EMPTY_ENV);
+        DF_mkRef(AM_hreg, (DF_TermPtr)suspLoc);
+        suspLoc += DF_TM_SUSP_SIZE; AM_hreg += DF_TM_ATOMIC_SIZE; 
+        oldArgs = (DF_TermPtr)(((MemPtr)oldArgs) + DF_TM_ATOMIC_SIZE);
+    }
+    for (; nabs > 0; nabs--){//create de Bruijn indices from #nabs to #1
+        DF_mkBV(AM_hreg, nabs); 
+        AM_hreg += DF_TM_ATOMIC_SIZE;
+    }
+    return rtPtr;
 }
 
 /***************************************************************************/
@@ -59,6 +100,8 @@ static Boolean HOPU_uniqueBV(int bvInd, DF_TermPtr args, int n)
 }
 
 /* Whether a constant occurs in the given arguments.                       */
+/* It is assumned that the given arguments can only contain bound variables*/
+/* and constants.                                                          */
 /* CHANGES have to be made here if the semantics of local constants are    */
 /* changed with respect to polymorphism.                                   */
 static Boolean HOPU_uniqueConst(DF_TermPtr cPtr, DF_TermPtr args, int n)
@@ -73,7 +116,7 @@ static Boolean HOPU_uniqueConst(DF_TermPtr cPtr, DF_TermPtr args, int n)
                                     AM_cstTyEnvSize(DF_constTabIndex(cPtr)));
                 } EM_catch {
                     if (EM_CurrentExnType == EM_TY_UNI_FAIL) {
-                        AM_resetTypesPDL();
+                        AM_resetTypesPDL();//remove tys added for ty unif
                     } else EM_reThrow();
                 }
             } else  return FALSE; 
@@ -125,16 +168,16 @@ static Boolean HOPU_isLLambda(int uc, int nargs, DF_TermPtr args)
         for (i = 0; i < nargs; i++){
             HN_hnorm(args);
             if (AM_numArgs == 0) {
-                if (AM_numAbs != 0) return FALSE; //lam
-                if (DF_isBV(AM_head)) {
+                if (AM_numAbs != 0) return FALSE; //abstraction
+                if (DF_isBV(AM_head)) {           //bound variable
                     if (!HOPU_uniqueBV(DF_bvIndex(AM_head), myArgs, i))
                         return FALSE;
-                } else if (DF_isConst(AM_head)) {
+                } else if (DF_isConst(AM_head)) { //constant
                     if (!(uc < DF_constUnivCount(AM_head) && 
                           HOPU_uniqueConst(AM_head, myArgs, i))) return FALSE;
-                } else return FALSE;          //other sort of terms
+                } else return FALSE;              //other sort of terms
             } else { //AM_numArgs != 0
-                if (DF_isBV(AM_head)) {
+                if (DF_isBV(AM_head)) {           //bound variable head
                     int dbInd = DF_bvIndex(AM_head) - AM_numAbs; //eta-norm
                     if (dbInd > 0 && HOPU_uniqueBV(dbInd, myArgs, i) &&
                         HOPU_isEtaExpArgs()) {
@@ -142,7 +185,7 @@ static Boolean HOPU_isLLambda(int uc, int nargs, DF_TermPtr args)
                         DF_mkBV((MemPtr)args, dbInd);
                     } else return FALSE;
                 } else { //!(DF_isBV(AM_head))
-                    if (DF_isConst(AM_head)) {
+                    if (DF_isConst(AM_head)) {    //constant head
                         if (uc < DF_constUnivCount(AM_head) && 
                             HOPU_uniqueConst(AM_head, myArgs, i) &&
                             HOPU_isEtaExpArgs()) {
@@ -151,7 +194,7 @@ static Boolean HOPU_isLLambda(int uc, int nargs, DF_TermPtr args)
                                 DF_mkRef((MemPtr)args, AM_head);
                             else DF_copyAtomic(AM_head, (MemPtr)args);
                         } else return FALSE;
-                    } else return FALSE; //other sort of terms
+                    } else return FALSE;          //other sort of terms
                 }       //!(DF_isBV(AM_head))
             }        //AM_numArgs != 0
             args = (DF_TermPtr)(((MemPtr)args) + DF_TM_ATOMIC_SIZE);
@@ -172,8 +215,8 @@ static Boolean HOPU_isLLambda(int uc, int nargs, DF_TermPtr args)
 static Boolean HOPU_copyFlagGlb = FALSE;
 
 /* Return a non-zero index of a bound variable appears in a list of        */
-/* arguments. Note the index is the position from the right.               */
-/* The embedding level is taken into account.                              */
+/* arguments. Note the index is the position from the right and the        */
+/* embedding level is taken into account.                                  */
 static int HOPU_bvIndex(int dbInd, DF_TermPtr args, int nargs, int lev)
 {
     int ind;
@@ -184,12 +227,12 @@ static int HOPU_bvIndex(int dbInd, DF_TermPtr args, int nargs, int lev)
         //otherwise try the next
         args = (DF_TermPtr)(((MemPtr)args) + DF_TM_ATOMIC_SIZE);
     }
-    return 0;
+    return 0; //not found
 }
 
 /* Return a non-zero index if a constant appears in a list of arguments.   */
-/* Note the index is the position from the right.                          */
-/* The embedding level is taken into account.                              */
+/* Note the index is the position from the right and the embedding level   */
+/* is taken into account.                                                  */
 /* CHANGES have to be made here if the semantics of local constants are    */
 /* changed with respect to polymorphism.                                   */
 static int HOPU_constIndex(DF_TermPtr cPtr, DF_TermPtr args, int nargs, int lev)
@@ -203,7 +246,7 @@ static int HOPU_constIndex(DF_TermPtr cPtr, DF_TermPtr args, int nargs, int lev)
                     HOPU_typesUnify(DF_constType(tPtr), DF_constType(cPtr), 
                                     AM_cstTyEnvSize(DF_constTabIndex(cPtr)));
                     return (ind+lev);
-                } EM_catch {
+                } EM_catch {//remove types added for ty unif from the PDL
                     if (EM_CurrentExnType == EM_TY_UNI_FAIL) AM_resetTypesPDL();
                     else EM_reThrow();
                 }
@@ -211,7 +254,7 @@ static int HOPU_constIndex(DF_TermPtr cPtr, DF_TermPtr args, int nargs, int lev)
         } //otherwise try the next
         args = (DF_TermPtr)(((MemPtr)args) + DF_TM_ATOMIC_SIZE);
     }
-    return 0;
+    return 0; //not found
 }
 
 /***************************************************************************/
@@ -229,7 +272,7 @@ static int HOPU_constIndex(DF_TermPtr cPtr, DF_TermPtr args, int nargs, int lev)
 /* As a result of this process, segments of the argument vectors for both  */
 /* variables are decided. That for the internal variable is created on the */
 /* current top of heap, while that for the outside variable, each          */
-/* argument of which must be de Bruijn indices, is recorded into an integer*/
+/* argument of which must be a de Bruijn index, is recorded into an integer*/
 /* array which is set by side-effect.                                      */
 /* The number returned by this procedure is the length of both of the      */
 /* argument vector segements. Raising occured when this number is non-zero.*/
@@ -243,7 +286,7 @@ static int HOPU_raise(int varuc, DF_TermPtr args, int nargs, int emblev,
     for (; nargs > 0; nargs--){
         DF_TermPtr tmPtr = DF_termDeref(args);
         if (DF_isConst(tmPtr) && (DF_constUnivCount(tmPtr) <= varuc)){
-            args11[numRaised] = nargs + emblev;        
+            args11[numRaised] = nargs + emblev;               //args11        
             if (DF_isTConst(tmPtr)) DF_mkRef(AM_hreg, tmPtr); //args21
             else DF_copyAtomic(tmPtr, AM_hreg);
             AM_hreg += DF_TM_ATOMIC_SIZE;
@@ -263,7 +306,7 @@ static int HOPU_raise(int varuc, DF_TermPtr args, int nargs, int emblev,
 /* As a result of this process, segments of the argument vectors for both  */
 /* variables are decided. That for the internal variable is created on the */
 /* current top of heap, while that for the outside variable, each          */
-/* argument of which must be de Bruijn indices, is recorded into an integer*/
+/* argument of which must be a de Bruijn index, is recorded into an integer*/
 /* array which is set by side-effect.                                      */
 /* The number returned by this procedure is the length of both of the      */
 /* argument vector segements. Pruning occured when this number is smaller  */
@@ -278,8 +321,8 @@ static int HOPU_prune(DF_TermPtr args1, int nargs1, DF_TermPtr args2,
         DF_TermPtr tmPtr = DF_termDeref(args2);
         if (DF_isConst(tmPtr)) {
             int ind = HOPU_constIndex(tmPtr, args1, nargs1, emblev);
-            if (ind > 0) {
-                args12[numNotPruned] = ind;
+            if (ind > 0) { 
+                args12[numNotPruned] = ind;                   //args12 
                 DF_mkBV(AM_hreg, nargs2);                     //args22
                 AM_hreg += DF_TM_ATOMIC_SIZE;
                 numNotPruned ++;
@@ -290,15 +333,15 @@ static int HOPU_prune(DF_TermPtr args1, int nargs1, DF_TermPtr args2,
             if (ind > emblev) {
                 int newind = HOPU_bvIndex(ind, args1, nargs1, emblev);
                 if (newind > 0) {
-                    args12[numNotPruned] = newind;
+                    args12[numNotPruned] = newind;            //args12
                     DF_mkBV(AM_hreg, nargs2);                 //args22
                     AM_hreg += DF_TM_ATOMIC_SIZE;
                     numNotPruned ++;
                     if (ind != newind) HOPU_copyFlagGlb = TRUE; 
                 } //newind == 0 the argument is pruned
             } else {//ind <= lev
-                args12[numNotPruned] = ind;
-                DF_mkBV(AM_hreg, nargs2);
+                args12[numNotPruned] = ind;                   //args12
+                DF_mkBV(AM_hreg, nargs2);                     //args22
                 AM_hreg += DF_TM_ATOMIC_SIZE;
                 numNotPruned ++;
             }
@@ -318,7 +361,7 @@ static int HOPU_prune(DF_TermPtr args1, int nargs1, DF_TermPtr args2,
 /* As a result of this process, the argument vectors for both  variables   */
 /* are decided. That for the outside variable is created on the current    */
 /* top of heap, while that for the internal variable, each argument of     */
-/* which must be de Bruijn indices, is recorded into an integer array which*/
+/* which must be a de Bruijn index, is recorded into an integer array which*/
 /* is set by side-effect.                                                  */
 /* The number returned by this procedure is the length of both of the      */
 /* argument vectors. Pruning occured when this number is smaller than the  */
@@ -337,33 +380,33 @@ static int HOPU_pruneAndRaise(DF_TermPtr args1, int nargs1, DF_TermPtr args2,
             if (ind > emblev) {
                 int newind = HOPU_bvIndex(ind, args1, nargs1, emblev);
                 if (newind > 0) {
-                    DF_mkBV(AM_hreg, newind);         //new args1
+                    DF_mkBV(AM_hreg, newind);         //args for outside var
                     AM_hreg += DF_TM_ATOMIC_SIZE;
-                    args[numNotPruned] = nargs2;
+                    args[numNotPruned] = nargs2;      //args for internal var 
                     numNotPruned ++;
                     if (ind != newind) HOPU_copyFlagGlb = TRUE;
                 } // newind == 0, the argument is prubed
             } else { //ind <= emblev
-                DF_mkBV(AM_hreg, ind);                //new args1
+                DF_mkBV(AM_hreg, ind);                //args for outside var
                 AM_hreg += DF_TM_ATOMIC_SIZE;
-                args[numNotPruned] = nargs2;
+                args[numNotPruned] = nargs2;          //args for internal var
                 numNotPruned ++;
             }
         } else { //tmPtr is const
             if (DF_constUnivCount(tmPtr) > AM_adjreg){                
                 int ind = HOPU_constIndex(tmPtr, args1, nargs1, emblev); 
                 if (ind > 0) {
-                    DF_mkBV(AM_hreg, ind);            //new args1
+                    DF_mkBV(AM_hreg, ind);            //args for outside var
                     AM_hreg += DF_TM_ATOMIC_SIZE;
-                    args[numNotPruned] = nargs2;
+                    args[numNotPruned] = nargs2;      //args for internal var
                     numNotPruned ++;
                     HOPU_copyFlagGlb = TRUE;
                 } //else ind = 0, the argument is pruned  
             } else { //const uc <= AM_adjreg
-                if (DF_isTConst(tmPtr)) DF_mkRef(AM_hreg, tmPtr); //new a1
+                if (DF_isTConst(tmPtr)) DF_mkRef(AM_hreg, tmPtr);//args out var
                 else DF_copyAtomic(tmPtr, AM_hreg);
                 AM_hreg += DF_TM_ATOMIC_SIZE;
-                args[numNotPruned] = nargs2;
+                args[numNotPruned] = nargs2;          //args for internal var
                 numNotPruned ++;
             }
         }
@@ -382,7 +425,6 @@ static int HOPU_pruneAndRaise(DF_TermPtr args1, int nargs1, DF_TermPtr args2,
 /* It is assumed that the sum of n and k is the same as m.                 */
 /* CHANGES have to be made here if the semantics of local constants are    */
 /* changed with respect to polymorphism.                                   */
-
 static int HOPU_pruneSameVar(DF_TermPtr args1, int nargs1, DF_TermPtr args2,
                              int nargs2, int lev)
 {
@@ -411,9 +453,9 @@ static int HOPU_pruneSameVar(DF_TermPtr args1, int nargs1, DF_TermPtr args2,
                         DF_mkBV(AM_hreg, nargs2); AM_hreg += DF_TM_ATOMIC_SIZE;
                         numNotPruned++;
                         HOPU_copyFlagGlb = TRUE;
-                        } EM_catch {
+                        } EM_catch {//remove tys for type unif from the PDL
                             if (EM_CurrentExnType == EM_TY_UNI_FAIL) 
-                                AM_resetTypesPDL();        //pruned
+                                AM_resetTypesPDL();        
                             else EM_reThrow();
                         } //EM_catch
                     } else {//no type association
@@ -451,6 +493,8 @@ static void HOPU_pushVarToHeap(int uc)
 /* Perform substitution to realize pruning and raising for an internal     */
 /* variable in the LLambda situation when the variable has an index greater*/
 /* than that of the outside one                                            */
+/* This procedure is also used to perform substitution for flex-flex pairs */
+/* with same variable heads in the LLambda situation.                      */
 static void HOPU_mkPandRSubst(DF_TermPtr hPtr, DF_TermPtr args, int nargs,
                               DF_TermPtr vPtr, int nabs)
 {
@@ -472,7 +516,9 @@ static void HOPU_mkPandRSubst(DF_TermPtr hPtr, DF_TermPtr args, int nargs,
 
 /* Perform substitution to realize pruning and raising for an internal     */
 /* variable in the LLambda situation when the variable has an index smaller*/
-/* than that of the outside one                                            */
+/* than or equal to that of the outside one                                */
+/* The arguments of the substitution which should be de Bruijn indices     */ 
+/* are given by an integer array.                                          */
 static void HOPU_mkPrunedSubst(DF_TermPtr hPtr, int *args, int nargs, 
                                DF_TermPtr vPtr, int nabs)
 {
@@ -496,7 +542,11 @@ static void HOPU_mkPrunedSubst(DF_TermPtr hPtr, int *args, int nargs,
     }
 }
 
-/* Create a term from the given arguments.                                  */ 
+/* Generating the partial structure of a substitution to realize pruning   */ 
+/* and raising for an outside variable in the LLambda situation when the   */
+/* variable has an index smaller than that of the internal one.            */
+/* The arguments of the susbsitution consists of two segments of de Burijn */
+/* indices, which are given by two integer arrays respectively.            */
 static DF_TermPtr HOPU_mkPandRTerm(DF_TermPtr hPtr, int args1[], int nargs1,
                                    int args2[], int nargs2)
 {
@@ -522,7 +572,9 @@ static DF_TermPtr HOPU_mkPandRTerm(DF_TermPtr hPtr, int args1[], int nargs1,
     }
 }
 
-/* Create a term from the given arguments.                                  */
+/* Generating the partial structure of a substitution to realize pruning   */ 
+/* and raising for an internal variable in the LLambda situation when the  */
+/* variable has an index greater than or equal to that of the outside one. */
 static DF_TermPtr HOPU_mkPrunedTerm(DF_TermPtr hPtr, DF_TermPtr args, int nargs)
 {
     if (nargs == 0) return hPtr;
@@ -535,10 +587,11 @@ static DF_TermPtr HOPU_mkPrunedTerm(DF_TermPtr hPtr, DF_TermPtr args, int nargs)
     }
 }
 
-/* Find the (paritial) substitution of the head of a flex term corresponding  */
-/* to another internal flex term which is known to be LLambda. The internal   */
-/* free variable is bound to a proper substitution as a side-effect.          */
-/* The arguments:                                                             */
+/* Find the (partial) structure of the substitution for a flex head of a      */
+/* LLambda term corresponding to an internal flex term which is known to be   */
+/* LLambda. The internal free variable is bound to a proper substitution  as  */
+/* side-effect.
+/* The arguments of this procedure are:                                       */
 /*  args1 : reference to the argument vector of the outside flex term         */
 /*  nargs1: number of arguments of the outside flex term                      */
 /*  uc    : universe count of the internal free variable                      */
@@ -548,6 +601,8 @@ static DF_TermPtr HOPU_mkPrunedTerm(DF_TermPtr hPtr, DF_TermPtr args, int nargs)
 /*  args2 : refers to the argument vector of the internal flex term           */
 /*  nargs2: number of arguments of the internal flex term                     */
 /*  lev   : the abstraction context of the internal flex term                 */
+/* Note that the outside free variable and its universe count are assumed to  */
+/* be given by the global variables (registers) AM_vbbreg and AM_adjreg.      */
 static DF_TermPtr HOPU_flexNestedLLambda(DF_TermPtr args1, int nargs1, int uc,
                    DF_TermPtr tPtr2, DF_TermPtr fhPtr, DF_TermPtr args2, 
                    int nargs2, int lev)
@@ -606,17 +661,18 @@ static DF_TermPtr HOPU_flexNestedLLambda(DF_TermPtr args1, int nargs1, int uc,
 }
 
 /* Checking the arguments of a flex (non-LLambda) term to see whetehr a    */
-/* free variable same as that in the current AM_vbbreg register, a free    */
-/* variable with higher univ count than that in the current AM_adjreg      */
-/* register, a constant with higher univ count than that in the current    */
+/* free variable same as that currently in the AM_vbbreg register, a free  */
+/* variable with higher univ count than that currently in the AM_adjreg    */
+/* register, a constant with higher univ count than that currently in      */
 /* AM_adjreg, or a de Bruijn index bound by abstractions over the variable */
 /* for which a substitution is being constructed occurs.                   */
 /* If one of the situations occurs, exception is raised.                   */   
 static void HOPU_flexCheck(DF_TermPtr args, int nargs, int emblev)
 {
     for (; nargs > 0; nargs --){
-        int nemblev = emblev + AM_numAbs;
+        int nemblev;  
         HN_hnorm(args);
+        nemblev = emblev + AM_numAbs;
         if (AM_rigFlag){
             if (DF_isBV(AM_head)) {
                 if (DF_bvIndex(AM_head) > nemblev) EM_throw(EM_HOPU_FAIL);
@@ -633,44 +689,48 @@ static void HOPU_flexCheck(DF_TermPtr args, int nargs, int emblev)
     }
 }
 
-/* Create a term on the top of heap which is to be added into the live list*/
-/* It is assumed that nargs != 0 or lev != 0                               */
-/* (h [|a1, 0, lev, nil|] ... [|an, 0, lev, nil|] #lev ... #1)             */ 
-static void HOPU_mkDelayTerm(DF_TermPtr h, DF_TermPtr args, int nargs, int lev)
+/* Generating a term on the top of heap which is to be added into a        */
+/* disagreement pair.                                                      */
+/* The term has the following structure:                                   */
+/* (h [|a1, 0, lev, nil|] ... [|an, 0, lev, nil|] #lev ... #1)             */
+/* It is assumed that nargs and lev are not equal to zero.                 */
+static void HOPU_mkTermNLL(DF_TermPtr h, DF_TermPtr args, int nargs, int lev)
 {
     int newArity = nargs + lev;
-    MemPtr newArgs = AM_hreg + DF_TM_APP_SIZE;
+    MemPtr newArgs = AM_hreg + DF_TM_APP_SIZE; //spare app (head) size on heap
     AM_arityError(newArity);
     AM_heapError(AM_hreg + nargs*DF_TM_SUSP_SIZE + newArity*DF_TM_ATOMIC_SIZE
                  + DF_TM_APP_SIZE);
     DF_mkApp(AM_hreg, newArity, h, (DF_TermPtr)newArgs);
     AM_hreg += (DF_TM_APP_SIZE + newArity * DF_TM_ATOMIC_SIZE);//alloc arg vec
-    for (; nargs > 0; nargs--){
-        DF_mkRef(newArgs, (DF_TermPtr)AM_hreg);
+    for (; nargs > 0; nargs--){ //[|ai, 0, lev, nil|], for i <= nargs
+        DF_mkRef(newArgs, (DF_TermPtr)AM_hreg); 
         DF_mkSusp(AM_hreg, 0, lev, DF_termDeref(args), DF_EMPTY_ENV);
         newArgs += DF_TM_ATOMIC_SIZE;  AM_hreg += DF_TM_SUSP_SIZE;
         args = (DF_TermPtr)(((MemPtr)args) + DF_TM_ATOMIC_SIZE);
     }
-    for (; lev > 0; lev--){
+    for (; lev > 0; lev--){     //#i, for i <= lev
         DF_mkBV(newArgs, lev);
         newArgs += DF_TM_ATOMIC_SIZE;
     }
 }
 
-/* Create a term on the top of heap to be returned as a partial binding    */
-/* (h #n ... #1)                                                           */ 
-static void HOPU_mkPartSubst(DF_TermPtr h, int n)
+/* Generating a partial subsitution for the free head of a LLambda term    */
+/* corresponding to an internal flex term which is known to be non-LLambda.*/
+/* The partial substitution is of form:                                    */
+/* (h #n ... #1)                                                           */
+/* It is assumed that n is not equal to zero.                              */ 
+static void HOPU_mkSubstNLL(DF_TermPtr h, int n)
 {
     AM_arityError(n);
     AM_heapError(AM_hreg + DF_TM_APP_SIZE + n * DF_TM_ATOMIC_SIZE);
     DF_mkApp(AM_hreg, n, h, (DF_TermPtr)(AM_hreg + DF_TM_APP_SIZE));
-    AM_hreg += DF_TM_APP_SIZE;
+       AM_hreg += DF_TM_APP_SIZE;
     for (; n > 0; n--){
         DF_mkBV(AM_hreg, n);
         AM_hreg += DF_TM_ATOMIC_SIZE;
     }
 }
-
 
 /* Try to solve G = ...(F a1 ... an)..., where F and G are different free  */
 /* variables, and (F a1 ... an) is non-LLambda.                            */
@@ -687,8 +747,13 @@ static void HOPU_bndVarNestedFlex(DF_TermPtr fhPtr, DF_TermPtr args, int nargs,
     }
 }
 
-/* Try to solve (F a1 ... an) = lam(k, (G b1 ... bm)), where F and G are   */
-/* both free variables, when (F a1 ... an) is known to be LLambda.         */
+/* Try to find the (partial) structure of the substitution for a flex head  */
+/* of a LLambda term corresponding to an internal flex term which is not    */
+/* known to be LLambda.                                                     */
+/* If the internal flex term is LLambda, HOPU_flexNestedLLambda is invoked  */
+/* to generate the (parital) substitution for the outside variable, and     */
+/* perform proper substitutions on the internal free variable if necessary. */
+/* Otherwise, a disagreement pair is added into the live list.              */
 static DF_TermPtr HOPU_flexNestedSubst(DF_TermPtr args1, int nargs1, 
                                        DF_TermPtr fhPtr, DF_TermPtr args2, 
                                        int nargs2, DF_TermPtr tmPtr, int emblev)
@@ -714,17 +779,16 @@ static DF_TermPtr HOPU_flexNestedSubst(DF_TermPtr args1, int nargs1,
         if ((nargs1 == 0) && (emblev == 0)) {
             bnd = newVar;
             AM_addDisPair(bnd, tmPtr);
-        } else {        
+        } else {                          
             newTerm = (DF_TermPtr)AM_hreg;
-            HOPU_mkDelayTerm(newVar, args1, nargs1, emblev);
+            HOPU_mkTermNLL(newVar, args1, nargs1, emblev);
             AM_addDisPair(newTerm, tmPtr);
             bnd = (DF_TermPtr)AM_hreg;
-            HOPU_mkPartSubst(newVar, emblev + nargs1);
+            HOPU_mkSubstNLL(newVar, emblev + nargs1);
         }
     }
     return bnd;
 }
-
 
 /* Try to solve G = (F a1 ... an), where F and G are different free        */
 /* variables, and (F a1 ... an) is non-LLambda.                            */
@@ -779,18 +843,20 @@ static void HOPU_flexMkSubst(DF_TermPtr tPtr1, DF_TermPtr h1, int nargs1,
                     HOPU_mkPandRSubst(newVar, newArgs, nargs1, h1, nargs2);
                 } else AM_hreg = oldhtop; //unbound
             } else {  //(F a1 ... an)[ll] = (lam(k, (F b1 ... bm)))[non-ll] 
-                if (lev != 0) {
+                if (lev == 0) AM_addDisPair(tPtr1, tPtr2);  
+                else {
                     MemPtr nhtop = AM_hreg + DF_TM_LAM_SIZE;
                     DF_TermPtr tmPtr = (DF_TermPtr)AM_hreg;
                     AM_heapError(AM_hreg);
                     DF_mkLam(AM_hreg, lev, tPtr2);
                     AM_hreg = nhtop;
                     AM_addDisPair(tPtr1, tmPtr);
-                } else AM_addDisPair(tPtr1, tPtr2); 
-            }
+                } //(lev != 0)
+            } //tPtr2 not LLambda 
         } else {        //different variable
             int nabs;
-            AM_vbbreg = h1;   AM_adjreg = uc;   HOPU_copyFlagGlb = FALSE;       
+            AM_vbbreg = h1;   AM_adjreg = uc;   //set regs for occ
+            HOPU_copyFlagGlb = FALSE;       
             bndBody = HOPU_flexNestedSubst(args1, nargs1, h2, args2, nargs2, 
                                            tPtr2, lev);
             nabs = lev + nargs1;
@@ -806,14 +872,15 @@ static void HOPU_flexMkSubst(DF_TermPtr tPtr1, DF_TermPtr h1, int nargs1,
             EM_try{ HOPU_bndVarFlex(h2, tPtr1, h1, args1, nargs1);
             } EM_catch { if (EM_CurrentExnType != EM_HOPU_FAIL) EM_reThrow(); } 
         } 
-        if (lev != 0) {
+        if (lev == 0) AM_addDisPair(tPtr1, tPtr2); 
+        else {
             MemPtr nhtop = AM_hreg + DF_TM_LAM_SIZE;
             DF_TermPtr tmPtr = (DF_TermPtr)AM_hreg;
             AM_heapError(AM_hreg);
             DF_mkLam(AM_hreg, lev, tPtr2);
             AM_hreg = nhtop;
             AM_addDisPair(tPtr1, tmPtr);            
-        } else AM_addDisPair(tPtr1, tPtr2);
+        } //(lev != 0) 
     }                  //the first term is non-LLambda
 }
 
@@ -991,14 +1058,15 @@ static void HOPU_rigMkSubst(DF_TermPtr fPtr, DF_TermPtr fhPtr, int fnargs,
             DF_mkLam((MemPtr)fhPtr, nabs, bndBody);
         }
     } else {                              //non-Llambda pattern
-        if (emblev != 0) {
+        if (emblev == 0) AM_addDisPair(fPtr, rPtr);
+        else {
             MemPtr nhtop = AM_hreg + DF_TM_LAM_SIZE;
             DF_TermPtr tmPtr = (DF_TermPtr)AM_hreg;
             AM_heapError(AM_hreg);
             DF_mkLam(AM_hreg, emblev, rPtr);
             AM_hreg = nhtop;
             AM_addDisPair(fPtr, tmPtr);
-        } else AM_addDisPair(fPtr, rPtr);
+        } // (emblev != 0)
     }                                     //non-LLambda pattern
 }
 
@@ -1094,48 +1162,6 @@ void HOPU_setPDL(MemPtr args1, MemPtr args2, int nargs, int nabs)
 /*                                                                         */   
 /*  The main routines of this file.                                        */
 /***************************************************************************/
-/* Eta expands a rigid term whose term pointer and decomposition are given */
-/* by arguments. The new lambda body is returned. (It is unnecessary to    */
-/* create a new lambda term for the abstractions in the front of the eta   */
-/* expanded form. Note that the term head and argument vector are updated  */
-/* as side-effect.                                                         */
-static DF_TermPtr HOPU_etaExpand(DF_TermPtr *h, DF_TermPtr *args, int nargs, 
-                                 int nabs)
-{
-    DF_TermPtr hPtr = *h, oldArgs = *args, rtPtr;
-    MemPtr     suspLoc;  //where susps are to be created
-    int        newArity = nargs + nabs;
-    if (DF_isBV(hPtr)){  //lift index by nabs if the head is a bound variable
-        int ind = DF_bvIndex(hPtr) + nabs;
-        AM_embedError(ind);
-        AM_heapError(AM_hreg + DF_TM_ATOMIC_SIZE);
-        *h = hPtr =(DF_TermPtr)AM_hreg; //update head pointer
-        DF_mkBV(AM_hreg,ind);
-        AM_hreg += DF_TM_ATOMIC_SIZE;
-    }
-    AM_arityError(newArity);
-    AM_heapError(AM_hreg + nargs * DF_TM_SUSP_SIZE + newArity*DF_TM_ATOMIC_SIZE
-                 + DF_TM_APP_SIZE);
-    suspLoc = AM_hreg;
-    AM_hreg += nargs * DF_TM_SUSP_SIZE;  //allocate space for nargs suspensions
-    rtPtr   = (DF_TermPtr)AM_hreg;       //new application
-    DF_mkApp(AM_hreg, newArity, hPtr, (DF_TermPtr)(AM_hreg + DF_TM_APP_SIZE));
-    AM_hreg += DF_TM_APP_SIZE;
-    *args = (DF_TermPtr)AM_hreg;         //update arg vector pointer
-    for (; nargs > 0; nargs--){//create suspensions over original arguments 
-        DF_mkSusp(suspLoc, 0, nabs, DF_termDeref(oldArgs), DF_EMPTY_ENV);
-        DF_mkRef(AM_hreg, (DF_TermPtr)suspLoc);
-        suspLoc += DF_TM_SUSP_SIZE; AM_hreg += DF_TM_ATOMIC_SIZE; 
-        oldArgs = (DF_TermPtr)(((MemPtr)oldArgs) + DF_TM_ATOMIC_SIZE);
-    }
-    for (; nabs > 0; nabs--){//create de Bruijn indices from #nabs to #1
-        DF_mkBV(AM_hreg, nabs); 
-        AM_hreg += DF_TM_ATOMIC_SIZE;
-    }
-    return rtPtr;
-}
-
-
 /* Perform higher-order pattern unification over the pairs delayed on the  */
 /* PDL stack. The PDL stack is empty upon successful termination of this   */
 /* procedure.                                                              */
@@ -1146,7 +1172,6 @@ void HOPU_patternUnify()
                args;          //arg vec of hnf
     Flag       rig,   cons;   //rigid flag and cons flags
     int        nabs,  nargs;  //binder length and # of arguments of hnf
-
     while (AM_nemptyPDL()){
         //retrieve the pair of terms on the current top of PDL
         tPtr1 = (DF_TermPtr)AM_popPDL(); tPtr2 = (DF_TermPtr)AM_popPDL();
@@ -1196,7 +1221,7 @@ void HOPU_patternUnify()
                 else HOPU_flexMkSubst(absBody2, AM_head, AM_numArgs, AM_argVec,
                                       absBody1,hPtr,nargs,args,nabs-AM_numAbs);
             }               // flex - flex
-        } 
+        }        //(rig == FALSE)
     } // while (AM_nemptyPDL())
 }
 
