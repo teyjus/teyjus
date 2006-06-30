@@ -17,21 +17,12 @@ WordPtr MEM_memBeg;       //starting addr of the system memory
 WordPtr MEM_memEnd;       //end addr of the system memory
 WordPtr MEM_memTop;       //the first usable word in the system memory
 
-/* These variables are needed when string areas are allocated at the end of   */
-/* the system memory                                                          */
-/* The "string stack" is assumed to grow from higher address to low           */
-WordPtr MEM_strAreaBeg;   //starting addr of the string area
-WordPtr MEM_strAreaEnd;   //end addr of the string area
-
-
 /* Asking for the system memory of a given size (in word),                    */
 /* and initialize relevant global variables.                                  */
 void   MEM_memInit(unsigned int size)
 {
     MEM_memBeg = MEM_memTop = (WordPtr)EM_malloc(size * sizeof(Word));
     MEM_memEnd = MEM_memBeg + (size - 1);
-    
-    MEM_strAreaBeg = MEM_strAreaEnd = MEM_memEnd;
 }
 
 

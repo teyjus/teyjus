@@ -22,12 +22,6 @@ extern  WordPtr MEM_memBeg;       //starting addr of the system memory
 extern  WordPtr MEM_memEnd;       //end addr of the system memory
 extern  WordPtr MEM_memTop;       //the first usable word in the system memory
 
-/* These variables are needed when string areas are allocated at the end of   */
-/* the system memory                                                          */
-/* The "string stack" is assumed to grow from higher address to low           */
-extern  WordPtr MEM_strAreaBeg;   //starting addr of the string area
-extern  WordPtr MEM_strAreaEnd;   //end addr of the string area
-
 /* Asking for the system memory of a given size (in word),                    */
 /* and initialize relevant global variables.                                  */
 void    MEM_memInit(unsigned int size);
@@ -105,10 +99,6 @@ typedef struct
     MEM_CstPtr  cstBase;         //starting addr of constant table
     WordPtr     modSpaceBeg;     //starting addr of module space
     WordPtr     modSpaceEnd;     //ending addr of module space
-    //(The last two fields are needed when string area is allocated at the 
-    // end of the system memory) 
-    WordPtr     *strSpaceBeg;    //starting addr of string area
-    WordPtr     *strSpaceEnd;    //end addr of string area
 } MEM_GmtEnt;
 
 #define MEM_MAX_MODULES    255   //max number of modules (temp)
