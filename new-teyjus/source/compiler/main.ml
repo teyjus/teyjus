@@ -7,7 +7,7 @@ let compile =
 		let modresult = Compile.compileModule basename in
 		let sigresult = Compile.compileSignature basename in
 
-		let absyn = (Types.translate modresult sigresult) in
+		let absyn = (Translate.translate modresult sigresult) in
 	
 		(*	Print the results (preabsyn module and sig) to the output file	*)
 		(if (!Compile.printPreAbsyn) then

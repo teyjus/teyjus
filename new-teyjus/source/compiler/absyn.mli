@@ -186,6 +186,11 @@ and amodule =
 
 val getKindArity : akind -> int
 val getKindPos : akind -> pos
+
+val getConstantPos : aconstant -> pos
+val getConstantFixity : aconstant -> afixity
+val getConstantPrec : aconstant -> int
+
 val printAbsyn : amodule -> out_channel -> unit
 
 val string_of_fixity : afixity -> string

@@ -187,6 +187,10 @@ and amodule =
 			askeleton list * askeleton list * aclause list)
 |		Signature
 
+(**********************************************************************
+*getKindPos:
+*	Get a kind's position information.
+**********************************************************************)
 let getKindPos = function
 	LocalKind(_,_,_,p) -> p
 |	GlobalKind(_,_,_,p) -> p
@@ -194,12 +198,45 @@ let getKindPos = function
 
 (**********************************************************************
 *getKindArity:
+*	Get a kind's arity.
 **********************************************************************)
 let getKindArity = function
 	LocalKind(_,Some a,_,_) -> a
 |	GlobalKind(_,Some a,_,_) -> a
 |	PervasiveKind(_,Some a,_,_) -> a
 |	k -> (Errormsg.impossible (getKindPos k)  "getKindArity(): invalid kind arity")
+
+(**********************************************************************
+*getConstantPos:
+*	Get a constant's position information.
+**********************************************************************)
+let getConstantPos = function
+	Constant(_,_,_,_,_,_,_,_,_,_,_,_,p) ->
+		p
+
+(**********************************************************************
+*getConstantType:
+*	Get a constant's type (local, global, closed, etc.)
+**********************************************************************)
+let getConstantType = function
+	Constant(_,_,_,_,_,_,_,_,_,_,_,ctype,_) ->
+		ctype
+
+(**********************************************************************
+*getConstantFixity:
+*	Get a constant's fixity.
+**********************************************************************)
+let getConstantFixity = function
+	Constant(_,fix,_,_,_,_,_,_,_,_,_,_,_) ->
+		fix
+
+(**********************************************************************
+*getConstantPrec:
+*	Get a constant's precedence.
+**********************************************************************)
+let getConstantPrec = function
+	Constant(_,_,prec,_,_,_,_,_,_,_,_,_,_) ->
+		prec
 
 (*	Print a fixity.  Used only in printConstant.	*)
 let string_of_fixity = function

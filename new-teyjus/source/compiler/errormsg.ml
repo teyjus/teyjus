@@ -32,6 +32,13 @@ let find =
 		with Not_found -> None
 
 (********************************************************************
+*none:
+*	An empty pos, useful when printing internal compiler errors that
+*	are unrelated to a particular file or location.
+********************************************************************)
+let none = ("", 0)
+
+(********************************************************************
 *string_of_pos:
 *	Convert a pos to a string.
 ********************************************************************)
@@ -45,8 +52,13 @@ let string_of_pos = function (file, pos) ->
 					p rest (num - 1)
 			| [] -> (file ^ "0.0")
 	in
-	let Some(lines) = (find file (!fileTable)) in
-	p (!lines) (List.length (!lines))
+	if (file, pos) = none then
+		"none"
+	else
+		match (find file (!fileTable)) with
+			Some(lines) ->
+				p (!lines) (List.length (!lines))
+		|	None -> raise Not_found
 
 (********************************************************************
 *printPosition:
@@ -60,8 +72,9 @@ let rec printPosition = fun p ->
 * Call with a character position when a newline is reached.
 ********************************************************************)
 let newLine = function (file, pos) ->
-	let Some(lines) = (find file (!fileTable)) in
-	lines := pos :: !lines
+	match (find file (!fileTable)) with
+		Some(lines) -> lines := pos :: !lines
+	|	None -> raise Not_found
 
 (********************************************************************
 *reset:

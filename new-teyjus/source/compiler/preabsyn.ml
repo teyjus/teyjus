@@ -229,6 +229,8 @@ let printPreAbsyn = fun m out ->
 					output ", ";
 					printPos pos;
 					output ")")
+			|	ErrorType ->
+					(output "Error")
 
 		and printTypeSymbol = function
 				TypeSymbol(tsym, Some t, idk, pos) ->
@@ -299,6 +301,8 @@ let printPreAbsyn = fun m out ->
 					printOperation o;
 					printPos pos;
 					output_line ")")
+			|	ErrorTerm ->
+					(output "Error")
 		
 		and printClause = function
 				Clause(ts) ->
