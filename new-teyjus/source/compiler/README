@@ -7,6 +7,24 @@ Building Teyjus tjc:
 		And then install it in your PATH.
 	2. Compile:
 		ocamake *.ml *.mli *.mly *.mll -opt -o tjc
+		
+		or, using the supplied makefile:
+	
+		make
 
+Running tjc:
+	tjc currently supports 3 arguments:
+		--preabsyn:	Prints the preabsyn to a file.
+		--absyn:	Prints the absyn to a file.
+		--input:	Specifies the input file.
+
+	A fourth option is in the works, but isn't done:
+		--tables:	Prints the symbol tables that the
+				module is being compiled against.
 Notes:
-	Yes, this doesn't compile yet.
+	There will be numerous warnings.  These are being fixed
+	right now.  All of them refer to nonexhaustive match
+	warnings, or with disregarding the result of a function.
+
+	There are a lot of places where the error messages aren't
+	as good as they could be. Those are on the to-do list.
