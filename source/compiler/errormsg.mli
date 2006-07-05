@@ -23,3 +23,4 @@ val impossible : pos -> string -> 'a   (* raises InternalError *)
 val see : pos -> string -> string
 val addFile : string -> unit
 val reset : unit -> unit
+val none : pos
