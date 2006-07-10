@@ -36,9 +36,7 @@ The first byte will determine the category of symbol using the codes
 indicated, and a subsequent variable length field will determine the
 item within the category. The latter is done as follows:
 
-    (1) For arrow, the next byte contains the number of argument
-        types. Since prefix notation is used, representations of 
-        the requisite number of arguments and the target type will
+    (1) For arrow, the argument and target types will
         follow. 
 
     (2) Pervasives correspond to builtin kinds such as int, o, string
@@ -113,153 +111,204 @@ Multibyte integers are stored with the most significant byte appearing
 first in the file.
 
 <bytecode version number> --- 1 word
-<module begin marker>
-{module name represented as 
-  <size> 1 byte
-  <character string of size length>
+[Module Name]
+<name size> --- 1 byte
+{
+	<ith character of name> --- 1 byte
 }
 
-<number of bytes of space needed for strings> --- 1 word
-<number of bytes of space needed for type skeletons> --- 1 word
-<number of bytes of space needed for other header info> --- 1 word
 <number of bytes of space needed for code> --- 1 word
 
+[Global Kinds]
+<number of global kinds> --- 2 bytes
+{
+	[Global Kind]
+	<arity> --- 1 byte
+	<name size> --- 1 byte
+	{
+		<ith character of name> --- 1 byte
+	}
+}
+
+[Local Kinds]
+<number of local kinds> --- 2 bytes
+{
+	[Local Kind]
+	<arity> --- 1 byte
+}
+
+[Type Skeletons]
+<number of type skeletons> --- 2 bytes
+{
+	[Type Skeleton]
+	<prefix representation of type skeleton> (see bytecode.txt)
+}
+
+[Global Constants]
+<number of global constants> --- 2 bytes
+{
+	[Global Constant]
+	<fixity> --- 1 byte
+	<precedence> --- 1 byte
+	<type env size> --- 1 byte
+	<type preserving info> --- 1 byte  (0 if not type preserving, 1 otherwise)
+	<name size> --- 1 byte
+	{
+		<ith character of name> --- 1 byte
+	}
+	<index into type skeleton list> --- 2 bytes
+}
+
+[Local Constants]
+<number of local constants> --- 2 bytes
+{
+	[Local Constant]
+	<fixity> --- 1 byte
+	<precedence> --- 1 byte
+	<type env size> --- 1 byte
+	<index into type skeleton list> --- 2 bytes
+}
+
+[Hidden Constants]
+<number of hidden constants> --- 2 bytes
+{
+	[Local Constant]
+	<type env size> --- 1 byte
+	<index into type skeleton list> --- 2 bytes
+}
+
+[Strings]
+<number of strings> --- 2 bytes
+{
+	[String]
+	<string size> --- 1 byte
+	{
+		<ith character of string> --- 1 byte
+	}
+}
+
+[Implication Goal Tables]
+<number of implication goals> --- 2 bytes
+{
+	[Implication goal]
+	[Next Clause Table]
+	<number of entries in next clause table>
+	{
+		<mark local/global/hidden> --- 1 byte
+		<index into constant table> --- 2 bytes
+	}
+	<find function code> --- 1 byte
+	[Search Table]
+	<number of predicates> --- 2 bytes
+	{
+		<mark local/global/hidden> --- 1 byte
+		<index into constant table> --- 2 bytes
+		<relative address of code> --- 1 word
+	}
+}
+
+[Hash Tables]
+<number of hash tables> --- 2 bytes
+{
+	[Hash Table]
+	<number of entries> --- 2 bytes
+	{
+		<mark local/global/hidden> --- 1 byte
+		<index into constant table> --- 2 bytes
+		<relative address of code> --- 1 word
+	}
+}
+
+[Bound Variable Tables]
+<number of bound variable tables>
+{
+	[Bound Variable Table]
+	<number of entries> --- 2 bytes
+	{
+		<index> --- 1 byte
+		<relative address of code> --- 1 word
+	}
+}
+
+[Import Table]
+[Next Clause Table]
+<number of global, non-exportdef predicates>
+{
+	<mark local/global/hidden> --- 1 byte
+	<index into constant table> --- 2 bytes
+}
+[Exportdef Predicates Table]
+<number of exportdef predicates>
+{
+	<mark local/global/hidden> --- 1 byte
+	<index into constant table> --- 2 bytes
+}
+[Local Predicates Table]
+<number of local predicates>
+{
+	<mark local/global/hidden> --- 1 byte
+	<index into constant table> --- 2 bytes
+}
 <code for function to be used to find predicate definitions>  --- 1 byte
-
-<count of global kind declarations> --- 2 bytes (expandable to 1 word)
-{sequence of fields of the form
-<arity> --- 1 byte
-<length of name> --- 1 byte
-<sequence of characters of size length>
+[Search Table]
+<total number of predicates>
+{
+	<mark local/global/hidden> --- 1 byte
+	<index into constant table> --- 2 bytes
+	<relative address of code> --- 1 word
 }
 
-<count of local kind declarations>  --- 2 bytes (expandable to 1 word)
-{sequence of fields of the form
-<arity> --- 1 byte
-}
 
-<count of type skeletons> --- 2 bytes
-{sequence of fields of the form
-<prefix representation of type skeleton> (see earlier description)
-}
-
-<count of global constant declarations> --- 2 bytes
-{sequence of fields of the form
-<fixity> --- 1 byte
-<precedence> --- 1 byte
-<type env size> --- 1 byte
-<type preserving info> --- 1 byte  (0 if not type preserving, 1 otherwise)
-<length of name> --- 1 byte
-<sequence of characters of size length>
-<index into type skeleton list> --- 2 bytes
-}
-
-<count of local constant declarations>  --- 2 bytes
-{sequence of fields of the form
-<fixity> --- 1 byte
-<precedence> --- 1 byte
-<type env size> --- 1 byte
-<index into type skeleton list> --- 2 bytes
-}
-
-<count of number of segments of clauses> --- 1 byte
-
+[Accumulated Modules]
 <count of accumulated modules> --- 1 byte
-{sequence of fields of the form
-<size of module name> --- 1 byte
-<sequence of characters defining name> 
-<size of kind renaming function> -- 2 bytes
-{sequence of fields of the form 
-<size of kind name> --- 1 byte
-<sequence of characters constituting name>
-<index into local kind list> -- 2 bytes }
-<size of constant renaming function> --- 2 bytes
-{sequence of fields of the form 
-<size of constant name> --- 1 byte
-<sequence of characters defining name> 
-<index into local constant list> --- 2 bytes }
-
-<count of imported modules> --- 1 byte
-{sequence of fields of the form
-<size of module name> --- 1 byte
-<sequence of characters defining name> 
-<size of kind renaming function> -- 2 bytes
-{sequence of fields of the form 
-<size of kind name> --- 1 byte
-<sequence of characters constituting name>
-<index into local kind list> -- 2 bytes }
-<size of constant renaming function> --- 2 bytes
-{sequence of fields of the form 
-<size of constant name> --- 1 byte
-<sequence of characters defining name> 
-<index into local constant list> --- 2 bytes }
-
-<count of number of strings> --- 2 bytes
-{sequence of fields of the form
-<string length> --- 1 word
-<sequence of characters of size length>
+{
+	[Accumulated Module, in reverse order of accumulation]
+	<size of module name> --- 1 byte
+	<sequence of characters defining name>
+	
+	[Kind Renaming Function]
+	<size of kind renaming function> -- 2 bytes
+	{sequence of fields of the form 
+		<size of kind name> --- 1 byte
+		<sequence of characters constituting name>
+		<kind index> -- 3 bytes  - 1 byte flag, 2 byte index
+	}
+	
+	[Constant Renaming Function]
+	<size of constant renaming function> --- 2 bytes
+	{sequence of fields of the form 
+		<size of constant name> --- 1 byte
+		<sequence of characters defining name> 
+		<kind index> -- 3 bytes  - 1 byte flag, 2 byte index
+	}
 }
 
-<count of hidden constant declarations> --- 2 bytes
-{sequence of fields of the form
-<type env size> --- 1 byte
-<index into type skeleton list> --- 2 bytes
+[Imported Modules]
+<count of accumulated modules> --- 1 byte
+{
+	[Imported Module]
+	<size of module name> --- 1 byte
+	<sequence of characters defining name>
+	
+	[Kind Renaming Function]
+	<size of kind renaming function> -- 2 bytes
+	{sequence of fields of the form 
+		<size of kind name> --- 1 byte
+		<sequence of characters constituting name>
+		<kind index> -- 3 bytes  - 1 byte flag, 2 byte index
+	}
+	
+	[Constant Renaming Function]
+	<size of constant renaming function> --- 2 bytes
+	{sequence of fields of the form 
+		<size of constant name> --- 1 byte
+		<sequence of characters defining name> 
+		<kind index> -- 3 bytes  - 1 byte flag, 2 byte index
+	}
 }
 
-<count of blocks of implication goal code>  --- 1 byte
-{sequence of fields of the form
-<count of the predicate definitions possibly  
-                             extending previous ones> --- 2 bytes
-{sequence of fields of the form                            |
-<mark indicating local, global or hidden> --- 1 byte       | next clause table
-<index into the relevant ``name'' table> --- 2 bytes       |
-}
-<find function code>  --- 1 byte                           |
-<table size in words, incl. hash chains space> --- 1 word  | for compiling
-<number of procedures defined> --- 2 bytes                 | hash table 
-{sequence of fields of the form                            | or seq search
-<mark indicating local, global or hidden> --- 1 byte       | table
-<index into the relevant ``name'' table> --- 2 bytes       |
-<relative address of code> --- 4 bytes
-}
-}
-
-<count of hash tables to be generated for constant indexing instructions> 
-                   --- 2 bytes
-{sequence of table generating information of the form
-<table size in words, that includes space for hash chains> --- 1 word
-<number of constants in the table>  --- 2 bytes
-{sequence of fields of the form
-<mark indicating local, global, hidden or pervasive> --- 1 byte
-<index into the relevant ``name'' table> --- 2 bytes
-<relative address of code relevant to this constant> --- 1 word
-}
-}
-
-<count of tables to be generated for bound var indexing instructions> 
-                   --- 2 bytes
-{sequence of table generating information of the form
-<table size in words> --- 1 word
-<number of entries in the table>  --- 2 bytes
-{sequence of fields of the form
-<index> --- 1 byte
-<relative address of code relevant to this index> --- 1 word
-}
-}
-           
-<count of the predicate definitions possibly 
-                             extending previous ones> --- 2 bytes
-{sequence of indices into global constant list, each 2 bytes long}
-
-<count of predicates defined in this module> --- 2 bytes
-<search table size in words, including space for hash chains> -- 1 word
-{sequence of fields of the form
-<mark indicating local, global or hidden> --- 1 byte
-<index into the relevant ``name'' table> --- 2 bytes
-<relative address of code> --- 1 word
-}
-
-{bytecode for the clauses
+[Bytecode]
+{
 This part will consist of a sequence of instructions each 
 of which is given by the op code followed by info about the 
 requisite number of operands. The op codes for various 
@@ -284,7 +333,6 @@ bytecode is as follows:
                                       global (0), local (1) or hidden (2), 
                                       pervasive (3)
                                     Second byte indicates the index
-   T  (type skel index)      ---  2 byte index
    MT (module table address) ---  2 byte index
    IT (impl. table address)  ---  2 byte index
    HT (hash table address)   ---  2 byte index   
@@ -296,6 +344,4 @@ bytecode is as follows:
    F (floating point number) ---  8 bytes: first 4 bytes are mantissa,
 					second 4 bytes are exponent.
    S  (string start address) ---  2 byte index
-   SL (length-tagged string) ---  2 byte index
 }
-<end of module marker>
