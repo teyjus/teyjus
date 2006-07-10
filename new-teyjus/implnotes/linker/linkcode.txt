@@ -73,6 +73,16 @@
 	<index into type skeleton list> --- 2 bytes
 }
 
+[Strings]
+<number of strings> --- 2 bytes
+{
+	[String]
+	<string size> --- 1 byte
+	{
+		<ith character of string> --- 1 byte
+	}
+}
+
 [Implication Goal Tables]
 <number of implication goals> --- 2 bytes
 {
@@ -83,7 +93,6 @@
 		<index into constant table> --- 2 bytes
 	}
 	<find function code> --- 1 byte
-	<search table size> --- 1 word
 	<number of predicates> --- 2 bytes
 	{
 		<mark local/global/hidden> --- 1 byte
@@ -96,7 +105,6 @@
 <number of hash tables> --- 2 bytes
 {
 	[Hash Table]
-	<size>	--- 1 word
 	<number of entries> --- 2 bytes
 	{
 		<mark local/global/hidden> --- 1 byte
@@ -109,7 +117,6 @@
 <number of bound variable tables>
 {
 	[Bound Variable Table]
-	<size>	--- 1 word
 	<number of entries> --- 2 bytes
 	{
 		<index> --- 1 byte
@@ -153,4 +160,40 @@
 }
 
 [Bytecode]
-<Bytecode in a form identical to that in the bytecode files>
+{
+This part will consist of a sequence of instructions each 
+of which is given by the op code followed by info about the 
+requisite number of operands. The op codes for various 
+instructions are available in the file instructions.h in the 
+simulator code directory. This file also decribes a code for
+each kind of operand. The presentation of operand info in the
+bytecode is as follows:
+   P (padding)               ---  null field
+   R (register no)           ---  1 byte number
+   E (env variable)          ---  1 byte number
+   N (next clause in i.p.)   ---  1 byte number
+   I1 (small integer)        ---  1 byte number
+   I2 (larger integer)       ---  2 byte number
+   CE (closure env var)      ---  1 byte number
+   C  (constant index)       ---  3 bytes, 
+                                    First byte indicates whether 
+                                      global (0), local (1) or hidden (2)
+                                      pervasive (3)
+                                    Second byte indicates the index
+   K  (kind index)           ---  3 bytes, 
+                                    First byte indicates whether 
+                                      global (0), local (1) or hidden (2), 
+                                      pervasive (3)
+                                    Second byte indicates the index
+   MT (module table address) ---  2 byte index
+   IT (impl. table address)  ---  2 byte index
+   HT (hash table address)   ---  2 byte index   
+   L  (code location)        ---  4 byte relative address: offset in
+					bytes from start of
+					instruction
+   I (integer)               ---  4 bytes, encoded as a single long
+					integer
+   F (floating point number) ---  8 bytes: first 4 bytes are mantissa,
+					second 4 bytes are exponent.
+   S  (string start address) ---  2 byte index
+}
