@@ -109,33 +109,34 @@ and avar = Var of (bool * bool * bool * bool * int * askeleton list * int * int 
 ********************************************************************)
 and aterm =
 		IntTerm of (int * pos)
-	|	FixedIntTerm of (int)
 	|	StringTerm of (string * pos)
-	|	FixedStringTerm of (string list)
 	|	RealTerm of (float * pos)
-	|	FixedRealTerm of (float)
-	
-	|	AbstractionTerm of (atypesymbol * aterm * pos)
-	|	SansAbstractionTerm of (atypesymbol * aterm)
-	|	FixedAbstractionTerm of (atypesymbol * aterm)
-	|	NNAbstractionTerm of (aterm)
+	|	AbstractionTerm of (atypesymbol list * aterm * pos)
+	|	SansAbstractionTerm of (atypesymbol list * aterm)
 	
 	|	ConstTerm of (aconstant * atype list * pos)
 	|	SansConstTerm of (aconstant * atype list)
-	|	FixedConstTerm of (aconstant * atype list)
 	
 	|	FreeVarTerm of (atypesymbol * pos)
 	|	SansFreeVarTerm of (atypesymbol)
 	
 	|	BoundVarTerm of (atypesymbol * pos)
 	|	SansBoundVarTerm of (atypesymbol)
-	|	FixedBoundVarTerm of (int)
 	
-	|	ApplyTerm of (aterm * aterm list * int * pos)
-	|	SansApplyTerm of (aterm * aterm list * int)
-	|	FixedApplyTerm of (aterm * aterm list * int)
+	|	ApplyTerm of (aterm * aterm * int * pos)
+	|	SansApplyTerm of (aterm * aterm * int)
 	
 	|	ErrorTerm
+
+and afixedterm =
+	|	FixedIntTerm of (int)
+	|	FixedStringTerm of (string list)
+	|	FixedRealTerm of (float)
+	|	FixedAbstractionTerm of (atypesymbol list * afixedterm)
+	|	FixedConstTerm of (aconstant * atype list)
+	|	FixedBoundVarTerm of (int)
+	|	FixedApplyTerm of (aterm * aterm list * int)
+	|	FixedErrorTerm
 
 and ahcvarpair = HCVarPair of (avar * atype list * aconstant)
 
