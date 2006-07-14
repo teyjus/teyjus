@@ -1,10 +1,8 @@
 type pos = Errormsg.pos
 type symbol = Symbol.symbol
 
-type ptterm = Term of (Absyn.aterm * Types.typemolecule * pos)
 type ptop = Op of (pos * Absyn.afixity * int * Absyn.aconstant * Absyn.atype list)
 
-type pttermandvariables = TermAndVariables of (ptterm)
 
 (*	Parser State	*)
 type ptparsestate =
@@ -19,24 +17,6 @@ type ptparsestate =
 |	PostfixState
 |	NoneState
 |	TermState
-
-(*
-let parseTerm = fun t symtable ->
-	let parse = fun t symtable opstack termstack ->
-		match t with
-			Preabsyn.SeqTerm()::ts ->	
-		|	Preabsyn.ConsTerm()::ts ->
-		|	Preabsyn.IntTerm(i, pos)::ts ->
-		|	Preabsyn.RealTerm(r, pos)::ts ->
-		|	Preabsyn.StringTerm(s, pos)::ts ->
-		|	Preabsyn.IdTerm()::ts ->
-		|	Preabsyn.IdTerm()::ts ->
-		
-		|	[] ->	reduce
-	
-	in
-	parse t symtable [] []
-*)
 
 (**********************************************************************
 *makeApply:
