@@ -16,13 +16,14 @@ MEM_Gmt    MEM_modTable;                 //global module table
 WordPtr MEM_memBeg;       //starting addr of the system memory
 WordPtr MEM_memEnd;       //end addr of the system memory
 WordPtr MEM_memTop;       //the first usable word in the system memory
+WordPtr MEM_memBot;       //the last usable word in the system memory
 
 /* Asking for the system memory of a given size (in word),                    */
 /* and initialize relevant global variables.                                  */
 void   MEM_memInit(unsigned int size)
 {
     MEM_memBeg = MEM_memTop = (WordPtr)EM_malloc(size * sizeof(Word));
-    MEM_memEnd = MEM_memBeg + (size - 1);
+    MEM_memEnd = MEM_memBot = MEM_memBeg + (size - 1);
 }
 
 
