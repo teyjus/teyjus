@@ -21,6 +21,8 @@
 extern  WordPtr MEM_memBeg;       //starting addr of the system memory
 extern  WordPtr MEM_memEnd;       //end addr of the system memory
 extern  WordPtr MEM_memTop;       //the first usable word in the system memory
+extern  WordPtr MEM_memBot;       //the last usable word in the system memory
+
 
 /* Asking for the system memory of a given size (in word),                    */
 /* and initialize relevant global variables.                                  */
@@ -99,6 +101,8 @@ typedef struct
     MEM_CstPtr  cstBase;         //starting addr of constant table
     WordPtr     modSpaceBeg;     //starting addr of module space
     WordPtr     modSpaceEnd;     //ending addr of module space
+	WordPtr		codeSpaceBeg;    //starting addr of module space
+	WordPtr		codeSpaceEnd;    //ending addr of module space
 } MEM_GmtEnt;
 
 #define MEM_MAX_MODULES    255   //max number of modules (temp)
