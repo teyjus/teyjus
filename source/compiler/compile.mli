@@ -5,7 +5,7 @@ exception Exception
 
 val typeAbbrevTable : Preabsyn.ptypeabbrev Table.SymbolTable.t
 
-(*	Compile to Preabsyn	*)
+(*  Compile to Preabsyn *)
 val compileModule : string -> Preabsyn.pmodule
 val compileSignature : string -> Preabsyn.pmodule
 
