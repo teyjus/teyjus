@@ -111,27 +111,34 @@ int Remove(struct Tree* t, char* key)
 		{
 			tmp->right=tmp->left;
 		}
-		else
+		else if(tmp->left!=NULL)
 		{
 			tmp2=tmp->right;
 			while(tmp2->left!=NULL)
 			{
-				tmp2=tmp->left;
+				tmp2=tmp2->left;
 			}
 			tmp2->left=tmp->left;
+			tmp->left->parent=tmp2;
 		}
 		
 		if(tmp->parent==NULL)
 		{
 			t->root=tmp->right;
+			if(tmp->right)
+				tmp->right->parent=NULL;
 		}
 		else if(tmp->parent->right==tmp)
 		{
 			tmp->parent->right=tmp->right;
+			if(tmp->right)
+				tmp->right->parent=tmp->parent;
 		}
 		else
 		{
 			tmp->parent->left=tmp->right;
+			if(tmp->right)
+				tmp->right->parent=tmp->parent;
 		}
 		
 		cmp=tmp->data;

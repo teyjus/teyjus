@@ -1,7 +1,10 @@
 #include <stdlib.h>
+#include <stdio.h>
 #include "module.h"
 #include "vector.h"
 #include "rename.h"
+#include "file.h"
+#include "tyskel.h"
 /*/////////////////////////////////////////////////////////////////////////////////////
 //This file defines the code for using GConsts and LConsts/////
 ////////////////////////////////////////////////////////////////////////////////////*/
@@ -13,7 +16,7 @@ typedef struct{
 	INT1 fixity;
 	INT1 precedence;
 	INT1 ty_env_size;
-	INT1 ty_preserving_info;
+	//INT1 ty_preserving_info;
 	Name name;
 	TySkelInd ty_skel_index;
 }TGConst_t;
@@ -24,6 +27,12 @@ ConstInd* AllocateLGConsts(int count);
 ConstInd LoadGConst();
 void WriteGConst(int i);
 ConstInd LoadTopGConst(int i);
+int CheckGConstEqv(ConstInd i,TGConst_t new);
+
+
+void WriteGConsts();
+void WriteLConsts();
+void WriteHConsts();
 
 void InitTGConsts()
 {
@@ -47,6 +56,7 @@ void LoadGConsts()
 	int i;
 	int count=CM->GConstcount=GET2();
 	CM->GConst=AllocateLGConsts(count);
+	printf("Loading %d Global Constants.\n",count);//DEBUG
 	for(i=0;i<count;i++)
 	{
 		CM->GConst[i]=LoadGConst();
@@ -59,7 +69,7 @@ ConstInd LoadGConst()
 	tmp.fixity=GET1();
 	tmp.precedence=GET1();
 	tmp.ty_env_size=GET1();;
-	tmp.ty_preserving_info=GET1();
+	//tmp.ty_preserving_info=GET1();
 	Name name;
 	GetName(&name);
 	ConstInd index=RenameConst(name);
@@ -78,6 +88,7 @@ void LoadTopGConsts()
 	int count=CM->GConstcount=GET2();
 	Extend(&GConsts,count);
 	CM->GConst=AllocateLGConsts(count);
+	printf("Loading %d Top Level Constants.\n",count);//DEBUG
 	for(i=0;i<count;i++)
 	{
 		CM->GConst[i]=LoadTopGConst(i);
@@ -94,7 +105,7 @@ ConstInd LoadTopGConst(int i)
 	tmp->fixity=GET1();
 	tmp->precedence=GET1();
 	tmp->ty_env_size=GET1();;
-	tmp->ty_preserving_info=GET1();
+	//tmp->ty_preserving_info=GET1();
 	GetName(&(tmp->name));
 	tmp->ty_skel_index=GetTySkelInd();
 	
@@ -117,7 +128,7 @@ void WriteGConst(i)
 	PUT1(tmp->fixity);
 	PUT1(tmp->precedence);
 	PUT1(tmp->ty_env_size);
-	PUT1(tmp->ty_preserving_info);
+	//PUT1(tmp->ty_preserving_info);
 	PutName(tmp->name);
 	PutTySkelInd(tmp->ty_skel_index);
 }
@@ -148,6 +159,7 @@ void LoadLConsts()
 	int i;
 	int count=CM->LConstcount=GET2();
 	int offset=CM->LConstoffset=Extend(&LConsts,count);
+	printf("Loading %d Local Constants.\n",count);//DEBUG
 	for(i=0;i<count;i++)
 	{
 		LoadLConst(offset+i);
@@ -205,6 +217,7 @@ void LoadHConsts()
 	int i;
 	int count=CM->HConstcount=GET2();
 	int offset=CM->HConstoffset=Extend(&HConsts,count);
+	printf("Loading %d Hidden Constants.\n",count);//DEBUG
 	for(i=0;i<count;i++)
 	{
 		LoadHConst(offset+i);
@@ -236,6 +249,14 @@ void WriteHConst(i)
 	PUT1(tmp->ty_env_size);
 	PutTySkelInd(tmp->ty_skel_index);
 }
+//////////////////////////////////////////////////////////////
+void WriteConsts()
+{
+	PUT2(LConsts.numEntries+GConsts.numEntries+HConsts.numEntries);
+	WriteGConsts();
+	WriteLConsts();
+	WriteHConsts();
+}
 
 /////////////////////////////////////////////////////////////
 //Utility Functions
@@ -259,7 +280,7 @@ int CheckGConstEqv(ConstInd i,TGConst_t new)
 	b=b&&tmp2->fixity==new.fixity;
 	b=b&&tmp2->precedence==new.precedence;
 	b=b&&tmp2->ty_env_size==new.ty_env_size;
-	b=b&&tmp2->ty_preserving_info==new.ty_preserving_info;
+	//b=b&&tmp2->ty_preserving_info==new.ty_preserving_info;
 	b=b&&0==TySkelCmp(tmp2->ty_skel_index,new.ty_skel_index);
 	return b;
 }

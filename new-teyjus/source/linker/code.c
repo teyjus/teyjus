@@ -7,6 +7,10 @@
 #include "datatypes.h"
 #include "vector.h"
 #include "file.h"
+#include "hashtab.h"
+#include "bvrtab.h"
+
+#define ASSERT(x,err) if(!(x)){printf("%s\n",err); exit(0);}
 //////////////////////////////////////////////////////
 //Code Load and Write Code
 //////////////////////////////////////////////////////
@@ -35,6 +39,7 @@ void LoadCode()
 	int i,j;
 	int offset=CM->CodeOffset;
 	int size=CM->CodeSize;
+	printf("Loading %d bytes of code to offset %d.\n",size,offset);//DEBUG
 	INT1* code=(INT1*)Fetch(&Code,offset);
 	ConstInd tmpIndex;
 	
@@ -47,6 +52,7 @@ void LoadCode()
 	{
 		j=i;
 		opcode=code[j++]=GET1();
+		//printf("%d:\t%s\n",i,INSTR_instrName(opcode));//DEBUG
 		if(opcode==call)
 		{
 			code[j]=GET1();
@@ -144,7 +150,6 @@ void LoadCode()
 			argid++;
 		}
 		while(opType[argid]!=INSTR_X);
-		
 		i+=INSTR_instrSize(opcode)*sizeof(WORD);
 	}
 }
@@ -153,7 +158,7 @@ void LoadCodeSize()
 {
 	int size=CM->CodeSize=GETWORD();
 	CM->CodeOffset=Extend(&Code,size);
-	
+	printf("Loaded Codesize = %d, got offset %d.\n",size,CM->CodeOffset);
 }
 
 void WriteCodeSize()
@@ -180,6 +185,7 @@ void WriteCode()
 		instrCat=INSTR_instrType(opcode);
 		opType=INSTR_operandTypes(instrCat);
 		argid=-1;
+		PUT1(opcode);
 		do{
 			argid++;
 			switch(opType[argid])
@@ -310,79 +316,96 @@ void PutFloat(INT4 i)
 	PUT4(tmp->exponent);
 }
 
-CodeInd MergeSubSequence(CodeInd a, CodeInd b, INT1 n)
+CodeInd MergeSubSequence(CodeInd younger, CodeInd older, INT1 n)
 {
 	CodeInd c,d;
 	INT1* code=(INT1*)Fetch(&Code,0);
-	int trysize=INSTR_instrSize(try)*sizeof(WORD);
-	int trustsize=INSTR_instrSize(trust)*sizeof(WORD);
-	if(code[a]==try||code[a]==try_else)
+	int trysize=INSTR_instrSize(try)*INSTR_LLen;
+	int trustsize=INSTR_instrSize(trust)*INSTR_LLen;
+	
+	//Check plurality of the younger definition
+	if(code[younger]==try||code[younger]==try_else)
 	{
-		c=a;
+		//Younger is plural.
+		c=younger;
 		if(code[c]==try)
 			c+=trysize;
-		else
-			c+=trustsize;
+		else //code[c]==try_else
+			c=*(CodeInd*)(code+c+2*INSTR_LLen);
 		
+		//Get c to the trust instruction for the sequence.
 		while(code[c]!=trust)
 		{
 			if(code[c]==retry)
+			{
 				c+=trysize;
+			}
 			else
-				c+=trustsize;
+			{
+				ASSERT(code[c]==retry_else,"Unexpected subsequence instruction")
+				c=*(CodeInd*)(code+c+2*INSTR_LLen);
+			}
 		}
 		
+		//Convert this into a retry else.
 		code[c]=retry_else;
-		c+=2+sizeof(CodeInd);
-			
-		if(code[b]==try||code[b]==try_else)
+		//Move c to the address of the else label.
+		c+=2*INSTR_LLen;
+		
+		//Check for plurality of the older subsequence.
+		if(code[older]==try||code[older]==try_else)
 		{
-			if(code[b]==try)
-				code[b]=retry;
-			else
-				code[b]=retry_else;
-			*(CodeInd*)(code+c)=b;
+			//Older is plural.
+			if(code[older]==try)
+				code[older]=retry;
+			else //code[older]==try_else
+				code[older]=retry_else;
+			//Fix label
+			*(CodeInd*)(code+c)=older;
 		}
 		else
 		{
+			//Older is singular, so make a new block for the choice point info.
 			d=Extend(&Code,trustsize);
 			code=(INT1*)Fetch(&Code,0);
 			*(CodeInd*)(code+c)=d;
-			*(code+d++)=trust;
-			*(code+d++)=n;
-			*(CodeInd*)(code+d)=b;
+			code[d]=trust;
+			code[d+1]=n;
+			*(CodeInd*)(code+d+INSTR_LLen)=older;
 		}
-		return a;
+		return younger;
 	}
 	else
 	{
-		if(code[b]==try||code[b]==try_else)
+		//Younger is singular.
+		if(code[older]==try||code[older]==try_else)
 		{
-			if(code[b]==try)
-				code[b]=retry;
-			else
-				code[b]=retry_else;
+			//Older is plural.
+			if(code[older]==try)
+				code[older]=retry;
+			else //code[older]==try_else
+				code[older]=retry_else;
 			
+			//Make a new try_else block
 			c=Extend(&Code,trustsize);
-			code=Fetch(&Code,c);
-			*(code++)=try_else;
-			*(code++)=n;
-			*(CodeInd*)code=a;
-			code+=sizeof(CodeInd);
-			*(CodeInd*)code=b;
+			code=Fetch(&Code,0);
+			code[c]=try_else;
+			code[c+1]=n;
+			*(CodeInd*)(code+c+INSTR_LLen)=younger;
+			*(CodeInd*)(code+c+2*INSTR_LLen)=older;
 			return c;
 		}
 		else
 		{
+			//Both are singular, create a try->trust block
 			c=Extend(&Code,trysize+trustsize);
-			code=Fetch(&Code,c);
-			*(code)=try;
-			*(code+1)=n;
-			*(CodeInd*)(code+2)=a;
-			code+=trysize;
-			*(code)=trust;
-			*(code+1)=n;
-			*(CodeInd*)(code+2)=b;
+			code=Fetch(&Code,0);
+			code[c]=try;
+			code[c+1]=n;
+			*(CodeInd*)(code+c+INSTR_LLen)=younger;
+			code[c+trysize]=trust;
+			code[c+trysize+1]=n;
+			*(CodeInd*)(code+c+trysize+INSTR_LLen)=older;
 			return c;
 		}
 	}
@@ -392,29 +415,53 @@ CodeInd MergeSubSequence(CodeInd a, CodeInd b, INT1 n)
 CodeInd MergeDefs(CodeInd older, CodeInd younger)
 {
 	INT1* code=Fetch(&Code,0);
-	CodeInd c;
-	int n;
+	CodeInd c=-1;
+	int n=-1;
 	
 	//Assert switch_on_reg for younger.
-	if(code[younger]!=switch_on_reg)
-	{
-		printf("Invalid definition of older global predicate.");
-		exit(0);
-	}
+	ASSERT(code[younger]==switch_on_reg,"Expected \"switch_on_reg\" at beginning of younger definition.")
 	
 	//Get predicate arity.
-	c=*(CodeInd*)(code+younger++);
+	//Set c to L1 of switch_on_reg.
+	c=*(CodeInd*)(code+younger+sizeof(CodeInd));
+	
+	//Assert that the opcode at c is try.
+	ASSERT(code[c]==try,"Expected \"try\" at branch L1 after switch_on_reg.")
+	
+	//Set n to the arity of the predicate.
 	n=code[c+1];
+	//Change the try -> trust_ext block to fails.
+	code[c]=fail;
+	code[c+sizeof(CodeInd)]=fail;
+	code[c+2*sizeof(CodeInd)]=fail;
 	
 	//Get procedure address
-	younger=*(CodeInd*)(code+younger+sizeof(CodeInd));
+	//Set c to L2 of switch_on_reg
+	c=*(CodeInd*)(code+younger+2*sizeof(CodeInd));
+	//Delete switch_on_reg
+	code[younger]=fail;
+	code[younger+sizeof(CodeInd)]=fail;
+	code[younger+2*sizeof(CodeInd)]=fail;
+	//Set c to the start address of the definition.
+	younger=c;
 	
 	//Check for switch_on_reg for older
 	if(code[older]==switch_on_reg)
 	{
-		younger=MergeSequence(younger,*(CodeInd*)(code+older+2),n);
-		code=Fetch(&Code,older+2);
-		*(CodeInd*)code=younger;
+		//Set c to older's L2
+		c=*(CodeInd*)(code+older+2*sizeof(CodeInd));
+		//Call MergeSequence on the sequences
+		younger=MergeSequence(younger,c,n);
+		//Set older's L2
+		code=Fetch(&Code,0);
+		*(CodeInd*)(code+older+2*sizeof(CodeInd))=younger;
+		//Get the address of the try for the older definition.
+		c=*(CodeInd*)(code+older+sizeof(CodeInd));
+		
+		//Assert that the opcode at c is try.
+		ASSERT(code[c]==try,"Expected \"try\" at branch L1 after switch_on_reg.")
+		//Fix the try clause.
+		*(CodeInd*)(code+c+sizeof(CodeInd))=younger;
 		return older;
 	}
 	else
@@ -428,82 +475,107 @@ CodeInd MergeSequence(CodeInd younger, CodeInd older, INT1 n)
 {
 	CodeInd c;
 	INT1* code=Fetch(&Code,0);
-	int tmesize=INSTR_instrSize(try_me_else)*sizeof(WORD);
+	int tmesize=INSTR_instrSize(try_me_else)*INSTR_LLen;
+	
+	//Check if the younger definition is singular or plural.
 	if(code[younger]==try_me_else)
 	{
-		c=*(CodeInd*)(code+younger+2);
-		while(c==retry_me_else)
-			c=*(CodeInd*)(code+c+2);
+		//Younger is plural, set c to jump to last clause
+		c=*(CodeInd*)(code+younger+INSTR_LLen);
+		while(code[c]==retry_me_else)
+			c=*(CodeInd*)(code+c+INSTR_LLen);
+		ASSERT(code[c]==trust_me,"Expected trust at end of definition.");
 		
+		//Check plurality of older definition.
 		if(code[older]==try_me_else)
 		{
+			//Older is Plural, prep c for continuation.
 			code[c]=retry_me_else;
+			//code[c+1]=n already.
+			//Check for indexing on both endpoints
 			if((code[c+tmesize]==switch_on_term)&&(code[older+tmesize]==switch_on_term))
 			{
-				*(CodeInd*)(code+c+2)=*(CodeInd*)(code+older+2);
+				//Bridge over the indexing of the older
+				*(CodeInd*)(code+c+INSTR_LLen)=*(CodeInd*)(code+older+INSTR_LLen);
 				MergeTerm(c+tmesize,older+tmesize,n);
 				return younger;
 			}
 			else
 			{
-				*(CodeInd*)(code+c+2)=older;
+				//Append whole older definition.
+				*(CodeInd*)(code+c+INSTR_LLen)=older;
+				//Change first older clause to continuation
 				code[older]=retry_me_else;
 				return younger;
 			}
 		}
 		else
 		{
+			//Older is singular, younger plural, c is the last clause.
+			//Check for indexing on both endpoints
 			if((code[c+tmesize]==switch_on_term)&&(code[older]==switch_on_term))
 			{
+				//c is still last, merge indexed.
 				MergeTerm(c+tmesize,older,n);
 				return younger;
 			}
 			else
 			{
+				//can't merge in singular, fix choice point instructions.
 				older-=tmesize;
 				code[older]=trust_me;
 				code[older+1]=n;
 				code[c]=retry_me_else;
-				*(CodeInd*)(code+c+2)=older;
+				*(CodeInd*)(code+c+INSTR_LLen)=older;
+				return younger;
 			}
 		}
 	}
 	else
 	{
+		//Younger is singular, check older
 		if(code[older]==try_me_else)
 		{
+			//Older is plural, give younger a try_me_else.
 			younger-=tmesize;
 			code[younger]=try_me_else;
 			code[younger+1]=n;
 				
+			//Check for double endpoint indexing.
 			if((code[younger+tmesize]==switch_on_term)&&(code[older+tmesize]==switch_on_term))
 			{
-				*(CodeInd*)(code+younger+2)=*(CodeInd*)(code+older+2);
+				//Bridge over first old clause.
+				*(CodeInd*)(code+younger+INSTR_LLen)=*(CodeInd*)(code+older+INSTR_LLen);
+				//Merge indexing.
 				MergeTerm(younger+tmesize,older+tmesize,n);
 				return younger;
 			}
 			else
 			{
-				*(CodeInd*)(code+younger+2)=older;
+				//Append old definition whole
+				*(CodeInd*)(code+younger+INSTR_LLen)=older;
 				code[older]=retry_me_else;
 				return younger;
 			}
 		}
 		else
 		{
+			//Older is singular.  Check indexing.
 			if((code[younger]==switch_on_term)&&(code[older]==switch_on_term))
 			{
+				//Combine into singular definition.
 				MergeTerm(younger,older,n);
 				return younger;
 			}
 			else
 			{
+				//Merge to plural.
 				younger-=tmesize;
 				older-=tmesize;
 				code[younger]=try_me_else;
 				code[younger+1]=n;
-				*(CodeInd*)(code+younger+2)=older;
-				code[older]=trust;
+				*(CodeInd*)(code+younger+INSTR_LLen)=older;
+				code[older]=trust_me;
 				code[older+1]=n;
 				return younger;
 			}
@@ -515,53 +587,62 @@ void MergeTerm(CodeInd younger, CodeInd older,INT1 n)
 {
 	INT1* code=(INT1*)Fetch(&Code,0);
 	
-	CodeInd c,d;
+	CodeInd c,d;//Holder variables for the younger and older labels, respectively.
 	//Combine variable subsequences.
-	c=MergeSequence(*(CodeInd*)(code+younger++),*(CodeInd*)(code+older++),n);
+	younger+=INSTR_LLen;
+	older+=INSTR_LLen;
+	c=MergeSequence(*(CodeInd*)(code+younger),*(CodeInd*)(code+older),n);
+	//Reload code location.
 	code=(INT1*)Fetch(&Code,0);
+	//Set V label
 	*(CodeInd*)(code+younger)=c;
 	
 	//Combine constant subsequences.
-	INT1 tmp1;
-	younger+=sizeof(CodeInd);
-	older+=sizeof(CodeInd);
+	INT1 tabsize;
+	younger+=INSTR_LLen;
+	older+=INSTR_LLen;
 	c=*(CodeInd*)(code+younger);
 	d=*(CodeInd*)(code+older);
+	
+	//Check if older subsequence exists.
 	if(code[d]==switch_on_constant)
 	{
+		//Check if younger case exists.
 		if(code[c]==switch_on_constant)
 		{
-			tmp1=MergeHashTabs(*(HashTabInd*)(code+c+2),*(HashTabInd*)(code+d+2),n);
+			tabsize=MergeHashTabs(*(HashTabInd*)(code+c+2),*(HashTabInd*)(code+d+2),n);
 			code=(INT1*)Fetch(&Code,0);
-			code[c+1]=tmp1;
+			//Update table size.
+			code[c+1]=tabsize;
 		}
 		else
 		{
+			//Use only the existing older case.
 			*(CodeInd*)(code+younger)=d;
 		}
 	}
 	
 	//Combine List subsequences.
-	younger+=sizeof(CodeInd);
-	older+=sizeof(CodeInd);
+	younger+=INSTR_LLen;
+	older+=INSTR_LLen;
 	c=*(CodeInd*)(code+younger);
 	d=*(CodeInd*)(code+older);
+	//Check older case
 	if(code[d]!=fail)
 	{
+		//Check younger case
 		if(code[c]!=fail)
 		{
 			d=MergeSubSequence(c,d,n);
+			//Reload code variable.
 			code=(INT1*)Fetch(&Code,0);
-			
 		}
-		
 		*(CodeInd*)(code+younger)=d;
 	}
 	
 	//Combine Bvr subsequences
-	INT2 tmp2;
-	younger+=sizeof(CodeInd);
-	older+=sizeof(CodeInd);
+	younger+=INSTR_LLen;
+	older+=INSTR_LLen;
 	c=*(CodeInd*)(code+younger);
 	d=*(CodeInd*)(code+older);
 	if(code[d]==switch_on_bvar)
@@ -570,6 +651,7 @@ void MergeTerm(CodeInd younger, CodeInd older,INT1 n)
 		{
 			MergeBvrTabs(*(BvrTabInd*)(code+c+3),*(BvrTabInd*)(code+d+3),n);
 			code=(INT1*)Fetch(&Code,0);
+			//Use the larger value limit.
 			if(*(INT2*)(code+c+1)<*(INT2*)(code+d+1))
 				*(INT2*)(code+c+1)=*(INT2*)(code+d+1);
 		}

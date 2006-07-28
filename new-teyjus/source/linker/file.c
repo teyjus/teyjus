@@ -1,10 +1,14 @@
+#include <sys/types.h>
+#include <sys/stat.h>
 #include <stdlib.h>
 #include <fcntl.h>
+#include <unistd.h>
 #include <stdio.h>
 #include <string.h>
 #include "file.h"
 
 #define DEBUG(x) printf("%s\n",x)
+#define SWAPENDIAN
 
 struct FileNode{
 	int fd;
@@ -16,9 +20,9 @@ struct NameNode{
 	struct NameNode* next;
 };
 
-struct FileNode* InFile;
+struct FileNode* InFile=NULL;
 
-struct NameNode* UsedFile;
+struct NameNode* UsedFile=NULL;
 
 int ofd;
 
@@ -30,7 +34,7 @@ void PushInput(char* modname)
 		perror("Malloc Failure");
 		exit(0);
 	}
-	sprintf(buf,"%s.bc",modname);
+	sprintf(buf,"%s.lp",modname);
 	
 	
 	struct FileNode* tmp = malloc(sizeof(struct FileNode));
@@ -57,7 +61,7 @@ void PushInput(char* modname)
 	}
 	
 	
-	tmp2->name=buf;
+	tmp2->name=modname;
 	tmp->next=InFile;
 	tmp2->next=UsedFile;
 	InFile=tmp;
@@ -80,7 +84,7 @@ void SetOutput(char* modname)
 		perror("Malloc Failure");
 		exit(0);
 	}
-	sprintf(buf,"%s.lc",modname);
+	sprintf(buf,"%s.bc",modname);
 	
 	ofd=open(buf,O_WRONLY|O_CREAT|O_TRUNC,0666);
 	if(ofd==-1)
@@ -103,28 +107,30 @@ void WriteDependencies()
 			PUT1(tmp->name[i]);
 			i--;
 		}
+		tmp=tmp->next;
 	}
 }
 
 int GETWORD()
 {
-	int tmp;
-	read(InFile->fd,&tmp,sizeof(tmp));
-	return tmp;
+	//int tmp;
+	//read(InFile->fd,&tmp,sizeof(tmp));
+	//return tmp;
+	return GET4();
 }
 
 INT4 GET4()
 {
 	INT4 tmp;
 	read(InFile->fd,&tmp,sizeof(tmp));
-	return tmp;
+	return ntohl(tmp);
 }
 
 INT2 GET2()
 {
 	INT2 tmp;
 	read(InFile->fd,&tmp,sizeof(tmp));
-	return tmp;
+	return ntohs(tmp);
 }
 
 INT1 GET1()
@@ -139,10 +145,8 @@ Name* GetName(Name* name)
 /*	if(name==NULL)
 		return NULL;*/
 	char* tmp;
-	int i=0;
 	INT1 size=name->size=GET1();
-	printf("Name:%d ",size);
-	fflush(stdout);
+	//printf("Name:%d ",size);//DEBUG
 	tmp=name->string=malloc(size);
 	if(tmp==NULL)
 	{
@@ -150,7 +154,7 @@ Name* GetName(Name* name)
 		exit(0);
 	}
 	read(InFile->fd,tmp,size);
-	printf("\"%s\"\n",tmp);
+	//printf("\"%s\"\n",tmp);//DEBUG
 	return name;
 }
 
@@ -161,12 +165,14 @@ void PUT1(INT1 x)
 
 void PUT2(INT2 x)
 {
-	write(ofd,&x,sizeof(x));
+	INT2 tmp = htons(x);
+	write(ofd,&tmp,sizeof(x));
 }
 
 void PUT4(INT4 x)
 {
-	write(ofd,&x,sizeof(x));
+	INT4 tmp = htonl(x);
+	write(ofd,&tmp,sizeof(x));
 }
 
 void PUTN(void* data,int n)
@@ -176,12 +182,12 @@ void PUTN(void* data,int n)
 
 void PUTWORD(int x)
 {
-	write(ofd,&x,sizeof(x));
+	PUT4(x);
+	//write(ofd,&x,sizeof(x));
 }
 
 void PutName(Name name)
 {
-	int j;
 	INT1 size=name.size;
 	PUT1(size);
 	

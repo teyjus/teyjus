@@ -1,5 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include "module.h"
 #include "kind.h"
 #include "tyskel.h"
@@ -10,18 +11,22 @@
 #include "bvrtab.h"
 #include "code.h"
 #include "importtab.h"
+#include "file.h"
+#include "rename.h"
 
 #define BC_VER 3
 
-void LoadAccModule(char* modname);
-void LoadAccModules();
-void LoadImpModule(char* modname);
-void LoadImpModules();
-void PushModule(char* modname);
-void PopModule();
+static void LoadAccModule(char* modname);
+static void LoadAccModules();
+static void LoadImpModule(char* modname);
+static void LoadImpModules();
+static void PushModule(char* modname);
+static void PopModule();
 
-void CheckBytecodeVersion();
-void CheckModuleName(char* modname);
+static void CheckBytecodeVersion();
+static void CheckModuleName(char* modname);
+
+static int NumSegs=0;
 
 void PushModule(char* modname)
 {
@@ -65,6 +70,7 @@ void InitAll()
 
 void LoadTopModule(char* modname)
 {
+	printf("Loading Top Level module %s.\n",modname);//DEBUG
 	PushModule(modname);
 	
 	NewImportTab();
@@ -93,10 +99,12 @@ void LoadTopModule(char* modname)
 	
 	RestoreImportTab();
 	PopModule();
+	printf("Finished module %s.\n",modname);//DEBUG
 }
 
 void LoadAccModule(char* modname)
 {
+	printf("Accumulating module %s.\n",modname);//DEBUG
 	PushModule(modname);
 	
 	LoadCodeSize();
@@ -122,10 +130,12 @@ void LoadAccModule(char* modname)
 	
 	LoadCode();
 	PopModule();
+	printf("Finished module %s.\n",modname);//DEBUG
 }
 
 void LoadImpModule(char* modname)
 {
+	printf("Importing module %s.\n",modname);//DEBUG
 	PushModule(modname);
 	
 	LoadCodeSize();
@@ -152,12 +162,14 @@ void LoadImpModule(char* modname)
 	LoadCode();
 	
 	PopModule();
+	printf("Finished module %s.\n",modname);//DEBUG
 }
 
 void LoadImpModules()
 {
 	int count=CM->ImportCount=GET1();
 	int i;
+	printf("Importing %d modules\n",count);//DEBUG
 	CM->Import=malloc(sizeof(ImportTabInd)*count);
 	if(CM->Import==NULL)
 	{
@@ -165,12 +177,20 @@ void LoadImpModules()
 		exit(0);
 	}
 	
+	if(!count)
+	{
+		CM->SegmentID=-1;
+		return;
+	}
+	
+	CM->SegmentID=NumSegs++;
+	
 	for(i=0;i<count;i++)
 	{
 		Name name;
 		GetName(&name);
-		LoadConstRNTable();
 		LoadKindRNTable();
+		LoadConstRNTable();
 		CM->Import[i]=NewImportTab();
 		LoadImpModule(name.string);
 		RestoreImportTab();
@@ -181,14 +201,14 @@ void LoadImpModules()
 void LoadAccModules()
 {
 	int count=GET1();
+	printf("Accumulating %d modules\n",count);//DEBUG
 	int i;
-	
 	for(i=0;i<count;i++)
 	{
 		Name name;
 		GetName(&name);
-		LoadConstRNTable();
 		LoadKindRNTable();
+		LoadConstRNTable();
 		LoadAccModule(name.string);
 		Clear(name);
 	}
@@ -196,7 +216,9 @@ void LoadAccModules()
 
 void CheckBytecodeVersion()
 {
-	if(GET1()!=BC_VER)
+	int x=GET4();
+	printf("Bytecode version %d.\n",x);
+	if(x!=BC_VER)
 	{
 		perror("Incorrect Bytecode Version");
 		exit(0);
@@ -215,19 +237,19 @@ void CheckModuleName(char* modname)
 	Clear(name);
 }
 
-void WriteAll()
+void WriteAll(char* modname)
 {
+	SetOutput(modname);
 	WriteDependencies();
-	WriteGKinds();
-	WriteLKinds();
+	WriteKinds();
 	WriteTySkels();
-	WriteGConsts();
-	WriteLConsts();
-	WriteHConsts();
+	WriteConsts();
 	WriteStringSpaces();
 	WriteImplGoals();
 	WriteHashTabs();
 	WriteBvrTabs();
+	WriteAddCodeTable();
+	PUT1(NumSegs);
 	WriteImportTabs();
 	WriteCode();
 }
@@ -243,7 +265,7 @@ KindInd FindKindInd(INT1 gl_flag,INT2 index)
 	KindInd tmp;
 	tmp.gl_flag=gl_flag;
 	tmp.index=index;
-	printf("KindInd:(%d,%d)->",tmp.gl_flag,tmp.index);
+	//printf("KindInd:(%d,%d)->",tmp.gl_flag,tmp.index);//DEBUG
 	switch(tmp.gl_flag)
 	{
 		case LOCAL:
@@ -271,7 +293,7 @@ KindInd FindKindInd(INT1 gl_flag,INT2 index)
 			exit(0);
 			break;
 	}
-	printf("(%d,%d)\n",tmp.gl_flag,tmp.index);
+	//printf("(%d,%d)\n",tmp.gl_flag,tmp.index);//DEBUG
 	return tmp;
 }
 
@@ -285,7 +307,7 @@ ConstInd GetConstInd(){
 	ConstInd tmp;
 	tmp.gl_flag=GET1();
 	tmp.index=GET2();
-	printf("ConstInd:(%d,%d)->",tmp.gl_flag,tmp.index);
+	//printf("ConstInd:(%d,%d)->",tmp.gl_flag,tmp.index);//DEBUG
 	switch(tmp.gl_flag)
 	{
 		case LOCAL:
@@ -323,7 +345,7 @@ ConstInd GetConstInd(){
 			exit(0);
 			break;
 	}
-	printf("(%d,%d)\n",tmp.gl_flag,tmp.index);
+	//printf("(%d,%d)\n",tmp.gl_flag,tmp.index);//DEBUG
 	return tmp;
 }
 
@@ -335,14 +357,14 @@ void PutConstInd(ConstInd x)
 
 TySkelInd GetTySkelInd(){
 	TySkelInd tmp=GET2();
-	printf("TySkel:%d->",tmp);
+	//printf("TySkel:%d->",tmp);//DEBUG
 	if(tmp>=CM->TySkelcount)
 	{
 		printf("Invalid Type Skeleton %d\n",tmp);
 		exit(0);
 	}
 	tmp+=CM->TySkeloffset;
-	printf("%d\n",tmp);
+	//printf("%d\n",tmp);//DEBUG
 	return tmp;
 }
 
@@ -353,14 +375,14 @@ void PutTySkelInd(TySkelInd x)
 
 CodeInd GetCodeInd(){
 	CodeInd tmp=GETWORD();
-	printf("CodeInd:%d->",tmp);
+	//printf("CodeInd:%d->",tmp);//DEBUG
 	if(tmp>=CM->CodeSize)
 	{
 		printf("Invalid Code Address %d\n",tmp);
 		exit(0);
 	}
 	tmp+=CM->CodeOffset;
-	printf("%d\n",tmp);
+	//printf("%d\n",tmp);//DEBUG
 	return tmp;
 }
 

@@ -15,6 +15,9 @@
 	}
 }
 
+<size of code area> --- 1 word
+
+<total number of kinds>  --- 2 bytes
 [Global Kinds]
 <number of global kinds> --- 2 bytes
 {
@@ -40,6 +43,7 @@
 	<prefix representation of type skeleton> (see bytecode.txt)
 }
 
+<total number of constants> --- 2 bytes
 [Global Constants]
 <number of global constants> --- 2 bytes
 {
@@ -47,7 +51,7 @@
 	<fixity> --- 1 byte
 	<precedence> --- 1 byte
 	<type env size> --- 1 byte
-	<type preserving info> --- 1 byte  (0 if not type preserving, 1 otherwise)
+	//<type preserving info> --- 1 byte  (0 if not type preserving, 1 otherwise)
 	<name size> --- 1 byte
 	{
 		<ith character of name> --- 1 byte

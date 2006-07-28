@@ -1,4 +1,6 @@
-
+#include <stdlib.h>
+#include <stdio.h>
+#include "module.h"
 
 int main(int argc, char* argv[])
 {
@@ -11,5 +13,6 @@ int main(int argc, char* argv[])
 	
 	InitAll();
 	LoadTopModule(argv[1]);
-	WriteAll();
+	WriteAll(argv[1]);
+	return 0;
 }

@@ -1,8 +1,10 @@
+#include <stdio.h>
 #include "vector.h"
 #include "datatypes.h"
 #include "module.h"
 #include "file.h"
 #include "hashtab.h"
+#include "code.h"
 //////////////////////////////////////////////////////
 //HashTab Load and Write Code
 //////////////////////////////////////////////////////

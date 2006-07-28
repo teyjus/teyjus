@@ -5,6 +5,7 @@
 #include "kind.h"
 #include "vector.h"
 #include "rename.h"
+#include "file.h"
 
 /*/////////////////////////////////////////////////////////////////////////////////////
 //This file defines the code for using GKinds and LKinds/////
@@ -24,6 +25,9 @@ KindInd* AllocateLGKinds(int count);
 KindInd LoadTopGKind(int i);
 KindInd LoadGKind();
 void WriteGKind(int i);
+
+void WriteGKinds();
+void WriteLKinds();
 
 void InitTGKinds()
 {
@@ -56,6 +60,7 @@ void LoadGKinds()
 	
 	INT2 count=CM->GKindcount=GET2();
 	CM->GKind=AllocateLGKinds(count);
+	printf("Loading %d Global Kinds.\n",count);//DEBUG
 	for(i=0;i<count;i++)
 	{
 		CM->GKind[i]=LoadGKind();
@@ -85,6 +90,8 @@ void LoadTopGKinds()
 	INT2 count=CM->GKindcount=GET2();
 	Extend(&GKinds,(int)count);
 	CM->GKind=AllocateLGKinds(count);
+	printf("Loading %d Top Level Kinds.\n",count);//DEBUG
+	
 	for(i=0;i<count;i++)
 	{
 		CM->GKind[i]=LoadTopGKind(i);
@@ -145,7 +152,8 @@ void LoadLKinds()
 	int i;
 	INT2 count=CM->LKindcount=GET2();
 	int offset=CM->LKindoffset=Extend(&LKinds,count);
-	//CM->LKind=AllocateLLKinds(count);
+	printf("Loading %d Local Kinds.\n",count);//DEBUG
+	
 	for(i=0;i<count;i++)
 	{
 		LoadLKind(offset+i);
@@ -173,6 +181,14 @@ void WriteLKind(i)
 {
 	TLKind_t* tmp=Fetch(&LKinds,i);
 	PUT1(tmp->arity);
+}
+
+////////////////////////////////////////////////
+void WriteKinds()
+{
+	PUT2(LKinds.numEntries+GKinds.numEntries);
+	WriteGKinds();
+	WriteLKinds();
 }
 
 /////////////////////////////////////////////////////////////

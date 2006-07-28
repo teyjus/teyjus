@@ -151,7 +151,7 @@ first in the file.
 	<fixity> --- 1 byte
 	<precedence> --- 1 byte
 	<type env size> --- 1 byte
-	<type preserving info> --- 1 byte  (0 if not type preserving, 1 otherwise)
+	//<Needness vector>
 	<name size> --- 1 byte
 	{
 		<ith character of name> --- 1 byte
@@ -232,26 +232,26 @@ first in the file.
 
 [Import Table]
 [Next Clause Table]
-<number of global, non-exportdef predicates>
+<number of global, non-exportdef predicates> --- 2 bytes
 {
 	<mark local/global/hidden> --- 1 byte
 	<index into constant table> --- 2 bytes
 }
 [Exportdef Predicates Table]
-<number of exportdef predicates>
+<number of exportdef predicates> --- 2 bytes
 {
 	<mark local/global/hidden> --- 1 byte
 	<index into constant table> --- 2 bytes
 }
 [Local Predicates Table]
-<number of local predicates>
+<number of local predicates> --- 2 bytes
 {
 	<mark local/global/hidden> --- 1 byte
 	<index into constant table> --- 2 bytes
 }
 <code for function to be used to find predicate definitions>  --- 1 byte
 [Search Table]
-<total number of predicates>
+<total number of predicates> --- 2 bytes
 {
 	<mark local/global/hidden> --- 1 byte
 	<index into constant table> --- 2 bytes

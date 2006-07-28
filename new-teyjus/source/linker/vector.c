@@ -22,6 +22,7 @@ int InitVec(struct Vector* vec,int max,size_t size)
 		perror("Vector element size is zero");
 		exit(0);
 	}
+	return 0;
 }
 
 int Extend(struct Vector* vec, int count)
@@ -39,7 +40,7 @@ int Extend(struct Vector* vec, int count)
 			vec->maxEntries*=2;
 		}while(vec->numEntries>vec->maxEntries);
 		
-		vec->entry=realloc(vec->entry,vec->maxEntries*vec->entrySize);
+		vec->entry=realloc(vec->entry,(vec->maxEntries)*(vec->entrySize));
 		if(vec->entry==NULL)
 		{
 			perror("Memory Allocation Failed");

@@ -9,7 +9,7 @@ extern void InitTHashTabs();
 extern void LoadHashTabs();
 extern void WriteHashTabs();
 
-typedef struct Vector* HashTab_t;
+typedef struct Vector HashTab_t;
 
 /////////////////////////////////////////
 //Utilities////////////////////////////
