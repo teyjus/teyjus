@@ -6,6 +6,7 @@
 #include "file.h"
 #include "module.h"
 #include "hashtab.h"
+#include "code.h"
 //////////////////////////////////////////////////////
 //ImportTab Load and Write Code
 //////////////////////////////////////////////////////
@@ -60,7 +61,7 @@ ImportTabInd NewImportTab()
 	CT=Fetch(&ImportTabs,CTID);
 	CT->parent=tmp;
 	InitVec(&(CT->LConstInds),32,sizeof(ConstInd));
-	InitVec(&(CT->findCodeTabs),1,sizeof(HashTab_t));
+	InitVec(&(CT->findCodeTabs),2,sizeof(HashTab_t));
 	InitInfoTab(&(CT->newPred));
 	return CTID;
 }
@@ -68,8 +69,9 @@ ImportTabInd NewImportTab()
 //Load the Import tab of the top level module.
 void TopImportTab()
 {
+	
+	printf("Loading Top Level Import Tab.\n");//DEBUG
 	int i;
-	int offset;
 	//Use next clause table for top level predicate names.
 	INT2 count=GET2();
 	PredInfoTab* info=&(CT->newPred);
@@ -98,12 +100,15 @@ void TopImportTab()
 	
 	//Load the findCodeTable
 	struct Vector* vec=&(CT->findCodeTabs);
-	LoadHashTab((HashTab_t*)Fetch(vec,Extend(vec,1)));
+	HashTab_t* httmp=(HashTab_t*)Fetch(vec,Extend(vec,1));
+	LoadHashTab(httmp);
 }
 
 //Load the Import tab of an accumulated module.
 void AccImportTab()
 {
+	
+	printf("Loading Accumulated Import Tab.\n");//DEBUG
 	int i;
 	PredInfoTab* info=&(CT->newPred);
 	
@@ -121,6 +126,7 @@ void AccImportTab()
 		GetConstInd();
 	}
 	
+	
 	//Add local predicates to info table.
 	count=GET2();
 	for(i=0;i<count;i++)
@@ -133,7 +139,9 @@ void AccImportTab()
 	
 	//Load another findCodeTable
 	struct Vector* vec=&(CT->findCodeTabs);
-	LoadHashTab((HashTab_t*)Fetch(vec,Extend(vec,1)));
+	
+	HashTab_t* tabaddr=(HashTab_t*)Fetch(vec,Extend(vec,1));
+	LoadHashTab(tabaddr);
 }
 
 //Load the Import tab of an imported module.
@@ -190,13 +198,15 @@ void ImpImportTab()
 //and current table ID to thier previous values.
 void RestoreImportTab()
 {
+	printf("Restoring Import Tab\n");//DEBUG
 	//Resolve predicate collisions
 	int i;
 	int size=(CT->findCodeTabs).numEntries;
-	HashTab_t* tmp=(HashTab_t*)Fetch(&(CT->findCodeTabs),i);
+	HashTab_t* tmp=(HashTab_t*)Fetch(&(CT->findCodeTabs),0);
 	for(i=1;i<size;i++)
+	{
 		MergeFindCodeTabs(tmp,tmp+i);
-		
+	}
 	//Restore CTID and CT
 	CTID=CT->parent;
 	if(CTID!=-1)
@@ -207,12 +217,20 @@ void RestoreImportTab()
 void WriteImportTabs()
 {
 	int i;
-	PUT2(ImportTabs.numEntries);
+	PUT2(ImportTabs.numEntries-1);
 	TImportTab_t* tmp=(TImportTab_t*)Fetch(&ImportTabs,0);
-	for(i=0;i<ImportTabs.numEntries;i++)
+	for(i=1;i<ImportTabs.numEntries;i++)
 	{
 		WriteImportTab(tmp+i);
 	}
+}
+
+//Write out the addcode table for the top level.
+void WriteAddCodeTable()
+{
+	PUT1(1);//FIND_CODE_FUNCTION
+	//Write the contents of the primary hash table of the first import table.
+	WriteHashTab((HashTab_t*)Fetch(&(((TImportTab_t*)Fetch(&ImportTabs,0))->findCodeTabs),0));
 }
 
 //Write out a single import table to file.
@@ -234,6 +252,8 @@ void WriteImportTab(TImportTab_t* ImportTab)
 	{
 		PutConstInd(tmp[i]);
 	}
+	
+	PUT1(1);//FIND_CODE_FUNCTION
 	
 	WriteHashTab((HashTab_t*)Fetch(&(ImportTab->findCodeTabs),0));
 }

@@ -1,9 +1,11 @@
 #ifndef _DATATYPES_H_
 #define _DATATYPES_H_
 
-#define INT1 unsigned char
-#define INT2 unsigned short
-#define INT4 unsigned int
+#include <sys/types.h>
+
+#define INT1 u_int8_t
+#define INT2 u_int16_t
+#define INT4 u_int32_t
 #define WORD int
 
 #define GLOBAL 0
@@ -12,6 +14,7 @@
 #define PERVASIVE 3
 
 #define DEBUG(x) printf("%s\n",x)
+#define DEBUGNUM(x) printf("-%d-\n",x)
 
 typedef struct{
 	int size;

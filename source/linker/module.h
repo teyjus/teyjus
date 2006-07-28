@@ -41,6 +41,7 @@ struct Module_st{
 	
 	int ImportCount;
 	ImportTabInd* Import;
+	int SegmentID;
 };
 
 struct Module_st* CM; 		//The module currently being loaded

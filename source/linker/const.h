@@ -8,20 +8,19 @@
 extern void InitTGConsts();
 extern void LoadGConsts();
 extern void LoadTopGConsts();
-extern void WriteGConsts();
 
 //LConst Header Data
 //Note: Uses CM->LConstoffset & CM->LConstcount
 
 extern void InitTLConsts();
 extern void LoadLConsts();
-extern void WriteLConsts();
 
 //HConst Header Data
 //Note: Uses CM->HConstoffset & CM->HConstcount
 
 extern void InitTHConsts();
 extern void LoadHConsts();
-extern void WriteHConsts();
+
+extern void WriteConsts();
 
 #endif

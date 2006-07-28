@@ -21,4 +21,6 @@ extern void PUT4(INT4 x);
 extern void PUTN(void* data, int n);
 extern void PUTWORD(int x);
 
+extern void PutName(Name name);
+
 #endif //_FILE_H_
