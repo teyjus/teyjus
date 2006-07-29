@@ -85,6 +85,19 @@ let reset = fun () ->
 		fileTable := FileTable.empty)
 
 (********************************************************************
+*info:
+* Formats information for output using error or warning.
+********************************************************************)
+let info = fun msg ->
+  ".\n\t" ^ msg
+
+(********************************************************************
+*see:
+* Annotates a message with a file location.
+********************************************************************)
+let see = fun pos msg ->
+	(info "See " ^ msg ^ " at " ^ (string_of_pos pos))
+(********************************************************************
 *error:
 * Prints an error, along with the line and character position.
 ********************************************************************)
@@ -128,8 +141,6 @@ let impossible = fun pos msg ->
 		List.iter print_string ["Internal Error:\n\t"; msg; ".\n\n"];
 		raise InternalError
 
-let see = fun pos msg ->
-	(".\n\tSee " ^ msg ^ " at " ^ (string_of_pos pos))
 	
 (********************************************************************
 *addFile:

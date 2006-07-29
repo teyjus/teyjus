@@ -32,7 +32,7 @@ val parseTerm : (Preabsyn.pterm->
                 ptfixedtermandvariables)
 
 val translateTerm : (Preabsyn.pterm ->
-                    ptvarlist -> ptvarlist
+                    ptvarlist -> ptvarlist ->
                     pttermandvariables)
 
 val normalizeTerm : (Absyn.aterm -> Absyn.aterm)

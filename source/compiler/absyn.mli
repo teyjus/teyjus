@@ -42,9 +42,10 @@ and askeleton = Skeleton of (atype * int * bool)
 ********************************************************************)
 and atype =
     ArrowType of (atype * atype)
-  | TypeVarType of (atypevar option ref * bool)
+  | TypeVarType of (atype option ref * bool)
   | AppType of (akind * atype list)
   | SkeletonVarType of (int)
+  | TypeSetType of (atype * atype list ref)
   | TypeRefType of (atype)
   | ErrorType
 
@@ -189,6 +190,7 @@ val printAbsyn : amodule -> out_channel -> unit
 
 val getKindArity : akind -> int
 val getKindPos : akind -> pos
+val getKindName : akind -> string
 
 val getConstantPos : aconstant -> pos
 val getConstantFixity : aconstant -> afixity
@@ -197,8 +199,17 @@ val getConstantSymbol : aconstant -> symbol
 
 val string_of_fixity : afixity -> string
 
-val dereferenceType : atype -> atype
-
-val isTypeVariable : atype -> bool
-
+val errorType : atype
 val getTypeTarget : atype -> atype
+val getTypeVariableReference : atype -> atype option ref
+val getTypeArguments : atype -> atype list
+val dereferenceType : atype -> atype
+val isArrowType : atype -> bool
+val isVariableType : atype -> bool
+val makeArrowType : atype list -> atype
+
+val errorTerm : aterm
+val getTermPos : aterm -> pos
+val string_of_term : aterm -> string
+
+val maxPrec : int
