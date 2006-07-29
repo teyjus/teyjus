@@ -16,6 +16,7 @@ val string_of_pos : pos -> string
 val newLine : pos -> unit
 val anyErrors : bool ref
 
+val info : string -> string
 val log : pos -> string -> unit
 val warning : pos -> string -> unit
 val error : pos -> string -> unit

@@ -4,7 +4,7 @@
 **********************************************************************)
 type pos = Errormsg.pos
 type symbol = Symbol.symbol
-  
+
 (********************************************************************
 *atypevardata
 * Information about a type variable.
@@ -40,9 +40,10 @@ and askeleton = Skeleton of (atype * int * bool)
 ********************************************************************)
 and atype =
     ArrowType of (atype * atype)
-  | TypeVarType of (atypevar option ref * bool)
+  | TypeVarType of (atype option ref * bool)
   | AppType of (akind * atype list)
   | SkeletonVarType of (int)
+  | TypeSetType of (atype * atype list ref)
   | TypeRefType of (atype)
   | ErrorType
 
@@ -207,6 +208,11 @@ let getKindArity = function
 | PervasiveKind(_,Some a,_,_) -> a
 | k -> (Errormsg.impossible (getKindPos k)  "getKindArity(): invalid kind arity")
 
+let getKindName = function
+  LocalKind(n,_,_,_) -> (Symbol.name n)
+| GlobalKind(n,_,_,_) -> (Symbol.name n)
+| PervasiveKind(n,_,_,_) -> (Symbol.name n)
+
 (**********************************************************************
 *getConstantPos:
 * Get a constant's position information.
@@ -220,8 +226,10 @@ let getConstantPos = function
 * Get a constant's symbol.
 **********************************************************************)
 let getConstantSymbol = function
-  Constant(sym , _ , _ , _ , _ , _ , _ , _ , _ , _ , _ , _ , _) -> sym
+  Constant(sym, _ , _ , _ , _ , _ , _ , _ , _ , _ , _ , _ , _) -> sym
 
+let getConstantName = fun c ->
+  (Symbol.name (getConstantSymbol c))
 
 (**********************************************************************
 *getConstantType:
@@ -296,8 +304,8 @@ let printAbsyn = fun m out ->
       output ")")
   | AppType(f,t) ->
       let rec print' = function
-        t::ts -> (printType t; output ", "; print' ts)
       | t::[] -> (printType t)
+      | t::ts -> (printType t; output ", "; print' ts)
       | [] -> (output "None")
       in
       
@@ -330,19 +338,19 @@ let printAbsyn = fun m out ->
     in
     
     let rec printSkeleton = function
-      Skeleton(t, i, b)::skels ->
+      Skeleton(t,i,b)::[] -> 
+        (output "Skeleton(";
+        printType t;
+        output (", " ^ (string_of_int i));
+        output (", " ^ (string_of_bool b));
+        output ")")
+    | Skeleton(t, i, b)::skels ->
         (output "Skeleton(";
         printType t;
         output (", " ^ (string_of_int i));
         output (", " ^ (string_of_bool b));
         output "), ";
         printSkeleton skels)
-    | Skeleton(t,i,b)::[] -> 
-        (output "Skeleton(";
-        printType t;
-        output (", " ^ (string_of_int i));
-        output (", " ^ (string_of_bool b));
-        output ")")
     | [] -> (output "None")
     in
     match const with
@@ -434,10 +442,38 @@ let printAbsyn = fun m out ->
       (output "Signature(";
       output_line ")")
 
-(*  Term Accessors  *)
-let getArrowTypeTarget = function
-  ArrowType(l, r) -> r
+(**********************************************************************
+*Various type accessors and values.
+**********************************************************************)
+let errorType = ErrorType
 
+let getTypeTarget = function
+  ArrowType(l, r) -> r
+| t -> t
+
+let getTypeVariableReference = function
+  TypeVarType(t, b) -> t
+| _ -> (Errormsg.impossible Errormsg.none "Absyn.getTypeVariableReference: invalid type")
+
+let getTypeArguments = function
+  AppType(k, args) -> args
+| _ -> (Errormsg.impossible Errormsg.none "Absyn.getTypeArguments: invalid type")
+
+let isArrowType = function
+  ArrowType(_) -> true
+| _ -> false
+
+let isVariableType = function
+  TypeVarType(_) -> true
+| _ -> false
+
+let rec makeArrowType = function
+  arg::args ->
+    (match args with
+      [] -> (Errormsg.impossible Errormsg.none "Absyn.makeArrowType: invalid number of types.")
+    | [arg'] -> ArrowType(arg, arg')
+    | arg'::args' -> ArrowType(arg, makeArrowType(args)))
+| [] -> (Errormsg.impossible Errormsg.none "Absyn.makeArrowType: invalid number of types.")
 
 (**********************************************************************
 *dereferenceType:
@@ -447,10 +483,126 @@ let rec dereferenceType = function
   TypeRefType(t) -> dereferenceType t
 | t -> t
 
-let isTypeVariable = function
-  TypeVarType(_) -> true
-| _ -> false
+let maxPrec = 255
+let appFixity = Infixl
+let appPrec = maxPrec + 2
 
+(**********************************************************************
+*Various term accessors.
+**********************************************************************)
+let getTermPos = function
+  IntTerm(_,p) -> p
+| StringTerm(_,p) -> p
+| RealTerm(_,p) -> p
+| AbstractionTerm(_,_,p) -> p
+| ConstTerm(_,_,p) -> p
+| FreeVarTerm(_,p) -> p
+| BoundVarTerm(_,p) -> p
+| ApplyTerm(_,_,_,p) -> p
+| _ -> (Errormsg.impossible Errormsg.none "Absyn.getTermPos: invalid term.")
 
-let getTypeTarget = function
-  ArrowType(_,r) -> r
+let errorTerm = ErrorTerm
+
+(**********************************************************************
+*Term Context:
+* Keeps track of what state the converter is in when going from
+* a term to a string.
+**********************************************************************)
+type atermcontext =
+  LeftTermContext
+| RightTermContext
+| WholeTermContext
+
+(**********************************************************************
+*string_of_term:
+* Converts an absyn term to a string representation.
+**********************************************************************)
+let string_of_term = fun term ->
+  let rec needsParens = fun opfix opprec context fix prec ->
+    let check1 = fun () -> opprec <= prec in
+    let check2 = fun () -> opprec < prec in
+    let checkLeft = fun () ->
+      match opfix with
+        Infix -> check2 ()
+      | Infixl -> check2 ()
+      | Prefix -> check2 ()
+      | Postfix -> check2 ()
+      | Postfixl -> check2 ()
+      | _ -> check1 ()
+    in
+    
+    let checkRight = fun () ->
+      match opfix with
+        Infixl -> check1 ()
+      | Postfixl -> check1 ()
+      | _ -> check2 ()
+    in
+    
+    match context with
+      LeftTermContext ->
+        (match fix with
+          Infix -> check1 ()
+        | Infixr -> check1 ()
+        | Postfix -> check1 ()
+        
+        | Infixl -> checkLeft ()
+        | Postfixl -> checkLeft ()
+        | _ -> (Errormsg.impossible Errormsg.none "Absyn.string_of_term: invalid fixity."))
+
+    | RightTermContext ->
+        (match fix with
+          Infix -> check1 ()
+        | Infixl -> check1 ()
+        | Prefix -> check1 ()
+        
+        | Infixr -> checkRight ()
+        | Prefixr -> checkRight ()
+        | _ -> (Errormsg.impossible Errormsg.none "Absyn.string_of_term: invalid fixity."))
+    | WholeTermContext -> (Errormsg.impossible Errormsg.none "Absyn.string_of_term: invalid term context.")
+
+  
+  and string_of_prefixterm = fun op opfix args context fix prec ->
+    let opprec = getConstantPrec op in
+    let paren = needsParens opfix opprec context fix prec in
+    let result = (getConstantName op) ^ " " ^ (string_of_term' (List.hd args) RightTermContext opfix opprec) in
+
+    if paren then
+      "(" ^ result ^ ")"
+    else
+      result
+  
+  and string_of_infix = fun op opfix args context fix prec ->
+    let opprec = getConstantPrec op in
+    let paren = needsParens opfix opprec context fix prec in
+    let result = (string_of_term' (List.hd args) LeftTermContext opfix opprec) ^ 
+      " " ^ (getConstantName op) ^ " " ^
+      (string_of_term' (List.hd (List.tl args)) RightTermContext opfix opprec) in
+    
+    if paren then
+      "(" ^ result ^ ")"
+    else
+      result
+  
+  and string_of_postfix = fun op opfix args context fix prec ->
+    let opprec = getConstantPrec op in
+    let paren = needsParens opfix opprec context fix prec in
+    let result = (string_of_term' (List.hd args) LeftTermContext opfix opprec) ^ " " ^ (getConstantName op) in
+    
+    if paren then
+      "(" ^ result ^ ")"
+    else
+      result
+  
+  and string_of_app = fun term context fix prec ->
+    let paren = needsParens appFixity appPrec context fix prec in
+    "error"
+  
+  and string_of_abstraction = fun term context fix prec ->
+    "error"
+  
+  and string_of_term' = fun term context fix prec ->
+    "error"
+  in
+  
+  (string_of_term' term WholeTermContext NoFixity 0)
+

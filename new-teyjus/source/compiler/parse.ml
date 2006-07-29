@@ -1,10 +1,23 @@
 type pos = Errormsg.pos
 type symbol = Symbol.symbol
 
-type ptop = Op of (pos * Absyn.afixity * int * Absyn.aconstant * Absyn.atype list)
+(*  Terms and Terms with Free Variables *)
+type ptvarlist = Absyn.atypesymbol Table.SymbolTable.t
+type ptterm = Term of (Absyn.aterm * Types.typemolecule)
+type ptfixedterm = FixedTerm of (Absyn.afixedterm * Types.typemolecule)
+type pttermandvariables = TermAndVariables of (ptterm * ptvarlist)
+type ptfixedtermandvariables = FixedTermAndVariables of (ptfixedterm * ptvarlist)
 
+(*  Stack and stack items.  *)
+type stackdata =
+  StackTerm of (ptterm)
+| StackOp of (Absyn.aconstant * Absyn.atype list)
+
+type stack = stackdata list
+
+(*  Term Accessors  *)
 let getTermTerm = function Term(t, _) -> t
-let getTermTypeMolecule = function Term(_, mol) -> mol
+let getTermMolecule = function Term(_, mol) -> mol
 let getFixedTermTerm = function Term(t, _) -> t
 let getFixedTermTypeMolecule = function Term(_, mol) -> mol
 let getTermAndVariablesTerm = function TermAndVariables(t, _) -> t
@@ -24,7 +37,7 @@ type ptparsestate =
 | NoneState
 | TermState
 
-let errorTerm = Term(Absyn.ErrorTerm, Types.errorTypeMolecule)
+let errorTerm = Term(Absyn.errorTerm, Types.errorMolecule)
 
 (**********************************************************************
 *stackTop:
@@ -46,7 +59,7 @@ let popStack = function
 *translateTerm:
 * Translate a single term from preabsyn to absyn.
 **********************************************************************)
-let translateTerm = fun term freevars boundvars state stack ->
+let rec translateTerm = fun term freevars boundvars state stack ->
   match term with
     Preabsyn.SeqTerm(terms, pos) -> (translateTerms terms freevars boundvars reduceToTerm NoneState [])
   | Preabsyn.ListTerm(terms, pos) -> (translateTerms terms freevars (reduceToListTerm (makeConstant "nil")) NoneState [])
@@ -71,7 +84,7 @@ let translateTerm = fun term freevars boundvars state stack ->
 *translateTerms:
 * Translate a list of preabsyn terms into abstract syntax.
 **********************************************************************)
-let translateTerms = fun terms freevars boundvars oper state stack ->
+and translateTerms = fun terms freevars boundvars oper state stack ->
 
   (********************************************************************
   *translate':
@@ -120,7 +133,7 @@ let translateTerms = fun terms freevars boundvars oper state stack ->
 *reduceToTerm:
 * Reduces the given stack to a term.
 **********************************************************************)
-let reduceToTerm = fun freevars state stack ->
+and reduceToTerm = fun freevars state stack ->
   (********************************************************************
   *reduce':
   * Reduces the term.
@@ -154,7 +167,7 @@ let reduceToTerm = fun freevars state stack ->
 (**********************************************************************
 *reduceToListTerm:
 **********************************************************************)
-let reduceToListTerm = fun term freevars state stack ->
+and reduceToListTerm = fun term freevars state stack ->
   let reduce' = fun term freevars ->
     try
       (reduceOperation [])
@@ -223,15 +236,3 @@ let makePervasiveKind = fun term skelname ->
   let pos = Absyn.getTermPos term in
   let skel = (Pervasive.getPervasiveKindType skelname) in
   Term(term, Types.TypeMolecule(skel, []), pos)
-
-(**********************************************************************
-*makeConstant:
-* Build a term and type representation of a constant.
-**********************************************************************)
-(*
-let makeConstant = fun constname ->
-  let makeEnvironment(0) -> 
-  |   makeEnvironment(i) -> Absyn.Var(None, []) :: (makeEnvironment (i - 1))
-  in`
-  _
-*)
