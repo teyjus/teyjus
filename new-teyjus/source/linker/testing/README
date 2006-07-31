@@ -1,0 +1,12 @@
+To compile the linker for now, you can just run the command:
+
+gcc -o tjlink *.c ../tables/instructions.c
+
+Then you should edit the source of the testfile generator to create your test case.
+The functions test and test2 should can be used as templates for describing testcases, and the expected structure of the file is described in the file "linkcode.txt" in the implementation notes.  The other functions provide a few useful shorthands for common outputs.
+
+The generator can be compiled with the command:
+
+gcc -o testfilemake testfile.c
+
+running testfilemake will result in the creation of the files test.bc and test2.bc.  You should rename these to test.lp and test2.lp, and place them in your working directory, then call tjlink with the argument of the name of the top level module, in this case test.  This results in the file test.bc, which is the linked copy of the files.  Currently, the only way to check the correctness of this file is by hand.

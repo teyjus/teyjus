@@ -294,9 +294,11 @@ int test2()
 	PUT1(trust_ext);PUT1(1);PUT1(0);//24
 	PUT1(fail);//28
 	PUT1(fail);//32
-	PUT1(unify_nil);//36
+	PUT1(call);PUT1(1);//36
+	PutConstInd(bar);//40
+	
 		
-	for(i=40/4;i<80/4;i++)
+	for(i=44/4;i<80/4;i++)
 	{
 		PUT1(fail);
 	}
