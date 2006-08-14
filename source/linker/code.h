@@ -6,6 +6,7 @@
 extern void InitTCode();
 extern void LoadCode();
 extern void WriteCode();
+extern void WriteCodeSize();
 extern void LoadCodeSize();
 
 extern CodeInd MergeSubSequence(CodeInd a, CodeInd b,INT1 n);
