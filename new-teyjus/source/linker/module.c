@@ -15,6 +15,7 @@
 #include "rename.h"
 
 #define BC_VER 3
+#define LINKCODE_VER 1
 
 static void LoadAccModule(char* modname);
 static void LoadAccModules();
@@ -240,7 +241,13 @@ void CheckModuleName(char* modname)
 void WriteAll(char* modname)
 {
 	SetOutput(modname);
+	PUTWORD(LINKCODE_VER);
+	Name name;
+	name.string=modname;
+	name.size=strlen(modname)+1;
+	PutName(name);
 	WriteDependencies();
+	WriteCodeSize();
 	WriteKinds();
 	WriteTySkels();
 	WriteConsts();

@@ -24,6 +24,8 @@ struct FileNode* InFile=NULL;
 
 struct NameNode* UsedFile=NULL;
 
+int files=0;
+
 int ofd;
 
 void PushInput(char* modname)
@@ -60,12 +62,19 @@ void PushInput(char* modname)
 		exit(0);
 	}
 	
+	tmp2->name=malloc(strlen(modname)+1);
+	if(tmp2->name==NULL)
+	{
+		perror("Malloc Failure");
+		exit(0);
+	}
 	
-	tmp2->name=modname;
+	strcpy(tmp2->name,modname);
 	tmp->next=InFile;
 	tmp2->next=UsedFile;
 	InFile=tmp;
 	UsedFile=tmp2;
+	files++;
 }
 
 void PopInput()
@@ -98,15 +107,13 @@ void WriteDependencies()
 {
 	int i;
 	struct NameNode* tmp=UsedFile;
+	PUT2(files);
+	Name name;
 	while(tmp!=NULL)
 	{
-		i=strlen(tmp->name);
-		PUT1(i);
-		while(i>0)
-		{
-			PUT1(tmp->name[i]);
-			i--;
-		}
+		name.string=tmp->name;
+		name.size=strlen(tmp->name)+1;
+		PutName(name);
 		tmp=tmp->next;
 	}
 }
