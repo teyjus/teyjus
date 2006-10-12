@@ -9,14 +9,27 @@ type pttermandvariables = TermAndVariables of (ptterm * ptvarlist)
 type ptfixedtermandvariables = FixedTermAndVariables of (ptfixedterm * ptvarlist)
 
 (*  Stack and stack items.  *)
-type stackdata =
+type ptstackdata =
   StackTerm of (ptterm)
-| StackOp of (Absyn.aconstant * Absyn.atype list)
+| StackOp of (Absyn.aconstant * Absyn.atype list * pos)
+| StackError
 
-type stack = stackdata list
+(*  Parser State  *)
+type ptparsestate =
+  PrefixState
+| PrefixrState
+| PrefixWithArgState
+| PrefixrWithArgState
+| InfixState
+| InfixrState
+| InfixWithArgState
+| InfixrWithArgState
+| PostfixState
+| TermState
+| NoneState
+| ErrorState
 
-val topStack : stack -> stackdata
-val popStack : stack -> stack
+type ptstack = Stack of (ptstackdata list * ptparsestate * int * Absyn.afixity)
 
 (*  Signifies an Error  *)
 val errorTerm : ptterm
@@ -26,15 +39,6 @@ type ptnewconstant = Absyn.aconstant -> (Absyn.aconstant Table.SymbolTable.t) ->
 type ptnewkind = Absyn.akind -> Absyn.akind Table.SymbolTable.t -> Absyn.akind Table.SymbolTable.t
 
 
-val parseTerm : (Preabsyn.pterm->
-                (Absyn.aconstant Table.SymbolTable.t) -> (Absyn.akind Table.SymbolTable.t) ->
-                ptnewconstant -> ptnewkind ->
-                ptfixedtermandvariables)
+val translateTerm : Preabsyn.pterm -> Absyn.amodule -> Absyn.afixedterm
+val translateClauses : Preabsyn.pterm list -> Absyn.amodule -> Absyn.aclause list
 
-val translateTerm : (Preabsyn.pterm ->
-                    ptvarlist -> ptvarlist ->
-                    pttermandvariables)
-
-val normalizeTerm : (Absyn.aterm -> Absyn.aterm)
-
-val fixTerm : (Absyn.aterm -> ptvarlist -> Absyn.afixedterm)

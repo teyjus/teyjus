@@ -269,7 +269,7 @@ signdecl
   | fixity idlist INTLIT PERIOD   {if ($3 < 0 || $3 > maxPrecedence) then
                                     Errormsg.error (getPos 1) ("Precedence must be between 0 and " ^ (string_of_int $3) ^ ".")
                                   else
-                                    fixityList :=  Preabsyn.Fixity($2, $1, $3, Preabsyn.fixityGetPos $1) :: !fixityList}
+                                    fixityList :=  Preabsyn.Fixity($2, $1, $3, Preabsyn.getFixityPos $1) :: !fixityList}
   | EXPORTDEF idlist PERIOD       {exportList := Preabsyn.Constant($2, None, getPos 1) :: !exportList}
   | EXPORTDEF idlist type PERIOD  {exportList := Preabsyn.Constant($2, Some $3, getPos 1) :: !exportList}
   | USEONLY idlist PERIOD         {useOnlyList := Preabsyn.Constant($2, None, getPos 1) :: !useOnlyList}
@@ -317,7 +317,7 @@ fixity
   ;
 
 parseModClause
-  : term PERIOD   {(clauseList := Preabsyn.Clause($1) :: (!clauseList))}
+  : term PERIOD   {(clauseList := Preabsyn.Clause(Preabsyn.SeqTerm(List.rev $1, (getPos 1))) :: (!clauseList))}
   | error PERIOD  {print_endline "error: parseModClause"}
   ;
 
@@ -327,7 +327,8 @@ term
   ;
 
 abstterm
-  : atomterm                  {$1}
+  : typedid INFIXLAMBDA term  {Preabsyn.IdTerm(Symbol.symbol("\\"), None, Preabsyn.ConstID, getPos 1)}
+  | atomterm                  {$1}
   ;
 
 
@@ -354,7 +355,6 @@ constvar
   | VID COLON type  {Preabsyn.IdTerm(Symbol.symbol (getIDName $1), (Some $3), (getIDKind $1), getPos 1)}
   | CUT         {Preabsyn.IdTerm(Symbol.symbol("!"), None, Preabsyn.ConstID, getPos 1)}
 
-  | INFIXLAMBDA {Preabsyn.IdTerm(Symbol.symbol("\\"), None, Preabsyn.ConstID, getPos 1)}
   | piid        {$1}
   | sigmaid     {$1}
   | nilid       {$1}
@@ -365,15 +365,15 @@ constvar
   | AMPAND      {Preabsyn.IdTerm(Symbol.symbol("&"), None, Preabsyn.ConstID, getPos 1)}
   | RDIVIDE     {Preabsyn.IdTerm(Symbol.symbol("/"), None, Preabsyn.ConstID, getPos 1)}
 
-  | COMMA       {Preabsyn.OpTerm(Preabsyn.COMMA, getPos 1)}
-  | PLUS        {Preabsyn.OpTerm(Preabsyn.PLUS, getPos 1)}
-  | MINUS       {Preabsyn.OpTerm(Preabsyn.MINUS, getPos 1)}
-  | TIMES       {Preabsyn.OpTerm(Preabsyn.TIMES, getPos 1)}
-  | LESS        {Preabsyn.OpTerm(Preabsyn.LT, getPos 1)}
-  | LEQ         {Preabsyn.OpTerm(Preabsyn.LE, getPos 1)}
-  | GTR         {Preabsyn.OpTerm(Preabsyn.GT, getPos 1)}
-  | GEQ         {Preabsyn.OpTerm(Preabsyn.GE,  getPos 1)}
-  | UMINUS      {Preabsyn.OpTerm(Preabsyn.UMINUS, getPos 1)}
+  | COMMA       {Preabsyn.IdTerm(Symbol.symbol(","), None, Preabsyn.ConstID, getPos 1)}
+  | PLUS        {Preabsyn.IdTerm(Symbol.symbol("+"), None, Preabsyn.ConstID, getPos 1)}
+  | MINUS       {Preabsyn.IdTerm(Symbol.symbol("-"), None, Preabsyn.ConstID, getPos 1)}
+  | TIMES       {Preabsyn.IdTerm(Symbol.symbol("*"), None, Preabsyn.ConstID, getPos 1)}
+  | LESS        {Preabsyn.IdTerm(Symbol.symbol("<"), None, Preabsyn.ConstID, getPos 1)}
+  | LEQ         {Preabsyn.IdTerm(Symbol.symbol("<="), None, Preabsyn.ConstID, getPos 1)}
+  | GTR         {Preabsyn.IdTerm(Symbol.symbol(">"), None, Preabsyn.ConstID, getPos 1)}
+  | GEQ         {Preabsyn.IdTerm(Symbol.symbol(">="), None, Preabsyn.ConstID,  getPos 1)}
+  | UMINUS      {Preabsyn.IdTerm(Symbol.symbol("-"), None, Preabsyn.ConstID, getPos 1)}
   | REALLIT     {Preabsyn.RealTerm($1, getPos 1)}
   | INTLIT      {Preabsyn.IntTerm($1, getPos 1)}
   | STRLIT      {Preabsyn.StringTerm($1, getPos 1)}

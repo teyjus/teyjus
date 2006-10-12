@@ -87,11 +87,6 @@ let WSPACE = [' ' '\t' '\r']+
 let NUM = DIGIT+
 
 
-(*
-%{
-(* NOTE: Need to somehow set the state using MODSTART, SIGSTART, etc. *)
-%}
-*)
 
 rule initial = parse
 | WSPACE        {initial lexbuf}

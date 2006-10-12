@@ -11,6 +11,7 @@ exception InternalError
 type pos = (string * int)
 
 let anyErrors = ref false
+let end_output = "\n"
 
 (**********************************************************************
 *File Table:
@@ -47,13 +48,13 @@ let string_of_pos = function (file, pos) ->
 		match lines with
 			a::rest ->
 				if a < pos then
-					(file ^ ":" ^ (string_of_int num) ^ "." ^ (string_of_int (pos - a)))
+					(file ^ "(" ^ (string_of_int num) ^ "." ^ (string_of_int (pos - a)) ^ ")")
 				else
 					p rest (num - 1)
-			| [] -> (file ^ "0.0")
+			| [] -> (file ^ "(0.0)")
 	in
 	if (file, pos) = none then
-		"none"
+		"none(0.0)"
 	else
 		match (find file (!fileTable)) with
 			Some(lines) ->
@@ -89,7 +90,7 @@ let reset = fun () ->
 * Formats information for output using error or warning.
 ********************************************************************)
 let info = fun msg ->
-  ".\n\t" ^ msg
+  "\n\t" ^ msg
 
 (********************************************************************
 *see:
@@ -97,6 +98,7 @@ let info = fun msg ->
 ********************************************************************)
 let see = fun pos msg ->
 	(info "See " ^ msg ^ " at " ^ (string_of_pos pos))
+
 (********************************************************************
 *error:
 * Prints an error, along with the line and character position.
@@ -104,20 +106,20 @@ let see = fun pos msg ->
 let error = fun pos (msg:string) ->
 		(anyErrors := true;
 		printPosition pos;
-		print_string " Error: ";
+		print_string " : Error : ";
 		print_string msg;
-		print_string ".\n\n")
+		print_string end_output)
 
 (********************************************************************
 *warning:
 * Prints a warning, along with the line and character position.
 ********************************************************************)
 let warning = fun pos (msg:string) ->
-		anyErrors := true;
+		(anyErrors := true;
 		printPosition pos;
-		print_string " Warning:\n\t";
+		print_string " : Warning : ";
 		print_string msg;
-		print_string ".\n\n"
+		print_string end_output)
 		
 (********************************************************************
 *log:
@@ -125,9 +127,9 @@ let warning = fun pos (msg:string) ->
 ********************************************************************)
 let log = fun pos msg ->
 		(printPosition pos;
-		print_string "Log:\n\t";
+		print_string " : Log : ";
 		print_string msg;
-		print_string ".\n\n")
+    print_string end_output)
 
 (********************************************************************
 *impossible:
@@ -135,11 +137,12 @@ let log = fun pos msg ->
 * InternalError.
 ********************************************************************)
 let impossible = fun pos msg ->
-		anyErrors := true;
+		(anyErrors := true;
 		printPosition pos;
-		print_string ":\n";
-		List.iter print_string ["Internal Error:\n\t"; msg; ".\n\n"];
-		raise InternalError
+		print_string " : Internal Error : ";
+		print_string msg; 
+		print_string end_output;
+		raise InternalError)
 
 	
 (********************************************************************

@@ -40,19 +40,21 @@ and ptype =
 
 and ptypeabbrev = TypeAbbrev of (psymbol * psymbol list * ptype * pos)
 
+and pboundterm = BoundTerm of (ptypesymbol list * pterm list)
+
 (*  Terms *)
 and pterm =
     SeqTerm of (pterm list * pos)
   | ListTerm of (pterm list * pos)
   | ConsTerm of (pterm list * pterm * pos)
+  | LambdaTerm of (pboundterm * pterm * pos)
   | IdTerm of (symbol * ptype option * pidkind * pos)
   | RealTerm of (float * pos)
   | IntTerm of (int * pos)
   | StringTerm of (string * pos)
-  | OpTerm of (poperation * pos)
   | ErrorTerm
 
-and pclause = Clause of (pterm list)
+and pclause = Clause of (pterm)
 
 (*  Constants *)
 and pconstant = Constant of (psymbol list * ptype option * pos)
@@ -62,17 +64,6 @@ and pkind = Kind of (psymbol list * int option * pos)
 
 (*  Fixity  *)
 and pfixity = Fixity of (psymbol list * pfixitykind * int * pos)
-
-and poperation =
-    COMMA
-  | PLUS
-  | MINUS
-  | TIMES
-  | LT
-  | LE
-  | GT
-  | GE
-  | UMINUS
 
 (********************************************************************
 *Module:
@@ -113,4 +104,7 @@ type pmodule =
 val printPreAbsyn : pmodule -> out_channel -> unit
 
 (*  Accessors *)
-val fixityGetPos : pfixitykind -> pos
+val getFixityPos : pfixitykind -> pos
+val getTermPos : pterm -> pos
+val getModuleClauses : pmodule -> pclause list
+val string_of_term : pterm -> string
