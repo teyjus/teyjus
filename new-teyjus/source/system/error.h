@@ -17,11 +17,14 @@
  ****************************************************************************/
 
 typedef enum EM_ExnType{
-    EM_NO_EXN = 0,     // used for warnings
+    EM_NO_EXN = 0,     // used for warnings ?? 
     EM_ABORT,          // exit the executable immediately
     EM_EXIT,           // traverse the exception stack and exit
-    EM_TY_UNI_FAIL,    // fail from type unification
-    EM_HOPU_FAIL       // fail from pattern unification
+    EM_TOP_LEVEL,      // return to the toplevel 
+    EM_QUERY_RESULT,   // query is solved; print answer
+    EM_FAIL,           // fail to simulator level 
+    EM_TY_UNI_FAIL,    // fail from type unification; needed?
+    EM_HOPU_FAIL       // fail from pattern unification; needed?
 } EM_ExnType;
 
 
@@ -97,5 +100,12 @@ EM_Catch
 
 void *EM_malloc(unsigned int);
 void *EM_realloc(void *, unsigned int);
+
+
+/****************************************************************************
+ * The routine that gets called in the event of an error                    *
+ ****************************************************************************/
+
+void EM_Error();
 
 #endif  //ERROR_H 
