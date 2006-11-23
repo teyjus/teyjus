@@ -16,6 +16,12 @@
 //#include "../config.h"
 
 /******************************************************************************/
+/*                FIND CODE FUNCTION  (to be filled in)                       */
+/******************************************************************************/
+//arguments: constInd, search table size, search table addr
+typedef CSpacePtr (*MEM_FindCodeFnPtr)(int, int, MemPtr);
+
+/******************************************************************************/
 /*                SYSTEM MEMORY MANAGEMENT  (TEMP)                            */
 /******************************************************************************/
 extern  WordPtr MEM_memBeg;       //starting addr of the system memory
@@ -27,6 +33,14 @@ extern  WordPtr MEM_memBot;       //the last usable word in the system memory
 /* Asking for the system memory of a given size (in word),                    */
 /* and initialize relevant global variables.                                  */
 void    MEM_memInit(unsigned int size);
+
+/******************************************************************************/
+/*                MODULE SPACE COMPONENTS                                     */
+/*----------------------------------------------------------------------------*/
+/* I.  Run time symbol tables: kind table; type skeleton table; constant table*/
+/* II. Implication table                                                      */
+/* III.Import table                                                           */
+/******************************************************************************/
 
 /*****************************************************************************/
 /*                          KIND SYMBOL TABLE                                */
@@ -88,6 +102,67 @@ typedef MEM_CstEnt *MEM_CstPtr;
 //Note this arithematic should in reality go into "config.h"
 #define MEM_CST_ENTRY_SIZE    (int)(sizeof(MEM_CstEnt)/WORD_SIZE)
 
+/*****************************************************************************/
+/*               ACCESSING THE IMPLICATION GOAL TABLE                        */
+/*****************************************************************************/
+/* functions for filling in the fields of an impl table                      */
+/* Q: the data stored in each field in byte code: are they word or in their  */
+/*    specific types?                                                        */
+void MEM_implPutLTS(WordPtr tab, Word nop);        //# pred (def extended)
+void MEM_implPutFC(WordPtr tab, Word fcPtr);       //ptr to find code func
+void MEM_implPutPSTS(WordPtr tab, Word tabSize);   //# entries link tab
+void MEM_implPutLT(WordPtr tab, int ind, Word cst);//link tab; ind from 0
+
+/* functions for retrieving the addresses of associated tables               */
+MemPtr MEM_implLT(MemPtr tab);           //start add of seq. of pred (link tab)
+MemPtr MEM_implPST(MemPtr tab, int lts); //start add of pred search tab
+
+/* functions for retrieving the fields of a impl table                       */
+int MEM_implLTS(MemPtr tab);                 //pred field (def extended)
+MEM_FindCodeFnPtr MEM_implFC(MemPtr tab);    //ptr to find code func
+int MEM_implPSTS(MemPtr tab);                //num entries in link tab
+int MEM_implIthLT(MemPtr ltab, int index);   /* value in ith entry of link tab 
+                                                 ltab is the addr of link tab;
+                                                 index should start from 0    */
+
+/*****************************************************************************
+ *                  ACCESSING THE IMPORTED MODULE TABLE                      *
+ *****************************************************************************/
+/* functions for filling in the fields of an import table                   */
+/* Q: the data stored in each field in byte code: are they word or in their  */
+/*    specific types?                                                        */
+void MEM_impPutNCSEG(WordPtr tab, Word nseg);        //# code segments
+void MEM_impPutNLC(WordPtr tab, Word nlc);           //# local constants
+void MEM_impPutLTS(WordPtr tab, Word nop);           //# pred (def extended)
+void MEM_impPutFC(WordPtr tab, Word fcp);            //ptr to find code func
+void MEM_impPutPSTS(WordPtr tab, Word tabSize);      //# entries in link tab
+void MEM_impPutLT(WordPtr tab, int ind, Word pred);  //link tab; ind from 0
+void MEM_impPutLCT(WordPtr lcTab, int ind, Word cst);/*loc c tab(may null)
+                                                       lcTab addr of local ctab;
+                                                       ind from 0 */
+
+/* functions for retrieving the addresses of associated tables               */
+MemPtr MEM_impLT(MemPtr tab);           //start addr of seq. of pred (link tab)
+MemPtr MEM_impLCT(MemPtr tab, int lts); //start addr of local const table
+MemPtr MEM_impPST(MemPtr tab, int lts, int nlc); //start addr of pred search tab
+
+/* functions for retrieving the fields of a impl table                       */
+int MEM_impNCSEG(MemPtr tab);             //# code segments
+int MEM_impNLC(MemPtr tab);               //# local constants
+int MEM_impLTS(MemPtr tab);               //# of preds (def extended)
+MEM_FindCodeFnPtr MEM_impFC(MemPtr tab);  //ptr to find code func
+int MEM_impPSTS(MemPtr tab);              //# entries in link tab
+int MEM_impIthLT(MemPtr lt, int ind);    /* ith entry in the link table: lt addr
+                                            of link tab; ind start from 0 */
+int MEM_impIthLCT(MemPtr lct, int ind);  /* ith entry in the local const table:
+                                            lct local c tab; ind start from 0 */
+
+
+/*****************************************************************************/
+/*    ACCESSING THE BOUND VARIABLE INDEXING TABLE (BRACHING TABLE)           */
+/*****************************************************************************/
+int       MEM_branchTabIndexVal(MemPtr tab, int index); //the nth index value
+CSpacePtr MEM_branchTabCodePtr(MemPtr tab, int index);  //transfer addr 
 
 /*****************************************************************************/
 /*                          GLOBAL MODULE TABLE                              */
@@ -109,62 +184,6 @@ typedef struct
 
 typedef MEM_GmtEnt MEM_Gmt[MEM_MAX_MODULES];
 
-extern  MEM_Gmt    MEM_modTable; //global module table 
-
-
-/*****************************************************************************/
-/*               ACCESSING THE IMPLICATION GOAL TABLE                        */
-/*****************************************************************************/
-/* functions for filling in the fields of an impl table                      */
-void    MEM_implPutNOP(WordPtr tab, Word nop);        //# pred (def extended)
-void    MEM_implPutFCP(WordPtr tab, Word fcPtr);      //ptr to find code func
-void    MEM_implPutTS(WordPtr tab, Word tabSize);     //# entries link tab
-void    MEM_implPutLT(WordPtr tab, int ind, Word cst);//link tab
-//Note the tab addr is calculated from the start of the impl tab
-WordPtr MEM_implMovToPT(WordPtr tab, int nop);        //start addr of search tab
-
-/* functions for retrieving the fields of a impl table                       */
-Mem    MEM_implNOP(MemPtr tab);  //pred field (def extended)
-MemPtr MEM_implFCP(MemPtr tab);  //ptr to find code func
-Mem    MEM_implTS(MemPtr tab);   //num entries in link tab
-MemPtr MEM_implLT(MemPtr tab);   //start add of seq. of pred (link tab)
-MemPtr MEM_implPT(MemPtr tab);   //start add of search tab
-
-
-
-/*****************************************************************************
- *                  ACCESSING THE IMPORTED MODULE TABLE                      *
- *****************************************************************************/
-/* functions for filling in the fields of an import table                   */
-void    MEM_impPutCSEG(WordPtr tab, Word nseg); //# code segments
-void    MEM_impPutNLC(WordPtr tab, Word nlc);   //# local constants
-void    MEM_impPutNOP(WordPtr tab, Word nop);   //# pred (def extended)
-void    MEM_impPutFCP(WordPtr tab, Word fcp);   //ptr to find code func
-void    MEM_impPutTS(WordPtr tab, Word tabSize);//# entries in link tab
-void    MEM_impPutLT(WordPtr tab, int ind, Word pred);  //link tab
-//Note the input tab addr should be the starting addr of the local const tab
-void    MEM_impPutLCT(WordPtr lcTab, int ind, Word cst);//loc c tab(may null)
-//Note the tab addr is calculated from the start of the imp tab
-WordPtr MEM_impMovToLCT(WordPtr tab, int nop);  //start addr of local c tab
-//Note the tab addr is calculated from the start of the imp tab
-WordPtr MEM_impMovToPT(WordPtr tab, int nloc, int nop);//start addr of sch tab 
-
-
-/* functions for retrieving the fields of a impl table                       */
-Mem    MEM_impCSEG(MemPtr tab); //# code segments
-Mem    MEM_impNLC(MemPtr tab);  //# local constants
-Mem    MEM_impNOP(MemPtr tab);  //# of preds (def extended)
-MemPtr MEM_impFCP(MemPtr tab);  //ptr to find code func
-Mem    MEM_impTS(MemPtr tab);   //# entries in link tab
-MemPtr MEM_impLT(MemPtr tab);   //start addr of seq. of pred (link tab)
-MemPtr MEM_impLCT(MemPtr tab);  //start addr of local const tab (possible null)
-MemPtr MEM_impPT(MemPtr tab);   //start addr of search tab
-
-
-/*****************************************************************************
- *                      functions for finding code                           *
- *****************************************************************************/
-
-
+extern  MEM_Gmt    MEM_modTable; //global module table
 
 #endif  //MEMORY_H
