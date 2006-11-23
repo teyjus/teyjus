@@ -1,0 +1,286 @@
+Comments relating to some choices in data representations  May, 2005
+====================================================================
+
+A. Representation of constants
+==============================
+
+Q: How to represent hidden constants?
+
+   Hidden constants are those introduced by universal quantifications in
+   generic goals, and they are, first of all, constants in nature. 
+   Consequently, in most situations, for example, in reduction, they share 
+   a common treatment with other constants. A distinction is not desirable 
+   because that would lead more cases to test in those common operations.
+   For this reason, we choose to use the same representation to encode hidden
+   constants as others. However, a subtle difference does exist in 
+   the interpretation of their representations: the identity of hidden 
+   constants is determined by both their names (symbol table entries)
+   and their universe counts, whereas the identity of others can be
+   decided solely from their name (symbol table entries) fields.
+   Inefficiency could be brought by this difference if constant comparison 
+   is realized without addtional control: the universe count has always
+   to be checked even for "normal" constants.
+   Considering the frequency of constants comparison, such a cost is significant
+   especially when C structures are used: not only an extra testing, but also
+   an extra dereference has to be performed. 
+
+   One way to solve this problem is as the following. We enforce the 
+   name and universe count fields to be allocated contiguously by grouping them
+   under another structure type, the size of which is that of an integer.
+   Then we give an alias of type unsigned int to this structure field by using
+   union. Thus in constants comparison, checking is performed on the unsigned 
+   int fields, whereas this field is accessed as a structure in other 
+   situations. 
+   Specifically, the structure declaration for constants takes the 
+   form of 
+
+        typedef struct {
+          DF_UNIVIND       univCount;        //unsigned short int
+          DF_TABIND        symbolTableIndex; //unsigned short int
+        } NAMEANDUC;
+
+        typedef struct { 
+          DF_TAG              tag;             // unsigned char
+          BOOLEAN             withType;        // unsigned char
+          union {
+           unsigned short int   value;
+           NAMEANDUC            nameAndUC;
+          } data;
+        } DF_CONST;
+
+   This method imposes some constraints on choosing the encoding of 
+   universe count and symbol table reference components. Apparently, the total
+   size of these two fields has to be that of an integer. Therefore
+   symbol table reference should be encoded as table indices as opposed to
+   absolute addresses which support a faster access to the symbol table 
+   entries, and may has some advantages in other aspects like loading. (These
+   aspects are discussed in detail in the next section.) However, operations 
+   such as symbol table access occur much rarely than constant comparison, and
+   so we are willing to sacrify a little in these operations for more 
+   efficient constant comparison. 
+   
+
+
+Q: How to encode symbol table references in constant representations?
+
+   There are two alternatives of encoding references to symbol tables for 
+   constants: one as absolute addresses and the other as an indices.
+
+   Comparing with the other, the absolute address encoding has some advantages.
+   First, run-time access to the symbol table is faster. Second, more 
+   flexibility is provided with regards to the treatment of pervasives: the
+   segment of symbol table containing pervasives can be allocated in a memory 
+   fragment which is independent to space of loaded modules, and therefore
+   be shared by those modules. 
+   However, as addressed in the previous question, the proposed solution to
+   reduce the cost in constant comparison imposes a limitation on the size
+   of the reference fields in which absolute addresses can not fit in. Therefore
+   more sophiticated control has to be considered for adopting absolute
+   address encoding. Second, when the absolute address method is adopted,
+   the two words for constants are fully occupied. This fact limits the 
+   ability of extending the attributes associated with constants. For example,
+   when a garbage collector is considered, a one bit mark has to be encoded
+   inside constants representation. However, as opposed to simply add a 
+   mark field to the structure, this bit has to be combined with some other 
+   attribute to ensure that constant can be fit into atomic size. 
+   Third, when memory compacting is considered in unloading modules, 
+   reallocation of constant references has to be performed for the persisting
+   modules and their (OCaml) parsing symbol tables, whereas with the index 
+   method, adjustment is only needed for the starting addresses of symbol 
+   tables.
+
+   Because of the above disadvantages, we currently decide to adopt 
+   the symbol table index method instead. Under this scheme, symbol tables for
+   a loaded (import chain of) module must be allocated continguously. To reduce
+   table accessing cost, pervasives will be copied in the initial segment 
+   of symbol tables for each loaded (import chain of) module.
+   
+
+
+
+B. Representation of applications and abstractions
+==================================================
+
+Q: How to encode function components in applications and lambda body in
+   abstractions?
+
+   Currently, we decided to encode function components in applications and
+   lambda body in abstractions as term pointers. In particular, the C structure
+   declaration of these two sorts of terms take the following forms, assuming
+   that DF_TERM is the type of atomic (generic) terms, which have the size
+   of 2 words regardless of machine architecture.
+
+   typedef struct{
+    DF_TAG      tag;     //unsigned char
+    DF_ARITY    arity;   //unsigned short int
+                         //---one word
+    DF_TERM_PTR functor; //DF_TERM *
+                         //---one word
+    DF_TERM_PTR args;    //DF_TERM *
+                         //---one word
+   } DF_APP;                             //3 words regardless of machine arch.
+                     
+   typedef struct{
+    DF_TAG       tag;        //unsigned char
+    DF_EMBEDLEV  embedLevel; //unsigned short int
+                             //---one word
+    DF_TERM_PTR  body;       //DF_TERM*
+                             //---one word
+   } DF_LAM;                              //2 words regardless of machine arch.
+
+
+   There is an alternative of representing such components, which is to 
+   let the functor and body fields have the type DF_TERM. The differences
+   of these two ways of encoding can be observed from the following example.
+   Considering an application (f a), where f and a are two constants,
+   the layout of this term under the former scheme takes form of:
+
+        memory image             address
+        -------------------
+        |const|           |         0
+        -------------------
+        |uc   | index(f)  |         1
+        -------------------     
+        |app  |  1        |         2
+        -------------------
+        |        0        |         3
+        -------------------
+        |        5        |         4
+        -------------------
+        |const|           |         5
+        -------------------
+        |uc   | index(c)  |         6
+        -------------------
+
+   whereas the layout under the later looks like:
+
+        memory image             address
+        -------------------
+        |app  | 1         |         0
+        -------------------
+        |     -----       |         1
+        -------------------
+        |const|           |         2
+        -------------------     
+        |uc   |  index(f) |         3
+        -------------------
+        |        5        |         4
+        -------------------
+        |const|           |         5
+        -------------------
+        |uc   | index(c)  |         6
+        -------------------
+   Note that in the latter representation, the word at address 1 is used as a
+place holder: the purpose of that word is to puch the functor component to
+the next word, because the destructive changes made on applications in 
+reduction will update the leading two words (atomic size) of an application.
+
+Comparing these two ways of encoding, the latter has the advantage of reducing
+one level of indirection in accessing the function component. However, 
+from the perspective of program structures, this encoding may not be desirable:
+in these sorts of encoding, an application structure should be viewed as an
+atom; the functor part should be not be accessable unless it is accessed as a
+component of the application. Further, the usage of the "place holder" word 
+also looks ad hoc. These arguments are also true for abstractions.
+For these reasons, we choose to use the former (term pointer) method in 
+encoding these two sorts of terms.
+
+
+C. Representation of type arrows
+================================
+
+     Given an arrow type of the form
+   
+         A1 -> A2 -> ... -> An -> B
+
+     this can be represented in two different ways:
+
+     a. as a form ->([A1,...,An], B)
+
+     b. as a form ->(A1, ->(A2, ...(->(An,B))))
+
+     The representation in (a) has a direct correspondence to the first-order
+     representation of applications. 
+     For example, a term (f a1 ... an), where f is a constant of 
+     type A1 -> A2 -> ... -> An -> B and each ai is a term of type Ai,
+     is represented as
+
+             app(f, [a1 ... an])
+
+     Using the representation in (a), the type of f is of form
+
+             ->([A1,...,An], B)
+
+     from which the type of the application (B) and the types of ai's can be
+     easily accessed. Access of this sort could be costly if the representation
+     in (b) is used, for example, the target B is nested in a depth of n 
+     of the tree structure.
+
+
+     However, the representation in (b) also has its own advantage. 
+     It allows a uniform treatment of types in the compiled code and, 
+     in general, in unification. 
+     To understand this, consider unifying two types of the form
+
+      A1 -> ... -> An -> B    and   C1 -> ... -> Cm -> D
+
+     This can be treated via standard first order unification if the
+     representation in (a) is used and, in fact, the type arrow constructor
+     can be handled like the list cons in the WAM for the purpose of 
+     optimization. However, this is *not* the case if the notation in (b) 
+     is used. For example, if we have that n > m, at some stage unifying the 
+     two types will at some stage have to shift to trying to unify the terms 
+
+      ->([A{m+1},...,An],B)   and   D. 
+
+     This requires instructions specialized to unifying arrow types in
+     compiled code and a unification procedure sensitive to arrow types in
+     interpretive code. 
+
+
+     In summary, both of the two methods have their cons and pros. The first
+     supports more efficient access to the subcomponents of a type in a way
+     relating closely to the representation of applications, but requires
+     more sophisticated maitanence.
+     The second provides a cleaner basis to the compilation and interpretive 
+     unification treatment, and allows the sort of optimization for list cons 
+     in the WAM.
+     Of course, a choice between these two has to be made depending on the 
+     actual usage of types in computation.
+     In our new implementationb which is organized around higher-order pattern
+     unification, run-time access of types are needed in the following two
+     situations: first, types may need to be unified for the comparison of 
+     constant occurrences with same names and second, they are needed for 
+     the purpose of printing, i.e., displaying the declared types of constants 
+     in printing module, and displaying the types of logic variables and 
+     constants in answer subsitutions when the print_types flag is set on.
+     Note that the usage of types for deciding the structures of unifers in 
+     the full higher-order unification context no longer exist here, and 
+     consequently so does maintaining of types for logic variables.
+     Considering these two usages of types, of course the first one is more 
+     critical to the design of the simulator, and should play a more 
+     important role in making our decision. Observation on this usage can
+     be made that the correspondence between types and term applications,
+     for example, retrieving the type of an application, or of its ith 
+     argument, needs never to be examined, and in fact, such examination 
+     is not always possible in our type association scheme when some type
+     associations regarding predicate constants are reduced. Now comparing
+     the efficiency of type unification with these two representations,
+     the one in (b) may be a little less efficient, because potentially more
+     type arrow constructors have to be compared. However, we have noticed
+     that the unification of types occurs rather infrequently in practice
+     within our new type association scheme. From these perspectives, it
+     might be reasonable to adopt the method in (b) for a simpler and
+     cleaner scheme for type unification. 
+     Now consider the two printing usage of types. When types are printed 
+     for displaying modules, methods (a) and (b) do not make much difference.
+     The declared type of a constant has to be traversed once anyway.
+     The situation of printing types in displaying answer subsitutions is more
+     complicated and an approach to this has yet to be decided. 
+     Generally speaking, the problems here are brought by the fact that some 
+     type associations regarding predicate constants are reduced in our new 
+     type association scheme, and a detailed description on these problems 
+     will appear later in this text. However, as talked before, the printing
+     usage of types should not become the deciding factor of making our 
+     choice unless the methods make no differences in unification, which is
+     apparently not the case.
