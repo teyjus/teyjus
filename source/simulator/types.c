@@ -10,6 +10,7 @@
 
 #include "dataformats.h"
 #include "abstmachine.h"
+#include "trail.h"
 #include "../system/error.h" //to be changed
 
 /* Push n types onto PDL                                           */
@@ -42,7 +43,7 @@ static void TY_typesOcc()
         tyPtr = DF_typeDeref((DF_TypePtr)AM_popPDL());
         switch (DF_typeTag(tyPtr)){
         case DF_TY_TAG_REF: {
-            if (AM_tyvbbreg == tyPtr) EM_throw(EM_TY_UNI_FAIL);
+            if (AM_tyvbbreg == tyPtr) EM_throw(EM_FAIL);
             break;
         }
         case DF_TY_TAG_SORT: break;
@@ -66,10 +67,10 @@ static void TY_typesOcc()
 static void TY_bindVars(DF_TypePtr varPtr1, DF_TypePtr varPtr2)
 {
     if (varPtr2 < varPtr1){
-        //trail(varPtr1)
+        TR_trailType(varPtr1);
         DF_copyAtomicType(varPtr2, (MemPtr)varPtr1);
     } else {
-        //trail(varPtr2)
+        TR_trailType(varPtr2);
         DF_copyAtomicType(varPtr1, (MemPtr)varPtr2);
     }
 }
@@ -81,7 +82,7 @@ static void TY_bind(DF_TypePtr varPtr, DF_TypePtr tyPtr)
     AM_pushPDL((MemPtr)tyPtr);
     AM_tyvbbreg = varPtr;      //type variable being bound
     TY_typesOcc();
-    // trail(varPtr)
+    TR_trailType(varPtr);
     DF_copyAtomicType(tyPtr, (MemPtr)varPtr);
 }        
 
@@ -106,11 +107,11 @@ void TY_typesUnify()
                 case DF_TY_TAG_SORT: {
                 if (!(DF_isSortType(tyPtr1) &&  
                       DF_typeKindTabIndex(tyPtr1)==DF_typeKindTabIndex(tyPtr2)))
-                    EM_throw(EM_TY_UNI_FAIL);
+                    EM_throw(EM_FAIL);
                 break;
                 }
                 case DF_TY_TAG_ARROW:{
-                if (!DF_isArrowType(tyPtr1)) EM_throw(EM_TY_UNI_FAIL);
+                if (!DF_isArrowType(tyPtr1)) EM_throw(EM_FAIL);
                 TY_pushPairsToPDL((MemPtr)DF_typeArrowArgs(tyPtr1),
                                   (MemPtr)DF_typeArrowArgs(tyPtr2), 
                                   DF_TY_ARROW_ARITY);
@@ -124,14 +125,51 @@ void TY_typesUnify()
                         TY_pushPairsToPDL((MemPtr)DF_typeStrArgs(fPtr1),
                                           (MemPtr)DF_typeStrArgs(fPtr2),
                                           DF_typeStrFuncArity(fPtr1));
-                    else EM_throw(EM_TY_UNI_FAIL); //different function
-                } else EM_throw(EM_TY_UNI_FAIL); //tyPtr1 not str or ref
+                    else EM_throw(EM_FAIL); //different function
+                } else EM_throw(EM_FAIL); //tyPtr1 not str or ref
                 break;
                 }
                 } //switch
             } //tyPtr1 not ref
         } //tyPtr1 != tyPtr2
     } //while (AM_nemptyTypesPDL())
+}
+
+
+/*****************************************************************************
+ *  Occurs check over types. This version is used when the check has to be   *
+ *  performed within the compiled form of unification. In particular, this   *
+ *  routine would be invoked from within the unify_type_value class of       *
+ *  instructions in read mode. The peculiarity of this situation is that the *
+ *  binding of the relevant type variable would have been started already by *
+ *  a get_type_structure or get_type_arrow instruction, so we have to check  *
+ *  for the occurrence of the structure created as a consequence of this     *
+ *  rather than for a variable occurrence.                                   *
+ *****************************************************************************/
+void TY_typesOccC()
+{
+    DF_TypePtr tyPtr;
+    while (AM_nemptyTypesPDL()){
+        tyPtr = DF_typeDeref((DF_TypePtr)AM_popPDL());
+        switch (DF_typeTag(tyPtr)) {
+        case DF_TY_TAG_REF: case DF_TY_TAG_SORT: break;
+        case DF_TY_TAG_STR: 
+        {
+            DF_TypePtr fPtr = DF_typeStrFuncAndArgs(tyPtr);
+            if (AM_tyvbbreg == fPtr) EM_throw(EM_FAIL);
+            TY_pushTypesToPDL((MemPtr)DF_typeStrArgs(fPtr),
+                              DF_typeStrFuncArity(fPtr));
+            break;
+        }
+        case DF_TY_TAG_ARROW: 
+        {
+            DF_TypePtr args = DF_typeArrowArgs(tyPtr);
+            if (AM_tyvbbreg == args) EM_throw(EM_FAIL);
+            TY_pushTypesToPDL((MemPtr)args, DF_TY_ARROW_ARITY);
+            break;
+        }
+        } //switch
+    } //while
 }
 
 #endif //TYPES_C

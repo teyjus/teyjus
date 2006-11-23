@@ -12,6 +12,7 @@
 #include "dataformats.h"
 #include "mctypes.h"
 
+#include "print.h" //to be removed
 /********************************************************************/
 /*                                                                  */
 /*                         TYPE REPRESENTATION                      */
@@ -19,7 +20,7 @@
 /********************************************************************/
 
 /* Types of relevant fields in type representations.                */
-typedef TwoBytes      DF_KstTabInd;  //kind symbol table index
+typedef TwoBytes      DF_KstTabInd;    //kind symbol table index
 typedef TwoBytes      DF_StrTypeArity; //arity of type structure
 typedef TwoBytes      DF_SkelInd;      //offset of variables in type skeletons
 
@@ -51,6 +52,7 @@ typedef struct                         //type arrows
 
 typedef struct                         //type functors
 {
+    DF_Tag            tag;
     DF_StrTypeArity   arity;
     DF_KstTabInd      kindTabIndex;
 } DF_FuncType;
@@ -92,7 +94,8 @@ Boolean DF_isStrType(DF_TypePtr tyPtr)
 {   return (tyPtr->tag.categoryTag == DF_TY_TAG_STR);  }
 Boolean DF_isFreeVarType(DF_TypePtr tyPtr)
 {   return ((tyPtr->tag.categoryTag == DF_TY_TAG_REF)
-            && ((DF_RefType*)tyPtr)->target == tyPtr);   }
+            && ((DF_RefType*)tyPtr)->target == tyPtr); }
+    
 
 /* TYPE DECOMPOSITION */
 int DF_typeTag(DF_TypePtr tyPtr)                          //generic type
@@ -169,6 +172,7 @@ void DF_mkStrType(MemPtr loc, DF_TypePtr funcAndArgs)
 }
 void DF_mkStrFuncType(MemPtr loc, int ind, int n)
 {
+    ((DF_FuncType*)loc)->tag.categoryTag = DF_TY_TAG_FUNC;
     ((DF_FuncType*)loc)->kindTabIndex = ind;
     ((DF_FuncType*)loc)->arity = n;
 }
@@ -242,7 +246,7 @@ typedef struct                  //string
 
 typedef struct                  //stream
 {
-    DF_Tag          tag;     
+    DF_Tag        tag;     
     DF_StreamTabInd index;
 } DF_StreamTerm;
 
@@ -291,14 +295,16 @@ typedef struct                  //suspensions
 //environment items
 typedef struct                  //dummy environment item
 {
-    Boolean           isDummy;
+    //Boolean           isDummy;
+    DF_Tag            tag;
     DF_DBInd          embedLevel;
     DF_EnvPtr         rest;
 } DF_DummyEnv;
 
 typedef struct                  //pair environment item
 {
-    Boolean          isDummy;
+    //Boolean          isDummy;
+    DF_Tag           tag;
     DF_DBInd         embedLevel;
     DF_EnvPtr        rest;
     DF_TermPtr       term;
@@ -312,7 +318,7 @@ typedef struct                  //pair environment item
 /* DEREFERENCE      */
 DF_TermPtr DF_termDeref(DF_TermPtr tmPtr)
 {
-    while (DF_isRef(tmPtr)) tmPtr = ((DF_RefTerm*)tmPtr)->target;
+    while (DF_isRef(tmPtr)) tmPtr = ((DF_RefTerm*)tmPtr)->target;    
     return tmPtr;
 }
 
@@ -325,10 +331,10 @@ Boolean DF_isNAtomic(DF_TermPtr tmPtr)
 Boolean DF_isFV(DF_TermPtr tmPtr)      
 {   return (tmPtr -> tag.categoryTag == DF_TM_TAG_VAR);   }
 Boolean DF_isConst(DF_TermPtr tmPtr)   
-{   return (tmPtr -> tag.categoryTag == DF_TM_TAG_CONST); }                  
+{   return (tmPtr -> tag.categoryTag == DF_TM_TAG_CONST); }
 /*assume the tmPtr is known to be a constant */
 Boolean DF_isTConst(DF_TermPtr tmPtr)  
-{   return ((DF_ConstTerm*)tmPtr) -> withType;             }
+{   return ((DF_ConstTerm*)tmPtr) -> withType;                       }
 Boolean DF_isInt(DF_TermPtr tmPtr)     
 {   return (tmPtr -> tag.categoryTag == DF_TM_TAG_INT);   }
 Boolean DF_isFloat(DF_TermPtr tmPtr)   
@@ -352,9 +358,9 @@ Boolean DF_isApp(DF_TermPtr tmPtr)
 Boolean DF_isSusp(DF_TermPtr tmPtr)    
 {   return (tmPtr-> tag.categoryTag == DF_TM_TAG_SUSP);   }
 Boolean DF_isEmpEnv(DF_EnvPtr envPtr)   
-{   return (envPtr == DF_EMPTY_ENV);                      }
+{   return (envPtr == DF_EMPTY_ENV);                                 }
 Boolean DF_isDummyEnv(DF_EnvPtr envPtr) 
-{   return envPtr -> isDummy;                             }
+{   return envPtr -> tag.categoryTag == DF_ENV_TAG_DUMMY; }
                                             
 
 /* TERM DECOMPOSITION */
@@ -502,6 +508,14 @@ void DF_copyAtomic(DF_TermPtr src, MemPtr dest)              //copy atomic
 {
     *((DF_TermPtr)dest) = *src;
 }
+void DF_copyApp(DF_TermPtr src, MemPtr dest)                 //copy application
+{
+    *((DF_AppTerm*)dest) = *((DF_AppTerm*)src);
+}
+void DF_copySusp(DF_TermPtr src, MemPtr dest)                //copy suspension
+{
+    *((DF_SuspTerm*)dest) = *((DF_SuspTerm*)src);
+}
 void DF_mkVar(MemPtr loc, int uc)                            //unbound variable
 {
     ((DF_VarTerm*)loc) -> tag.categoryTag = DF_TM_TAG_VAR;
@@ -587,14 +601,14 @@ void DF_mkSusp(MemPtr loc, int ol, int nl, DF_TermPtr tmPtr, DF_EnvPtr env)
 
 void DF_mkDummyEnv(MemPtr loc, int l, DF_EnvPtr rest)        //@l env item
 {
-    ((DF_DummyEnv*)loc) -> isDummy = TRUE;
+    ((DF_DummyEnv*)loc) -> tag.categoryTag = DF_ENV_TAG_DUMMY;
     ((DF_DummyEnv*)loc) -> embedLevel = l;
     ((DF_DummyEnv*)loc) -> rest = rest;
 }
 void DF_mkPairEnv(MemPtr loc, int l, DF_TermPtr t, DF_EnvPtr rest)
 { 
                                                              // (t, l) env item
-    ((DF_PairEnv*)loc) -> isDummy = FALSE;
+    ((DF_PairEnv*)loc) -> tag.categoryTag = DF_ENV_TAG_PAIR;
     ((DF_PairEnv*)loc) -> embedLevel = l;
     ((DF_PairEnv*)loc) -> rest = rest;
     ((DF_PairEnv*)loc) -> term = t;    
@@ -607,20 +621,26 @@ void DF_modVarUC(DF_TermPtr vPtr, int uc)
     ((DF_VarTerm*)vPtr) -> univCount = uc;
 }
 
-/* SPECIAL CONSTANTS  */
 
+/* (NON_TRIVIAL) TERM COMPARISON */
 Boolean DF_sameConsts(DF_TermPtr const1, DF_TermPtr const2)   //same constant?
 {
     return (((DF_ConstTerm*)const1)->data.value == 
             ((DF_ConstTerm*)const2)->data.value);
 }
-
 Boolean DF_sameStrs(DF_TermPtr str1, DF_TermPtr str2)         //same string?
 {
     if (str1 == str2) return TRUE;
     return (strcmp(((DF_StrTerm*)str1)->charList, 
                    (((DF_StrTerm*)str2)->charList)) == 0);
 }
+Boolean DF_stringCompare(DF_TermPtr tmPtr, char *str)
+{
+    char *myStr = ((DF_StrTerm*)tmPtr) -> charList;
+    if (myStr == str) return TRUE;
+    return (strcmp(myStr, str) == 0);
+}
+
 
 /********************************************************************/
 /*                                                                  */
@@ -630,29 +650,16 @@ Boolean DF_sameStrs(DF_TermPtr str1, DF_TermPtr str2)         //same string?
 /********************************************************************/
 
 //create a new node at the given location
-void DF_mkDisPair(MemPtr loc, DF_DisPairPtr prev, DF_DisPairPtr next, 
-                  DF_TermPtr first, DF_TermPtr second)
+void DF_mkDisPair(MemPtr loc, DF_DisPairPtr next, DF_TermPtr first, 
+                  DF_TermPtr second)
 {
-    ((DF_DisPairPtr)(loc)) -> prev       = prev;
+    ((DF_DisPairPtr)(loc)) -> tag.categoryTag = DF_DISPAIR;
     ((DF_DisPairPtr)(loc)) -> next       = next;
     ((DF_DisPairPtr)(loc)) -> firstTerm  = first;
     ((DF_DisPairPtr)(loc)) -> secondTerm = second;
 }
 
-//modify the prev field of a given disagreement pair
-void DF_modDisPairPrev(DF_DisPairPtr loc, DF_DisPairPtr newPrev)
-{
-    loc -> prev = newPrev;
-}
-
-//modify the next field of a given disagreement pair
-void DF_modDisPairNext(DF_DisPairPtr loc, DF_DisPairPtr newNext)
-{
-    loc -> next = newNext;
-}
-
 //decomposition
-DF_DisPairPtr DF_disPairPrev(DF_DisPairPtr disPtr){return disPtr -> prev;      }
 DF_DisPairPtr DF_disPairNext(DF_DisPairPtr disPtr){return disPtr -> next;      }
 DF_TermPtr    DF_disPairFirstTerm(DF_DisPairPtr disPtr)
 {

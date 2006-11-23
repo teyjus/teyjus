@@ -7,7 +7,7 @@
 #ifndef DATAFORMATS_H
 #define DATAFORMATS_H
 
-#include <limits.h>
+#include <limits.h>           // to be removed
 #include <stdlib.h>
 #include "mctypes.h"
 
@@ -22,6 +22,43 @@ typedef struct
     Byte   categoryTag;
     Byte   mark;                    //to be used in garbage collection
 } DF_Tag;
+
+/* The tags of heap items */
+typedef enum
+{
+    //type categories
+    DF_TY_TAG_SORT = 0,       //sort
+    DF_TY_TAG_REF,            //reference
+    DF_TY_TAG_SKVAR,          //skeleton variable
+    DF_TY_TAG_ARROW,          //type arrow
+    DF_TY_TAG_STR,            //type structure
+    DF_TY_TAG_FUNC,           //functor of type structure
+
+    //term categories
+    DF_TM_TAG_VAR  = 6,       // existential variables
+    DF_TM_TAG_CONST,          // constants 
+    DF_TM_TAG_INT,            // integers
+    DF_TM_TAG_FLOAT,          // floats
+    DF_TM_TAG_NIL,            // empty lists
+    DF_TM_TAG_STR,            // strings
+    DF_TM_TAG_STREAM,         // streams
+    DF_TM_TAG_BVAR,           // lambda bound variables (de Bruijn index)
+                              // -- atoms above
+    DF_TM_TAG_REF,            // references
+                              // -- complex terms below
+    DF_TM_TAG_CONS,           // list constructors
+    DF_TM_TAG_LAM,            // abstractions
+    DF_TM_TAG_APP,            // applications
+    DF_TM_TAG_SUSP,           // suspensions
+
+    //suspension environment items 
+    DF_ENV_TAG_DUMMY = 19,    //dummy environment
+    DF_ENV_TAG_PAIR,          //pair environment 
+    
+    //disagreement pair
+    DF_DISPAIR = 21           
+} DF_HeapDataCategory;
+
 
 /********************************************************************/
 /*                                                                  */
@@ -38,6 +75,7 @@ typedef struct
 /* in this file.                                                    */
 /********************************************************************/
 
+/*
 //type categories
 enum DF_TypeCategory
 {
@@ -47,6 +85,7 @@ enum DF_TypeCategory
     DF_TY_TAG_ARROW, //type arrow
     DF_TY_TAG_STR    //type structure
 };
+*/
 
 //generic type (head) for every category
 typedef struct               
@@ -118,7 +157,8 @@ void DF_mkStrFuncType(MemPtr loc, int ind, int n);
 /* performed through interface functions with declarations present  */
 /* in this file.                                                    */
 /********************************************************************/
- 
+
+/* 
 //term categories
 enum DF_TermCategory 
 { 
@@ -138,7 +178,7 @@ enum DF_TermCategory
     DF_TM_TAG_APP,            // applications
     DF_TM_TAG_SUSP            // suspensions
 };
-
+*/
 
 // a generic term (head) for every category
 typedef struct               
@@ -152,14 +192,13 @@ typedef struct
 
 typedef DF_Term *DF_TermPtr; //term pointer
 
-
 //sizes of different term items
 #define DF_TM_ATOMIC_SIZE  2       // atomic size
-#define DF_TM_TCONST_SIZE  3       // type associated constant   
+#define DF_TM_TCONST_SIZE  3       // type associated constant (config set) 
 #define DF_TM_APP_SIZE     3       // application head
 #define DF_TM_LAM_SIZE     2       // abstraction
 #define DF_TM_CONS_SIZE    2       // cons 
-#define DF_TM_SUSP_SIZE    4       // suspension 
+#define DF_TM_SUSP_SIZE    4       // suspension               (config set)
 
 // attributes of some special constants 
 #define  DF_CONS_ARITY  2          //arity of cons
@@ -167,7 +206,8 @@ typedef DF_Term *DF_TermPtr; //term pointer
 //a generic environment item in suspension
 typedef struct DF_env
 {
-    Boolean          isDummy;
+    //Boolean          isDummy;
+    DF_Tag           tag;
     TwoBytes         embedLevel;
     struct DF_env    *rest;        //the tail of the list
 } DF_Env;
@@ -181,10 +221,10 @@ typedef DF_Env *DF_EnvPtr;
 #define DF_ENV_DUMMY_SIZE  2       // dummy environment item
 #define DF_ENV_PAIR_SIZE   3       // pair environment item
 
-//limits 
+//limits (to be set by configuration)
 #define DF_MAX_BV_IND      USHRT_MAX        //max db ind (embedding level)
 #define DF_TM_MAX_ARITY    USHRT_MAX        //max arity 
-#define DF_MAX_UINVIND     USHRT_MAX        //max universe index
+#define DF_MAX_UNIVIND     USHRT_MAX        //max universe index
 
 
 /******************************************************************/
@@ -268,6 +308,8 @@ DF_TermPtr DF_envPairTerm(DF_EnvPtr);        // t in (t,l)
 
 /* TERM CONSTRUCTION */
 void DF_copyAtomic(DF_TermPtr src, MemPtr dest);   //copy atomic 
+void DF_copyApp(DF_TermPtr src, MemPtr dest);      //copy application
+void DF_copySusp(DF_TermPtr src, MemPtr dest);     //copy suspension
 void DF_mkVar(MemPtr loc, int uc);                 //unbound variable
 void DF_mkBV(MemPtr loc, int ind);                 //de Bruijn index
 void DF_mkConst(MemPtr loc, int uc, int ind);      //const 
@@ -290,24 +332,23 @@ void DF_mkPairEnv(MemPtr loc, int l, DF_TermPtr t, DF_EnvPtr rest);
                                                           // (t, l) env item
 
 /* TERM MODIFICATION */
-void DF_modVarUC(DF_TermPtr vPtr, int uc);         
+void DF_modVarUC(DF_TermPtr vPtr, int uc);
 
-/* SPECIAL CONSTANTS */
+/* (NON_TRIVIAL) TERM COMPARISON */
 Boolean DF_sameConsts(DF_TermPtr const1, DF_TermPtr const2);   //same const?
-
 Boolean DF_sameStrs(DF_TermPtr str1, DF_TermPtr str2);         //same string?
-
+Boolean DF_stringCompare(DF_TermPtr tmPtr, char *str);
 
 /********************************************************************/
 /*                                                                  */
 /*                    DISAGREEMENT SET REPRESENTATION               */
 /*                                                                  */
-/*                    A double linked list                          */
+/*                    Linked list                                   */
 /********************************************************************/
 
 typedef struct DF_disPair   //each node in the disagreement set
 {
-    struct DF_disPair    *prev;
+    DF_Tag               tag;
     struct DF_disPair    *next;
     DF_TermPtr           firstTerm;
     DF_TermPtr           secondTerm;
@@ -315,7 +356,8 @@ typedef struct DF_disPair   //each node in the disagreement set
 
 typedef DF_DisPair  *DF_DisPairPtr; //pointer to a disagreement pair
 
-#define DF_DISPAIR_SIZE   sizeof(DF_DisPair)
+//note this arithmatic should in reality be performed in configuration
+#define DF_DISPAIR_SIZE   (int)ceil(sizeof(DF_DisPair)/WORD_SIZE)
 
 #define DF_EMPTY_DIS_SET  NULL      //empty disagreement set
 
@@ -324,17 +366,10 @@ typedef DF_DisPair  *DF_DisPairPtr; //pointer to a disagreement pair
 /******************************************************************/
 
 //create a new node at the given location
-void DF_mkDisPair(MemPtr loc, DF_DisPairPtr prev, DF_DisPairPtr next, 
-                  DF_TermPtr first, DF_TermPtr second);
-
-//modify the prev field of a given disagreement pair
-void DF_modDisPairPrev(DF_DisPairPtr loc, DF_DisPairPtr newPrev);
-//modify the next field of a given disagreement pair
-void DF_modDisPairNext(DF_DisPairPtr loc, DF_DisPairPtr newNext);
-
+void DF_mkDisPair(MemPtr loc, DF_DisPairPtr next, DF_TermPtr first, 
+                  DF_TermPtr second);
 
 //decomposition
-DF_DisPairPtr DF_disPairPrev(DF_DisPairPtr disPtr);
 DF_DisPairPtr DF_disPairNext(DF_DisPairPtr disPtr);
 DF_TermPtr    DF_disPairFirstTerm(DF_DisPairPtr disPtr);
 DF_TermPtr    DF_disPairSecondTerm(DF_DisPairPtr disPtr);
@@ -342,7 +377,6 @@ DF_TermPtr    DF_disPairSecondTerm(DF_DisPairPtr disPtr);
 //whether a given disagreement set is empty
 Boolean       DF_isEmpDisSet(DF_DisPairPtr disPtr);
 Boolean       DF_isNEmpDisSet(DF_DisPairPtr disPtr);
-
 
 #endif  //DATAFORMATS_H
 

@@ -4,7 +4,6 @@
 /*  interpretive part of higher-order pattern unification.                  */
 /*                                                                          */
 /****************************************************************************/
-
 #ifndef HOPU_C
 #define HOPU_C
 
@@ -14,6 +13,7 @@
 #include "hnorm.h"
 #include "abstmachine.h"
 #include "types.h"
+#include "trail.h"
 #include "../system/error.h"  //to be changed
 #include "../system/memory.h" //to be changed
 
@@ -31,18 +31,77 @@ static void HOPU_typesUnify(DF_TypePtr tyEnv1, DF_TypePtr tyEnv2, int n)
 }
 
 /* Return the dereference of the abstraction body of the given term.       */
-static DF_TermPtr HOPU_lamBody(DF_TermPtr tmPtr)
+DF_TermPtr HOPU_lamBody(DF_TermPtr tmPtr)
 {
     tmPtr = DF_termDeref(tmPtr);
     while (DF_isLam(tmPtr)) tmPtr = DF_termDeref(DF_lamBody(tmPtr));
     return tmPtr;
 }
 
+/***************************************************************************/ 
+/* Globalize functions needed for HOPU_patternUnidyPair                    */
+/***************************************************************************/
+
+/* Globalize a rigid term.                                                 */
+/* If the term pointer is not one referring to a heap address, the atomic  */
+/* content is then copied onto the current top of heap; the term pointer   */
+/* is updated to the new heap term.                                        */
+static DF_TermPtr HOPU_globalizeRigid(DF_TermPtr rPtr)
+{
+    if (AM_nHeapAddr((MemPtr)rPtr)) {//rPtr must refer to const (no type), int,
+                                     //float, str, (stream), nil, cons
+        MemPtr nhreg = AM_hreg + DF_TM_ATOMIC_SIZE;
+        AM_heapError(nhreg);
+        DF_copyAtomic(rPtr, AM_hreg);
+        rPtr = (DF_TermPtr)AM_hreg;
+        AM_hreg = nhreg;
+    }
+    return rPtr;
+}
+
+/* Globalize a rigid term and make a variable binding.                     */
+/* If the term pointer to the rigid term is not one referring to a heap    */
+/* address, its atomic content is then copied into the variable to be bound*/
+/* Otherwise, the variable is made a reference to the rigid term.          */
+void HOPU_globalizeCopyRigid(DF_TermPtr rPtr, DF_TermPtr vPtr)
+{
+    if (AM_nHeapAddr((MemPtr)rPtr)) //rPtr must refer to rigid atomic term
+        DF_copyAtomic(rPtr, (MemPtr)vPtr);
+    else DF_mkRef((MemPtr)vPtr, rPtr); //rPtr could also be app 
+}        
+  
+/* Globalize a flex term.                                                   */
+/* If the term pointer is one referring to a stack address, (in which case  */
+/* the flex term must be a free variable itself), the atomic content is     */
+/* copied onto the current top of heap; the free variable on stack is then  */
+/* bound to the new heap term, and the binding is trailed if necessary; the */
+/* term pointer is updated to the new heap term.                            */  
+DF_TermPtr HOPU_globalizeFlex(DF_TermPtr fPtr)
+{
+    if (AM_stackAddr((MemPtr)fPtr)) {//fPtr must be a reference to var
+        MemPtr nhreg = AM_hreg + DF_TM_ATOMIC_SIZE;
+        AM_heapError(nhreg);
+        DF_copyAtomic(fPtr, AM_hreg);
+        TR_trailETerm(fPtr);
+        DF_mkRef((MemPtr)fPtr, (DF_TermPtr)AM_hreg);
+        fPtr = (DF_TermPtr)AM_hreg;
+        AM_hreg = nhreg;
+    }   
+    return fPtr;
+}
+
+/***************************************************************************/
+/* Explicit eta expansion (on a rigid term)                                */
+/***************************************************************************/
+
 /* Eta expands a rigid term whose term pointer and decomposition are given */
 /* by arguments. The new lambda body is returned. (It is unnecessary to    */
 /* create a new lambda term for the abstractions in the front of the eta   */
 /* expanded form. Note that the term head and argument vector are updated  */
 /* as side-effect.                                                         */
+/* Note globalization on the term head is always performed and no          */
+/* specialized version of this function is provided based on the assumption*/
+/* that explicit eta-expansion is rarely needed.                           */
 static DF_TermPtr HOPU_etaExpand(DF_TermPtr *h, DF_TermPtr *args, int nargs, 
                                  int nabs)
 {
@@ -56,7 +115,10 @@ static DF_TermPtr HOPU_etaExpand(DF_TermPtr *h, DF_TermPtr *args, int nargs,
         *h = hPtr =(DF_TermPtr)AM_hreg; //update head pointer
         DF_mkBV(AM_hreg,ind);
         AM_hreg += DF_TM_ATOMIC_SIZE;
-    }
+    } else 
+        //always perform globalization; eta expansion is rarely needed 
+        *h = hPtr = HOPU_globalizeRigid(hPtr); 
+
     AM_arityError(newArity);
     AM_heapError(AM_hreg + nargs * DF_TM_SUSP_SIZE + newArity*DF_TM_ATOMIC_SIZE
                  + DF_TM_APP_SIZE);
@@ -115,8 +177,9 @@ static Boolean HOPU_uniqueConst(DF_TermPtr cPtr, DF_TermPtr args, int n)
                     HOPU_typesUnify(DF_constType(tPtr), DF_constType(cPtr), 
                                     AM_cstTyEnvSize(DF_constTabIndex(cPtr)));
                 } EM_catch {
-                    if (EM_CurrentExnType == EM_TY_UNI_FAIL) {
-                        AM_resetTypesPDL();//remove tys added for ty unif
+                    if (EM_CurrentExnType == EM_FAIL) {
+                        AM_resetTypesPDL();//remove tys from pdl for ty unif
+                        return FALSE;
                     } else EM_reThrow();
                 }
             } else  return FALSE; 
@@ -181,7 +244,7 @@ static Boolean HOPU_isLLambda(int uc, int nargs, DF_TermPtr args)
                     int dbInd = DF_bvIndex(AM_head) - AM_numAbs; //eta-norm
                     if (dbInd > 0 && HOPU_uniqueBV(dbInd, myArgs, i) &&
                         HOPU_isEtaExpArgs()) {
-                        //trail(args);
+                        TR_trailHTerm(args);
                         DF_mkBV((MemPtr)args, dbInd);
                     } else return FALSE;
                 } else { //!(DF_isBV(AM_head))
@@ -189,7 +252,7 @@ static Boolean HOPU_isLLambda(int uc, int nargs, DF_TermPtr args)
                         if (uc < DF_constUnivCount(AM_head) && 
                             HOPU_uniqueConst(AM_head, myArgs, i) &&
                             HOPU_isEtaExpArgs()) {
-                            //trail(args);
+                            TR_trailHTerm(args);
                             if (DF_isTConst(AM_head)) 
                                 DF_mkRef((MemPtr)args, AM_head);
                             else DF_copyAtomic(AM_head, (MemPtr)args);
@@ -203,7 +266,6 @@ static Boolean HOPU_isLLambda(int uc, int nargs, DF_TermPtr args)
     } //nargs != 0
 }
 
-
 /***************************************************************************/
 /*                            BINDING                                      */
 /*                                                                         */
@@ -212,7 +274,7 @@ static Boolean HOPU_isLLambda(int uc, int nargs, DF_TermPtr args)
 /***************************************************************************/
 /* A flag denoting whether new structure is created during the process of  */
 /* finding substitutions.                                                  */
-static Boolean HOPU_copyFlagGlb = FALSE;
+Boolean HOPU_copyFlagGlb = FALSE;
 
 /* Return a non-zero index of a bound variable appears in a list of        */
 /* arguments. Note the index is the position from the right and the        */
@@ -247,7 +309,7 @@ static int HOPU_constIndex(DF_TermPtr cPtr, DF_TermPtr args, int nargs, int lev)
                                     AM_cstTyEnvSize(DF_constTabIndex(cPtr)));
                     return (ind+lev);
                 } EM_catch {//remove types added for ty unif from the PDL
-                    if (EM_CurrentExnType == EM_TY_UNI_FAIL) AM_resetTypesPDL();
+                    if (EM_CurrentExnType == EM_FAIL) AM_resetTypesPDL();
                     else EM_reThrow();
                 }
                } else return (ind+lev);  //cPtr does not have type associated
@@ -454,7 +516,7 @@ static int HOPU_pruneSameVar(DF_TermPtr args1, int nargs1, DF_TermPtr args2,
                         numNotPruned++;
                         HOPU_copyFlagGlb = TRUE;
                         } EM_catch {//remove tys for type unif from the PDL
-                            if (EM_CurrentExnType == EM_TY_UNI_FAIL) 
+                            if (EM_CurrentExnType == EM_FAIL) 
                                 AM_resetTypesPDL();        
                             else EM_reThrow();
                         } //EM_catch
@@ -498,7 +560,7 @@ static void HOPU_pushVarToHeap(int uc)
 static void HOPU_mkPandRSubst(DF_TermPtr hPtr, DF_TermPtr args, int nargs,
                               DF_TermPtr vPtr, int nabs)
 {
-    //trail(vPtr)
+    TR_trailTerm(vPtr); AM_bndFlag = ON;
     if (nargs == 0) {
         if (nabs == 0) DF_mkRef((MemPtr)vPtr, hPtr);
         else DF_mkLam((MemPtr)vPtr, nabs, hPtr);
@@ -522,7 +584,8 @@ static void HOPU_mkPandRSubst(DF_TermPtr hPtr, DF_TermPtr args, int nargs,
 static void HOPU_mkPrunedSubst(DF_TermPtr hPtr, int *args, int nargs, 
                                DF_TermPtr vPtr, int nabs)
 {
-    //trail(vPtr)
+    AM_bndFlag = ON;
+    TR_trailTerm(vPtr);
     if (nargs == 0) {
         if (nabs == 0) DF_mkRef((MemPtr)vPtr, hPtr);
         else DF_mkLam((MemPtr)vPtr, nabs, hPtr);
@@ -623,7 +686,7 @@ static DF_TermPtr HOPU_flexNestedLLambda(DF_TermPtr args1, int nargs1, int uc,
         }
         if ((nargs11 == 0) && (nargs12 == nargs2)) {//neither raised nor pruned
             AM_hreg = oldhtop; //the internal free var remains unbound          
-            //trail(fhPtr);
+            TR_trailTerm(fhPtr); AM_bndFlag = ON;
             DF_modVarUC(fhPtr, AM_adjreg);
             if (HOPU_copyFlagGlb)
                 bnd = HOPU_mkPandRTerm(fhPtr, args11, nargs11, args12, nargs12);
@@ -675,18 +738,45 @@ static void HOPU_flexCheck(DF_TermPtr args, int nargs, int emblev)
         nemblev = emblev + AM_numAbs;
         if (AM_rigFlag){
             if (DF_isBV(AM_head)) {
-                if (DF_bvIndex(AM_head) > nemblev) EM_throw(EM_HOPU_FAIL);
+                if (DF_bvIndex(AM_head) > nemblev) EM_throw(EM_FAIL);
             } else {
                 if (DF_isConst(AM_head)&&(DF_constUnivCount(AM_head)>AM_adjreg))
-                    EM_throw(EM_HOPU_FAIL);
+                    EM_throw(EM_FAIL);
             } //otherwise succeeds
         } else { //AM_rigFlag == FALSE
             if ((AM_vbbreg == AM_head) || (DF_fvUnivCount(AM_head)>AM_adjreg))
-                EM_throw(EM_HOPU_FAIL);
+                EM_throw(EM_FAIL);
         }
         HOPU_flexCheck(AM_argVec, AM_numArgs, nemblev);
         args = (DF_TermPtr)(((MemPtr)args) + DF_TM_ATOMIC_SIZE);
     }
+}
+
+/* This version of flexCheckC is needed in the compiled form of pattern      */
+/* unification. The essential difference from the other version is that the  */
+/* variable being bound is already partially bound to a structure.           */
+/* The difference from the other procedure is the head normalization         */
+/* procedure invoked is one performs the occurs checking on partially bound  */
+/* variables                                                                 */ 
+static void HOPU_flexCheckC(DF_TermPtr args, int nargs, int emblev)
+{
+    for (; nargs > 0; nargs--){
+        int nemblev;
+        HN_hnormOcc(args);
+        nemblev = emblev + AM_numAbs;
+        if (AM_rigFlag) {
+            if (DF_isBV(AM_head)) {
+                if (DF_bvIndex(AM_head) > nemblev) EM_throw(EM_FAIL);
+            } else {
+                if (DF_isConst(AM_head)&&(DF_constUnivCount(AM_head)>AM_adjreg))
+                    EM_throw(EM_FAIL);
+            } //otherwise succeeds
+        } else  //AM_rigFlag == FALSE
+            if (DF_fvUnivCount(AM_head) > AM_adjreg) EM_throw(EM_FAIL);
+
+        HOPU_flexCheckC(AM_argVec, AM_numArgs, nemblev);
+        args = (DF_TermPtr)(((MemPtr)args)+DF_TM_ATOMIC_SIZE);
+    }   
 }
 
 /* Generating a term on the top of heap which is to be added into a        */
@@ -742,7 +832,8 @@ static void HOPU_bndVarNestedFlex(DF_TermPtr fhPtr, DF_TermPtr args, int nargs,
 {
     HOPU_flexCheck(args, nargs, lev);
     if (DF_fvUnivCount(fhPtr) > AM_adjreg) {
-        //trail(fPtr);
+        TR_trailTerm(fhPtr);  
+        AM_bndFlag = ON;
         DF_modVarUC(fhPtr, AM_adjreg);
     }
 }
@@ -761,7 +852,7 @@ static DF_TermPtr HOPU_flexNestedSubst(DF_TermPtr args1, int nargs1,
     DF_TermPtr bnd;
     int varuc = DF_fvUnivCount(fhPtr);
     if (HOPU_isLLambda(varuc, nargs2, args2)){ 
-        if (fhPtr == AM_vbbreg) EM_throw(EM_HOPU_FAIL); //occurs check
+        if (fhPtr == AM_vbbreg) EM_throw(EM_FAIL); //occurs check
         bnd = HOPU_flexNestedLLambda(args1, nargs1, varuc, tmPtr, fhPtr, args2,
                                      nargs2, emblev);
     } else {// the internal flex term is not LLambda: delay (opt possible)
@@ -771,7 +862,7 @@ static DF_TermPtr HOPU_flexNestedSubst(DF_TermPtr args1, int nargs1,
             EM_try{ 
                 HOPU_bndVarNestedFlex(fhPtr, args2, nargs2, emblev);
                 return tmPtr;
-            } EM_catch {if (EM_CurrentExnType != EM_HOPU_FAIL) EM_reThrow();}
+            } EM_catch {if (EM_CurrentExnType != EM_FAIL) EM_reThrow();}
         }
         newVar = (DF_TermPtr)AM_hreg;
         HOPU_pushVarToHeap(AM_adjreg);
@@ -790,6 +881,52 @@ static DF_TermPtr HOPU_flexNestedSubst(DF_TermPtr args1, int nargs1,
     return bnd;
 }
 
+/* This version of flexNestedSubst is needed in the compiled form of pattern */
+/* unification. The essential difference from the other version is that the  */
+/* variable being bound is already partially bound to a structure.           */
+/* The difference from the other procedure is first the head normalization   */
+/* process invokded is one performs occurs checking on partially bound       */
+/* variables, and second, the "top-level" flexible term is a free variable:  */
+/* so there is no need to distinguish whether the other flex term is Llambda */
+/* or not: the substitution can be found by an invocation of flexCheckC      */
+DF_TermPtr HOPU_flexNestedSubstC(DF_TermPtr fhPtr, DF_TermPtr args, int nargs,
+                                 DF_TermPtr tmPtr, int emblev)
+{
+    DF_TermPtr bnd, newVar, newTerm;
+    int varuc;
+
+    EM_try {
+        HOPU_flexCheckC(args, nargs, emblev);
+        if (DF_fvUnivCount(fhPtr) > AM_adjreg){
+            TR_trailTerm(fhPtr);
+            AM_bndFlag = ON;
+            DF_modVarUC(fhPtr, AM_adjreg);
+        }
+        return tmPtr;
+    } EM_catch { if (EM_CurrentExnType != EM_FAIL) EM_reThrow(); }
+
+    varuc = DF_fvUnivCount(fhPtr);
+    if (HOPU_isLLambda(varuc, nargs, args)){
+        bnd = HOPU_flexNestedLLambda(NULL, 0, varuc, tmPtr, fhPtr, args, nargs,
+                                     emblev);
+    } else {//otherwise delay this pair onto the live list
+        HOPU_copyFlagGlb = TRUE;
+        newVar = (DF_TermPtr)AM_hreg;
+        HOPU_pushVarToHeap(AM_adjreg);
+        if (emblev == 0) {
+            bnd = newVar;
+            AM_addDisPair(bnd, tmPtr);
+        } else {
+            newTerm = (DF_TermPtr)AM_hreg;
+            HOPU_mkTermNLL(newVar, NULL, 0, emblev);
+            AM_addDisPair(newTerm, tmPtr);
+            bnd = (DF_TermPtr)AM_hreg;
+            HOPU_mkSubstNLL(newVar, emblev);
+        }
+    }
+    return bnd;    
+}
+
 /* Try to solve G = (F a1 ... an), where F and G are different free        */
 /* variables, and (F a1 ... an) is non-LLambda.                            */
 /* Either G is bound to (F a1 ... an) or an exception is raised. In the    */
@@ -801,10 +938,12 @@ static void HOPU_bndVarFlex(DF_TermPtr vPtr, DF_TermPtr fPtr, DF_TermPtr fhPtr,
     AM_vbbreg = vPtr;    AM_adjreg = DF_fvUnivCount(vPtr);
     HOPU_flexCheck(args, nargs, 0);    
     if (DF_fvUnivCount(fhPtr) > AM_adjreg) {
-        //trail(fPtr);
+        TR_trailTerm(fPtr);
+        AM_bndFlag = ON;
         DF_modVarUC(fhPtr, AM_adjreg);
     }
-    //trail(vPtr);
+    TR_trailTerm(vPtr);
+    AM_bndFlag = ON;
     DF_mkRef((MemPtr)vPtr, fPtr);
 }
 
@@ -832,7 +971,7 @@ static void HOPU_flexMkSubst(DF_TermPtr tPtr1, DF_TermPtr h1, int nargs1,
     if (HOPU_isLLambda(uc, nargs1, args1)){ //the first term is LLambda
         DF_TermPtr bndBody;
         if (h1 == h2) { //same variable (comparing addresses)
-            if (HOPU_isLLambda(uc, nargs2, args2)) {
+            if (HOPU_isLLambda(uc, nargs2, args2)) {//same var common uc
                 MemPtr oldhtop = AM_hreg;
                 DF_TermPtr newArgs = (DF_TermPtr)AM_hreg;
                 HOPU_copyFlagGlb = FALSE;
@@ -860,17 +999,17 @@ static void HOPU_flexMkSubst(DF_TermPtr tPtr1, DF_TermPtr h1, int nargs1,
             bndBody = HOPU_flexNestedSubst(args1, nargs1, h2, args2, nargs2, 
                                            tPtr2, lev);
             nabs = lev + nargs1;
-            // trail(h1);
+            TR_trailTerm(h1); AM_bndFlag = ON;
             if (nabs == 0) DF_mkRef((MemPtr)h1, bndBody);
             else {
                 AM_embedError(nabs);
                 DF_mkLam((MemPtr)h1, nabs, bndBody);
             }  
         }               //different variable
-    } else {            //the first term is non-LLambda        
+    } else {            //the first term is non-LLambda
         if ((nargs2 == 0) && (lev == 0) && (h1 != h2)) { // (F t1 ... tm) = G  
-            EM_try{ HOPU_bndVarFlex(h2, tPtr1, h1, args1, nargs1);
-            } EM_catch { if (EM_CurrentExnType != EM_HOPU_FAIL) EM_reThrow(); } 
+            EM_try{ HOPU_bndVarFlex(h2, tPtr1, h1, args1, nargs1); return;
+            } EM_catch { if (EM_CurrentExnType != EM_FAIL) EM_reThrow(); } 
         } 
         if (lev == 0) AM_addDisPair(tPtr1, tPtr2); 
         else {
@@ -879,10 +1018,87 @@ static void HOPU_flexMkSubst(DF_TermPtr tPtr1, DF_TermPtr h1, int nargs1,
             AM_heapError(AM_hreg);
             DF_mkLam(AM_hreg, lev, tPtr2);
             AM_hreg = nhtop;
-            AM_addDisPair(tPtr1, tmPtr);            
+            AM_addDisPair(tPtr1, tmPtr);
         } //(lev != 0) 
+        /*
+        if ((nargs2 == 0) && (lev == 0) && (h1 != h2))  // (F t1 ... tm) = G
+            HOPU_bndVarFlex(h2, tPtr1, h1, args1, nargs1);
+        else {
+            if (lev == 0) AM_addDisPair(tPtr1, tPtr2);
+            else {
+                MemPtr nhtop = AM_hreg + DF_TM_LAM_SIZE;
+                DF_TermPtr tmPtr = (DF_TermPtr)AM_hreg;
+                AM_heapError(AM_hreg);
+                DF_mkLam(AM_hreg, lev, tPtr2);
+                AM_hreg = nhtop;
+                AM_addDisPair(tPtr1, tmPtr);
+            }
+        } //(lev != 0)
+        */
     }                  //the first term is non-LLambda
 }
+
+/* The counterpart of HOPU_flexMkSubst invoked from HOPU_patternUnifyPair.  */
+/* Care is taken to avoid making a reference to a stack address in binding  */
+/* and creating disagreement pairs.                                         */
+/* It is assumed that the first term (F a1 ... an) given by its             */
+/* is not embedded in any abstractions.                                     */
+static void HOPU_flexMkSubstGlb(DF_TermPtr tPtr1, DF_TermPtr h1, int nargs1,
+                                DF_TermPtr args1,
+                                DF_TermPtr tPtr2, DF_TermPtr h2, int nargs2,
+                                DF_TermPtr args2, 
+                                DF_TermPtr topPtr2, int lev)
+{
+    int uc = DF_fvUnivCount(h1);
+    if (HOPU_isLLambda(uc, nargs1, args1)) { //the first term is LLambda
+        DF_TermPtr bndBody;
+        if (h1 == h2) { //same variable (comparing addresses)
+            if (HOPU_isLLambda(uc, nargs2, args2)){//same var; common uc
+                MemPtr oldhtop = AM_hreg;
+                DF_TermPtr newArgs = (DF_TermPtr)AM_hreg;
+                HOPU_copyFlagGlb = FALSE;
+                nargs1 = HOPU_pruneSameVar(args1, nargs1, args2, nargs2, lev);
+                if ((nargs1 != nargs2) || HOPU_copyFlagGlb) {
+                    DF_TermPtr newVar = (DF_TermPtr)AM_hreg;
+                    HOPU_pushVarToHeap(uc);
+                    HOPU_mkPandRSubst(newVar, newArgs, nargs1, h1, nargs2);
+                } else AM_hreg = oldhtop; //variable remain unbound
+            } else { //(F a1 ... an)[ll] = (lam(k, (F b1 ... bm)))[non-ll]
+                     //non-LLambda term must locate on the heap
+                if (nargs1 == 0) tPtr1 = HOPU_globalizeFlex(tPtr1);
+                if (lev == 0) AM_addDisPair(tPtr1, tPtr2);
+                else AM_addDisPair(tPtr1, DF_termDeref(topPtr2));
+            } //tPtr2 not LLambda
+        } else { //different variable
+            int nabs;
+            AM_vbbreg = h1; AM_adjreg = uc; //set regs for occ
+            HOPU_copyFlagGlb = FALSE;
+            bndBody = HOPU_flexNestedSubst(args1, nargs1, h2, args2, nargs2,
+                                           tPtr2, lev);
+            nabs = nargs1 + lev;
+            TR_trailTerm(h1); AM_bndFlag = ON;
+            if (HOPU_copyFlagGlb == FALSE)
+                bndBody = HOPU_globalizeFlex(bndBody);
+            if (nabs == 0) DF_mkRef((MemPtr)h1, bndBody);
+            else {
+                AM_embedError(nabs);
+                DF_mkLam((MemPtr)h1, nabs, bndBody);
+            }
+        }
+    } else {//the first term is non-LLambda (must locate on heap)
+        if ((nargs2 == 0) && (lev == 0) && (h1 != h2)) {//(F t1...tm)[nll] = G
+            EM_try { HOPU_bndVarFlex(h2, tPtr1, h1, args1, nargs1); return;
+            } EM_catch {
+                if (EM_CurrentExnType == EM_FAIL) 
+                    tPtr2 = HOPU_globalizeFlex(tPtr2);
+                else EM_reThrow();
+            }
+        }
+        if (lev == 0) AM_addDisPair(tPtr1, tPtr2);
+        else AM_addDisPair(tPtr1, DF_termDeref(topPtr2));
+    }       //the first term is non-LLambda
+}
+ 
 
 /***************************************************************************/
 /*                 BINDING FOR FLEX-RIGID                                  */
@@ -905,7 +1121,7 @@ static DF_TermPtr HOPU_getHead(DF_TermPtr rPtr, DF_TermPtr args, int nargs,
         if (DF_constUnivCount(rPtr) > AM_adjreg){
             MemPtr newhtop;
             int ind = HOPU_constIndex(rPtr, args, nargs, emblev);
-            if (ind == 0) EM_throw(EM_HOPU_FAIL);        //occurs-check
+            if (ind == 0) EM_throw(EM_FAIL);        //occurs-check
             AM_embedError(ind);
             newhtop = AM_hreg + DF_TM_ATOMIC_SIZE;
             AM_heapError(newhtop);
@@ -920,7 +1136,7 @@ static DF_TermPtr HOPU_getHead(DF_TermPtr rPtr, DF_TermPtr args, int nargs,
         int dbInd = DF_bvIndex(rPtr);
         if (dbInd > emblev){
             int ind = HOPU_bvIndex(dbInd, args, nargs, emblev);
-            if (ind == 0) EM_throw(EM_HOPU_FAIL);        //occurs-check
+            if (ind == 0) EM_throw(EM_FAIL);        //occurs-check
             AM_embedError(ind);
             if (ind == dbInd) rtPtr = rPtr;  //use the old db term
             else {                           //create a db on the heap top
@@ -1021,7 +1237,61 @@ static DF_TermPtr HOPU_rigNestedSubst(DF_TermPtr fargs, int fnargs,
                 HOPU_mkConsOrApp(rPtr, rhPtr, oldArgs, rnargs);
                 HOPU_copyFlagGlb = TRUE;
                 return tmPtr;
-            } else  return rPtr; //myCopyFlag == FALSE, myCopyFlagBody = FALSE
+            } else  return rPtr; //myCopyFlagHead==FALSE, myCopyFlagArgs==FALSE
+        }
+    }//rnargs > 0
+}
+
+/* This version of rigNestedSubstC is needed in the compiled form of pattern */
+/* unification. The essential difference from the other version is that the  */
+/* variable being bound is already partially bound to a structure.           */
+/* The difference from the other procedure is first the head normalization   */
+/* procedure invoked is one performs the occurs checking on partially bound  */
+/* variables, and second, the incoming flexible term is in fact a free       */
+/* variable.                                                                 */ 
+DF_TermPtr HOPU_rigNestedSubstC(DF_TermPtr rhPtr, DF_TermPtr rPtr,
+                                DF_TermPtr rargs, int rnargs, int emblev)
+{
+    rhPtr = HOPU_getHead(rhPtr, NULL, 0, emblev);
+    if (rnargs == 0) return rhPtr;
+    else {
+        Boolean myCopyFlagHead = HOPU_copyFlagGlb, myCopyFlagArgs = FALSE;
+        int i;
+        MemPtr oldHreg = AM_hreg;                    //the old heap top
+        MemPtr argLoc  = AM_hreg;                    //arg vector location
+        DF_TermPtr newArgs = (DF_TermPtr)AM_hreg;    //new arg vector
+        DF_TermPtr oldArgs = rargs;                  //old arg vector
+        AM_heapError(AM_hreg + rnargs * DF_TM_ATOMIC_SIZE); 
+        AM_hreg += rnargs * DF_TM_ATOMIC_SIZE;       //alloc space for new args
+        HOPU_copyFlagGlb = FALSE;
+        for (i = 0; i < rnargs; i++) {
+            DF_TermPtr bnd;
+            int        nabs;
+            HN_hnormOcc(rargs); nabs = AM_numAbs;
+            if (AM_rigFlag) 
+                bnd = HOPU_rigNestedSubstC(AM_head, HOPU_lamBody(rargs), 
+                                           AM_argVec, AM_numArgs, nabs+emblev);
+            else  //AM_rigFlag == FALSE
+                bnd = HOPU_flexNestedSubstC(AM_head, AM_argVec, AM_numArgs, 
+                                            HOPU_lamBody(rargs), nabs+emblev);
+            if (nabs == 0) DF_mkRef(argLoc, bnd);
+            argLoc += DF_TM_ATOMIC_SIZE;
+            if (HOPU_copyFlagGlb) {myCopyFlagArgs=TRUE; HOPU_copyFlagGlb=FALSE;}
+            rargs = (DF_TermPtr)(((MemPtr)rargs)+DF_TM_ATOMIC_SIZE);
+        } //for loop
+        if (myCopyFlagArgs) {
+            DF_TermPtr tmPtr = (DF_TermPtr)AM_hreg; //new cons or app
+            HOPU_mkConsOrApp(rPtr, rhPtr, newArgs, rnargs);
+            HOPU_copyFlagGlb = TRUE;
+            return tmPtr;
+        } else { //myCopyFlagArgs == FALSE
+            AM_hreg = oldHreg;//deallocate space for arg vector
+            if (myCopyFlagHead) {
+                DF_TermPtr tmPtr = (DF_TermPtr)AM_hreg;
+                HOPU_mkConsOrApp(rPtr, rhPtr, oldArgs, rnargs);
+                HOPU_copyFlagGlb = TRUE;
+                return tmPtr;
+            } else return rPtr; ////myCopyFlagHead==FALSE, myCopyFlagArgs==FALSE
         }
     }//rnargs > 0
 }
@@ -1048,10 +1318,11 @@ static void HOPU_rigMkSubst(DF_TermPtr fPtr, DF_TermPtr fhPtr, int fnargs,
         DF_TermPtr bndBody;                //abs body of bnd of the fv
         int nabs;
         AM_vbbreg = fhPtr; AM_adjreg = uc; //set regs for occurs check
+        HOPU_copyFlagGlb = FALSE;
         bndBody   = HOPU_rigNestedSubst(fargs, fnargs, rhPtr, rPtr,
                                         rargs, rnargs, emblev);
         nabs      = emblev + fnargs; //# abs in the front of the binding
-        //trail (fhPtr);    
+        TR_trailTerm(fhPtr);  AM_bndFlag = ON;
         if (nabs == 0) DF_mkRef((MemPtr)fhPtr, bndBody);
         else {
             AM_embedError(nabs);
@@ -1070,6 +1341,50 @@ static void HOPU_rigMkSubst(DF_TermPtr fPtr, DF_TermPtr fhPtr, int fnargs,
     }                                     //non-LLambda pattern
 }
 
+/* The counter part of HOPU_rigMkSubst invoked by HOPU_patternUnifyPair.    */
+/* Care is taken to avoid making a reference to a register/stack address in */
+/* binding and creating disagreement pair.                                  */
+/* It is assumed that the pair of terms are not embedded in any abstractions*/
+/* ie. (F a1 ... an) = (r b1 ... bm)                                        */
+/* Note both fPtr and rPtr are not dereferenced.                            */
+static void HOPU_rigMkSubstGlb(DF_TermPtr fPtr, DF_TermPtr fhPtr, int fnargs,
+                               DF_TermPtr fargs, 
+                               DF_TermPtr rPtr, DF_TermPtr rhPtr, int rnargs,
+                               DF_TermPtr rargs)
+{
+    int uc = DF_fvUnivCount(fhPtr);
+    if (HOPU_isLLambda(uc, fnargs, fargs)) { //LLambda pattern
+        DF_TermPtr bndBody;
+        AM_vbbreg = fhPtr; AM_adjreg = uc;
+        HOPU_copyFlagGlb = FALSE;
+        bndBody = HOPU_rigNestedSubst(fargs, fnargs, rhPtr, DF_termDeref(rPtr),
+                                      rargs, rnargs, 0);
+        TR_trailTerm(fhPtr); AM_bndFlag = ON;
+        if (HOPU_copyFlagGlb) {//bndBody must locate on the heap
+            if (fnargs == 0) DF_mkRef((MemPtr)fhPtr, bndBody);
+            else {
+                AM_embedError(fnargs);
+                DF_mkLam((MemPtr)fhPtr, fnargs, bndBody);
+            }
+        } else { //HOPU_copyFlagGlb == FALSE
+            /*  //note: rPtr is the undereferenced rigid term; in this case,
+            //      it is assumed rPtr cannot be a reference to the stack.
+            //      This assumption should be ensured by the fact that atomic
+            //      rigid terms on stack are alway copied into registers in 
+            //      binding. 
+            if (fnargs == 0) DF_copyAtomic(rPtr, (MemPtr)fhPtr); */
+            if (fnargs == 0) HOPU_globalizeCopyRigid(bndBody, fhPtr);
+            else {
+                bndBody = HOPU_globalizeRigid(bndBody);
+                AM_embedError(fnargs);
+                DF_mkLam((MemPtr)fhPtr, fnargs, bndBody);
+            }
+        }        //HOPU_copyFlagGlb == FALSE 
+    } else //non_LLambda flex (must locate on the heap)
+        AM_addDisPair(DF_termDeref(fPtr),
+                      HOPU_globalizeRigid(DF_termDeref(rPtr)));
+}
+
 /***************************************************************************/
 /*             TERM SIMPLIFICATION (RIGID-RIGID)                           */
 /*                                                                         */
@@ -1083,50 +1398,44 @@ static void HOPU_matchHeads(DF_TermPtr hPtr1, DF_TermPtr hPtr2, int nabs)
     switch(DF_termTag(hPtr1)){
     case DF_TM_TAG_CONST:{
         if (!(DF_isConst(hPtr2) && (DF_sameConsts(hPtr1, hPtr2)))) 
-            EM_throw(EM_HOPU_FAIL);
+            EM_throw(EM_FAIL);
         if (DF_isTConst(hPtr1)){ //(first-order) unify type environments
-            EM_try {
-                HOPU_typesUnify(DF_constType(hPtr1), DF_constType(hPtr2), 
-                                AM_cstTyEnvSize(DF_constTabIndex(hPtr1)));
-            } EM_catch {
-                if (EM_CurrentExnType == EM_TY_UNI_FAIL) EM_throw(EM_HOPU_FAIL);
-                else EM_reThrow();
-            }            
+            HOPU_typesUnify(DF_constType(hPtr1), DF_constType(hPtr2), 
+                            AM_cstTyEnvSize(DF_constTabIndex(hPtr1))); 
         }
         break;
     }
     case DF_TM_TAG_BVAR: {
-        if (!DF_isBV(hPtr2)) EM_throw(EM_HOPU_FAIL);
+        if (!DF_isBV(hPtr2)) EM_throw(EM_FAIL);
         else {                   
             int ind = DF_bvIndex(hPtr2) + nabs; //lifting for eta-expansion
             AM_embedError(ind);
-            if (DF_bvIndex(hPtr1) != ind) EM_throw(EM_HOPU_FAIL);
+            if (DF_bvIndex(hPtr1) != ind) EM_throw(EM_FAIL);
         }
         break;
     }
-    case DF_TM_TAG_NIL:  { if (!DF_isNil(hPtr2)) EM_throw(EM_HOPU_FAIL); break;}
+    case DF_TM_TAG_NIL:  { if (!DF_isNil(hPtr2)) EM_throw(EM_FAIL); break;}
     case DF_TM_TAG_INT:  {
         if (!(DF_isInt(hPtr2) && (DF_intValue(hPtr2) == DF_intValue(hPtr1))))
-            EM_throw(EM_HOPU_FAIL);
+            EM_throw(EM_FAIL);
         break;
     }
     case DF_TM_TAG_FLOAT:{
         if (!(DF_isFloat(hPtr2)&&(DF_floatValue(hPtr2)==DF_floatValue(hPtr1))))
-            EM_throw(EM_HOPU_FAIL);
+            EM_throw(EM_FAIL);
         break;
     }
     case DF_TM_TAG_STR:  {
         if (!(DF_isStr(hPtr2) && (DF_sameStrs(hPtr1, hPtr2))))
-            EM_throw(EM_HOPU_FAIL);
+            EM_throw(EM_FAIL);
         break;
     }
     case DF_TM_TAG_CONS: { 
-        if (!(DF_isCons(hPtr2))) EM_throw(EM_HOPU_FAIL);
+        if (!(DF_isCons(hPtr2))) EM_throw(EM_FAIL);
         break;
     }
     } //switch
 }
-
 
 /* Set up PDL by sub problems resulted from rigid-rigid pairs upon         */
 /* successful matching of their heads. Eta-expansion is performed on-a-fly */
@@ -1165,7 +1474,7 @@ void HOPU_setPDL(MemPtr args1, MemPtr args2, int nargs, int nabs)
 /* Perform higher-order pattern unification over the pairs delayed on the  */
 /* PDL stack. The PDL stack is empty upon successful termination of this   */
 /* procedure.                                                              */
-void HOPU_patternUnify()
+void HOPU_patternUnifyPDL()
 {
     DF_TermPtr tPtr1, tPtr2,  //pointers to terms to be unified
                hPtr,          //pointer to head of hnf 
@@ -1208,7 +1517,7 @@ void HOPU_patternUnify()
                 if (AM_numAbs < nabs) { //eta expand rigid term first
                     nabs = nabs - AM_numAbs;   //reuse nabs
                     absBody2 = HOPU_etaExpand(&AM_head, &AM_argVec, AM_numArgs,
-                                              AM_numAbs);
+                                              nabs);
                     HOPU_rigMkSubst(absBody1, hPtr, nargs, args, absBody2, 
                                     AM_head, AM_numArgs+nabs, AM_argVec, 0);
                 }else HOPU_rigMkSubst(absBody1,hPtr,nargs,args,absBody2,AM_head,
@@ -1223,6 +1532,128 @@ void HOPU_patternUnify()
             }               // flex - flex
         }        //(rig == FALSE)
     } // while (AM_nemptyPDL())
+}
+
+/* Interpretively pattern unify first the pairs delayed on the PDL, then    */
+/* those delayed on the live list, if binding occured during the first step */
+/* or previous compiled unification process.                                */
+/* Upon successful termination, PDL should be empty and pairs left on the   */
+/* live list should be those other than LLambda.                            */
+void HOPU_patternUnify()
+{
+    HOPU_patternUnifyPDL();   //first solve those left from compiled unification
+    while (AM_bndFlag && AM_nempLiveList()){
+        DF_DisPairPtr dset = AM_llreg;
+        do {  //move everything in live list to PDL
+            AM_pdlError(2);
+            AM_pushPDL((MemPtr)DF_disPairSecondTerm(dset));
+            AM_pushPDL((MemPtr)DF_disPairFirstTerm(dset));
+            dset = DF_disPairNext(dset);
+        } while (DF_isNEmpDisSet(dset));
+        AM_bndFlag = OFF;
+        AM_llreg = DF_EMPTY_DIS_SET;
+        HOPU_patternUnifyPDL(); //unsolvable pairs are added to live list
+    }
+}
+
+/* Interpretively pattern unify a pair of terms given as parameters. This is*/
+/* the counter part of HOPU_patterUnifyPDL that is invoked from the compiled*/
+/* part of unification. In this situation, the procedure has to be applied  */
+/* to two terms as opposed to pairs delayed on the PDL stack.               */
+/*                                                                          */
+/* The input term pointers may dereference to register and stack addresses  */
+/* Care must be taken to avoid making a reference to a register (stack)     */
+/* address in binding a variable, and in making a disagreement pair.        */ 
+
+void HOPU_patternUnifyPair(DF_TermPtr tPtr1, DF_TermPtr tPtr2)
+{
+    DF_TermPtr h1Ptr, h2Ptr, args1, args2;
+    Flag       rig1, rig2, cons1, cons2;
+    int        nabs1, nabs2, nargs1, nargs2;
+    MemPtr     oldPdlBot = AM_pdlBot;
+
+    AM_pdlBot = AM_pdlTop;
+    HN_hnorm(tPtr1); h1Ptr = AM_head; args1 = AM_argVec;
+    nabs1 = AM_numAbs; nargs1 = AM_numArgs; rig1 = AM_rigFlag;    
+    HN_hnorm(tPtr2); h2Ptr = AM_head; args2 = AM_argVec;
+    nabs2 = AM_numAbs; nargs2 = AM_numArgs; rig2 = AM_rigFlag;
+
+    if (rig1) {
+        if (rig2) { //rigid-rigid
+            if (nabs1 > nabs2) {
+                nabs1 = nabs1 - nabs2;
+                HOPU_matchHeads(h1Ptr, h2Ptr, nabs1);
+                HOPU_setPDL((MemPtr)args1, (MemPtr)args2, nargs2, nabs1);
+            } else {//nabs1 <= nabs2
+                nabs1 = nabs2 - nabs1;
+                HOPU_matchHeads(h2Ptr, h1Ptr, nabs1);
+                HOPU_setPDL((MemPtr)args2, (MemPtr)args1, nargs1, nabs1);
+            }
+        } else {   //rigid-flex
+            if ((nabs1 == 0) && (nabs2 == 0))
+                HOPU_rigMkSubstGlb(tPtr2, h2Ptr, nargs2, args2, 
+                                   tPtr1, h1Ptr, nargs1, args1);
+            else {
+                DF_TermPtr rigBody = HOPU_lamBody(tPtr1);
+                DF_TermPtr flexBody = HOPU_lamBody(tPtr2);
+                if (nabs1 < nabs2) {
+                    nabs1 = nabs2 - nabs1;
+                    rigBody = HOPU_etaExpand(&h1Ptr, &args1, nargs1, nabs1);
+                    //now rigBody must locate on heap
+                    HOPU_rigMkSubst(flexBody, h2Ptr, nargs2, args2, rigBody,
+                                    h1Ptr, nargs1+nabs1, args1, 0);
+                } else  // (nabs1 >= nabs2)
+                    HOPU_rigMkSubst(flexBody, h2Ptr, nargs2, args2, rigBody,
+                                    h1Ptr, nargs1, args1, nabs1-nabs2);
+            }        // !(nabs1 == nabs2 == 0)
+        }         //rigid-flex
+    } else { // rig1 = FALSE
+        if (rig2) { //flex-rigid
+            if ((nabs2 == 0) && (nabs1 == 0))
+                HOPU_rigMkSubstGlb(tPtr1, h1Ptr, nargs1, args1,
+                                   tPtr2, h2Ptr, nargs2, args2);
+            else { //!(nabs1 == nabs2 == 0)
+                DF_TermPtr rigBody = HOPU_lamBody(tPtr2);
+                DF_TermPtr flexBody = HOPU_lamBody(tPtr1);
+                if (nabs2 < nabs1) {
+                    nabs1 = nabs2 - nabs1;
+                    rigBody = HOPU_etaExpand(&h2Ptr, &args2, nargs2, nabs1);
+                    //now rigBody must locate on heap
+                    HOPU_rigMkSubst(flexBody, h1Ptr, nargs1, args1, rigBody,
+                                    h2Ptr, nargs2+nabs1, args2, 0);
+                } else  //(nabs1 >= nabs2)
+                    HOPU_rigMkSubst(flexBody, h1Ptr, nargs1, args1, rigBody,
+                                    h2Ptr, nargs2, args2, nabs1-nabs2);
+            }      //!(nabs1 == nabs2 == 0)
+        } else { //flex-flex
+            if (nabs1 == 0) //nabs2 >= nabs1
+                HOPU_flexMkSubstGlb(DF_termDeref(tPtr1), h1Ptr, nargs1, args1,
+                                    HOPU_lamBody(tPtr2), h2Ptr, nargs2, args2,
+                                    tPtr2, nabs2);
+            else { //(nabs1 > 0)
+                if (nabs2 == 0) //nabs2 < nabs1
+                    HOPU_flexMkSubstGlb(DF_termDeref(tPtr2),h2Ptr,nargs2,args2,
+                                        HOPU_lamBody(tPtr1),h1Ptr,nargs1,args1,
+                                        tPtr1,nabs1);
+            
+                else { //nabs1 != 0 && nabs2 != 0
+                    DF_TermPtr flexBody1 = HOPU_lamBody(tPtr1);
+                    DF_TermPtr flexBody2 = HOPU_lamBody(tPtr2);
+                    if (nabs2 > nabs1)
+                        HOPU_flexMkSubst(flexBody1, h1Ptr, nargs1, args1,
+                                         flexBody2, h2Ptr, nargs2, args2,
+                                         nabs2-nabs1);
+                    else //nabs2 <= nabs1
+                        HOPU_flexMkSubst(flexBody2, h2Ptr, nargs2, args2,
+                                         flexBody1, h1Ptr, nargs1, args1,
+                                         nabs1-nabs2);
+                }      //nabs1 != 0 && nabs2 != 0
+            }     //(nabs1 > 0)
+        }       //flex-flex
+    }        //rig1 = FALSE
+    //solve the pairs (which must locate on heap) remaining on the PDL
+    HOPU_patternUnifyPDL(); 
+    AM_pdlBot = oldPdlBot;
 }
 
 #endif //HOPU_C
