@@ -11,6 +11,7 @@
 #include <stdlib.h>
 #include "abstmachine.h"
 #include "dataformats.h"
+#include "trail.h"
 
 //for debugging: to be removed
 #include <stdio.h>
@@ -112,7 +113,7 @@ void HNL_pushSuspOnLoc(DF_TermPtr skPtr, int ol, int nl, DF_EnvPtr e,
    The change is trailed if necessary.                                  */
 void HNL_updateToRef(DF_TermPtr tmPtr, DF_TermPtr target)
 {
-    //trail(tmPtr);
+    TR_trailHTerm(tmPtr);
     DF_mkRef((MemPtr)tmPtr, target);
 }
 
