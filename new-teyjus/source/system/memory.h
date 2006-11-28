@@ -108,10 +108,10 @@ typedef MEM_CstEnt *MEM_CstPtr;
 /* functions for filling in the fields of an impl table                      */
 /* Q: the data stored in each field in byte code: are they word or in their  */
 /*    specific types?                                                        */
-void MEM_implPutLTS(WordPtr tab, Word nop);        //# pred (def extended)
-void MEM_implPutFC(WordPtr tab, Word fcPtr);       //ptr to find code func
-void MEM_implPutPSTS(WordPtr tab, Word tabSize);   //# entries link tab
-void MEM_implPutLT(WordPtr tab, int ind, Word cst);//link tab; ind from 0
+void MEM_implPutLTS(WordPtr tab, int lts);               //# pred (def extended)
+void MEM_implPutFC(WordPtr tab, MEM_FindCodeFnPtr fcPtr);//ptr to find code func
+void MEM_implPutPSTS(WordPtr tab, int tabSize);          //# entries link tab
+void MEM_implPutLT(WordPtr tab, int ind, int cst);       //link tab; ind from 0
 
 /* functions for retrieving the addresses of associated tables               */
 MemPtr MEM_implLT(MemPtr tab);           //start add of seq. of pred (link tab)
@@ -131,15 +131,15 @@ int MEM_implIthLT(MemPtr ltab, int index);   /* value in ith entry of link tab
 /* functions for filling in the fields of an import table                   */
 /* Q: the data stored in each field in byte code: are they word or in their  */
 /*    specific types?                                                        */
-void MEM_impPutNCSEG(WordPtr tab, Word nseg);        //# code segments
-void MEM_impPutNLC(WordPtr tab, Word nlc);           //# local constants
-void MEM_impPutLTS(WordPtr tab, Word nop);           //# pred (def extended)
-void MEM_impPutFC(WordPtr tab, Word fcp);            //ptr to find code func
-void MEM_impPutPSTS(WordPtr tab, Word tabSize);      //# entries in link tab
-void MEM_impPutLT(WordPtr tab, int ind, Word pred);  //link tab; ind from 0
-void MEM_impPutLCT(WordPtr lcTab, int ind, Word cst);/*loc c tab(may null)
-                                                       lcTab addr of local ctab;
-                                                       ind from 0 */
+void MEM_impPutNCSEG(WordPtr tab, int nseg);           //# code segments
+void MEM_impPutNLC(WordPtr tab, int nlc);              //# local constants
+void MEM_impPutLTS(WordPtr tab, int lts);              //# pred (def extended)
+void MEM_impPutFC(WordPtr tab, MEM_FindCodeFnPtr fcp); //ptr to find code func
+void MEM_impPutPSTS(WordPtr tab, int tabSize);         //# entries in link tab
+void MEM_impPutLT(WordPtr tab, int ind, int cst);      //link tab; ind from 0
+void MEM_impPutLCT(WordPtr lcTab, int ind, int cst);   /*loc c tab(may null)
+                                                         lcTab addr of local 
+                                                         ctab; ind from 0 */
 
 /* functions for retrieving the addresses of associated tables               */
 MemPtr MEM_impLT(MemPtr tab);           //start addr of seq. of pred (link tab)
