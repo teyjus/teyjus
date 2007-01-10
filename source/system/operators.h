@@ -1,10 +1,10 @@
 #ifndef OPERATORS_H
 #define OPERATORS_H
 
-#include <limits.h>
+//#include <limits.h>
 
 /* Fixity types */
-typedef  enum OP_FixityType
+typedef  enum 
 { 
     OP_INFIX    = 0, 
     OP_INFIXL   = 1, 
@@ -14,20 +14,32 @@ typedef  enum OP_FixityType
     OP_PREFIXR  = 5, 
     OP_POSTFIX  = 6, 
     OP_POSTFIXL = 7 
-}  OP_FixityType;
+} OP_FixityType;
 
 
+typedef  enum {
+    OP_WHOLE_TERM,
+    OP_LEFT_TERM,
+    OP_RIGHT_TERM
+} OP_TermContext;
+
+#define  OP_MAXPREC        255 
+#define  OP_MINPREC        0
+
+#define  OP_LAM_FIXITY     OP_PREFIXR
+#define  OP_LAM_PREC       -1
+
+#define  OP_APP_FIXITY     OP_INFIXL
+#define  OP_APP_PREC       257 
 
 //usful ?
 /*
 #define  OP_CCOMMA_FIXITY  OP_infixr
 #define  OP_CCOMMA_PREC    -2
 
-#define  OP_APP_FIXITY     OP_infixl
-#define  OP_APP_PREC       257 //?
 
-#define  OP_LAM_FIXITY     OP_infixr
-#define  OP_LAM_PREC       -1
+
+
 
 #define  OP_LT_FIXITY      OP_infix
 #define  OP_LT_PREC        130
