@@ -20,6 +20,7 @@ static int tySkelInd = 0;
 %union{
     char*            name;  
     char*            text;
+    int              bool;
     struct 
     {
         int   ival;
@@ -35,14 +36,17 @@ static int tySkelInd = 0;
 %token <name>   ID
 %token <isval>  NUM
 %token <text>   STRING
+%token <bool>   TRUE FALSE
 
 %start          pervasive_decls
 %type  <tyval>  tyskel   tyskel1   tyskel2        
 %type  <tylval> tyskel_list
 %type  <name>   kind_name kind_ind_name const_name const_ind_name fixity ls_type
 %type  <isval>  kind_num kind_tab_ind kind_arity const_num tyskel_num ty_index 
-                const_tab_ind tesize tyskel_tab_ind prec ls_num pred_num
+                const_tab_ind tesize tyskel_tab_ind prec ls_num pred_num 
+                neededness
 %type  <text>   comments
+%type  <bool>   typrev redef
 
 %%
 
@@ -97,7 +101,7 @@ const_tyskel        : const_tyskel_header const_tyskel_decls const_property
 
 const_tyskel_header : CONST const_num TYSKEL tyskel_num
                       {genNumConsts($2.sval); constInfoInit($2.ival);
-                       genNumTySkels($4.sval); tySkelInfoInit($4.ival);  
+                       genNumTySkels($4.sval); tySkelInfoInit($4.ival);
                       }
                     ;
 
@@ -117,10 +121,10 @@ const_tyskel_decl   : tyskel_decl const_decls
 
 tyskel_decl         : TYPE tyskel_tab_ind tyskel
                       {tySkelInd = $2.ival;
-                       genTySkels($2.ival, $3, NULL); }
+                       genTySkels($2.ival, $3, NULL);}
                     | TYPE comments tyskel_tab_ind tyskel
                       {tySkelInd = $3.ival; 
-                       genTySkels($3.ival, $4, $2);   } 
+                       genTySkels($3.ival, $4, $2);} 
                     ;
 
 tyskel_tab_ind      : NUM { $$ = $1;};
@@ -160,16 +164,17 @@ const_decls         : const_decl const_decls
                     | const_decl
                     ;
 
-const_decl          : const_tab_ind const_name const_ind_name tesize prec fixity
+const_decl          : const_tab_ind const_name const_ind_name tesize neededness
+                      typrev redef prec fixity 
                       { genConstIndices($1.ival, $3, $1.sval, NULL);
-                        genConstData($1.ival, $2, $4.sval, $5.sval, $6, 
-                                     tySkelInd, NULL);
+                        genConstData($1.ival, $2, $4.sval, $8.sval, $9, 
+                                     tySkelInd, NULL, $5.sval);
                       }
                     | comments const_tab_ind const_name const_ind_name tesize 
-                      prec fixity
+                      neededness typrev redef prec fixity
                       { genConstIndices($2.ival, $4, $2.sval, $1);
-                        genConstData($2.ival, $3, $5.sval, $6.sval, $7, 
-                                     tySkelInd, $1);                        
+                        genConstData($2.ival, $3, $5.sval, $9.sval, $10, 
+                                     tySkelInd, $1, $6.sval);
                       }
                     ;
 
@@ -191,6 +196,17 @@ const_ind_name      : ID  {$$ = $1;}
                     ;
 
 tesize              : NUM {$$ = $1;}
+                    ;
+
+neededness          : NUM {$$ = $1;}
+                    ;
+
+typrev              : TRUE  {$$ = 1;}
+                    | FALSE {$$ = 0;}
+                    ;
+
+redef               : TRUE  {$$ = 1;}
+                    | FALSE {$$ = 0;}
                     ;
 
 prec                : NUM {$$ = $1;}

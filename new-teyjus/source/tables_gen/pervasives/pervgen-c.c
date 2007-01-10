@@ -390,7 +390,7 @@ static char* genConstIndexType()
 
 //PERV_ConstData
 #define CONSTDATA_TYPE \
-"//pervasive const data type                                                   \ntypedef struct                                                                 \n{                                                                              \n    char      *name;                                                           \n    TwoBytes  typeEnvSize;                                                     \n    TwoBytes  tskTabIndex;     //index to the type skeleton table              \n    //word      neednessVec;   //needness vector (predicate constant)          \n    TwoBytes  univCount;                                                       \n    int       precedence;                                                      \n    int       fixity;                                                          \n} PERV_ConstData;                                                          \n\n"
+"//pervasive const data type                                                   \ntypedef struct                                                                 \n{                                                                              \n    char      *name;                                                           \n    TwoBytes  typeEnvSize;                                                     \n    TwoBytes  tskTabIndex;     //index to the type skeleton table              \n    TwoBytes  neededness;      //neededness (predicate constant)               \n    TwoBytes  univCount;                                                       \n    int       precedence;                                                      \n    int       fixity;                                                          \n} PERV_ConstData;                                                          \n\n"
 #define CONSTDATA_TYPE_LEN     900
 
 //PERV_ConstData
@@ -471,13 +471,13 @@ static char* genLogicSymbTypeDec()
 }
 
 //PERV_LSSTART
-#define LSSTART_BEG "#define PREV_LSSTART     "
+#define LSSTART_BEG "#define PERV_LSSTART     "
 #define LSSTART_BEG_LEN 20
 
 #define LSSTART_END "     //begin of interpretable symbols\n"
 #define LSSTART_END_LEN 50
 
-#define LSEND_BEG   "#define PREV_LSEND       "
+#define LSEND_BEG   "#define PERV_LSEND       "
 #define LSEND_BEG_LEN   20
 
 #define LSEND_END   "     //end of interpretable symbols\n"
@@ -507,13 +507,13 @@ void genLSRange(char* start, char* end)
 }
 
 //PERV_PREDSTART
-#define PREDSTART_BEG "#define PREV_PREDSTART     "
+#define PREDSTART_BEG "#define PERV_PREDSTART     "
 #define PREDSTART_BEG_LEN 20
 
 #define PREDSTART_END "     //begin of predicate symbols\n"
 #define PREDSTART_END_LEN 50
 
-#define PREDEND_BEG   "#define PREV_PREDEND       "
+#define PREDEND_BEG   "#define PERV_PREDEND       "
 #define PREDEND_BEG_LEN 20
 
 #define PREDEND_END   "     //end of predicate symbols\n"
@@ -546,6 +546,10 @@ void genPREDRange(char* start, char* end)
 #define LOGICSYMB_DEC "PERV_LogicSymbTypes PERV_logicSymb(int index); \n\n"
 #define LOGICSYMB_DEC_LEN      80   
 
+//PERV_predBuiltin
+#define PREDBUILTIN_DEC "int PERV_predBuiltin(int index); \n\n"
+#define PREDBUILTIN_DEC_LEN    80
+
 //pervasive consts relevant info in pervasives.h
 char* constH = NULL;
 
@@ -555,7 +559,8 @@ void genConstH()
     char* myText  = genConstIndexType();
     int length = CONST_COMMENTS_H_LEN + NUM_CONSTS_LEN +
         CONSTDATA_TYPE_LEN + CONSTDATA_TAB_DEC_LEN + GETCONSTDATA_DEC_LEN + 
-        COPYCONSTDATATAB_DEC_LEN + ISLS_ISPS_DEC_LEN + LOGICSYMB_DEC_LEN + 
+        COPYCONSTDATATAB_DEC_LEN + ISLS_ISPS_DEC_LEN + LOGICSYMB_DEC_LEN +
+        PREDBUILTIN_DEC_LEN + 
         strlen(myText1) + strlen(lsRange) + strlen(predRange) + strlen(myText);
 
     constH = (char*)malloc(sizeof(char)*(length + 1)); 
@@ -571,6 +576,7 @@ void genConstH()
     strcat(constH, myText1);             free(myText1);
     strcat(constH, ISLS_ISPS_DEC);
     strcat(constH, LOGICSYMB_DEC);
+    strcat(constH, PREDBUILTIN_DEC);
 }
 
 
@@ -1026,7 +1032,7 @@ void genTySkelC()
 static StringArray constData;
 
 void genConstData(int index, char* name, char* tesize, char* prec, char* fixity,
-		  int tySkelInd, char* comments)
+		  int tySkelInd, char* comments, char* neededness)
 {
   int   length;
   int   commentLen = comments ? strlen(comments) : 0;
@@ -1038,7 +1044,7 @@ void genConstData(int index, char* name, char* tesize, char* prec, char* fixity,
     exit(1);
   }
   length = INDENT_LEV1_LEN*2 + strlen(name) + strlen(tesize) + strlen(prec) +
-    commentLen + strlen(tySkelIndT) + 50;
+    commentLen + strlen(tySkelIndT) + strlen(neededness) + 80;
   oneConstData = (char*)malloc(sizeof(char)*(length + 1));
   
   strcpy(oneConstData, INDENT_LEV1);
@@ -1056,7 +1062,8 @@ void genConstData(int index, char* name, char* tesize, char* prec, char* fixity,
   strcat(oneConstData, ",     ");
   strcat(oneConstData, tySkelIndT);
   strcat(oneConstData, ",     ");
-  strcat(oneConstData, "0,  ");
+  strcat(oneConstData, neededness);
+  strcat(oneConstData, ",    0,     ");
   strcat(oneConstData, prec);
   strcat(oneConstData, ",   ");
   strcat(oneConstData, fixity);
@@ -1135,20 +1142,24 @@ static char* genConstDataTab()
 
 //PERV_isLogicSymb
 #define ISLOGICSYMB_DEF \
-"Boolean PERV_isLogicSymb(int index)                                           \n{                                                                              \n    return ((index >= PREV_LSSTART) && (index <= PREV_LSEND));                  \n}\n\n"
+"Boolean PERV_isLogicSymb(int index)                                           \n{                                                                              \n    return ((index >= PERV_LSSTART) && (index <= PERV_LSEND));                  \n}\n\n"
 #define ISLOGICSYMB_DEF_LEN 350
 
  
 //PERV_isPredSymb
 #define ISPREDSYMB_DEF \
-"Boolean PERV_isPredSymb(int index)                                            \n{                                                                              \n    return ((index >= PREV_PREDSTART) && (index <= PREV_PREDSTART));           \n}\n\n"
+"Boolean PERV_isPredSymb(int index)                                            \n{                                                                              \n    return ((index >= PERV_PREDSTART) && (index <= PERV_PREDSTART));           \n}\n\n"
 #define ISPREDSYMB_DEF_LEN 350
 
 //PERV_logicSymb
 #define LOGICSYMB_DEF \
-"PERV_LogicSymbTypes PERV_logicSymb(int index)                                 \n{                                                                              \n    return ((PERV_LogicSymbTypes)(index - PREV_LSSTART));                      \n}\n\n"
-#define LOGICSYMB_DEF_LEN 350
-    
+"PERV_LogicSymbTypes PERV_logicSymb(int index)                                 \n{                                                                              \n    return ((PERV_LogicSymbTypes)(index - PERV_LSSTART));                      \n}\n\n"
+#define LOGICSYMB_DEF_LEN 320
+
+//PERV_predBuiltin
+#define PREDBUILTIN_DEF \
+"int PERV_predBuiltin(int index)                                               \n{                                                                              \n    return (index - PERV_PREDSTART);                                           \n}\n\n"
+#define PREDBUILTIN_DEF_LEN 320 
 
 //pervasive constants relevant info in pervasives.c
 static char* constC = NULL;
@@ -1159,7 +1170,7 @@ void genConstC()
   constC = (char*)malloc(sizeof(char*)*(CONST_COMMENTS_C_LEN + strlen(myText) +
                          GETCONSTDATA_DEF_LEN + COPYCONSTDATATAB_DEF_LEN +
                          ISLOGICSYMB_DEF_LEN + ISPREDSYMB_DEF_LEN +
-                         LOGICSYMB_DEF_LEN + 1));
+                         LOGICSYMB_DEF_LEN + PREDBUILTIN_DEF_LEN + 1));
   strcpy(constC, CONST_COMMENTS_C);
   strcat(constC, myText);
   strcat(constC, GETCONSTDATA_DEF);
@@ -1167,6 +1178,7 @@ void genConstC()
   strcat(constC, ISLOGICSYMB_DEF);
   strcat(constC, ISPREDSYMB_DEF);
   strcat(constC, LOGICSYMB_DEF);
+  strcat(constC, PREDBUILTIN_DEF);
   free(myText);
 }
 
