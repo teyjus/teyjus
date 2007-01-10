@@ -33,275 +33,266 @@
    /% type skeleton format:                       
       TYPE [comments]                   index type  %/
       /%  constant format:
-       index  name index_name tesize prec fixity    %/
+       index  name index_name tesize neededness typerv redef prec fixity %/
 
       TYPE /* A */                      0     #1
         /* for unnamed universal constants (Note: tesize should be 0)*/
-       85 <constant>  univ    0   0     OP_NONE
+       85 <constant>       univ       0  0  FALSE  FALSE  0    OP_NONE
           
-
       TYPE /* (list A) */               1     (@ list 1 [#1])
         /* nil */
-       89 nil         nil     0   0     OP_NONE  
+       89 nil              nil        0  0  TRUE   FALSE  0    OP_NONE  
 
 
-      TYPE /* A->(list A)->(list A) */  2     #1 -> (@ list 1 [#1]) -> (@ list 1 [#1])      
+      TYPE /* A->(list A)->(list A) */  2     #1 -> (@ list 1 [#1]) -> (@ list 1 [#1])
         /* cons */
-       93  ::         cons    0   140   OP_INFIXR
+       93  ::              cons       0  0  TRUE   FALSE  140  OP_INFIXR
 
       TYPE /* int */                    3     int
         /* integer constant */
-       90  <int_constant>   intc   0   0   OP_NONE
+       90  <int_constant>  intc       0  0  TRUE   FALSE  0    OP_NONE
 
       TYPE /* real */                   4     real
         /*  real constant */
-       91  <real_constant>  realc  0   0   OP_NONE
+       91  <real_constant> realc      0  0  TRUE   FALSE  0    OP_NONE
 
       TYPE /* string */                 5     string
         /* string constant */
-       92  <str_constant>   strc   0   0   OP_NONE
+       92  <str_constant>  strc       0  0  TRUE   FALSE  0    OP_NONE
 
-      TYPE /* o (type of proposition)*/ 6     bool
-        
+      TYPE /* o (type of proposition)*/ 6     bool        
         /* true proposition */  
-	    4  true      true      0   0     OP_NONE  
+	    4  true            true       0  0  TRUE   FALSE  0    OP_NONE  
 	    /* cut predicate */
-	    5  !         cut       0   0     OP_NONE  
+	    5  !               cut        0  0  TRUE   FALSE  0    OP_NONE  
         /* fail predicate */
-        6  fail      fail      0   0     OP_NONE
+        6  fail            fail       0  0  TRUE   FALSE  0    OP_NONE
         /* halt the system */
-        9  halt      halt      0   0     OP_NONE
+        9  halt            halt       0  0  TRUE   FALSE  0    OP_NONE
         /* return to top level */
-       10  stop      stop      0   0     OP_NONE 
+       10  stop            stop       0  0  TRUE   FALSE  0    OP_NONE 
 
       TYPE /* int -> int */             7     int -> int
         /* unary minus on integers */
-       56  ~         intuminus 0   256   OP_PREFIX
+       56  ~               intuminus  0  0  TRUE   FALSE  256  OP_PREFIX
         /* modulus */
-       61  mod       mod       0   160   OP_INFIXL
+       61  mod             mod        0  0  TRUE   TRUE   160  OP_INFIXL
         /* integer abs */
-       63  abs       iabs      0   0     OP_NONE  
+       63  abs             iabs       0  0  TRUE   TRUE   0    OP_NONE  
           
 
       TYPE /* int -> int -> int */      8     int -> int -> int
         /* addition on integers */
-       57  +         intplus   0   150   OP_INFIXL
+       57  +               intplus    0  0  TRUE   FALSE  150  OP_INFIXL
         /* subtraction on integers */
-       58  -         intminus  0   150   OP_INFIXL
+       58  -               intminus   0  0  TRUE   FALSE  150  OP_INFIXL
         /* mutiplication on integers */
-       59  *         intmult   0   160   OP_INFIXL 
+       59  *               intmult    0  0  TRUE   FALSE  160  OP_INFIXL 
         /* integer division */
-       60  div       intdiv    0   160   OP_INFIXL
+       60  div             intdiv     0  0  TRUE   FALSE  160  OP_INFIXL
 
       TYPE /* int -> int -> o */        9     int -> int -> bool
         /* less than on integers */
-       15  <         intlss    0   130   OP_INFIX
+       19  <               intlss     0  0  TRUE   FALSE  130  OP_INFIX
         /* greater than on integers */
-       16  >         intgrt    0   130   OP_INFIX
+       20  >               intgrt     0  0  TRUE   FALSE  130  OP_INFIX
         /* less than or eq on integers */
-       17  <=        intleq    0   130   OP_INFIX
+       21  <=              intleq     0  0  TRUE   FALSE  130  OP_INFIX
         /* greater than or eq on integers*/
-       18  >=        intgeq    0   130   OP_INFIX
+       22  >=              intgeq     0  0  TRUE   FALSE  130  OP_INFIX
         /* time predicate */
-       51  time      time      0   0     OP_NONE
+       51  time            time       0  0  TRUE   TRUE   0    OP_NONE
 
       TYPE /* int -> real */            10    int -> real
         /* coercion to real */
-       62  int_to_real itor    0   0     OP_NONE
+       62  int_to_real     itor       0  0  TRUE   TRUE   0    OP_NONE
 
       TYPE /* real -> int */            11    real -> int
         /* floor function */
-       74  floor     floor     0   0     OP_NONE
+       74  floor           floor      0  0  TRUE   TRUE   0    OP_NONE
         /* ceiling function */
-       75  ceil      ceil      0   0     OP_NONE
+       75  ceil            ceil       0  0  TRUE   TRUE   0    OP_NONE
         /* truncation */
-       76  truncate  trunc     0   0     OP_NONE
-      
- 
+       76  truncate        trunc      0  0  TRUE   TRUE   0    OP_NONE
 
       TYPE /* real -> real */           12    real -> real
         /* unary minus on real */
-       64  r~        realuminus 0  256   OP_PREFIX  
+       64  r~              realuminus 0  0  TRUE   FALSE  256  OP_PREFIX  
         /* square root */
-       69  sqrt      sqrt      0   0     OP_NONE
+       69  sqrt            sqrt       0  0  TRUE   TRUE   0    OP_NONE
         /* sine */
-       70  sin       sin       0   0     OP_NONE
+       70  sin             sin        0  0  TRUE   TRUE   0    OP_NONE
         /* cosine */
-       71  cos       cos       0   0     OP_NONE
+       71  cos             cos        0  0  TRUE   TRUE   0    OP_NONE
         /* arc tan */
-       72  arctan    arctan    0   0     OP_NONE
+       72  arctan          arctan     0  0  TRUE   TRUE   0    OP_NONE
         /* natural log */
-       73  ln        log       0   0     OP_NONE
+       73  ln              log        0  0  TRUE   TRUE   0    OP_NONE
         /* real abs */
-       77  rabs      rabs      0   0     OP_NONE     
+       77  rabs            rabs       0  0  TRUE   TRUE   0    OP_NONE     
 
       TYPE /* real -> string */         13    real -> string
         /* real to string */
-       84  real_to_string rtos     0    0   OP_NONE
+       84  real_to_string  rtos       0  0  TRUE   TRUE   0    OP_NONE
 
       TYPE /* real -> real -> real */   14    real -> real -> real
         /* addition on reals */
-       65  r+        realplus  0   150   OP_INFIXL 
+       65  r+              realplus   0  0  TRUE   FALSE  150  OP_INFIXL 
         /* subtraction on reals */
-       66  r-        realminus 0   150   OP_INFIXL
+       66  r-              realminus  0  0  TRUE   FALSE  150  OP_INFIXL
         /* multiplication on reals */
-       67  r*        realmult  0   160   OP_INFIXL
+       67  r*              realmult   0  0  TRUE   FALSE  160  OP_INFIXL
         /* division */
-       68  /         realdiv   0   160   OP_INFIXL
+       68  /               realdiv    0  0  TRUE   FALSE  160  OP_INFIXL
             
-
       TYPE /* real -> real -> o */      15    real -> real -> bool   
         /* less than in reals */
-       19  r<        reallss   0   130   OP_INFIX
+       23  r<              reallss    0  0  TRUE   FALSE  130  OP_INFIX
         /* greater than on reals */
-       20  r>        realgrt   0   130   OP_INFIX
+       24  r>              realgrt    0  0  TRUE   FALSE  130  OP_INFIX
         /* less than or eq on reals */
-       21  r<=       realleq   0   130   OP_INFIX
+       25  r<=             realleq    0  0  TRUE   FALSE  130  OP_INFIX
         /* greater than or eq on reals */
-       22  r>=       realgeq   0   130   OP_INFIX
+       26  r>=             realgeq    0  0  TRUE   FALSE  130  OP_INFIX
 
       TYPE /* string -> int */          16    string -> int
         /* string length */
-       79  size      slen      0   0     OP_NONE
+       79  size            slen       0  0  TRUE   TRUE   0    OP_NONE
         /* ord function */
-       81  string_to_int  stoi      0   0     OP_NONE 
+       81  string_to_int   stoi       0  0  TRUE   TRUE   0    OP_NONE 
 
 
       TYPE /* int -> string */          17    int -> string
         /* chr function */
-       80  chr       itochr    0   0     OP_NONE
+       80  chr             itochr     0  0  TRUE   TRUE   0    OP_NONE
         /* int to string */
-       83  int_to_string itostr  0   0   OP_NONE 
+       83  int_to_string   itostr     0  0  TRUE   TRUE   0    OP_NONE 
 
       TYPE /* string->string->string */ 18    string -> string -> string 
         /* string concatination */
-       78  ^         scat      0   150   OP_INFIX   
-
+       78  ^               scat       0  0  TRUE   TRUE   150  OP_INFIX   
 
       TYPE /* string -> string -> o */  19    string -> string -> bool
         /* less than on strings */
-       23  s<         strlss   0   130   OP_INFIX
+       27  s<              strlss     0  0  TRUE   TRUE   130  OP_INFIX
         /* greater than on strings */
-       24  s>         strgrt   0   130   OP_INFIX
+       28  s>              strgrt     0  0  TRUE   TRUE   130  OP_INFIX
         /* less than or eq on strings */
-       25  s<=        strleq   0   130   OP_INFIX
+       29  s<=             strleq     0  0  TRUE   TRUE   130  OP_INFIX
         /* greater than or eq on strings */
-       26  s>=        strgeq   0   130   OP_INFIX 
+       30  s>=             strgeq     0  0  TRUE   TRUE   130  OP_INFIX 
         /* getenv predicate; needed? */
-       49  getenv     getenv   0   0     OP_NONE
+       49  getenv          getenv     0  0  TRUE   TRUE   0    OP_NONE
 
       TYPE /* string->int->int->string */ 20    string -> int -> int -> string
         /* substring */
-       82  substring   substr   0   0     OP_NONE
+       82  substring       substr     0  0  TRUE   TRUE   0    OP_NONE
 
       TYPE /* o -> o -> o */            21    bool -> bool -> bool
-
         /* logical and */
-        0   ,      and        0   110   OP_INFIXL
+        0   ,              and        0  0  TRUE   FALSE  110  OP_INFIXL
         /* logical or */
-        1   ;      or         0   100   OP_INFIXL
+        1   ;              or         0  0  TRUE   FALSE  100  OP_INFIXL
         /* another logical and */
-        8  &      ampand     0   120   OP_INFIXR
+        8  &               ampand     0  0  TRUE   FALSE  120  OP_INFIXR
         /* Prolog if; needed? */
-       11   :-     colondash  0   0     OP_INFIXL
+       11   :-             colondash  0  0  TRUE   FALSE  0    OP_INFIXL
         /* implication; needed? */
-       12   =>     impl       0   130   OP_INFIXR
+       12   =>             impl       0  0  TRUE   FALSE  130  OP_INFIXR
 
       TYPE /* (A -> o) -> o */          22    (#1 -> bool) -> bool
         /* existential quantifier */   
-        2  sigma   some       1   0     OP_NONE
+        2  sigma           some       1  1  FALSE  FALSE  0    OP_NONE
         /* universal quantifier */
-	    3  pi      all        1   0     OP_NONE  
+	    3  pi              all        1  1  FALSE  FALSE  0    OP_NONE  
 
       TYPE /* A -> A -> o */            23    #1 -> #1 -> bool
         /* is */
-       27  is         is      1   130   OP_INFIX
+       16  is              is         1  1  FALSE  FALSE  130  OP_INFIX
         /* equality (unify) predicate */
-       48  =          eq      1   130   OP_INFIX
+       18  =               eq         1  0  FALSE  FALSE  130  OP_INFIX
 
       TYPE /* in_stream */              24    instream
         /* std_in */
-       86  std_in     stdin   0   0     OP_NONE 
+       86  std_in          stdin      0  0  TRUE   TRUE   0    OP_NONE 
 
       TYPE /* out_stream */             25    outstream
         /* std_out */
-       87  std_out    stdout  0   0     OP_NONE
+       87  std_out         stdout     0  0  TRUE   TRUE   0    OP_NONE
         /* std_err */
-       88  std_err    stderr  0   0     OP_NONE
+       88  std_err         stderr     0  0  TRUE   TRUE   0    OP_NONE
 
       TYPE /* string->in_stream->o */   26    string -> instream -> bool
         /* open_in */ 
-       28  open_in         openin     0   0     OP_NONE
+       31  open_in         openin     0  0  TRUE   TRUE   0    OP_NONE
         /* open_string */
-       35  open_string     openstr    0   0     OP_NONE
+       36  open_string     openstr    0  0  TRUE   TRUE   0    OP_NONE
         
       TYPE /* string->out_stream->o */  27    string -> outstream -> bool   
         /* open_out */
-       29  open_out        openout    0   0     OP_NONE
+       32  open_out        openout    0  0  TRUE   TRUE   0    OP_NONE
         /* open_append */
-       30  open_append     openapp    0   0     OP_NONE
+       33  open_append     openapp    0  0  TRUE   TRUE   0    OP_NONE
         
       TYPE /* in_stream -> o */         28    instream -> bool 
         /* close_in */
-       31  close_in        closein    0   0     OP_NONE
+       34  close_in        closein    0  0  TRUE   TRUE   0    OP_NONE
         /* eof      */
-       40  eof             eof        0   0     OP_NONE  
+       41  eof             eof        0  0  TRUE   TRUE   0    OP_NONE  
 
       TYPE /* out_stream -> o */        29    outstream -> bool
         /* close_out */
-       32  close_out       closeout   0   0     OP_NONE 
+       35  close_out       closeout   0  0  TRUE   TRUE   0    OP_NONE 
         /* flush     */
-       41  flush           flush      0   0     OP_NONE
+       42  flush           flush      0  0  TRUE   TRUE   0    OP_NONE
 
       TYPE /* A -> string -> o */       30    #1 -> string -> bool
         /* term_to_string */
-       33  term_to_string  termtostr  0   0     OP_NONE 
+       46  term_to_string  termtostr  1  0  FALSE  TRUE   0    OP_NONE 
 
       TYPE /* string -> A -> o */       31    string -> #1 -> bool
         /* string_to_term */
-       34  string_to_term  strtoterm  0   0     OP_NONE
+       47  string_to_term  strtoterm  1  1  FALSE  TRUE   0    OP_NONE
 
       TYPE /* out_stream->string->o */  32    outstream -> string -> bool
         /* output */
-       37  output          output     0   0     OP_NONE      
+       38  output          output     0  0  TRUE   TRUE   0    OP_NONE      
 
       TYPE /* in_stream->int->string->o */ 33   instream -> int -> string -> bool
         /* input */
-       36  input           input      0   0     OP_NONE      
+       37  input           input      0  0  TRUE   TRUE   0    OP_NONE      
 
       TYPE /* in_stream->string->o */   34    instream -> string -> bool
         /* input_line */
-       38  input_line      inputline  0   0     OP_NONE
+       39  input_line      inputline  0  0  TRUE   TRUE   0    OP_NONE
         /* look_ahead */
-       39  look_ahead      lookahead  0   0     OP_NONE 
+       40  look_ahead      lookahead  0  0  TRUE   TRUE   0    OP_NONE 
        
       TYPE /* string -> o */            35    string -> bool
         /* print  */
-       42  print           print      0   0     OP_NONE
+       43  print           print      0  0  TRUE   TRUE   0    OP_NONE
 
       TYPE /* A -> o */                 36    #1 -> bool
         /* read   */
-       43  read            read       0   0     OP_NONE  
+       44  read            read       1  1  FALSE  TRUE   0    OP_NONE  
 
       TYPE /* out_stream -> A -> o */   37    outstream -> #1 -> bool    
         /* printterm */
-       44  printterm       printterm  0   0     OP_NONE
+       45  printterm       printterm  1  0  FALSE  TRUE   0    OP_NONE
 
       TYPE /* in_stream -> A -> o */    38    instream -> #1 -> bool
         /* readterm */
-       45  readterm        readterm   0   0     OP_NONE  
+       48  readterm        readterm   1  1  FALSE  TRUE   0    OP_NONE  
 
       TYPE /* o -> o */                 39    bool -> bool
         /* solve; used by code generator */
-       46  solve           solve      0   0     OP_NONE  
+       15  solve           solve      0  0  TRUE   FALSE  0    OP_NONE  
         /* not */
-       47  not             not        0   0     OP_NONE
+       17  not             not        0  0  TRUE   FALSE  0    OP_NONE
 
       TYPE /* string->int->in_stream->out_stream->o */ 40 string -> int -> instream -> outstream -> bool
        /* open_socket predicate */
-       50 open_socket     opensocket  0   0     OP_NONE 
-
-
+       50 open_socket      opensocket 0  0  FALSE  TRUE   0    OP_NONE 
 
       EMPTY TYPE
         7   EMPTY 
@@ -330,4 +321,5 @@
                 10       stop
 			  	
    PRED SYMBOL  37
-                PRED_START intlss  PRED_END time 
+                PRED_START solve  PRED_END time
+                

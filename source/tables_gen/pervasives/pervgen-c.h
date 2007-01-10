@@ -50,7 +50,7 @@ void genPREDRange(char* start, char* end);
 
 //in pervasives.c
 void genConstData(int index, char* name, char* tesize, char* prec, char* fixity,
-                  int tySkelInd, char* comments);
+                  int tySkelInd, char* comments, char* neededness);
 void genConstEmptyData(int index);
 void genConstC();
 

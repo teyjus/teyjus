@@ -30,7 +30,7 @@ STRING [^*/]+
 <INITIAL>"]"               {return RBRACKET;                               }
 <INITIAL>"("               {return LPAREN;                                 }
 <INITIAL>")"               {return RPAREN;                                 }
-<INITIAL>"t,"               {return COMMA;                                  }
+<INITIAL>"t,"              {return COMMA;                                  }
 <INITIAL>"#"               {return POUND;                                  }
 <INITIAL>"EMPTY"           {return EMPTY;                                  }
 <INITIAL>"LOGIC SYMBOL"    {return LSSYMB;                                 }
@@ -39,6 +39,8 @@ STRING [^*/]+
 <INITIAL>"PRED SYMBOL"     {return PREDSYMB;                               }
 <INITIAL>"PRED_START"      {return PREDSTART;                              }
 <INITIAL>"PRED_END"        {return PREDEND;                                }
+<INITIAL>"TRUE"            {return TRUE;                                   }
+<INITIAL>"FALSE"           {return FALSE;                                  }
 <INITIAL>{WSPACE}          {continue;                                      }
 <INITIAL>"/%"              {commentLev = 1; BEGIN(COMMENT); continue;      }
 <INITIAL>"/*"              {BEGIN(COMMENT2); continue;                     }
