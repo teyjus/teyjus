@@ -12,7 +12,7 @@ OPERAND TYPES
   L      CodeLabel      CSpacePtr   /* code location  */
   I      Int            int         /* integer immediate value */
   F      Float          float       /* floating point immediate value */
-  S      Str            char*       /* string pointer */
+  S      Str            DF_StrDataPtr  /* string pointer */
   MT     ModTab         MemPtr      /* module table address */
   IT     ImplTab        MemPtr      /* impl table address */
   HT     HashTab        MemPtr      /* hash table address */
@@ -141,6 +141,9 @@ INSTR CATEGORY
 
   I1CWPX [I1 C WP X X X X X]
          I1CWPX_LEN 8; I1CWPX_I1  1; I1CWPX_C   2 
+
+  I1I1WPX [I1 I1 P WP X X X X]
+          I1I1WPX_LEN 8; I1I1WPX_I11 1; I1I1WPX_I12 2
 
   CALL_I1_LEN 7
 
@@ -316,7 +319,7 @@ INSTRUCTIONS 141
 
    /* Miscellaneous Instructions */
    
-   136       call_builtin               I1WPX        I1WPX_LEN;
+   136       call_builtin               I1I1WPX      I1I1WPX_LEN;
    137       builtin                    I1X          I1X_LEN;
    138       stop                       X            X_LEN;
    139       halt                       X            X_LEN;

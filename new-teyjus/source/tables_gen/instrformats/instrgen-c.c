@@ -44,7 +44,8 @@ static char* itoa(int num)
 #define COMPDEF_BEG_H "#ifndef INSTRUCTIONS_H\n#define INSTRUCTIONS_H\n"
 #define COMPDEF_END_H "#endif //INSTRUCTIONS_H\n"
 
-#define INCLUDE_H "#include \"../simulator/mctypes.h\"      //to be changed\n"
+#define INCLUDE_H \
+"#include \"../simulator/mctypes.h\"      //to be changed                      \n#include \"../simulator/dataformats.h\"   //to be changed                      \n"
 
 /* OPERAND TYPES */
 #define OPTYPES_COMMENTS_H \
