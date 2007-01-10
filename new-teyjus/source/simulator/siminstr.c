@@ -14,6 +14,7 @@
 #include "types.h"
 #include "instraccess.h"
 #include "siminstrlocal.h"
+#include "builtins/builtins.h"
 #include "../system/error.h" //to be modified
 #include "../tables/pervasives.h"//to be modifed
 #include "../tables/instructions.h"//to be modifed
@@ -32,9 +33,9 @@ static MemPtr         bckfd;
 static MemPtr         nextcl;
 static int            constInd, kindInd, tablInd;
 static int            n, m, l, uc, numAbs;
-static long           intValue;
+static int            intValue;
 static float          floatValue;
-static char           *str;
+static DF_StrDataPtr  str;
 static CSpacePtr      label, cl;
 
 /****************************************************************************/
@@ -466,7 +467,7 @@ void SINSTR_get_m_structure()           //get_m_structure Xi,f,n--R_C_I1_X
             if ((DF_constTabIndex(func)==constInd)&&(DF_appArity(tmPtr)==n)){
                 AM_sreg = DF_appArgs(tmPtr); AM_writeFlag = OFF; //READ MODE
                 return;
-            } else EM_throw(EM_FAIL); //diff const head 
+            } else EM_THROW(EM_FAIL); //diff const head 
         } //otherwise continue with the next case
     }
     case DF_TM_TAG_LAM: case DF_TM_TAG_SUSP: //and other APP cases
@@ -478,21 +479,21 @@ void SINSTR_get_m_structure()           //get_m_structure Xi,f,n--R_C_I1_X
                     if (AM_numAbs == 0) {
                         AM_sreg = AM_argVec; AM_writeFlag = OFF; //READ MODE
                     } else SINSTRL_delayStr(tmPtr, constInd, n); //#abs > 0
-                } else EM_throw(EM_FAIL); //numArgs != numAbs + n
-            } else EM_throw(EM_FAIL); //non const rig head or diff const head
+                } else EM_THROW(EM_FAIL); //numArgs != numAbs + n
+            } else EM_THROW(EM_FAIL); //non const rig head or diff const head
         } else { //AM_rigFlag == OFF
             if (AM_numArgs == 0) {
                 if ((AM_numAbs == 0) && 
                     (DF_fvUnivCount(AM_head) >= AM_cstUnivCount(constInd)))
                     SINSTRL_bindStr(AM_head, constInd, n);
-                else EM_throw(EM_FAIL);
+                else EM_THROW(EM_FAIL);
             } else SINSTRL_delayStr(tmPtr, constInd, n);
         }        //AM_rigFlag == OFF
         return;
     }
     default: 
     {//CONS, NIL, CONST, INT, FLOAT, STR, BV, (STREAM)
-        EM_throw(EM_FAIL);
+        EM_THROW(EM_FAIL);
     }
     } //switch
 }
@@ -511,7 +512,7 @@ void SINSTR_get_p_structure()           //get_p_structure Xi,f,n--R_C_I1_X
                 AM_sreg   = DF_appArgs(tmPtr);    AM_writeFlag = OFF;
                 AM_tysreg = DF_constType(func);   AM_tyWriteFlag = OFF;
                 return;
-            } else EM_throw(EM_FAIL); //diff const head
+            } else EM_THROW(EM_FAIL); //diff const head
         } //otherwise continue with the next case
     }
     case DF_TM_TAG_LAM: case DF_TM_TAG_SUSP: //and other APP cases
@@ -524,21 +525,21 @@ void SINSTR_get_p_structure()           //get_p_structure Xi,f,n--R_C_I1_X
                         AM_sreg   = AM_argVec;            AM_writeFlag   = OFF;
                         AM_tysreg = DF_constType(AM_head);AM_tyWriteFlag = OFF;
                     } else SINSTRL_delayTStr(tmPtr, constInd, n);//#abs > 0
-                } else EM_throw(EM_FAIL); //numArgs != numAbs + n
-            } else EM_throw(EM_FAIL); //non const rig head or diff const head
+                } else EM_THROW(EM_FAIL); //numArgs != numAbs + n
+            } else EM_THROW(EM_FAIL); //non const rig head or diff const head
         } else {  //AM_rigFlag == OFF
             if (AM_numArgs == 0) {
                 if ((AM_numArgs == 0) && 
                     (DF_fvUnivCount(AM_head) >= AM_cstUnivCount(constInd)))
                     SINSTRL_bindTStr(AM_head, constInd, n);
-                else EM_throw(EM_FAIL);
+                else EM_THROW(EM_FAIL);
             } else SINSTRL_delayTStr(tmPtr, constInd, n);
         }         //AM_rigFlag == OFF
         return;
     }
     default:
     { //CONS, NIL, CONST, INT, FLOAT, STR, BV, (STREAM)
-        EM_throw(EM_FAIL);
+        EM_THROW(EM_FAIL);
     }
     } //switch
 }
@@ -552,7 +553,7 @@ void SINSTR_get_list()                  //get_list Xi -- R_X
     case DF_TM_TAG_CONS: {AM_sreg=DF_consArgs(tmPtr); AM_writeFlag=ON; return; }
     case DF_TM_TAG_APP: 
     {
-        if (DF_isConst(DF_termDeref(DF_appFunc(tmPtr)))) EM_throw(EM_FAIL);
+        if (DF_isConst(DF_termDeref(DF_appFunc(tmPtr)))) EM_THROW(EM_FAIL);
     }
     case DF_TM_TAG_SUSP: //and other APP cases 
     { //Note ABS cannot arise here due to well-typedness
@@ -561,13 +562,13 @@ void SINSTR_get_list()                  //get_list Xi -- R_X
             AM_sreg = AM_argVec; AM_writeFlag = OFF;
             return;
         } 
-        if (AM_rigFlag) EM_throw(EM_FAIL); //non cons rigid term
+        if (AM_rigFlag) EM_THROW(EM_FAIL); //non cons rigid term
         //otherwise flex term with #abs being 0 (due to well-typedness)
         if (AM_numArgs == 0) SINSTRL_bindCons(AM_head); //fv
         else SINSTRL_delayCons(tmPtr);                  //higher-order
         return;
     }
-    default: { EM_throw(EM_FAIL); } //NIL, CONST, BV
+    default: { EM_THROW(EM_FAIL); } //NIL, CONST, BV
     } //switch
 }
 
@@ -641,7 +642,7 @@ void SINSTR_unify_local_value_t()       //unify_local_value Xi -- R_X
             if (AM_nHeapAddr((MemPtr)tmPtr)) { //then globalize and then bind
                 if (DF_isConst(tmPtr)) { //must be a const without type assoc
                     if (AM_ocFlag && (DF_constUnivCount(tmPtr) > AM_adjreg))
-                        EM_throw(EM_FAIL);
+                        EM_THROW(EM_FAIL);
                     DF_copyAtomic(tmPtr, (MemPtr)AM_sreg);//move the cst to heap
                     *regX = *((AM_DataTypePtr)tmPtr); //update reg Xi
                 } else { //not const
@@ -681,7 +682,7 @@ void SINSTR_unify_local_value_p()       //unify_local_value Yi -- E_X
             if (AM_nHeapAddr((MemPtr)tmPtr)) { //then globalize and then bind
                 if (DF_isConst(tmPtr)) { //must be a const without type assoc
                     if (AM_ocFlag && (DF_constUnivCount(tmPtr) > AM_adjreg))
-                        EM_throw(EM_FAIL);
+                        EM_THROW(EM_FAIL);
                     DF_copyAtomic(tmPtr, (MemPtr)AM_sreg);
                 } else { //not const
                     if (DF_isFV(tmPtr)) {
@@ -709,7 +710,7 @@ void SINSTR_unify_m_constant()          //unify_m_constant C -- C_X
     INSACC_CX(constInd);
     if (AM_writeFlag) {
         if (AM_ocFlag && (AM_adjreg < (uc = AM_cstUnivCount(constInd)))) 
-            EM_throw(EM_FAIL);
+            EM_THROW(EM_FAIL);
         DF_mkConst((MemPtr)AM_sreg, uc, constInd);
     } else { //read mode
         tmPtr = DF_termDeref(AM_sreg); 
@@ -723,7 +724,7 @@ void SINSTR_unify_p_constant()          //unify_p_constant C,L -- C_L_X
     INSACC_CLX(constInd, label);
     if (AM_writeFlag) {
         if (AM_ocFlag && (AM_adjreg < (uc = AM_cstUnivCount(constInd))))
-            EM_throw(EM_FAIL);
+            EM_THROW(EM_FAIL);
         nhreg = AM_hreg + DF_TM_TCONST_SIZE;
         AM_heapError(nhreg + AM_cstTyEnvSize(constInd) * DF_TY_ATOMIC_SIZE);
         DF_mkTConst(AM_hreg, uc, constInd, (DF_TypePtr)nhreg);
@@ -900,7 +901,7 @@ void SINSTR_set_type_value_p()          //set_type_value Yi -- E_X
     AM_hreg += DF_TY_ATOMIC_SIZE;    
 }
 
-void SINSTR_set_local_value_t()         //set_type_local_value Xi -- R_X
+void SINSTR_set_type_local_value_t()    //set_type_local_value Xi -- R_X
 {
     INSACC_RX(regX);
     tyPtr = DF_typeDeref((DF_TypePtr)regX);
@@ -912,7 +913,7 @@ void SINSTR_set_local_value_t()         //set_type_local_value Xi -- R_X
     AM_hreg += DF_TY_ATOMIC_SIZE;
 }
 
-void SINSTR_set_local_value_p()         //set_type_local_value Yi -- E_X
+void SINSTR_set_type_local_value_p()    //set_type_local_value Yi -- E_X
 {
     INSACC_EX(envY);
     tyPtr = DF_typeDeref((DF_TypePtr)envY);
@@ -988,7 +989,7 @@ void SINSTR_get_type_constant()         //get_type_constant Xi,k -- R_K_X
         return;
     } 
     if (DF_isSortType(tyPtr) && (DF_typeKindTabIndex(tyPtr) == kindInd)) return;
-    EM_throw(EM_FAIL); //all other cases
+    EM_THROW(EM_FAIL); //all other cases
 }
 
 void SINSTR_get_type_structure()        //get_type_structure Xi,k -- R_K_X
@@ -1016,7 +1017,7 @@ void SINSTR_get_type_structure()        //get_type_structure Xi,k -- R_K_X
             return;
         }
     }
-    EM_throw(EM_FAIL);
+    EM_THROW(EM_FAIL);
 }
 
 void SINSTR_get_type_arrow()            //get_type_arrow Xi -- R_X
@@ -1036,7 +1037,7 @@ void SINSTR_get_type_arrow()            //get_type_arrow Xi -- R_X
         AM_tyWriteFlag = OFF;
         return;
     }
-    EM_throw(EM_FAIL);
+    EM_THROW(EM_FAIL);
 }
 
 /**********************************************************/
@@ -1089,7 +1090,7 @@ void SINSTR_unify_type_value_t()         //unify_type_value Xi -- R_X
     }
 }
 
-void SINSTRL_unify_type_value_p()        //unify_type_value Yi -- E_X
+void SINSTR_unify_type_value_p()        //unify_type_value Yi -- E_X
 {
     INSACC_EX(envY);
     tyPtr = DF_typeDeref((DF_TypePtr)envY);
@@ -1110,7 +1111,7 @@ void SINSTRL_unify_type_value_p()        //unify_type_value Yi -- E_X
     }
 }
 
-void SINSTRL_unify_envty_value_t()      //unify_envty_value Xi -- R_X
+void SINSTR_unify_envty_value_t()      //unify_envty_value Xi -- R_X
 {
     INSACC_RX(regX);
     tyPtr = DF_typeDeref((DF_TypePtr)regX);
@@ -1127,7 +1128,7 @@ void SINSTRL_unify_envty_value_t()      //unify_envty_value Xi -- R_X
     }
 }
 
-void SINSTRL_unify_envty_value_p()      //unify_envty_value Yi -- E_X
+void SINSTR_unify_envty_value_p()      //unify_envty_value Yi -- E_X
 {
     INSACC_EX(envY);
     tyPtr = DF_typeDeref((DF_TypePtr)envY);
@@ -1144,7 +1145,7 @@ void SINSTRL_unify_envty_value_p()      //unify_envty_value Yi -- E_X
     }
 }
  
-void SINSTRL_unify_type_local_value_t() //unify_type_local_value Xi -- R_X
+void SINSTR_unify_type_local_value_t() //unify_type_local_value Xi -- R_X
 {
     INSACC_RX(regX);
     tyPtr = DF_typeDeref((DF_TypePtr)regX);
@@ -1174,7 +1175,7 @@ void SINSTRL_unify_type_local_value_t() //unify_type_local_value Xi -- R_X
     }
 }
 
-void SINSTRL_unify_type_local_value_p() //unify_type_local_value Yi -- E_X
+void SINSTR_unify_type_local_value_p() //unify_type_local_value Yi -- E_X
 {
     INSACC_EX(envY);
     tyPtr = DF_typeDeref((DF_TypePtr)envY);
@@ -1203,7 +1204,7 @@ void SINSTRL_unify_type_local_value_p() //unify_type_local_value Yi -- E_X
     }
 }
 
-void SINSTRL_unify_envty_local_value_t() //unify_envty_local_value Xi -- R_X
+void SINSTR_unify_envty_local_value_t() //unify_envty_local_value Xi -- R_X
 {
     INSACC_RX(regX);
     tyPtr = DF_typeDeref((DF_TypePtr)regX);
@@ -1225,7 +1226,7 @@ void SINSTRL_unify_envty_local_value_t() //unify_envty_local_value Xi -- R_X
     }
 }
 
-void SINSTRL_unify_envty_local_value_p() //unify_envty_local_value Yi -- E_X
+void SINSTR_unify_envty_local_value_p() //unify_envty_local_value Yi -- E_X
 {
     INSACC_EX(envY);
     tyPtr = DF_typeDeref((DF_TypePtr)envY);
@@ -1262,7 +1263,7 @@ void SINSTR_unify_type_constant()       //unify_type_constant k -- K_X
         } //otherwise not ref
         if (DF_isSortType(tyPtr) && (DF_typeKindTabIndex(tyPtr) == kindInd))
             return;
-        EM_throw(EM_FAIL);
+        EM_THROW(EM_FAIL);
     }
 }
     
@@ -1439,16 +1440,15 @@ void SINSTR_deallocate()                //deallocate -- X
 
 void SINSTR_call()                      //call n,L -- I1_L_X
 {
-    INSACC_I1LX_I1(n);
     AM_cpreg = AM_preg + INSTR_I1LX_LEN; //next instruction
     AM_cereg = AM_ereg;
     AM_b0reg = AM_breg;
     AM_preg  = *((INSTR_CodeLabel *)(AM_preg + INSTR_I1LX_L));
 }
 
-void SINSTR_call_name()                 //call_name n,c -- I1_C_P_X
+void SINSTR_call_name()                 //call_name n,c -- I1_C_WP_X
 {
-    INSACC_I1CWPX(n, constInd);
+    INSACC_I1CWPX_C(constInd);
     AM_findCode(constInd, &cl, &ip);
     if (cl) {
         AM_cpreg = AM_preg;
@@ -1456,7 +1456,7 @@ void SINSTR_call_name()                 //call_name n,c -- I1_C_P_X
         AM_preg  = cl;
         AM_cireg = ip;
         if (AM_isImplCI()) AM_cereg = AM_cimpCE();
-    } else EM_throw(EM_FAIL);
+    } else EM_THROW(EM_FAIL);
 }
 
 void SINSTR_execute()                   //execute label -- L_X
@@ -1465,7 +1465,7 @@ void SINSTR_execute()                   //execute label -- L_X
     AM_b0reg = AM_breg;
 }
 
-void SINSTR_execute_name()              //execute_name c -- C_P_X
+void SINSTR_execute_name()              //execute_name c -- C_WP_X
 {
     INSACC_CWPX(constInd);
     AM_findCode(constInd, &cl, &ip);
@@ -1474,17 +1474,17 @@ void SINSTR_execute_name()              //execute_name c -- C_P_X
         AM_preg  = cl;
         AM_cireg = ip;
         if (AM_isImplCI()) AM_cereg = AM_cimpCE();
-    } else EM_throw(EM_FAIL);
+    } else EM_THROW(EM_FAIL);
 }
 
-void SINSTR_instr_proceed()             //proceed -- X
+void SINSTR_proceed()                   //proceed -- X
 {
    /* We use a nonlocal procedure exit to get back to the toplevel
       when a query has a result.  We do this so that we don't have to
       return values from instruction functions, and we don't have to
       do any checks in the simulator loop.  We use the exception
       mechanism to acheive our nonlocal exit. */
-    if (AM_noEnv()) EM_throw(EM_QUERY_RESULT);
+    if (AM_noEnv()) EM_THROW(EM_QUERY_RESULT);
     else {
         AM_preg  = AM_cpreg;
         AM_cireg = AM_envCI();
@@ -1515,7 +1515,7 @@ void SINSTR_retry_me_else()             //retry_me_else n,lab -- I1_L_X
     AM_setNClCP(label);
 }
 
-void SINSTR_trust_me()                  //trust_me n -- I1_P_X
+void SINSTR_trust_me()                  //trust_me n -- I1_WP_X
 {
     INSACC_I1WPX(n);
     AM_restoreRegs(n);
@@ -1547,15 +1547,15 @@ void SINSTR_retry()                     //retry n,label -- I1_L_X
     AM_preg = *((INSTR_CodeLabel *)(AM_preg + INSTR_I1LX_L));
 }
 
-void SINSTR_trust()                     //trust n,label -- I1_L_X
+void SINSTR_trust()                     //trust n,label -- I1_L_WP_X
 {
-    INSACC_I1LX_I1(n);
+    INSACC_I1LWPX_I1(n);
     AM_restoreRegs(n);
     if (AM_isImplCI()) AM_cereg = AM_cimpCE();
     AM_breg = AM_cpB();
     AM_hbreg = AM_cpH();
     AM_settosreg();
-    AM_preg = *((INSTR_CodeLabel *)(AM_preg + INSTR_I1LX_L));
+    AM_preg = *((INSTR_CodeLabel *)(AM_preg + INSTR_I1LWPX_L));
 }
 
 void SINSTR_trust_ext()                 //trust_ext n,m -- I1_N_X
@@ -1566,7 +1566,7 @@ void SINSTR_trust_ext()                 //trust_ext n,m -- I1_N_X
     if (AM_isFailInstr(AM_preg)) {
         AM_breg = AM_cpB();
         AM_settosreg();
-        EM_throw(EM_FAIL);
+        EM_THROW(EM_FAIL);
     }
     AM_restoreRegsWoCI(n);
     AM_cireg = AM_impNCLIP(nextcl);
@@ -1605,7 +1605,7 @@ void SINSTR_branch()                    //branch lab -- L_X
 /*****************************************************************************/
 /*   INDEXING INSTRUCTIONS                                                   */
 /*****************************************************************************/
-void SINSTR_switch_on_term()            //switch_on_term lv,lc,ll,lbv -- L_L_L_X
+void SINSTR_switch_on_term()          //switch_on_term lv,lc,ll,lbv --L_L_L_L_X
 {
     regA = AM_reg(1);
     tmPtr = DF_termDeref((DF_TermPtr)regA);
@@ -1654,7 +1654,7 @@ void SINSTR_switch_on_term()            //switch_on_term lv,lc,ll,lbv -- L_L_L_X
             AM_preg = *((INSTR_CodeLabel *)(AM_preg + INSTR_LLLLX_L2));
             return;
         }
-        case DF_TM_TAG_STREAM:{ EM_throw(EM_FAIL); }
+        case DF_TM_TAG_STREAM:{ EM_THROW(EM_FAIL); }
         case DF_TM_TAG_CONS:  {
              AM_preg = *((INSTR_CodeLabel *)(AM_preg + INSTR_LLLLX_L3));
              return; 
@@ -1676,7 +1676,7 @@ void SINSTR_switch_on_constant()        //switch_on_constant n,tab -- I1_HT_X
     if (cl) {
         AM_preg = cl;
         return;
-    } else EM_throw(EM_FAIL);
+    } else EM_THROW(EM_FAIL);
 }
 
 void SINSTR_switch_on_bvar()            //switch_on_bvar n,tab -- I1_BVT_X
@@ -1685,7 +1685,7 @@ void SINSTR_switch_on_bvar()            //switch_on_bvar n,tab -- I1_BVT_X
     for (m = 0; m != n; m++) 
         if (numAbs = MEM_branchTabIndexVal(table, m)) break;
     if (m < n) AM_preg = MEM_branchTabCodePtr(table, m);
-    else EM_throw(EM_FAIL);
+    else EM_THROW(EM_FAIL);
 }
 
 void SINSTR_switch_on_reg()             //switch_on_reg n,l1,l2 -- N_L_L_X
@@ -1731,11 +1731,11 @@ void SINSTR_cut()                       //cut Yn -- E_X
 /*****************************************************************************/
 /*   MISCELLANEOUS INSTRUCTIONS                                              */
 /*****************************************************************************/
-void SINSTR_call_builtin()              //call_builtin n -- I1_P_X
+void SINSTR_call_builtin()              //call_builtin n -- I1_WP_X
 {
-    INSACC_I1WPX(n);
+    INSACC_I1I1WPX_I1(n);
     AM_cpreg = AM_preg;
-    //BI_dispatch(n);
+    BI_dispatch(n);
 }
 
 void SINSTR_builtin()                   //builtin n -- I1_X
@@ -1745,22 +1745,22 @@ void SINSTR_builtin()                   //builtin n -- I1_X
         AM_cireg = AM_envCI();
         if (AM_isImplCI()) AM_cereg = AM_cimpCE();
     }
-    //BI_dispatch();
+    BI_dispatch(n);
 }
 
 void SINSTR_stop()                      //stop -- X
 {
-    EM_throw(EM_TOP_LEVEL);
+    EM_THROW(EM_TOP_LEVEL);
 }
 
 void SINSTR_halt()                      //halt -- X
 {
-    EM_throw(EM_EXIT);
+    EM_THROW(EM_EXIT);
 }
 
 void SINSTR_fail()                      //fail -- X
 {
-    EM_throw(EM_FAIL);
+    EM_THROW(EM_FAIL);
 }
 
 #endif //SIMINSTR_C

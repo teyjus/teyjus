@@ -22,7 +22,7 @@ void SINSTRL_unifyInt(DF_TermPtr tmPtr, int intValue);
 void SINSTRL_unifyFloat(DF_TermPtr tmPtr, float floatValue);
 
 //attempting to unify a dereferenced term with a string
-void SINSTRL_unifyString(DF_TermPtr tmPtr, char *str);
+void SINSTRL_unifyString(DF_TermPtr tmPtr, DF_StrDataPtr str);
 
 //attempting to unify a dereferenced term with a constant with type assoc
 void SINSTRL_unifyTConst(DF_TermPtr tmPtr, int constInd, CSpacePtr label);
