@@ -44,7 +44,7 @@ static void SINSTRL_bindFloat(DF_TermPtr varPtr, float f)
 
 //Bind a free variable to a string                                          
 //Note the BND register is set to ON 
-void SINSTRL_bindString(DF_TermPtr varPtr, char *str)
+void SINSTRL_bindString(DF_TermPtr varPtr, DF_StrDataPtr str)
 {
     TR_trailTerm(varPtr);
     DF_mkStr((MemPtr)varPtr, str);
@@ -201,7 +201,7 @@ static void SINSTRL_delayFloat(DF_TermPtr tPtr, float f)
 }
   
 //Delay a pair (onto the PDL stack) with a given term and a string
-static void SINSTRL_delayString(DF_TermPtr tPtr, char *str)
+static void SINSTRL_delayString(DF_TermPtr tPtr, DF_StrDataPtr str)
 {
     MemPtr nhreg = AM_hreg + DF_TM_ATOMIC_SIZE;
     AM_heapError(nhreg);
@@ -360,38 +360,38 @@ void SINSTRL_unifyConst(DF_TermPtr tmPtr, int constInd)
     switch (DF_termTag(tmPtr)) {
     case DF_TM_TAG_VAR: 
     { 
-        if (DF_fvUnivCount(tmPtr)<AM_cstUnivCount(constInd)) EM_throw(EM_FAIL);
+        if (DF_fvUnivCount(tmPtr)<AM_cstUnivCount(constInd)) EM_THROW(EM_FAIL);
         SINSTRL_bindConst(tmPtr, constInd);
         return;
     }
     case DF_TM_TAG_CONST:
     {
-        if (constInd != DF_constTabIndex(tmPtr)) EM_throw(EM_FAIL);
+        if (constInd != DF_constTabIndex(tmPtr)) EM_THROW(EM_FAIL);
         return;
     }
     case DF_TM_TAG_APP:
     {
-        if (DF_isConst(DF_termDeref(DF_appFunc(tmPtr)))) EM_throw(EM_FAIL);
+        if (DF_isConst(DF_termDeref(DF_appFunc(tmPtr)))) EM_THROW(EM_FAIL);
     }
     case DF_TM_TAG_LAM:  case DF_TM_TAG_SUSP: //and other APP cases
     { 
         HN_hnorm(tmPtr);
         if (AM_rigFlag) {
             if (DF_isConst(AM_head) && (DF_constTabIndex(AM_head) == constInd)){
-                if (AM_numAbs != AM_numArgs) EM_throw(EM_FAIL);
+                if (AM_numAbs != AM_numArgs) EM_THROW(EM_FAIL);
                 if (AM_numAbs != 0) SINSTRL_delayConst(tmPtr, constInd);//h-ord
-            } else EM_throw(EM_FAIL);
+            } else EM_THROW(EM_FAIL);
         } else { // (AM_rigFlag == OFF)
             if (AM_numArgs == 0) {
                 if ((AM_numAbs == 0) && 
                     (DF_fvUnivCount(AM_head) >= AM_cstUnivCount(constInd)))
                     SINSTRL_bindConst(AM_head, constInd);
-                else EM_throw(EM_FAIL);
+                else EM_THROW(EM_FAIL);
             } else SINSTRL_delayConst(tmPtr, constInd); //higher-order
         }       //  (AM_rigFlag == OFF)
         return;
     }
-    default:{ EM_throw(EM_FAIL); } //CONS, NIL, BVAR, INT, FLOAT, STR, (STREAM)
+    default:{ EM_THROW(EM_FAIL); } //CONS, NIL, BVAR, INT, FLOAT, STR, (STREAM)
     } //switch
 }
 
@@ -402,19 +402,19 @@ void SINSTRL_unifyInt(DF_TermPtr tmPtr, int intValue)
     case DF_TM_TAG_VAR: { SINSTRL_bindInt(tmPtr, intValue); return; }
     case DF_TM_TAG_INT: 
     { 
-        if (intValue != DF_intValue(tmPtr)) EM_throw(EM_FAIL);
+        if (intValue != DF_intValue(tmPtr)) EM_THROW(EM_FAIL);
         return;
     }
     case DF_TM_TAG_APP: 
     { //Note the functor of app cannot be an integer per well-typedness
-        if (DF_isConst(DF_termDeref(DF_appFunc(tmPtr)))) EM_throw(EM_FAIL);
+        if (DF_isConst(DF_termDeref(DF_appFunc(tmPtr)))) EM_THROW(EM_FAIL);
     }
     case DF_TM_TAG_SUSP: //and other APP cases
     { // Note ABS cannot occur due to well-typedness
         HN_hnorm(tmPtr);
         if (AM_rigFlag) { 
             if (DF_isInt(AM_head) && (DF_intValue(AM_head) == intValue)) return;
-            else EM_throw(EM_FAIL);
+            else EM_THROW(EM_FAIL);
         } else { //(AM_rigFlag == OFF)
             if (AM_numArgs == 0)  //note AM_numAbs must be 0 because of type
                 SINSTRL_bindInt(AM_head, intValue);
@@ -422,7 +422,7 @@ void SINSTRL_unifyInt(DF_TermPtr tmPtr, int intValue)
             return;
         }        //(AM_rigFlag == OFF)
     }
-    default: { EM_throw(EM_FAIL); } //BVAR, CONST
+    default: { EM_THROW(EM_FAIL); } //BVAR, CONST
     } //switch
 }
 
@@ -433,12 +433,12 @@ void SINSTRL_unifyFloat(DF_TermPtr tmPtr, float floatValue)
     case DF_TM_TAG_VAR: { SINSTRL_bindFloat(tmPtr, floatValue); return; }
     case DF_TM_TAG_FLOAT: 
     { 
-        if (floatValue != DF_floatValue(tmPtr)) EM_throw(EM_FAIL);
+        if (floatValue != DF_floatValue(tmPtr)) EM_THROW(EM_FAIL);
         return;
     }
     case DF_TM_TAG_APP: 
     { //Note the functor of app cannot be a float per well-typedness
-        if (DF_isConst(DF_termDeref(DF_appFunc(tmPtr)))) EM_throw(EM_FAIL);
+        if (DF_isConst(DF_termDeref(DF_appFunc(tmPtr)))) EM_THROW(EM_FAIL);
     }
     case DF_TM_TAG_SUSP: //other APP cases
     { //Note ABS cannot occur due to well-typedness
@@ -446,7 +446,7 @@ void SINSTRL_unifyFloat(DF_TermPtr tmPtr, float floatValue)
         if (AM_rigFlag) { 
             if (DF_isFloat(AM_head) && (DF_floatValue(AM_head) == floatValue)) 
                 return;
-            else EM_throw(EM_FAIL);
+            else EM_THROW(EM_FAIL);
         } else { //(AM_rigFlag == OFF)
             if (AM_numArgs == 0)  //note AM_numAbs must be 0 because of type
                 SINSTRL_bindFloat(AM_head, floatValue);
@@ -454,30 +454,30 @@ void SINSTRL_unifyFloat(DF_TermPtr tmPtr, float floatValue)
             return;
         }        //(AM_rigFlag == OFF)
     }
-    default: { EM_throw(EM_FAIL); } //BVAR, CONST
+    default: { EM_THROW(EM_FAIL); } //BVAR, CONST
     } //switch
 }
 
 //attempting to unify a dereferenced term with a string
-void SINSTRL_unifyString(DF_TermPtr tmPtr, char *str)
+void SINSTRL_unifyString(DF_TermPtr tmPtr, DF_StrDataPtr str)
 {
     switch (DF_termTag(tmPtr)){
     case DF_TM_TAG_VAR: { SINSTRL_bindString(tmPtr, str);  return; }
     case DF_TM_TAG_STR: 
     {
-        if (!DF_stringCompare(tmPtr, str)) EM_throw(EM_FAIL);
+        if (!DF_sameStrData(tmPtr, str)) EM_THROW(EM_FAIL);
         return;
     }
     case DF_TM_TAG_APP:
     { //Note the functor of app cannot be a string per well-typedness
-        if (DF_isConst(DF_termDeref(DF_appFunc(tmPtr)))) EM_throw(EM_FAIL);
+        if (DF_isConst(DF_termDeref(DF_appFunc(tmPtr)))) EM_THROW(EM_FAIL);
     }
     case DF_TM_TAG_SUSP: //and other APP cases
     { //Note ABS cannot occur due to well-typedness
         HN_hnorm(tmPtr);
         if (AM_rigFlag) {
-            if (DF_isStr(AM_head) && (DF_stringCompare(AM_head, str))) return;
-            else EM_throw(EM_FAIL);
+            if (DF_isStr(AM_head) && (DF_sameStrData(AM_head, str))) return;
+            else EM_THROW(EM_FAIL);
         } else  {//(AM_rigFlag == OFF)
             if (AM_numArgs == 0) //note AM_numAbs must be 0 because of type
                 SINSTRL_bindString(AM_head, str);
@@ -485,7 +485,7 @@ void SINSTRL_unifyString(DF_TermPtr tmPtr, char *str)
             return;
         }        //(AM_rigFlag == OFF)
     }
-    default: { EM_throw(EM_FAIL); } //BVAR, CONST
+    default: { EM_THROW(EM_FAIL); } //BVAR, CONST
     } //switch
 }
 
@@ -496,40 +496,40 @@ void SINSTRL_unifyTConst(DF_TermPtr tmPtr, int constInd, CSpacePtr label)
     switch (DF_termTag(tmPtr)) {
     case DF_TM_TAG_VAR: 
     {
-        if (DF_fvUnivCount(tmPtr)<AM_cstUnivCount(constInd)) EM_throw(EM_FAIL);
+        if (DF_fvUnivCount(tmPtr)<AM_cstUnivCount(constInd)) EM_THROW(EM_FAIL);
         SINSTRL_bindTConst(tmPtr, constInd);
         return;
     }
     case DF_TM_TAG_CONST:
     {
-        if (constInd != DF_constTabIndex(tmPtr)) EM_throw(EM_FAIL);
+        if (constInd != DF_constTabIndex(tmPtr)) EM_THROW(EM_FAIL);
         AM_preg = label;
         return;
     }
     case DF_TM_TAG_APP:
     {
-        if (DF_isConst(DF_termDeref(DF_appFunc(tmPtr)))) EM_throw(EM_FAIL);
+        if (DF_isConst(DF_termDeref(DF_appFunc(tmPtr)))) EM_THROW(EM_FAIL);
     }
     case DF_TM_TAG_LAM: case DF_TM_TAG_SUSP: //other APP cases
     { 
         HN_hnorm(tmPtr);
         if (AM_rigFlag) {
             if (DF_isConst(AM_head) && (DF_constTabIndex(AM_head) == constInd)){
-                if (AM_numAbs != AM_numArgs) EM_throw(EM_FAIL);
+                if (AM_numAbs != AM_numArgs) EM_THROW(EM_FAIL);
                 if (AM_numAbs == 0) AM_preg = label;       //first-order
                 else SINSTRL_delayTConst(tmPtr, constInd); //higher-order
-            } else EM_throw(EM_FAIL);
+            } else EM_THROW(EM_FAIL);
         } else { //(AM_rigFlag == OFF)
             if (AM_numAbs == 0) {
                 if ((AM_numAbs == 0) &&
                     (DF_fvUnivCount(AM_head) >= AM_cstUnivCount(constInd)))
                     SINSTRL_bindTConst(AM_head, constInd);
-                else EM_throw(EM_FAIL);
+                else EM_THROW(EM_FAIL);
             } else SINSTRL_delayTConst(tmPtr, constInd);   //higher-order
         }        //(AM_rigFlag == OFF)
         return;
     }
-    default: { EM_throw(EM_FAIL); } //CONS, NIL, BVAR, INT, FLOAT, STR, (STREAM)
+    default: { EM_THROW(EM_FAIL); } //CONS, NIL, BVAR, INT, FLOAT, STR, (STREAM)
     } //switch
 }
 
@@ -539,18 +539,18 @@ void SINSTRL_unifyNil(DF_TermPtr tmPtr)
     switch (DF_termTag(tmPtr)){
     case DF_TM_TAG_VAR:  { SINSTRL_bindNil(tmPtr); return; }
     case DF_TM_TAG_NIL:  { return; }
-    case DF_TM_TAG_CONS: { EM_throw(EM_FAIL);}
+    case DF_TM_TAG_CONS: { EM_THROW(EM_FAIL);}
     case DF_TM_TAG_APP:
     {
-        if (DF_isConst(DF_termDeref(DF_appFunc(tmPtr)))) EM_throw(EM_FAIL);
+        if (DF_isConst(DF_termDeref(DF_appFunc(tmPtr)))) EM_THROW(EM_FAIL);
     }
     case DF_TM_TAG_SUSP: //and other APP cases
     { //Note ABS cannot occur due to well-typedness
         HN_hnorm(tmPtr);
-        if (AM_consFlag) EM_throw(EM_FAIL);
+        if (AM_consFlag) EM_THROW(EM_FAIL);
         if (AM_rigFlag) {
             if (DF_isNil(AM_head)) return;
-            EM_throw(EM_FAIL);
+            EM_THROW(EM_FAIL);
         } else { //(AM_rigFlag == OFF)
             if (AM_numArgs == 0)  //note AM_numAbs must be 0 because of type
                 SINSTRL_bindNil(AM_head);
@@ -558,7 +558,7 @@ void SINSTRL_unifyNil(DF_TermPtr tmPtr)
             return;
         }        //(AM_rigFlag == OFF)
     }
-    default: { EM_throw(EM_FAIL); }//BVAR, CONST, CONS
+    default: { EM_THROW(EM_FAIL); }//BVAR, CONST, CONS
     } //switch
 }
 
