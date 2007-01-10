@@ -33,7 +33,7 @@ typedef struct
 } TR_TrailItem;
 
 /* The size of the trail item head */
-#define TR_TRAIL_ITEM_HEAD_SIZE   (int)ceil(sizeof(TR_TrailItem)/WORD_SIZE)
+#define TR_TRAIL_ITEM_HEAD_SIZE (int)ceil((double)sizeof(TR_TrailItem)/WORD_SIZE)
 /* The sizes of different trail items */
 #define TR_TRAIL_TERM_SIZE        TR_TRAIL_ITEM_HEAD_SIZE + DF_TM_ATOMIC_SIZE
 #define TR_TRAIL_MULTERM1_SIZE    TR_TRAIL_ITEM_HEAD_SIZE + DF_TM_APP_SIZE

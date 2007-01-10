@@ -8,7 +8,6 @@
 #define INSTRACCESS_H
 
 #include "../tables/instructions.h" //to be modified
-#include "myinstructions.h"         //to be removed
 
 #define INSACC_CALL_I1(op)  (*((INSTR_OneByteInt *)((op) - INSTR_CALL_I1_LEN)))
 
@@ -167,6 +166,7 @@
    AM_preg += INSTR_I1LX_LEN;                                   \
 }
 
+
 //INSTR_CAT_I1NX 
 #define INSACC_I1NX(op1, op2) {\
    (op1) = *((INSTR_OneByteInt *)(AM_preg + INSTR_I1NX_I1));    \
@@ -184,7 +184,7 @@
 //INSTR_CAT_I1BVTX
 #define INSACC_I1BVTX(op1, op2) {\
    (op1) = *((INSTR_OneByteInt *)(AM_preg + INSTR_I1BVTX_I1)); \
-   (op2) = *((INSTR_BrachTab *)(AM_preg + INSTR_I1BVTX_BVT));  \
+   (op2) = *((INSTR_BranchTab *)(AM_preg + INSTR_I1BVTX_BVT));  \
    AM_preg += INSTR_I1BVTX_LEN;                                \
 }
 
@@ -232,13 +232,6 @@
    AM_preg += INSTR_I1I1LX_LEN;                                 \
 }
 
-//INSTR_CAT_I1CWPX
-#define INSACC_I1CWPX(op1, op2) {\
-   (op1) = *((INSTR_OneByteInt *)(AM_preg + INSTR_I1CWPX_I1)); \
-   (op2) = *((INSTR_CstIndex *)(AM_preg + INSTR_I1CWPX_C));    \
-   AM_preg += INSTR_I1CWPX_LEN;                                \
-}
-
 //specialized
 //INSTR_CAT_LX
 #define INSACC_LX() {AM_preg = *((INSTR_CodeLabel *)(AM_preg + INSTR_LX_L));}
@@ -246,6 +239,11 @@
 //INSTR_CAT_I1LX
 #define INSACC_I1LX_I1(op) {\
    (op) = *((INSTR_OneByteInt *)(AM_preg + INSTR_I1LX_I1));    \
+}
+
+//INSTR_CAT_I1LWPX
+#define INSACC_I1LWPX_I1(op) {\
+   (op) = *((INSTR_OneByteInt *)(AM_preg + INSTR_I1LWPX_I1));  \
 }
 
 //INSACC_CAT_I1LLX
@@ -260,4 +258,14 @@
    (op) = *((INSTR_NextClauseInd *)(AM_preg + INSTR_NLLX_N)); \
 }
 
+//INSTR_CAT_I1CWPX
+#define INSACC_I1CWPX_C(op) {\
+   (op) = *((INSTR_CstIndex *)(AM_preg + INSTR_I1CWPX_C)); \
+}
+
+
+//INSTR_CAT_I1I1WPX
+#define INSACC_I1I1WPX_I1(op1) {\
+   (op1) = *((INSTR_OneByteInt *)(AM_preg + INSTR_I1I1WPX_I12)); \
+}
 #endif //INSTRACCESS_H

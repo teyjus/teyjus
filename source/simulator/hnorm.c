@@ -511,7 +511,7 @@ static DF_TermPtr HN_hnormConsOcc(DF_TermPtr consPtr, Boolean whnf)
 {
     DF_TermPtr argvec = DF_consArgs(consPtr),
                rtPtr; //term pointer to be returned
-    if (AM_vbbreg == argvec) EM_throw(EM_FAIL);    
+    if (AM_vbbreg == argvec) EM_THROW(EM_FAIL);    
     if (HN_isEmptyEnv()){
         AM_argVec = argvec;
         AM_numArgs = DF_CONS_ARITY;
@@ -651,7 +651,7 @@ static DF_TermPtr HN_hnormDispatchOcc(DF_TermPtr tmPtr, Boolean whnf)
     case DF_TM_TAG_CONS:     { return HN_hnormConsOcc(tmPtr, whnf);         }
     case DF_TM_TAG_LAM:      { return HN_hnormLamOcc(tmPtr, whnf);          }
     case DF_TM_TAG_APP:      {
-        if (AM_vbbreg == tmPtr) EM_throw(EM_FAIL);
+        if (AM_vbbreg == tmPtr) EM_THROW(EM_FAIL);
         return HN_hnormAppOcc(tmPtr, whnf);          }
     case DF_TM_TAG_SUSP:     { return HN_hnormSuspOcc(tmPtr, whnf);         }
     case DF_TM_TAG_REF:      {tmPtr=DF_termDeref(tmPtr); goto restart_hnormOcc;}

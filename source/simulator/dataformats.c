@@ -11,6 +11,7 @@
 #include <string.h>
 #include "dataformats.h"
 #include "mctypes.h"
+#include "mcstring.h"
 
 #include "print.h" //to be removed
 /********************************************************************/
@@ -188,7 +189,7 @@ typedef TwoBytes  DF_UnivInd;   //universe count
 typedef TwoBytes  DF_CstTabInd; //constant symbol table index
 typedef TwoBytes  DF_Arity;     //application arity
 typedef TwoBytes  DF_DBInd;     //de Bruijn ind, embed level and num of lams
-typedef TwoBytes  DF_StreamTabInd; //temp
+typedef WordPtr   DF_StreamTabInd; 
 
 typedef struct                  //logic variables          
 {
@@ -241,7 +242,7 @@ typedef struct                  //floats
 typedef struct                  //string
 {
     DF_Tag        tag;
-    char          *charList;
+    DF_StrDataPtr value;
 } DF_StrTerm;
 
 typedef struct                  //stream
@@ -392,38 +393,28 @@ long DF_intValue(DF_TermPtr tmPtr)                  //integer value
 {
     return ((DF_IntTerm*)tmPtr)->value;
 }
-long DF_intABS(DF_TermPtr tmPtr)                    //absolute value
-{
-    return labs(((DF_IntTerm*)tmPtr)->value);
-}
-long DF_intNEG(DF_TermPtr tmPtr)                    //negation
-{
-    return -(((DF_IntTerm*)tmPtr)->value);
-}
 //float
 float DF_floatValue(DF_TermPtr tmPtr)               //float value
 {
     return ((DF_FloatTerm*)tmPtr)->value;
 }
-float DF_floatABS(DF_TermPtr tmPtr)                 //absolute value
-{
-    return fabs(((DF_FloatTerm*)tmPtr)->value);
-}
-float DF_floatNEG(DF_TermPtr tmPtr)                 //negation
-{
-    return -(((DF_FloatTerm*)tmPtr)->value);
-}
 //string
-char* DF_strValue(DF_TermPtr tmPtr)                 //string value
+MCSTR_Str DF_strValue(DF_TermPtr tmPtr)             //string value
 {
-    return ((DF_StrTerm*)tmPtr)->charList;
+    return (MCSTR_Str)(((MemPtr)(((DF_StrTerm*)tmPtr)->value))
+                       + DF_STRDATA_HEAD_SIZE);
 }
-int DF_strLength(DF_TermPtr tmPtr)                  //string length
+DF_StrDataPtr DF_strData(DF_TermPtr tmPtr)          //string data field
 {
-    return strlen(((DF_StrTerm*)tmPtr)->charList);
+    return ((DF_StrTerm*)tmPtr)->value;
 }
+MCSTR_Str DF_strDataValue(DF_StrDataPtr tmPtr)     //acc str value from data fd
+{
+    return (MCSTR_Str)(((MemPtr)tmPtr) + DF_STRDATA_HEAD_SIZE);
+}
+
 //stream TEMP
-int DF_streamTabIndex(DF_TermPtr tmPtr)             //stream table index
+WordPtr DF_streamTabIndex(DF_TermPtr tmPtr)        //stream table index
 {
     return ((DF_StreamTerm*)tmPtr)->index;
 }
@@ -552,15 +543,24 @@ void DF_mkFloat(MemPtr loc, float value)                     //float
     ((DF_FloatTerm*)loc) -> tag.categoryTag = DF_TM_TAG_FLOAT;
     ((DF_FloatTerm*)loc) -> value = value;
 }
-void DF_mkStr(MemPtr loc, char *value)                       //string
+void DF_mkStr(MemPtr loc, DF_StrDataPtr data)                //string
 {
     ((DF_StrTerm*)loc) -> tag.categoryTag = DF_TM_TAG_STR;
-    ((DF_StrTerm*)loc) -> charList = value;
+    ((DF_StrTerm*)loc) -> value = data;
 }
-void DF_mkStream(MemPtr loc, int ind)           //stream TEMP
+void DF_mkStrDataHead(MemPtr loc)                            //string data head
+{
+    ((DF_StrDataPtr)loc) -> tag.categoryTag = DF_TM_TAG_STRBODY;
+}
+
+void DF_mkStream(MemPtr loc, WordPtr ind)                    //stream 
 {
     ((DF_StreamTerm*)loc) -> tag.categoryTag = DF_TM_TAG_STREAM;
     ((DF_StreamTerm*)loc) -> index = ind;
+}
+void DF_setStreamInd(DF_TermPtr tm, WordPtr ind)             //update stream ind
+{
+    ((DF_StreamTerm*)tm) -> index = ind;
 }
 void DF_mkNil(MemPtr loc)                                    //nil
 {
@@ -631,16 +631,24 @@ Boolean DF_sameConsts(DF_TermPtr const1, DF_TermPtr const2)   //same constant?
 Boolean DF_sameStrs(DF_TermPtr str1, DF_TermPtr str2)         //same string?
 {
     if (str1 == str2) return TRUE;
-    return (strcmp(((DF_StrTerm*)str1)->charList, 
-                   (((DF_StrTerm*)str2)->charList)) == 0);
+    else if (((DF_StrTerm*)str1)->value == 
+             ((DF_StrTerm*)str2)->value) return TRUE; //compare data fd addr
+    //compare literals
+    return MCSTR_sameStrs(
+        (MCSTR_Str)(((MemPtr)(((DF_StrTerm*)str1)->value)) + 
+                    DF_STRDATA_HEAD_SIZE),
+        (MCSTR_Str)(((MemPtr)(((DF_StrTerm*)str2)->value)) +
+                    DF_STRDATA_HEAD_SIZE));
+    
 }
-Boolean DF_stringCompare(DF_TermPtr tmPtr, char *str)
+Boolean DF_sameStrData(DF_TermPtr tmPtr, DF_StrDataPtr strData)
 {
-    char *myStr = ((DF_StrTerm*)tmPtr) -> charList;
-    if (myStr == str) return TRUE;
-    return (strcmp(myStr, str) == 0);
+    if (((DF_StrTerm*)tmPtr) -> value == strData) return TRUE; //compare addr
+    return MCSTR_sameStrs(
+        (MCSTR_Str)(((MemPtr)(((DF_StrTerm*)tmPtr)->value)) + 
+                    DF_STRDATA_HEAD_SIZE),
+        (MCSTR_Str)(((MemPtr)strData) + DF_STRDATA_HEAD_SIZE));
 }
-
 
 /********************************************************************/
 /*                                                                  */

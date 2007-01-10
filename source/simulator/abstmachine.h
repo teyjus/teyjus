@@ -9,9 +9,32 @@
 
 #include  <stdlib.h>
 #include  <math.h>
-#include   "mctypes.h"
-#include   "dataformats.h"
-#include   "../system/memory.h"
+#include  "mctypes.h"
+#include  "dataformats.h"
+#include  "../system/memory.h"
+#include  "../system/error.h"
+
+/***************************######********************************************
+ *                          ERROR INFORMATION
+ *********************************######**************************************/
+
+#define SIM_NUM_ERROR_MESSAGES 13
+enum
+{
+   SIM_ERROR = SIM_FIRST_ERR_INDEX,
+   SIM_ERROR_TOO_MANY_ABSTRACTIONS,
+   SIM_ERROR_TOO_MANY_ARGUMENTS,
+   SIM_ERROR_TOO_MANY_UNIV_QUANTS,
+   SIM_ERROR_HEAP_TOO_BIG,
+   SIM_ERROR_HEAP_TOO_SMALL,
+   SIM_ERROR_CANNOT_ALLOCATE_HEAP,
+   SIM_ERROR_CANNOT_ALLOCATE_HEAP_MESSAGE,
+   SIM_ERROR_CANNOT_ALLOCATE_HEAP_SUGGESTION,
+   SIM_ERROR_TRAIL_OVERFL,
+   SIM_ERROR_HEAP_OVERFL,
+   SIM_ERROR_STACK_OVERFL,
+   SIM_ERROR_PDL_OVERFL,
+};
 
 typedef union  //the type of data: (atomic) term or type 
 {
@@ -21,7 +44,7 @@ typedef union  //the type of data: (atomic) term or type
 
 typedef AM_DataType *AM_DataTypePtr;
 
-//#define AM_DATA_SIZE (int)ceil(sizeof(AM_DataType)/WORD_SIZE)
+//#define AM_DATA_SIZE (int)ceil((double)sizeof(AM_DataType)/WORD_SIZE)
 #define AM_DATA_SIZE  2
 
 /****************************************************************************/
@@ -99,7 +122,19 @@ extern MemPtr    AM_heapBeg,                //beginning of the heap
 /****************************************************************************/
 /*            CODE PLACED IN THE HEAP BY THE SYSTEM                         */
 /****************************************************************************/
-extern CSpacePtr  AM_failInstr;
+extern CSpacePtr  AM_failCode;
+extern CSpacePtr  AM_andCode;
+extern CSpacePtr  AM_orCode;
+extern CSpacePtr  AM_allCode;
+extern CSpacePtr  AM_solveCode;
+extern CSpacePtr  AM_builtinCode;
+extern CSpacePtr  AM_eqCode;
+extern CSpacePtr  AM_stopCode;
+extern CSpacePtr  AM_haltCode;
+extern CSpacePtr  AM_notCode1;
+extern CSpacePtr  AM_notCode2;
+extern CSpacePtr  AM_proceedCode;
+
 
 Boolean AM_isFailInstr(CSpacePtr cptr);
 /****************************************************************************/
@@ -124,6 +159,7 @@ void    AM_settosreg();            //set AM_tosreg to the top imp or choice pt
 
 //environment record creation function
 MemPtr AM_mkEnv(MemPtr ep);                  //create the fixed part of env rec
+MemPtr AM_mkEnvWOUC(MemPtr ep);              //ct fixed part of env without uc
 
 //environment record access functions (current top env record)
 AM_DataTypePtr AM_envVar(int n);             //the nth var fd
@@ -143,7 +179,8 @@ AM_DataTypePtr AM_cenvVar(int n);            //the nth var fd in clause env
 
 //choice point creation functions
 void AM_mkCP(MemPtr cp, CSpacePtr label, int n); //create a choice pt
-void AM_setNClCP(CSpacePtr ncl);              //set the ncl fd in top ch pt
+void AM_saveStateCP(MemPtr cp, CSpacePtr label);   
+void AM_setNClCP(CSpacePtr ncl);                 //set the ncl fd in top ch pt
 
 //restore functions 
 //restore all components of a choice point except the trail top and the 
@@ -158,6 +195,8 @@ CSpacePtr AM_cpNCL();
 MemPtr    AM_cpTR();
 MemPtr    AM_cpB();
 MemPtr    AM_cpCI();
+
+AM_DataTypePtr AM_cpArg(MemPtr cp, int n); //addr of nth arg in a given cp
 
 /***************************************************************************/
 /*                IMPLICATION/IMPORT RECORD OPERATIONS                     */
@@ -256,6 +295,7 @@ DF_TypePtr AM_tstSkel(int n);   //type skeleton in a given entry
 /* Constant symbol table                                                    */
 char* AM_cstName(int n);        //name of a constant in a given entry
 int   AM_cstTyEnvSize(int n);   //type environment size 
+int   AM_cstNeeded(int n);      //neededness info
 int   AM_cstUnivCount(int n);   //universe count 
 int   AM_cstPrecedence(int n);  //precedence
 int   AM_cstFixity(int n);      //fixity
