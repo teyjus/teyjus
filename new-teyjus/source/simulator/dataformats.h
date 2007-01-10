@@ -9,7 +9,9 @@
 
 #include <limits.h>           // to be removed
 #include <stdlib.h>
+//#include <math.h>
 #include "mctypes.h"
+#include "mcstring.h"
 
 /********************************************************************/
 /*   DATA TAG FIELD IN TYPES AND TERMS                              */
@@ -51,12 +53,14 @@ typedef enum
     DF_TM_TAG_APP,            // applications
     DF_TM_TAG_SUSP,           // suspensions
 
+    DF_TM_TAG_STRBODY = 19,   // string body
+
     //suspension environment items 
-    DF_ENV_TAG_DUMMY = 19,    //dummy environment
+    DF_ENV_TAG_DUMMY = 20,    //dummy environment
     DF_ENV_TAG_PAIR,          //pair environment 
     
     //disagreement pair
-    DF_DISPAIR = 21           
+    DF_DISPAIR = 22           
 } DF_HeapDataCategory;
 
 
@@ -93,7 +97,7 @@ typedef struct
     DF_Tag          tag;     /* the common field for every type (head); can 
                                 be any one of enum TypeCategory.
                                 rely on struct alignment */ 
-    void            *dummy;  /* a place holder which enforces the size of the 
+    Word            dummy;   /* a place holder which enforces the size of the 
                                 generic term to be 2 words. */
 } DF_Type;
 
@@ -186,7 +190,7 @@ typedef struct
     DF_Tag       tag;        /* the common field for every term (head); can 
                                 be any one of enum TermCategory.
                                 rely on struct alignment */
-    void         *dummy;     /* a place holder which enforces the size of the 
+    Word         dummy;      /* a place holder which enforces the size of the 
                                 generic term to be 2 words. */
 } DF_Term;
 
@@ -201,7 +205,19 @@ typedef DF_Term *DF_TermPtr; //term pointer
 #define DF_TM_SUSP_SIZE    4       // suspension               (config set)
 
 // attributes of some special constants 
-#define  DF_CONS_ARITY  2          //arity of cons
+#define  DF_CONS_ARITY     2       //arity of cons
+
+// head of string body (a tag word should be followed by encoding of literals)
+typedef union                     
+{
+    DF_Tag        tag;
+    Word          dummy;
+} DF_StrData;                 
+
+typedef DF_StrData *DF_StrDataPtr;
+
+//#define DF_STRDATA_HEAD_SIZE   (int)ceil((double)sizeof(DF_StrData)/WORD_SIZE)
+#define DF_STRDATA_HEAD_SIZE  1     
 
 //a generic environment item in suspension
 typedef struct DF_env
@@ -268,17 +284,14 @@ int DF_constTabIndex(DF_TermPtr);            // symbol table index
 DF_TypePtr DF_constType(DF_TermPtr);         // type environment
 //integer
 long DF_intValue(DF_TermPtr);                // integer value (long)
-long DF_intABS(DF_TermPtr);                  // absolute value
-long DF_intNEG(DF_TermPtr);                  // negation
 //float
 float DF_floatValue(DF_TermPtr);             // float value
-float DF_floatABS(DF_TermPtr);               // absolute value
-float DF_floatNEG(DF_TermPtr);               // negation
 //string
-char* DF_strValue(DF_TermPtr);               // string value
-int   DF_strLength(DF_TermPtr);              // string length
+MCSTR_Str DF_strValue(DF_TermPtr);           // string value
+DF_StrDataPtr DF_strData(DF_TermPtr tmPtr);  // string data field
+MCSTR_Str DF_strDataValue(DF_StrDataPtr tmPtr);  //acc str value from data fd
 //stream
-int DF_streamTabIndex(DF_TermPtr);           // stream table index TEMP
+WordPtr DF_streamTabIndex(DF_TermPtr);       // stream table index 
 //de Bruijn indices
 int DF_bvIndex(DF_TermPtr);                  // de Bruijn index
 //reference
@@ -317,8 +330,10 @@ void DF_mkTConst(MemPtr loc, int uc, int ind, DF_TypePtr typeEnv);
                                                    //const with type association
 void DF_mkInt(MemPtr loc, long value);             //int
 void DF_mkFloat(MemPtr loc, float value);          //float
-void DF_mkStr(MemPtr loc, char *value);            //string
-void DF_mkStream(MemPtr loc, int ind);             //stream TEMP
+void DF_mkStr(MemPtr loc, DF_StrDataPtr data);     //string
+void DF_mkStrDataHead(MemPtr loc);                 //string data head
+void DF_mkStream(MemPtr loc, WordPtr ind);         //stream 
+void DF_setStreamInd(DF_TermPtr tm, WordPtr ind);  //update index of a stream
 void DF_mkNil(MemPtr loc);                         //nil
 void DF_mkRef(MemPtr loc, DF_TermPtr target);      //reference
 void DF_mkCons(MemPtr loc, DF_TermPtr args);       //cons
@@ -335,9 +350,9 @@ void DF_mkPairEnv(MemPtr loc, int l, DF_TermPtr t, DF_EnvPtr rest);
 void DF_modVarUC(DF_TermPtr vPtr, int uc);
 
 /* (NON_TRIVIAL) TERM COMPARISON */
-Boolean DF_sameConsts(DF_TermPtr const1, DF_TermPtr const2);   //same const?
-Boolean DF_sameStrs(DF_TermPtr str1, DF_TermPtr str2);         //same string?
-Boolean DF_stringCompare(DF_TermPtr tmPtr, char *str);
+Boolean DF_sameConsts(DF_TermPtr const1, DF_TermPtr const2);     //same const?
+Boolean DF_sameStrs(DF_TermPtr str1, DF_TermPtr str2);           //same string?
+Boolean DF_sameStrData(DF_TermPtr tmPtr, DF_StrDataPtr strData); //same str?
 
 /********************************************************************/
 /*                                                                  */
@@ -357,7 +372,7 @@ typedef struct DF_disPair   //each node in the disagreement set
 typedef DF_DisPair  *DF_DisPairPtr; //pointer to a disagreement pair
 
 //note this arithmatic should in reality be performed in configuration
-#define DF_DISPAIR_SIZE   (int)ceil(sizeof(DF_DisPair)/WORD_SIZE)
+#define DF_DISPAIR_SIZE   (int)ceil((double)sizeof(DF_DisPair)/WORD_SIZE)
 
 #define DF_EMPTY_DIS_SET  NULL      //empty disagreement set
 

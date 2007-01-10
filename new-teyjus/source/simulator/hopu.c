@@ -173,14 +173,14 @@ static Boolean HOPU_uniqueConst(DF_TermPtr cPtr, DF_TermPtr args, int n)
         tPtr = DF_termDeref(args);
         if (DF_isConst(tPtr) && DF_sameConsts(tPtr, cPtr)) {
             if (DF_isTConst(tPtr)) {
-                EM_try { 
+                EM_TRY { 
                     HOPU_typesUnify(DF_constType(tPtr), DF_constType(cPtr), 
                                     AM_cstTyEnvSize(DF_constTabIndex(cPtr)));
-                } EM_catch {
+                } EM_CATCH {
                     if (EM_CurrentExnType == EM_FAIL) {
                         AM_resetTypesPDL();//remove tys from pdl for ty unif
                         return FALSE;
-                    } else EM_reThrow();
+                    } else EM_RETHROW();
                 }
             } else  return FALSE; 
         } //otherwise different constant or bv, check the next
@@ -304,13 +304,13 @@ static int HOPU_constIndex(DF_TermPtr cPtr, DF_TermPtr args, int nargs, int lev)
         DF_TermPtr tPtr = DF_termDeref(args);
         if (DF_isConst(tPtr) && DF_sameConsts(tPtr, cPtr)) {
                if (DF_isTConst(tPtr)) {
-                EM_try { 
+                EM_TRY { 
                     HOPU_typesUnify(DF_constType(tPtr), DF_constType(cPtr), 
                                     AM_cstTyEnvSize(DF_constTabIndex(cPtr)));
                     return (ind+lev);
-                } EM_catch {//remove types added for ty unif from the PDL
+                } EM_CATCH {//remove types added for ty unif from the PDL
                     if (EM_CurrentExnType == EM_FAIL) AM_resetTypesPDL();
-                    else EM_reThrow();
+                    else EM_RETHROW();
                 }
                } else return (ind+lev);  //cPtr does not have type associated
         } //otherwise try the next
@@ -509,16 +509,16 @@ static int HOPU_pruneSameVar(DF_TermPtr args1, int nargs1, DF_TermPtr args2,
             } else {// tPtr1 is a constant
                 if (DF_isConst(tPtr2) && DF_sameConsts(tPtr1, tPtr2)){
                     if (DF_isTConst(tPtr2)) {
-                        EM_try {
+                        EM_TRY {
                         HOPU_typesUnify(DF_constType(tPtr1),DF_constType(tPtr2),
                                      AM_cstTyEnvSize(DF_constTabIndex(tPtr1)));
                         DF_mkBV(AM_hreg, nargs2); AM_hreg += DF_TM_ATOMIC_SIZE;
                         numNotPruned++;
                         HOPU_copyFlagGlb = TRUE;
-                        } EM_catch {//remove tys for type unif from the PDL
+                        } EM_CATCH {//remove tys for type unif from the PDL
                             if (EM_CurrentExnType == EM_FAIL) 
                                 AM_resetTypesPDL();        
-                            else EM_reThrow();
+                            else EM_RETHROW();
                         } //EM_catch
                     } else {//no type association
                         DF_mkBV(AM_hreg, nargs2); AM_hreg+=DF_TM_ATOMIC_SIZE;
@@ -738,14 +738,14 @@ static void HOPU_flexCheck(DF_TermPtr args, int nargs, int emblev)
         nemblev = emblev + AM_numAbs;
         if (AM_rigFlag){
             if (DF_isBV(AM_head)) {
-                if (DF_bvIndex(AM_head) > nemblev) EM_throw(EM_FAIL);
+                if (DF_bvIndex(AM_head) > nemblev) EM_THROW(EM_FAIL);
             } else {
                 if (DF_isConst(AM_head)&&(DF_constUnivCount(AM_head)>AM_adjreg))
-                    EM_throw(EM_FAIL);
+                    EM_THROW(EM_FAIL);
             } //otherwise succeeds
         } else { //AM_rigFlag == FALSE
             if ((AM_vbbreg == AM_head) || (DF_fvUnivCount(AM_head)>AM_adjreg))
-                EM_throw(EM_FAIL);
+                EM_THROW(EM_FAIL);
         }
         HOPU_flexCheck(AM_argVec, AM_numArgs, nemblev);
         args = (DF_TermPtr)(((MemPtr)args) + DF_TM_ATOMIC_SIZE);
@@ -766,13 +766,13 @@ static void HOPU_flexCheckC(DF_TermPtr args, int nargs, int emblev)
         nemblev = emblev + AM_numAbs;
         if (AM_rigFlag) {
             if (DF_isBV(AM_head)) {
-                if (DF_bvIndex(AM_head) > nemblev) EM_throw(EM_FAIL);
+                if (DF_bvIndex(AM_head) > nemblev) EM_THROW(EM_FAIL);
             } else {
                 if (DF_isConst(AM_head)&&(DF_constUnivCount(AM_head)>AM_adjreg))
-                    EM_throw(EM_FAIL);
+                    EM_THROW(EM_FAIL);
             } //otherwise succeeds
         } else  //AM_rigFlag == FALSE
-            if (DF_fvUnivCount(AM_head) > AM_adjreg) EM_throw(EM_FAIL);
+            if (DF_fvUnivCount(AM_head) > AM_adjreg) EM_THROW(EM_FAIL);
 
         HOPU_flexCheckC(AM_argVec, AM_numArgs, nemblev);
         args = (DF_TermPtr)(((MemPtr)args)+DF_TM_ATOMIC_SIZE);
@@ -852,17 +852,17 @@ static DF_TermPtr HOPU_flexNestedSubst(DF_TermPtr args1, int nargs1,
     DF_TermPtr bnd;
     int varuc = DF_fvUnivCount(fhPtr);
     if (HOPU_isLLambda(varuc, nargs2, args2)){ 
-        if (fhPtr == AM_vbbreg) EM_throw(EM_FAIL); //occurs check
+        if (fhPtr == AM_vbbreg) EM_THROW(EM_FAIL); //occurs check
         bnd = HOPU_flexNestedLLambda(args1, nargs1, varuc, tmPtr, fhPtr, args2,
                                      nargs2, emblev);
     } else {// the internal flex term is not LLambda: delay (opt possible)
         DF_TermPtr newVar;
         DF_TermPtr newTerm;
         if (fhPtr != AM_vbbreg) {
-            EM_try{ 
+            EM_TRY{ 
                 HOPU_bndVarNestedFlex(fhPtr, args2, nargs2, emblev);
                 return tmPtr;
-            } EM_catch {if (EM_CurrentExnType != EM_FAIL) EM_reThrow();}
+            } EM_CATCH {if (EM_CurrentExnType != EM_FAIL) EM_RETHROW();}
         }
         newVar = (DF_TermPtr)AM_hreg;
         HOPU_pushVarToHeap(AM_adjreg);
@@ -895,7 +895,7 @@ DF_TermPtr HOPU_flexNestedSubstC(DF_TermPtr fhPtr, DF_TermPtr args, int nargs,
     DF_TermPtr bnd, newVar, newTerm;
     int varuc;
 
-    EM_try {
+    EM_TRY {
         HOPU_flexCheckC(args, nargs, emblev);
         if (DF_fvUnivCount(fhPtr) > AM_adjreg){
             TR_trailTerm(fhPtr);
@@ -903,7 +903,7 @@ DF_TermPtr HOPU_flexNestedSubstC(DF_TermPtr fhPtr, DF_TermPtr args, int nargs,
             DF_modVarUC(fhPtr, AM_adjreg);
         }
         return tmPtr;
-    } EM_catch { if (EM_CurrentExnType != EM_FAIL) EM_reThrow(); }
+    } EM_CATCH { if (EM_CurrentExnType != EM_FAIL) EM_RETHROW(); }
 
     varuc = DF_fvUnivCount(fhPtr);
     if (HOPU_isLLambda(varuc, nargs, args)){
@@ -1008,8 +1008,8 @@ static void HOPU_flexMkSubst(DF_TermPtr tPtr1, DF_TermPtr h1, int nargs1,
         }               //different variable
     } else {            //the first term is non-LLambda
         if ((nargs2 == 0) && (lev == 0) && (h1 != h2)) { // (F t1 ... tm) = G  
-            EM_try{ HOPU_bndVarFlex(h2, tPtr1, h1, args1, nargs1); return;
-            } EM_catch { if (EM_CurrentExnType != EM_FAIL) EM_reThrow(); } 
+            EM_TRY{ HOPU_bndVarFlex(h2, tPtr1, h1, args1, nargs1); return;
+            } EM_CATCH { if (EM_CurrentExnType != EM_FAIL) EM_RETHROW(); } 
         } 
         if (lev == 0) AM_addDisPair(tPtr1, tPtr2); 
         else {
@@ -1087,11 +1087,11 @@ static void HOPU_flexMkSubstGlb(DF_TermPtr tPtr1, DF_TermPtr h1, int nargs1,
         }
     } else {//the first term is non-LLambda (must locate on heap)
         if ((nargs2 == 0) && (lev == 0) && (h1 != h2)) {//(F t1...tm)[nll] = G
-            EM_try { HOPU_bndVarFlex(h2, tPtr1, h1, args1, nargs1); return;
-            } EM_catch {
+            EM_TRY { HOPU_bndVarFlex(h2, tPtr1, h1, args1, nargs1); return;
+            } EM_CATCH {
                 if (EM_CurrentExnType == EM_FAIL) 
                     tPtr2 = HOPU_globalizeFlex(tPtr2);
-                else EM_reThrow();
+                else EM_RETHROW();
             }
         }
         if (lev == 0) AM_addDisPair(tPtr1, tPtr2);
@@ -1121,7 +1121,7 @@ static DF_TermPtr HOPU_getHead(DF_TermPtr rPtr, DF_TermPtr args, int nargs,
         if (DF_constUnivCount(rPtr) > AM_adjreg){
             MemPtr newhtop;
             int ind = HOPU_constIndex(rPtr, args, nargs, emblev);
-            if (ind == 0) EM_throw(EM_FAIL);        //occurs-check
+            if (ind == 0) EM_THROW(EM_FAIL);        //occurs-check
             AM_embedError(ind);
             newhtop = AM_hreg + DF_TM_ATOMIC_SIZE;
             AM_heapError(newhtop);
@@ -1136,7 +1136,7 @@ static DF_TermPtr HOPU_getHead(DF_TermPtr rPtr, DF_TermPtr args, int nargs,
         int dbInd = DF_bvIndex(rPtr);
         if (dbInd > emblev){
             int ind = HOPU_bvIndex(dbInd, args, nargs, emblev);
-            if (ind == 0) EM_throw(EM_FAIL);        //occurs-check
+            if (ind == 0) EM_THROW(EM_FAIL);        //occurs-check
             AM_embedError(ind);
             if (ind == dbInd) rtPtr = rPtr;  //use the old db term
             else {                           //create a db on the heap top
@@ -1398,7 +1398,7 @@ static void HOPU_matchHeads(DF_TermPtr hPtr1, DF_TermPtr hPtr2, int nabs)
     switch(DF_termTag(hPtr1)){
     case DF_TM_TAG_CONST:{
         if (!(DF_isConst(hPtr2) && (DF_sameConsts(hPtr1, hPtr2)))) 
-            EM_throw(EM_FAIL);
+            EM_THROW(EM_FAIL);
         if (DF_isTConst(hPtr1)){ //(first-order) unify type environments
             HOPU_typesUnify(DF_constType(hPtr1), DF_constType(hPtr2), 
                             AM_cstTyEnvSize(DF_constTabIndex(hPtr1))); 
@@ -1406,32 +1406,32 @@ static void HOPU_matchHeads(DF_TermPtr hPtr1, DF_TermPtr hPtr2, int nabs)
         break;
     }
     case DF_TM_TAG_BVAR: {
-        if (!DF_isBV(hPtr2)) EM_throw(EM_FAIL);
+        if (!DF_isBV(hPtr2)) EM_THROW(EM_FAIL);
         else {                   
             int ind = DF_bvIndex(hPtr2) + nabs; //lifting for eta-expansion
             AM_embedError(ind);
-            if (DF_bvIndex(hPtr1) != ind) EM_throw(EM_FAIL);
+            if (DF_bvIndex(hPtr1) != ind) EM_THROW(EM_FAIL);
         }
         break;
     }
-    case DF_TM_TAG_NIL:  { if (!DF_isNil(hPtr2)) EM_throw(EM_FAIL); break;}
+    case DF_TM_TAG_NIL:  { if (!DF_isNil(hPtr2)) EM_THROW(EM_FAIL); break;}
     case DF_TM_TAG_INT:  {
         if (!(DF_isInt(hPtr2) && (DF_intValue(hPtr2) == DF_intValue(hPtr1))))
-            EM_throw(EM_FAIL);
+            EM_THROW(EM_FAIL);
         break;
     }
     case DF_TM_TAG_FLOAT:{
         if (!(DF_isFloat(hPtr2)&&(DF_floatValue(hPtr2)==DF_floatValue(hPtr1))))
-            EM_throw(EM_FAIL);
+            EM_THROW(EM_FAIL);
         break;
     }
     case DF_TM_TAG_STR:  {
         if (!(DF_isStr(hPtr2) && (DF_sameStrs(hPtr1, hPtr2))))
-            EM_throw(EM_FAIL);
+            EM_THROW(EM_FAIL);
         break;
     }
     case DF_TM_TAG_CONS: { 
-        if (!(DF_isCons(hPtr2))) EM_throw(EM_FAIL);
+        if (!(DF_isCons(hPtr2))) EM_THROW(EM_FAIL);
         break;
     }
     } //switch

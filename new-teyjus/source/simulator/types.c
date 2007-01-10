@@ -43,7 +43,7 @@ static void TY_typesOcc()
         tyPtr = DF_typeDeref((DF_TypePtr)AM_popPDL());
         switch (DF_typeTag(tyPtr)){
         case DF_TY_TAG_REF: {
-            if (AM_tyvbbreg == tyPtr) EM_throw(EM_FAIL);
+            if (AM_tyvbbreg == tyPtr) EM_THROW(EM_FAIL);
             break;
         }
         case DF_TY_TAG_SORT: break;
@@ -107,11 +107,11 @@ void TY_typesUnify()
                 case DF_TY_TAG_SORT: {
                 if (!(DF_isSortType(tyPtr1) &&  
                       DF_typeKindTabIndex(tyPtr1)==DF_typeKindTabIndex(tyPtr2)))
-                    EM_throw(EM_FAIL);
+                    EM_THROW(EM_FAIL);
                 break;
                 }
                 case DF_TY_TAG_ARROW:{
-                if (!DF_isArrowType(tyPtr1)) EM_throw(EM_FAIL);
+                if (!DF_isArrowType(tyPtr1)) EM_THROW(EM_FAIL);
                 TY_pushPairsToPDL((MemPtr)DF_typeArrowArgs(tyPtr1),
                                   (MemPtr)DF_typeArrowArgs(tyPtr2), 
                                   DF_TY_ARROW_ARITY);
@@ -125,8 +125,8 @@ void TY_typesUnify()
                         TY_pushPairsToPDL((MemPtr)DF_typeStrArgs(fPtr1),
                                           (MemPtr)DF_typeStrArgs(fPtr2),
                                           DF_typeStrFuncArity(fPtr1));
-                    else EM_throw(EM_FAIL); //different function
-                } else EM_throw(EM_FAIL); //tyPtr1 not str or ref
+                    else EM_THROW(EM_FAIL); //different function
+                } else EM_THROW(EM_FAIL); //tyPtr1 not str or ref
                 break;
                 }
                 } //switch
@@ -156,7 +156,7 @@ void TY_typesOccC()
         case DF_TY_TAG_STR: 
         {
             DF_TypePtr fPtr = DF_typeStrFuncAndArgs(tyPtr);
-            if (AM_tyvbbreg == fPtr) EM_throw(EM_FAIL);
+            if (AM_tyvbbreg == fPtr) EM_THROW(EM_FAIL);
             TY_pushTypesToPDL((MemPtr)DF_typeStrArgs(fPtr),
                               DF_typeStrFuncArity(fPtr));
             break;
@@ -164,7 +164,7 @@ void TY_typesOccC()
         case DF_TY_TAG_ARROW: 
         {
             DF_TypePtr args = DF_typeArrowArgs(tyPtr);
-            if (AM_tyvbbreg == args) EM_throw(EM_FAIL);
+            if (AM_tyvbbreg == args) EM_THROW(EM_FAIL);
             TY_pushTypesToPDL((MemPtr)args, DF_TY_ARROW_ARITY);
             break;
         }

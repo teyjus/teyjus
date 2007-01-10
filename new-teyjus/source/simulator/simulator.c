@@ -11,18 +11,18 @@
 #include "abstmachine.h"
 #include "trail.h"
 #include "../system/error.h" //to be modified
-#include "myinstructions.h" //to be changed to ../tables/instructions
+#include "../tables/instructions.h" //to be modified
 
 void SIM_simulate()
 {
   restart_loop:
-    EM_try {
+    EM_TRY {
         while(1) SDP_dispatchTable[*((INSTR_OpCode *)AM_preg)]();
         /* it's expected that this statement not be reached: the only
            way out of this while loop is by an exception */
-    } EM_catch {
+    } EM_CATCH {
         if (EM_CurrentExnType == EM_FAIL) {
-            if (AM_botCP()) EM_reThrow(); //FRONT will deal with it
+            if (AM_botCP()) EM_RETHROW(); //temp 
             else {
                 TR_unwindTrail(AM_cpTR());
                 AM_initPDL();
@@ -30,7 +30,7 @@ void SIM_simulate()
                 AM_preg = AM_cpNCL();
                 goto restart_loop;
             }
-        } else EM_reThrow();
+        } else EM_RETHROW();
     }
 }
 

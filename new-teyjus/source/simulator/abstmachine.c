@@ -9,6 +9,7 @@
 #define ABSTMACHINE_C
 
 #include   "mctypes.h"
+#include   "mcstring.h"
 #include   "dataformats.h"
 #include   "abstmachine.h"
 #include   "instraccess.h"
@@ -89,9 +90,21 @@ MemPtr     AM_heapBeg,                //beginning of the heap
 /****************************************************************************/
 /*            CODE PLACED IN THE HEAP BY THE SYSTEM                         */
 /****************************************************************************/
-CSpacePtr  AM_failInstr;
+CSpacePtr  AM_failCode;
+CSpacePtr  AM_andCode;
+CSpacePtr  AM_orCode;
+CSpacePtr  AM_allCode;
+CSpacePtr  AM_solveCode;
+CSpacePtr  AM_builtinCode;
+CSpacePtr  AM_eqCode;
+CSpacePtr  AM_stopCode;
+CSpacePtr  AM_haltCode;
+CSpacePtr  AM_notCode1;
+CSpacePtr  AM_notCode2;
+CSpacePtr  AM_proceedCode;
 
-Boolean    AM_isFailInstr(CSpacePtr cptr)    { cptr == AM_failInstr; }
+
+Boolean    AM_isFailInstr(CSpacePtr cptr)    { cptr == AM_failCode; }
 /****************************************************************************/
 /*               VITUAL MACHINE MEMORY OPERATIONS                           */
 /****************************************************************************/
@@ -144,6 +157,13 @@ MemPtr AM_mkEnv(MemPtr ep)                 //create the fixed part of env rec
     *((CSpacePtr *)ep)    = AM_cpreg;             //CP field 
     return (ep - 1);
 }
+MemPtr AM_mkEnvWOUC(MemPtr ep)              //ct fixed part of env without uc
+{
+    *((MemPtr *)(ep - 3)) = AM_cireg;             //CI field
+    *((MemPtr *)(ep - 2)) = AM_ereg;              //CE field
+    *((CSpacePtr *)ep)    = AM_cpreg;             //CP field
+    return (ep - 1);
+}
 
 //environment record access functions (current top-level env record)
 //the env continuation point 
@@ -189,12 +209,26 @@ void AM_mkCP(MemPtr cp, CSpacePtr label, int n)  //create a choice pt
     for (; n > 0; n--)                                //save reg(1) to reg(n)
         *(((AM_DataTypePtr)(cp - 10)) - n) = *AM_reg(n);
 }
-
+void AM_saveStateCP(MemPtr cp, CSpacePtr label)
+{
+    *((MemPtr *)cp)              = AM_hreg;           //heap point
+    *((CSpacePtr *)(cp - 1))     = label;             //next clause ptr 
+    *((MemPtr *)(cp - 2))        = AM_trreg;          //trail point
+    *((DF_DisPairPtr *)(cp - 3)) = AM_llreg;          //live list 
+    *((MemPtr *)(cp - 4))        = AM_b0reg;          //cut point
+    *((MemPtr *)(cp - 5))        = AM_breg;           //previous choice pt
+    *((MemPtr *)(cp - 6))        = AM_cireg;          //clause context
+    *((MemPtr *)(cp - 7))        = AM_ireg;           //program context
+    *((CSpacePtr *)(cp - 8))     = AM_cpreg;          //cont. code ptr
+    *((MemPtr *)(cp - 9))        = AM_ereg;           //cont. env ptr
+    *((TwoBytes *)(cp - 10))     = AM_ucreg;          //universe count
+}
 //set the next clause field in the current top choice point
 void AM_setNClCP(CSpacePtr ncl)
 {
     *((CSpacePtr *)(AM_breg - 1)) = ncl;
 }
+
 
 //restore function
 //restore all components of a choice point except the trail top and the 
@@ -235,6 +269,11 @@ CSpacePtr AM_cpNCL() { *((CSpacePtr *)(AM_breg - 1)); }
 MemPtr    AM_cpTR()  { *((MemPtr *)(AM_breg - 2));    } 
 MemPtr    AM_cpB()   { *((MemPtr *)(AM_breg - 5));    }
 MemPtr    AM_cpCI()  { *((MemPtr *)(AM_breg - 6));    }
+
+AM_DataTypePtr AM_cpArg(MemPtr cp, int n) //addr of nth arg in a given cp
+{
+    return ((AM_DataTypePtr)(cp - 10)) - n;
+}
 
 /***************************************************************************/
 /*                IMPLICATION/IMPORT RECORD OPERATIONS                     */
@@ -313,7 +352,7 @@ void AM_mkImpNCLTab(MemPtr ip, MemPtr linkTab, int size)
             *((CSpacePtr *)nextCl) = clausePtr; 
             *((MemPtr *)(nextCl+1))= iptr;
         } else {         //not found
-            *((CSpacePtr *)nextCl) = AM_failInstr;
+            *((CSpacePtr *)nextCl) = AM_failCode;
             *(nextCl+1)            = NULL;
         }
         nextCl += AM_NCLT_ENTRY_SIZE;
@@ -444,7 +483,9 @@ MEM_CstPtr   AM_cstBase;     //starting addr of the const symbol table
 /* Kind symbol table                                                        */
 char* AM_kstName(int n)        //name of a type constructor in a given entry
 {
-    return ((MEM_KstPtr)(((MemPtr)AM_kstBase) + n*MEM_KST_ENTRY_SIZE)) -> name;
+    return MCSTR_toCString(
+        DF_strDataValue(((MEM_KstPtr)(((MemPtr)AM_kstBase)
+                                      + n*MEM_KST_ENTRY_SIZE)) -> name));
 }
 
 int   AM_kstArity(int n)       //arity of a type constructor in a given entry
@@ -461,13 +502,21 @@ DF_TypePtr AM_tstSkel(int n)   //type skeleton in a given entry
 /* Constant symbol table                                                    */
 char* AM_cstName(int n)        //name of a constant in a given entry
 {
-    return ((MEM_CstPtr)(((MemPtr)AM_cstBase) + n*MEM_CST_ENTRY_SIZE)) -> name;
+    return MCSTR_toCString(
+        DF_strDataValue(((MEM_CstPtr)(((MemPtr)AM_cstBase) +
+                                      n*MEM_CST_ENTRY_SIZE)) -> name));
 }
 int   AM_cstTyEnvSize(int n)   //type environment size 
 {
     return ((MEM_CstPtr)(((MemPtr)AM_cstBase)+n*MEM_CST_ENTRY_SIZE))->
         typeEnvSize;
-}    
+}
+int   AM_cstNeeded(int n)      //neededness info
+{
+    return ((MEM_CstPtr)(((MemPtr)AM_cstBase)+n*MEM_CST_ENTRY_SIZE))->
+        neededness;
+    
+}
 int   AM_cstUnivCount(int n)   //universe count 
 {
     return ((MEM_CstPtr)(((MemPtr)AM_cstBase)+n*MEM_CST_ENTRY_SIZE))->univCount;
@@ -497,35 +546,20 @@ void AM_setCstUnivCount(int n, int uc)    //set universe count
  ****************************************************************************/
 void AM_heapError(MemPtr p)                 //heap overflow
 {
-    if (AM_heapEnd < p) {
-         // to be replaced by real exception handling functions
-        printf("heap overflow\n");
-        EM_error();
-    }
+    if (AM_heapEnd < p) EM_error(SIM_ERROR_HEAP_OVERFL);
 }
 void AM_stackError(MemPtr p)               //stack overflow
 {
-    if (AM_stackEnd < p){
-         // to be replaced by real exception handling functions
-        printf("stack overflow\n");
-        EM_error();
-    }
+    if (AM_stackEnd < p) EM_error(SIM_ERROR_STACK_OVERFL);
 }
 void AM_pdlError(int n)                    //pdl overflow for n cells
 {
-    if (AM_pdlEnd < (AM_pdlTop + n)){
-        // to be replaced by real exception handling functions
-        printf("pdl overflow\n");
-        EM_error();
-    }
+    if (AM_pdlEnd < (AM_pdlTop + n)) EM_error(SIM_ERROR_PDL_OVERFL);
 }
 void AM_trailError(int n)                  //trail overflow for n cells
 {
-    if (AM_trailEnd < (AM_trreg + n)){
-        //to be replaced by real exception handling functions
-        printf("trail overflow\n");
-        EM_error();
-    }
+    if (AM_trailEnd < (AM_trreg + n))
+        EM_error(SIM_ERROR_TRAIL_OVERFL);
 }
 
   
@@ -534,27 +568,17 @@ void AM_trailError(int n)                  //trail overflow for n cells
  ****************************************************************************/
 void AM_embedError(int n)     //violation of max number of lambda embeddings 
 {
-    if (n > DF_MAX_BV_IND){
-        // to be replaced by real exception handling functions
-        printf("exceed the max number of lambda embeddings\n");
-        EM_error();
-    }
+    if (n > DF_MAX_BV_IND)
+        EM_error(SIM_ERROR_TOO_MANY_ABSTRACTIONS, DF_MAX_BV_IND);
 }
 void AM_arityError(int n)    // violation of max number of arity in applications
 {
-    if (n > DF_TM_MAX_ARITY){
-         // to be replaced by real exception handling functions
-        printf("exceed the max number of term arity\n");
-        EM_error();
-    }
+    if (n > DF_TM_MAX_ARITY) EM_error(SIM_ERROR_TOO_MANY_ARGUMENTS, 
+                                      DF_TM_MAX_ARITY);
 }
 void AM_ucError(int n)      //violation of maximum of universe count
 {
-    if (n == DF_MAX_UNIVIND){
-          // to be replaced by real exception handling functions
-        printf("exceed the maximum of universe count\n");
-        EM_error();
-    }
+    if (n == DF_MAX_UNIVIND) EM_error(SIM_ERROR_TOO_MANY_UNIV_QUANTS);
 }
 
 #endif //ABSTMACHINE_C
