@@ -48,8 +48,8 @@ void    MEM_memInit(unsigned int size);
 /*  kind symbol table entry                                                  */
 typedef struct                                       
 {
-    char      *name;
-    TwoBytes  arity; //agree with DF_StrTypeArity (simulator/dataformats.c)
+    DF_StrDataPtr name;
+    TwoBytes      arity; //agree with DF_StrTypeArity (simulator/dataformats.c)
 } MEM_KstEnt;
 
 typedef MEM_KstEnt *MEM_KstPtr;
@@ -60,7 +60,7 @@ typedef MEM_KstEnt *MEM_KstPtr;
 
 /*  size of each entry of this table (in word)                              */
 //Note this arithematic should in reality go into "config.h"
-#define MEM_KST_ENTRY_SIZE     (int)ceil(sizeof(MEM_KstEnt)/WORD_SIZE)
+#define MEM_KST_ENTRY_SIZE     (int)ceil((double)sizeof(MEM_KstEnt)/WORD_SIZE)
 
 /*****************************************************************************/
 /*                         TYPE SKELETON TABLE                               */
@@ -75,7 +75,7 @@ typedef MEM_TstEnt *MEM_TstPtr;
 
 /*  size of each entry of this table (in word)                               */
 //Note this arithematic should in reality go into "config.h"
-#define MEM_TST_ENTRY_SIZE    (int)ceil(sizeof(MEM_TstEnt)/WORD_SIZE)
+#define MEM_TST_ENTRY_SIZE    (int)ceil((double)sizeof(MEM_TstEnt)/WORD_SIZE)
 
 /*****************************************************************************/
 /*                        CONSTANT SYMBOL TABLE                              */
@@ -83,13 +83,13 @@ typedef MEM_TstEnt *MEM_TstPtr;
 /*  constant symbol table entry                                              */ 
 typedef struct
 {
-    char      *name;
-    TwoBytes  typeEnvSize;
-    TwoBytes  tskTabIndex;     //index to the type skeleton table 
-    //word      neednessVec;   //needness vector (predicate constant)
-    TwoBytes  univCount;
-    int       precedence;
-    int       fixity;
+    DF_StrDataPtr name;
+    TwoBytes      typeEnvSize;
+    TwoBytes      tskTabIndex;     //index to the type skeleton table 
+    TwoBytes      neededness;      //neededness info 
+    TwoBytes      univCount;
+    int           precedence;
+    int           fixity;
 } MEM_CstEnt;
 
 typedef MEM_CstEnt *MEM_CstPtr;
