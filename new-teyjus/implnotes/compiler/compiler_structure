@@ -1,0 +1,319 @@
+                    Compiler phases and interfaces
+                    ==============================
+
+
+Phases of the compiler
+======================
+(The interfaces between the modules are explained below the diagram.)
+
+
+           | source 
+           | files
+           |
+           v
+    --------------------------------
+   | preabstract syntax generation  |
+    --------------------------------
+           |
+           |
+           v
+    -----------------------------------
+   | term processing:                  |
+   |  .preterm to term                 |
+   |   (with type checking)            |
+   |  .beta-normalization              |
+   |  .clause normalization & deorify  |
+   -------------------------------------
+           |
+           | 
+           v 
+    ----------------------------------
+   | type optimization                |
+    ----------------------------------
+           |
+           |
+           v
+    ----------------------------------
+   | clause processing                |
+    ----------------------------------
+           |
+           | 
+           v
+    ----------------------------------
+   | code generation                  |
+    ----------------------------------
+           | 
+           |
+           v
+    ----------------------------------
+   | write bytecode file              |
+    ----------------------------------
+           | bytecode 
+           | file
+           v 
+
+
+
+preabstract syntax generation
+=============================
+
+Output:  
+-------
+  1. Abstract syntax representation of the module being processed. The 
+     following information is contained:
+     a. module name;
+     b. kind symbol table, constants symbol table, type abbreviation table;
+     c. local and global kind lists, local and global constant lists;
+     d. type skeleton list;
+     e. import module list with each entry containing the name and a module
+        number of the imported module, lists of kinds and constants that
+        are global in the imported module;
+     f. accumulate module list with each entry containing the name of the
+        accumulated module, lists of kinds and constants that are global
+        in the imported module.
+  2. Preterm list for the clauses in this module.
+
+
+term processing
+===============
+For each clause (in pre abstract syntax upon entering this phase), the 
+following things are carried out:
+1. translate the clause from its preterm representation to term representation
+   as well as type check;
+2. beta-normalize the resulted term;
+3. check whether the target type of the term is boolean;
+4. clause normalize and deorify
+
+The internal modules are organized as the following:
+
+--For each clause:
+
+             |  preterm 
+             |  module.ktable, module.ctable
+             |  (if new constant and new kind are allowed, module.lklist)
+             v
+      -------------------------------------
+     | preterm to term and type checking   |
+      -------------------------------------
+             |  term:
+             |    - type checked;
+             |      type skeletons are associated with constant data and 
+             |      type environments are associated with constant occurrence; 
+             |      types are associated with variables (tysy)
+             | (if new kind and new constant are allowed:
+             |    - a list of new constants;
+             |    - module.ktable, module.ctable, module.lklist are updated ) 
+             v
+      ----------------------------------------------
+     | beta-normalization and target type checking  |
+      ----------------------------------------------
+             |  term:
+             |   - abstractions are represented in un-nested form: 
+             |      (binders: tysy list, nabs: int, body: term)
+             |   - target type: boolean 
+             |   - beta-normal form
+             v
+      -------------------------------------------
+     | clause normalization and deorification    |
+      -------------------------------------------      
+             |  term list:
+             |   - in "normalized and deorified" clause structure;
+             |   - in Bohem tree representation;
+             |   - universal variables (tysy) are associated by 
+             |     corresponding hidden constants; 
+             |   - bound variables as predicate names (in clause head or 
+             |     atomic goal) are replaced by hidden constants or free 
+             |     variables;
+             |   - predicate constants are marked as closed or not;
+             |   - the definitions are closed for hidden constant predicate
+             |     names.
+             |
+             |  module:
+             |   - a hidden constants list is added in the module abstract 
+             |     syntax representation;
+             |   - a list of type skels for hidden constants is added;
+             |
+             |  new clauses list corresponding to those introduced in 
+             |  deorifying, with each entry containing an anonymous constant 
+             |  (constData) as the predicate name and a list of terms 
+             |  corresponding to the clauses defining this constant.
+             |
+             |  a list of variables (tysy) have been encountered
+             |
+             |  a list of anonymous constants (constData) corresponding to
+             |  new clauses added in deorification 
+             v
+
+--end of for each clause
+
+If new constants are allowed, they are skeletonized after all terms are
+processed, and module.skellist and module.lconstlist are updated.
+
+
+Clause normalization and deorification
+---------------------------------------
+The internal modules of clause normalization and deorification are as the
+follows:
+
+  clause normalization:
+  ---------------------
+  input:  1. term to be clause_normalized (term)
+          2. clause_normalized terms (term list)
+          3. a list of enclosing universal variables (tysy list)
+          4. embedded clause? (bool)
+ 
+  output: 1. term list (normalized)
+             - bound variables as predicate names are replaced by hidden
+               constants;
+             - predicate constants are marked as closed or not
+          2. encountered variables (tysy list)
+          
+  deorification:
+  --------------
+  input:  1. normalized term to be deorified (term)
+          2. term list for already deorified terms (term list)
+          3. a list of free variables (tysy list)
+          4. a list of enclosing universal variables (tysy list)
+          5. an association list of universal variable and implication goals
+             (tysy, term list) list
+          6. deorify? (bool)
+ 
+  output: 1. term list (deorified)
+             - in Bohem tree representation;
+             - universal variables (tysy) are associated with corresponding 
+               hidden constants;
+             - bound variables as predicate names are replaced by hidden 
+               constants or free variables
+             - the definitions are closed for hidden constant predicate
+               names.
+          2. a list of free variables (tysy list)
+          3. association list of universal variable and implication goals
+             (tysy, term list) list
+          4. hidden constant list (constData list)
+          5. hskel list 
+          6. new clauses list ((constData, term list) list)
+          7. anonymous constant list (constData list)
+          8. encountered variables (tysy list)
+     
+       
+type optimization
+=================
+1. type association are dropped from all variables by traversing the given
+   variable list (tysy list);
+2. the global, local and anonymous constants list are traversed for deciding
+   type environments necessary to be present;
+3. the term lists for old and new clauses are traversed for removing 
+   unnecessary type environment with constant ocurrences according to 
+   information obtained in step 2; a association list of form 
+   (constData, term list) list is obtained which associates constant with the 
+   clauses defining it;
+4. neededness analysis is performed over the association list obtained from
+   the previous step so that type associations are reduced for predicate 
+   constants.
+
+Output
+------
+   1. a term list     
+       - no type information is associated with variables;
+       - type skeleton (the enumeration of skeleton variables), type 
+         environment size are adjusted and neededness is set for constants 
+         (constData);
+         (The type environment sizes of hidden constants are always zero.) 
+       - type environments of constant occurrences are adjusted.
+   2. new clauses list
+       Same transformations as above are performed over the terms in this list
+   3. module: 
+      no other changes are made on the module abstract syntax except for
+      constData embedded in constant symbol table and constant lists.
+
+
+clause processing
+=================
+   
+Output
+------
+   1. module:
+      a. clauses list
+      The term representations for clauses are translated into clause 
+      representations, and these clauses are entered into the abstract syntax 
+      of the module.
+      Each entry of the clauses list is of form
+      (cls: clause list, offset: int, nextclause: int, closed: bool, 
+       mapped:bool),
+      where clauses are collected around the predicate name.
+      
+      - the terms contained by clauses are in De Bruijn notation;
+      - for predicate names, the codeinfo field in its constData is 
+        assigned to either a builtin index for pervasives or a clauses list
+        defining this predicate;
+      - variable and type variable occurrences are associated with varData 
+        and tyVarData in which perm, heapvar, safety are marked. If the
+        variable (type variable) is permanent, stack offset is also assigned.
+      b. string list 
+    
+
+code generation
+===============
+
+Output
+------
+   1. the fields of the module are modified:
+      a. an index is assigned for each kindData by traversing over the global
+         and local kind lists;
+      b. an index is assigned for each constData by traversing over the global,
+         local and hidden constant lists;
+      c. the type skeleton list and hidden type skeleton list are merged,
+         and an index is assigned for each skeleton in the new list;
+      d. an index is assigned for each string in the string list;      
+
+   2. additional information to be used for write bytecode:
+      -  instrList with a sequence of instructions obtained from the clauses
+         list of the module (instr list)
+
+      -  importInfo obtained from the imported list
+         kind: (module name: string; module number: int; #kinds: int;
+                kinds: kindData list) list
+         constants: (module name: string; module number: int; #constants: int;
+                     constants: constData list) list
+
+      -  accumInfo obtained from the accumulated list
+         kind: (module name: string; #kinds: int; kinds: kindData list) list
+         constants: (module name: string; #constants: int; 
+                     constants: constData list) list
+         
+      -  impgoalCode
+         (#extendingPreds: int, extendingPreds: constData list, 
+          #preds: int, imppredInfo: (pred: constData, offset: int) list) list
+
+      -  predList (constData list)
+
+      -  extendingPredList (constData list)
+      -  #extendingPreds  (int)
+
+      -  chashtables
+         (tabSize: int; entry: (constData, index:int, codeloc:int) list) list 
+      -  hashtablenum  (int)
+
+      -  #defs    (int)
+      -  #strings (int) 
+      -  #tyskels (int)
+      -  #hconsts, #lconsts, #gconsts (int)
+      -  #lkinds, #gkinds (int)
+      -  codebytes   (int)
+      -  headerspace (int)
+      -  typebytes   (int)
+      -  stringbytes (int)
+ 
+
+
+      
+
+
+   
+   
+
+  
+
+  
+
+ 
