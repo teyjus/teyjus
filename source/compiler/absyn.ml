@@ -20,9 +20,9 @@ and akindmap =
   | KindMapping of akindmap
 
 and akind =
-    LocalKind of (symbol * int option * akindmap * pos)
-  | GlobalKind of (symbol * int option * akindmap * pos)
-  | PervasiveKind of (symbol * int option * akindmap * pos)
+    LocalKind of (symbol * int option * int ref * pos)
+  | GlobalKind of (symbol * int option * int ref * pos)
+  | PervasiveKind of (symbol * int option * int ref * pos)
 
 (********************************************************************
 *Type Abbreviations:
@@ -32,8 +32,10 @@ and atypeabbrev =
 
 (********************************************************************
 *Type Skeleton:
+* Type
+* Environment Size
 ********************************************************************)
-and askeleton = Skeleton of (atype * int * bool)
+and askeleton = Skeleton of (atype * int)
 
 (********************************************************************
 *Types:
@@ -57,6 +59,10 @@ and afixity =
   | Postfixl
   | NoFixity
 
+and acodeinfo =
+    Builtin
+  | Clauses of aclause list ref
+
 (********************************************************************
 *Constants:
 * Code info might not be necessary.
@@ -70,18 +76,16 @@ and afixity =
 *   No Defs?
 *   Closed?
 *   Type Preserving?
+*   Type Reducible?
 *   Type Skeleton
 *   Type Environment
 *   Code Info
 *   Constant Type
 ********************************************************************)
-
-and acodeinfo =
-    Builtin
-  | Clauses of aclause list
-  
 and aconstant =
-    Constant of (symbol * afixity * int * bool * bool * bool * bool * bool * askeleton list * atype list * acodeinfo * int * aconstanttype * pos)
+    Constant of (symbol * afixity ref * int ref *
+      bool ref * bool ref * bool ref * bool ref * bool ref * bool ref *
+      askeleton list * atype list * acodeinfo * int ref * aconstanttype * pos)
 
 and aconstanttype = 
     GlobalConstant
@@ -176,10 +180,10 @@ and astring = (string * int * bool)
 and amodule =
     Module of (string * aconstant Table.SymbolTable.t *
       akind Table.SymbolTable.t * atypeabbrev Table.SymbolTable.t * 
-      astring list * aconstant list * 
-      aconstant list * aconstant list * akind list * akind list *
-      askeleton list * askeleton list * aclause list)
-|   Signature
+      astring list * aconstant list * akind list * atypeabbrev list *
+      askeleton list * aclause list)
+  | Signature of (string * aconstant list * akind list * atypeabbrev list *
+      askeleton list)
 
 let string_of_kind = function
   LocalKind(n,_,_,_) -> "LocalKind(" ^ (Symbol.name n) ^ ")"
@@ -213,38 +217,38 @@ let getKindName = function
 * Skeleton Accessors
 **********************************************************************)
 let getSkeletonType = function
-  Skeleton(f,_,_) -> f
+  Skeleton(f,_) -> f
 
 let getSkeletonSize = function
-  Skeleton(_,i,_) -> i
+  Skeleton(_,i) -> i
 
 (**********************************************************************
 * Constant Accessors
 **********************************************************************)
 let getConstantPos = function
-  Constant(_,_,_,_,_,_,_,_,_,_,_,_,_,p) ->
+  Constant(_,_,_,_,_,_,_,_,_,_,_,_,_,_,p) ->
     p
 
 let getConstantSymbol = function
-  Constant(sym, _, _, _, _, _, _, _, _, _, _, _, _, _) -> sym
+  Constant(sym, _, _, _, _, _, _, _, _, _, _, _, _, _, _) -> sym
 
 let getConstantName = fun c ->
   (Symbol.name (getConstantSymbol c))
 
 let getConstantSkeleton = function
-  Constant(_,_,_,_,_,_,_,_,skel,_,_,_,_,_) -> (List.hd skel)
+  Constant(_,_,_,_,_,_,_,_,_,skel,_,_,_,_,_) -> (List.hd skel)
 
 let getConstantType = function
-  Constant(_,_,_,_,_,_,_,_,_,_,_,_,ctype,_) ->
+  Constant(_,_,_,_,_,_,_,_,_,_,_,_,ctype,_,_) ->
     ctype
 
 let getConstantFixity = function
-  Constant(_,fix,_,_,_,_,_,_,_,_,_,_,_,_) ->
-    fix
+  Constant(_,fix,_,_,_,_,_,_,_,_,_,_,_,_,_) ->
+    !fix
 
 let getConstantPrec = function
-  Constant(_,_,prec,_,_,_,_,_,_,_,_,_,_,_) ->
-    prec
+  Constant(_,_,prec,_,_,_,_,_,_,_,_,_,_,_,_) ->
+    !prec
 
 (**********************************************************************
 *string_of_fixity:
@@ -357,39 +361,39 @@ let printAbsyn = fun m out ->
     in
     
     let rec printSkeleton = function
-      Skeleton(t,i,b)::[] -> 
+      Skeleton(t,i)::[] -> 
         (output "Skeleton(";
         printType t;
         output (", " ^ (string_of_int i));
-        output (", " ^ (string_of_bool b));
         output ")")
-    | Skeleton(t, i, b)::skels ->
+    | Skeleton(t, i)::skels ->
         (output "Skeleton(";
         printType t;
         output (", " ^ (string_of_int i));
-        output (", " ^ (string_of_bool b));
         output "), ";
         printSkeleton skels)
     | [] -> (output "None")
     in
     match const with
-      Constant(sym,fix,prec,exportdef,useonly,nodefs,closed,typepreserv,skel,env,codeinfo,index,ctype, pos) ->
+      Constant(sym,fix,prec,exportdef,useonly,nodefs,closed,typepreserv,reducible,skel,env,codeinfo,index,ctype,pos) ->
         (output "Constant(";
         output (Symbol.name sym);
         output ", ";
-        output (string_of_fixity fix);
+        output (string_of_fixity !fix);
         output ", ";
-        output (string_of_int prec);
+        output (string_of_int !prec);
         output ", ";
-        output (string_of_bool exportdef);
+        output (string_of_bool !exportdef);
         output ", ";
-        output (string_of_bool useonly);
+        output (string_of_bool !useonly);
         output ", ";
-        output (string_of_bool nodefs);
+        output (string_of_bool !nodefs);
         output ", ";
-        output (string_of_bool closed);
+        output (string_of_bool !closed);
         output ", ";
-        output (string_of_bool typepreserv);
+        output (string_of_bool !typepreserv);
+        output ", ";
+        output (string_of_bool !reducible);
         output ", ";
         printSkeleton skel;
         output ", ";
@@ -441,9 +445,7 @@ let printAbsyn = fun m out ->
 
   match m with
     Module(name, ctable, ktable, tabbrevtable, strings,
-      gconsts, lconsts, cconsts,
-      gkinds, lkinds,
-      skels,hskels,clause) ->
+      consts, kinds, tabbrevs, skels, clauses) ->
       
       (output "Module(";
       output name;
@@ -457,8 +459,9 @@ let printAbsyn = fun m out ->
       printTable printkind' ktable;
       output_line ")")
       
-  | Signature ->
+  | Signature(name, consts, kinds, tabbrevs, skels) ->
       (output "Signature(";
+      output name;
       output_line ")")
 
 (**********************************************************************
@@ -507,6 +510,7 @@ let getTypeSetDefault = function
   TypeSetType(def, _) -> def
 | _ -> (Errormsg.impossible Errormsg.none "Absyn.getTypeSetType: invalid type")
 
+let makeTypeVariable () = TypeVarType(ref None, false)
 let getTypeVariableReference = function
   TypeVarType(t, _) -> t
 | _ -> (Errormsg.impossible Errormsg.none "Absyn.getTypeVariableReference: invalid type")
@@ -742,17 +746,17 @@ let string_of_term = fun term ->
 
 
 let getModuleConstantTable = function
-  Module(_,ctable,_,_,_,_,_,_,_,_,_,_,_) -> ctable
-| Signature -> Errormsg.impossible Errormsg.none "Absyn.getModuleConstantTable: not a module."
+  Module(_,ctable,_,_,_,_,_,_,_,_) -> ctable
+| Signature(_) -> Errormsg.impossible Errormsg.none "Absyn.getModuleConstantTable: not a module."
 
 let getModuleKindTable = function
-  Module(_,_,ktable,_,_,_,_,_,_,_,_,_,_) -> ktable
-| Signature -> Errormsg.impossible Errormsg.none "Absyn.getModuleKindTable: not a module."
+  Module(_,_,ktable,_,_,_,_,_,_,_) -> ktable
+| Signature(_) -> Errormsg.impossible Errormsg.none "Absyn.getModuleKindTable: not a module."
 
 let getModuleTypeAbbrevTable = function
-  Module(_,_,_,atable,_,_,_,_,_,_,_,_,_) -> atable
-| Signature -> Errormsg.impossible Errormsg.none "Absyn.getModuleTypeAbbrevTable: not a module."
+  Module(_,_,_,atable,_,_,_,_,_,_) -> atable
+| Signature(_) -> Errormsg.impossible Errormsg.none "Absyn.getModuleTypeAbbrevTable: not a module."
 
 let getModuleClauses = function
-  Module(_,_,_,_,_,_,_,_,_,_,_,_,c) -> c
-| Signature -> Errormsg.impossible Errormsg.none "Absyn.getModuleClauses: not a module."
+  Module(_,_,_,_,_,_,_,_,_,c) -> c
+| Signature(_) -> Errormsg.impossible Errormsg.none "Absyn.getModuleClauses: not a module."
