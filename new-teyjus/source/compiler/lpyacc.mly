@@ -148,7 +148,7 @@ parseModule
   : modheader modpreamble modbody modend  {
       reverseResults ();
       let m = Preabsyn.Module(!Lplex.currentModuleName, !globalConstants, !localConstants,
-                      !closedConstants, !fixityList, !globalKinds, !localKinds, 
+                      !closedConstants, !useOnlyList, !fixityList, !globalKinds, !localKinds, 
                       !globalTypeAbbrevs, !clauseList, !accumulatedModList, 
                       !accumulatedSigList, !useSigList) in
       (clearResults ();
@@ -156,7 +156,7 @@ parseModule
   | error modpreamble modbody modend      {
       reverseResults ();
       let m = Preabsyn.Module(!Lplex.currentModuleName, !globalConstants, !localConstants,
-                      !closedConstants, !fixityList, !globalKinds, !localKinds,
+                      !closedConstants, !useOnlyList, !fixityList, !globalKinds, !localKinds,
                       !globalTypeAbbrevs, !clauseList,
                       !accumulatedModList, !accumulatedSigList,
                       !useSigList) in
@@ -327,7 +327,10 @@ term
   ;
 
 abstterm
-  : typedid INFIXLAMBDA term  {Preabsyn.IdTerm(Symbol.symbol("\\"), None, Preabsyn.ConstID, getPos 1)}
+  : typedid INFIXLAMBDA term  {Preabsyn.LambdaTerm(
+                                [Preabsyn.TypeSymbol(getTypedIDSym $1, getTypedIDType $1,
+                                getTypedIDKind $1, getTypedIDPos $1)],
+                                (List.rev $3), getPos 1)}
   | atomterm                  {$1}
   ;
 
