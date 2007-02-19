@@ -1,35 +1,35 @@
 (*****************************************************************************
- *Absyn:                                                                     *
- * The abstract syntax representation.                                       *
- ****************************************************************************)
+*Absyn:
+* The abstract syntax representation.
+*****************************************************************************)
 type pos = Errormsg.pos
 type symbol = Symbol.symbol
 
-(****************************************************************************
- *Kinds:                                                                    *
- * (symbol, arity, index)                                                   *
- ***************************************************************************)
-type akindInfo = (symbol * int option * int option ref * pos) 
+(*****************************************************************************
+*Kinds:
+* (symbol, arity, index, position)
+*****************************************************************************)
+type akindinfo = (symbol * int option * int option ref * pos) 
 
 and akind = 
-	LocalKind of akindInfo
+LocalKind of akindInfo
   | GlobalKind of akindInfo
   | PervasiveKind of akindInfo
 
 (*****************************************************************************
- *Type Variable Data:                                                        *
- * (firstuse, lastuse, perm, safety, heapvar, offset, firstgoal, lastgoal)   *
- ****************************************************************************)
+*Type Variable Data:
+* (firstuse, lastuse, perm, safety, heapvar, offset, firstgoal, lastgoal)
+*****************************************************************************)
 and atypevar = 
-    TypeVar of (atype option ref * atype option ref * bool option ref * 
-				  bool option ref * bool option ref * int option ref * 
-				  int option ref * int option ref)
+  TypeVar of (atype option ref * atype option ref * bool option ref * 
+    bool option ref * bool option ref * int option ref * 
+    int option ref * int option ref)
 
-(****************************************************************************
- * Type:                                                                    *
- ***************************************************************************)
+(*****************************************************************************
+*Type:
+*****************************************************************************)
 and atype = 
-	SkeletonVarType of (int ref)
+    SkeletonVarType of (int ref)
   | TypeVarType of (atypevar option ref * bool option ref)
   |	ArrowType of (atype * atype)
   | AppType of (akind * atype list)
@@ -37,50 +37,49 @@ and atype =
   | TypeRefType of (atype)
   | ErrorType
 
-(****************************************************************************
- * Type Skeleton: (type, tyskel table index, adjust)                        *
- ***************************************************************************)
-
+(*****************************************************************************
+*Type Skeleton: (type, tyskel table index, adjust)
+*****************************************************************************)
 and askeleton = Skeleton of (atype * int option ref * bool ref)
 
-(****************************************************************************
- * Type Abbreviations:                                                      *
- ***************************************************************************)
+(*****************************************************************************
+*Type Abbreviations:
+*****************************************************************************)
 and atypeabbrev =
-	TypeAbbrev of (symbol * symbol list * atype * pos)
+  TypeAbbrev of (symbol * symbol list * atype * pos)
 
 (****************************************************************************
- *Constants:                                                                *
- * Symbol                                                                   *
- * Fixity                                                                   *
- * Precedence                                                               *
- * Export Def                                                               *
- * Use Only                                                                 *
- * No Defs                                                                  *
- * Closed                                                                   * 
- * (Type Preserving)                                                        *
- * Skeleton                                                                 *
- * Type Environment Size                                                    *
- * Neededness                                                               *
- * (Type Environment)                                                       *
- * Reducible (true for exportdef and anonymous constants or local constants *
- *            marked as useonly in the imported and accumulated modules)    *
- * Code Info                                                                *
- * Constant Type                                                            *
- * Index                                                                    *
- ***************************************************************************)
+*Constants:
+* Symbol
+* Fixity
+* Precedence
+* Export Def
+* Use Only
+* No Defs
+* Closed
+* (Type Preserving)
+* Skeleton
+* Type Environment Size
+* Neededness
+* (Type Environment)
+* Reducible (true for exportdef and anonymous constants or local constants
+*            marked as useonly in the imported and accumulated modules)
+* Code Info
+* Constant Type
+* Index
+* Position
+***************************************************************************)
 and aconstant = 
-	Constant of (symbol * afixity * int * bool * bool * bool * bool ref *
-				   bool * askeleton * int ref * bool array option ref * 
-				   atype list * bool ref * acodeinfo option ref * 
-				   aconstanttype * int ref * pos)
+  Constant of (symbol * afixity * int * bool * bool * bool * bool ref *
+    bool * askeleton * int ref * bool array option ref * atype list *
+    bool ref * acodeinfo option ref * aconstanttype * int ref * pos)
 
 and aconstanttype =
-	GlobalConstant
+    GlobalConstant
   | LocalConstant
   | PervasiveConstant of bool (*  Can this constant be redefined? *)
   | HiddenConstant
-  | Anonymous
+  | AnonymousConstant
 
 and afixity = 
     Infix
@@ -93,115 +92,108 @@ and afixity =
   | NoFixity
 
 and acodeinfo = 
-	Builtin
+    Builtin
   | Clauses of aclausesblock
 
 (*****************************************************************************
- * Variables (name based):                                                   * 
- *   (symbol, hidden constant, newtysy, type)                                *
- ****************************************************************************)
-and atysyinfo = (symbol * aconstant option ref * bool ref * atype option ref)
+*Variables (name based):
+*   (symbol, hidden constant, newtysy, type)
+*****************************************************************************)
+and atypesymbolinfo = (symbol * aconstant option ref * bool ref * atype option ref)
  
-and atysy = 
-	ImplicitVar of atysyinfo
-  | AnonImplicitVar of atysyinfo
-  | BoundVar of atysyinfo
+and atypesymbol = 
+    ImplicitVar of atypesymbolinfo
+  | AnonymousImplicitVar of atypesymbolinfo
+  | BoundVar of atypesymbolinfo
 
 (*****************************************************************************
- * Variables (logic variables):                                              *
- *   (oneuse, perm, safety, heapvar, offset, firstgoal, lastgoal, lastuse)   *
- ****************************************************************************)
-and avar = Var of (bool option ref * bool option ref * bool option ref  * 
-					 bool option ref * int option ref * int option ref * 
-					 int option ref * aterm option ref)
+*Variables (logic variables):
+*   (oneuse, perm, safety, heapvar, offset, firstgoal, lastgoal, lastuse)
+*****************************************************************************)
+and avar =
+  Var of (bool option ref * bool option ref * bool option ref *
+    bool option ref * int option ref * int option ref * int option ref *
+    aterm option ref)
 
 (*****************************************************************************
- * Variable occurrences:                                                     *
- ****************************************************************************)
-and freevarinfo = 
-	NamedFreeVar of (atysy)
+*Variable occurrences:
+*****************************************************************************)
+and afreevarinfo = 
+    NamedFreeVar of (atypesymbol)
   | FreeVar of (bool option ref * avar)
 
-and boundvarinfo =
-	NamedBoundVar of (atysy)
+and aboundvarinfo =
+    NamedBoundVar of (atysy)
   | DBIndex of int
 	
-(****************************************************************************
- * Strings:                                                                 *
- ***************************************************************************)
+(*****************************************************************************
+*Strings:
+*****************************************************************************)
 and stringdata = (string * int option ref * bool option ref)
 
-and strinfo =
-	StrLiteral of (string)
-  | StrData of (stringdata)
+and stringinfo =
+    StringLiteral of (string)
+  | StringData of (stringdata)
 
-(****************************************************************************
- * Abstractions:                                                            *
- ***************************************************************************)
-and abstractionInfo =
-	NestedAbst of (atysy * aterm)
-  | UNestedAbst of (atysy list * int * aterm)
+(*****************************************************************************
+*Abstractions:
+*****************************************************************************)
+and aabstractioninfo =
+    NestedAbstraction of (atypesymbol * aterm)
+  | UNestedAbstraction of (atypesymbol list * int * aterm)
 
-(****************************************************************************
- * Applications:                                                            *
- ***************************************************************************)
-and applicationInfo =
-	CurriedApp of (aterm * aterm)
-  | FirstOrderApp of (aterm * aterm list * int)
+(*****************************************************************************
+*Applications:
+*****************************************************************************)
+and aapplicationinfo =
+    CurriedApplication of (aterm * aterm)
+  | FirstOrderApplication of (aterm * aterm list * int)
 
-(****************************************************************************
- * Terms:                                                                   *
- ***************************************************************************)
+(*****************************************************************************
+*Terms:
+*****************************************************************************)
 and aterm =
-	IntTerm         of (int * bool * pos option)
-  | RealTerm        of (float * bool * pos option)
-  | StringTerm      of (strinfo * bool * pos option)
-  | ConstantTerm    of (aconstant * atype list * bool * pos option)
-  | FreeVarTerm     of (freevarinfo * bool * pos option)
-  | BoundVarTerm    of (boundvarinfo * bool * pos option)
-  | AbstractionTerm of (abstractionInfo * bool * pos option)
-  | ApplicationTerm of (applicationInfo * bool * pos option)
+    IntTerm of (int * bool * pos option)
+  | RealTerm of (float * bool * pos option)
+  | StringTerm of (astringinfo * bool * pos option)
+  | ConstantTerm of (aconstant * atype list * bool * pos option)
+  | FreeVarTerm of (afreevarinfo * bool * pos option)
+  | BoundVarTerm of (aboundvarinfo * bool * pos option)
+  | AbstractionTerm of (aabstractioninfo * bool * pos option)
+  | ApplicationTerm of (aapplicationinfo * bool * pos option)
   | ErrorTerm
 
-(****************************************************************************
- * Goals:                                                                   *
- ***************************************************************************)
+(*****************************************************************************
+*Goals:
+*****************************************************************************)
 and agoal = 
-	AtomicGoal of (aconstant * int * int * aterm list * atype list)
-  | AndGoal    of (agoal * agoal)
-  | ImpGoal    of (adefinitions * avarinits * agoal)
-  | AllGoal    of (ahcvarassoc * agoal)
-  | SomeGoal   of (avar * agoal)
-(*| OrGoal     of (agoal * agoal) *)
+    AtomicGoal of (aconstant * int * int * aterm list * atype list)
+  | AndGoal of (agoal * agoal)
+  | ImpGoal of (adefinitions * avarinits * agoal)
+  | AllGoal of (ahcvarassoc * agoal)
+  | SomeGoal of (avar * agoal)
+(*| OrGoal of (agoal * agoal) *)
 
 and adefinitions = ((aconstant * aclausesblock) list)
-
 and avarinits = (avar list)
-
 and ahcvarassoc = ((avar * aconstant) list)
 
 (****************************************************************************
- * Clauses:                                                                 *
+ *Clauses:
  * (head, args, tyargs, numargs, numtargs, body, offset, varmap, tyvarmap   *
- *  gesplist, cutvar, hasenv, impmods)                                      *
+ *gesplist, cutvar, hasenv, impmods)                                      *
  ***************************************************************************)
-(*
-and aclause = 
-    Clause of (aconstant * aterm list * atype list * int * int * agoal option *
-				 atermvarmap * atypevarmap * int option ref * 
-				 goalenvassoc ref * avar option ref * bool ref * impmods ref)
-*)
 
 and aclause = 
     Fact of (aconstant * aterm list * atype list * int * int * 
-			   atermvarmap * atypevarmap * int option ref * impmods)
+			   atermvarmap * atypevarmap * int option ref * aimportedmodule list)
   | Rule of (aconstant * aterm list * atype list * int * int * atermvarmap *
-			   atypevarmap * agoal * goalenvassoc ref * avar option ref *
-			   bool ref * impmods)
+			   atypevarmap * agoal * agoalenvassoc ref * avar option ref *
+			   bool ref * aimportedmodule list)
 
 
 (* Goal number and environment size association list*)
-and goalenvassoc = ((int * int) list)
+and agoalenvassoc = ((int * int) list)
 
 (* term variable map list *)
 and atermvarmap  = ((avar * avar) list)
@@ -209,42 +201,98 @@ and atermvarmap  = ((avar * avar) list)
 (* type variable map list *)
 and atypevarmap  = ((atypevar * atypevar) list)
 
-(* a clauses block: (clauses, last, offset, nextclause, closed, mapped) *)	  
+(* clauses block: (clauses, last, offset, nextclause, closed, mapped) *)	  
 and aclausesblock = (aclause list ref * aclause ref * int ref * 
 					   int option ref * bool ref * bool ref)
 
-(****************************************************************************
- * Modules:                                                                 *
- * (modname, imported, accumulated, kind table, constant table,             *
- *	type abbre table, string list, local kind list, global kind list,       *
- *  local constant list, global constant list, hidden constant list,        *
- *  skeleton list, hskeleton list, clauses blocks list)                     *
- ***************************************************************************)
+(*****************************************************************************
+*Modules:
+* (modname, imported, accumulated, kind table, constant table,
+* type abbre table, string list, local kind list, global kind list,
+* local constant list, global constant list, hidden constant list,
+* skeleton list, hskeleton list, clauses blocks list)
+*****************************************************************************)
 
 and amodule = 
-	 Module of (string * impmods * accmods * aconstant Table.SymbolTable.t *
-				  akind Table.SymbolTable.t * atypeabbrev Table.SymbolTable.t *
-				  strinfo list * akind list * akind list * aconstant list *
-				  aconstant list * aconstant list * askeleton list *
-				  askeleton list * aclauseinfo)
-  |  Signature
+    Module of (string * aimportedmodule list * aaccummulatedmodule list *
+      aconstant Table.SymbolTable.t * akind Table.SymbolTable.t *
+      atypeabbrev Table.SymbolTable.t * astringinfo list * akind list *
+      akind list * aconstant list * aconstant list * aconstant list *
+      askeleton list * askeleton list * aclauseinfo)
+  | Signature of (akind list * aconstant list)
 
-and impmods = ((string * int * amodsig) list)
+and aimportedmodule = 
+  ImportedModule of (string * int * amodule)
 
-and accmods = ((string * amodsig) list)
-
-(* global kinds list and global constants list *)
-and amodsig = (akind list * aconstant list)
+and aaccummulatedmodule =
+  AccummulatedModule of (string * amodule)
 
 and aclauseinfo = 
-	 ClauseBlocks of aclausesblock list
-  |  PreClauseBlocks of adefinitions
+    ClauseBlocks of aclausesblock list
+  | PreClauseBlocks of adefinitions
 
-(****************************************************************************)
-(* Auxiliary functions                                                      *)
-(****************************************************************************)
-val tysyHiddenConst : atysy -> aconstant
-val tysyType : atysy -> atype
+(*****************************************************************************
+*Auxiliary functions:
+*****************************************************************************)
+val printAbsyn : amodule -> out_channel -> unit
 
-val constantCodeInfoFd : aconstant -> acodeinfo option ref
-val constantTypeEnvSize : aconstant -> int
+val getKindArity : akind -> int
+val getKindPos : akind -> pos
+val getKindName : akind -> string
+val string_of_kind : akind -> string
+
+val getConstantPos : aconstant -> pos
+val getConstantFixity : aconstant -> afixity
+val getConstantPrec : aconstant -> int
+val getConstantSymbol : aconstant -> symbol
+val getConstantSkeleton : aconstant -> askeleton
+val getConstantName : aconstant -> string
+
+val getSkeletonType : askeleton -> atype
+val getSkeletonSize : askeleton -> int
+
+val string_of_fixity : afixity -> string
+val isFixityPrefix : afixity -> bool
+val isFixityPostfix : afixity -> bool
+
+val errorType : atype
+val getArrowTypeTarget : atype -> atype
+val getArrowTypeArguments : atype -> atype list
+val makeTypeVariable : unit -> atype
+val getTypeVariableReference : atype -> atype option ref
+val getTypeSetSet : atype -> atype list ref
+val getTypeSetDefault : atype -> atype
+val getTypeArguments : atype -> atype list
+val dereferenceType : atype -> atype
+val isArrowType : atype -> bool
+val isVariableType : atype -> bool
+val isTypeSetType : atype -> bool
+val isConstantType : atype -> bool
+val makeArrowType : atype -> atype list -> atype
+val string_of_type : atype -> string
+val isSkeletonVariableType : atype -> bool
+val getSkeletonVariableIndex : atype -> int
+
+val errorTerm : aterm
+val getTermPos : aterm -> pos
+val string_of_term : aterm -> string
+val makeFreeVarTerm : atypesymbol -> pos -> aterm
+val makeBoundVarTerm : atypesymbol -> pos -> aterm
+val getTermAbstractionVar : aterm -> atypesymbol
+
+val maxPrec : int
+
+val getTypeSymbolType : atypesymbol -> atypesymboltype
+val getTypeSymbolRawType : atypesymbol -> atype
+val getTypeSymbolSymbol : atypesymbol -> symbol
+
+val getModuleConstantTable : amodule -> aconstant Table.SymbolTable.t
+val getModuleKindTable : amodule -> akind Table.SymbolTable.t
+val getModuleTypeAbbrevTable : amodule -> atypeabbrev Table.SymbolTable.t
+val getModuleClauses : amodule -> aclause list
+
+val getTypeSymbolHiddenConst : atysy -> aconstant
+val getTypeSybolType : atysy -> atype
+
+val getConstantCodeInfoFd : aconstant -> acodeinfo option ref
+val getConstantTypeEnvSize : aconstant -> int
