@@ -9,9 +9,8 @@ val commaConstant : Absyn.aconstant
 val consConstant : Absyn.aconstant
 val nilConstant : Absyn.aconstant
 
-val nextId : unit -> int
-
 (*
+val nextId : unit -> int
 val appFixity : Absyn.afixity
 val appPrec : int
 *)

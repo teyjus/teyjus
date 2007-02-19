@@ -20,17 +20,14 @@ let getTypeAndBindingsBindings = function
   TypeAndBindings(_, bs) -> bs
 
 type typeandenvironment =
-  TypeAndEnvironment of (Absyn.atype * int * bool)
+  TypeAndEnvironment of (Absyn.atype * int)
 
 (*  TypeAndEnvironment Accessors  *)
 let getTypeAndEnvironmentType = function
-  TypeAndEnvironment(t, _, _) -> t
+  TypeAndEnvironment(t, _) -> t
     
 let getTypeAndEnvironmentSize = function
-  TypeAndEnvironment(_, i, _) -> i
-
-let getTypeAndEnvironmentPreserving = function 
-  TypeAndEnvironment(_, _, b) -> b
+  TypeAndEnvironment(_, i) -> i
 
 type argstypes =
   ArgsTypes of (int * Absyn.atype list * Absyn.atype list)
@@ -265,13 +262,12 @@ and translateTypeSkeleton = fun ty kindtable typeabbrevtable newsymfunc ->
     (*  First translate the target.  Store the skeleton index to check
         for type preservation.  *)
     let TypeAndBindings(target', ts) = rationalizeType target Table.empty kindtable typeabbrevtable newsymfunc rationalizeSkeletonVar in
-    let currentIndex = !typeSkeletonIndex in
-    
+
     (*  Translate all of the arguments  *)
     let args' = translateArgs args ts in
     
     (*  Rebuild the arrow type as absyn *)
-    TypeAndEnvironment(buildArrow target' args', !typeSkeletonIndex, (currentIndex = !typeSkeletonIndex))
+    TypeAndEnvironment(buildArrow target' args', !typeSkeletonIndex)
     
   | t -> invalid_arg "Types.translateArrow: invalid type"
   in
@@ -283,7 +279,7 @@ and translateTypeSkeleton = fun ty kindtable typeabbrevtable newsymfunc ->
       translateArrow ty
   | _ ->
     let TypeAndBindings(t, ts) = rationalizeType ty Table.empty kindtable typeabbrevtable newsymfunc rationalizeSkeletonVar in
-    TypeAndEnvironment(t, !typeSkeletonIndex, true) 
+    TypeAndEnvironment(t, !typeSkeletonIndex) 
 
 (**********************************************************************
 *translateFixities:
@@ -334,17 +330,18 @@ and translateFixities = fun fixities constants ->
         [] -> ctable
       | Preabsyn.Symbol(sym,_,pos)::ss ->
           (match Table.find sym ctable with
-            Some Absyn.Constant(asym,fix,p,b1,b2,b3,s,i1,skellist,tlist,codeinfo,id,ctype,pos') ->
+            Some Absyn.Constant(asym,fix,p,b1,b2,b3,b4,s,i1,skellist,tlist,codeinfo,id,ctype,pos') ->
               if (getFixityArity k) <> (getTypeArity tlist) then
                 (Errormsg.error pos ("declared fixity is incompatible with declared type arity" ^
                   (Errormsg.see pos' "constant declaration"));
                 ctable)
               else if not (checkFixity fix (getFixity k)) then
-                (Errormsg.error pos ("constant " ^ (Symbol.name sym) ^ " already declared with fixity " ^ (Absyn.string_of_fixity fix) ^
+                (Errormsg.error pos ("constant " ^ (Symbol.name sym) ^ " already declared with fixity " ^ (Absyn.string_of_fixity !fix) ^
                   (Errormsg.see pos' "constant declaration"));
                 ctable)
               else
-                (Table.add sym (Absyn.Constant(asym,(getFixity k),prec,b1,b2,b3,s,i1,skellist,tlist,codeinfo,id,ctype,pos)) ctable)
+                (fix := (getFixity k);
+                ctable)
           | None ->
               (Errormsg.error pos ("fixity declaration: undeclared constant " ^
                 (Symbol.name sym));
@@ -360,15 +357,13 @@ and translateFixities = fun fixities constants ->
       let constants' = translateFixities fs constants in
       (translate' f constants')
 
+
 (**********************************************************************
 *translateLocalKinds:
 **********************************************************************)
 and translateLocalKinds = fun kinds ->
-  let kindIndex = ref 0 in
   let buildkind = fun sym arity pos ->
-    let k = Absyn.LocalKind(sym, arity, Absyn.KindIndex(!kindIndex), pos) in
-    (kindIndex := !kindIndex + 1;
-    k)
+    Absyn.LocalKind(sym, arity, ref 0, pos)
   in
   translateKinds kinds buildkind Table.empty
 
@@ -376,11 +371,8 @@ and translateLocalKinds = fun kinds ->
 *translateGlobalKinds:
 **********************************************************************)
 and translateGlobalKinds = fun kinds ->
-    let kindIndex = ref 0 in
     let buildkind = fun sym arity pos ->
-      let k = Absyn.GlobalKind(sym, arity, Absyn.KindIndex(!kindIndex), pos) in
-      (kindIndex := !kindIndex + 1;
-      k)
+      Absyn.GlobalKind(sym, arity, ref 0, pos)
     in
     translateKinds kinds buildkind Table.empty
 
@@ -419,15 +411,47 @@ and translateKind = fun kind buildkind klist ->
       (addKind syms a pos klist)
 
 
+(**********************************************************************
+*translateGlobalConstants:
+**********************************************************************)
 and translateGlobalConstants = fun clist kindtable typeabbrevtable ->
-  let buildConstant = fun sym ty tyskel pres pos ->
-    Absyn.Constant(sym, Absyn.NoFixity, -1, false, false, false, false, pres, tyskel, ty, Absyn.Clauses([]), Pervasive.nextId (), Absyn.LocalConstant, pos)
+  let buildConstant = fun sym ty tyskel pos ->
+    Absyn.Constant(sym, ref Absyn.NoFixity, ref (-1), ref false, ref false,
+      ref false, ref false, ref false, ref false, tyskel, ty, Absyn.Clauses(ref []),
+      ref 0, Absyn.LocalConstant, pos)
   in
   translateConstants clist kindtable typeabbrevtable buildConstant
 
+(**********************************************************************
+*translateLocalConstants:
+**********************************************************************)
 and translateLocalConstants = fun clist kindtable typeabbrevtable ->
-  let buildConstant = fun sym ty tyskel pres pos ->
-    Absyn.Constant(sym, Absyn.NoFixity, -1, false, false, false, false, pres, tyskel, ty, Absyn.Clauses([]), Pervasive.nextId (), Absyn.LocalConstant, pos)
+  let buildConstant = fun sym ty tyskel pos ->
+    Absyn.Constant(sym, ref Absyn.NoFixity, ref (-1), ref false, ref false,
+      ref false, ref false, ref false, ref false, tyskel, ty, Absyn.Clauses(ref []),
+      ref 0, Absyn.LocalConstant, pos)
+  in
+  translateConstants clist kindtable typeabbrevtable buildConstant
+
+(**********************************************************************
+*translateUseOnlyConstants:
+**********************************************************************)
+and translateUseOnlyConstants = fun clist kindtable typeabbrevtable ->
+  let buildConstant = fun sym ty tyskel pos ->
+    Absyn.Constant(sym, ref Absyn.NoFixity, ref (-1), ref false, ref true,
+    ref false, ref false, ref false, ref false, tyskel, ty, Absyn.Clauses(ref []),
+    ref 0, Absyn.LocalConstant, pos)
+  in
+  translateConstants clist kindtable typeabbrevtable buildConstant
+
+(**********************************************************************
+*translateClosedConstants:
+**********************************************************************)
+and translateClosedConstants = fun clist kindtable typeabbrevtable ->
+  let buildConstant = fun sym ty tyskel pos ->
+    Absyn.Constant(sym, ref Absyn.NoFixity, ref (-1), ref false, ref false,
+    ref false, ref true, ref false, ref false, tyskel, ty, Absyn.Clauses(ref []),
+    ref 0, Absyn.LocalConstant, pos)
   in
   translateConstants clist kindtable typeabbrevtable buildConstant
 
@@ -456,11 +480,11 @@ and translateConstant = fun c clist kindtable typeabbrevtable buildconstant ->
   *translate':
   * Enter all names into table.
   ********************************************************************)
-  let rec enter = fun names ty tyskel pres clist ->
+  let rec enter = fun names ty tyskel clist ->
     match names with
       Preabsyn.Symbol(name,_,p)::ns ->
-        let clist' = (buildconstant name ty tyskel pres p) :: clist in
-        (enter ns ty tyskel pres clist')
+        let clist' = (buildconstant name ty tyskel p) :: clist in
+        (enter ns ty tyskel clist')
     | [] -> clist
   in
   
@@ -469,11 +493,11 @@ and translateConstant = fun c clist kindtable typeabbrevtable buildconstant ->
 
   match c with
     Preabsyn.Constant(names, Some t, pos) ->
-      let TypeAndEnvironment(tyskel, size, pres) = translateTypeSkeleton t kindtable typeabbrevtable newSymFunc in
+      let TypeAndEnvironment(tyskel, size) = translateTypeSkeleton t kindtable typeabbrevtable newSymFunc in
       let ty = translateType' t kindtable typeabbrevtable in
-      (enter names [ty] [Absyn.Skeleton(tyskel, size, pres)] pres clist)
+      (enter names [ty] [Absyn.Skeleton(tyskel, size)] clist)
   | Preabsyn.Constant(names, None, pos) ->
-      (enter names [] [] false clist)
+      (enter names [] [] clist)
 
 (********************************************************************
 *translateTypeAbbrevs:
@@ -619,8 +643,8 @@ and compareConstants = fun c1 c2 ->
     (f1 = f2 || (f1 = -1 || f2 = -1))
   in
   
-  let Absyn.Constant(s,fix,prec,exp,useonly,nodefs,closed,pres,skels,tys,ci,id,ctype,p) = c1 in
-  let Absyn.Constant(s',fix',prec',exp',useonly',nodefs',closed',pres',skels',tys',ci',id',ctype',p') = c2 in
+  let Absyn.Constant(s,fix,prec,exp,useonly,nodefs,closed,pres,reducible,skels,tys,ci,id,ctype,p) = c1 in
+  let Absyn.Constant(s',fix',prec',exp',useonly',nodefs',closed',pres',reducible',skels',tys',ci',id',ctype',p') = c2 in
   
   if not (checkFixity fix fix') then
     (Errormsg.error p ("constant already declared with fixity " ^ (Absyn.string_of_fixity fix') ^
@@ -641,14 +665,14 @@ and compareConstants = fun c1 c2 ->
 * equal, the check is true, and if either is not yet defined, it is
 * true.
 **********************************************************************)
-and checkFixity = fun f1 f2 ->
+and checkFixity f1 f2 =
   (f1 = f2 || (f1 = Absyn.NoFixity || f2 = Absyn.NoFixity))
 
 (**********************************************************************
 *translate:
 * Convert from a preabsyn module to an absyn module.
 **********************************************************************)
-let rec translate = fun mod' sig' ->
+let rec translate mod' sig' =
     let (ktable, ctable, atable) = translateSignature sig' Pervasive.pervasiveKinds Pervasive.pervasiveConstants Pervasive.pervasiveTypeAbbrevs in
     let amod = translateModule mod' ktable ctable atable in
     amod
@@ -749,8 +773,7 @@ and translateSignature = fun s ktable ctable tabbrevtable ->
   let ctable = mergeGlobalConstants gconstantlist ctable in
 
   (*  Translate fixities *)
-  let ctable = translateFixities fixities ctable in
-    
+  let ctable = translateFixities fixities ctable in  
   (ktable,ctable,tabbrevtable)
 
 (********************************************************************
@@ -880,7 +903,7 @@ and translateModule = fun mod' ktable ctable atable ->
     in
     
     (******************************************************************
-    *processAccumModes:
+    *processAccumMods:
     * Convert a list of accumulated modules filenames into a list of
     * preabsyn signatures.
     ******************************************************************)
@@ -893,7 +916,7 @@ and translateModule = fun mod' ktable ctable atable ->
     (********************************************************************
     *translateAccumMods:
     * Goes through all of the accumulated modules, parses them, and
-    * gets the appropriate tables and suchlike.
+    * gets the appropriate tables and suchlike.  In addition, it 
     ********************************************************************)
     let rec translateAccumMods = fun accums ktable ctable atable ->
       match accums with
@@ -924,18 +947,19 @@ and translateModule = fun mod' ktable ctable atable ->
         let atable' = translateTypeAbbrevs tabbrevs ktable in
         let atable = mergeTypeAbbrevs atable' atable in
         
-        
         (*  Translate local, global, and closed constants and get the
             associated tables. *)
         let gconstlist = translateGlobalConstants gconsts ktable atable in
         let lconstlist = translateLocalConstants lconsts ktable atable in
+        let uconstlist = translateUseOnlyConstants uconsts ktable atable in
         
         let ctable = mergeGlobalConstants gconstlist ctable in
         let ctable = mergeLocalConstants lconstlist ctable in
+        let ctable = mergeUseOnlyConstants uconstlist ctable in
         
         (*  Apply fixity flags  *)
         let ctable = translateFixities fixities ctable in
-        
+                
         let amod = Absyn.Module(name, ctable, ktable, atable, [], [], [], [], [], [], [], [], []) in
         amod
     | Preabsyn.Signature _ ->

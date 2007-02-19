@@ -247,8 +247,10 @@ and parseTerm = fun term fvs bvs amodule stack ->
       let TermAndVariables(term', fvs') = tv in
       (parseTerms headterms fvs' bvs' amodule (reduceToListTerm (Some term')) newStack)
   | Preabsyn.LambdaTerm(b, t, pos) ->
-      let bvs' = parseTypeSymbols b in
-      Errormsg.impossible pos "Parse.parseTerm: lambda term unimplemented."
+      let bbvs = parseTypeSymbols b in
+      let (tv', fvs', bvs', stack') = parseTerms (t fvs (bbvs @ bvs) (reduceToTerm) newStack) in
+      let term' = getTermAndVariablesTerm tv' in
+      (TermAndVariables(Absyn.AbstractionTerm(term', bbvs, pos), getTermAndVariablesVariables tv'))
   | Preabsyn.IntTerm(i, pos) -> (TermAndVariables((makeType (Absyn.IntTerm(i, pos)) "int" (Absyn.getModuleKindTable amodule) pos), fvs), fvs, bvs, stack)
   | Preabsyn.RealTerm(r, pos) -> (TermAndVariables((makeType (Absyn.RealTerm(r, pos)) "real" (Absyn.getModuleKindTable amodule) pos), fvs), fvs, bvs, stack)
   | Preabsyn.StringTerm(s, pos) -> (TermAndVariables((makeType (Absyn.StringTerm(s, pos)) "string" (Absyn.getModuleKindTable amodule) pos), fvs), fvs, bvs, stack)
@@ -316,15 +318,30 @@ and parseTerms = fun terms fvs bvs amodule oper stack ->
 *parseTypeSymbols:
 * Parses a list of type symbols.
 **********************************************************************)
-and parseTypeSymbols =
-  Errormsg.impossible Errormsg.none "Parse.parseTypeSymbols: unimplemented."
+and parseTypeSymbols tsymlist =
+  let newBoundTypeSymbol sym ty pos =
+    match ty with
+      Some t ->
+        Absyn.BoundTypeSymbol(true, Absyn.RawType(t), sym, pos)
+    | None ->
+        Absyn.BoundTypeSymbol(true, Absyn.makeVariableType (), sym, pos)
+  in
+
+  let rec parse' tsymlist =
+    match tsymlist with
+      (Preabsyn.TypeSymbol(sym, ty, k, pos))::tsymlist' ->
+        let bv = newBoundTypeSymbol sym ty pos in
+        bv :: (parse' tsymlist')
+    | [] -> []
+  in
+  parse' tsymlist
 
 (**********************************************************************
 *translateId:
 * Converts a preabsyn ID to an absyn representation.  How it does so
 * depends on what sort of ID it is.  A better description is in order.
 **********************************************************************)
-and translateId = fun term fvs bvs amodule ->
+and translateId term fvs bvs amodule =
   let Preabsyn.IdTerm(sym, ty, k, pos) = term in
   
   (*  Anonymous Variable  *) 
@@ -597,15 +614,16 @@ and reduceOperation = fun list amodule stack ->
       
       Next, check for a comma.  If the list argument indicates that the parser
       is parsing a list (in bracket notation) the comma will be interpereted as
-      a cons (::), otherwise it will be interpreted as a conjunction (,).
-      
-      Next, check for a sigma, pi, or lambda term.
+      a cons (::), otherwise it will be interpreted as a conjunction (,).      
   *)
+  
   let _::ot::_ = (getStackStack stack) in
   match ot with
-    StackOp(c,_,_) -> if (Absyn.getConstantSymbol c) = (Absyn.getConstantSymbol Pervasive.genericApplyConstant) then
+    StackOp(c,_,_) -> 
+                      let csym = (Absyn.getConstantSymbol c) in
+                      if csym = (Absyn.getConstantSymbol Pervasive.genericApplyConstant) then
                         (reduceApply stack)
-                      else if (Absyn.getConstantSymbol c) = (Absyn.getConstantSymbol Pervasive.commaConstant) then
+                      else if csym = (Absyn.getConstantSymbol Pervasive.commaConstant) then
                         (reduceComma stack)
                       else
                         reduce' ()
