@@ -46,7 +46,7 @@ and pterm =
     SeqTerm of (pterm list * pos)
   | ListTerm of (pterm list * pos)
   | ConsTerm of (pterm list * pterm * pos)
-  | LambdaTerm of (pboundterm * pterm * pos)
+  | LambdaTerm of (ptypesymbol list * pterm list * pos)
   | IdTerm of (symbol * ptype option * pidkind * pos)
   | RealTerm of (float * pos)
   | IntTerm of (int * pos)
@@ -71,8 +71,9 @@ and pfixity = Fixity of (psymbol list * pfixitykind * int * pos)
 ********************************************************************)
 type pmodule =
     Module of (string * pconstant list * pconstant list * 
-      pconstant list * pfixity list * pkind list * pkind list * ptypeabbrev list *
-      pclause list * psymbol list * psymbol list * psymbol list)
+      pconstant list * pconstant list * pfixity list * pkind list *
+      pkind list * ptypeabbrev list * pclause list * psymbol list *
+      psymbol list * psymbol list)
   | Signature of (string * pconstant list * pkind list *
       ptypeabbrev list * pfixity list * psymbol list)
 
@@ -121,7 +122,7 @@ and string_of_term = fun term ->
   | StringTerm(s, pos) ->
       ("StringTerm(" ^ s ^ ", " ^ (Errormsg.string_of_pos pos) ^ ")")
   | LambdaTerm(lt, t, pos) ->
-      ("LambdaTerm(" ^ (string_of_boundterm lt) ^ ", " ^ (string_of_term t) ^ ", " ^ (Errormsg.string_of_pos pos) ^ ")")
+      ("LambdaTerm(" ^ (string_of_typesymbollist lt) ^ ", " ^ (string_of_termlist t) ^ ", " ^ (Errormsg.string_of_pos pos) ^ ")")
   | ErrorTerm ->
       ("Error")     
 
@@ -275,7 +276,7 @@ let printPreAbsyn = fun m out ->
           output_line ")")
 
     and printPreAbsyn' = function
-        Module(name, gconstants, lconstants, cconstants, fixities, gkinds, lkinds, tabbrevs, clauses, accummod, accumsig, usesig) ->
+        Module(name, gconstants, lconstants, cconstants, uconstants, fixities, gkinds, lkinds, tabbrevs, clauses, accummod, accumsig, usesig) ->
           (output_line ("Module:" ^ name);
           output_line "Constants:";
           List.iter printConstant gconstants;
@@ -326,7 +327,7 @@ let getTermPos = function
   | ErrorTerm -> (Errormsg.impossible Errormsg.none "Preabsyn.getTermPos: invalid term")
 
 let getModuleClauses = function
-    Module(name, gconsts, lconsts, cconsts, fixities,
+    Module(name, gconsts, lconsts, cconsts, uconsts, fixities,
       gkinds, lkinds, tabbrevs, clauses, accummods,
       accumsigs, usesigs) -> clauses
   | _ -> Errormsg.impossible Errormsg.none "Preabsyn.getModuleClauses: invalid module"

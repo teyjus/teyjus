@@ -47,7 +47,7 @@ and pterm =
     SeqTerm of (pterm list * pos)
   | ListTerm of (pterm list * pos)
   | ConsTerm of (pterm list * pterm * pos)
-  | LambdaTerm of (pboundterm * pterm * pos)
+  | LambdaTerm of (ptypesymbol list * pterm list * pos)
   | IdTerm of (symbol * ptype option * pidkind * pos)
   | RealTerm of (float * pos)
   | IntTerm of (int * pos)
@@ -96,8 +96,9 @@ and pfixity = Fixity of (psymbol list * pfixitykind * int * pos)
 ********************************************************************)
 type pmodule =
     Module of (string * pconstant list * pconstant list * 
-      pconstant list * pfixity list * pkind list * pkind list * ptypeabbrev list *
-      pclause list * psymbol list * psymbol list * psymbol list)
+      pconstant list * pconstant list * pfixity list * pkind list *
+      pkind list * ptypeabbrev list * pclause list * psymbol list *
+      psymbol list * psymbol list)
   | Signature of (string * pconstant list * pkind list *
       ptypeabbrev list * pfixity list * psymbol list)
 
