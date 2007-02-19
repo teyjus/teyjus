@@ -1,34 +1,4 @@
-Compiler Organization:
-
-Coding standards:
-  All tabs are 2 spaces wide.  True tabs are not used.
-
-  Camelcase is used for function and variable names.
-
-  Function definitions should always take the form:
-    let functionName arg1 ... argN =
-      body
-
-    except when pattern matching a single argument:
-    
-    let functionName = function
-      (pattern) -> ...
-    | (pattern) -> ...
-  
-    (note that some definitions use the less obvious
-    let functionName = fun arg1 ... argN = body
-    and are being changed.)
-
-  Datatypes:
-    All labels of a disjoint union refer at least in part to their type.
-    That is, for example
-
-    All datatypes use tuples to represent structured data.  Records
-    are never used.  Accessor functions are defined for each datatype
-    to access individual fields of the tuple, so that one never matches
-    against a tuple to extract a single value.
-
-Module Organization:
+Compiler Module Organization:
   The modules are generally divided into three kinds, those that define
   datatypes and associated functions, those that implement major
   functionality by making use of the aforementioned modules, and finally
