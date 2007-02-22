@@ -12,9 +12,9 @@ type symbol = Symbol.symbol
 type akindinfo = (symbol * int option * int option ref * pos) 
 
 and akind = 
-LocalKind of akindInfo
-  | GlobalKind of akindInfo
-  | PervasiveKind of akindInfo
+    LocalKind of akindinfo
+  | GlobalKind of akindinfo
+  | PervasiveKind of akindinfo
 
 (*****************************************************************************
 *Type Variable Data:
@@ -30,7 +30,7 @@ and atypevar =
 *****************************************************************************)
 and atype = 
     SkeletonVarType of (int ref)
-  | TypeVarType of (atypevar option ref * bool option ref)
+  | TypeVarType of (atypevar option ref * bool ref)
   |	ArrowType of (atype * atype)
   | AppType of (akind * atype list)
   | TypeSetType of (atype * atype list ref)
@@ -58,21 +58,22 @@ and atypeabbrev =
 * No Defs
 * Closed
 * (Type Preserving)
+* Reducible (true for exportdef and anonymous constants or local constants
+*            marked as useonly in the imported and accumulated modules)
 * Skeleton
 * Type Environment Size
 * Neededness
 * (Type Environment)
-* Reducible (true for exportdef and anonymous constants or local constants
-*            marked as useonly in the imported and accumulated modules)
 * Code Info
 * Constant Type
 * Index
 * Position
 ***************************************************************************)
 and aconstant = 
-  Constant of (symbol * afixity * int * bool * bool * bool * bool ref *
-    bool * askeleton * int ref * bool array option ref * atype list *
-    bool ref * acodeinfo option ref * aconstanttype * int ref * pos)
+  Constant of (symbol * afixity ref * int ref * bool ref * bool ref *
+    bool ref * bool ref * bool ref * bool ref * askeleton * int ref *
+    bool array option ref * atype list * acodeinfo option ref *
+    aconstanttype * int ref * pos)
 
 and aconstanttype =
     GlobalConstant
@@ -120,20 +121,20 @@ and avar =
 *****************************************************************************)
 and afreevarinfo = 
     NamedFreeVar of (atypesymbol)
-  | FreeVar of (bool option ref * avar)
+  | FreeVar of (avar * bool option ref)
 
 and aboundvarinfo =
-    NamedBoundVar of (atysy)
+    NamedBoundVar of (atypesymbol)
   | DBIndex of int
 	
 (*****************************************************************************
 *Strings:
 *****************************************************************************)
-and stringdata = (string * int option ref * bool option ref)
+and astringdata = (string * int option ref * bool option ref)
 
-and stringinfo =
+and astringinfo =
     StringLiteral of (string)
-  | StringData of (stringdata)
+  | StringData of (astringdata)
 
 (*****************************************************************************
 *Abstractions:
@@ -212,14 +213,13 @@ and aclausesblock = (aclause list ref * aclause ref * int ref *
 * local constant list, global constant list, hidden constant list,
 * skeleton list, hskeleton list, clauses blocks list)
 *****************************************************************************)
-
 and amodule = 
     Module of (string * aimportedmodule list * aaccummulatedmodule list *
       aconstant Table.SymbolTable.t * akind Table.SymbolTable.t *
       atypeabbrev Table.SymbolTable.t * astringinfo list * akind list *
       akind list * aconstant list * aconstant list * aconstant list *
       askeleton list * askeleton list * aclauseinfo)
-  | Signature of (akind list * aconstant list)
+  | Signature of (string * akind list * aconstant list)
 
 and aimportedmodule = 
   ImportedModule of (string * int * amodule)
@@ -247,6 +247,7 @@ val getConstantPrec : aconstant -> int
 val getConstantSymbol : aconstant -> symbol
 val getConstantSkeleton : aconstant -> askeleton
 val getConstantName : aconstant -> string
+val getConstantType : aconstant -> aconstanttype
 
 val getSkeletonType : askeleton -> atype
 val getSkeletonSize : askeleton -> int
@@ -282,17 +283,16 @@ val getTermAbstractionVar : aterm -> atypesymbol
 
 val maxPrec : int
 
-val getTypeSymbolType : atypesymbol -> atypesymboltype
+(* val getTypeSymbolType : atypesymbol -> atypesymboltype *)
 val getTypeSymbolRawType : atypesymbol -> atype
 val getTypeSymbolSymbol : atypesymbol -> symbol
+val getTypeSymbolHiddenConst : atypesymbol -> aconstant
+val getTypeSymbolType : atypesymbol -> atype
 
 val getModuleConstantTable : amodule -> aconstant Table.SymbolTable.t
 val getModuleKindTable : amodule -> akind Table.SymbolTable.t
 val getModuleTypeAbbrevTable : amodule -> atypeabbrev Table.SymbolTable.t
 val getModuleClauses : amodule -> aclause list
-
-val getTypeSymbolHiddenConst : atysy -> aconstant
-val getTypeSybolType : atysy -> atype
 
 val getConstantCodeInfoFd : aconstant -> acodeinfo option ref
 val getConstantTypeEnvSize : aconstant -> int

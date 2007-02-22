@@ -273,6 +273,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\option.mli"
+				>
+			</File>
+			<File
 				RelativePath=".\parse.mli"
 				>
 			</File>

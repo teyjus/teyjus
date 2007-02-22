@@ -8,6 +8,8 @@ val genericApplyConstant : Absyn.aconstant
 val commaConstant : Absyn.aconstant
 val consConstant : Absyn.aconstant
 val nilConstant : Absyn.aconstant
+val allConstant : Absyn.aconstant
+val implicationConstant : Absyn.aconstant
 
 (*
 val nextId : unit -> int

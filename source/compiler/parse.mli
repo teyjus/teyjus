@@ -4,9 +4,7 @@ type symbol = Symbol.symbol
 (*  Terms and Terms with Free Variables *)
 type ptvarlist = Absyn.atypesymbol Table.SymbolTable.t
 type ptterm = Term of (Absyn.aterm * Types.typemolecule)
-type ptfixedterm = FixedTerm of (Absyn.afixedterm * Types.typemolecule)
 type pttermandvariables = TermAndVariables of (ptterm * ptvarlist)
-type ptfixedtermandvariables = FixedTermAndVariables of (ptfixedterm * ptvarlist)
 
 (*  Stack and stack items.  *)
 type ptstackdata =
@@ -38,7 +36,8 @@ val errorTerm : ptterm
 type ptnewconstant = Absyn.aconstant -> (Absyn.aconstant Table.SymbolTable.t) -> (Absyn.aconstant Table.SymbolTable.t)
 type ptnewkind = Absyn.akind -> Absyn.akind Table.SymbolTable.t -> Absyn.akind Table.SymbolTable.t
 
+val translateTerm : Preabsyn.pterm -> Absyn.amodule -> Absyn.aterm
+val translateClause : Preabsyn.pterm -> Absyn.amodule -> Absyn.aclause list
 
-val translateTerm : Preabsyn.pterm -> Absyn.amodule -> Absyn.afixedterm
-val translateClauses : Preabsyn.pterm list -> Absyn.amodule -> Absyn.aclause list
-
+val andTerm : Absyn.aterm
+val implicationTerm : Absyn.aterm

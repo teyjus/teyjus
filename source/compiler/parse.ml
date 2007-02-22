@@ -207,9 +207,28 @@ let popStack = function
 * Given an abstract syntax representation of a module and a list of
 * preabsyn terms, generates a list of absyn clauses.
 **********************************************************************)
-let rec translateClauses = fun terms amodule ->
-  Errormsg.impossible Errormsg.none "Parse.translateClauses: unimplemented."
- 
+let rec translateClause = fun term amodule ->
+  let (tv, _, _, _) = parseTerm term Table.SymbolTable.empty Table.SymbolTable.empty amodule newStack in
+  let tv' = (getTermAndVariablesTerm tv) in
+  let term' = getTermTerm tv' in
+  let type' = getTermType tv' in
+  
+  (*  Ensure that the term is valid and is of the correct type. *)
+  if term' = Absyn.errorTerm then
+    Absyn.errorTerm
+  else
+  
+  if (Types.unify type' booltype term') <> Types.Success then
+    (Errormsg.error (Absyn.getTermPos term') ("expecting term of boolean type" ^ 
+      (Errormsg.info "encountered term:") ^
+      (Errormsg.info Absyn.string_of_term term') ^
+      (Errormsg.info "of type:") ^
+      (Errormsg.info Absyn.string_of_type type'));
+    Absyn.errorTerm)
+  else
+   
+  (normalizeTerm term')
+
 (**********************************************************************
 *translateTerm:
 * Given an abstract syntax representation of a module and a preabsyn
