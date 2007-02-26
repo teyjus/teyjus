@@ -51,7 +51,7 @@
 	<fixity> --- 1 byte
 	<precedence> --- 1 byte
 	<type env size> --- 1 byte
-	//<type preserving info> --- 1 byte  (0 if not type preserving, 1 otherwise)
+	<neededness info> --- 1 byte
 	<name size> --- 1 byte
 	{
 		<ith character of name> --- 1 byte
@@ -66,6 +66,7 @@
 	<fixity> --- 1 byte
 	<precedence> --- 1 byte
 	<type env size> --- 1 byte
+	<neededness info> --- 1 byte
 	<index into type skeleton list> --- 2 bytes
 }
 
@@ -74,6 +75,7 @@
 {
 	[Local Constant]
 	<type env size> --- 1 byte
+	<neededness info> --- 1 byte
 	<index into type skeleton list> --- 2 bytes
 }
 
