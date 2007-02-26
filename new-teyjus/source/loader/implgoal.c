@@ -1,20 +1,25 @@
 #include "implgoal.h"
 #include "loader.h"
 #include "file.h"
+#include "code.h"
+#include "const.h"
 #include "../system/memory.h"
+#include "addcode.h"
 
 TwoBytes LD_IMPLGOAL_numImplGoals;
 WordPtr* LD_IMPLGOAL_ImplGoals;
 
+WordPtr LD_IMPLGOAL_LoadImplGoal(MEM_GmtEnt* ent);
+
 void LD_IMPLGOAL_LoadImplGoals(MEM_GmtEnt* ent)
 {
   int i;
-  TwoBytes count=LD_LOADER_numImplGoals=LD_FILE_GET2();
-  LD_LOADER_ImplGoals=(WordPtr*)malloc(count*sizeof(WordPtr));
+  TwoBytes count=LD_IMPLGOAL_numImplGoals=LD_FILE_GET2();
+  LD_IMPLGOAL_ImplGoals=(WordPtr*)EM_malloc(count*sizeof(WordPtr));
   
   for(i=0;i<count;i++)
   {
-    LD_LOADER_ImplGoals[i]=LD_IMPLGOAL_LoadImplGoal(MEM_GmtEnt* ent);
+    LD_IMPLGOAL_ImplGoals[i]=LD_IMPLGOAL_LoadImplGoal(ent);
   }
   
   return;
@@ -23,43 +28,33 @@ void LD_IMPLGOAL_LoadImplGoals(MEM_GmtEnt* ent)
 WordPtr LD_IMPLGOAL_LoadImplGoal(MEM_GmtEnt* ent)
 {
   int i;
+  
+  //Load Next Clause Table
   int nctSize=(int)LD_FILE_GET2();
   
-  WordPtr tab=LD_LOADER_ExtendModSpace(ent,(3+nop)*sizeof(Word));
+  WordPtr tab=LD_LOADER_ExtendModSpace(ent,(3+nctSize)*sizeof(Word));
   
   Word cst;
-  MEM_implPutNOP(tab,(INT4)nop);
-  for(i=0;i<nop;i++)
+  MEM_implPutNOP(tab,(Word)nctSize);
+  for(i=0;i<nctSize;i++)
   {
     cst=(Word)LD_CONST_GetConstInd();
     MEM_implPutLT(tab,i,cst);
   }
   
-  Word fcf=(Word)LD_FILE_GET1();
-  MEM_implPutFCP(tab,fcf);
-  
-  INT4 searchtabsize;
-  INT4 nop;
-  nop=searchtabsize=(INT4)LD_FILE_GET2();
-  
-  //TODO Make search tables use hashes
-  Word* sTab=LD_LOADER_ExtendModSpace(ent,2*sizeof(Word)*nop);
-  for(int i=0;i<nop;i++)
-  {
-    sTab[2*i]=(Word)LD_CONST_GetConstInd();
-    sTab[2*i+1]=(Word)LD_CODE_GetCodeInd();
-  }
+  //Load FindCodeFunc
+  //Byte fcf=LD_FILE_GET1();
+  //MEM_implPutFCP(tab,(MEM_FindCodeFnPtr)NULL);
+  ///\todo fix Impl goal loading
+  //LD_ADDCODE_LoadAddCodeTab(ent);
   
   return tab;
 }
 
-WordPtr LD_IMPLGOAL_GetImplGoal()
+WordPtr LD_IMPLGOAL_GetImplGoalAddr()
 {
   int i =(int) LD_FILE_GET2();
-  if(0<=i && i<= LD_LOADER_numImplGoals)
-  {
-    return LD_LOADER_ImplGoals[i];
-  }
-  else
-    return NULL; //TODO Throw exception?
+  if(0>i || i>LD_IMPLGOAL_numImplGoals)
+    EM_THROW(LD_LoadError);
+  return LD_IMPLGOAL_ImplGoals[i];
 }
