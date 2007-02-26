@@ -20,7 +20,7 @@
 
 int LD_LOADER_LoadLinkcodeVer();
 
-int LD_LOADER_LinkOpen(char* modname);
+void LD_LOADER_LinkOpen(char* modname);
 int LD_LOADER_LoadModuleName(char* modname);
 int LD_LOADER_LoadDependencies(char* modname);
 MEM_GmtEnt* LD_LOADER_GetNewGMTEnt();
@@ -36,49 +36,42 @@ void LD_CODE_LoadCodeSize(MEM_GmtEnt* ent);
 //Returns -1 on failure.
 int LD_LOADER_Load(char* modname)
 {
-	printf("Opening...");
-	if(-1==LD_LOADER_LinkOpen(modname))
-		return -1;
-	printf("\nChecking Version...");
-	if(-1==LD_LOADER_LoadLinkcodeVer())
-		return -1;
-	printf("\nChecking Name...");
-	if(-1==LD_LOADER_LoadModuleName(modname))
-		return -1;
-	printf("\nChecking Dependencies...");
-	if(-1==LD_LOADER_LoadDependencies(modname))
-		return -1;
-	
-	printf("\nInitializing Module Table Entry...");
-	fflush(stdout);
-	MEM_GmtEnt* gmtEnt=LD_LOADER_GetNewGMTEnt();
-	LD_LOADER_SetName(gmtEnt,modname);
-	printf("\nLoading Code Size\n");
-	LD_CODE_LoadCodeSize(gmtEnt);
-	printf("Loading Kind Table\n");
-	LD_KIND_LoadKst(gmtEnt);
-	printf("Loading Type Skeleton Table\n");
-	LD_TYSKEL_LoadTst(gmtEnt);
-	printf("Loading Constant Table\n");
-	LD_CONST_LoadCst(gmtEnt);
-	printf("Done\n");
-	LD_STRING_LoadStrings(gmtEnt);
-	return 0;
+  EM_TRY{
+    printf("Opening...");
+    LD_LOADER_LinkOpen(modname);
+    printf("\nChecking Version...");
+    LD_LOADER_LoadLinkcodeVer();
+    printf("\nChecking Name...");
+    LD_LOADER_LoadModuleName(modname);
+    printf("\nChecking Dependencies...");
+    LD_LOADER_LoadDependencies(modname);
+  }EM_CATCH{
+    return -1;
+  }
+  /*
+  printf("\nInitializing Module Table Entry...");
+  fflush(stdout);
+  MEM_GmtEnt* gmtEnt=LD_LOADER_GetNewGMTEnt();
+  LD_LOADER_SetName(gmtEnt,modname);
+  printf("\nLoading Code Size\n");
+  LD_CODE_LoadCodeSize(gmtEnt);
+  printf("Loading Kind Table\n");
+  LD_KIND_LoadKst(gmtEnt);
+  printf("Loading Type Skeleton Table\n");
+  LD_TYSKEL_LoadTst(gmtEnt);
+  printf("Loading Constant Table\n");
+  LD_CONST_LoadCst(gmtEnt);
+  printf("Done\n");
+  LD_STRING_LoadStrings(gmtEnt);
+  */
+return 0;
 }
 
-int LD_LOADER_LinkOpen(char* modname)
+void LD_LOADER_LinkOpen(char* modname)
 {
-	if(LD_FILE_Exists(modname,LINKCODE_EXT))
-	{
-		return LD_FILE_Open(modname,LINKCODE_EXT);
-	}
-	else
-	{
-		if(LD_FILE_Link(modname))
-			return LD_FILE_Open(modname,LINKCODE_EXT);
-		else
-			return -1;
-	}
+  if(!LD_FILE_Exists(modname,LINKCODE_EXT))
+      LD_FILE_Link(modname);
+  LD_FILE_Open(modname,LINKCODE_EXT);
 }
 
 int LD_LOADER_LoadLinkcodeVer()
@@ -108,32 +101,27 @@ int LD_LOADER_LoadModuleName(char* modname)
 
 int LD_LOADER_LoadDependencies(char* modname)
 {
-	char namelen=0;
-	char name[256];
-	TwoBytes count = LD_FILE_GET2();
-	int i;
-	int linktime=LD_FILE_ModTime(modname,LINKCODE_EXT);
-	for(i=0;i<count;i++)
-	{
-		namelen=LD_FILE_GET1();
-		LD_FILE_GetString(name,namelen);
-		if(LD_FILE_ModTime(name,BYTECODE_EXT)>linktime)
-		{
-			free(name);
-			if(LD_FILE_Link(modname))
-			{
-				LD_FILE_Open(modname,LINKCODE_EXT);
-				LD_LOADER_LoadLinkcodeVer();
-				LD_LOADER_LoadModuleName(modname);
-				count=LD_FILE_GET2();
-				i=-1;
-				continue;
-			}
-			else
-				return -1;
-		}
-	}
-	return 1;
+  char namelen=0;
+  char name[256];
+  TwoBytes count = LD_FILE_GET2();
+  int i;
+  int linktime=LD_FILE_ModTime(modname,LINKCODE_EXT);
+  for(i=0;i<count;i++)
+  {
+    namelen=LD_FILE_GET1();
+    LD_FILE_GetString(name,namelen);
+    if(LD_FILE_ModTime(name,BYTECODE_EXT)>linktime)
+    {
+      free(name);
+      LD_FILE_Link(modname);
+      LD_FILE_Open(modname,LINKCODE_EXT);
+      LD_LOADER_LoadLinkcodeVer();
+      LD_LOADER_LoadModuleName(modname);
+      count=LD_FILE_GET2();
+      i=-1;
+    }
+  }
+  return 1;
 }
 
 MEM_GmtEnt* LD_LOADER_GetNewGMTEnt()
@@ -144,11 +132,22 @@ MEM_GmtEnt* LD_LOADER_GetNewGMTEnt()
 		if(MEM_modTable[i].modname==NULL)
 		{
 			MEM_modTable[i].modSpaceEnd=MEM_modTable[i].modSpaceBeg=MEM_memTop;
-			MEM_modTable[i].codeSpaceEnd=MEM_memBot;
+            MEM_modTable[i].codeSpaceEnd=MEM_modTable[i].codeSpaceBeg=MEM_memBot;
 			return MEM_modTable+i;
 		}
 	}
 	return NULL;
+}
+
+void LD_LOADER_DropGMTEnt(MEM_GmtEnt* ent)
+{
+  ent->modname=NULL;
+}
+
+void LD_LOADER_AddGMTEnt(MEM_GmtEnt* ent)
+{
+  MEM_memTop=ent->modSpaceEnd;
+  MEM_memBot=ent->codeSpaceBeg;
 }
 
 void* LD_LOADER_ExtendModSpace(MEM_GmtEnt* ent, int size)
@@ -164,10 +163,4 @@ int LD_LOADER_SetName(MEM_GmtEnt* ent,char* modname)
 	strcpy(namebuf,modname);
 	ent->modname=namebuf;
 	return 0;
-}
-
-void LD_CODE_LoadCodeSize(MEM_GmtEnt* ent)
-{
-	Word codesize=LD_FILE_GETWORD();
-	ent->codeSpaceBeg=ent->codeSpaceEnd-(int)codesize;
 }

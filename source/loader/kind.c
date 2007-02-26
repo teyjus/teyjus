@@ -1,11 +1,14 @@
 #include "file.h"
 #include "../system/memory.h"
+#include "../tables/pervasives.h"
 #include "loader.h"
 #include "kind.h"
+#include <stdio.h>
 
-#define NUM_PERVASIVE_KINDS 10 //Fixme
+//#define PERV_KIND_NUM 10 //Fixme
 #define GLOBAL 0
 #define LOCAL 1
+#define PERVASIVE 2
 
 TwoBytes LD_KIND_numGKinds=-1;
 
@@ -17,15 +20,17 @@ int LD_KIND_LoadKst(MEM_GmtEnt* ent)
 	
 	//Allocate space for the kind table.
 	TwoBytes kstsize=LD_FILE_GET2();
-	MEM_KstEnt* kst=(MEM_KstEnt*)LD_LOADER_ExtendModSpace(ent,(kstsize+NUM_PERVASIVE_KINDS)*sizeof(MEM_KstEnt));
+    //printf("Kind table size=%d\n",kstsize);
+	MEM_KstEnt* kst=(MEM_KstEnt*)LD_LOADER_ExtendModSpace(ent,(kstsize+PERV_KIND_NUM)*sizeof(MEM_KstEnt));
 	ent->kstBase=(MEM_KstPtr)kst;
 	
 	//Copy the pervasive kinds
-	//TODO load pervasives.
-	kst+=NUM_PERVASIVE_KINDS;
+    PERV_copyKindDataTab((PERV_KindData*)kst);
+	kst+=PERV_KIND_NUM;
 			
 	//Get the number of global kinds
-	TwoBytes num_glob=LD_KIND_numGKinds=LD_FILE_GET2();
+    TwoBytes num_glob=LD_KIND_numGKinds=LD_FILE_GET2();
+    //printf("GKind table size=%d\n",num_glob);
 	if(num_glob>kstsize)
 		return -1;
 	
@@ -34,14 +39,15 @@ int LD_KIND_LoadKst(MEM_GmtEnt* ent)
 	{
 		kst[i].arity=LD_FILE_GET1();
 		str_length=LD_FILE_GET1();
-		string=(char*)LD_LOADER_ExtendModSpace(ent,str_length);
+        string=(char*)LD_LOADER_ExtendModSpace(ent,str_length+1);///\todo Fix kind string loading to new representation
 		LD_FILE_GetString(string,str_length);
 		kst[i].name=string;
 	}
 	
 	//Load the local kinds
 	TwoBytes num_loc=LD_FILE_GET2();
-	if(num_glob+num_loc!=kstsize)
+    //printf("LKind table size=%d\n",num_loc);
+    if(num_glob+num_loc!=kstsize)
 		return -1;
 	kst+=num_glob;
 	for(i=0;i<num_loc;i++)
@@ -56,21 +62,27 @@ int LD_KIND_LoadKst(MEM_GmtEnt* ent)
 TwoBytes LD_KIND_ConvKindInd(Byte gl, TwoBytes ind)
 {
 	if(gl==3)
-		return ind+NUM_PERVASIVE_KINDS;
+		return ind+PERV_KIND_NUM;
 	else if(gl==2)
-		return ind+NUM_PERVASIVE_KINDS+LD_KIND_numGKinds;
+		return ind+PERV_KIND_NUM+LD_KIND_numGKinds;
 	else
 		return ind;
 }
 
 TwoBytes LD_KIND_GetKindInd()
 {
-	Byte gl=LD_FILE_GET1();
-	TwoBytes ind=LD_FILE_GET2();
-	if(gl==GLOBAL)
-		return ind+NUM_PERVASIVE_KINDS;
-	else if(gl==LOCAL)
-		return ind+NUM_PERVASIVE_KINDS+LD_KIND_numGKinds;
-	else
-		return ind;
+  Byte gl=LD_FILE_GET1();
+  TwoBytes ind=LD_FILE_GET2();
+  //printf("Read KIndex %d:%d\n",gl,ind);
+  switch(gl)
+  {
+    case LOCAL:
+      ind+=LD_KIND_numGKinds;
+    case GLOBAL:
+      ind+=PERV_KIND_NUM;
+    case PERVASIVE:
+      return ind;
+    default:
+      EM_THROW(LD_LoadError);
+  }
 }

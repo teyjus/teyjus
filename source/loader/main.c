@@ -4,11 +4,11 @@
 
 int main()
 {
-	printf("Beginning test...");
-	MEM_memInit(1024*8);
-	printf("Memory Initialized\n");
-	LD_LOADER_Load("test");
-	printf("Module Loaded\n");
-	
-	return 0;
+  printf("Beginning test...");
+  MEM_memInit(1024*8);
+  printf("Memory Initialized\n");
+  LD_LOADER_Load("test");
+  printf("Module Loaded\n");
+  
+  return 0;
 }
