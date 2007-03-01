@@ -58,7 +58,7 @@ let rationalizeTypeAbbrevVar =
 **********************************************************************)
 let rationalizeSkeletonVar =
   fun sym symtable p ->
-    let t = Absyn.SkeletonVarType(!typeSkeletonIndex) in
+    let t = Absyn.SkeletonVarType(ref !typeSkeletonIndex) in
     (typeSkeletonIndex := !typeSkeletonIndex + 1;
     TypeAndBindings(t, (Table.add sym t symtable)))
 
@@ -69,7 +69,7 @@ let rationalizeSkeletonVar =
 **********************************************************************)
 let rationalizeVar =
   fun sym symtable p ->
-    let t = Absyn.TypeVarType(ref None, false) in
+    let t = Absyn.makeTypeVariable () in
     TypeAndBindings(t, (Table.add sym t symtable))
 
 (********************************************************************
@@ -321,27 +321,40 @@ and translateFixities = fun fixities constants ->
       in
       
       let rec getTypeArity = function
-        [Absyn.ArrowType(_,r)] -> 1 + (getTypeArity [r])
-      | [_] -> 0
-      | _ -> (Errormsg.impossible pos "getTypeArity(): invalid skeleton list")  
+        Absyn.ArrowType(_,r) -> 1 + (getTypeArity r)
+      | _ -> 0
       in
       
       match syms with
         [] -> ctable
       | Preabsyn.Symbol(sym,_,pos)::ss ->
           (match Table.find sym ctable with
-            Some Absyn.Constant(asym,fix,p,b1,b2,b3,b4,s,i1,skellist,tlist,codeinfo,id,ctype,pos') ->
-              if (getFixityArity k) <> (getTypeArity tlist) then
-                (Errormsg.error pos ("declared fixity is incompatible with declared type arity" ^
-                  (Errormsg.see pos' "constant declaration"));
-                ctable)
-              else if not (checkFixity fix (getFixity k)) then
-                (Errormsg.error pos ("constant " ^ (Symbol.name sym) ^ " already declared with fixity " ^ (Absyn.string_of_fixity !fix) ^
-                  (Errormsg.see pos' "constant declaration"));
-                ctable)
+            Some c ->
+              let skel = (Absyn.getConstantSkeleton c) in
+              let fix = Absyn.getConstantFixityRef c in
+              let pos' = Absyn.getConstantPos c in
+              
+              if Option.isSome skel then
+                let t' = Absyn.getSkeletonType (Option.get skel) in
+                if (getFixityArity k) <> (getTypeArity t') then
+                  (Errormsg.error pos ("declared fixity is incompatible with declared type arity" ^
+                    (Errormsg.see pos' "constant declaration"));
+                  ctable)
+                else if not (checkFixity !fix (getFixity k)) then
+                  (Errormsg.error pos ("constant " ^ (Symbol.name sym) ^ " already declared with fixity " ^ (Absyn.string_of_fixity !fix) ^
+                    (Errormsg.see pos' "constant declaration"));
+                  ctable)
+                else
+                  (fix := (getFixity k);
+                  ctable)
               else
-                (fix := (getFixity k);
-                ctable)
+                if not (checkFixity !fix (getFixity k)) then
+                  (Errormsg.error pos ("constant " ^ (Symbol.name sym) ^ " already declared with fixity " ^ (Absyn.string_of_fixity !fix) ^
+                    (Errormsg.see pos' "constant declaration"));
+                  ctable)
+                else
+                  (fix := (getFixity k);
+                  ctable)
           | None ->
               (Errormsg.error pos ("fixity declaration: undeclared constant " ^
                 (Symbol.name sym));
@@ -415,10 +428,11 @@ and translateKind = fun kind buildkind klist ->
 *translateGlobalConstants:
 **********************************************************************)
 and translateGlobalConstants = fun clist kindtable typeabbrevtable ->
-  let buildConstant = fun sym ty tyskel pos ->
+  let buildConstant = fun sym ty tyskel esize pos ->
     Absyn.Constant(sym, ref Absyn.NoFixity, ref (-1), ref false, ref false,
-      ref false, ref false, ref false, ref false, tyskel, ty, Absyn.Clauses(ref []),
-      ref 0, Absyn.LocalConstant, pos)
+      ref false, ref false, ref false, ref false, tyskel,
+      ref esize, ref None, ref None,
+      ref Absyn.GlobalConstant, ref 0, pos)
   in
   translateConstants clist kindtable typeabbrevtable buildConstant
 
@@ -426,10 +440,11 @@ and translateGlobalConstants = fun clist kindtable typeabbrevtable ->
 *translateLocalConstants:
 **********************************************************************)
 and translateLocalConstants = fun clist kindtable typeabbrevtable ->
-  let buildConstant = fun sym ty tyskel pos ->
+  let buildConstant = fun sym ty tyskel esize pos ->
     Absyn.Constant(sym, ref Absyn.NoFixity, ref (-1), ref false, ref false,
-      ref false, ref false, ref false, ref false, tyskel, ty, Absyn.Clauses(ref []),
-      ref 0, Absyn.LocalConstant, pos)
+      ref false, ref false, ref false, ref false, tyskel,
+      ref esize, ref None, ref None,
+      ref Absyn.LocalConstant, ref 0, pos)
   in
   translateConstants clist kindtable typeabbrevtable buildConstant
 
@@ -437,10 +452,11 @@ and translateLocalConstants = fun clist kindtable typeabbrevtable ->
 *translateUseOnlyConstants:
 **********************************************************************)
 and translateUseOnlyConstants = fun clist kindtable typeabbrevtable ->
-  let buildConstant = fun sym ty tyskel pos ->
+  let buildConstant = fun sym ty tyskel esize pos ->
     Absyn.Constant(sym, ref Absyn.NoFixity, ref (-1), ref false, ref true,
-    ref false, ref false, ref false, ref false, tyskel, ty, Absyn.Clauses(ref []),
-    ref 0, Absyn.LocalConstant, pos)
+      ref false, ref false, ref false, ref false, tyskel,
+      ref esize, ref None, ref None,
+      ref Absyn.GlobalConstant, ref 0, pos)
   in
   translateConstants clist kindtable typeabbrevtable buildConstant
 
@@ -448,10 +464,11 @@ and translateUseOnlyConstants = fun clist kindtable typeabbrevtable ->
 *translateClosedConstants:
 **********************************************************************)
 and translateClosedConstants = fun clist kindtable typeabbrevtable ->
-  let buildConstant = fun sym ty tyskel pos ->
+  let buildConstant = fun sym ty tyskel esize pos ->
     Absyn.Constant(sym, ref Absyn.NoFixity, ref (-1), ref false, ref false,
-    ref false, ref true, ref false, ref false, tyskel, ty, Absyn.Clauses(ref []),
-    ref 0, Absyn.LocalConstant, pos)
+      ref false, ref true, ref false, ref false, tyskel,
+      ref esize, ref None, ref None,
+      ref Absyn.GlobalConstant, ref 0, pos)
   in
   translateConstants clist kindtable typeabbrevtable buildConstant
 
@@ -480,11 +497,11 @@ and translateConstant = fun c clist kindtable typeabbrevtable buildconstant ->
   *translate':
   * Enter all names into table.
   ********************************************************************)
-  let rec enter = fun names ty tyskel clist ->
+  let rec enter = fun names ty tyskel esize clist ->
     match names with
       Preabsyn.Symbol(name,_,p)::ns ->
-        let clist' = (buildconstant name ty tyskel p) :: clist in
-        (enter ns ty tyskel clist')
+        let clist' = (buildconstant name ty tyskel esize p) :: clist in
+        (enter ns ty tyskel esize clist')
     | [] -> clist
   in
   
@@ -495,9 +512,9 @@ and translateConstant = fun c clist kindtable typeabbrevtable buildconstant ->
     Preabsyn.Constant(names, Some t, pos) ->
       let TypeAndEnvironment(tyskel, size) = translateTypeSkeleton t kindtable typeabbrevtable newSymFunc in
       let ty = translateType' t kindtable typeabbrevtable in
-      (enter names [ty] [Absyn.Skeleton(tyskel, size)] clist)
+      (enter names [ty] (ref(Some(Absyn.Skeleton(tyskel, ref None, ref false)))) size clist)
   | Preabsyn.Constant(names, None, pos) ->
-      (enter names [] [] clist)
+      (enter names [] (ref None) 0 clist)
 
 (********************************************************************
 *translateTypeAbbrevs:
@@ -547,7 +564,7 @@ and translateTypeAbbrev =
     let rec buildTable = fun syms i ->
       match syms with
         [] -> Table.empty
-      | sym::ss -> (Table.add sym (Absyn.SkeletonVarType(i)) (buildTable ss (i + 1)))
+      | sym::ss -> (Table.add sym (Absyn.SkeletonVarType(ref i)) (buildTable ss (i + 1)))
     in
     
     (******************************************************************
@@ -587,7 +604,7 @@ and translateTypeAbbrevCall = fun abbrev args vartable pos ->
     | Absyn.TypeVarType(_) -> t
     | Absyn.TypeSetType(_) -> t
     | Absyn.SkeletonVarType(i) ->
-        if i = argnum then
+        if !i = argnum then
           a
         else
           t
@@ -643,8 +660,17 @@ and compareConstants = fun c1 c2 ->
     (f1 = f2 || (f1 = -1 || f2 = -1))
   in
   
-  let Absyn.Constant(s,fix,prec,exp,useonly,nodefs,closed,pres,reducible,skels,tys,ci,id,ctype,p) = c1 in
-  let Absyn.Constant(s',fix',prec',exp',useonly',nodefs',closed',pres',reducible',skels',tys',ci',id',ctype',p') = c2 in
+  let fix = Absyn.getConstantFixity c1 in
+  let fix' = Absyn.getConstantFixity c2 in
+  
+  let prec = Absyn.getConstantPrec c1 in
+  let prec' = Absyn.getConstantPrec c2 in
+  
+  let skel = Absyn.getConstantSkeleton c1 in
+  let skel' = Absyn.getConstantSkeleton c2 in
+  
+  let p = Absyn.getConstantPos c1 in
+  let p' = Absyn.getConstantPos c2 in
   
   if not (checkFixity fix fix') then
     (Errormsg.error p ("constant already declared with fixity " ^ (Absyn.string_of_fixity fix') ^
@@ -653,7 +679,7 @@ and compareConstants = fun c1 c2 ->
   else if not (checkPrec prec prec') then
     (Errormsg.error p ("constant already declared with precedence" ^ (string_of_int prec'));
     false)
-  else if (skels <> skels') || (tys <> tys') then
+  else if (skel <> skel') then
     (Errormsg.error p "constant already declared with different type";
     false)
   else
@@ -855,27 +881,35 @@ and translateModule = fun mod' ktable ctable atable ->
     ********************************************************************)
     let mergeLocalConstants = fun clist ctable ->
       let merge = fun table constant ->
-        let Absyn.Constant(s,fix,prec,exp,useonly,nodefs,closed,pres,skels,tys,ci,id,ctype,p) = constant in
-        match skels with
-          [] -> (*  This local has no defined type  *)
-            let c2 = (Table.find s table) in
-            (match c2 with
-              Some Absyn.Constant(s',fix',prec',exp',useonly',nodefs',closed',pres',skels',tys',ci',id',ctype',p') ->
-                if not (compareConstants constant (get c2)) then
-                  table
-                else
-                  (Table.add s (Absyn.Constant(s',fix',prec',exp',useonly',nodefs',closed',pres',skels',tys',ci',id',Absyn.LocalConstant,p')) table)
-            | None ->
-                (Errormsg.error p ("local constant declared without type, and no global constant exists");
-                table))
-        | skel::ss -> (*  This local was defined with a type  *)
+        let skel = Absyn.getConstantSkeleton constant in
+        let s = Absyn.getConstantSymbol constant in
+        let p = Absyn.getConstantPos constant in
+        match skel with
+          None -> (*  This local has no defined type  *)
             (match (Table.find s table) with
               Some c2 ->
-                let Absyn.Constant(s',fix',prec',exp',useonly',nodefs',closed',pres',skels',tys',ci',id',ctype',p') = c2 in
                 if not (compareConstants constant c2) then
                   table
                 else
-                  (Table.add s (Absyn.Constant(s',fix',prec',exp',useonly',nodefs',closed',pres',skels',tys',ci',id',Absyn.LocalConstant,p')) table)
+                  let tyref = Absyn.getConstantTypeRef c2 in
+                  let skelref = Absyn.getConstantSkeletonRef c2 in
+                  (tyref := Absyn.LocalConstant;
+                  skelref := skel;
+                  table)
+            | None ->
+                (Errormsg.error p ("local constant declared without type, and no global constant exists");
+                table))
+        | Some skel -> (*  This local was defined with a type  *)
+            (match (Table.find s table) with
+              Some c2 ->
+                if not (compareConstants constant c2) then
+                  table
+                else
+                  let tyref = Absyn.getConstantTypeRef c2 in
+                  let skelref = Absyn.getConstantSkeletonRef c2 in
+                  (tyref := Absyn.LocalConstant;
+                  skelref := Some skel;
+                  table)
             | None ->
                 (Table.add s constant table))
       in
@@ -883,13 +917,96 @@ and translateModule = fun mod' ktable ctable atable ->
     in
     
     (********************************************************************
+    *mergeClosedConstants:
+    * Merge the closed constants in the module into the constant table.
+    ********************************************************************)
+    let mergeClosedConstants = fun clist ctable ->
+      let merge = fun table constant ->
+        let skel = Absyn.getConstantSkeleton constant in
+        let s = Absyn.getConstantSymbol constant in
+        let p = Absyn.getConstantPos constant in
+        match skel with
+          None -> (*  This local has no defined type  *)
+            (match (Table.find s table) with
+              Some c2 ->
+                if not (compareConstants constant c2) then
+                  table
+                else
+                  let tyref = Absyn.getConstantTypeRef c2 in
+                  let skelref = Absyn.getConstantSkeletonRef c2 in
+                  (tyref := Absyn.LocalConstant;
+                  skelref := skel;
+                  table)
+            | None ->
+                (Errormsg.error p ("local constant declared without type, and no global constant exists");
+                table))
+        | Some skel -> (*  This local was defined with a type  *)
+            (match (Table.find s table) with
+              Some c2 ->
+                if not (compareConstants constant c2) then
+                  table
+                else
+                  let tyref = Absyn.getConstantTypeRef c2 in
+                  let skelref = Absyn.getConstantSkeletonRef c2 in
+                  (tyref := Absyn.LocalConstant;
+                  skelref := Some skel;
+                  table)
+            | None ->
+                (Table.add s constant table))
+      in
+      (*  (List.fold_left merge ctable clist) *)
+      Errormsg.impossible Errormsg.none "Translate.mergeClosedConstants: not implemented"
+    in
+    
+    (********************************************************************
+    *mergeUseOnlyConstants:
+    * Merge the useonly constants in the module into the constant table.
+    ********************************************************************)
+    let mergeUseOnlyConstants = fun clist ctable ->
+      let merge = fun table constant ->
+        let skel = Absyn.getConstantSkeleton constant in
+        let s = Absyn.getConstantSymbol constant in
+        let p = Absyn.getConstantPos constant in
+        match skel with
+          None -> (*  This local has no defined type  *)
+            (match (Table.find s table) with
+              Some c2 ->
+                if not (compareConstants constant c2) then
+                  table
+                else
+                  let tyref = Absyn.getConstantTypeRef c2 in
+                  let skelref = Absyn.getConstantSkeletonRef c2 in
+                  (tyref := Absyn.LocalConstant;
+                  skelref := skel;
+                  table)
+            | None ->
+                (Errormsg.error p ("local constant declared without type, and no global constant exists");
+                table))
+        | Some skel -> (*  This local was defined with a type  *)
+            (match (Table.find s table) with
+              Some c2 ->
+                if not (compareConstants constant c2) then
+                  table
+                else
+                  let tyref = Absyn.getConstantTypeRef c2 in
+                  let skelref = Absyn.getConstantSkeletonRef c2 in
+                  (tyref := Absyn.LocalConstant;
+                  skelref := Some skel;
+                  table)
+            | None ->
+                (Table.add s constant table))
+      in
+      (*  (List.fold_left merge ctable clist) *)
+      Errormsg.impossible Errormsg.none "Translate.mergeClosedConstants: not implemented"
+    in
+    
+    (********************************************************************
     *mergeGlobalConstants:
     * Merge the global constants in the module into the constant table.
-    * This follows the same process as mergeAccumConstants.
     ********************************************************************)
     let mergeGlobalConstants = fun clist ctable ->
       let merge = fun ctable constant ->
-        let Absyn.Constant(s,fix,prec,exp,useonly,nodefs,closed,pres,skels,tys,ci,id,ctype,p) = constant in
+        let s = Absyn.getConstantSymbol constant in
         match (Table.find s ctable) with
           Some c2 ->
             if not (compareConstants constant c2) then
@@ -897,7 +1014,9 @@ and translateModule = fun mod' ktable ctable atable ->
             else
               ctable
         | None ->
-            (Table.add s (Absyn.Constant(s,fix,prec,exp,useonly,nodefs,closed,pres,skels,tys,ci,id,Absyn.LocalConstant,p)) ctable)
+            let tyref = Absyn.getConstantTypeRef constant in
+            (tyref := Absyn.LocalConstant;
+            Table.add s constant ctable)
       in
       (List.fold_left merge ctable clist)
     in
@@ -928,9 +1047,9 @@ and translateModule = fun mod' ktable ctable atable ->
     in
     (*  Get the pieces of the module  *)
     match mod' with
-      Preabsyn.Module(name, gconsts, lconsts, cconsts, fixities,
+      Preabsyn.Module(name, gconsts, lconsts, cconsts, uconsts, fixities,
                         gkinds, lkinds, tabbrevs, clauses, accummods,
-                        accumsigs, usesigs) ->
+                        accumsigs, usesigs, impmods) ->
 
         (*  Translate the accumulated modules *)
         let accummods' = processAccumMods accummods in
@@ -951,16 +1070,18 @@ and translateModule = fun mod' ktable ctable atable ->
             associated tables. *)
         let gconstlist = translateGlobalConstants gconsts ktable atable in
         let lconstlist = translateLocalConstants lconsts ktable atable in
+        let cconstlist = translateClosedConstants cconsts ktable atable in
         let uconstlist = translateUseOnlyConstants uconsts ktable atable in
         
         let ctable = mergeGlobalConstants gconstlist ctable in
         let ctable = mergeLocalConstants lconstlist ctable in
+        let ctable = mergeClosedConstants cconstlist ctable in
         let ctable = mergeUseOnlyConstants uconstlist ctable in
         
         (*  Apply fixity flags  *)
         let ctable = translateFixities fixities ctable in
                 
-        let amod = Absyn.Module(name, ctable, ktable, atable, [], [], [], [], [], [], [], [], []) in
+        let amod = Absyn.Module(name, [], [], ref ctable, ref ktable, atable, [], [], [], [], [], [], [], [], ref(Absyn.ClauseBlocks([]))) in
         amod
     | Preabsyn.Signature _ ->
         invalid_arg "Types.translateModule: attempted to translate Preabsyn.Signature()"

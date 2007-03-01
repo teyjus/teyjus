@@ -9,7 +9,7 @@ let hashtable = Hashtbl.create 1
 
 let nextsym = ref 0
 
-let name = fun(s,n) -> s
+let name (s,n) = s
 let symbol = fun(s: string) ->
   try
     (s, (Hashtbl.find hashtable s))
@@ -21,4 +21,10 @@ let symbol = fun(s: string) ->
                       (Hashtbl.add hashtable s id);
                       (s,id)
                     end
-let id = fun(s,n) -> n
+let id (s,n) = n
+
+let currentId = ref 0
+let generate () =
+  let s = "_gen_" ^ (string_of_int (!currentId)) in
+  let _ = currentId := !currentId + 1 in
+  symbol s

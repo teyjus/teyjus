@@ -9,7 +9,7 @@ type symbol = Symbol.symbol
 *Kinds:
 * (symbol, arity, index, position)
 *****************************************************************************)
-type akindinfo = (symbol * int option * int option ref * pos) 
+type akindinfo = (symbol * int option * int ref * pos) 
 
 and akind = 
     LocalKind of akindinfo
@@ -21,16 +21,17 @@ and akind =
 * (firstuse, lastuse, perm, safety, heapvar, offset, firstgoal, lastgoal)
 *****************************************************************************)
 and atypevar = 
-  TypeVar of (atype option ref * atype option ref * bool option ref * 
-    bool option ref * bool option ref * int option ref * 
-    int option ref * int option ref)
+    TypeVar of (atype option ref * atype option ref * bool option ref * 
+      bool option ref * bool option ref * int option ref * 
+      int option ref * int option ref)
+  | FreeTypeVar of atype
 
 (*****************************************************************************
 *Type:
 *****************************************************************************)
 and atype = 
     SkeletonVarType of (int ref)
-  | TypeVarType of (atypevar option ref * bool option ref)
+  | TypeVarType of (atypevar option ref * bool ref)
   |	ArrowType of (atype * atype)
   | AppType of (akind * atype list)
   | TypeSetType of (atype * atype list ref)
@@ -71,9 +72,9 @@ and atypeabbrev =
 ***************************************************************************)
 and aconstant = 
   Constant of (symbol * afixity ref * int ref * bool ref * bool ref *
-    bool ref * bool ref * bool ref * bool ref * askeleton * int ref *
-    bool array option ref * atype list * acodeinfo option ref *
-    aconstanttype * int ref * pos)
+    bool ref * bool ref * bool ref * bool ref * askeleton option ref *
+    int ref * bool array option ref * acodeinfo option ref *
+    aconstanttype ref * int ref * pos)
 
 and aconstanttype =
     GlobalConstant
@@ -155,14 +156,14 @@ and aapplicationinfo =
 *Terms:
 *****************************************************************************)
 and aterm =
-    IntTerm of (int * bool * pos option)
-  | RealTerm of (float * bool * pos option)
-  | StringTerm of (astringinfo * bool * pos option)
-  | ConstantTerm of (aconstant * atype list * bool * pos option)
-  | FreeVarTerm of (afreevarinfo * bool * pos option)
-  | BoundVarTerm of (aboundvarinfo * bool * pos option)
-  | AbstractionTerm of (aabstractioninfo * bool * pos option)
-  | ApplicationTerm of (aapplicationinfo * bool * pos option)
+    IntTerm of (int * bool * pos)
+  | RealTerm of (float * bool * pos)
+  | StringTerm of (astringinfo * bool * pos)
+  | ConstantTerm of (aconstant * atype list * bool * pos)
+  | FreeVarTerm of (afreevarinfo * bool * pos)
+  | BoundVarTerm of (aboundvarinfo * bool * pos)
+  | AbstractionTerm of (aabstractioninfo * bool * pos)
+  | ApplicationTerm of (aapplicationinfo * bool * pos)
   | ErrorTerm
 
 (*****************************************************************************
@@ -217,10 +218,10 @@ and aclausesblock = (aclause list ref * aclause ref * int ref *
 
 and amodule = 
     Module of (string * aimportedmodule list * aaccummulatedmodule list *
-      aconstant Table.SymbolTable.t * akind Table.SymbolTable.t *
+      aconstant Table.SymbolTable.t ref * akind Table.SymbolTable.t ref *
       atypeabbrev Table.SymbolTable.t * astringinfo list * akind list *
       akind list * aconstant list * aconstant list * aconstant list *
-      askeleton list * askeleton list * aclauseinfo)
+      askeleton list * askeleton list * aclauseinfo ref)
   | Signature of (string * akind list * aconstant list)
 
 and aimportedmodule = 
@@ -271,41 +272,85 @@ let getKindName = function
 let getSkeletonType = function
   Skeleton(f,_,_) -> f
 
-let getSkeletonSize = function
+let getSkeletonIndex = function
   Skeleton(_,i,_) ->
     match !i with
       Some i' -> i'
     | None -> (Errormsg.impossible Errormsg.none
-                "Absyn.getSkeletonSize: Skeleton has no size.")
+                "Absyn.getSkeletonSize: Skeleton has no index.")
 
 (**********************************************************************
 * Constant Accessors
 **********************************************************************)
+let getConstantCodeInfo = function
+  Constant(_,_,_,_,_,_,_,_,_,_,_,_,ci,_,_,_) ->
+    ci
+  
+let getConstantTypeEnvSize = function
+  Constant(_,_,_,_,_,_,_,_,_,_,s,_,_,_,_,_) ->
+    !s
+
+let getConstantTypeEnvSizeRef = function
+  Constant(_,_,_,_,_,_,_,_,_,_,s,_,_,_,_,_) ->
+    s
+
+let getConstantNoDefs = function
+  Constant(_,_,_,_,_,nd,_,_,_,_,_,_,_,_,_,_) ->
+    !nd
+
+let getConstantNoDefsRef = function
+  Constant(_,_,_,_,_,nd,_,_,_,_,_,_,_,_,_,_) ->
+    nd
+
+let getConstantClosed = function
+  Constant(_,_,_,_,_,_,c,_,_,_,_,_,_,_,_,_) ->
+    !c
+
+let getConstantClosedRef = function
+  Constant(_,_,_,_,_,_,c,_,_,_,_,_,_,_,_,_) ->
+    c
+   
 let getConstantPos = function
-  Constant(_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,p) ->
+  Constant(_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,p) ->
     p
 
 let getConstantSymbol = function
-  Constant(sym,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_) -> sym
+  Constant(sym,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_) -> sym
 
 let getConstantName = fun c ->
   (Symbol.name (getConstantSymbol c))
 
 let getConstantSkeleton = function
-  Constant(_,_,_,_,_,_,_,_,skel,_,_,_,_,_,_,_,_) -> skel
+  Constant(_,_,_,_,_,_,_,_,_,s,_,_,_,_,_,_) ->
+    !s
+
+let getConstantSkeletonRef = function
+  Constant(_,_,_,_,_,_,_,_,_,s,_,_,_,_,_,_) ->
+    s
 
 let getConstantType = function
-  Constant(_,_,_,_,_,_,_,_,_,_,_,_,_,_,ctype,_,_) ->
+  Constant(_,_,_,_,_,_,_,_,_,_,_,_,_,ctype,_,_) ->
+    !ctype
+
+let getConstantTypeRef = function
+  Constant(_,_,_,_,_,_,_,_,_,_,_,_,_,ctype,_,_) ->
     ctype
 
+let getConstantFixityRef = function
+  Constant(_,fix,_,_,_,_,_,_,_,_,_,_,_,_,_,_) ->
+    fix
+    
 let getConstantFixity = function
-  Constant(_,fix,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_) ->
+  Constant(_,fix,_,_,_,_,_,_,_,_,_,_,_,_,_,_) ->
     !fix
 
 let getConstantPrec = function
-  Constant(_,_,prec,_,_,_,_,_,_,_,_,_,_,_,_,_,_) ->
+  Constant(_,_,prec,_,_,_,_,_,_,_,_,_,_,_,_,_) ->
     !prec
 
+let getConstantPrecRef = function
+  Constant(_,_,prec,_,_,_,_,_,_,_,_,_,_,_,_,_) ->
+    prec
 (**********************************************************************
 *string_of_fixity:
 * Convert an absyn fixity to a string.  Used only in printAbsyn.
@@ -344,7 +389,9 @@ let printAbsyn = fun m out ->
     output ")")
   in
   
-  let rec printTypeVar = function TypeVar(firstuse,_,_,_,_,_,_,_) -> ()
+  let rec printTypeVar = function
+      TypeVar(_,_,_,_,_,_,_,_) -> output_line "FreeTypeVar()"
+    | FreeTypeVar(t) -> printType t
 
   (*  Print an absyn type *)
   and printType = function
@@ -354,13 +401,13 @@ let printAbsyn = fun m out ->
           (output "TypeVar(";
           printTypeVar v';
           output ", ";
-          output (Option.string_of_option !b string_of_bool);
+          output (string_of_bool !b);
           output ")")
       | None ->
           (output "TypeVar(";
           output "None";
           output ", ";
-          output (Option.string_of_option !b string_of_bool);
+          output (string_of_bool !b);
           output ")"))
   | TypeSetType(def, l) ->
       let rec print' = function
@@ -418,7 +465,8 @@ let printAbsyn = fun m out ->
     in
     
     let rec printSkeleton = function
-      Skeleton(t,i,b) -> 
+      None -> output "None"
+    | Some(Skeleton(t,i,b)) -> 
         (output "Skeleton(";
         printType t;
         output (", " ^ (Option.string_of_option !i string_of_int));
@@ -428,7 +476,7 @@ let printAbsyn = fun m out ->
     
     match const with
       Constant(sym,fix,prec,exportdef,useonly,nodefs,closed,typepreserv,
-        reducible,skel,envsize,_,env,codeinfo,ctype,index,pos) ->
+        reducible,skel,envsize,_,codeinfo,ctype,index,pos) ->
         (output "Constant(";
         output (Symbol.name sym);
         output ", ";
@@ -448,9 +496,9 @@ let printAbsyn = fun m out ->
         output ", ";
         output (string_of_bool !reducible);
         output ", ";
-        printSkeleton skel;
+        printSkeleton !skel;
         output ", ";
-        printConstantType ctype;
+        printConstantType !ctype;
         output ", ";
         printPos pos;
         output_line ")")
@@ -505,11 +553,11 @@ let printAbsyn = fun m out ->
       output_line ", ";
       
       output_line "ConstantTable:";
-      printTable printConstant ctable;
+      printTable printConstant !ctable;
       output_line "";
       
       output_line "KindTable:";
-      printTable printkind' ktable;
+      printTable printkind' !ktable;
       output_line ")")
       
   | Signature(name, consts, kinds) ->
@@ -560,7 +608,17 @@ let getTypeSetDefault = function
   TypeSetType(def, _) -> def
 | _ -> (Errormsg.impossible Errormsg.none "Absyn.getTypeSetType: invalid type")
 
-let makeTypeVariable () = TypeVarType(ref None, ref None)
+let makeTypeVariable () = TypeVarType(ref None, ref false)
+
+let rec makeTypeEnvironment i =
+  match i with
+      0 -> []
+    | i' ->
+        if i' < 0 then
+          Errormsg.impossible Errormsg.none "Absyn.makeTypeEnvironment: invalid environment size"
+        else
+          (makeTypeVariable ()) :: (makeTypeEnvironment (i - 1))
+
 let getTypeVariableReference = function
   TypeVarType(t, _) -> t
 | _ -> (Errormsg.impossible Errormsg.none "Absyn.getTypeVariableReference: invalid type")
@@ -593,6 +651,10 @@ let isSkeletonVariableType = function
 | _ -> false
 
 let getSkeletonVariableIndex = function
+  SkeletonVarType(i) -> !i
+| _ -> (Errormsg.impossible Errormsg.none "Absyn.getSkeletonVariableIndex: invalid type.")
+
+let getSkeletonVariableIndexRef = function
   SkeletonVarType(i) -> i
 | _ -> (Errormsg.impossible Errormsg.none "Absyn.getSkeletonVariableIndex: invalid type.")
 
@@ -610,7 +672,9 @@ let rec dereferenceType = fun ty ->
     TypeRefType(t) -> dereferenceType t
   | TypeVarType(r, _) ->
       (match !r with
-        Some(t) -> dereferenceType t
+        Some(FreeTypeVar(t)) -> dereferenceType t
+      | Some(TypeVar(_)) -> Errormsg.impossible Errormsg.none
+          "Absyn.dereferenceType: Invalid type variable"
       | None -> ty)
   | _ -> ty
 
@@ -622,50 +686,81 @@ let appPrec = maxPrec + 2
 *Various term accessors and constructors.
 **********************************************************************)
 let getTermPos = function
-  IntTerm(_,p) -> p
-| StringTerm(_,p) -> p
-| RealTerm(_,p) -> p
+  IntTerm(_,_,p) -> p
+| StringTerm(_,_,p) -> p
+| RealTerm(_,_,p) -> p
 | AbstractionTerm(_,_,p) -> p
-| ConstantTerm(_,_,p) -> p
-| FreeVarTerm(_,p) -> p
-| BoundVarTerm(_,p) -> p
-| ApplyTerm(_,_,p) -> p
+| ConstantTerm(_,_,_,p) -> p
+| FreeVarTerm(_,_,p) -> p
+| BoundVarTerm(_,_,p) -> p
+| ApplicationTerm(_,_,p) -> p
 | ErrorTerm -> Errormsg.none
 | _ -> Errormsg.impossible Errormsg.none "Absyn.getTermPos: invalid term"
 
 let getTermAbstractionVar = function
-  AbstractionTerm(avar,_,_) -> avar
+  AbstractionTerm(NestedAbstraction(v,_),_,_) -> v
 | _ -> Errormsg.impossible Errormsg.none "Absyn.getTermAbstractionVar: invalid term"
 
+let getTermAbstractionBody = function
+  AbstractionTerm(NestedAbstraction(_,b),_,_) -> b
+| _ -> Errormsg.impossible Errormsg.none "Absyn.getTermAbstractionBody: invalid term"
+
+let getTermConstant = function
+  ConstantTerm(c,_,_,_) -> c
+| _ -> Errormsg.impossible Errormsg.none "Absyn.getTermConstant: invalid term"
+
+let getTermTypeEnv = function
+  ConstantTerm(_,te,_,_) -> te
+| _ -> Errormsg.impossible Errormsg.none "Absyn.getTermConstant: invalid term"
+
 let errorTerm = ErrorTerm
-let errorFixedTerm = FixedErrorTerm
 
-let makeFreeVarTerm = fun tsym pos ->
-  FreeVarTerm(tsym, pos)
+let makeFreeVarTerm tsym pos =
+  FreeVarTerm(NamedFreeVar(tsym), false, pos)
 
-let makeBoundVarTerm = fun tsym pos ->
-  BoundVarTerm(tsym, pos)
+let makeBoundVarTerm tsym pos =
+  BoundVarTerm(NamedBoundVar(tsym), false, pos)
 
-let getTypeSymbolType = function
-    ImplicitTypeSymbol(_,_,_,t) -> t
-  | AnonymousTypeSymbol(_,_,_,t) -> t
-  | BoundTypeSymbol(_,_,_,t) -> t
+let getTypeSymbolType ty =
+  let get' t =
+    if Option.isSome t then
+      Option.get t
+    else
+      Errormsg.impossible Errormsg.none "Absyn.getTypeSymbolType: invalid type"
+  in
+  match ty with
+    ImplicitVar(_,_,_,t) -> get' !t
+  | AnonymousImplicitVar(_,_,_,t) -> get' !t
+  | BoundVar(_,_,_,t) -> get' !t
+
+let getTypeSymbolHiddenConstant tsym =
+  let get' = function
+      Some(c) -> c
+    | None -> Errormsg.impossible Errormsg.none "Absyn.getTypeSymbolHiddenConstant: type symbol has no constant"
+  in
+  
+  match tsym with
+    ImplicitVar(_,c,_,_) -> get' !c
+  | AnonymousImplicitVar(_,c,_,_) -> get' !c
+  | BoundVar(_,c,_,_) -> get' !c
 
 let getTypeSymbolRawType = fun s ->
   let get' = function
-      RawType(t) -> t
-    | _ -> Errormsg.impossible Errormsg.none "Absyn.getTypeSymbolRawType: type symbol has no raw type"
+      Some(t) -> t
+    | _ -> Errormsg.impossible Errormsg.none "Absyn.getTypeSymbolRawType: type symbol has no type"
   in
   
   match s with
-    ImplicitTypeSymbol(_,_,_,t) -> get' t
-  | AnonymousTypeSymbol(_,_,_,t) -> get' t
-  | BoundTypeSymbol(_,_,_,t) -> get' t
+    ImplicitVar(_,_,_,t) -> get' !t
+  | AnonymousImplicitVar(_,_,_,t) -> get' !t
+  | BoundVar(_,_,_,t) -> get' !t
 
 let getTypeSymbolSymbol = function
-    ImplicitTypeSymbol(_,_,s,_) -> s
-  | AnonymousTypeSymbol(_,_,s,_) -> s
-  | BoundTypeSymbol(_,_,s,_) -> s
+    ImplicitVar(s,_,_,_) -> s
+  | AnonymousImplicitVar(s,_,_,_) -> s
+  | BoundVar(s,_,_,_) -> s
+
+let getTypeSymbolName s = (Symbol.name (getTypeSymbolSymbol s))
 
 (**********************************************************************
 *Term Context:
@@ -763,8 +858,21 @@ let string_of_term = fun term ->
       result
   
   and string_of_app = fun term context fix prec ->
+    let rec string_of_args args =
+      match args with
+          [] -> ""
+        | a::aa -> (string_of_term' a WholeTermContext appFixity appPrec) ^ " " ^ (string_of_args aa)
+    in
+    
     match term with
-      ApplyTerm(l,r,_) ->
+      ApplicationTerm(FirstOrderApplication(f, args, _),_,_) ->
+        let paren = needsParens appFixity appPrec context fix prec in
+        let result = (string_of_term' f LeftTermContext appFixity appPrec) ^ " " ^ (string_of_args args) in
+        if paren then
+          "(" ^ result ^ ")"
+        else
+          result
+    | ApplicationTerm(CurriedApplication(l, r),_,_) ->
         let paren = needsParens appFixity appPrec context fix prec in
         let result = (string_of_term' l LeftTermContext appFixity appPrec) ^ " " ^ (string_of_term' r RightTermContext appFixity appPrec) in
         if paren then
@@ -778,13 +886,14 @@ let string_of_term = fun term ->
   
   and string_of_term' = fun term context fix prec ->
     match term with
-      IntTerm(i,_) -> (string_of_int i)
-    | RealTerm(r,_) -> (string_of_float r)
-    | StringTerm(s,_) -> "\"" ^ s ^ "\""
-    | ConstantTerm(c,_,_) -> (getConstantName c)
-    | FreeVarTerm(s,_) -> Symbol.name (getTypeSymbolSymbol s)
-    | BoundVarTerm(s,_) -> Symbol.name (getTypeSymbolSymbol s)
-    | ApplyTerm(_) -> string_of_app term context fix prec
+      IntTerm(i,_,_) -> (string_of_int i)
+    | RealTerm(r,_,_) -> (string_of_float r)
+    | StringTerm(StringLiteral(s),_,_) -> "\"" ^ s ^ "\""
+    | StringTerm(StringData(s,_,_),_,_) -> "\"" ^ s ^ "\""
+    | ConstantTerm(c,_,_,_) -> (getConstantName c)
+    | FreeVarTerm(NamedFreeVar(s),_,_) -> Symbol.name (getTypeSymbolSymbol s)
+    | BoundVarTerm(NamedBoundVar(s),_,_) -> Symbol.name (getTypeSymbolSymbol s)
+    | ApplicationTerm(_) -> string_of_app term context fix prec
     | AbstractionTerm(_) -> string_of_abstraction term context fix prec
     | ErrorTerm -> "error"
     | _ -> Errormsg.impossible (getTermPos term) "string_of_term': unimplemented for this term."
@@ -794,17 +903,21 @@ let string_of_term = fun term ->
 
 
 let getModuleConstantTable = function
-  Module(_,ctable,_,_,_,_,_,_,_,_) -> ctable
+  Module(_,_,_,ctable,_,_,_,_,_,_,_,_,_,_,_) -> !ctable
 | Signature(_) -> Errormsg.impossible Errormsg.none "Absyn.getModuleConstantTable: not a module."
 
 let getModuleKindTable = function
-  Module(_,_,ktable,_,_,_,_,_,_,_) -> ktable
+  Module(_,_,_,_,ktable,_,_,_,_,_,_,_,_,_,_) -> !ktable
 | Signature(_) -> Errormsg.impossible Errormsg.none "Absyn.getModuleKindTable: not a module."
 
 let getModuleTypeAbbrevTable = function
-  Module(_,_,_,atable,_,_,_,_,_,_) -> atable
+  Module(_,_,_,_,_,atable,_,_,_,_,_,_,_,_,_) -> atable
 | Signature(_) -> Errormsg.impossible Errormsg.none "Absyn.getModuleTypeAbbrevTable: not a module."
 
 let getModuleClauses = function
-  Module(_,_,_,_,_,_,_,_,_,c) -> c
+  Module(_,_,_,_,_,_,_,_,_,_,_,_,_,_,c) -> !c
 | Signature(_) -> Errormsg.impossible Errormsg.none "Absyn.getModuleClauses: not a module."
+
+let getModuleClausesRef = function
+  Module(_,_,_,_,_,_,_,_,_,_,_,_,_,_,c) -> c
+| Signature(_) -> Errormsg.impossible Errormsg.none "Absyn.getModuleClausesRef: not a module."

@@ -73,9 +73,12 @@ type pmodule =
     Module of (string * pconstant list * pconstant list * 
       pconstant list * pconstant list * pfixity list * pkind list *
       pkind list * ptypeabbrev list * pclause list * psymbol list *
-      psymbol list * psymbol list)
+      psymbol list * psymbol list * psymbol list)
   | Signature of (string * pconstant list * pkind list *
       ptypeabbrev list * pfixity list * psymbol list)
+
+let getClauseTerm = function
+  Clause(t) -> t
 
 (********************************************************************
 *string_of_termlist:
@@ -276,7 +279,7 @@ let printPreAbsyn = fun m out ->
           output_line ")")
 
     and printPreAbsyn' = function
-        Module(name, gconstants, lconstants, cconstants, uconstants, fixities, gkinds, lkinds, tabbrevs, clauses, accummod, accumsig, usesig) ->
+        Module(name, gconstants, lconstants, cconstants, uconstants, fixities, gkinds, lkinds, tabbrevs, clauses, accummod, accumsig, usesig, impmods) ->
           (output_line ("Module:" ^ name);
           output_line "Constants:";
           List.iter printConstant gconstants;
@@ -329,5 +332,5 @@ let getTermPos = function
 let getModuleClauses = function
     Module(name, gconsts, lconsts, cconsts, uconsts, fixities,
       gkinds, lkinds, tabbrevs, clauses, accummods,
-      accumsigs, usesigs) -> clauses
+      accumsigs, usesigs, impmods) -> clauses
   | _ -> Errormsg.impossible Errormsg.none "Preabsyn.getModuleClauses: invalid module"
