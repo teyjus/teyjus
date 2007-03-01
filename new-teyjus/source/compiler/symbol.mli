@@ -7,3 +7,4 @@ type symbol
 val symbol : string -> symbol
 val name : symbol -> string
 val id : symbol -> int
+val generate : unit -> symbol

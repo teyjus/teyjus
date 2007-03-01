@@ -29,7 +29,7 @@
 			<Tool
 				Name="VCCustomBuildTool"
 				Description="Building..."
-				CommandLine="ocamake -clean *.mly *.mll *.mli *.ml&#x0D;&#x0A;del *.cm*&#x0D;&#x0A;del *.obj&#x0D;&#x0A;ocamake *.mly *.mll *.ml *.mli -epp -opt -o tjc.exe&#x0D;&#x0A;"
+				CommandLine="rem ocamake -clean *.mly *.mll *.mli *.ml&#x0D;&#x0A;rem del *.cm*&#x0D;&#x0A;rem del *.obj&#x0D;&#x0A;ocamake *.mly *.mll *.ml *.mli -epp -opt -o tjc.exe&#x0D;&#x0A;"
 				AdditionalDependencies=""
 				Outputs="tjc.exe"
 			/>
@@ -208,6 +208,10 @@
 						CommandLine=""
 					/>
 				</FileConfiguration>
+			</File>
+			<File
+				RelativePath=".\option.ml"
+				>
 			</File>
 			<File
 				RelativePath=".\parse.ml"

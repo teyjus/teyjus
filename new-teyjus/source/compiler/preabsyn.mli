@@ -85,6 +85,7 @@ and pfixity = Fixity of (psymbol list * pfixitykind * int * pos)
 *   Accumulated Modules: psymbol list
 *   Accumulated Signatures: psymbol list
 *   Used Signatures: psymbol list
+*   Imported Modules: psymbol list
 * Signature:
 *   Name: string
 *   Global Constants: pconstant list
@@ -98,7 +99,7 @@ type pmodule =
     Module of (string * pconstant list * pconstant list * 
       pconstant list * pconstant list * pfixity list * pkind list *
       pkind list * ptypeabbrev list * pclause list * psymbol list *
-      psymbol list * psymbol list)
+      psymbol list * psymbol list * psymbol list)
   | Signature of (string * pconstant list * pkind list *
       ptypeabbrev list * pfixity list * psymbol list)
 
@@ -108,4 +109,6 @@ val printPreAbsyn : pmodule -> out_channel -> unit
 val getFixityPos : pfixitykind -> pos
 val getTermPos : pterm -> pos
 val getModuleClauses : pmodule -> pclause list
+val getClauseTerm : pclause -> pterm
+
 val string_of_term : pterm -> string

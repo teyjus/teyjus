@@ -2,15 +2,13 @@ type pos = Errormsg.pos
 type symbol = Symbol.symbol
 
 (*  Terms and Terms with Free Variables *)
-type ptvarlist = Absyn.atypesymbol Table.SymbolTable.t
+type ptvarlist = Absyn.atypesymbol list
 type ptterm = Term of (Absyn.aterm * Types.typemolecule)
-type ptfixedterm = FixedTerm of (Absyn.afixedterm * Types.typemolecule)
 type pttermandvariables = TermAndVariables of (ptterm * ptvarlist)
-type ptfixedtermandvariables = FixedTermAndVariables of (ptfixedterm * ptvarlist)
 
 (*  Functions indicating what to do when a new constant or kind is encountered. *)
-type ptnewconstant = Absyn.aconstant -> (Absyn.aconstant Table.SymbolTable.t) -> (Absyn.aconstant Table.SymbolTable.t)
-type ptnewkind = Absyn.akind -> Absyn.akind Table.SymbolTable.t -> Absyn.akind Table.SymbolTable.t
+type ptnewconstant = symbol -> Absyn.aconstant Table.SymbolTable.t -> Absyn.aconstant Table.SymbolTable.t
+type ptnewkind = symbol -> int -> pos -> Absyn.akind Table.SymbolTable.t -> Absyn.akind Table.SymbolTable.t
 
 (*  Term Accessors  *)
 let getTermTerm = function Term(t, _) -> t
@@ -21,9 +19,7 @@ let getTermAndVariablesTerm = function TermAndVariables(t, _) -> t
 let getTermAndVariablesVariables = function TermAndVariables(_, vars) -> vars
 
 let errorTerm = Term(Absyn.errorTerm, Types.errorMolecule)
-let errorFixedTerm = FixedTerm(Absyn.errorFixedTerm, Types.errorMolecule)
-let errorTermAndVariables = TermAndVariables(errorTerm, Table.SymbolTable.empty)
-let errorFixedTermAndVariables = FixedTermAndVariables(errorFixedTerm, Table.SymbolTable.empty)
+let errorTermAndVariables = TermAndVariables(errorTerm, [])
 let getTermType = function
   Term(_,ty) -> ty
 
@@ -36,7 +32,6 @@ let getTermAndVariablesTerm = function
 (**********************************************************************
 *Term-parsing types.
 **********************************************************************)
-
 (*  Stack and stack items.  *)
 type ptstackdata =
   StackTerm of (ptterm)
@@ -118,18 +113,28 @@ let printStack = fun stack ->
   let str = (print' data) in
   print_endline ("Stack: " ^ str)
 
-let contains = fun env v ->
-  match (Table.find v env) with
-    Some(_) -> true
-  | None -> false
+let contains env v =
+  let find tsym =
+    (Absyn.getTypeSymbolSymbol tsym) = v
+  in
+  (List.exists find env)
 
 let get = fun env v ->
-  match (Table.find v env) with
-    Some(v) -> v
-  | None -> Errormsg.impossible Errormsg.none "Parse.get: entry not found"
+  let find tsym =
+    (Absyn.getTypeSymbolSymbol tsym) = v
+  in
+  
+  if contains env v then
+    List.find find env
+  else
+    Errormsg.impossible Errormsg.none "Parse.get: entry not found"
 
 let add = fun env sym tsym ->
-  (Table.add sym tsym env)
+  if (contains env sym) then
+    env
+  else
+    tsym::env
+
 
 let newStack = Stack([], NoneState, 0, Absyn.NoFixity)
 let errorStack = Stack([], ErrorState, 0, Absyn.NoFixity)
@@ -184,7 +189,7 @@ let makeType = fun term s ktable pos ->
 let makeConstant = fun c pos ->
   let ty = Types.makeConstantType c in
   let env = Types.getMoleculeEnvironment ty in
-  Term(Absyn.ConstantTerm(c,env,pos), ty)
+  Term(Absyn.ConstantTerm(c,env,false,pos), ty)
 
 (**********************************************************************
 *stackTop:
@@ -207,8 +212,8 @@ let popStack = function
 * Given an abstract syntax representation of a module and a list of
 * preabsyn terms, generates a list of absyn clauses.
 **********************************************************************)
-let rec translateClause = fun term amodule ->
-  let (tv, _, _, _) = parseTerm term Table.SymbolTable.empty Table.SymbolTable.empty amodule newStack in
+let rec translateClause = fun term amodule newconstant newkind ->
+  let (tv, _, _, _) = parseTerm term [] [] amodule newStack in
   let tv' = (getTermAndVariablesTerm tv) in
   let term' = getTermTerm tv' in
   let type' = getTermType tv' in
@@ -218,12 +223,15 @@ let rec translateClause = fun term amodule ->
     Absyn.errorTerm
   else
   
-  if (Types.unify type' booltype term') <> Types.Success then
+  let boolkind = Pervasive.boolKind in
+  let booltype = Types.makeKindType boolkind in
+  
+  if (Types.unify type' booltype) <> (Types.Success) then
     (Errormsg.error (Absyn.getTermPos term') ("expecting term of boolean type" ^ 
       (Errormsg.info "encountered term:") ^
-      (Errormsg.info Absyn.string_of_term term') ^
+      (Errormsg.info (Absyn.string_of_term term')) ^
       (Errormsg.info "of type:") ^
-      (Errormsg.info Absyn.string_of_type type'));
+      (Errormsg.info (Absyn.string_of_type (Types.getMoleculeType type'))));
     Absyn.errorTerm)
   else
    
@@ -234,16 +242,16 @@ let rec translateClause = fun term amodule ->
 * Given an abstract syntax representation of a module and a preabsyn
 * term, generates a normalized absyn term.
 **********************************************************************)
-let rec translateTerm = fun term amodule ->
+and translateTerm = fun term amodule ->
   let _ = Errormsg.log (Preabsyn.getTermPos term) ("unparsed preabsyn: " ^ (Preabsyn.string_of_term term)) in
-  let (tv,_,_,_) = parseTerm term Table.SymbolTable.empty Table.SymbolTable.empty amodule newStack in
+  let (tv,_,_,_) = parseTerm term [] [] amodule newStack in
   let term' = getTermTerm (getTermAndVariablesTerm tv) in
   let mol' = getTermMolecule (getTermAndVariablesTerm tv) in
   let _ = Errormsg.log (Absyn.getTermPos term') ("parsed term: " ^ (Absyn.string_of_term term') ^ " : " ^ (Types.string_of_typemolecule mol')) in
   let term'' = normalizeTerm term' in
   let _ = Errormsg.log (Absyn.getTermPos term'') ("parsed, normalized term: " ^ (Absyn.string_of_term term'')) in
   let fixedterm = fixTerm term' in
-  (Errormsg.log (Absyn.getTermPos term'') ("parsed, normalized, fixed term: " ^ (Absyn.string_of_fixedterm fixedterm));
+  (Errormsg.log (Absyn.getTermPos term'') ("parsed, normalized, fixed term: " ^ (Absyn.string_of_term fixedterm));
   fixedterm)
 
 (**********************************************************************
@@ -266,13 +274,13 @@ and parseTerm = fun term fvs bvs amodule stack ->
       let TermAndVariables(term', fvs') = tv in
       (parseTerms headterms fvs' bvs' amodule (reduceToListTerm (Some term')) newStack)
   | Preabsyn.LambdaTerm(b, t, pos) ->
-      let bbvs = parseTypeSymbols b in
-      let (tv', fvs', bvs', stack') = parseTerms (t fvs (bbvs @ bvs) (reduceToTerm) newStack) in
+      let bbvs = parseTypeSymbols b amodule in
+      let (tv', fvs', bvs', stack') = parseTerms t fvs (bbvs @ bvs) amodule (reduceToTerm) newStack in
       let term' = getTermAndVariablesTerm tv' in
-      (TermAndVariables(Absyn.AbstractionTerm(term', bbvs, pos), getTermAndVariablesVariables tv'))
-  | Preabsyn.IntTerm(i, pos) -> (TermAndVariables((makeType (Absyn.IntTerm(i, pos)) "int" (Absyn.getModuleKindTable amodule) pos), fvs), fvs, bvs, stack)
-  | Preabsyn.RealTerm(r, pos) -> (TermAndVariables((makeType (Absyn.RealTerm(r, pos)) "real" (Absyn.getModuleKindTable amodule) pos), fvs), fvs, bvs, stack)
-  | Preabsyn.StringTerm(s, pos) -> (TermAndVariables((makeType (Absyn.StringTerm(s, pos)) "string" (Absyn.getModuleKindTable amodule) pos), fvs), fvs, bvs, stack)
+      (TermAndVariables(makeAbstraction term' bbvs pos, fvs'), fvs', bbvs, stack)
+  | Preabsyn.IntTerm(i, pos) -> (TermAndVariables((makeType (Absyn.IntTerm(i, false, pos)) "int" (Absyn.getModuleKindTable amodule) pos), fvs), fvs, bvs, stack)
+  | Preabsyn.RealTerm(r, pos) -> (TermAndVariables((makeType (Absyn.RealTerm(r, false, pos)) "real" (Absyn.getModuleKindTable amodule) pos), fvs), fvs, bvs, stack)
+  | Preabsyn.StringTerm(s, pos) -> (TermAndVariables((makeType (Absyn.StringTerm(Absyn.StringLiteral(s), false, pos)) "string" (Absyn.getModuleKindTable amodule) pos), fvs), fvs, bvs, stack)
   | Preabsyn.IdTerm(sym, ty, idkind, pos) ->
       let (op', fvs', bvs') = (translateId term fvs bvs amodule) in
       (match op' with
@@ -287,7 +295,7 @@ and parseTerm = fun term fvs bvs amodule stack ->
 * Translate a list of preabsyn terms into abstract syntax.  Executes
 * the given operation upon successful translation of the list.
 **********************************************************************)
-and parseTerms = fun terms fvs bvs amodule oper stack ->
+and parseTerms terms fvs bvs amodule oper stack =
   (********************************************************************
   *translate':
   * Translate an individual term in the list.
@@ -322,6 +330,7 @@ and parseTerms = fun terms fvs bvs amodule oper stack ->
           | StackError -> (errorStack, fvs', bvs'))
         with
           TermException -> (errorStack, fvs', bvs'))
+    | Preabsyn.LambdaTerm(_) -> simple ()
     | Preabsyn.ErrorTerm -> (errorStack, fvs, bvs))
   in
 
@@ -337,13 +346,14 @@ and parseTerms = fun terms fvs bvs amodule oper stack ->
 *parseTypeSymbols:
 * Parses a list of type symbols.
 **********************************************************************)
-and parseTypeSymbols tsymlist =
+and parseTypeSymbols tsymlist amodule =
   let newBoundTypeSymbol sym ty pos =
     match ty with
       Some t ->
-        Absyn.BoundTypeSymbol(true, Absyn.RawType(t), sym, pos)
+        let t' = Translate.translateType t amodule in
+        Absyn.BoundVar(sym, ref None, ref true, ref(Some t'))
     | None ->
-        Absyn.BoundTypeSymbol(true, Absyn.makeVariableType (), sym, pos)
+        Absyn.BoundVar(sym, ref None, ref true,ref(Some (Absyn.makeTypeVariable ())))
   in
 
   let rec parse' tsymlist =
@@ -400,7 +410,7 @@ and constantToOpTerm = fun term constant fvs bvs amodule ->
   let make' = fun tmol pos ->
     let fixity = Absyn.getConstantFixity constant in
     if fixity = Absyn.NoFixity then
-      (StackTerm(Term(Absyn.ConstantTerm(constant, (Types.getMoleculeEnvironment tmol), pos), tmol)), fvs, bvs)
+      (StackTerm(Term(Absyn.ConstantTerm(constant, (Types.getMoleculeEnvironment tmol), false, pos), tmol)), fvs, bvs)
     else
       (StackOp(constant, (Types.getMoleculeEnvironment tmol), pos), fvs, bvs)
   in
@@ -420,25 +430,25 @@ and constantToOpTerm = fun term constant fvs bvs amodule ->
       (make' tm1 pos)
   | _ -> Errormsg.impossible (Preabsyn.getTermPos term) "Parse.constantToOpTerm: invalid term."
 
-and makeImplicitTypeSymbol = fun c sym tysy ->
-  Absyn.ImplicitTypeSymbol(false, c, sym, tysy)
-and makeBoundTypeSymbol = fun c sym tysy ->
-  Absyn.BoundTypeSymbol(false, c, sym, tysy)
-and makeAnonymousTypeSymbol = fun c sym tysy ->
-  Absyn.AnonymousTypeSymbol(false, c, sym, tysy)
+and makeImplicitTypeSymbol = fun c sym ty ->
+  Absyn.ImplicitVar(sym, ref c, ref false, ref (Some ty))
+and makeBoundTypeSymbol = fun c sym ty ->
+  Absyn.BoundVar(sym, ref c, ref false, ref (Some ty))
+and makeAnonymousTypeSymbol = fun c sym ty ->
+  Absyn.AnonymousImplicitVar(sym, ref c, ref false, ref (Some ty))
 
 and makeVarToOpTerm = fun term fvs bvs amodule makeSymFunc ->
   match term with
     Preabsyn.IdTerm(sym, Some(ty), k, pos) ->
       let skel = Translate.translateType ty amodule in
       let tmol = Types.Molecule(skel, [], false) in
-      let typesym = makeSymFunc None sym (Absyn.RawType(skel)) in
+      let typesym = makeSymFunc None sym skel in
       let fvs' = (add fvs sym typesym) in
       (StackTerm(Term(Absyn.makeFreeVarTerm typesym pos, tmol)), fvs', bvs)
   | Preabsyn.IdTerm(sym, None, k, pos) ->
-      let skel = Absyn.TypeVarType(ref None, false) in
+      let skel = Absyn.makeTypeVariable () in
       let tmol = Types.Molecule(skel, [], false) in
-      let typesym = makeSymFunc None sym (Absyn.RawType(skel)) in
+      let typesym = makeSymFunc None sym skel in
       let fvs' = (add fvs sym typesym) in
       (StackTerm(Term(Absyn.makeFreeVarTerm typesym pos, tmol)), fvs', bvs)
   | _ -> Errormsg.impossible Errormsg.none "Parse.makeVarToOpTerm: invalid id term"
@@ -527,7 +537,7 @@ and reduceToListTerm = fun list fvs bvs amodule stack ->
         (TermAndVariables(term', fvs), fvs, bvs, newStack)
     | InfixrWithArgState ->
         let top::ot::rest = getStackStack stack in
-        let Some(item) = list in
+        let item = Option.get list in
         if (getStackOpConstant ot) = (Pervasive.consConstant) then
           let pos = getStackItemPos top in
           let cons = (makeConstant Pervasive.consConstant pos) in
@@ -555,7 +565,7 @@ and reduceToListTerm = fun list fvs bvs amodule stack ->
   | InfixState -> (err ())
   | InfixrState -> (err ())
   | _ ->
-    let Some(item) = list in
+    let item = Option.get list in
     let (term, fvs', bvs', stack') = (reduce' stack) in
     let pos = (Absyn.getTermPos (getTermTerm (getTermAndVariablesTerm term))) in
     let cons = (makeConstant Pervasive.consConstant pos) in
@@ -950,6 +960,34 @@ and newParseState = fun stack ->
     Stack(list, TermState, prec, fix)
 
 (**********************************************************************
+*makeAbstraction:
+**********************************************************************)
+and makeAbstraction term bvs pos =
+  let rec makeTerm currentterm bvs =
+    match bvs with
+      [] -> currentterm
+    | bv::bvs' ->
+        let term' = Absyn.AbstractionTerm(
+          Absyn.NestedAbstraction(bv, currentterm),
+          false,
+          pos) in
+        (makeTerm term' bvs')
+  in
+  
+  let rec makeType ty bvs =
+    match bvs with
+      bv::[] -> (Absyn.getTypeSymbolType bv)
+    | bv::bvs' ->
+        Absyn.ArrowType(ty, (makeType (Absyn.getTypeSymbolType bv) bvs'))
+  in
+  
+  let term' = makeTerm (getTermTerm term) bvs in
+  let ty = getTermType term in
+  let ty' = makeType (Types.getMoleculeType ty) bvs in
+  let mol = getTermMolecule term in
+  let env' = Types.getMoleculeEnvironment mol in
+  Term(term', Types.Molecule(ty', env', false))
+(**********************************************************************
 *makeError:
 * Builds a term and type representation of an error.
 **********************************************************************)
@@ -969,7 +1007,10 @@ and makeApplyOp = fun pos ->
 * Makes an application term, performing type checking.
 **********************************************************************)
 and makeApply = fun f arg ->
-  let term = Absyn.ApplyTerm(getTermTerm f, getTermTerm arg, Absyn.getTermPos (getTermTerm f)) in
+  let term = Absyn.ApplicationTerm(
+    Absyn.CurriedApplication(getTermTerm f, getTermTerm arg),
+    false,
+    Absyn.getTermPos (getTermTerm f)) in
   let ty = Types.checkApply (getTermType f) (getTermType arg) term in
   
   if ty = Types.errorMolecule then
@@ -983,9 +1024,15 @@ and makeApply = fun f arg ->
 * of makeApply, used to display better error information.
 **********************************************************************)
 and makeBinaryApply = fun f (arg1 : ptterm) (arg2 : ptterm) ->
-  let term = Absyn.ApplyTerm(
-    Absyn.ApplyTerm(getTermTerm f, getTermTerm arg1, Absyn.getTermPos (getTermTerm f)),
-    getTermTerm arg2, Absyn.getTermPos (getTermTerm f)) in
+  let term = Absyn.ApplicationTerm(
+    Absyn.CurriedApplication(
+      Absyn.ApplicationTerm(
+        Absyn.CurriedApplication(getTermTerm f, getTermTerm arg1),
+        false,
+        Absyn.getTermPos (getTermTerm f)),
+      getTermTerm arg2),
+    false,
+    Absyn.getTermPos (getTermTerm f)) in
   
   let ty = Types.checkApply (getTermType f) (getTermType arg1) term in
   let ty' = Types.checkApply ty (getTermType arg2) term in
@@ -1065,7 +1112,7 @@ and normalizeTerm = fun term ->
         encountered.  If so, check for an environment entry, and use
         the corresponding term or suspension.  Otherwise, simply use
         the term. *)
-    | Absyn.BoundVarTerm(tsym, _) ->
+    | Absyn.BoundVarTerm(Absyn.NamedBoundVar(tsym), _, pos) ->
         (match (findEntry env tsym) with
           Some(entry) ->
             if (isEntrySuspension (!entry)) then
@@ -1077,9 +1124,8 @@ and normalizeTerm = fun term ->
             else
               (!entry)
         | None -> (TermEntry(term)))
-    
     (*  Application *)
-    | Absyn.ApplyTerm(l, r, p) ->
+    | Absyn.ApplicationTerm(Absyn.CurriedApplication(l, r), b, p) ->
         let l' = normalize l env true in
         if (isEntrySuspension l') then
           let t' = (getEntrySuspensionTerm l') in
@@ -1090,34 +1136,42 @@ and normalizeTerm = fun term ->
           let l'' = (getEntryTerm l') in
           let r' = normalize r env true in
           let r'' = (getEntryTerm r') in
-          TermEntry(Absyn.ApplyTerm(l'', r'', p))
+          TermEntry(Absyn.ApplicationTerm(Absyn.CurriedApplication(l'', r''), b, p))
     
-    | Absyn.AbstractionTerm(tsym, aterm, pos) ->
+    | Absyn.AbstractionTerm(Absyn.NestedAbstraction(tsym, aterm), b, pos) ->
         if whnf then
           SuspensionEntry(term, env)
         else if (getEnvironmentSize env) > 0 then
-          let tsym' = Absyn.BoundTypeSymbol(true,
-            None,
-            (Absyn.getTypeSymbolSymbol tsym),
-            (Absyn.getTypeSymbolType tsym)) in
-          let bv = Absyn.BoundVarTerm(tsym, pos) in
-          let env' = makeTerm tsym bv env in
+          let tsym' = Absyn.BoundVar(Absyn.getTypeSymbolSymbol tsym, ref None, ref false, ref(Some(Absyn.getTypeSymbolType tsym))) in
+          let bv = Absyn.BoundVarTerm(Absyn.NamedBoundVar(tsym'),b, pos) in
+          let env' = makeTerm tsym' bv env in
           let aterm' = (getEntryTerm (normalize aterm env' false)) in
           if aterm <> aterm' then
-            TermEntry(Absyn.AbstractionTerm(tsym', aterm', pos))
+            TermEntry(Absyn.AbstractionTerm(Absyn.NestedAbstraction(tsym', aterm'), b, pos))
           else
             TermEntry(term)
         else
           let aterm' = (getEntryTerm (normalize aterm emptyEnvironment false)) in
           if aterm <> aterm' then
-            TermEntry(Absyn.AbstractionTerm(tsym, aterm', pos))
+            TermEntry(Absyn.AbstractionTerm(Absyn.NestedAbstraction(tsym, aterm'), b, pos))
           else
             TermEntry(term)
     | Absyn.ErrorTerm -> TermEntry(Absyn.ErrorTerm)
+    | _ ->
+        (Errormsg.error (Absyn.getTermPos term) "Parse.normalize: invalid term type";
+        TermEntry(Absyn.ErrorTerm))
   in
 
   let result = normalize term [] false in
   (getEntryTerm result)
 
-and fixTerm = fun term ->
-  Absyn.errorFixedTerm
+and fixTerm term =
+  Absyn.errorTerm
+  
+let illegalConstant c pos =
+  if c = Pervasive.implicationConstant || c = Pervasive.colonDashConstant then
+    (Errormsg.error pos ("symbol " ^ (Absyn.getConstantName c) ^
+      " cannot be embedded in predicate arguments");
+    true)
+  else
+    false

@@ -16,7 +16,7 @@ let maxPrecedence = 255
 * placed in a Preabsyn.Signature structure and returned.  If a module
 * is parsed, the data is placed in a Preabsyn.Module.
 **********************************************************************)
-let importList = ref []
+let importedModList = ref []
 
 let accumulatedModList = ref []
 let accumulatedSigList = ref []
@@ -37,9 +37,8 @@ let globalTypeAbbrevs = ref []
 let fixityList = ref []
 
 let reverseResults = fun () ->
-  (importList := List.rev !importList;
-
-  accumulatedModList := List.rev !accumulatedModList;
+  (accumulatedModList := List.rev !accumulatedModList;
+  importedModList := List.rev !importedModList;
   accumulatedSigList := List.rev !accumulatedSigList;
   useSigList := List.rev !useSigList;
   useOnlyList := List.rev !useOnlyList;
@@ -58,8 +57,7 @@ let reverseResults = fun () ->
   fixityList := List.rev !fixityList)
 
 let clearResults = fun () ->
-  (importList := [];
-
+  (importedModList := [];
   accumulatedModList := [];
   accumulatedSigList := [];
   useSigList := [];
@@ -150,7 +148,7 @@ parseModule
       let m = Preabsyn.Module(!Lplex.currentModuleName, !globalConstants, !localConstants,
                       !closedConstants, !useOnlyList, !fixityList, !globalKinds, !localKinds, 
                       !globalTypeAbbrevs, !clauseList, !accumulatedModList, 
-                      !accumulatedSigList, !useSigList) in
+                      !accumulatedSigList, !useSigList, !importedModList) in
       (clearResults ();
       m)}
   | error modpreamble modbody modend      {
@@ -159,7 +157,7 @@ parseModule
                       !closedConstants, !useOnlyList, !fixityList, !globalKinds, !localKinds,
                       !globalTypeAbbrevs, !clauseList,
                       !accumulatedModList, !accumulatedSigList,
-                      !useSigList) in
+                      !useSigList, !importedModList) in
       (clearResults ();
       m)}
   ;
@@ -217,7 +215,7 @@ sigend
 modpreamble
   :     {}
   | modpreamble IMPORT  cvidlist  PERIOD
-                {importList := $3 @ !importList}
+                {importedModList := $3 @ !importedModList}
   | modpreamble ACCUMULATE cvidlist PERIOD
                 {accumulatedModList := $3 @ !accumulatedModList}
   | modpreamble ACCUMSIG cvidlist PERIOD

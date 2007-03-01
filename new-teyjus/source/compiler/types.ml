@@ -23,13 +23,6 @@ exception UnifyException of unifyresult
 * environment.
 **********************************************************************)
 let makeConstantType = fun constant ->
-  let buildEnv = fun i l ->
-    if i = 0 then
-      l
-    else
-      ((Absyn.TypeVarType(ref None, false)) :: l)
-  in
-  
   let instance = fun t ->
     match t with
       Absyn.TypeSetType(def, l) ->
@@ -37,12 +30,20 @@ let makeConstantType = fun constant ->
     | _ -> t
   in
   
+  let envsize = Absyn.getConstantTypeEnvSize constant in
   let skel = Absyn.getConstantSkeleton constant in
-  let envsize = Absyn.getSkeletonSize skel in
-  let ty = Absyn.getSkeletonType skel in
-      
-  Molecule(instance ty, buildEnv envsize [], false)
+  
+  if Option.isSome skel then
+    let ty = Absyn.getSkeletonType (Option.get skel) in
+    Molecule(instance ty, Absyn.makeTypeEnvironment envsize, false)
+  else
+    Errormsg.impossible (Absyn.getConstantPos constant)
+      "Types.makeConstantType: constant has no skeleton."
 
+(**********************************************************************
+*makeKindType:
+* Constructs a sort from an absyn kind.
+**********************************************************************)
 let makeKindType = fun kind ->
   Molecule(Absyn.AppType(kind, []), [], false)
 
@@ -130,7 +131,7 @@ and string_of_typemolecule' = fun mol bindings ->
   
   and string_of_type = fun t ->
     match t with
-      Absyn.SkeletonVarType(i) -> (string_of_skelvar i)
+      Absyn.SkeletonVarType(i) -> (string_of_skelvar !i)
     | Absyn.TypeRefType(r) -> (string_of_type r)
     | Absyn.TypeVarType(_) -> (string_of_var bindings)
     | Absyn.TypeSetType(_) -> (string_of_typeset t)
@@ -171,7 +172,7 @@ let rec occursCheck = fun var skel bindings ->
       else
         skel
   | Absyn.SkeletonVarType(i) ->
-      let skel' = (Absyn.dereferenceType (getEnvironmentElement bindings i)) in
+      let skel' = (Absyn.dereferenceType (getEnvironmentElement bindings !i)) in
       occursCheck var skel' []
   | Absyn.AppType(k, args) ->
       (****************************************************************
@@ -216,7 +217,7 @@ let bindVariable = fun var mol bindings ->
   let ty = (getMoleculeType mol) in
   try 
     let t = (occursCheck var ty (getMoleculeEnvironment mol)) in
-    (Absyn.getTypeVariableReference var := Some t;
+    (Absyn.getTypeVariableReference var := Some(Absyn.FreeTypeVar(t));
     var :: bindings)
   with
     UnifyException(OccursCheckFailure) ->
@@ -273,7 +274,7 @@ let rec unify = fun (tm1 : typemolecule) (tm2 : typemolecule) ->
       if (Absyn.isVariableType skel2) then
         (*  Only bind if the variables are not equal. *)
         if (skel1 <> skel2) then
-          ((Absyn.getTypeVariableReference skel1) := (Some skel2);
+          ((Absyn.getTypeVariableReference skel1) := (Some(Absyn.FreeTypeVar(skel2)));
           skel1::bindings)
         else
           bindings
@@ -444,10 +445,10 @@ let checkApply = fun fty argty term ->
     
     (*  Check if the function is a variable... *)
     else if (Absyn.isVariableType fskel) then
-      let fargskel = Absyn.TypeVarType(ref None, false) in
+      let fargskel = Absyn.makeTypeVariable () in
       let fargty = Molecule(fargskel, [], false) in
-      let targskel = Absyn.TypeVarType(ref None, false) in
-      let targty = Molecule(Absyn.TypeVarType(ref None, false), [], false) in
+      let targskel = Absyn.makeTypeVariable () in
+      let targty = Molecule(Absyn.makeTypeVariable (), [], false) in
       
       (unify' fargty argty targty)
 

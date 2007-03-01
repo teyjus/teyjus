@@ -6,48 +6,64 @@ type newclause = NewClause of (Absyn.aconstant * Absyn.aterm list)
 
 type deorifygoalresult =
   DeOrifyGoalResult of (Absyn.aterm list * Absyn.atypesymbol list *
-  universalvardefinition list * bool * newclause list)
+    universalvardefinition list * bool * newclause list)
 
-let getDeOrifyGoalResultGoal = function
-  DeOrifyGoalResult(g,_,_,_) -> g
-let getDeOrifyGoalResultGoal = function
-  DeOrifyGoalResult(_,fvs,_,_) -> fvs
-let getDeOrifyGoalResultGoal = function
-  DeOrifyGoalResult(_,_,uvdefs,_) -> uvdefs
-let getDeOrifyGoalResultGoal = function
+let getDeOrifyGoalResultGoals = function
+  DeOrifyGoalResult(g,_,_,_,_) -> g
+let getDeOrifyGoalResultFVS = function
+  DeOrifyGoalResult(_,fvs,_,_,_) -> fvs
+let getDeOrifyGoalResultUVDefs = function
+  DeOrifyGoalResult(_,_,uvdefs,_,_) -> uvdefs
+let getDeOrifyGoalResultHasCut = function
   DeOrifyGoalResult(_,_,_,hc,_) -> hc
-let getDeOrifyGoalResultGoal = function
+let getDeOrifyGoalResultNewClauses = function
   DeOrifyGoalResult(_,_,_,_,nc) -> nc
 
+type deorifyclauseresult =
+  DeOrifyClauseResult of (Absyn.aterm list * Absyn.atypesymbol list *
+    universalvardefinition list * newclause list)
+
+(********************************************************************
+*union:
+* Returns the union of two lists of free variables.
+********************************************************************)
+let rec union fvs1 fvs2 =
+  fvs1 @ fvs2
+
+(********************************************************************
+*newHead:
+********************************************************************)
+let rec newHead fvs =
+  Errormsg.impossible Errormsg.none "Clauses.newHead: not implemented"
 
 (********************************************************************
 *newPredicate:
 *
 ********************************************************************)
-let newPredicate goals fvs newclauses =
+and newPredicate goals fvs newclauses =
   let (pred, head) = newHead fvs in
   let clauses = reverseDistributeImplication head goals [] in
   let newclause = NewClause(pred, clauses) in
-  newclause::newclauses
+  (head, newclause::newclauses)
 
 (********************************************************************
 *newPredicateFromAnd:
 ********************************************************************)
-let newPredicateFromAnd goals1 goals2 fvs newclauses =
+and newPredicateFromAnd goals1 goals2 fvs newclauses =
   let (pred, head) = newHead fvs in
   let clauses = reverseDistributeImplication head goals2 [] in
   let clauses' = reverseDistributeImplication head goals1 clauses in
   let newclause = NewClause(pred, clauses') in
-  newclause::newclauses
+  (head, newclause::newclauses)
 
 (********************************************************************
 *getClauseHeadAndArguments:
 * Gets the clause head and arguments, flattening an applications at
 * the head.
 ********************************************************************)
-let rec getClauseHeadAndArguments term =  
-  match t with
-    Absyn.ApplicationTerm(Absyn.FirstOrderTerm(t', args, _), _) ->
+and getClauseHeadAndArguments term =  
+  match term with
+    Absyn.ApplicationTerm(Absyn.FirstOrderApplication(t', args, _), _, pos) ->
       let (head, args') = getClauseHeadAndArguments t' in
       (t', args' @ args)
   | _ -> (term, [])
@@ -63,12 +79,12 @@ and collectFreeVars term fvs bvs =
     Absyn.IntTerm(_) -> (term, fvs)
   | Absyn.RealTerm(_) -> (term, fvs)
   | Absyn.StringTerm(_) -> (term, fvs)
-  | Absyn.FreeVarTerm(tsym,_,pos) ->
-      if not List.mem tsym fvs then
+  | Absyn.FreeVarTerm(Absyn.NamedFreeVar(tsym),_,pos) ->
+      if not (List.mem tsym fvs) then
         (term, tsym::fvs)
       else
         (term, fvs)
-  | Absyn.BoundVarTerm(tsym, _, pos) ->
+  | Absyn.BoundVarTerm(Absyn.NamedBoundVar(tsym), _, pos) ->
       if not ((List.mem tsym bvs) || (List.mem tsym fvs)) then
         (term, tsym::fvs)
       else
@@ -78,19 +94,20 @@ and collectFreeVars term fvs bvs =
         (Absyn.errorTerm, [])
       else
         (term, fvs)
-  | Absyn.AbstractionTerm(tsym,body,pos) ->
+  | Absyn.AbstractionTerm(Absyn.NestedAbstraction(tsym,body),b,pos) ->
       let (body', fvs') = collectFreeVars body fvs bvs in
-      let term' = Absyn.AbstractionTerm(tsym, body', pos) in
+      let term' = Absyn.AbstractionTerm(Absyn.NestedAbstraction(tsym, body'), b, pos) in
       (term', fvs')
   | Absyn.ApplicationTerm(_) ->
+      let pos = Absyn.getTermPos term in
       let (head, args) = getClauseHeadAndArguments term in
       let (head', fvs') = collectFreeVars head fvs bvs in
-      let (args', fvs'') = collectArgsFreeVars args fvs' in
+      let (args', fvs'') = collectArgsFreeVars args fvs' bvs in
       let term' = Absyn.ApplicationTerm(
         Absyn.FirstOrderApplication(
           head',
           args',
-          List.size args'),
+          List.length args'),
         false,
         pos) in
       (term', fvs'')
@@ -101,11 +118,11 @@ and collectFreeVars term fvs bvs =
 * Collect the free variables of a list of terms, and return a list
 * of rectified items, and the fvs.
 **********************************************************************)
-and collectArgsFreeVars args fvs =
+and collectArgsFreeVars args fvs bvs =
   match args with
     [] -> ([], fvs)
   | a::aa ->
-      let (args', fvs') = collectArgsFreeVars aa fvs in
+      let (args', fvs') = collectArgsFreeVars aa fvs bvs in
       let (arg', fvs'') = collectFreeVars a fvs bvs in
       (arg'::args', fvs'')
 
@@ -114,14 +131,15 @@ and collectArgsFreeVars args fvs =
 * Insert a universal quantification over vtysy over each of the terms
 * in myterms.
 **********************************************************************)
-let rec distributeUniversal term tsym terms =
+and distributeUniversal term tsym terms =
   let rec distribute' term terms =
     match terms with
       [] -> []
     | t::ts ->
         let newterm = Absyn.ApplicationTerm(
           Absyn.FirstOrderApplication(term,
-            [Absyn.AbstractionTerm(tsym, t, Errormsg.none)], 1), 
+            [Absyn.AbstractionTerm(Absyn.NestedAbstraction(tsym, t), false, Errormsg.none)], 1),
+          false,
           Errormsg.none) in
         (newterm :: (distribute' term ts))
   in
@@ -129,19 +147,25 @@ let rec distributeUniversal term tsym terms =
   distribute' term terms
 
 (**********************************************************************
+*reverseDistributeImplication:
+**********************************************************************)
+and reverseDistributeImplication head g1 g2 =
+  Errormsg.impossible Errormsg.none "Clauses.reverseDistributeImplication: not implemented"
+
+(**********************************************************************
 *distributeImplication:
 * Produces a new list of normalized clauses by adding an implication over
 * each of the normalized clauses in cls with the antecedent of each
 * implication being goal.
 **********************************************************************)
-and distributeImplication goal cls =
+and distributeImplication goal cls result =
   (********************************************************************
   *distribute:
   * Distribute a single implication.
   ********************************************************************)
-  let rec distribute goal clause ctable =
+  let rec distribute goal clause =
     let regularImplication () =
-      let imply = Parse.implicationTerm in
+      let imply = Pervasive.implicationTerm in
       Absyn.ApplicationTerm(
         Absyn.FirstOrderApplication(imply, [goal; clause], 2),false, Errormsg.none)
     in
@@ -149,15 +173,16 @@ and distributeImplication goal cls =
     match clause with
       Absyn.ApplicationTerm(Absyn.FirstOrderApplication(f, args, _), _, pos) ->
         (match f with
-          Absyn.ConstantTerm(c,_) ->
+          Absyn.ConstantTerm(c,_,_,_) ->
             if c = Pervasive.allConstant then
               let arg1 = List.hd args in
-              let tsym = Absyn.getAbstractionTermVar arg1 in
-              let body = Absyn.getAbstractionTermBody arg1 in
+              let tsym = Absyn.getTermAbstractionVar arg1 in
+              let body = Absyn.getTermAbstractionBody arg1 in
+              let pos' = Absyn.getTermPos arg1 in
               Absyn.ApplicationTerm(
                 Absyn.FirstOrderApplication(
                   f,
-                  [Absyn.AbstractionTerm(tsym, distribute goal arg1, Errormsg.none)],
+                  [Absyn.AbstractionTerm(Absyn.NestedAbstraction(tsym, distribute goal arg1), false, pos')],
                   1),
                 false,
                 Errormsg.none)
@@ -166,7 +191,7 @@ and distributeImplication goal cls =
               let arg2 = List.hd (List.tl args) in
               let inner = Absyn.ApplicationTerm(
                 Absyn.FirstOrderApplication(
-                  Parse.andTerm,
+                  Pervasive.andTerm,
                   [arg1; goal],
                   2),
                 false,
@@ -181,13 +206,13 @@ and distributeImplication goal cls =
             else
               regularImplication ()
         | _ -> regularImplication ())
-    | _ -> regularImplicaiton ()
+    | _ -> regularImplication ()
   in
   
   match cls with
-    [] -> []
+    [] -> (result : Absyn.aterm list)
   | c::cs ->
-      (distribute goal c)  :: (distributeImplication goal cs)
+      (distribute goal c)  :: (distributeImplication goal cs result)
 
 
 (**********************************************************************
@@ -195,38 +220,62 @@ and distributeImplication goal cls =
 * The returned value brings back a list of disjunctions forming goal if
 * wholegoal is true and a disjunction free form otherwise.
 **********************************************************************)
-let rec deOrifyGoal goal uvs uvdefs andgoal wholegoal =
+and deOrifyGoal goal uvs uvdefs andgoal wholegoal newclauses =
   let (t, args) = getClauseHeadAndArguments goal in
   
   match t with
-    Absyn.ConstantTerm(c,_,pos) ->
+    Absyn.ConstantTerm(c,_,_,pos) ->
       if c = Pervasive.allConstant then
         let arg1 = List.hd args in
-        (deOrifyUniversalGoal t arg1 uvs uvdefs andgoal wholegoal)
+        (deOrifyUniversalGoal t arg1 uvs uvdefs andgoal wholegoal newclauses)
       else if c = Pervasive.someConstant then
         let arg1 = List.hd args in
-        (deOrifyExistentialGoal t arg1 uvs uvdefs andgoal wholegoal)
+        (deOrifyExistentialGoal t arg1 uvs uvdefs andgoal wholegoal newclauses)
       else if c = Pervasive.orConstant then
         let arg1 = List.hd args in
         let arg2 = List.hd (List.tl args) in
-        (deOrifyOrGoal arg1 arg2 uvs uvdefs andgoal wholegoal)
+        (deOrifyOrGoal arg1 arg2 uvs uvdefs andgoal wholegoal newclauses)
       else if c = Pervasive.andConstant then
         let arg1 = List.hd args in
         let arg2 = List.hd (List.tl args) in
-        (deOrifyAndGoal arg1 arg2 uvs uvdefs andgoal wholegoal)
+        (deOrifyAndGoal arg1 arg2 uvs uvdefs andgoal wholegoal newclauses)
       else if c = Pervasive.implicationConstant then
         let arg1 = List.hd args in
         let arg2 = List.hd (List.tl args) in
-        (deOrifyImplicationGoal arg1 arg2 uvs uvdefs andgoal false)
+        (deOrifyImplicationGoal arg1 arg2 uvs uvdefs andgoal false newclauses)
       else if c = Pervasive.colonDashConstant then
         let arg1 = List.hd args in
         let arg2 = List.hd (List.tl args) in
-        (deOrifyImplicationGoal arg2 arg1 uvs uvdefs andgoal false)
+        (deOrifyImplicationGoal arg2 arg1 uvs uvdefs andgoal false newclauses)
       else if c = Pervasive.cutConstant then
-        deOrifyCutGoal goal andgoal uvdefs
+        (deOrifyCutGoal goal andgoal uvdefs newclauses)
       else
-        deOrifyAtomicGoal t args andgoal uvs uvdefs
-  | _ -> (deOrifyAtomicGoal t args andgoal uvs uvdefs)
+        (deOrifyAtomicGoal t args andgoal uvs uvdefs newclauses)
+  | _ -> (deOrifyAtomicGoal t args andgoal uvs uvdefs newclauses)
+
+(**********************************************************************
+*deOrifyCutGoal:
+**********************************************************************)
+and deOrifyCutGoal goal andgoal uvdefs newclauses =
+  Errormsg.impossible Errormsg.none "Clauses.deOrifyCutGoal: not implemented"
+
+(**********************************************************************
+*deOrifyUniversalGoal:
+**********************************************************************)
+and deOrifyUniversalGoal t arg1 uvs uvdefs andgoal wholegoal newclauses =
+  Errormsg.impossible Errormsg.none "Clauses.deOrifyUniversalGoal: not implemented"
+
+(**********************************************************************
+*deOrifyExistentialGoal:
+**********************************************************************)
+and deOrifyExistentialGoal t arg1 uvs uvdefs andgoal wholegoal newclauses =
+  Errormsg.impossible Errormsg.none "Clauses.deOrifyExistentialGoal: not implemented"
+
+(**********************************************************************
+*deOrifyImplicationGoal:
+**********************************************************************)
+and deOrifyImplicationGoal t arg1 uvs uvdefs andgoal wholegoal newclauses =
+  Errormsg.impossible Errormsg.none "Clauses.deOrifyImplicationGoal: not implemented"
 
 (**********************************************************************
 *deOrifyAtomicGoal:
@@ -236,9 +285,8 @@ let rec deOrifyGoal goal uvs uvdefs andgoal wholegoal =
 * Finally, arguments have to be checked for correctness, they have to be
 * rectified and their free variables collected.
 **********************************************************************)
-and deOrifyAtomicGoal head args andgoal uvs uvdefs =
+and deOrifyAtomicGoal head args andgoal uvs uvdefs newclauses =
   let deorify' head hascut fvs uvdefs =
-  
     (*  If the andgoal is not None, the head should actually be an
         application, with and ("," or "&") at the head, and the
         original head and the andgoal as arguments. *)
@@ -247,40 +295,40 @@ and deOrifyAtomicGoal head args andgoal uvs uvdefs =
           let andgoal' = Option.get andgoal in
           let head' = Absyn.ApplicationTerm(
             Absyn.FirstOrderApplication(
-              Parse.andTerm,
+              Pervasive.andTerm,
               [head; andgoal'],
               2),
             false,
             Absyn.getTermPos head) in
-          DeOrifyGoalResult([head'], fvs, uvdefs, hascut)
+          DeOrifyGoalResult([head'], fvs, uvdefs, hascut, newclauses)
         else
-          DeOrifyGoalResult([head], fvs, uvdefs, hascut)
+          DeOrifyGoalResult([head], fvs, uvdefs, hascut, newclauses)
     in
     
     match args with
       [] ->
-          DeOrifyGoalResult([getGoal head], fvs, uvdefs, hascut)
+          getGoal head andgoal
     | _ ->
-        let (args', fvs') = collectArgsFreeVars args fvs in
+        let (args', fvs') = collectArgsFreeVars args fvs [] in
         let head' = Absyn.ApplicationTerm(
           Absyn.FirstOrderApplication(
             head,
             args',
-            List.size args'),
+            List.length args'),
           false,
           Absyn.getTermPos head) in
-        DeOrifyGoalResult([getGoal head'], fvs', uvdefs, hascut)
+        getGoal head' andgoal
   in
   
   match head with
-    Absyn.BoundVarTerm(Absyn.NamedBoundVar(tsym),_,pos) ->
+    Absyn.BoundVarTerm(Absyn.NamedBoundVar(tsym),b,pos) ->
       if (List.mem tsym uvs) then
-        let c = Absyn.getTypeSymbolConstant tsym in
+        let c = Absyn.getTypeSymbolHiddenConstant tsym in
         let head' = Absyn.ConstantTerm(c, [], false, pos) in
-        deorify' head' false [] uvdefs
+        (deorify' head' false [] uvdefs)
       else
-        let head' = Absyn.FreeVarTerm(tsym, pos) in
-        deorify' head' false [tsym] uvdefs
+        let head' = Absyn.FreeVarTerm(Absyn.NamedFreeVar(tsym), b, pos) in
+        (deorify' head' false [tsym] uvdefs)
   | Absyn.FreeVarTerm(Absyn.NamedFreeVar(tsym),_,pos) ->
       deorify' head false [tsym] uvdefs
   | _ -> deorify' head false [] uvdefs
@@ -291,15 +339,15 @@ and deOrifyAtomicGoal head args andgoal uvs uvdefs =
 * then a new predicate must be introduced to prevent the cut from cutting off
 * choice points in the parent clause.
 **********************************************************************)
-let rec deOrifyOneOrGoal goal uvs uvdefs andgoal =
-  let DeOrifyGoalResult(goals', uvs', uvdefs', hascut') =
-    (deOrifyGoal goal uvs uvdefs andgoal true) in
+and deOrifyOneOrGoal goal uvs uvdefs andgoal newclauses=
+  let DeOrifyGoalResult(goals', fvs', uvdefs', hascut', newclauses') =
+    (deOrifyGoal goal uvs uvdefs andgoal true newclauses) in
   
   if hascut' then
-    let _ = _ in
-    DeOrifyGoalResult(,uvs',uvdefs',hascut')
+    let (goal', newclauses') = newPredicate goals' fvs' newclauses in
+    DeOrifyGoalResult([goal'], fvs', uvdefs',hascut', newclauses')
   else
-    DeOrifyGoalResult(goals',uvs',uvdefs',hascut')
+    DeOrifyGoalResult(goals', fvs', uvdefs',hascut', newclauses')
 
 (**********************************************************************
 *deOrifyOrGoal:
@@ -311,7 +359,7 @@ let rec deOrifyOneOrGoal goal uvs uvdefs andgoal =
 * be reversed to get the right (reverse) ordering for clauses. Also upward
 * propogation of cuts stops here
 **********************************************************************)
-and deOrifyOrGoal goal1 goal2 uvs uvdefs andgoal wholegoal =
+and deOrifyOrGoal goal1 goal2 uvs uvdefs andgoal wholegoal newclauses =
   let getAndGoal wholegoal andgoal =
     if wholegoal then
       andgoal
@@ -320,87 +368,98 @@ and deOrifyOrGoal goal1 goal2 uvs uvdefs andgoal wholegoal =
   in
   let andgoal' = (getAndGoal wholegoal andgoal) in
   
-  let result1 = deOrifyOneOrGoal goal2 uvs uvdefs andgoal' in
+  let result1 = deOrifyOneOrGoal goal2 uvs uvdefs andgoal' newclauses in
   
+  let newclauses' = getDeOrifyGoalResultNewClauses result1 in
   let uvdefs' = getDeOrifyGoalResultUVDefs result1 in
-  let result2 = deOrifyOneOrGoal goal1 uvs uvdefs' andgoal' in
+  let result2 = deOrifyOneOrGoal goal1 uvs uvdefs' andgoal' newclauses' in
   
+  let newclauses'' = getDeOrifyGoalResultNewClauses result2 in
   let fvs' = union (getDeOrifyGoalResultFVS result1) (getDeOrifyGoalResultFVS result2) in
-  let uvdefs' = getDeOrifyGoalResultsUVDefs result1 in
-
+  let uvdefs' = getDeOrifyGoalResultUVDefs result1 in
+  
   if wholegoal then
     let goals1 = getDeOrifyGoalResultGoals result1 in
     let goals2 = getDeOrifyGoalResultGoals result2 in
-    DeOrifyGoalResults(goals1 @ goals2, fvs', uvdefs', false)
+    DeOrifyGoalResult(goals1 @ goals2, fvs', uvdefs', false, newclauses'')
   else
-    let pred = newPredicate
+    let (pred, newclauses''') = newPredicateFromAnd
       (getDeOrifyGoalResultGoals result2)
       (getDeOrifyGoalResultGoals result1)
-      (getDeOrifyGoalResultFVS result1) in
+      (getDeOrifyGoalResultFVS result1)
+      newclauses'' in
+
     if Option.isSome andgoal' then
       let goal' = Absyn.ApplicationTerm(
         Absyn.FirstOrderApplication(
-          Parse.andTerm,
+          Pervasive.andTerm,
           [pred; Option.get andgoal'],
           2),
         false,
         Errormsg.none) in
-      DeOrifyGoalResults([goal'], fvs', uvdefs', false)
+      DeOrifyGoalResult([goal'], fvs', uvdefs', false, newclauses''')
     else
-      DeOrifyGoalResults([pred], fvs', uvdefs', false)
+      DeOrifyGoalResult([pred], fvs', uvdefs', false, newclauses''')
 
 (**********************************************************************
 *deOrifyAndGoal:
 **********************************************************************)
-and deOrifyAndGoal goal1 goal2 uvs uvdefs andgoal wholegoal =
+and deOrifyAndGoal goal1 goal2 uvs uvdefs andgoal wholegoal newclauses =
   let getAndGoal goals =
     match goals with
       [] -> None
     | g::gs -> Some g
   in
   
-  let result1 = deOrifyGoal goal2 uvs uvdefs andgoal false in
+  let result1 = deOrifyGoal goal2 uvs uvdefs andgoal false newclauses in
   let r1goals = getDeOrifyGoalResultGoals result1 in
   let andgoal' = getAndGoal r1goals in
   
-  let uvdefs' = getDeOrifyGoalResultsUVDefs result1 in
+  let uvdefs' = getDeOrifyGoalResultUVDefs result1 in
+  let newclauses' = getDeOrifyGoalResultNewClauses result1 in
   
-  let result2 = deOrifyGoal goal1 uvs uvdefs' andgoal' wholegoal in
-  let fvs' = union (getDeOrifyGoalResultsFVS result1) (getDeOrifyGoalResultsFVS result2) in
-  let hascut' = (getDeOrifyGoalResultsHasCut result1) || (getDeOrifyGoalResultsHasCut result2) in
-  let uvdefs' = getDeOrifyGoalResultsUVDefs result2 in
-  DeOrifyGoalResults([getDeOrifyGoalResultsGoals result2], fvs', uvdefs', hascut')
+  let result2 = deOrifyGoal goal1 uvs uvdefs' andgoal' wholegoal newclauses' in
+  let fvs' = union (getDeOrifyGoalResultFVS result1) (getDeOrifyGoalResultFVS result2) in
+  let hascut' = (getDeOrifyGoalResultHasCut result1) || (getDeOrifyGoalResultHasCut result2) in
+  let uvdefs' = getDeOrifyGoalResultUVDefs result2 in
+  let newclauses'' = getDeOrifyGoalResultNewClauses result2 in
+  
+  DeOrifyGoalResult(getDeOrifyGoalResultGoals result2, fvs', uvdefs', hascut', newclauses'')
 
 (**********************************************************************
 *deOrifyClause:
 * Removes disjunctions from a clause.
 **********************************************************************)
-let rec deOrifyClause term currentclauses fvs uvs uvdefs =
+let rec deOrifyClause term currentclauses fvs uvs uvdefs newclauses =
+  let checkClauseArguments args fvs =
+    Errormsg.impossible Errormsg.none "Clauses.checkClauseArguments: not implemented"
+  in
+  
   match term with
     (*  An application  *)
-    Absyn.ApplicationTerm(Absyn.FirstOrderApplication(f, arg::args, num), _, _) ->
+    Absyn.ApplicationTerm(Absyn.FirstOrderApplication(f, arg::args, num), b, pos) ->
       (*  atomicHead: regular head with arguments.  *)
       let atomicHead () =  
         let (args', fvs') = checkClauseArguments args fvs in
-        let newclause = Absyn.ApplicationTerm(Absyn.FirstOrderApplication(f, args', num)) in
-        (newclause::currentclauses, fvs', uvdefs)
+        let newclause = Absyn.ApplicationTerm(Absyn.FirstOrderApplication(f, args', num),b,pos) in
+        DeOrifyClauseResult(newclause::currentclauses, fvs', uvdefs, newclauses)
       in
       
       (match f with
         Absyn.ConstantTerm(c,_,_,_) ->
           if c = Pervasive.allConstant then
-            let tsym = Absyn.getAbstractionTermVar(arg) in
-            let (clauses', fvs', uvdefs') = deOrifyClause arg [] fvs uvs uvdefs in
+            let tsym = Absyn.getTermAbstractionVar arg in
+            let DeOrifyClauseResult(clauses', fvs', uvdefs', newclauses') = deOrifyClause arg [] fvs uvs uvdefs newclauses in
             let clauses'' = distributeUniversal f tsym clauses' in
             let fvs'' = List.filter ((=) tsym) fvs' in
-            (clauses'' @ currentclauses, fvs'', uvdefs)
+            DeOrifyClauseResult(clauses'' @ currentclauses, fvs'', uvdefs, newclauses')
             
           else if c = Pervasive.implicationConstant then
-            let (goals, fvs', uvdefs') = deOrifyGoal arg uvs uvdefs in
-            let (clauses', fvs'', uvdefs'') = deOrifyClause (List.hd args) [] (union fvs' fvs'') uvs uvdefs' in
-            let t = List.head clauses' in
+            let DeOrifyGoalResult(goals, fvs', uvdefs', hascut', newclauses') = deOrifyGoal arg uvs uvdefs None false newclauses in
+            let DeOrifyClauseResult(clauses', fvs'', uvdefs'', newclauses'') = deOrifyClause (List.hd args) [] (union fvs fvs') uvs uvdefs' newclauses' in
+            let t = List.hd clauses' in
             let clauses'' = reverseDistributeImplication t goals currentclauses in
-            (clauses'', fvs'', uvdefs'')
+            DeOrifyClauseResult(clauses'', fvs'', uvdefs'', newclauses'')
             
           else
             atomicHead ()
@@ -409,20 +468,20 @@ let rec deOrifyClause term currentclauses fvs uvs uvdefs =
           atomicHead ())
     
     (*  The term is a propositional head.  *)
-  | _ -> (term::currentclauses, fvs, uvdefs)
+  | _ -> DeOrifyClauseResult(term::currentclauses, fvs, uvdefs, newclauses)
 
 (**********************************************************************
 *deOrifyClauses:
 * Removes disjunctions from a list of clauses.  The result is a list
 * of absyn clauses that don't contain disjunctions.
 **********************************************************************)
-and deOrifyClauses clauses currentclauses uvs =
+and deOrifyClauses clauses currentclauses uvs newclauses =
   match clauses with
     [] ->
-      currentclauses
+      DeOrifyClauseResult(currentclauses, [], [], newclauses)
   | c::cs ->
-      let (clauses', fvs', uvs', uvdefs') = deOrifyClauses cs currentclauses uvs in
-      (deOrifyClause c clauses' fvs' uvs' uvdefs')
+      let DeOrifyClauseResult(clauses', fvs', uvdefs', newclauses') = deOrifyClauses cs currentclauses uvs newclauses in
+      (deOrifyClause c clauses' fvs' uvs uvdefs' newclauses')
 
 (**********************************************************************
 *etaFluffQuantifier:
@@ -432,12 +491,12 @@ and deOrifyClauses clauses currentclauses uvs =
 **********************************************************************)
 and etaFluffQuantifier term arg =
   match term with
-    Absyn.LambdaTerm(_) ->
-      (Absyn.getAbstractionTermBody arg, Absyn.getAbstractionTermVar arg)
+    Absyn.AbstractionTerm(_) ->
+      (Absyn.getTermAbstractionBody arg, Absyn.getTermAbstractionVar arg)
   | _ ->
-      let c = Absyn.getConstantTermConstant term in
-      let tenv = Absyn.getConstantTypeEnv c in
-      let tsym = Absyn.BoundVar(Symbol.generate (), ref None, ref true, List.hd tenv) in
+      let c = Absyn.getTermConstant term in
+      let tenv = Absyn.getTermTypeEnv term in
+      let tsym = Absyn.BoundVar(Symbol.generate (), ref None, ref true, ref(Some(List.hd tenv))) in
       let bvterm = Absyn.BoundVarTerm(Absyn.NamedBoundVar(tsym), false, Errormsg.none) in
       let term = Absyn.ApplicationTerm(
         Absyn.FirstOrderApplication(arg, [bvterm], 1), false, Errormsg.none) in
@@ -453,8 +512,8 @@ and normalizeClause clauseterm clauses uvs uvdefs embedded =
   *indeterminate:
   * Indicates that a predicate head's name didn't resolve.
   ********************************************************************)
-  let indeterminate term clauses =
-    (Errormsg.error (Absyn.getTermPos t) ("Predicate name " ^
+  let indeterminate tsym pos =
+    (Errormsg.error pos("Predicate name " ^
       (Absyn.getTypeSymbolName tsym) ^ " is indeterminate");
     clauses)
   in
@@ -469,7 +528,7 @@ and normalizeClause clauseterm clauses uvs uvdefs embedded =
         term :: clauses
     | _ ->
         let term' = Absyn.ApplicationTerm(
-          Absyn.FirstOrderApplication(term, args, List.size args),
+          Absyn.FirstOrderApplication(term, args, List.length args),
           false, Errormsg.none) in
         (term' :: clauses)
   in
@@ -482,11 +541,11 @@ and normalizeClause clauseterm clauses uvs uvdefs embedded =
   let (t, args) = getClauseHeadAndArguments clauseterm in
   
   match t with
-    Absyn.ConstantTerm(c, _, _) ->
+    Absyn.ConstantTerm(c, env, b, pos) ->
       (*  Clause is: all P  *)
       if c = Pervasive.allConstant then
         let (arg, tsym) = etaFluffQuantifier t (List.hd args) in
-        (distributeUniversal t tsym (normalizeClause arg [] uvs uvdefs embedded) uvs embedded)
+        (distributeUniversal t tsym (normalizeClause arg [] uvs uvdefs embedded))
       
       (*  Clause is: a, b or a & b  *)
       else if c = Pervasive.andConstant then
@@ -504,7 +563,7 @@ and normalizeClause clauseterm clauses uvs uvdefs embedded =
       else if c = Pervasive.colonDashConstant then
         let arg1 = List.hd args in
         let arg2 = List.hd (List.tl args) in
-        (distributeImplication arg2 (normalizeClause arg1 [] uvs embedded) clauses)
+        (distributeImplication arg2 (normalizeClause arg1 [] uvs uvdefs embedded) clauses)
 
       (*  Clause is an exists clause. *)
       else if c = Pervasive.someConstant then
@@ -529,41 +588,43 @@ and normalizeClause clauseterm clauses uvs uvdefs embedded =
       else if embedded then
         ((Absyn.getConstantClosedRef c) := false;
         rigidAtom t clauses args)
-  | Absyn.BoundVarTerm(Absyn.NamedBoundVar(tsym), _, _) ->
+      else
+        (rigidAtom t clauses args)
+  | Absyn.BoundVarTerm(Absyn.NamedBoundVar(tsym), _, pos) ->
       if List.mem tsym uvs then
-        let t' = Absyn.ConstantTerm(Absyn.getTypeSymbolConstant tsym,
+        let t' = Absyn.ConstantTerm(Absyn.getTypeSymbolHiddenConstant tsym,
           [], false, Errormsg.none) in
-        if not List.mem tsym !uvdefs then
+        if not (List.mem tsym !uvdefs) then
           (uvdefs := tsym :: !uvdefs;
           rigidAtom t clauses args)
         else
           (rigidAtom t clauses args)
       else
-        (indeterminate t clauses)
+        (indeterminate tsym pos)
   | _ ->
-      (indeterminate t clauses)
+      (Errormsg.impossible (Absyn.getTermPos t) "Clauses.normalizeClause: invalid term type")
       
 (**********************************************************************
 *newKind:
 * Callback used when the term parser encounters an undefined kind.
 * Any undefined kind is flagged as an error.
 **********************************************************************)
-and newKind sym arity pos =
-  let k = Absyn.Kind() in
-  let ktable' = () in
+and newKind sym arity pos ktable=
+  let k = Absyn.LocalKind(sym, Some arity, ref 0, pos) in
+  let ktable' = Table.add sym k ktable in
   (if arity > 0 then
     Errormsg.error pos ("undefined type constructor " ^
       (Symbol.name sym) ^ " of arity " ^ (string_of_int arity))
   else
-    Errormsg.error pos ("undefined sort " ^ (Symbol.name sym)));
-  k
+    Errormsg.error pos ("undefined sort " ^ (Symbol.name sym));
+  ktable')
 
 (**********************************************************************
 *newConstant:
 * Callback used whn the term parser encounters an undefined constant.
 *************=********************************************************)
-and newConstant =
-  ()
+and newConstant sym ctable =
+  ctable
 
 (**********************************************************************
 *translateClauses:
@@ -578,13 +639,15 @@ and translateClauses pmod amod =
   * the term, and finally deorifies it.  The result is a list of
   * absyn clauses.
   ********************************************************************)
-  let translateClause preclause ktable ctable =
-    let (clause, newconstants) =
-      Parse.translateClause preclause ktable ctable newkind newconst in
+  let translateClause preclause amod clauses newclauses =
+    let preterm = Preabsyn.getClauseTerm preclause in
+    let clause =
+      Parse.translateClause preterm amod newConstant newKind in
     
-    let normclause = normalizeClause clause in
-    let cls = deOrifyClauses normclause in
-    cls
+    let uvdefs = ref [] in
+    let clauses' = normalizeClause clause [] [] uvdefs false in
+    let DeOrifyClauseResult(cls, _, _, newcls) = (deOrifyClauses clauses' clauses [] newclauses) in
+    (cls, newcls)
   in
   
   (********************************************************************
@@ -592,19 +655,18 @@ and translateClauses pmod amod =
   * Auxiliary function that iterates over a list of preabsyn clauses,
   * translates them, and flattens the resulting lists of clauses.
   ********************************************************************)
-  let parse' preclauses ktable ctable =
+  let rec parse' preclauses amod clauses newclauses =
     match preclauses with
-      [] -> []
+      [] -> (clauses, newclauses)
     | c::cs ->
-        let clauses = translateClause c ktable ctable in
-        clauses @ (parse' cs ktable ctable)
+        let (clauses', newclauses') = translateClause c amod clauses newclauses in
+        parse' cs amod clauses' newclauses'
 
-  in
-  let ktable = Absyn.getModuleKindTable amod in
-  let ctable = Absyn.getModuleConstantTable amod in
-  
+  in  
   let preclauses = Preabsyn.getModuleClauses pmod in
-  let clauses = parse' preclauses [] ktable ctable in
+  let (clauses, newclauses) = parse' preclauses amod [] [] in
+  
   
   (*  Enter them into the module  *)
-  (Absyn.getModuleClausesRef amod) := clauses
+  (*  let _ = (Absyn.getModuleClausesRef amod) := clauses in  *)
+  amod
