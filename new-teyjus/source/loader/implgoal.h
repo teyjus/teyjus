@@ -3,8 +3,8 @@
 
 #include "../system/memory.h"
 
-void LD_IMPL_LoadImplGoals(MEM_GmtEnt* ent);
+void LD_IMPLGOAL_LoadImplGoals(MEM_GmtEnt* ent);
 
-WordPtr LD_IMPL_GetImplGoalAddr();
+WordPtr LD_IMPLGOAL_GetImplGoalAddr();
 
 #endif //_IMPLGOAL_H_

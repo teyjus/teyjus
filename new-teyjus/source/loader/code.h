@@ -8,7 +8,7 @@
 extern int LD_CODE_LoadCode(MEM_GmtEnt* ent);
 
 //!Read a relative code address, return the absolute address.  Relies on code size.
-extern WordPtr LD_CODE_GetCodeInd();
+extern CSpacePtr LD_CODE_GetCodeInd();
 
 //!Read in code size from file and record in MEM_GmtEnt
 extern void LD_CODE_LoadCodeSize(MEM_GmtEnt* ent);
