@@ -8,15 +8,9 @@
 #include "strings.h"
 #include "../tables/instructions.h"
 #include "code.h"
+#include "importtab.h"
 
 WordPtr codeSpaceBeg;
-
-///\todo Put a real implementation into importtab.c
-WordPtr LD_IMPOTAB_GetImportTabAddr()
-{
-  LD_FILE_GET2();
-  return NULL;
-}
 
 int LD_CODE_LoadCode(MEM_GmtEnt* ent)
 {
@@ -32,7 +26,7 @@ int LD_CODE_LoadCode(MEM_GmtEnt* ent)
   for(i=0;i<size;)
   {
     j=i;
-    opcode=code[j++]=GET1();
+    opcode=code[j++]=LD_FILE_GET1();
     instrCat=INSTR_instrType(opcode);
     opType=INSTR_operandTypes(instrCat);
     argid=0;
@@ -68,12 +62,12 @@ int LD_CODE_LoadCode(MEM_GmtEnt* ent)
           break;
           
           case INSTR_MT:///\todo Make sure table indexes are supposed to resolve to real addresses.
-          *(WordPtr*)(code+j)=LD_IMPOTAB_GetImportTabAddr();
+          *(WordPtr*)(code+j)=LD_IMPORTTAB_GetImportTabAddr();
           j+=sizeof(WordPtr);
           break;
           
         case INSTR_IT:
-          *(WordPtr*)(code+j)=LD_IMPL_GetImplGoalAddr();
+          *(WordPtr*)(code+j)=LD_IMPLGOAL_GetImplGoalAddr();
           j+=sizeof(WordPtr);
           break;
           
@@ -88,12 +82,12 @@ int LD_CODE_LoadCode(MEM_GmtEnt* ent)
           break;
           
         case INSTR_S:
-          *(WordPtr*)(code+j)=LD_STRING_GetStringAddr(LD_FILE_GET2());///\todo Unify where addresses get read.
+          *(DF_StrDataPtr*)(code+j)=LD_STRING_GetStringAddr(LD_FILE_GET2());///\todo Unify where addresses get read.
           j+=sizeof(WordPtr);
           break;
           
         case INSTR_L:
-          *(WordPtr*)(code+j)=LD_CODE_GetCodeInd();
+          *(CSpacePtr*)(code+j)=LD_CODE_GetCodeInd();
           j+=sizeof(WordPtr);
           break;
           
@@ -120,7 +114,7 @@ int LD_CODE_LoadCode(MEM_GmtEnt* ent)
 }
 
 
-WordPtr LD_CODE_GetCodeInd()
+CSpacePtr LD_CODE_GetCodeInd()
 {
   return codeSpaceBeg+(int)LD_FILE_GETWORD();
 }

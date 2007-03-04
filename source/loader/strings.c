@@ -2,31 +2,42 @@
 #include "loader.h"
 #include "file.h"
 #include "../system/memory.h"
+#include "../simulator/mcstring.h"
 
 TwoBytes LD_LOADER_numStrings;
-char** LD_LOADER_Strings;
+DF_StrDataPtr* LD_LOADER_Strings;
 
 void LD_STRING_LoadStrings(MEM_GmtEnt* ent)
 {
-	int i;
-	char* string;
-	int str_length;
-	TwoBytes count=LD_LOADER_numStrings=LD_FILE_GET2();
-	LD_LOADER_Strings=(char**)EM_malloc(count*sizeof(char*));
-    
-	for(i=0;i<count;i++)
-	{
-		str_length=LD_FILE_GET1();
-		string=LD_LOADER_Strings[i]=(char*)LD_LOADER_ExtendModSpace(ent,str_length+1);
-		LD_FILE_GetString(string,str_length);
-		//printf("Loaded string \"%s\"\n",string);
-	}
-	return;
+  int i;
+  TwoBytes count=LD_LOADER_numStrings=LD_FILE_GET2();
+  LD_LOADER_Strings=(DF_StrDataPtr*)EM_malloc(count*sizeof(char*));
+  
+  for(i=0;i<count;i++)
+  {
+    LD_LOADER_Strings[i]= LD_STRING_LoadString(ent);
+  }
+  return;
 }
 
-WordPtr LD_STRING_GetStringAddr(int i)
+DF_StrDataPtr LD_STRING_LoadString(MEM_GmtEnt* ent)
 {
-  return (WordPtr)LD_LOADER_Strings[i];
+  int str_length=LD_FILE_GET1();
+  char* string=(char*)EM_malloc((str_length+1)*sizeof(char));
+  LD_FILE_GetString(string,str_length);
+  
+  DF_StrDataPtr loc=(DF_StrDataPtr)LD_LOADER_ExtendModSpace(ent,MCSTR_numWords(str_length)+DF_STRDATA_HEAD_SIZE);
+  
+  DF_mkStrDataHead((MemPtr)loc);
+  MCSTR_toString((MCSTR_Str)(loc+DF_STRDATA_HEAD_SIZE), string, str_length);
+  
+  free(string);
+  return loc;
+}
+
+DF_StrDataPtr LD_STRING_GetStringAddr(int i)
+{
+  return LD_LOADER_Strings[i];
 }
 
 void LD_STRING_Cleanup()

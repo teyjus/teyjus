@@ -4,7 +4,7 @@
 #include "code.h"
 #include "const.h"
 #include "../system/memory.h"
-#include "addcode.h"
+#include "searchtab.h"
 
 TwoBytes LD_IMPLGOAL_numImplGoals;
 WordPtr* LD_IMPLGOAL_ImplGoals;
@@ -31,23 +31,37 @@ WordPtr LD_IMPLGOAL_LoadImplGoal(MEM_GmtEnt* ent)
   
   //Load Next Clause Table
   int nctSize=(int)LD_FILE_GET2();
-  
+  ///\todo Check on the space requirements of the implgoal table.
   WordPtr tab=LD_LOADER_ExtendModSpace(ent,(3+nctSize)*sizeof(Word));
   
-  Word cst;
-  MEM_implPutNOP(tab,(Word)nctSize);
+  int cst;
+  MEM_implPutLTS(tab,nctSize);
   for(i=0;i<nctSize;i++)
   {
-    cst=(Word)LD_CONST_GetConstInd();
+    cst=(int)LD_CONST_GetConstInd();
     MEM_implPutLT(tab,i,cst);
   }
   
   //Load FindCodeFunc
-  //Byte fcf=LD_FILE_GET1();
-  //MEM_implPutFCP(tab,(MEM_FindCodeFnPtr)NULL);
-  ///\todo fix Impl goal loading
-  //LD_ADDCODE_LoadAddCodeTab(ent);
-  
+#define FCF_SEQNSEARCH 1
+#define FCF_HASHSEARCH 2
+///\todo Correct and move these: shared with addcode.c
+  Byte fcf=LD_FILE_GET1();
+  int tabSize;
+  if(fcf==FCF_SEQNSEARCH)
+  {
+    MEM_implPutFC(tab,(MEM_FindCodeFnPtr)&LD_SEARCHTAB_SeqnSrch);
+    LD_SEARCHTAB_LoadSeqSTab(ent,&tabSize);
+    MEM_implPutPSTS(tab,tabSize);
+    ///\todo do something with returned address.
+  }
+  else if(fcf==FCF_HASHSEARCH)
+  {
+    MEM_implPutFC(tab,(MEM_FindCodeFnPtr)&LD_SEARCHTAB_HashSrch);
+    LD_SEARCHTAB_LoadHashTab(ent,&tabSize);
+    MEM_implPutPSTS(tab,tabSize);
+    ///\todo do something with returned address.
+  }
   return tab;
 }
 

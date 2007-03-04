@@ -14,49 +14,46 @@ TwoBytes LD_KIND_numGKinds=-1;
 
 int LD_KIND_LoadKst(MEM_GmtEnt* ent)
 {
-	int i;
-	char str_length;
-	char* string=NULL;
-	
-	//Allocate space for the kind table.
-	TwoBytes kstsize=LD_FILE_GET2();
-    //printf("Kind table size=%d\n",kstsize);
-	MEM_KstEnt* kst=(MEM_KstEnt*)LD_LOADER_ExtendModSpace(ent,(kstsize+PERV_KIND_NUM)*sizeof(MEM_KstEnt));
-	ent->kstBase=(MEM_KstPtr)kst;
-	
-	//Copy the pervasive kinds
-    PERV_copyKindDataTab((PERV_KindData*)kst);
-	kst+=PERV_KIND_NUM;
-			
-	//Get the number of global kinds
-    TwoBytes num_glob=LD_KIND_numGKinds=LD_FILE_GET2();
-    //printf("GKind table size=%d\n",num_glob);
-	if(num_glob>kstsize)
-		return -1;
-	
-	//Load the global kinds
-	for(i=0;i<num_glob;i++)
-	{
-		kst[i].arity=LD_FILE_GET1();
-		str_length=LD_FILE_GET1();
-        string=(char*)LD_LOADER_ExtendModSpace(ent,str_length+1);///\todo Fix kind string loading to new representation
-		LD_FILE_GetString(string,str_length);
-		kst[i].name=string;
-	}
-	
-	//Load the local kinds
-	TwoBytes num_loc=LD_FILE_GET2();
-    //printf("LKind table size=%d\n",num_loc);
-    if(num_glob+num_loc!=kstsize)
-		return -1;
-	kst+=num_glob;
-	for(i=0;i<num_loc;i++)
-	{
-		kst[i].arity=LD_FILE_GET1();
-		kst[i].name=NULL;
-	}
-	
-	return 0;
+  int i;
+  char str_length;
+  char* string=NULL;
+  
+  //Allocate space for the kind table.
+  TwoBytes kstsize=LD_FILE_GET2();
+  //printf("Kind table size=%d\n",kstsize);
+  MEM_KstEnt* kst=(MEM_KstEnt*)LD_LOADER_ExtendModSpace(ent,(kstsize+PERV_KIND_NUM)*sizeof(MEM_KstEnt));
+  ent->kstBase=(MEM_KstPtr)kst;
+  
+  //Copy the pervasive kinds
+  PERV_copyKindDataTab((PERV_KindData*)kst);
+  kst+=PERV_KIND_NUM;
+          
+  //Get the number of global kinds
+  TwoBytes num_glob=LD_KIND_numGKinds=LD_FILE_GET2();
+  //printf("GKind table size=%d\n",num_glob);
+  if(num_glob>kstsize)
+    return -1;
+  
+  //Load the global kinds
+  for(i=0;i<num_glob;i++)
+  {
+    kst[i].arity=LD_FILE_GET1();
+    kst[i].name=LD_STRING_LoadString(ent);
+  }
+  
+  //Load the local kinds
+  TwoBytes num_loc=LD_FILE_GET2();
+  //printf("LKind table size=%d\n",num_loc);
+  if(num_glob+num_loc!=kstsize)
+    return -1;
+  kst+=num_glob;
+  for(i=0;i<num_loc;i++)
+  {
+    kst[i].arity=LD_FILE_GET1();
+    kst[i].name=NULL;
+  }
+  
+  return 0;
 }
 
 TwoBytes LD_KIND_ConvKindInd(Byte gl, TwoBytes ind)

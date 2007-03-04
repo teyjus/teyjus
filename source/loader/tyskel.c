@@ -15,19 +15,19 @@ int LD_TYSKEL_LoadType(MEM_GmtEnt* ent,DF_TypePtr loc);
 
 int LD_TYSKEL_LoadTst(MEM_GmtEnt* ent)
 {
-	int i;
-	TwoBytes tstsize=LD_FILE_GET2();
-	DF_TypePtr* tst=(DF_TypePtr*)LD_LOADER_ExtendModSpace(ent,tstsize*sizeof(DF_TypePtr));
-	
-	for(i=0;i<tstsize;i++)
-	{
-		tst[i]=(DF_TypePtr)LD_LOADER_ExtendModSpace(ent,sizeof(DF_Type));
-		printf("Type#%d:",i); //DEBUG
-		if(-1==LD_TYSKEL_LoadType(ent,tst[i]))
-			return -1;
-		printf(":\n"); //DEBUG
-	}
-	return 0;
+  int i;
+  TwoBytes tstsize=LD_FILE_GET2();
+  DF_TypePtr* tst=(DF_TypePtr*)LD_LOADER_ExtendModSpace(ent,tstsize*sizeof(DF_TypePtr));
+  
+  for(i=0;i<tstsize;i++)
+  {
+    tst[i]=(DF_TypePtr)LD_LOADER_ExtendModSpace(ent,sizeof(DF_Type));
+    printf("Type#%d:",i); //DEBUG
+    if(-1==LD_TYSKEL_LoadType(ent,tst[i]))
+      return -1;
+    printf(":\n"); //DEBUG
+  }
+  return 0;
 }
 
 int LD_TYSKEL_LoadType(MEM_GmtEnt* ent,DF_TypePtr loc)

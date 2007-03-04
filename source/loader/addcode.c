@@ -14,23 +14,24 @@ void LD_ADDCODE_LoadModAddCodeTab(MEM_GmtEnt* ent)
 
 CSpacePtr LD_ADDCODE_LoadAddCodeTab(MEM_GmtEnt* ent)
 {
-  //Load FindCodeFunc
+#define FCF_SEQNSEARCH 1
+#define FCF_HASHSEARCH 2
+///\todo Correct and move these: shared with addcode.c
   Byte fcf=LD_FILE_GET1();
-  ///\todo do something sensible with the find code function.
-  //MEM_implPutFCP(tab,(MEM_FindCodeFnPtr)NULL);//TODO
-  
-  //Load Search table
-  Word sTabSize=(Word)LD_FILE_GET2();
-  
-  ///\todo Make search tables use hashes
-  Word* sTab=LD_LOADER_ExtendModSpace(ent,2*sizeof(Word)*sTabSize);
-  for(int i=0;i<nop;i++)
+  if(fcf==FCF_SEQNSEARCH)
   {
-    sTab[2*i]=(Word)LD_CONST_GetConstInd();
-    sTab[2*i+1]=(Word)LD_CODE_GetCodeInd();
+    //MEM_implPutFCP(tab,(MEM_FindCodeFnPtr)&LD_SEARCHTAB_SeqnSrch);
+    ///\todo store find code function somewhere
+    LD_SEARCHTAB_LoadSeqSTab(ent);
+    ///\todo do something with returned address.
   }
-  
-  return sTab;
+  else if(fcf==FCF_HASHSEARCH)
+  {
+    //MEM_implPutFCP(tab,(MEM_FindCodeFnPtr)&LD_SEARCHTAB_HashSrch);
+    ///\todo store find code function somewhere
+    LD_SEARCHTAB_LoadHashTab(ent);
+    ///\todo do something with returned address.
+  }
 }
 
 WordPtr LD_IMPLGOAL_GetImplGoal()
