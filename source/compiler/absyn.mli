@@ -64,7 +64,6 @@ and atypeabbrev =
 * Skeleton
 * Type Environment Size
 * Neededness
-* (Type Environment)
 * Code Info
 * Constant Type
 * Index
@@ -94,7 +93,7 @@ and afixity =
   | NoFixity
 
 and acodeinfo = 
-    Builtin
+    Builtin of int
   | Clauses of aclausesblock
 
 (*****************************************************************************
@@ -312,3 +311,6 @@ val getModuleTypeAbbrevTable : amodule -> atypeabbrev Table.SymbolTable.t
 val getModuleClauses : amodule -> aclauseinfo
 val getModuleClausesRef : amodule -> aclauseinfo ref
 val makeTypeEnvironment : int -> atype list
+
+val getConstantCat : aconstant -> aconstanttype
+val makeTypeSetVariable : atype list -> atype
