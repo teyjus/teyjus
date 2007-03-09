@@ -7,8 +7,9 @@ OPERAND TYPES
   N      NextClauseInd  Byte        /* next clause number in impt or impl pt */
   I1     OneByteInt     Byte        /* 1 byte natural number */
   CE     ClEnvInd       Byte        /* closure environment variable number */
+  SEG    ImpSegInd      Byte        /* import segment index  */ 
   C      CstIndex       TwoBytes    /* constant symbol table index */
-  K      KstIndex       TwoBytes    /* kind symbol table index  */ 
+  K      KstIndex       TwoBytes    /* kind symbol table index  */
   L      CodeLabel      CSpacePtr   /* code location  */
   I      Int            int         /* integer immediate value */
   F      Float          float       /* floating point immediate value */
@@ -127,8 +128,8 @@ INSTR CATEGORY
   RCI1X  [R C I1 P P P X X]
          RCI1X_LEN 8; RCI1X_R  1; RCI1X_C  2; RCI1X_I1 4
 
-  I1I1LX [I1 I1 P L X X X X]
-         I1I1LX_LEN 8; I1I1LX_I11 1; I1I1LX_I12 2; I1I1LX_L 4 
+  SEGI1LX [SEG I1 P L X X X X]
+          SEGI1LX_LEN 8; SEGI1LX_SEG 1; SEGI1LX_I1 2; SEGI1LX_L 4 
 
   I1LLX  [I1 P P L L X X X]
          I1LLX_LEN  12; I1LLX_I1   1; I1LLX_L1   4; I1LLX_L2 8
@@ -275,7 +276,7 @@ INSTRUCTIONS 141
 
    105       push_impl_point            I1ITX        I1ITX_LEN;
    106       pop_impl_point             X            X_LEN;
-   107       add_imports                I1I1LX       I1I1LX_LEN;
+   107       add_imports                SEGI1LX      SEGI1LX_LEN;
    108       remove_imports             I1LX         I1LX_LEN;
    109       push_import                MTX          MTX_LEN;
    110       pop_imports                I1X          I1X_LEN;
