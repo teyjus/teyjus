@@ -1,4 +1,6 @@
 %{
+#include "util.h" 
+#include "op.h" 
 #include "types.h"
 #include "y.tab.h"
 #include <string.h> 
@@ -15,15 +17,14 @@ NUM    {DIGIT}+
 WSPACE [ \t]+
 STRING [^*/]+
 
-%x COMMENT COMMENT2
+%x COMMENT C_COMMENT
 
-%%
+%% 
 <INITIAL,COMMENT>"\n"      {continue;                                      }
 <INITIAL>"KIND"            {return KIND;                                   }
 <INITIAL>"CONST"           {return CONST;                                  }
 <INITIAL>"TYPE SKEL"       {return TYSKEL;                                 }
 <INITIAL>"TYPE"            {return TYPE;                                   }
-<INITIAL>"EMPTY TYPE"      {return EMPTYTYPE;                              }
 <INITIAL>"->"              {return TYARROW;                                }
 <INITIAL>"@"               {return TYAPP;                                  }
 <INITIAL>"["               {return LBRACKET;                               }
@@ -32,25 +33,39 @@ STRING [^*/]+
 <INITIAL>")"               {return RPAREN;                                 }
 <INITIAL>"t,"              {return COMMA;                                  }
 <INITIAL>"#"               {return POUND;                                  }
-<INITIAL>"EMPTY"           {return EMPTY;                                  }
+<INITIAL>";;"              {return SEMICOLON;                              }
+<INITIAL>"INFIX"           {return INFIX;                                  }
+<INITIAL>"INFIXL"          {return INFIXL;                                 }
+<INITIAL>"INFIXR"          {return INFIXR;                                 }
+<INITIAL>"PREFIX"          {return PREFIX;                                 }
+<INITIAL>"PREFIXR"         {return PREFIXR;                                }
+<INITIAL>"POSTFIX"         {return POSTFIX;                                }
+<INITIAL>"POSTFIXL"        {return POSTFIXL;                               }
+<INITIAL>"NOFIXITY"        {return NOFIXITY;                               }
+<INITIAL>"MIN1"            {return MIN1;                                   }
+<INITIAL>"MIN2"            {return MIN2;                                   }
+<INITIAL>"MAX"             {return MAX;                                    }
+<INITIAL>"NOCODE"          {return NOCODE;                                 }
 <INITIAL>"LOGIC SYMBOL"    {return LSSYMB;                                 }
 <INITIAL>"LS_START"        {return LSSTART;                                }
 <INITIAL>"LS_END"          {return LSEND;                                  }
 <INITIAL>"PRED SYMBOL"     {return PREDSYMB;                               }
 <INITIAL>"PRED_START"      {return PREDSTART;                              }
 <INITIAL>"PRED_END"        {return PREDEND;                                }
+<INITIAL>"REGCL"           {return REGCL;                                  }
+<INITIAL>"BACKTRACK"       {return BACKTRACK;                              }
 <INITIAL>"TRUE"            {return TRUE;                                   }
 <INITIAL>"FALSE"           {return FALSE;                                  }
 <INITIAL>{WSPACE}          {continue;                                      }
 <INITIAL>"/%"              {commentLev = 1; BEGIN(COMMENT); continue;      }
-<INITIAL>"/*"              {BEGIN(COMMENT2); continue;                     }
+<INITIAL>"/*"              {BEGIN(C_COMMENT); continue;                    }
 <INITIAL>{ID}              {yylval.name = strdup(yytext); return ID;       }
 <INITIAL>{NUM}             {yylval.isval.ival = atoi(yytext); 
                             yylval.isval.sval = strdup(yytext); 
                             return NUM;                                    }
 
-<COMMENT2>"*/"             {BEGIN(INITIAL); continue;                      }
-<COMMENT2>{STRING}         {yylval.text = strdup(yytext); return STRING;   }
+<C_COMMENT>"*/"            {BEGIN(INITIAL); continue;                      }
+<C_COMMENT>{STRING}        {yylval.text = strdup(yytext); return STRING;   }
 
 <COMMENT>[^%/\n]+          {continue;                                      }
 <COMMENT>"/%"              {commentLev++; continue;                        }
