@@ -24,18 +24,24 @@ and atypevar =
     TypeVar of (atype option ref * atype option ref * bool option ref * 
       bool option ref * bool option ref * int option ref * 
       int option ref * int option ref)
-  | FreeTypeVar of atype
+
+(****************************************************************************
+*Type Var Information:
+*****************************************************************************)
+and atypevarinfo =
+	BoundTypeVar of atype
+  |	FreeTypeVar of (atypevar option ref * bool option ref)
+
 
 (*****************************************************************************
 *Type:
 *****************************************************************************)
 and atype = 
     SkeletonVarType of (int ref)
-  | TypeVarType of (atypevar option ref * bool ref)
+  | TypeVarType of (atypevarinfo ref)
   |	ArrowType of (atype * atype)
   | AppType of (akind * atype list)
   | TypeSetType of (atype * atype list ref)
-  | TypeRefType of (atype)
   | ErrorType
 
 (*****************************************************************************
