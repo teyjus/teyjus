@@ -4,10 +4,11 @@
 /****************************************************************************/
 #include <stdlib.h>
 #include "types.h"
+#include "util.h"
 
 Type mkSortType(char* name)
 {
-    Type rtPtr = (Type)malloc(sizeof(Type_));
+    Type rtPtr = (Type)UTIL_malloc(sizeof(Type_));
     rtPtr -> tag = SORT;
     rtPtr -> data.sort = name;
     return rtPtr;
@@ -15,7 +16,7 @@ Type mkSortType(char* name)
 
 Type mkSkVarType(char* index)
 {
-    Type rtPtr = (Type)malloc(sizeof(Type_));
+    Type rtPtr = (Type)UTIL_malloc(sizeof(Type_));
     rtPtr -> tag = SKVAR;
     rtPtr -> data.skvar = index;
     return rtPtr;
@@ -23,7 +24,7 @@ Type mkSkVarType(char* index)
 
 Type mkStrFuncType(char* name, char* arity)
 {
-    Type rtPtr = (Type)malloc(sizeof(Type_));
+    Type rtPtr = (Type)UTIL_malloc(sizeof(Type_));
     rtPtr -> tag = FUNC;
     rtPtr -> data.func.name = name;
     rtPtr -> data.func.arity = arity;
@@ -33,7 +34,7 @@ Type mkStrFuncType(char* name, char* arity)
 
 Type mkStrType(Type func, int arity, TypeList args)
 {
-    Type rtPtr = (Type)malloc(sizeof(Type_));
+    Type rtPtr = (Type)UTIL_malloc(sizeof(Type_));
     rtPtr -> tag = STR;
     rtPtr -> data.str.functor = func;
     rtPtr -> data.str.arity   = arity;
@@ -43,7 +44,7 @@ Type mkStrType(Type func, int arity, TypeList args)
 
 Type mkArrowType(Type lop, Type rop)
 {
-    Type rtPtr = (Type)malloc(sizeof(Type_));
+    Type rtPtr = (Type)UTIL_malloc(sizeof(Type_));
     rtPtr -> tag = ARROW;
     rtPtr -> data.arrow.lop = lop;
     rtPtr -> data.arrow.rop = rop;
@@ -65,7 +66,7 @@ void freeType(Type ty)
 
 TypeList addItem(Type data, TypeList typeList)
 {
-    TypeList new = (TypeList)malloc(sizeof(TypeList_));
+    TypeList new = (TypeList)UTIL_malloc(sizeof(TypeList_));
     new -> oneType = data;
     if (typeList) new -> next = typeList;
     else new -> next = NULL;
@@ -75,7 +76,7 @@ TypeList addItem(Type data, TypeList typeList)
 
 TypeList addItemToEnd(TypeList typeList, Type data)
 {
-    TypeList new = (TypeList)malloc(sizeof(TypeList_));
+    TypeList new = (TypeList)UTIL_malloc(sizeof(TypeList_));
     new -> oneType = data;
     new -> next = NULL;
     if (typeList) {
