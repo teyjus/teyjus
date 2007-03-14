@@ -5,7 +5,6 @@
 #include "kind.h"
 #include <stdio.h>
 
-//#define PERV_KIND_NUM 10 //Fixme
 #define GLOBAL 0
 #define LOCAL 1
 #define PERVASIVE 2
@@ -54,16 +53,6 @@ int LD_KIND_LoadKst(MEM_GmtEnt* ent)
   }
   
   return 0;
-}
-
-TwoBytes LD_KIND_ConvKindInd(Byte gl, TwoBytes ind)
-{
-	if(gl==3)
-		return ind+PERV_KIND_NUM;
-	else if(gl==2)
-		return ind+PERV_KIND_NUM+LD_KIND_numGKinds;
-	else
-		return ind;
 }
 
 TwoBytes LD_KIND_GetKindInd()

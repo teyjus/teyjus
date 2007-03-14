@@ -132,7 +132,7 @@ MEM_GmtEnt* LD_LOADER_GetNewGMTEnt()
 		if(MEM_modTable[i].modname==NULL)
 		{
 			MEM_modTable[i].modSpaceEnd=MEM_modTable[i].modSpaceBeg=MEM_memTop;
-            MEM_modTable[i].codeSpaceEnd=MEM_modTable[i].codeSpaceBeg=MEM_memBot;
+            MEM_modTable[i].codeSpaceEnd=MEM_modTable[i].codeSpaceBeg=(CSpacePtr)MEM_memBot;
 			return MEM_modTable+i;
 		}
 	}
@@ -147,7 +147,7 @@ void LD_LOADER_DropGMTEnt(MEM_GmtEnt* ent)
 void LD_LOADER_AddGMTEnt(MEM_GmtEnt* ent)
 {
   MEM_memTop=ent->modSpaceEnd;
-  MEM_memBot=ent->codeSpaceBeg;
+  MEM_memBot=(MemPtr)ent->codeSpaceBeg;
 }
 
 void* LD_LOADER_ExtendModSpace(MEM_GmtEnt* ent, int size)
