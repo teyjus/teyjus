@@ -5,6 +5,4 @@
 
 extern int LD_TYSKEL_LoadTst(MEM_GmtEnt* ent);
 
-extern Word LD_TYSKEL_GetTySkelAddr();
-
 #endif //_TYSKEL_H_

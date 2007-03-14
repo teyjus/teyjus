@@ -46,11 +46,11 @@ int LD_CODE_LoadCode(MEM_GmtEnt* ent)
           j+=sizeof(Byte);
           break;
 
-        case INSTR_I2:
+        /*case INSTR_I2:
           *(TwoBytes*)(code+j)=LD_FILE_GET2();
           j+=sizeof(TwoBytes);
           break;
-          
+        */  
           case INSTR_C:///\todo Check on constant index size in code
           *(TwoBytes*)(code+j)=LD_CONST_GetConstInd();
           j+=sizeof(TwoBytes);

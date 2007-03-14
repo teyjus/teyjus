@@ -1,6 +1,7 @@
 #include "file.h"
 #include "../system/memory.h"
 #include "loader.h"
+#include "searchtab.h"
 
 TwoBytes LD_HASHTAB_numHashTabs;
 WordPtr* LD_HASHTAB_HashTabs;

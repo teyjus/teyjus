@@ -14,9 +14,12 @@ WordPtr LD_IMPORTTAB_LoadImportTab(MEM_GmtEnt* ent);
 void LD_IMPORTTAB_LoadImportTabs(MEM_GmtEnt* ent)
 {
   int i;
+  ///\todo do something with number of segments
+  LD_FILE_GET2();//Get number of segments.
   TwoBytes count=LD_IMPORTTAB_numImportTabs=LD_FILE_GET2();
   LD_IMPORTTAB_ImportTabs=(WordPtr*)EM_malloc(count*sizeof(WordPtr));
   
+  ent->addtable=(CSpacePtr)LD_IMPORTTAB_LoadImportTab(ent);
   for(i=0;i<count;i++)
   {
     LD_IMPORTTAB_ImportTabs[i]=LD_IMPORTTAB_LoadImportTab(ent);
@@ -30,7 +33,6 @@ WordPtr LD_IMPORTTAB_LoadImportTab(MEM_GmtEnt* ent)
   ///\todo Check on the space requirements of the import table.
   WordPtr tab=LD_LOADER_ExtendModSpace(ent,(3)*sizeof(Word));
   int cst;
-  //void MEM_impPutNCSEG(WordPtr tab, int nseg);           //# code segments
   int i;
   //Load Next Clause Table
   int nctSize=(int)LD_FILE_GET2();
@@ -52,19 +54,16 @@ WordPtr LD_IMPORTTAB_LoadImportTab(MEM_GmtEnt* ent)
   }
   
   //Load FindCodeFunc
-#define FCF_SEQNSEARCH 1
-#define FCF_HASHSEARCH 2
-///\todo Correct and move these: shared with addcode.c
   Byte fcf=LD_FILE_GET1();
   int psts;
-  if(fcf==FCF_SEQNSEARCH)
+  if(fcf==SEARCHTAB_FCF_SEQNSEARCH)
   {
     MEM_impPutFC(tab,(MEM_FindCodeFnPtr)&LD_SEARCHTAB_SeqnSrch);
     LD_SEARCHTAB_LoadSeqSTab(ent,&psts);
     MEM_impPutPSTS(tab,psts);
     ///\todo do something with returned address.
   }
-  else if(fcf==FCF_HASHSEARCH)
+  else if(fcf==SEARCHTAB_FCF_HASHSEARCH)
   {
     MEM_impPutFC(tab,(MEM_FindCodeFnPtr)&LD_SEARCHTAB_HashSrch);
     LD_SEARCHTAB_LoadHashTab(ent,&psts);
