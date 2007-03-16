@@ -52,4 +52,13 @@ extern Byte LD_FILE_GET1();
 **/
 extern void LD_FILE_GetString(char* buffer,int length);
 
+//#ifdef DEBUG
+extern void LD_FILE_OpenPipe();
+extern void LD_FILE_PipePUT1(Byte b);
+extern void LD_FILE_PipePUT2(TwoBytes s);
+extern void LD_FILE_PipePUTWORD(Word w);
+extern void LD_FILE_PipePutString(char* str);
+extern void LD_FILE_ClosePipe();
+//#endif
+
 #endif //_FILE_H_
