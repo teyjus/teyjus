@@ -23,39 +23,39 @@ void WriteStringSpaces();
 
 void InitTStringSpaces()
 {
-	InitVec(&StringSpaces,128,sizeof(TStringSpace_t));
+  InitVec(&StringSpaces,128,sizeof(TStringSpace_t));
 }
 
 void LoadStringSpace(int i)
 {
-	TStringSpace_t* tmp=(TStringSpace_t*)Fetch(&StringSpaces,i);
-	GetName(tmp);
+  TStringSpace_t* tmp=(TStringSpace_t*)Fetch(&StringSpaces,i);
+  GetName(tmp);
 }
 
 void LoadStringSpaces()
 {
-	int i;
-	
-	INT2 count=CM->StringSpacecount=GET2();
-	int offset=CM->StringSpaceoffset=Extend(&StringSpaces,count);
-	for(i=0;i<count;i++)
-	{
-		LoadStringSpace(offset+i);
-	}
+  int i;
+  
+  TwoBytes count=CM->StringSpacecount=GET2();
+  int offset=CM->StringSpaceoffset=Extend(&StringSpaces,count);
+  for(i=0;i<count;i++)
+  {
+    LoadStringSpace(offset+i);
+  }
 }
 
 void WriteStringSpace(int i)
 {
-	TStringSpace_t* tmp=(TStringSpace_t*)Fetch(&StringSpaces,i);
-	PutName(*tmp);
+  TStringSpace_t* tmp=(TStringSpace_t*)Fetch(&StringSpaces,i);
+  PutName(*tmp);
 }
 
 void WriteStringSpaces()
 {
-	int i;
-	PUT2(StringSpaces.numEntries);
-	for(i=0;i<StringSpaces.numEntries;i++)
-	{
-		WriteStringSpace(i);
-	}
+  int i;
+  PUT2(StringSpaces.numEntries);
+  for(i=0;i<StringSpaces.numEntries;i++)
+  {
+    WriteStringSpace(i);
+  }
 }

@@ -1,149 +1,50 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include "../system/error.h"
 #include "tree.h"
+#include "datatypes.h"
 
-struct TreeNode{
-	struct TreeNode* left;
-	struct TreeNode* right;
-	struct TreeNode* parent;
-	char* key;
-	int data;
-};
+typedef struct{
+  char* key;
+  MarkInd data;
+}entry;
 
-//void Init(struct Tree* t);
-struct TreeNode* CreateNode(struct Tree* t, char* key);
-int Add(struct Tree* t, char* key);
-int Remove(struct Tree* t, char* key);
-
-void InitTree(struct Tree* t)
+int compar_fn(const void* pa,const void* pb)
 {
-	t->root=NULL;
-	t->numEntries=0;
-	return;
+  const char* na = ((const entry*) pa) -> key;
+  const char* nb = ((const entry*) pb) -> key;
+  return strcmp(na,nb);
 }
 
-struct TreeNode* CreateNode(struct Tree* t, char* key)
+void free_node(void* p)
 {
-	struct TreeNode* tmp=malloc(sizeof(struct TreeNode));
-	if(tmp==NULL)
-	{
-		perror("Memory Allocation Failed");
-		exit(0);
-	}
-	tmp->left=NULL;
-	tmp->right=NULL;
-	tmp->parent=NULL;
-	tmp->key=malloc(strlen(key));
-	strcpy(tmp->key,key);
-	tmp->data=t->numEntries++;
-	
-	return tmp;
+  free(((entry*)p)->key);
+  free(p);
 }
 
-int Add(struct Tree* t, char* key)
+void LK_TREE_Add(void** root, char* key, MarkInd ind)
 {
-	int cmp;
-	struct TreeNode* tmp=t->root;
-	if(tmp==NULL)
-	{
-		tmp=t->root=CreateNode(t,key);
-	}
-	else
-	{
-		cmp=strcmp(tmp->key,key);
-		while(0!=cmp)
-		{
-			if(0<cmp)
-			{
-				if(tmp->right==NULL)
-				{
-					tmp->right=CreateNode(t,key);
-					tmp->right->parent=tmp;
-				}
-				tmp=tmp->right;
-			}
-			else
-			{
-				if(tmp->left==NULL)
-				{
-					tmp->left=CreateNode(t,key);
-					tmp->left->parent=tmp;
-				}
-				tmp=tmp->left;
-			}
-			cmp=strcmp(tmp->key,key);
-		}
-	}
-	return tmp->data;
+  entry* p=(entry*)EM_malloc(sizeof(entry));
+  p->key=EM_malloc(strlen(key)+1);
+  strcpy(key,p->key);
+  p->data=ind;
+  if(NULL==tsearch((void*)p,root,compar_fn))
+    EM_THROW(EM_OUT_OF_MEMORY);
 }
 
-int Remove(struct Tree* t, char* key)
+MarkInd LK_TREE_Retrieve(void **root, char* key)
 {
-	struct TreeNode* tmp=t->root;
-	struct TreeNode* tmp2;
-	int cmp;
-	if(tmp==NULL)
-	{
-		return -1;
-	}
-	else
-	{
-		cmp=strcmp(tmp->key,key);
-		while(0!=cmp)
-		{
-			if(0<cmp)
-			{
-				if(tmp->right==NULL)
-					return -1;
-				tmp=tmp->right;
-			}
-			else
-			{
-				if(tmp->left==NULL)
-					return -1;
-				tmp=tmp->left;
-			}
-			cmp=strcmp(tmp->key,key);
-		}
-		
-		if(tmp->right==NULL)
-		{
-			tmp->right=tmp->left;
-		}
-		else if(tmp->left!=NULL)
-		{
-			tmp2=tmp->right;
-			while(tmp2->left!=NULL)
-			{
-				tmp2=tmp2->left;
-			}
-			tmp2->left=tmp->left;
-			tmp->left->parent=tmp2;
-		}
-		
-		if(tmp->parent==NULL)
-		{
-			t->root=tmp->right;
-			if(tmp->right)
-				tmp->right->parent=NULL;
-		}
-		else if(tmp->parent->right==tmp)
-		{
-			tmp->parent->right=tmp->right;
-			if(tmp->right)
-				tmp->right->parent=tmp->parent;
-		}
-		else
-		{
-			tmp->parent->left=tmp->right;
-			if(tmp->right)
-				tmp->right->parent=tmp->parent;
-		}
-		
-		cmp=tmp->data;
-		free(tmp->key);
-		free(tmp);
-		return cmp;
-	}
+  entry e;
+  e.key=key;
+  entry* p=(entry*)tfind((void*)&e,root,compar_fn);
+  if(NULL==p)
+    EM_THROW(LK_LinkError);
+  return p->data;
+}
+
+void LK_TREE_Empty(void **root)
+{
+  tdestroy(root,free_node);
+  *root=NULL;
 }
