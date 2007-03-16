@@ -109,3 +109,45 @@ Byte LD_FILE_GET1()
     EM_THROW(LD_FILE_ReadError);
   return tmp;
 }
+
+//#ifdef DEBUG
+int pfd;
+
+void LD_FILE_OpenPipe()
+{
+  int m_pipe[2];
+  if(-1==pipe(m_pipe))
+    EM_THROW(LD_FILE_OpenError);
+  fd=m_pipe[0];
+  pfd=m_pipe[1];
+}
+
+void LD_FILE_PipePUT1(Byte b)
+{
+  write(pfd,&b,sizeof(b));
+}
+
+void LD_FILE_PipePUT2(TwoBytes s)
+{
+  write(pfd,&s,sizeof(s));
+}
+
+void LD_FILE_PipePUTWORD(Word w)
+{
+  write(pfd,&w,sizeof(w));
+}
+
+void LD_FILE_PipePutString(char* str)
+{
+  char len=strlen(str);
+  write(pfd,&len,sizeof(len));
+  write(pfd,str,len);
+}
+
+void LD_FILE_ClosePipe()
+{
+  close(fd);
+  close(pfd);
+}
+
+//#endif
