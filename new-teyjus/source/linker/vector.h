@@ -6,10 +6,10 @@
 /////////////////////////////////////////////////////////////////
 
 struct Vector{
-	void*	entry;
-	int		numEntries;
-	int		maxEntries;
-	size_t	entrySize;
+  void*  entry;
+  int    numEntries;
+  int    maxEntries;
+  size_t  entrySize;
 };
 
 //Initializes the vector at vec to hold elements

@@ -2,11 +2,13 @@
 #define _DATATYPES_H_
 
 #include <sys/types.h>
+#include "../simulator/mctypes.h"
+#include "../system/error.h"
 
-#define INT1 u_int8_t
-#define INT2 u_int16_t
+//#define Byte u_int8_t
+//#define TwoBytes u_int16_t
 #define INT4 u_int32_t
-#define WORD int
+//#define Word int
 
 #define GLOBAL 0
 #define LOCAL 1
@@ -17,28 +19,30 @@
 #define DEBUGNUM(x) printf("-%d-\n",x)
 
 typedef struct{
-	int size;
-	char* string;
+  int size;
+  char* string;
 }Name;
 
 #define Clear(name) free(name.string)
 
 typedef struct{
-	INT1 gl_flag;
-	INT2 index;
-}ConstInd;
+  Byte gl_flag;
+  TwoBytes index;
+}MarkInd;
 
-typedef struct{
-	INT1 gl_flag;
-	INT2 index;
-}KindInd;
+typedef MarkInd ConstInd;
+typedef MarkInd KindInd;
 
-typedef INT2 TySkelInd;
-typedef INT2 HashTabInd;
-typedef INT2 StringSpaceInd;
-typedef INT2 BvrTabInd;
-typedef INT2 ImplGoalInd;
+typedef TwoBytes TySkelInd;
+typedef TwoBytes HashTabInd;
+typedef TwoBytes StringSpaceInd;
+typedef TwoBytes BvrTabInd;
+typedef TwoBytes ImplGoalInd;
 typedef unsigned int CodeInd;
 typedef unsigned int ImportTabInd;
+
+typedef enum {
+  LK_LinkError=LOADER_FIRST_ERR_INDEX
+}LK_ExnType;
 
 #endif //_DATATYPES_H_

@@ -6,7 +6,7 @@
 #include "vector.h"
 #include "rename.h"
 #include "file.h"
-
+#include "../system/error.h"
 /*/////////////////////////////////////////////////////////////////////////////////////
 //This file defines the code for using GKinds and LKinds/////
 ////////////////////////////////////////////////////////////////////////////////////*/
@@ -15,13 +15,12 @@
 //GKind Load and Write Code
 //////////////////////////////////////////////////////
 typedef struct{
-	int arity;
-	Name name;
+  int arity;
+  Name name;
 }TGKind_t;
 
 struct Vector GKinds;
 
-KindInd* AllocateLGKinds(int count);
 KindInd LoadTopGKind(int i);
 KindInd LoadGKind();
 void WriteGKind(int i);
@@ -31,102 +30,82 @@ void WriteLKinds();
 
 void InitTGKinds()
 {
-	InitVec(&GKinds,128,sizeof(TGKind_t));
-}
-
-KindInd* AllocateLGKinds(int count)
-{
-	KindInd* tmp;
-	if(count>0)
-	{
-		tmp=(KindInd*)malloc(count*sizeof(KindInd));
-		if(tmp==NULL)
-		{
-			perror("Memory Allocation Failed");
-			exit(0);
-		}
-	}
-	else
-	{
-		tmp=NULL;
-	}
-	
-	return tmp;
+  InitVec(&GKinds,128,sizeof(TGKind_t));
 }
 
 void LoadGKinds()
 {
-	int i;
-	
-	INT2 count=CM->GKindcount=GET2();
-	CM->GKind=AllocateLGKinds(count);
-	printf("Loading %d Global Kinds.\n",count);//DEBUG
-	for(i=0;i<count;i++)
-	{
-		CM->GKind[i]=LoadGKind();
-	}
+  int i;
+  
+  TwoBytes count=CM->GKindcount=GET2();
+  CM->GKind=EM_malloc(count*sizeof(KindInd));
+  printf("Loading %d Global Kinds.\n",count);//DEBUG
+  for(i=0;i<count;i++)
+  {
+    CM->GKind[i]=LoadGKind();
+  }
 }
 
 KindInd LoadGKind()
 {
-	int arity=GET1();
-	int oldarity;
-	Name name;
-	GetName(&name);
-	KindInd index=RenameKind(name);
-	oldarity=CheckKindArity(index);
-	if(arity!=oldarity)
-	{
-		printf("Kind Arity Mismatch: Kind %s should have arity %d, has arity %d.\n",name.string,oldarity,arity);
-		exit(0);
-	}
-	Clear(name);
-	return index;
+  int arity=GET1();
+  int oldarity;
+  Name name;
+  GetName(&name);
+  KindInd index=LK_RENAME_RenameKind(name);
+  oldarity=CheckKindArity(index);
+  if(arity!=oldarity)
+  {
+    printf("Kind Arity Mismatch: Kind %s should have arity %d, has arity %d.\n",name.string,oldarity,arity);
+    exit(0);
+  }
+  Clear(name);
+  return index;
 }
 
 void LoadTopGKinds()
 {
-	int i;
-	INT2 count=CM->GKindcount=GET2();
-	Extend(&GKinds,(int)count);
-	CM->GKind=AllocateLGKinds(count);
-	printf("Loading %d Top Level Kinds.\n",count);//DEBUG
-	
-	for(i=0;i<count;i++)
-	{
-		CM->GKind[i]=LoadTopGKind(i);
-	}
+  int i;
+  TwoBytes count=CM->GKindcount=GET2();
+  Extend(&GKinds,(int)count);
+  CM->GKind=EM_malloc(count);
+  printf("Loading %d Top Level Kinds.\n",count);//DEBUG
+  
+  for(i=0;i<count;i++)
+  {
+    CM->GKind[i]=LoadTopGKind(i);
+  }
 }
 
 KindInd LoadTopGKind(int i)
 {
-	KindInd tmp;
-	TGKind_t* tmp2=Fetch(&GKinds,i);
-	tmp.index=i;
-	tmp.gl_flag=GLOBAL;
-	
-	tmp2->arity=GET1();
-	GetName(&(tmp2->name));
-	
-	return tmp;
+  KindInd tmp;
+  TGKind_t* tmp2=Fetch(&GKinds,i);
+  tmp.index=i;
+  tmp.gl_flag=GLOBAL;
+  
+  tmp2->arity=GET1();
+  GetName(&(tmp2->name));
+  
+  return tmp;
 }
 
 void WriteGKinds()
 {
-	int i;
-	INT2 tmp=GKinds.numEntries;
-	PUT2(tmp);
-	for(i=0;i<tmp;i++)
-	{
-		WriteGKind(i);
-	}
+  int i;
+  TwoBytes tmp=GKinds.numEntries;
+  PUT2(tmp);
+  for(i=0;i<tmp;i++)
+  {
+    WriteGKind(i);
+  }
 }
 
 void WriteGKind(i)
 {
-	TGKind_t* tmp=Fetch(&GKinds,i);
-	PUT1(tmp->arity);
-	PutName(tmp->name);
+  TGKind_t* tmp=Fetch(&GKinds,i);
+  PUT1(tmp->arity);
+  PutName(tmp->name);
 }
 
 
@@ -134,7 +113,7 @@ void WriteGKind(i)
 //LKind Load and Write Code
 //////////////////////////////////////////////////////
 typedef struct{
-	int arity;
+  int arity;
 }TLKind_t;
 
 struct Vector LKinds;
@@ -144,51 +123,51 @@ void WriteLKind(int i);
 
 void InitTLKinds()
 {
-	InitVec(&LKinds,128,sizeof(TLKind_t));
+  InitVec(&LKinds,128,sizeof(TLKind_t));
 }
 
 void LoadLKinds()
 {
-	int i;
-	INT2 count=CM->LKindcount=GET2();
-	int offset=CM->LKindoffset=Extend(&LKinds,count);
-	printf("Loading %d Local Kinds.\n",count);//DEBUG
-	
-	for(i=0;i<count;i++)
-	{
-		LoadLKind(offset+i);
-	}
+  int i;
+  TwoBytes count=CM->LKindcount=GET2();
+  int offset=CM->LKindoffset=Extend(&LKinds,count);
+  printf("Loading %d Local Kinds.\n",count);//DEBUG
+  
+  for(i=0;i<count;i++)
+  {
+    LoadLKind(offset+i);
+  }
 }
 
 void LoadLKind(int i)
 {
-	TLKind_t* tmp=Fetch(&LKinds,i);
-	tmp->arity=GET1();
+  TLKind_t* tmp=Fetch(&LKinds,i);
+  tmp->arity=GET1();
 }
 
 void WriteLKinds()
 {
-	int i;
-	INT2 tmp=LKinds.numEntries;
-	PUT2(tmp);
-	for(i=0;i<tmp;i++)
-	{
-		WriteLKind(i);
-	}
+  int i;
+  TwoBytes tmp=LKinds.numEntries;
+  PUT2(tmp);
+  for(i=0;i<tmp;i++)
+  {
+    WriteLKind(i);
+  }
 }
 
 void WriteLKind(i)
 {
-	TLKind_t* tmp=Fetch(&LKinds,i);
-	PUT1(tmp->arity);
+  TLKind_t* tmp=Fetch(&LKinds,i);
+  PUT1(tmp->arity);
 }
 
 ////////////////////////////////////////////////
 void WriteKinds()
 {
-	PUT2(LKinds.numEntries+GKinds.numEntries);
-	WriteGKinds();
-	WriteLKinds();
+  PUT2(LKinds.numEntries+GKinds.numEntries);
+  WriteGKinds();
+  WriteLKinds();
 }
 
 /////////////////////////////////////////////////////////////
@@ -196,10 +175,10 @@ void WriteKinds()
 ////////////////////////////////////////////////////////////
 int CheckKindArity(KindInd i)
 {
-	if(i.gl_flag==LOCAL)
-	{
-		return ((TLKind_t*)Fetch(&LKinds,i.index))->arity;
-	}
-	//GLOBAL_KIND
-	return ((TGKind_t*)Fetch(&GKinds,i.index))->arity;
+  if(i.gl_flag==LOCAL)
+  {
+    return ((TLKind_t*)Fetch(&LKinds,i.index))->arity;
+  }
+  //GLOBAL_KIND
+  return ((TGKind_t*)Fetch(&GKinds,i.index))->arity;
 }

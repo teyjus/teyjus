@@ -9,7 +9,7 @@ extern void WriteCode();
 extern void WriteCodeSize();
 extern void LoadCodeSize();
 
-extern CodeInd MergeSubSequence(CodeInd a, CodeInd b,INT1 n);
+extern CodeInd MergeSubSequence(CodeInd a, CodeInd b,Byte n);
 extern CodeInd MergeDefs(CodeInd a, CodeInd b);
 
 extern void MakeCallName(CodeInd from, int exec_flag, ConstInd to);

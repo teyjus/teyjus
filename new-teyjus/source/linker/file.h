@@ -8,18 +8,18 @@ extern void PopInput();
 extern void WriteDependencies();
 extern void SetOutput(char* modname);
 
-extern int GETWORD();
+extern int GETWord();
 extern INT4 GET4();
-extern INT2 GET2();
-extern INT1 GET1();
+extern TwoBytes GET2();
+extern Byte GET1();
 
 extern Name* GetName(Name* name);
 
-extern void PUT1(INT1 x);
-extern void PUT2(INT2 x);
+extern void PUT1(Byte x);
+extern void PUT2(TwoBytes x);
 extern void PUT4(INT4 x);
 extern void PUTN(void* data, int n);
-extern void PUTWORD(int x);
+extern void PUTWord(int x);
 
 extern void PutName(Name name);
 

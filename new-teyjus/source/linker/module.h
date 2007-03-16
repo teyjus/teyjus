@@ -57,7 +57,7 @@ extern void WriteAll();
 extern ConstInd GetConstInd();
 extern TySkelInd GetTySkelInd();
 extern KindInd GetKindInd();
-extern KindInd FindKindInd(INT1 gl_flag,INT2 index);
+extern KindInd FindKindInd(Byte gl_flag,TwoBytes index);
 extern ImplGoalInd GetImplGoalInd();
 extern HashTabInd GetHashTabInd();
 extern BvrTabInd GetBvrTabInd();

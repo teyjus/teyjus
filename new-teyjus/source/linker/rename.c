@@ -6,118 +6,60 @@
 #include "tree.h"
 #include "file.h"
 
-struct Vector ConstRNTab;
-struct Tree ConstRNTree;
+void* ConstRNTree=NULL;
 
-void LoadConstRNTabEnt(int i);
+void LK_RENAME_LoadConstRNTabEnt();
 
-void LoadConstRNTable()
+void LK_RENAME_LoadConstRNTable()
 {
-	if(ConstRNTree.root!=NULL)
-	{
-		printf("Const renaming table should be empty.\n");
-		exit(0);
-	}
-	Destroy(&ConstRNTab);
-	INT2 size=GET2();
-	InitVec(&ConstRNTab,(int)size,sizeof(ConstInd));
-	Extend(&ConstRNTab,(int)size);
-	int i;
-	for(i=0;i<size;i++)
-	{
-		LoadConstRNTabEnt(i);
-	}
+  LK_TREE_Empty(&ConstRNTree);
+  int size=(int)GET2();
+  int i;
+  for(i=0;i<size;i++)
+  {
+    LK_RENAME_LoadConstRNTabEnt();
+  }
 }
 
-void LoadConstRNTabEnt(int i)
+void LK_RENAME_LoadConstRNTabEnt()
 {
-	ConstInd* tmp=(ConstInd*)Fetch(&ConstRNTab,i);
-	
-	Name name;
-	GetName(&name);
-	*tmp=GetConstInd();
-	if(i!=Add(&ConstRNTree,name.string))
-	{
-		printf("Duplicate name in rename table\n");
-		exit(0);
-	}
-	
-	Clear(name);
+  Name name;
+  GetName(&name);
+  MarkInd ind=GetConstInd();
+  LK_TREE_Add(&ConstRNTree,name.string,ind);
+  Clear(name);
 }
 
-ConstInd RenameConst(Name name)
+ConstInd LK_RENAME_RenameConst(Name name)
 {
-	int tmp=Remove(&ConstRNTree,name.string);
-	if(-1==tmp)
-	{
-		printf("Unrecognized global constant %s\n",name.string);
-		exit(0);
-	}
-	else
-	{
-		return *(ConstInd*)Fetch(&ConstRNTab,tmp);
-	}
+  return LK_TREE_Retrieve(&ConstRNTree,name.string);
 }
 
+void* KindRNTree=NULL;
 
-struct Vector KindRNTab;
-struct Tree KindRNTree;
+void LK_RENAME_LoadKindRNTabEnt();
 
-void LoadKindRNTabEnt(int i);
-
-void LoadKindRNTable()
+void LK_RENAME_LoadKindRNTable()
 {
-	if(KindRNTree.root!=NULL)
-	{
-		printf("Kind renaming table should be empty.\n");
-		exit(0);
-	}
-	Destroy(&KindRNTab);
-	INT2 size=GET2();
-	InitVec(&KindRNTab,(int)size,sizeof(KindInd));
-	Extend(&KindRNTab,(int)size);
-	int i;
-	for(i=0;i<size;i++)
-	{
-		LoadKindRNTabEnt(i);
-	}
+  LK_TREE_Empty(&KindRNTree);
+  int size=(int)GET2();
+  int i;
+  for(i=0;i<size;i++)
+  {
+    LK_RENAME_LoadKindRNTabEnt();
+  }
 }
 
-void LoadKindRNTabEnt(int i)
+void LK_RENAME_LoadKindRNTabEnt()
 {
-	KindInd* tmp=(KindInd*)Fetch(&KindRNTab,i);
-	
-	Name name;
-	GetName(&name);
-	*tmp=GetKindInd();
-	
-	if(i!=Add(&KindRNTree,name.string))
-	{
-		printf("Duplicate name in rename table\n");
-		exit(0);
-	}
-	
-	Clear(name);
+  Name name;
+  GetName(&name);
+  MarkInd ind=GetKindInd();
+  LK_TREE_Add(&KindRNTree,name.string,ind);
+  Clear(name);
 }
 
-KindInd RenameKind(Name name)
+KindInd LK_RENAME_RenameKind(Name name)
 {
-	int tmp=Remove(&KindRNTree,name.string);
-	if(-1==tmp)
-	{
-		printf("Unrecognized global kind %s\n",name.string);
-		exit(0);
-	}
-	else
-	{
-		return *(KindInd*)Fetch(&KindRNTab,tmp);
-	}
-}
-
-void InitRNTables()
-{
-	InitVec(&ConstRNTab,0,sizeof(ConstInd));
-	InitTree(&ConstRNTree);
-	InitVec(&KindRNTab,0,sizeof(KindInd));
-	InitTree(&KindRNTree);
+  return LK_TREE_Retrieve(&KindRNTree,name.string);
 }

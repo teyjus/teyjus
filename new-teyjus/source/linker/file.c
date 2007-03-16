@@ -11,13 +11,13 @@
 #define SWAPENDIAN
 
 struct FileNode{
-	int fd;
-	struct FileNode* next;
+  int fd;
+  struct FileNode* next;
 };
 
 struct NameNode{
-	char* name;
-	struct NameNode* next;
+  char* name;
+  struct NameNode* next;
 };
 
 struct FileNode* InFile=NULL;
@@ -30,173 +30,173 @@ int ofd;
 
 void PushInput(char* modname)
 {
-	char* buf=malloc(sizeof(char)*1024);
-	if(buf==NULL)
-	{
-		perror("Malloc Failure");
-		exit(0);
-	}
-	sprintf(buf,"%s.lp",modname);
-	
-	
-	struct FileNode* tmp = malloc(sizeof(struct FileNode));
-	if(tmp==NULL)
-	{
-		perror("Malloc Failure");
-		exit(0);
-	}
-	
-	
-	tmp->fd=open(buf,O_RDONLY,0000);
-	if(tmp->fd==-1)
-	{
-		perror(buf);
-		exit(0);
-	}
-	
-	
-	struct NameNode* tmp2 = malloc(sizeof(struct NameNode));
-	if(tmp2==NULL)
-	{
-		perror("Malloc Failure");
-		exit(0);
-	}
-	
-	tmp2->name=malloc(strlen(modname)+1);
-	if(tmp2->name==NULL)
-	{
-		perror("Malloc Failure");
-		exit(0);
-	}
-	
-	strcpy(tmp2->name,modname);
-	tmp->next=InFile;
-	tmp2->next=UsedFile;
-	InFile=tmp;
-	UsedFile=tmp2;
-	files++;
+  char* buf=malloc(sizeof(char)*1024);
+  if(buf==NULL)
+  {
+    perror("Malloc Failure");
+    exit(0);
+  }
+  sprintf(buf,"%s.lp",modname);
+  
+  
+  struct FileNode* tmp = malloc(sizeof(struct FileNode));
+  if(tmp==NULL)
+  {
+    perror("Malloc Failure");
+    exit(0);
+  }
+  
+  
+  tmp->fd=open(buf,O_RDONLY,0000);
+  if(tmp->fd==-1)
+  {
+    perror(buf);
+    exit(0);
+  }
+  
+  
+  struct NameNode* tmp2 = malloc(sizeof(struct NameNode));
+  if(tmp2==NULL)
+  {
+    perror("Malloc Failure");
+    exit(0);
+  }
+  
+  tmp2->name=malloc(strlen(modname)+1);
+  if(tmp2->name==NULL)
+  {
+    perror("Malloc Failure");
+    exit(0);
+  }
+  
+  strcpy(tmp2->name,modname);
+  tmp->next=InFile;
+  tmp2->next=UsedFile;
+  InFile=tmp;
+  UsedFile=tmp2;
+  files++;
 }
 
 void PopInput()
 {
-	close(InFile->fd);
-	struct FileNode* tmp=InFile->next;
-	free(InFile);
-	InFile=tmp;
+  close(InFile->fd);
+  struct FileNode* tmp=InFile->next;
+  free(InFile);
+  InFile=tmp;
 }
 
 void SetOutput(char* modname)
 {
-	char* buf=malloc(sizeof(char)*1024);
-	if(buf==NULL)
-	{
-		perror("Malloc Failure");
-		exit(0);
-	}
-	sprintf(buf,"%s.bc",modname);
-	
-	ofd=open(buf,O_WRONLY|O_CREAT|O_TRUNC,0666);
-	if(ofd==-1)
-	{
-		perror(buf);
-		exit(0);
-	}
+  char* buf=malloc(sizeof(char)*1024);
+  if(buf==NULL)
+  {
+    perror("Malloc Failure");
+    exit(0);
+  }
+  sprintf(buf,"%s.bc",modname);
+  
+  ofd=open(buf,O_WRONLY|O_CREAT|O_TRUNC,0666);
+  if(ofd==-1)
+  {
+    perror(buf);
+    exit(0);
+  }
 }
 
 void WriteDependencies()
 {
-	int i;
-	struct NameNode* tmp=UsedFile;
-	PUT2(files);
-	Name name;
-	while(tmp!=NULL)
-	{
-		name.string=tmp->name;
-		name.size=strlen(tmp->name)+1;
-		PutName(name);
-		tmp=tmp->next;
-	}
+  int i;
+  struct NameNode* tmp=UsedFile;
+  PUT2(files);
+  Name name;
+  while(tmp!=NULL)
+  {
+    name.string=tmp->name;
+    name.size=strlen(tmp->name)+1;
+    PutName(name);
+    tmp=tmp->next;
+  }
 }
 
-int GETWORD()
+int GETWord()
 {
-	//int tmp;
-	//read(InFile->fd,&tmp,sizeof(tmp));
-	//return tmp;
-	return GET4();
+  //int tmp;
+  //read(InFile->fd,&tmp,sizeof(tmp));
+  //return tmp;
+  return GET4();
 }
 
 INT4 GET4()
 {
-	INT4 tmp;
-	read(InFile->fd,&tmp,sizeof(tmp));
-	return ntohl(tmp);
+  INT4 tmp;
+  read(InFile->fd,&tmp,sizeof(tmp));
+  return ntohl(tmp);
 }
 
-INT2 GET2()
+TwoBytes GET2()
 {
-	INT2 tmp;
-	read(InFile->fd,&tmp,sizeof(tmp));
-	return ntohs(tmp);
+  TwoBytes tmp;
+  read(InFile->fd,&tmp,sizeof(tmp));
+  return ntohs(tmp);
 }
 
-INT1 GET1()
+Byte GET1()
 {
-	INT1 tmp;
-	read(InFile->fd,&tmp,sizeof(tmp));
-	return tmp;
+  Byte tmp;
+  read(InFile->fd,&tmp,sizeof(tmp));
+  return tmp;
 }
 
 Name* GetName(Name* name)
 {
-/*	if(name==NULL)
-		return NULL;*/
-	char* tmp;
-	INT1 size=name->size=GET1();
-	//printf("Name:%d ",size);//DEBUG
-	tmp=name->string=malloc(size);
-	if(tmp==NULL)
-	{
-		perror("Memory Allocation Failed");
-		exit(0);
-	}
-	read(InFile->fd,tmp,size);
-	//printf("\"%s\"\n",tmp);//DEBUG
-	return name;
+/*  if(name==NULL)
+    return NULL;*/
+  char* tmp;
+  Byte size=name->size=GET1();
+  //printf("Name:%d ",size);//DEBUG
+  tmp=name->string=malloc(size);
+  if(tmp==NULL)
+  {
+    perror("Memory Allocation Failed");
+    exit(0);
+  }
+  read(InFile->fd,tmp,size);
+  //printf("\"%s\"\n",tmp);//DEBUG
+  return name;
 }
 
-void PUT1(INT1 x)
+void PUT1(Byte x)
 {
-	write(ofd,&x,sizeof(x));
+  write(ofd,&x,sizeof(x));
 }
 
-void PUT2(INT2 x)
+void PUT2(TwoBytes x)
 {
-	INT2 tmp = htons(x);
-	write(ofd,&tmp,sizeof(x));
+  TwoBytes tmp = htons(x);
+  write(ofd,&tmp,sizeof(x));
 }
 
 void PUT4(INT4 x)
 {
-	INT4 tmp = htonl(x);
-	write(ofd,&tmp,sizeof(x));
+  INT4 tmp = htonl(x);
+  write(ofd,&tmp,sizeof(x));
 }
 
 void PUTN(void* data,int n)
 {
-	write(ofd,data,n);
+  write(ofd,data,n);
 }
 
-void PUTWORD(int x)
+void PUTWord(int x)
 {
-	PUT4(x);
-	//write(ofd,&x,sizeof(x));
+  PUT4(x);
+  //write(ofd,&x,sizeof(x));
 }
 
 void PutName(Name name)
 {
-	INT1 size=name.size;
-	PUT1(size);
-	
-	write(ofd,name.string,size);
+  Byte size=name.size;
+  PUT1(size);
+  
+  write(ofd,name.string,size);
 }
