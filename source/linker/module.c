@@ -13,6 +13,7 @@
 #include "importtab.h"
 #include "file.h"
 #include "rename.h"
+#include "deps.h"
 
 #define BC_VER 3
 #define LINKCODE_VER 1
