@@ -1,12 +1,12 @@
 #include <stdio.h>
 #include <cut-2/cut.h>
 #include <string.h>
-#include "../system/error.h"
-#include "../system/memory.h"
-#include "../tables/pervasives.h"
-#include "file.h"
-#include "loader.h"
-#include "tyskel.h"
+#include "system/error.h"
+#include "system/memory.h"
+#include "tables/pervasives.h"
+#include "loader/file.h"
+#include "loader/loader.h"
+#include "loader/tyskel.h"
 
 void __CUT__pipetyskelcheck()
 {
