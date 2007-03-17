@@ -1,8 +1,8 @@
 #include <stdio.h>
 #include <cut-2/cut.h>
 #include <string.h>
-#include "../system/error.h"
-#include "file.h"
+#include "system/error.h"
+#include "loader/file.h"
 
 void __CUT__filecheck( void )
 {
