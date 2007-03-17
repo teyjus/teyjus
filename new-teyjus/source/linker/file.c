@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "file.h"
+#include "../system/error.h"
 
 #define DEBUG(x) printf("%s\n",x)
 #define SWAPENDIAN
@@ -15,37 +16,16 @@ struct FileNode{
   struct FileNode* next;
 };
 
-struct NameNode{
-  char* name;
-  struct NameNode* next;
-};
-
 struct FileNode* InFile=NULL;
-
-struct NameNode* UsedFile=NULL;
-
-int files=0;
 
 int ofd;
 
 void PushInput(char* modname)
 {
-  char* buf=malloc(sizeof(char)*1024);
-  if(buf==NULL)
-  {
-    perror("Malloc Failure");
-    exit(0);
-  }
+  char* buf=EM_malloc(sizeof(char)*1024);
   sprintf(buf,"%s.lp",modname);
   
-  
-  struct FileNode* tmp = malloc(sizeof(struct FileNode));
-  if(tmp==NULL)
-  {
-    perror("Malloc Failure");
-    exit(0);
-  }
-  
+  struct FileNode* tmp = EM_malloc(sizeof(struct FileNode));
   
   tmp->fd=open(buf,O_RDONLY,0000);
   if(tmp->fd==-1)
@@ -53,28 +33,8 @@ void PushInput(char* modname)
     perror(buf);
     exit(0);
   }
-  
-  
-  struct NameNode* tmp2 = malloc(sizeof(struct NameNode));
-  if(tmp2==NULL)
-  {
-    perror("Malloc Failure");
-    exit(0);
-  }
-  
-  tmp2->name=malloc(strlen(modname)+1);
-  if(tmp2->name==NULL)
-  {
-    perror("Malloc Failure");
-    exit(0);
-  }
-  
-  strcpy(tmp2->name,modname);
   tmp->next=InFile;
-  tmp2->next=UsedFile;
   InFile=tmp;
-  UsedFile=tmp2;
-  files++;
 }
 
 void PopInput()
@@ -87,12 +47,7 @@ void PopInput()
 
 void SetOutput(char* modname)
 {
-  char* buf=malloc(sizeof(char)*1024);
-  if(buf==NULL)
-  {
-    perror("Malloc Failure");
-    exit(0);
-  }
+  char* buf=EM_malloc(sizeof(char)*1024);
   sprintf(buf,"%s.bc",modname);
   
   ofd=open(buf,O_WRONLY|O_CREAT|O_TRUNC,0666);
@@ -103,41 +58,25 @@ void SetOutput(char* modname)
   }
 }
 
-void WriteDependencies()
+Word GETWord()
 {
-  int i;
-  struct NameNode* tmp=UsedFile;
-  PUT2(files);
-  Name name;
-  while(tmp!=NULL)
-  {
-    name.string=tmp->name;
-    name.size=strlen(tmp->name)+1;
-    PutName(name);
-    tmp=tmp->next;
-  }
-}
-
-int GETWord()
-{
-  //int tmp;
-  //read(InFile->fd,&tmp,sizeof(tmp));
-  //return tmp;
-  return GET4();
+  Word tmp;
+  read(InFile->fd,&tmp,sizeof(tmp));
+  return tmp;
 }
 
 INT4 GET4()
 {
   INT4 tmp;
   read(InFile->fd,&tmp,sizeof(tmp));
-  return ntohl(tmp);
+  return tmp;
 }
 
 TwoBytes GET2()
 {
   TwoBytes tmp;
   read(InFile->fd,&tmp,sizeof(tmp));
-  return ntohs(tmp);
+  return tmp;
 }
 
 Byte GET1()
@@ -154,12 +93,7 @@ Name* GetName(Name* name)
   char* tmp;
   Byte size=name->size=GET1();
   //printf("Name:%d ",size);//DEBUG
-  tmp=name->string=malloc(size);
-  if(tmp==NULL)
-  {
-    perror("Memory Allocation Failed");
-    exit(0);
-  }
+  tmp=name->string=EM_malloc(size);
   read(InFile->fd,tmp,size);
   //printf("\"%s\"\n",tmp);//DEBUG
   return name;
@@ -172,14 +106,12 @@ void PUT1(Byte x)
 
 void PUT2(TwoBytes x)
 {
-  TwoBytes tmp = htons(x);
-  write(ofd,&tmp,sizeof(x));
+  write(ofd,&x,sizeof(x));
 }
 
 void PUT4(INT4 x)
 {
-  INT4 tmp = htonl(x);
-  write(ofd,&tmp,sizeof(x));
+  write(ofd,&x,sizeof(x));
 }
 
 void PUTN(void* data,int n)
@@ -187,10 +119,9 @@ void PUTN(void* data,int n)
   write(ofd,data,n);
 }
 
-void PUTWord(int x)
+void PUTWord(Word x)
 {
-  PUT4(x);
-  //write(ofd,&x,sizeof(x));
+  write(ofd,&x,sizeof(x));
 }
 
 void PutName(Name name)
@@ -200,3 +131,55 @@ void PutName(Name name)
   
   write(ofd,name.string,size);
 }
+
+//#ifdef DEBUG
+int pifd=-1;
+
+void LK_FILE_PushPipeInput()
+{
+  int pipes[2];
+  struct FileNode* tmp = EM_malloc(sizeof(struct FileNode));
+  if(pipe(pipes))
+    EM_THROW(LK_LinkError);
+  
+  pifd=pipes[1];
+  
+  tmp->fd=pipes[0];
+  tmp->next=InFile;
+  InFile=tmp;
+}
+
+void LK_FILE_PipePUT1(Byte x)
+{
+  write(pifd,&x,sizeof(x));
+}
+
+void LK_FILE_PipePUT2(TwoBytes x)
+{
+  write(pifd,&x,sizeof(x));
+}
+
+void LK_FILE_PipePUT4(INT4 x)
+{
+  write(pifd,&x,sizeof(x));
+}
+
+void LK_FILE_PipePUTWord(Word x)
+{
+  write(pifd,&x,sizeof(x));
+}
+
+
+void LK_FILE_PipePUTN(void* data,int n)
+{
+  write(pifd,data,n);
+}
+
+void LK_FILE_PipePutName(Name name)
+{
+  Byte size=name.size;
+  LK_FILE_PipePUT1(size);
+  
+  write(pifd,name.string,size);
+}
+//#endif
