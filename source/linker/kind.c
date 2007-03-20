@@ -19,19 +19,14 @@ typedef struct{
   Name name;
 }TGKind_t;
 
-struct Vector GKinds;
+//struct Vector GKinds;
 
-KindInd LoadTopGKind(int i);
+KindInd LoadTopGKind(int fd, int i);
 KindInd LoadGKind();
-void WriteGKind(int i);
+void WriteGKind(int fd, int i);
 
 void WriteGKinds();
 void WriteLKinds();
-
-void InitTGKinds()
-{
-  InitVec(&GKinds,128,sizeof(TGKind_t));
-}
 
 void LoadGKinds()
 {
@@ -63,49 +58,56 @@ KindInd LoadGKind()
   return index;
 }
 
-void LoadTopGKinds()
+TGKind_t* GKindTab=NULL;
+int GKindTabSize=-1;
+
+void LK_KIND_FreeGKinds()
+{
+  free(GKindTab);
+}
+
+void LoadTopGKinds(int fd, struct Module_st* CMData)
 {
   int i;
-  TwoBytes count=CM->GKindcount=GET2();
-  Extend(&GKinds,(int)count);
-  CM->GKind=EM_malloc(count);
-  printf("Loading %d Top Level Kinds.\n",count);//DEBUG
+  TwoBytes count=GKindTabSize=CMData->GKindcount=LK_FILE_GET2(fd);
+  
+  GKindTab=EM_malloc(GKindTabSize*sizeof(TGKind_t));
+  
+  CMData->GKind=EM_malloc(count);
   
   for(i=0;i<count;i++)
   {
-    CM->GKind[i]=LoadTopGKind(i);
+    CMData->GKind[i]=LoadTopGKind(fd,i);
   }
 }
 
-KindInd LoadTopGKind(int i)
+KindInd LoadTopGKind(int fd,int i)
 {
-  KindInd tmp;
-  TGKind_t* tmp2=Fetch(&GKinds,i);
+  KindInd tmp={GLOBAL,i};
   tmp.index=i;
   tmp.gl_flag=GLOBAL;
   
-  tmp2->arity=GET1();
-  GetName(&(tmp2->name));
+  GKindTab[i].arity=LK_FILE_GET1(fd);
+  LK_FILE_GetName(fd,&(GKindTab[i].name));
   
   return tmp;
 }
 
-void WriteGKinds()
+void WriteGKinds(int fd)
 {
   int i;
-  TwoBytes tmp=GKinds.numEntries;
-  PUT2(tmp);
+  TwoBytes tmp=GKindTabSize;
+  LK_FILE_PUT2(fd,tmp);
   for(i=0;i<tmp;i++)
   {
-    WriteGKind(i);
+    WriteGKind(fd,i);
   }
 }
 
-void WriteGKind(i)
+void WriteGKind(int fd, int i)
 {
-  TGKind_t* tmp=Fetch(&GKinds,i);
-  PUT1(tmp->arity);
-  PutName(tmp->name);
+  LK_FILE_PUT1(fd,GKindTab[i].arity);
+  LK_FILE_PutName(fd,GKindTab[i].name);
 }
 
 
@@ -118,56 +120,57 @@ typedef struct{
 
 struct Vector LKinds;
 
-void LoadLKind(int i);
-void WriteLKind(int i);
+void LoadLKind(int fd, int i);
+void WriteLKind(int fd, int i);
 
 void InitTLKinds()
 {
   InitVec(&LKinds,128,sizeof(TLKind_t));
 }
 
-void LoadLKinds()
+void LoadLKinds(int fd, struct Module_st* CMData)
 {
   int i;
-  TwoBytes count=CM->LKindcount=GET2();
-  int offset=CM->LKindoffset=Extend(&LKinds,count);
-  printf("Loading %d Local Kinds.\n",count);//DEBUG
+  TwoBytes count=LK_FILE_GET2(fd);
+  CMData->LKindcount=count;
+  int offset=CMData->LKindoffset=Extend(&LKinds,count);
+  //printf("Loading %d Local Kinds.\n",count);//DEBUG
   
   for(i=0;i<count;i++)
   {
-    LoadLKind(offset+i);
+    LoadLKind(fd,offset+i);
   }
 }
 
-void LoadLKind(int i)
+void LoadLKind(int fd, int i)
 {
   TLKind_t* tmp=Fetch(&LKinds,i);
-  tmp->arity=GET1();
+  tmp->arity=LK_FILE_GET1(fd);
 }
 
-void WriteLKinds()
+void WriteLKinds(int fd)
 {
   int i;
   TwoBytes tmp=LKinds.numEntries;
-  PUT2(tmp);
+  LK_FILE_PUT2(fd,tmp);
   for(i=0;i<tmp;i++)
   {
-    WriteLKind(i);
+    WriteLKind(fd,i);
   }
 }
 
-void WriteLKind(i)
+void WriteLKind(int fd, int i)
 {
   TLKind_t* tmp=Fetch(&LKinds,i);
-  PUT1(tmp->arity);
+  LK_FILE_PUT1(fd,tmp->arity);
 }
 
 ////////////////////////////////////////////////
 void WriteKinds()
 {
-  PUT2(LKinds.numEntries+GKinds.numEntries);
-  WriteGKinds();
-  WriteLKinds();
+  PUT2(LKinds.numEntries+GKindTabSize);
+  WriteGKinds(PeekOutput());
+  WriteLKinds(PeekOutput());
 }
 
 /////////////////////////////////////////////////////////////
@@ -180,5 +183,5 @@ int CheckKindArity(KindInd i)
     return ((TLKind_t*)Fetch(&LKinds,i.index))->arity;
   }
   //GLOBAL_KIND
-  return ((TGKind_t*)Fetch(&GKinds,i.index))->arity;
+  return GKindTab[i.index].arity;
 }

@@ -56,7 +56,6 @@ void PopModule()
 void InitAll()
 {
   CM=NULL;
-  InitTGKinds();
   InitTLKinds();
   InitTTySkels();
   InitTGConsts();
@@ -78,8 +77,8 @@ void LoadTopModule(char* modname)
   NewImportTab();
   LoadCodeSize();
   
-  LoadTopGKinds();
-  LoadLKinds();
+  LoadTopGKinds(PeekInput(),CM);
+  LoadLKinds(PeekInput(),CM);
   
   LoadTySkels();
   
@@ -112,7 +111,7 @@ void LoadAccModule(char* modname)
   LoadCodeSize();
   
   LoadGKinds();
-  LoadLKinds();
+  LoadLKinds(PeekInput(),CM);
   
   LoadTySkels();
   
@@ -143,7 +142,7 @@ void LoadImpModule(char* modname)
   LoadCodeSize();
   
   LoadGKinds();
-  LoadLKinds();
+  LoadLKinds(PeekInput(),CM);
   
   LoadTySkels();
   
