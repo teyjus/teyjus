@@ -10,20 +10,49 @@ struct Vector{
   struct obstack obs;
   size_t objSize;
 };
-//Initializes the vector at vec to hold elements
-//of size size, and enough space to hold max elements
+
+/**
+\brief Initialize a vector for use.
+\arg vec The vector to initialize.
+\arg size The size of the elements the vector holds.
+\arg max ignored
+**/
 extern void LK_VECTOR_Init(struct Vector* vec, int max, size_t size);
 
+/**
+\brief Get the number of elements contained by a vector.
+**/
 extern int LK_VECTOR_Size(struct Vector* vec);
-//Extends the vector at vec to hold count more elements.
-//Preforms a resize on the vector if necessary.
-//Returns the index of the first element of the added block.
+
+/**
+\brief Increase the size of a vector
+\arg vec The vector
+\arg count The number of elements to add to the vector.
+**/
 extern int LK_VECTOR_Grow(struct Vector* vec, int count);
 
-//Returns a pointer to the element in vec with the given index.
+/**
+\brief Get a pointer to an element of a vector.
+\arg vec The vector
+\arg index The index of the element to retrieve.
+\note Elements are assumed to be allocated contiguosly, so LK_VECTOR_GetPtr(v,0)+elSize*10 = LK_VECTOR_GetPtr(v,10)
+\note Calling LK_VECTOR_Grow may invalidate the pointer returned.
+**/
 extern void* LK_VECTOR_GetPtr(struct Vector* vec, int index);
 
-//Frees the memory used by the vector
+/**
+\brief Free the memory used by a vector.
+\arg vec The vector to free.
+**/
 extern void LK_VECTOR_Free(struct Vector* vec);
+
+/**
+\brief Write the contents of a vector to a file.
+\arg fd A valid file descriptor.
+\arg vec A pointer to the vector to write.
+\arg write_fn A function to call to write each individual entry.
+Writes the vector out in the format 2 byte size followed by that number of entries.
+**/
+extern void LK_VECTOR_Write(int fd, struct Vector* vec,void (*write_fn)(int fd, void* entry));
 
 #endif //_VECTOR_H_
