@@ -154,16 +154,7 @@ void WriteLKind(int fd, void* ent)
 
 void WriteLKinds(int fd)
 {
-  /*
-  int i;
-  TwoBytes tmp=LK_VECTOR_Size(&LKinds);
-  LK_FILE_PUT2(fd,tmp);
-  for(i=0;i<tmp;i++)
-  {
-    WriteLKind(fd,i);
-}*/
   LK_VECTOR_Write(fd, &LKinds,&WriteLKind);
-
 }
 
 ////////////////////////////////////////////////

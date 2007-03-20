@@ -11,10 +11,8 @@
 //////////////////////////////////////////////////////
 
 #define ARROW 0
-#define PKIND 1
-#define LKIND 2
-#define GKIND 3
-#define VARIABLE 4
+#define KIND 1
+#define VARIABLE 2
 
 struct Vector TySkels;
 
@@ -41,34 +39,14 @@ int LoadTySkel(struct Vector* TySkel,int i)
       i=LoadTySkel(TySkel,i);
       break;
       
-    case PKIND:
-    case LKIND:
-      if(type==PKIND)
-        type=PERVASIVE;
-      else
-        type=LOCAL;
-      KTMP=FindKindInd(type,GET2());
+    case KIND:
+      KTMP=GetKindInd(PeekInput(),CM);
       arity=CheckKindArity(KTMP);
-      LK_VECTOR_Grow(TySkel,1+arity*2);
+      LK_VECTOR_Grow(TySkel,2+arity*2);
       tyStr=(Byte*)LK_VECTOR_GetPtr(TySkel,i);
+      *(tyStr++)=KTMP.gl_flag;
       *(TwoBytes*)tyStr=KTMP.index;
-      i+=2;
-      for(j=0;j<arity;j++)
-        i=LoadTySkel(TySkel,i);
-      break;
-      
-    case GKIND:
-      type=GLOBAL;
-      KTMP=FindKindInd(type,GET2());
-      arity=CheckKindArity(KTMP);
-      LK_VECTOR_Grow(TySkel,1+arity*2);
-      tyStr=(Byte*)LK_VECTOR_GetPtr(TySkel,i);
-      *(TwoBytes*)tyStr=KTMP.index;
-      if(KTMP.gl_flag==GLOBAL)
-        *(tyStr-1)=GKIND;
-      else
-        *(tyStr-1)=LKIND;
-      i+=2;
+      i+=3;
       for(j=0;j<arity;j++)
         i=LoadTySkel(TySkel,i);
       break;
