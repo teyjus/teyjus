@@ -36,7 +36,7 @@ void WriteHConsts();
 
 void InitTGConsts()
 {
-  InitVec(&GConsts,128,sizeof(TGConst_t));
+  LK_VECTOR_Init(&GConsts,128,sizeof(TGConst_t));
 }
 
 ConstInd* AllocateLGConsts(int count)
@@ -86,7 +86,7 @@ void LoadTopGConsts()
 {
   int i;
   int count=CM->GConstcount=GET2();
-  Extend(&GConsts,count);
+  LK_VECTOR_Grow(&GConsts,count);
   CM->GConst=AllocateLGConsts(count);
   printf("Loading %d Top Level Constants.\n",count);//DEBUG
   for(i=0;i<count;i++)
@@ -100,7 +100,7 @@ ConstInd LoadTopGConst(int i)
   ConstInd index;
   index.index=i;
   index.gl_flag=GLOBAL;
-  TGConst_t* tmp=(TGConst_t*)Fetch(&GConsts,i);
+  TGConst_t* tmp=(TGConst_t*)LK_VECTOR_GetPtr(&GConsts,i);
   
   tmp->fixity=GET1();
   tmp->precedence=GET1();
@@ -115,8 +115,9 @@ ConstInd LoadTopGConst(int i)
 void WriteGConsts()
 {
   int i;
-  PUT2(GConsts.numEntries);
-  for(i=0;i<GConsts.numEntries;i++)
+  int size=LK_VECTOR_Size(&GConsts);
+  PUT2(size);
+  for(i=0;i<size;i++)
   {
     WriteGConst(i);
   }
@@ -124,7 +125,7 @@ void WriteGConsts()
 
 void WriteGConst(i)
 {
-  TGConst_t* tmp=(TGConst_t*)Fetch(&GConsts,i);
+  TGConst_t* tmp=(TGConst_t*)LK_VECTOR_GetPtr(&GConsts,i);
   PUT1(tmp->fixity);
   PUT1(tmp->precedence);
   PUT1(tmp->ty_env_size);
@@ -151,14 +152,14 @@ void WriteLConst(int i);
 
 void InitTLConsts()
 {
-  InitVec(&LConsts,128,sizeof(TLConst_t));
+  LK_VECTOR_Init(&LConsts,128,sizeof(TLConst_t));
 }
 
 void LoadLConsts()
 {
   int i;
   int count=CM->LConstcount=GET2();
-  int offset=CM->LConstoffset=Extend(&LConsts,count);
+  int offset=CM->LConstoffset=LK_VECTOR_Grow(&LConsts,count);
   printf("Loading %d Local Constants.\n",count);//DEBUG
   for(i=0;i<count;i++)
   {
@@ -168,7 +169,7 @@ void LoadLConsts()
 
 void LoadLConst(int i)
 {
-  TLConst_t* tmp=(TLConst_t*)Fetch(&LConsts,i);
+  TLConst_t* tmp=(TLConst_t*)LK_VECTOR_GetPtr(&LConsts,i);
   tmp->fixity=GET1();
   tmp->precedence=GET1();
   tmp->ty_env_size=GET1();
@@ -178,8 +179,9 @@ void LoadLConst(int i)
 void WriteLConsts()
 {
   int i;
-  PUT2(LConsts.numEntries);
-  for(i=0;i<LConsts.numEntries;i++)
+  int size=LK_VECTOR_Size(&LConsts);
+  PUT2(size);
+  for(i=0;i<size;i++)
   {
     WriteLConst(i);
   }
@@ -187,7 +189,7 @@ void WriteLConsts()
 
 void WriteLConst(i)
 {
-  TLConst_t* tmp=(TLConst_t*)Fetch(&LConsts,i);
+  TLConst_t* tmp=(TLConst_t*)LK_VECTOR_GetPtr(&LConsts,i);
   PUT1(tmp->fixity);
   PUT1(tmp->precedence);
   PUT1(tmp->ty_env_size);
@@ -209,14 +211,14 @@ void WriteHConst(int i);
 
 void InitTHConsts()
 {
-  InitVec(&HConsts,128,sizeof(THConst_t));
+  LK_VECTOR_Init(&HConsts,128,sizeof(THConst_t));
 }
 
 void LoadHConsts()
 {
   int i;
   int count=CM->HConstcount=GET2();
-  int offset=CM->HConstoffset=Extend(&HConsts,count);
+  int offset=CM->HConstoffset=LK_VECTOR_Grow(&HConsts,count);
   printf("Loading %d Hidden Constants.\n",count);//DEBUG
   for(i=0;i<count;i++)
   {
@@ -226,7 +228,7 @@ void LoadHConsts()
 
 void LoadHConst(int i)
 {
-  THConst_t* tmp=(THConst_t*)Fetch(&HConsts,i);
+  THConst_t* tmp=(THConst_t*)LK_VECTOR_GetPtr(&HConsts,i);
   
   tmp->ty_env_size=GET1();
   tmp->ty_skel_index=GetTySkelInd();
@@ -235,8 +237,9 @@ void LoadHConst(int i)
 void WriteHConsts()
 {
   int i;
-  PUT2(HConsts.numEntries);
-  for(i=0;i<HConsts.numEntries;i++)
+  int size=LK_VECTOR_Size(&HConsts);
+  PUT2(size);
+  for(i=0;i<size;i++)
   {
     WriteHConst(i);
   }
@@ -244,7 +247,7 @@ void WriteHConsts()
 
 void WriteHConst(i)
 {
-  THConst_t* tmp=(THConst_t*)Fetch(&HConsts,i);
+  THConst_t* tmp=(THConst_t*)LK_VECTOR_GetPtr(&HConsts,i);
   
   PUT1(tmp->ty_env_size);
   PutTySkelInd(tmp->ty_skel_index);
@@ -252,7 +255,7 @@ void WriteHConst(i)
 //////////////////////////////////////////////////////////////
 void WriteConsts()
 {
-  PUT2(LConsts.numEntries+GConsts.numEntries+HConsts.numEntries);
+  PUT2(LK_VECTOR_Size(&LConsts)+LK_VECTOR_Size(&GConsts)+LK_VECTOR_Size(&HConsts));
   WriteGConsts();
   WriteLConsts();
   WriteHConsts();
@@ -266,7 +269,7 @@ int CheckGConstEqv(ConstInd i,TGConst_t new)
   int b=1;
   if(i.gl_flag==LOCAL)
   {
-    TLConst_t* tmp=(TLConst_t*)Fetch(&LConsts,i.index);
+    TLConst_t* tmp=(TLConst_t*)LK_VECTOR_GetPtr(&LConsts,i.index);
   
     b=b&&tmp->fixity==new.fixity;
     b=b&&tmp->precedence==new.precedence;
@@ -275,7 +278,7 @@ int CheckGConstEqv(ConstInd i,TGConst_t new)
     return b;
   }
   //GLOBAL
-  TGConst_t* tmp2=(TGConst_t*)Fetch(&GConsts,i.index);
+  TGConst_t* tmp2=(TGConst_t*)LK_VECTOR_GetPtr(&GConsts,i.index);
   
   b=b&&tmp2->fixity==new.fixity;
   b=b&&tmp2->precedence==new.precedence;

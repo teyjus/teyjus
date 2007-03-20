@@ -49,7 +49,7 @@ void AddPredCall(PredInfo* pred, CodeInd addr, int exec_flag);
 void InitTImportTabs()
 {
   CT=NULL;
-  InitVec(&ImportTabs,8,sizeof(TImportTab_t));
+  LK_VECTOR_Init(&ImportTabs,8,sizeof(TImportTab_t));
   CTID=-1;
 }
 
@@ -57,11 +57,11 @@ void InitTImportTabs()
 ImportTabInd NewImportTab()
 {
   ImportTabInd tmp=CTID;
-  CTID=Extend(&ImportTabs,1);
-  CT=Fetch(&ImportTabs,CTID);
+  CTID=LK_VECTOR_Grow(&ImportTabs,1);
+  CT=LK_VECTOR_GetPtr(&ImportTabs,CTID);
   CT->parent=tmp;
-  InitVec(&(CT->LConstInds),32,sizeof(ConstInd));
-  InitVec(&(CT->findCodeTabs),2,sizeof(HashTab_t));
+  LK_VECTOR_Init(&(CT->LConstInds),32,sizeof(ConstInd));
+  LK_VECTOR_Init(&(CT->findCodeTabs),2,sizeof(HashTab_t));
   InitInfoTab(&(CT->newPred));
   return CTID;
 }
@@ -100,7 +100,7 @@ void TopImportTab()
   
   //Load the findCodeTable
   struct Vector* vec=&(CT->findCodeTabs);
-  HashTab_t* httmp=(HashTab_t*)Fetch(vec,Extend(vec,1));
+  HashTab_t* httmp=(HashTab_t*)LK_VECTOR_GetPtr(vec,LK_VECTOR_Grow(vec,1));
   LoadHashTab(httmp);
 }
 
@@ -140,7 +140,7 @@ void AccImportTab()
   //Load another findCodeTable
   struct Vector* vec=&(CT->findCodeTabs);
   
-  HashTab_t* tabaddr=(HashTab_t*)Fetch(vec,Extend(vec,1));
+  HashTab_t* tabaddr=(HashTab_t*)LK_VECTOR_GetPtr(vec,LK_VECTOR_Grow(vec,1));
   LoadHashTab(tabaddr);
 }
 
@@ -156,11 +156,11 @@ void ImpImportTab()
   TwoBytes count=GET2();
   
   vec=&(CT->extPred);
-  InitVec(vec,(int)count,sizeof(ConstInd));
-  Extend(vec,(int)count);
+  LK_VECTOR_Init(vec,(int)count,sizeof(ConstInd));
+  LK_VECTOR_Grow(vec,(int)count);
   
   ConstInd* tmp;
-  tmp=Fetch(vec,0);
+  tmp=LK_VECTOR_GetPtr(vec,0);
     
   for(i=0;i<count;i++)
   {
@@ -191,7 +191,7 @@ void ImpImportTab()
     
   //Load find code table
   vec=&(CT->findCodeTabs);
-  LoadHashTab((HashTab_t*)Fetch(vec,Extend(vec,1)));
+  LoadHashTab((HashTab_t*)LK_VECTOR_GetPtr(vec,LK_VECTOR_Grow(vec,1)));
 }
 
 //Resolve the current import table and restore the current table pointer
@@ -201,8 +201,8 @@ void RestoreImportTab()
   printf("Restoring Import Tab\n");//DEBUG
   //Resolve predicate collisions
   int i;
-  int size=(CT->findCodeTabs).numEntries;
-  HashTab_t* tmp=(HashTab_t*)Fetch(&(CT->findCodeTabs),0);
+  int size=LK_VECTOR_Size(&(CT->findCodeTabs));
+  HashTab_t* tmp=(HashTab_t*)LK_VECTOR_GetPtr(&(CT->findCodeTabs),0);
   for(i=1;i<size;i++)
   {
     MergeFindCodeTabs(tmp,tmp+i);
@@ -210,16 +210,17 @@ void RestoreImportTab()
   //Restore CTID and CT
   CTID=CT->parent;
   if(CTID!=-1)
-    CT=Fetch(&ImportTabs,CTID);
+    CT=LK_VECTOR_GetPtr(&ImportTabs,CTID);
 }
 
 //Write out all import tables to file.
 void WriteImportTabs()
 {
   int i;
-  PUT2(ImportTabs.numEntries-1);
-  TImportTab_t* tmp=(TImportTab_t*)Fetch(&ImportTabs,0);
-  for(i=1;i<ImportTabs.numEntries;i++)
+  int size=LK_VECTOR_Size(&ImportTabs);
+  PUT2(size-1);
+  TImportTab_t* tmp=(TImportTab_t*)LK_VECTOR_GetPtr(&ImportTabs,0);
+  for(i=1;i<size;i++)
   {
     WriteImportTab(tmp+i);
   }
@@ -230,7 +231,7 @@ void WriteAddCodeTable()
 {
   PUT1(1);//FIND_CODE_FUNCTION
   //Write the contents of the primary hash table of the first import table.
-  WriteHashTab((HashTab_t*)Fetch(&(((TImportTab_t*)Fetch(&ImportTabs,0))->findCodeTabs),0));
+  WriteHashTab((HashTab_t*)LK_VECTOR_GetPtr(&(((TImportTab_t*)LK_VECTOR_GetPtr(&ImportTabs,0))->findCodeTabs),0));
 }
 
 //Write out a single import table to file.
@@ -238,16 +239,16 @@ void WriteImportTab(TImportTab_t* ImportTab)
 {
   int i;
   struct Vector* vec=&(ImportTab->LConstInds);
-  int count=vec->numEntries;
-  ConstInd* tmp=Fetch(vec,0);
+  int count=LK_VECTOR_Size(vec);
+  ConstInd* tmp=LK_VECTOR_GetPtr(vec,0);
   for(i=0;i<count;i++)
   {
     PutConstInd(tmp[i]);
   }
   
   vec=&(ImportTab->extPred);
-  count=vec->numEntries;
-  tmp=Fetch(vec,0);
+  count=LK_VECTOR_Size(vec);
+  tmp=LK_VECTOR_GetPtr(vec,0);
   for(i=0;i<count;i++)
   {
     PutConstInd(tmp[i]);
@@ -255,7 +256,7 @@ void WriteImportTab(TImportTab_t* ImportTab)
   
   PUT1(1);//FIND_CODE_FUNCTION
   
-  WriteHashTab((HashTab_t*)Fetch(&(ImportTab->findCodeTabs),0));
+  WriteHashTab((HashTab_t*)LK_VECTOR_GetPtr(&(ImportTab->findCodeTabs),0));
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -264,22 +265,22 @@ void WriteImportTab(TImportTab_t* ImportTab)
 
 void InitInfoTab(PredInfoTab* newPred)
 {
-  InitVec(newPred,16,sizeof(PredInfo));
+  LK_VECTOR_Init(newPred,16,sizeof(PredInfo));
 }
 
 //Add the predicate with index 'index' to the predicate info table,
 //and mark the new entry as a static with no calls.
 void AddInfo(PredInfoTab* newPred, ConstInd index)
 {
-  PredInfo* tmp=(PredInfo*)Fetch(newPred,Extend(newPred,1));
+  PredInfo* tmp=(PredInfo*)LK_VECTOR_GetPtr(newPred,LK_VECTOR_Grow(newPred,1));
   tmp->index=index;
   tmp->dynamic_flag=0;
-  InitVec(&(tmp->predCalls),8,sizeof(PCallEnt));
+  LK_VECTOR_Init(&(tmp->predCalls),8,sizeof(PCallEnt));
 }
 
 void AddPredCall(PredInfo* pred, CodeInd addr, int exec_flag)
 {
-  PCallEnt* tmp = (PCallEnt*)Fetch(&(pred->predCalls),Extend(&(pred->predCalls),1));
+  PCallEnt* tmp = (PCallEnt*)LK_VECTOR_GetPtr(&(pred->predCalls),LK_VECTOR_Grow(&(pred->predCalls),1));
   tmp->addr=addr;
   tmp->exec_flag=exec_flag;
 }
@@ -287,9 +288,9 @@ void AddPredCall(PredInfo* pred, CodeInd addr, int exec_flag)
 //Return a pointer to the Predicate info table entry for the constant with index 'index'.
 PredInfo* FindPredInfo(PredInfoTab* newPred, ConstInd index)
 {
-  PredInfo* tmp=Fetch(newPred,0);
+  PredInfo* tmp=LK_VECTOR_GetPtr(newPred,0);
   int i;
-  int size=newPred->numEntries;
+  int size=LK_VECTOR_Size(newPred);
   
   for(i=0;i<size;i++)
   {
@@ -304,7 +305,7 @@ PredInfo* FindPredInfo(PredInfoTab* newPred, ConstInd index)
 //that has index 'tab'.
 void MarkDynamic(ImportTabInd tab, ConstInd index)
 {
-  PredInfo* tmp=FindPredInfo(&(((TImportTab_t*)Fetch(&ImportTabs,tab))->newPred),index);
+  PredInfo* tmp=FindPredInfo(&(((TImportTab_t*)LK_VECTOR_GetPtr(&ImportTabs,tab))->newPred),index);
   if(tmp==NULL)
   {
     printf("Error couldn't find predicate to mark dynamic.");
@@ -317,8 +318,8 @@ void MarkDynamic(ImportTabInd tab, ConstInd index)
 void ResolvePredCalls(PredInfo* pred)
 {
   int i;
-  int size=(pred->predCalls).numEntries;
-  PCallEnt* tmp=Fetch(&(pred->predCalls),0);
+  int size=LK_VECTOR_Size(&(pred->predCalls));
+  PCallEnt* tmp=LK_VECTOR_GetPtr(&(pred->predCalls),0);
   CodeInd addr;
   if(pred->dynamic_flag>0)
   {
@@ -330,7 +331,7 @@ void ResolvePredCalls(PredInfo* pred)
   else
   {
     
-    addr=HashCodeAddr((HashTab_t*)Fetch(&(CT->findCodeTabs),0),pred->index);
+    addr=HashCodeAddr((HashTab_t*)LK_VECTOR_GetPtr(&(CT->findCodeTabs),0),pred->index);
     for(i=0;i<size;i++)
     {
       MakeCall(tmp[i].addr,tmp[i].exec_flag,addr);
