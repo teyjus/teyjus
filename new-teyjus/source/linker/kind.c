@@ -121,7 +121,6 @@ typedef struct{
 struct Vector LKinds;
 
 void LoadLKind(int fd, int i);
-void WriteLKind(int fd, int i);
 
 void InitTLKinds()
 {
@@ -148,21 +147,23 @@ void LoadLKind(int fd, int i)
   tmp->arity=LK_FILE_GET1(fd);
 }
 
+void WriteLKind(int fd, void* ent)
+{
+  LK_FILE_PUT1(fd,((TLKind_t*)ent)->arity);
+}
+
 void WriteLKinds(int fd)
 {
+  /*
   int i;
   TwoBytes tmp=LK_VECTOR_Size(&LKinds);
   LK_FILE_PUT2(fd,tmp);
   for(i=0;i<tmp;i++)
   {
     WriteLKind(fd,i);
-  }
-}
+}*/
+  LK_VECTOR_Write(fd, &LKinds,&WriteLKind);
 
-void WriteLKind(int fd, int i)
-{
-  TLKind_t* tmp=LK_VECTOR_GetPtr(&LKinds,i);
-  LK_FILE_PUT1(fd,tmp->arity);
 }
 
 ////////////////////////////////////////////////

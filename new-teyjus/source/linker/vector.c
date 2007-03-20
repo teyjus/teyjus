@@ -43,5 +43,19 @@ void* LK_VECTOR_GetPtr(struct Vector* vec, int index)
 
 void LK_VECTOR_Free(struct Vector* vec)
 {
+  obstack_finish(&(vec->obs));
   obstack_free(&(vec->obs),NULL);
+}
+
+void LK_VECTOR_Write(int fd, struct Vector* vec,void (*write_fn)(int fd, void* entry))
+{
+  int i;
+  int size=LK_VECTOR_Size(vec);
+  LK_FILE_PUT2(fd,size);
+  void* base = obstack_base(&(vec->obs));
+  int objSize= vec->objSize;
+  for(i=0;i<size;i++)
+  {
+    write_fn(fd,base+i*objSize);
+  }
 }
