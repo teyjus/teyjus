@@ -100,7 +100,7 @@ void LoadCode()
           break;
           
         case INSTR_K:
-          *(KindInd*)(code+j)=GetKindInd();
+          *(KindInd*)(code+j)=GetKindInd(PeekInput(),CM);
           j+=sizeof(KindInd);
           break;
           
@@ -157,14 +157,14 @@ void LoadCode()
 
 void LoadCodeSize()
 {
-  int size=CM->CodeSize=GETWord();
+  int size=CM->CodeSize=(int)GETWord();
   CM->CodeOffset=LK_VECTOR_Grow(&Code,size);
   printf("Loaded Codesize = %d, got offset %d.\n",size,CM->CodeOffset);
 }
 
 void WriteCodeSize()
 {
-  PUTWord(LK_VECTOR_Size(&Code));
+  PUTWord((Word)LK_VECTOR_Size(&Code));
 }
 
 void WriteCode()

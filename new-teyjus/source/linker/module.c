@@ -171,26 +171,20 @@ void LoadImpModules()
   int count=CM->ImportCount=GET1();
   int i;
   printf("Importing %d modules\n",count);//DEBUG
-  CM->Import=malloc(sizeof(ImportTabInd)*count);
-  if(CM->Import==NULL)
-  {
-    printf("Malloc failure\n");
-    exit(0);
-  }
   
   if(!count)
   {
     CM->SegmentID=-1;
     return;
   }
-  
+  CM->Import=EM_malloc(sizeof(ImportTabInd)*count);
   CM->SegmentID=NumSegs++;
   
   for(i=0;i<count;i++)
   {
     Name name;
     GetName(&name);
-    LK_RENAME_LoadKindRNTable();
+    LK_RENAME_LoadKindRNTable(PeekInput(),CM);
     LK_RENAME_LoadConstRNTable();
     CM->Import[i]=NewImportTab();
     LoadImpModule(name.string);
@@ -208,7 +202,7 @@ void LoadAccModules()
   {
     Name name;
     GetName(&name);
-    LK_RENAME_LoadKindRNTable();
+    LK_RENAME_LoadKindRNTable(PeekInput(),CM);
     LK_RENAME_LoadConstRNTable();
     LoadAccModule(name.string);
     Clear(name);
@@ -261,46 +255,37 @@ void WriteAll(char* modname)
   WriteCode();
 }
 
-KindInd GetKindInd(){
-  Byte tmp=GET1();
-  TwoBytes tmp2=GET2();
-  return FindKindInd(tmp,tmp2);
-}
-
-KindInd FindKindInd(Byte gl_flag,TwoBytes index)
-{
+KindInd GetKindInd(int fd, struct Module_st* CMData){
   KindInd tmp;
-  tmp.gl_flag=gl_flag;
-  tmp.index=index;
-  //printf("KindInd:(%d,%d)->",tmp.gl_flag,tmp.index);//DEBUG
+  tmp.gl_flag=LK_FILE_GET1(fd);
+  tmp.index=LK_FILE_GET2(fd);
   switch(tmp.gl_flag)
   {
     case LOCAL:
-      if(tmp.index>=CM->LKindcount)
+      if(tmp.index>=CMData->LKindcount)
       {
         printf("Invalid Local Kind %d\n",index);
         exit(0);
       }
-      tmp.index+=CM->LKindoffset;
+      tmp.index+=CMData->LKindoffset;
       break;
       
     case GLOBAL:
-      if(tmp.index>=CM->GKindcount)
+      if(tmp.index>=CMData->GKindcount)
       {
         printf("Invalid Global Kind %d\n",index);
-        exit(0);
+        EM_THROW(LK_LinkError);
       }
-      tmp=CM->GKind[tmp.index];
+      tmp=CMData->GKind[tmp.index];
       
     case PERVASIVE:
       break;
       
     default:
-      printf("Invalid Kind Flag %d\n",tmp.gl_flag);
-      exit(0);
+      printf("Invalid Kind Type %d\n",index);
+      EM_THROW(LK_LinkError);
       break;
   }
-  //printf("(%d,%d)\n",tmp.gl_flag,tmp.index);//DEBUG
   return tmp;
 }
 

@@ -37,26 +37,26 @@ ConstInd LK_RENAME_RenameConst(Name name)
 
 void* KindRNTree=NULL;
 
-void LK_RENAME_LoadKindRNTabEnt();
+void LK_RENAME_LoadKindRNTabEnt(int fd ,struct Module_st* CMData);
 
-void LK_RENAME_LoadKindRNTable()
+void LK_RENAME_LoadKindRNTable(int fd ,struct Module_st* CMData)
 {
-  LK_TREE_Empty(&KindRNTree);
-  int size=(int)GET2();
+  if(KindRNTree!=NULL)
+    LK_TREE_Empty(&KindRNTree);
+  int size=(int)LK_FILE_GET2(fd);
   int i;
   for(i=0;i<size;i++)
   {
-    LK_RENAME_LoadKindRNTabEnt();
+    LK_RENAME_LoadKindRNTabEnt(fd,CMData);
   }
 }
 
-void LK_RENAME_LoadKindRNTabEnt()
+void LK_RENAME_LoadKindRNTabEnt(int fd ,struct Module_st* CMData)
 {
-  Name name;
-  GetName(&name);
-  MarkInd ind=GetKindInd();
-  LK_TREE_Add(&KindRNTree,name.string,ind);
-  Clear(name);
+  char* name=LK_FILE_GetString(fd);
+  MarkInd ind=GetKindInd(fd,CMData);
+  LK_TREE_Add(&KindRNTree,name,ind);
+  free(name);
 }
 
 KindInd LK_RENAME_RenameKind(Name name)
