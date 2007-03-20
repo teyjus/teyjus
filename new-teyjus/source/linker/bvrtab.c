@@ -19,15 +19,15 @@ void WriteBvrTab(struct Vector* BvrTab);
 
 void InitTBvrTabs()
 {
-  InitVec(&BvrTabs,32,sizeof(struct Vector));
+  LK_VECTOR_Init(&BvrTabs,32,sizeof(struct Vector));
 }
 
 void LoadBvrTabs()
 {
   int i;
   TwoBytes count=CM->BvrTabcount=GET2();
-  int offset=CM->BvrTaboffset=Extend(&BvrTabs,(int)count);
-  struct Vector* tmp=(struct Vector*)Fetch(&BvrTabs,offset);
+  int offset=CM->BvrTaboffset=LK_VECTOR_Grow(&BvrTabs,(int)count);
+  struct Vector* tmp=(struct Vector*)LK_VECTOR_GetPtr(&BvrTabs,offset);
   for(i=0;i<count;i++)
   {
     LoadBvrTab(tmp+i);
@@ -38,9 +38,9 @@ void LoadBvrTab(struct Vector* BvrTab)
 {
   int j;
   Byte count=GET1();
-  InitVec(BvrTab,(int)count,sizeof(BvrTabEnt));
-  Extend(BvrTab,(int)count);
-  BvrTabEnt* tmp=(BvrTabEnt*)Fetch(BvrTab,0);
+  LK_VECTOR_Init(BvrTab,(int)count,sizeof(BvrTabEnt));
+  LK_VECTOR_Grow(BvrTab,(int)count);
+  BvrTabEnt* tmp=(BvrTabEnt*)LK_VECTOR_GetPtr(BvrTab,0);
   for(j=0;j<count;j++)
   {
     tmp[j].index=GET1();
@@ -52,9 +52,10 @@ void LoadBvrTab(struct Vector* BvrTab)
 void WriteBvrTabs()
 {
   int i;
-  PUT2(BvrTabs.numEntries);
-  struct Vector* tmp=Fetch(&BvrTabs,0);
-  for(i=0;i<BvrTabs.numEntries;i++)
+  int size=LK_VECTOR_Size(&BvrTabs);
+  PUT2(size);
+  struct Vector* tmp=LK_VECTOR_GetPtr(&BvrTabs,0);
+  for(i=0;i<size;i++)
   {
     WriteBvrTab(tmp+i);
   }
@@ -63,9 +64,9 @@ void WriteBvrTabs()
 void WriteBvrTab(struct Vector* BvrTab)
 {
   int j;
-  Byte count=BvrTab->numEntries;
+  Byte count=LK_VECTOR_Size(BvrTab);
   PUT1(count);
-  BvrTabEnt* tmp=(BvrTabEnt*)Fetch(BvrTab,0);
+  BvrTabEnt* tmp=(BvrTabEnt*)LK_VECTOR_GetPtr(BvrTab,0);
   for(j=0;j<count;j++)
   {
     PUT1(tmp[j].index);
@@ -75,9 +76,10 @@ void WriteBvrTab(struct Vector* BvrTab)
 
 int BvrTabSearch(struct Vector* BvrTab,Byte index)
 {
-  BvrTabEnt* tmp=Fetch(BvrTab,0);
+  BvrTabEnt* tmp=LK_VECTOR_GetPtr(BvrTab,0);
   int i;
-  for(i=0;i<BvrTab->numEntries;i++)
+  int size=LK_VECTOR_Size(BvrTab);
+  for(i=0;i<size;i++)
   {
     if(tmp[i].index==index)
       return i;
@@ -87,13 +89,13 @@ int BvrTabSearch(struct Vector* BvrTab,Byte index)
 
 void MergeBvrTabs(BvrTabInd a, BvrTabInd b,Byte n)
 {
-  struct Vector* pa=(struct Vector*)Fetch(&BvrTabs,a);
-  struct Vector* pb=(struct Vector*)Fetch(&BvrTabs,b);
+  struct Vector* pa=(struct Vector*)LK_VECTOR_GetPtr(&BvrTabs,a);
+  struct Vector* pb=(struct Vector*)LK_VECTOR_GetPtr(&BvrTabs,b);
   
-  int size=pb->numEntries;
+  int size=LK_VECTOR_Size(pb);
   int i,j;
-  BvrTabEnt* tmpa=(BvrTabEnt*)Fetch(pa,0);
-  BvrTabEnt* tmpb=(BvrTabEnt*)Fetch(pb,0);
+  BvrTabEnt* tmpa=(BvrTabEnt*)LK_VECTOR_GetPtr(pa,0);
+  BvrTabEnt* tmpb=(BvrTabEnt*)LK_VECTOR_GetPtr(pb,0);
   for(i=0;i<size;i++)
   {
     j=BvrTabSearch(pa,tmpb[i].index);
@@ -104,14 +106,14 @@ void MergeBvrTabs(BvrTabInd a, BvrTabInd b,Byte n)
     else
     {
       BVR_AddEntry(pa,tmpb+i);
-      tmpa=(BvrTabEnt*)Fetch(pa,0);
+      tmpa=(BvrTabEnt*)LK_VECTOR_GetPtr(pa,0);
     }
   }
 }
 
 void BVR_AddEntry(struct Vector* BvrTab, BvrTabEnt* entry)
 {
-  BvrTabEnt* new=Fetch(BvrTab,Extend(BvrTab,1));
+  BvrTabEnt* new=LK_VECTOR_GetPtr(BvrTab,LK_VECTOR_Grow(BvrTab,1));
   new->index=entry->index;
   new->addr=entry->addr;
 }

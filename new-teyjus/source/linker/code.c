@@ -31,8 +31,8 @@ void MergeTerm(CodeInd younger, CodeInd older,Byte n);
 
 void InitTCode()
 {
-  InitVec(&Code,1024,sizeof(char));
-  InitVec(&Floats,32,sizeof(struct BCFloat));
+  LK_VECTOR_Init(&Code,1024,sizeof(char));
+  LK_VECTOR_Init(&Floats,32,sizeof(struct BCFloat));
 }
 
 void LoadCode()
@@ -41,7 +41,7 @@ void LoadCode()
   int offset=CM->CodeOffset;
   int size=CM->CodeSize;
   printf("Loading %d bytes of code to offset %d.\n",size,offset);//DEBUG
-  Byte* code=(Byte*)Fetch(&Code,offset);
+  Byte* code=(Byte*)LK_VECTOR_GetPtr(&Code,offset);
   ConstInd tmpIndex;
   
   Byte opcode=-1;
@@ -158,20 +158,20 @@ void LoadCode()
 void LoadCodeSize()
 {
   int size=CM->CodeSize=GETWord();
-  CM->CodeOffset=Extend(&Code,size);
+  CM->CodeOffset=LK_VECTOR_Grow(&Code,size);
   printf("Loaded Codesize = %d, got offset %d.\n",size,CM->CodeOffset);
 }
 
 void WriteCodeSize()
 {
-  PUTWord(Code.numEntries);
+  PUTWord(LK_VECTOR_Size(&Code));
 }
 
 void WriteCode()
 {
   int i,j;
-  int size=Code.numEntries;
-  char* code=Fetch(&Code,0);
+  int size=LK_VECTOR_Size(&Code);
+  char* code=LK_VECTOR_GetPtr(&Code,0);
   
   Byte opcode=-1;
   INSTR_InstrCategory instrCat=INSTR_CAT_X;
@@ -272,7 +272,7 @@ void WriteCode()
 
 void MakeCallName(CodeInd from, int exec_flag, ConstInd to)
 {
-  Byte* tmp=Fetch(&Code,from);
+  Byte* tmp=LK_VECTOR_GetPtr(&Code,from);
   if(exec_flag)
   {
     tmp[0]=execute_name;
@@ -287,7 +287,7 @@ void MakeCallName(CodeInd from, int exec_flag, ConstInd to)
   
 void MakeCall(CodeInd from, int exec_flag, CodeInd to)
 {
-  Byte* tmp=Fetch(&Code,from);
+  Byte* tmp=LK_VECTOR_GetPtr(&Code,from);
   if(exec_flag)
   {
     tmp[0]=execute;
@@ -303,8 +303,8 @@ void MakeCall(CodeInd from, int exec_flag, CodeInd to)
 
 INT4 GetFloat()
 {
-  int i=Extend(&Floats,1);
-  struct BCFloat* tmp=(struct BCFloat*)Fetch(&Floats,i);
+  int i=LK_VECTOR_Grow(&Floats,1);
+  struct BCFloat* tmp=(struct BCFloat*)LK_VECTOR_GetPtr(&Floats,i);
   tmp->mantissa=GET4();
   tmp->exponent=GET4();
   return i;
@@ -312,7 +312,7 @@ INT4 GetFloat()
 
 void PutFloat(INT4 i)
 {
-  struct BCFloat* tmp=(struct BCFloat*)Fetch(&Floats,i);
+  struct BCFloat* tmp=(struct BCFloat*)LK_VECTOR_GetPtr(&Floats,i);
   PUT4(tmp->mantissa);
   PUT4(tmp->exponent);
 }
@@ -320,7 +320,7 @@ void PutFloat(INT4 i)
 CodeInd MergeSubSequence(CodeInd younger, CodeInd older, Byte n)
 {
   CodeInd c,d;
-  Byte* code=(Byte*)Fetch(&Code,0);
+  Byte* code=(Byte*)LK_VECTOR_GetPtr(&Code,0);
   int trysize=INSTR_instrSize(try);
   int trustsize=INSTR_instrSize(trust);
   
@@ -367,8 +367,8 @@ CodeInd MergeSubSequence(CodeInd younger, CodeInd older, Byte n)
     else
     {
       //Older is singular, so make a new block for the choice point info.
-      d=Extend(&Code,trustsize);
-      code=(Byte*)Fetch(&Code,0);
+      d=LK_VECTOR_Grow(&Code,trustsize);
+      code=(Byte*)LK_VECTOR_GetPtr(&Code,0);
       *(CodeInd*)(code+c)=d;
       code[d]=trust;
       code[d+1]=n;
@@ -388,8 +388,8 @@ CodeInd MergeSubSequence(CodeInd younger, CodeInd older, Byte n)
         code[older]=retry_else;
       
       //Make a new try_else block
-      c=Extend(&Code,trustsize);
-      code=Fetch(&Code,0);
+      c=LK_VECTOR_Grow(&Code,trustsize);
+      code=LK_VECTOR_GetPtr(&Code,0);
       code[c]=try_else;
       code[c+1]=n;
       *(CodeInd*)(code+c+INSTR_LLen)=younger;
@@ -399,8 +399,8 @@ CodeInd MergeSubSequence(CodeInd younger, CodeInd older, Byte n)
     else
     {
       //Both are singular, create a try->trust block
-      c=Extend(&Code,trysize+trustsize);
-      code=Fetch(&Code,0);
+      c=LK_VECTOR_Grow(&Code,trysize+trustsize);
+      code=LK_VECTOR_GetPtr(&Code,0);
       code[c]=try;
       code[c+1]=n;
       *(CodeInd*)(code+c+INSTR_LLen)=younger;
@@ -415,7 +415,7 @@ CodeInd MergeSubSequence(CodeInd younger, CodeInd older, Byte n)
 //Append definition at older to definition at younger.
 CodeInd MergeDefs(CodeInd older, CodeInd younger)
 {
-  Byte* code=Fetch(&Code,0);
+  Byte* code=LK_VECTOR_GetPtr(&Code,0);
   CodeInd c=-1;
   int n=-1;
   
@@ -454,7 +454,7 @@ CodeInd MergeDefs(CodeInd older, CodeInd younger)
     //Call MergeSequence on the sequences
     younger=MergeSequence(younger,c,n);
     //Set older's L2
-    code=Fetch(&Code,0);
+    code=LK_VECTOR_GetPtr(&Code,0);
     *(CodeInd*)(code+older+2*sizeof(CodeInd))=younger;
     //Get the address of the try for the older definition.
     c=*(CodeInd*)(code+older+sizeof(CodeInd));
@@ -475,7 +475,7 @@ CodeInd MergeDefs(CodeInd older, CodeInd younger)
 CodeInd MergeSequence(CodeInd younger, CodeInd older, Byte n)
 {
   CodeInd c;
-  Byte* code=Fetch(&Code,0);
+  Byte* code=LK_VECTOR_GetPtr(&Code,0);
   int tmesize=INSTR_instrSize(try_me_else)*INSTR_LLen;
   
   //Check if the younger definition is singular or plural.
@@ -586,7 +586,7 @@ CodeInd MergeSequence(CodeInd younger, CodeInd older, Byte n)
 
 void MergeTerm(CodeInd younger, CodeInd older,Byte n)
 {
-  Byte* code=(Byte*)Fetch(&Code,0);
+  Byte* code=(Byte*)LK_VECTOR_GetPtr(&Code,0);
   
   CodeInd c,d;//Holder variables for the younger and older labels, respectively.
   //Combine variable subsequences.
@@ -594,7 +594,7 @@ void MergeTerm(CodeInd younger, CodeInd older,Byte n)
   older+=INSTR_LLen;
   c=MergeSequence(*(CodeInd*)(code+younger),*(CodeInd*)(code+older),n);
   //Reload code location.
-  code=(Byte*)Fetch(&Code,0);
+  code=(Byte*)LK_VECTOR_GetPtr(&Code,0);
   //Set V label
   *(CodeInd*)(code+younger)=c;
   
@@ -612,7 +612,7 @@ void MergeTerm(CodeInd younger, CodeInd older,Byte n)
     if(code[c]==switch_on_constant)
     {
       tabsize=MergeHashTabs(*(HashTabInd*)(code+c+2),*(HashTabInd*)(code+d+2),n);
-      code=(Byte*)Fetch(&Code,0);
+      code=(Byte*)LK_VECTOR_GetPtr(&Code,0);
       //Update table size.
       code[c+1]=tabsize;
     }
@@ -636,7 +636,7 @@ void MergeTerm(CodeInd younger, CodeInd older,Byte n)
     {
       d=MergeSubSequence(c,d,n);
       //Reload code variable.
-      code=(Byte*)Fetch(&Code,0);
+      code=(Byte*)LK_VECTOR_GetPtr(&Code,0);
     }
     *(CodeInd*)(code+younger)=d;
   }
@@ -651,7 +651,7 @@ void MergeTerm(CodeInd younger, CodeInd older,Byte n)
     if(code[c]==switch_on_bvar)
     {
       MergeBvrTabs(*(BvrTabInd*)(code+c+3),*(BvrTabInd*)(code+d+3),n);
-      code=(Byte*)Fetch(&Code,0);
+      code=(Byte*)LK_VECTOR_GetPtr(&Code,0);
       //Use the larger value limit.
       if(*(TwoBytes*)(code+c+1)<*(TwoBytes*)(code+d+1))
         *(TwoBytes*)(code+c+1)=*(TwoBytes*)(code+d+1);

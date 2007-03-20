@@ -24,15 +24,15 @@ void WriteImplGoal(TImplGoal_t* ImplGoal);
 
 void InitTImplGoals()
 {
-  InitVec(&ImplGoals,32,sizeof(TImplGoal_t));
+  LK_VECTOR_Init(&ImplGoals,32,sizeof(TImplGoal_t));
 }
 
 void LoadImplGoals()
 {
   int i;
   int count=CM->ImplGoalcount=GET2();
-  int offset=CM->ImplGoaloffset=Extend(&ImplGoals,count);
-  TImplGoal_t* tmp=(TImplGoal_t*)Fetch(&ImplGoals,offset);
+  int offset=CM->ImplGoaloffset=LK_VECTOR_Grow(&ImplGoals,count);
+  TImplGoal_t* tmp=(TImplGoal_t*)LK_VECTOR_GetPtr(&ImplGoals,offset);
   for(i=0;i<count;i++)
   {
     LoadImplGoal(tmp+i);
@@ -44,9 +44,9 @@ void LoadImplGoal(TImplGoal_t* ImplGoal)
   int j;
   TwoBytes count=GET2();
   struct Vector* vec=&(ImplGoal->extPred);
-  InitVec(vec,(int)count,sizeof(ConstInd));
-  Extend(vec,(int)count);
-  ConstInd* tmp=(ConstInd*)Fetch(vec,0);
+  LK_VECTOR_Init(vec,(int)count,sizeof(ConstInd));
+  LK_VECTOR_Grow(vec,(int)count);
+  ConstInd* tmp=(ConstInd*)LK_VECTOR_GetPtr(vec,0);
   for(j=0;j<count;j++)
   {
     tmp[j]=GetConstInd();
@@ -57,9 +57,9 @@ void LoadImplGoal(TImplGoal_t* ImplGoal)
   
   count=GET2();
   vec=&(ImplGoal->findCodeTab);
-  InitVec(vec,(int)count,sizeof(HashTabEnt));
-  Extend(vec,(int)count);
-  HashTabEnt* tmp2=(HashTabEnt*)Fetch(vec,0);
+  LK_VECTOR_Init(vec,(int)count,sizeof(HashTabEnt));
+  LK_VECTOR_Grow(vec,(int)count);
+  HashTabEnt* tmp2=(HashTabEnt*)LK_VECTOR_GetPtr(vec,0);
   for(j=0;j<count;j++)
   {
     tmp2[j].index=GetConstInd();
@@ -70,9 +70,10 @@ void LoadImplGoal(TImplGoal_t* ImplGoal)
 void WriteImplGoals()
 {
   int i;
-  PUT2(ImplGoals.numEntries);
-  TImplGoal_t* tmp=Fetch(&ImplGoals,0);
-  for(i=0;i<ImplGoals.numEntries;i++)
+  int size=LK_VECTOR_Size(&ImplGoals);
+  PUT2(size);
+  TImplGoal_t* tmp=LK_VECTOR_GetPtr(&ImplGoals,0);
+  for(i=0;i<size;i++)
   {
     WriteImplGoal(tmp+i);
   }
@@ -81,10 +82,10 @@ void WriteImplGoals()
 void WriteImplGoal(TImplGoal_t* ImplGoal)
 {
   int j;
-  TwoBytes count=(ImplGoal->extPred).numEntries;
+  TwoBytes count=LK_VECTOR_Size(&(ImplGoal->extPred));
   PUT2(count);
   
-  ConstInd* tmp=(ConstInd*)Fetch(&(ImplGoal->extPred),0);
+  ConstInd* tmp=(ConstInd*)LK_VECTOR_GetPtr(&(ImplGoal->extPred),0);
   for(j=0;j<count;j++)
   {
     PutConstInd(tmp[j]);
@@ -92,10 +93,10 @@ void WriteImplGoal(TImplGoal_t* ImplGoal)
   
   PUT1(ImplGoal->findCodeFun);
   
-  count = (ImplGoal->findCodeTab).numEntries;
+  count = LK_VECTOR_Size(&(ImplGoal->findCodeTab));
   PUT2(count);
   
-  HashTabEnt* tmp2=(HashTabEnt*)Fetch(&(ImplGoal->findCodeTab),0);
+  HashTabEnt* tmp2=(HashTabEnt*)LK_VECTOR_GetPtr(&(ImplGoal->findCodeTab),0);
   for(j=0;j<count;j++)
   {
     PutConstInd(tmp2[j].index);

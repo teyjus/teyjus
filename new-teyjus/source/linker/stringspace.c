@@ -23,12 +23,12 @@ void WriteStringSpaces();
 
 void InitTStringSpaces()
 {
-  InitVec(&StringSpaces,128,sizeof(TStringSpace_t));
+  LK_VECTOR_Init(&StringSpaces,128,sizeof(TStringSpace_t));
 }
 
 void LoadStringSpace(int i)
 {
-  TStringSpace_t* tmp=(TStringSpace_t*)Fetch(&StringSpaces,i);
+  TStringSpace_t* tmp=(TStringSpace_t*)LK_VECTOR_GetPtr(&StringSpaces,i);
   GetName(tmp);
 }
 
@@ -37,7 +37,7 @@ void LoadStringSpaces()
   int i;
   
   TwoBytes count=CM->StringSpacecount=GET2();
-  int offset=CM->StringSpaceoffset=Extend(&StringSpaces,count);
+  int offset=CM->StringSpaceoffset=LK_VECTOR_Grow(&StringSpaces,count);
   for(i=0;i<count;i++)
   {
     LoadStringSpace(offset+i);
@@ -46,15 +46,16 @@ void LoadStringSpaces()
 
 void WriteStringSpace(int i)
 {
-  TStringSpace_t* tmp=(TStringSpace_t*)Fetch(&StringSpaces,i);
+  TStringSpace_t* tmp=(TStringSpace_t*)LK_VECTOR_GetPtr(&StringSpaces,i);
   PutName(*tmp);
 }
 
 void WriteStringSpaces()
 {
   int i;
-  PUT2(StringSpaces.numEntries);
-  for(i=0;i<StringSpaces.numEntries;i++)
+  int size=LK_VECTOR_Size(&StringSpaces);
+  PUT2(size);
+  for(i=0;i<size;i++)
   {
     WriteStringSpace(i);
   }

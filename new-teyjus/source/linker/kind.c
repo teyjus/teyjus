@@ -73,7 +73,7 @@ void LoadTopGKinds(int fd, struct Module_st* CMData)
   
   GKindTab=EM_malloc(GKindTabSize*sizeof(TGKind_t));
   
-  CMData->GKind=EM_malloc(count);
+  CMData->GKind=EM_malloc(count*sizeof(MarkInd));
   
   for(i=0;i<count;i++)
   {
@@ -125,7 +125,7 @@ void WriteLKind(int fd, int i);
 
 void InitTLKinds()
 {
-  InitVec(&LKinds,128,sizeof(TLKind_t));
+  LK_VECTOR_Init(&LKinds,128,sizeof(TLKind_t));
 }
 
 void LoadLKinds(int fd, struct Module_st* CMData)
@@ -133,7 +133,7 @@ void LoadLKinds(int fd, struct Module_st* CMData)
   int i;
   TwoBytes count=LK_FILE_GET2(fd);
   CMData->LKindcount=count;
-  int offset=CMData->LKindoffset=Extend(&LKinds,count);
+  int offset=CMData->LKindoffset=LK_VECTOR_Grow(&LKinds,count);
   //printf("Loading %d Local Kinds.\n",count);//DEBUG
   
   for(i=0;i<count;i++)
@@ -144,14 +144,14 @@ void LoadLKinds(int fd, struct Module_st* CMData)
 
 void LoadLKind(int fd, int i)
 {
-  TLKind_t* tmp=Fetch(&LKinds,i);
+  TLKind_t* tmp=LK_VECTOR_GetPtr(&LKinds,i);
   tmp->arity=LK_FILE_GET1(fd);
 }
 
 void WriteLKinds(int fd)
 {
   int i;
-  TwoBytes tmp=LKinds.numEntries;
+  TwoBytes tmp=LK_VECTOR_Size(&LKinds);
   LK_FILE_PUT2(fd,tmp);
   for(i=0;i<tmp;i++)
   {
@@ -161,14 +161,14 @@ void WriteLKinds(int fd)
 
 void WriteLKind(int fd, int i)
 {
-  TLKind_t* tmp=Fetch(&LKinds,i);
+  TLKind_t* tmp=LK_VECTOR_GetPtr(&LKinds,i);
   LK_FILE_PUT1(fd,tmp->arity);
 }
 
 ////////////////////////////////////////////////
 void WriteKinds()
 {
-  PUT2(LKinds.numEntries+GKindTabSize);
+  PUT2(LK_VECTOR_Size(&LKinds)+GKindTabSize);
   WriteGKinds(PeekOutput());
   WriteLKinds(PeekOutput());
 }
@@ -180,7 +180,7 @@ int CheckKindArity(KindInd i)
 {
   if(i.gl_flag==LOCAL)
   {
-    return ((TLKind_t*)Fetch(&LKinds,i.index))->arity;
+    return ((TLKind_t*)LK_VECTOR_GetPtr(&LKinds,i.index))->arity;
   }
   //GLOBAL_KIND
   return GKindTab[i.index].arity;
