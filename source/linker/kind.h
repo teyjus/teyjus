@@ -2,6 +2,7 @@
 #define _KIND_H_
 
 #include "datatypes.h"
+#include "module.h"
 /*/////////////////////////////////////////////////////////////////////////////////////
 //This file defines the outside view of GKinds and LKinds/////
 ////////////////////////////////////////////////////////////////////////////////////*/
@@ -10,10 +11,9 @@
 //Note: Uses CM->GKind & CM->GKindcount
 
 //Loads the global kinds of a bytecode file.
-extern void LoadGKinds();
+extern void LoadGKinds(int fd, struct Module_st* CMData);
 //Loads the global kinds of the top-level bytecode file.
 extern void LoadTopGKinds(int fd, struct Module_st* CMData);
-extern void LK_KIND_FreeGKinds();
 
 extern void LoadLKinds(int fd, struct Module_st* CMData);
 

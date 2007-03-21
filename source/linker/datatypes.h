@@ -15,6 +15,11 @@
 #define HIDDEN 2
 #define PERVASIVE 3
 
+//TySkel symbols
+#define ARROW 0
+#define KIND 1
+#define VARIABLE 2
+
 #define DEBUG(x) printf("%s\n",x)
 #define DEBUGNUM(x) printf("-%d-\n",x)
 
@@ -38,8 +43,8 @@ typedef TwoBytes HashTabInd;
 typedef TwoBytes StringSpaceInd;
 typedef TwoBytes BvrTabInd;
 typedef TwoBytes ImplGoalInd;
-typedef unsigned int CodeInd;
-typedef unsigned int ImportTabInd;
+typedef long CodeInd;
+typedef int ImportTabInd;
 
 typedef enum {
   LK_LinkError=LOADER_FIRST_ERR_INDEX

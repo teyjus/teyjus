@@ -25,46 +25,40 @@ KindInd LoadTopGKind(int fd, int i);
 KindInd LoadGKind();
 void WriteGKind(int fd, int i);
 
-void WriteGKinds();
+void WriteGKinds(int fd);
 void WriteLKinds();
 
-void LoadGKinds()
+void LoadGKinds(int fd, struct Module_st* CMData)
 {
   int i;
   
-  TwoBytes count=CM->GKindcount=GET2();
-  CM->GKind=EM_malloc(count*sizeof(KindInd));
-  printf("Loading %d Global Kinds.\n",count);//DEBUG
+  TwoBytes count=CMData->GKindcount=LK_FILE_GET2(fd);
+  CMData->GKind=EM_malloc(count*sizeof(KindInd));
   for(i=0;i<count;i++)
   {
-    CM->GKind[i]=LoadGKind();
+    CMData->GKind[i]=LoadGKind(fd);
   }
 }
 
-KindInd LoadGKind()
+KindInd LoadGKind(int fd)
 {
-  int arity=GET1();
+  int arity=LK_FILE_GET1(fd);
   int oldarity;
-  Name name;
-  GetName(&name);
+  char* name=LK_FILE_GetString(fd);
   KindInd index=LK_RENAME_RenameKind(name);
   oldarity=CheckKindArity(index);
   if(arity!=oldarity)
   {
-    printf("Kind Arity Mismatch: Kind %s should have arity %d, has arity %d.\n",name.string,oldarity,arity);
-    exit(0);
+    printf("Kind Arity Mismatch: Kind %s should have arity %d, has arity %d.\n",name,oldarity,arity);
+    free(name);
+    EM_THROW(LK_LinkError);
   }
-  Clear(name);
+  free(name);
   return index;
 }
 
 TGKind_t* GKindTab=NULL;
 int GKindTabSize=-1;
-
-void LK_KIND_FreeGKinds()
-{
-  free(GKindTab);
-}
 
 void LoadTopGKinds(int fd, struct Module_st* CMData)
 {
@@ -102,6 +96,8 @@ void WriteGKinds(int fd)
   {
     WriteGKind(fd,i);
   }
+  free(GKindTab);
+  GKindTab=NULL;
 }
 
 void WriteGKind(int fd, int i)
@@ -133,7 +129,6 @@ void LoadLKinds(int fd, struct Module_st* CMData)
   TwoBytes count=LK_FILE_GET2(fd);
   CMData->LKindcount=count;
   int offset=CMData->LKindoffset=LK_VECTOR_Grow(&LKinds,count);
-  //printf("Loading %d Local Kinds.\n",count);//DEBUG
   
   for(i=0;i<count;i++)
   {
@@ -155,6 +150,7 @@ void WriteLKind(int fd, void* ent)
 void WriteLKinds(int fd)
 {
   LK_VECTOR_Write(fd, &LKinds,&WriteLKind);
+  LK_VECTOR_Free(&LKinds);
 }
 
 ////////////////////////////////////////////////
