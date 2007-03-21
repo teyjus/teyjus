@@ -1,96 +1,93 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <obstack.h>
 #include "module.h"
 #include "tyskel.h"
 #include "kind.h"
 #include "vector.h"
 #include "file.h"
 
+#define obstack_chunk_alloc EM_malloc
+#define obstack_chunk_free free
+
 //////////////////////////////////////////////////////
 //TySkel Load and Write Code
 //////////////////////////////////////////////////////
 
-#define ARROW 0
-#define KIND 1
-#define VARIABLE 2
+typedef struct{
+  void* TySkel;
+  int size;
+}TySkel_t;
 
 struct Vector TySkels;
 
-int LoadTySkel(struct Vector* TySkel,int i);
-void WriteTySkel(int i);
+struct obstack TySkelStack;
+
+void LK_TYSKEL_obstack_alloc_failed_handler(void)
+{
+  exit(0);
+}
 
 void InitTTySkels()
 {
-  LK_VECTOR_Init(&TySkels,128,sizeof(struct Vector));
+  LK_VECTOR_Init(&TySkels,128,sizeof(TySkel_t));
+  obstack_alloc_failed_handler=&LK_TYSKEL_obstack_alloc_failed_handler;
+  obstack_init(&TySkelStack);
 }
 
-int LoadTySkel(struct Vector* TySkel,int i)
+void LoadTySkel(int fd, struct Module_st* CMData)
 {
   int arity,j;
   KindInd KTMP;
-  Byte type;
-  Byte* tyStr=(Byte*)LK_VECTOR_GetPtr(TySkel,i++);
-  tyStr[0]=type=GET1();
+  Byte type=LK_FILE_GET1(fd);
+  obstack_1grow(&TySkelStack,type);
   switch(type)
   {
     case ARROW:
-      LK_VECTOR_Grow(TySkel,3);
-      i=LoadTySkel(TySkel,i);
-      i=LoadTySkel(TySkel,i);
+      LoadTySkel(fd,CMData);
+      LoadTySkel(fd,CMData);
       break;
       
     case KIND:
-      KTMP=GetKindInd(PeekInput(),CM);
+      KTMP=GetKindInd(fd,CMData);
+      obstack_1grow(&TySkelStack,KTMP.gl_flag);
+      obstack_grow(&TySkelStack,&(KTMP.index),sizeof(TwoBytes));
       arity=CheckKindArity(KTMP);
-      LK_VECTOR_Grow(TySkel,2+arity*2);
-      tyStr=(Byte*)LK_VECTOR_GetPtr(TySkel,i);
-      *(tyStr++)=KTMP.gl_flag;
-      *(TwoBytes*)tyStr=KTMP.index;
-      i+=3;
       for(j=0;j<arity;j++)
-        i=LoadTySkel(TySkel,i);
+        LoadTySkel(fd,CMData);
       break;
       
     case VARIABLE:
     default:
-      tyStr[1]=GET1();
-      i++;
+      obstack_1grow(&TySkelStack,LK_FILE_GET1(fd));
       break;
   }
-  return i;
 }
 
-void LoadTySkels()
+void LoadTySkels(int fd, struct Module_st* CMData)
 {
   int i;
-  struct Vector* tmp;
-  TwoBytes count=CM->TySkelcount=GET2();
-  int offset=CM->TySkeloffset=LK_VECTOR_Grow(&TySkels,(int)count);
-  //CM->TySkel=AllocateLTySkels(count);
-  tmp=(struct Vector*)LK_VECTOR_GetPtr(&TySkels,offset);
+  int count=CMData->TySkelcount=LK_FILE_GET2(fd);
+  int offset=LK_VECTOR_Grow(&TySkels,count);
+  CMData->TySkeloffset=offset;
+  TySkel_t* tab=LK_VECTOR_GetPtr(&TySkels,offset);
   for(i=0;i<count;i++)
   {
-    LK_VECTOR_Init(tmp+i,32,1);
-    LK_VECTOR_Grow(tmp+i,2);
-    LoadTySkel(tmp+i,0);
+    LoadTySkel(fd,CMData);
+    tab[i].size=obstack_object_size(&TySkelStack);
+    tab[i].TySkel=obstack_finish(&TySkelStack);
   }
 }
 
-void WriteTySkels()
+void WriteTySkel(int fd, void* entry)
 {
-  int i;
-  int size=LK_VECTOR_Size(&TySkels);
-  PUT2(size);
-  for(i=0;i<size;i++)
-  {
-    WriteTySkel(i);
-  }
+  TySkel_t* p=entry;
+  LK_FILE_PUTN(fd,p->TySkel,p->size);
 }
 
-void WriteTySkel(int i)
+void WriteTySkels(int fd)
 {
-  struct Vector* tmp=(struct Vector*)LK_VECTOR_GetPtr(&TySkels,i);
-  PUTN(LK_VECTOR_GetPtr(tmp,0),LK_VECTOR_Size(tmp));
+  LK_VECTOR_Write(fd,&TySkels,WriteTySkel);
 }
 
 int TySkelCmp(TySkelInd a, TySkelInd b)

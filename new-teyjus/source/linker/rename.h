@@ -6,6 +6,6 @@ extern void LK_RENAME_LoadConstRNTable();
 extern void LK_RENAME_LoadKindRNTable(int fd ,struct Module_st* CMData);
 
 extern ConstInd LK_RENAME_RenameConst(Name name);
-extern KindInd LK_RENAME_RenameKind(Name name);
+extern KindInd LK_RENAME_RenameKind(char* name);
 
 #endif //_RENAME_H_

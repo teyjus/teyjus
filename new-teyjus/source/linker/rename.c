@@ -59,7 +59,7 @@ void LK_RENAME_LoadKindRNTabEnt(int fd ,struct Module_st* CMData)
   free(name);
 }
 
-KindInd LK_RENAME_RenameKind(Name name)
+KindInd LK_RENAME_RenameKind(char* name)
 {
-  return LK_TREE_Retrieve(&KindRNTree,name.string);
+  return LK_TREE_Retrieve(&KindRNTree,name);
 }

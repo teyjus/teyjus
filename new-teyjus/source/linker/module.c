@@ -80,7 +80,7 @@ void LoadTopModule(char* modname)
   LoadTopGKinds(PeekInput(),CM);
   LoadLKinds(PeekInput(),CM);
   
-  LoadTySkels();
+  LoadTySkels(PeekInput(),CM);
   
   LoadTopGConsts();
   LoadLConsts();
@@ -110,10 +110,10 @@ void LoadAccModule(char* modname)
   
   LoadCodeSize();
   
-  LoadGKinds();
+  LoadGKinds(PeekInput(),CM);
   LoadLKinds(PeekInput(),CM);
   
-  LoadTySkels();
+  LoadTySkels(PeekInput(),CM);
   
   LoadGConsts();
   LoadLConsts();
@@ -141,10 +141,10 @@ void LoadImpModule(char* modname)
   
   LoadCodeSize();
   
-  LoadGKinds();
+  LoadGKinds(PeekInput(),CM);
   LoadLKinds(PeekInput(),CM);
   
-  LoadTySkels();
+  LoadTySkels(PeekInput(),CM);
   
   LoadGConsts();
   LoadLConsts();
@@ -235,15 +235,12 @@ void CheckModuleName(char* modname)
 void WriteAll(char* modname)
 {
   SetOutput(modname);
-  PUTWord(LINKCODE_VER);
-  Name name;
-  name.string=modname;
-  name.size=strlen(modname)+1;
-  PutName(name);
+  PUTWord((Word)LINKCODE_VER);
+  LK_FILE_PutString(PeekOutput(),modname);
   WriteDependencies();
   WriteCodeSize();
   WriteKinds();
-  WriteTySkels();
+  WriteTySkels(PeekOutput());
   WriteConsts();
   WriteStringSpaces();
   WriteImplGoals();
@@ -366,7 +363,7 @@ void PutTySkelInd(TySkelInd x)
 }
 
 CodeInd GetCodeInd(){
-  CodeInd tmp=GETWord();
+  CodeInd tmp=(CodeInd)GETWord();
   //printf("CodeInd:%d->",tmp);//DEBUG
   if(tmp>=CM->CodeSize)
   {
@@ -380,7 +377,7 @@ CodeInd GetCodeInd(){
 
 void PutCodeInd(CodeInd x)
 {
-  PUTWord(x);
+  PUTWord((Word)x);
 }
 
 ImportTabInd GetImportTabInd()
