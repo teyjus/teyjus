@@ -43,92 +43,92 @@ let iskoutstream tm = (tm == koutstream)
 
 let tyskel0 = (Some (Absyn.Skeleton(Absyn.SkeletonVarType((ref 1)), (ref None), (ref false))))
 
-let tyskel1 = (Some (Absyn.Skeleton(Absyn.AppType(klist, (Absyn.SkeletonVarType((ref 1)) :: [])), (ref None), (ref false))))
+let tyskel1 = (Some (Absyn.Skeleton(Absyn.ApplicationType(klist, (Absyn.SkeletonVarType((ref 1)) :: [])), (ref None), (ref false))))
 
-let tyskel2 = (Some (Absyn.Skeleton(Absyn.ArrowType(Absyn.SkeletonVarType((ref 1)), Absyn.ArrowType(Absyn.AppType(klist, (Absyn.SkeletonVarType((ref 1)) :: [])), Absyn.AppType(klist, (Absyn.SkeletonVarType((ref 1)) :: [])))), (ref None), (ref false))))
+let tyskel2 = (Some (Absyn.Skeleton(Absyn.ArrowType(Absyn.SkeletonVarType((ref 1)), Absyn.ArrowType(Absyn.ApplicationType(klist, (Absyn.SkeletonVarType((ref 1)) :: [])), Absyn.ApplicationType(klist, (Absyn.SkeletonVarType((ref 1)) :: [])))), (ref None), (ref false))))
 
-let tyskel3 = (Some (Absyn.Skeleton(Absyn.AppType(kint, []), (ref None), (ref false))))
+let tyskel3 = (Some (Absyn.Skeleton(Absyn.ApplicationType(kint, []), (ref None), (ref false))))
 
-let tyskel4 = (Some (Absyn.Skeleton(Absyn.AppType(kreal, []), (ref None), (ref false))))
+let tyskel4 = (Some (Absyn.Skeleton(Absyn.ApplicationType(kreal, []), (ref None), (ref false))))
 
-let tyskel5 = (Some (Absyn.Skeleton(Absyn.AppType(kstring, []), (ref None), (ref false))))
+let tyskel5 = (Some (Absyn.Skeleton(Absyn.ApplicationType(kstring, []), (ref None), (ref false))))
 
-let tyskel6 = (Some (Absyn.Skeleton(Absyn.AppType(kbool, []), (ref None), (ref false))))
+let tyskel6 = (Some (Absyn.Skeleton(Absyn.ApplicationType(kbool, []), (ref None), (ref false))))
 
-let tyskel7 = (Some (Absyn.Skeleton(Absyn.ArrowType(Absyn.AppType(kint, []), Absyn.AppType(kint, [])), (ref None), (ref false))))
+let tyskel7 = (Some (Absyn.Skeleton(Absyn.ArrowType(Absyn.ApplicationType(kint, []), Absyn.ApplicationType(kint, [])), (ref None), (ref false))))
 
-let tyskel8 = (Some (Absyn.Skeleton(Absyn.ArrowType(Absyn.AppType(kint, []), Absyn.ArrowType(Absyn.AppType(kint, []), Absyn.AppType(kint, []))), (ref None), (ref false))))
+let tyskel8 = (Some (Absyn.Skeleton(Absyn.ArrowType(Absyn.ApplicationType(kint, []), Absyn.ArrowType(Absyn.ApplicationType(kint, []), Absyn.ApplicationType(kint, []))), (ref None), (ref false))))
 
-let tyskel9 = (Some (Absyn.Skeleton(Absyn.ArrowType(Absyn.AppType(kint, []), Absyn.ArrowType(Absyn.AppType(kint, []), Absyn.AppType(kbool, []))), (ref None), (ref false))))
+let tyskel9 = (Some (Absyn.Skeleton(Absyn.ArrowType(Absyn.ApplicationType(kint, []), Absyn.ArrowType(Absyn.ApplicationType(kint, []), Absyn.ApplicationType(kbool, []))), (ref None), (ref false))))
 
-let tyskel10 = (Some (Absyn.Skeleton(Absyn.ArrowType(Absyn.AppType(kint, []), Absyn.AppType(kreal, [])), (ref None), (ref false))))
+let tyskel10 = (Some (Absyn.Skeleton(Absyn.ArrowType(Absyn.ApplicationType(kint, []), Absyn.ApplicationType(kreal, [])), (ref None), (ref false))))
 
-let tyskel11 = (Some (Absyn.Skeleton(Absyn.ArrowType(Absyn.AppType(kreal, []), Absyn.AppType(kint, [])), (ref None), (ref false))))
+let tyskel11 = (Some (Absyn.Skeleton(Absyn.ArrowType(Absyn.ApplicationType(kreal, []), Absyn.ApplicationType(kint, [])), (ref None), (ref false))))
 
-let tyskel12 = (Some (Absyn.Skeleton(Absyn.ArrowType(Absyn.AppType(kreal, []), Absyn.AppType(kreal, [])), (ref None), (ref false))))
+let tyskel12 = (Some (Absyn.Skeleton(Absyn.ArrowType(Absyn.ApplicationType(kreal, []), Absyn.ApplicationType(kreal, [])), (ref None), (ref false))))
 
-let tyskel13 = (Some (Absyn.Skeleton(Absyn.ArrowType(Absyn.AppType(kreal, []), Absyn.AppType(kstring, [])), (ref None), (ref false))))
+let tyskel13 = (Some (Absyn.Skeleton(Absyn.ArrowType(Absyn.ApplicationType(kreal, []), Absyn.ApplicationType(kstring, [])), (ref None), (ref false))))
 
-let tyskel14 = (Some (Absyn.Skeleton(Absyn.ArrowType(Absyn.AppType(kreal, []), Absyn.ArrowType(Absyn.AppType(kreal, []), Absyn.AppType(kreal, []))), (ref None), (ref false))))
+let tyskel14 = (Some (Absyn.Skeleton(Absyn.ArrowType(Absyn.ApplicationType(kreal, []), Absyn.ArrowType(Absyn.ApplicationType(kreal, []), Absyn.ApplicationType(kreal, []))), (ref None), (ref false))))
 
-let tyskel15 = (Some (Absyn.Skeleton(Absyn.ArrowType(Absyn.AppType(kreal, []), Absyn.ArrowType(Absyn.AppType(kreal, []), Absyn.AppType(kbool, []))), (ref None), (ref false))))
+let tyskel15 = (Some (Absyn.Skeleton(Absyn.ArrowType(Absyn.ApplicationType(kreal, []), Absyn.ArrowType(Absyn.ApplicationType(kreal, []), Absyn.ApplicationType(kbool, []))), (ref None), (ref false))))
 
-let tyskel16 = (Some (Absyn.Skeleton(Absyn.ArrowType(Absyn.AppType(kstring, []), Absyn.AppType(kint, [])), (ref None), (ref false))))
+let tyskel16 = (Some (Absyn.Skeleton(Absyn.ArrowType(Absyn.ApplicationType(kstring, []), Absyn.ApplicationType(kint, [])), (ref None), (ref false))))
 
-let tyskel17 = (Some (Absyn.Skeleton(Absyn.ArrowType(Absyn.AppType(kint, []), Absyn.AppType(kstring, [])), (ref None), (ref false))))
+let tyskel17 = (Some (Absyn.Skeleton(Absyn.ArrowType(Absyn.ApplicationType(kint, []), Absyn.ApplicationType(kstring, [])), (ref None), (ref false))))
 
-let tyskel18 = (Some (Absyn.Skeleton(Absyn.ArrowType(Absyn.AppType(kstring, []), Absyn.ArrowType(Absyn.AppType(kstring, []), Absyn.AppType(kstring, []))), (ref None), (ref false))))
+let tyskel18 = (Some (Absyn.Skeleton(Absyn.ArrowType(Absyn.ApplicationType(kstring, []), Absyn.ArrowType(Absyn.ApplicationType(kstring, []), Absyn.ApplicationType(kstring, []))), (ref None), (ref false))))
 
-let tyskel19 = (Some (Absyn.Skeleton(Absyn.ArrowType(Absyn.AppType(kstring, []), Absyn.ArrowType(Absyn.AppType(kstring, []), Absyn.AppType(kbool, []))), (ref None), (ref false))))
+let tyskel19 = (Some (Absyn.Skeleton(Absyn.ArrowType(Absyn.ApplicationType(kstring, []), Absyn.ArrowType(Absyn.ApplicationType(kstring, []), Absyn.ApplicationType(kbool, []))), (ref None), (ref false))))
 
-let tyskel20 = (Some (Absyn.Skeleton(Absyn.ArrowType(Absyn.AppType(kstring, []), Absyn.ArrowType(Absyn.AppType(kint, []), Absyn.ArrowType(Absyn.AppType(kint, []), Absyn.AppType(kstring, [])))), (ref None), (ref false))))
+let tyskel20 = (Some (Absyn.Skeleton(Absyn.ArrowType(Absyn.ApplicationType(kstring, []), Absyn.ArrowType(Absyn.ApplicationType(kint, []), Absyn.ArrowType(Absyn.ApplicationType(kint, []), Absyn.ApplicationType(kstring, [])))), (ref None), (ref false))))
 
-let tyskel21 = (Some (Absyn.Skeleton(Absyn.ArrowType(Absyn.AppType(kbool, []), Absyn.ArrowType(Absyn.AppType(kbool, []), Absyn.AppType(kbool, []))), (ref None), (ref false))))
+let tyskel21 = (Some (Absyn.Skeleton(Absyn.ArrowType(Absyn.ApplicationType(kbool, []), Absyn.ArrowType(Absyn.ApplicationType(kbool, []), Absyn.ApplicationType(kbool, []))), (ref None), (ref false))))
 
-let tyskel22 = (Some (Absyn.Skeleton(Absyn.ArrowType(Absyn.ArrowType(Absyn.SkeletonVarType((ref 1)), Absyn.AppType(kbool, [])), Absyn.AppType(kbool, [])), (ref None), (ref false))))
+let tyskel22 = (Some (Absyn.Skeleton(Absyn.ArrowType(Absyn.ArrowType(Absyn.SkeletonVarType((ref 1)), Absyn.ApplicationType(kbool, [])), Absyn.ApplicationType(kbool, [])), (ref None), (ref false))))
 
-let tyskel23 = (Some (Absyn.Skeleton(Absyn.ArrowType(Absyn.SkeletonVarType((ref 1)), Absyn.ArrowType(Absyn.SkeletonVarType((ref 1)), Absyn.AppType(kbool, []))), (ref None), (ref false))))
+let tyskel23 = (Some (Absyn.Skeleton(Absyn.ArrowType(Absyn.SkeletonVarType((ref 1)), Absyn.ArrowType(Absyn.SkeletonVarType((ref 1)), Absyn.ApplicationType(kbool, []))), (ref None), (ref false))))
 
-let tyskel24 = (Some (Absyn.Skeleton(Absyn.AppType(kinstream, []), (ref None), (ref false))))
+let tyskel24 = (Some (Absyn.Skeleton(Absyn.ApplicationType(kinstream, []), (ref None), (ref false))))
 
-let tyskel25 = (Some (Absyn.Skeleton(Absyn.AppType(koutstream, []), (ref None), (ref false))))
+let tyskel25 = (Some (Absyn.Skeleton(Absyn.ApplicationType(koutstream, []), (ref None), (ref false))))
 
-let tyskel26 = (Some (Absyn.Skeleton(Absyn.ArrowType(Absyn.AppType(kstring, []), Absyn.ArrowType(Absyn.AppType(kinstream, []), Absyn.AppType(kbool, []))), (ref None), (ref false))))
+let tyskel26 = (Some (Absyn.Skeleton(Absyn.ArrowType(Absyn.ApplicationType(kstring, []), Absyn.ArrowType(Absyn.ApplicationType(kinstream, []), Absyn.ApplicationType(kbool, []))), (ref None), (ref false))))
 
-let tyskel27 = (Some (Absyn.Skeleton(Absyn.ArrowType(Absyn.AppType(kstring, []), Absyn.ArrowType(Absyn.AppType(koutstream, []), Absyn.AppType(kbool, []))), (ref None), (ref false))))
+let tyskel27 = (Some (Absyn.Skeleton(Absyn.ArrowType(Absyn.ApplicationType(kstring, []), Absyn.ArrowType(Absyn.ApplicationType(koutstream, []), Absyn.ApplicationType(kbool, []))), (ref None), (ref false))))
 
-let tyskel28 = (Some (Absyn.Skeleton(Absyn.ArrowType(Absyn.AppType(kinstream, []), Absyn.AppType(kbool, [])), (ref None), (ref false))))
+let tyskel28 = (Some (Absyn.Skeleton(Absyn.ArrowType(Absyn.ApplicationType(kinstream, []), Absyn.ApplicationType(kbool, [])), (ref None), (ref false))))
 
-let tyskel29 = (Some (Absyn.Skeleton(Absyn.ArrowType(Absyn.AppType(koutstream, []), Absyn.AppType(kbool, [])), (ref None), (ref false))))
+let tyskel29 = (Some (Absyn.Skeleton(Absyn.ArrowType(Absyn.ApplicationType(koutstream, []), Absyn.ApplicationType(kbool, [])), (ref None), (ref false))))
 
-let tyskel30 = (Some (Absyn.Skeleton(Absyn.ArrowType(Absyn.SkeletonVarType((ref 1)), Absyn.ArrowType(Absyn.AppType(kstring, []), Absyn.AppType(kbool, []))), (ref None), (ref false))))
+let tyskel30 = (Some (Absyn.Skeleton(Absyn.ArrowType(Absyn.SkeletonVarType((ref 1)), Absyn.ArrowType(Absyn.ApplicationType(kstring, []), Absyn.ApplicationType(kbool, []))), (ref None), (ref false))))
 
-let tyskel31 = (Some (Absyn.Skeleton(Absyn.ArrowType(Absyn.AppType(kstring, []), Absyn.ArrowType(Absyn.SkeletonVarType((ref 1)), Absyn.AppType(kbool, []))), (ref None), (ref false))))
+let tyskel31 = (Some (Absyn.Skeleton(Absyn.ArrowType(Absyn.ApplicationType(kstring, []), Absyn.ArrowType(Absyn.SkeletonVarType((ref 1)), Absyn.ApplicationType(kbool, []))), (ref None), (ref false))))
 
-let tyskel32 = (Some (Absyn.Skeleton(Absyn.ArrowType(Absyn.AppType(koutstream, []), Absyn.ArrowType(Absyn.AppType(kstring, []), Absyn.AppType(kbool, []))), (ref None), (ref false))))
+let tyskel32 = (Some (Absyn.Skeleton(Absyn.ArrowType(Absyn.ApplicationType(koutstream, []), Absyn.ArrowType(Absyn.ApplicationType(kstring, []), Absyn.ApplicationType(kbool, []))), (ref None), (ref false))))
 
-let tyskel33 = (Some (Absyn.Skeleton(Absyn.ArrowType(Absyn.AppType(kinstream, []), Absyn.ArrowType(Absyn.AppType(kint, []), Absyn.ArrowType(Absyn.AppType(kstring, []), Absyn.AppType(kbool, [])))), (ref None), (ref false))))
+let tyskel33 = (Some (Absyn.Skeleton(Absyn.ArrowType(Absyn.ApplicationType(kinstream, []), Absyn.ArrowType(Absyn.ApplicationType(kint, []), Absyn.ArrowType(Absyn.ApplicationType(kstring, []), Absyn.ApplicationType(kbool, [])))), (ref None), (ref false))))
 
-let tyskel34 = (Some (Absyn.Skeleton(Absyn.ArrowType(Absyn.AppType(kinstream, []), Absyn.ArrowType(Absyn.AppType(kstring, []), Absyn.AppType(kbool, []))), (ref None), (ref false))))
+let tyskel34 = (Some (Absyn.Skeleton(Absyn.ArrowType(Absyn.ApplicationType(kinstream, []), Absyn.ArrowType(Absyn.ApplicationType(kstring, []), Absyn.ApplicationType(kbool, []))), (ref None), (ref false))))
 
-let tyskel35 = (Some (Absyn.Skeleton(Absyn.ArrowType(Absyn.AppType(kstring, []), Absyn.AppType(kbool, [])), (ref None), (ref false))))
+let tyskel35 = (Some (Absyn.Skeleton(Absyn.ArrowType(Absyn.ApplicationType(kstring, []), Absyn.ApplicationType(kbool, [])), (ref None), (ref false))))
 
-let tyskel36 = (Some (Absyn.Skeleton(Absyn.ArrowType(Absyn.SkeletonVarType((ref 1)), Absyn.AppType(kbool, [])), (ref None), (ref false))))
+let tyskel36 = (Some (Absyn.Skeleton(Absyn.ArrowType(Absyn.SkeletonVarType((ref 1)), Absyn.ApplicationType(kbool, [])), (ref None), (ref false))))
 
-let tyskel37 = (Some (Absyn.Skeleton(Absyn.ArrowType(Absyn.AppType(koutstream, []), Absyn.ArrowType(Absyn.SkeletonVarType((ref 1)), Absyn.AppType(kbool, []))), (ref None), (ref false))))
+let tyskel37 = (Some (Absyn.Skeleton(Absyn.ArrowType(Absyn.ApplicationType(koutstream, []), Absyn.ArrowType(Absyn.SkeletonVarType((ref 1)), Absyn.ApplicationType(kbool, []))), (ref None), (ref false))))
 
-let tyskel38 = (Some (Absyn.Skeleton(Absyn.ArrowType(Absyn.AppType(kinstream, []), Absyn.ArrowType(Absyn.SkeletonVarType((ref 1)), Absyn.AppType(kbool, []))), (ref None), (ref false))))
+let tyskel38 = (Some (Absyn.Skeleton(Absyn.ArrowType(Absyn.ApplicationType(kinstream, []), Absyn.ArrowType(Absyn.SkeletonVarType((ref 1)), Absyn.ApplicationType(kbool, []))), (ref None), (ref false))))
 
-let tyskel39 = (Some (Absyn.Skeleton(Absyn.ArrowType(Absyn.AppType(kbool, []), Absyn.AppType(kbool, [])), (ref None), (ref false))))
+let tyskel39 = (Some (Absyn.Skeleton(Absyn.ArrowType(Absyn.ApplicationType(kbool, []), Absyn.ApplicationType(kbool, [])), (ref None), (ref false))))
 
-let tyskel40 = (Some (Absyn.Skeleton(Absyn.ArrowType(Absyn.AppType(kstring, []), Absyn.ArrowType(Absyn.AppType(kint, []), Absyn.ArrowType(Absyn.AppType(kinstream, []), Absyn.ArrowType(Absyn.AppType(koutstream, []), Absyn.AppType(kbool, []))))), (ref None), (ref false))))
+let tyskel40 = (Some (Absyn.Skeleton(Absyn.ArrowType(Absyn.ApplicationType(kstring, []), Absyn.ArrowType(Absyn.ApplicationType(kint, []), Absyn.ArrowType(Absyn.ApplicationType(kinstream, []), Absyn.ArrowType(Absyn.ApplicationType(koutstream, []), Absyn.ApplicationType(kbool, []))))), (ref None), (ref false))))
 
-let tysetvarIR = Absyn.makeTypeSetVariable (Absyn.AppType(kint,[]) :: Absyn.AppType(kreal,[]) :: [])
+let tysetvarIR = Absyn.makeTypeSetVariable (Absyn.ApplicationType(kint,[])) (Absyn.ApplicationType(kint,[]) :: Absyn.ApplicationType(kreal,[]) :: [])
 let overloadTySkel1 = (ref (Some (Absyn.Skeleton(Absyn.ArrowType(tysetvarIR, tysetvarIR), (ref None), (ref false)))))
 let overloadTySkel2 = (ref (Some (Absyn.Skeleton(Absyn.ArrowType(tysetvarIR, Absyn.ArrowType(tysetvarIR, tysetvarIR)), (ref None), (ref false)))))
 
-let tysetvarIRS = Absyn.makeTypeSetVariable (Absyn.AppType(kint,[]) :: Absyn.AppType(kreal,[]) :: Absyn.AppType(kstring, []) :: [])
-let overloadTySkel3 = (ref (Some (Absyn.Skeleton(Absyn.ArrowType(tysetvarIRS, Absyn.ArrowType(tysetvarIRS, Absyn.AppType(kbool, []))), (ref None), (ref false)))))
+let tysetvarIRS = Absyn.makeTypeSetVariable (Absyn.ApplicationType(kint,[])) (Absyn.ApplicationType(kint,[]) :: Absyn.ApplicationType(kreal,[]) :: Absyn.ApplicationType(kstring, []) :: [])
+let overloadTySkel3 = (ref (Some (Absyn.Skeleton(Absyn.ArrowType(tysetvarIRS, Absyn.ArrowType(tysetvarIRS, Absyn.ApplicationType(kbool, []))), (ref None), (ref false)))))
 
 
 
@@ -634,7 +634,7 @@ let andTerm = Absyn.ConstantTerm(andConstant, [], false, Errormsg.none)
 let implicationTerm = Absyn.ConstantTerm(implConstant, [], false, Errormsg.none)
 
 let isPerv const =                                                            
-  let constCat = Absyn.getConstantCat(const) in                                
+  let constCat = Absyn.getConstantType(const) in                                
   match constCat with                                                          
    	Absyn.PervasiveConstant(_) -> true                                        
   | _ -> false                                                                 
@@ -651,3 +651,6 @@ let backtrackablePerv const =
 
 
 
+let getOverload k c = c
+let isOverloaded c = false
+let maxSkeletonIndex = 256
