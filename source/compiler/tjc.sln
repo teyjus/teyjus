@@ -3,6 +3,8 @@ Microsoft Visual Studio Solution File, Format Version 9.00
 # Visual Studio 2005
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "tjc", "tjc.vcproj", "{D01EFDC6-3E9E-4A67-8AC2-09FEF32CB316}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "tjctest", "tjctest\tjctest.vcproj", "{4C6B2D2A-A755-485E-8320-4A39951621F8}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -13,6 +15,10 @@ Global
 		{D01EFDC6-3E9E-4A67-8AC2-09FEF32CB316}.Debug|Win32.Build.0 = Debug|Win32
 		{D01EFDC6-3E9E-4A67-8AC2-09FEF32CB316}.Release|Win32.ActiveCfg = Release|Win32
 		{D01EFDC6-3E9E-4A67-8AC2-09FEF32CB316}.Release|Win32.Build.0 = Release|Win32
+		{4C6B2D2A-A755-485E-8320-4A39951621F8}.Debug|Win32.ActiveCfg = Debug|Win32
+		{4C6B2D2A-A755-485E-8320-4A39951621F8}.Debug|Win32.Build.0 = Debug|Win32
+		{4C6B2D2A-A755-485E-8320-4A39951621F8}.Release|Win32.ActiveCfg = Release|Win32
+		{4C6B2D2A-A755-485E-8320-4A39951621F8}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

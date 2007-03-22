@@ -11,6 +11,13 @@ exception InternalError
 type pos = (string * int)
 
 let anyErrors = ref false
+
+let errorsEnabled = ref true
+let warningsEnabled = ref true
+let loggingEnabled = ref false
+
+let warningsAsErrors = ref false
+
 let end_output = "\n"
 
 (**********************************************************************
@@ -104,33 +111,42 @@ let see = fun pos msg ->
 * Prints an error, along with the line and character position.
 ********************************************************************)
 let error = fun pos (msg:string) ->
+  if !errorsEnabled then
 		(anyErrors := true;
 		printPosition pos;
 		print_string " : Error : ";
 		print_string msg;
 		print_string end_output)
-
+  else
+    ()
 (********************************************************************
 *warning:
 * Prints a warning, along with the line and character position.
 ********************************************************************)
 let warning = fun pos (msg:string) ->
-		(anyErrors := true;
-		printPosition pos;
-		print_string " : Warning : ";
-		print_string msg;
-		print_string end_output)
-		
+  if !warningsEnabled && !errorsEnabled then
+	  (if !warningsAsErrors then
+	    anyErrors := true
+	  else
+	    ();
+	  printPosition pos;
+	  print_string " : Warning : ";
+	  print_string msg;
+	  print_string end_output)
+  else
+    ()		
 (********************************************************************
 *log:
 *	Outputs logging information.
 ********************************************************************)
 let log = fun pos msg ->
-		(printPosition pos;
-		print_string " : Log : ";
-		print_string msg;
+  if !loggingEnabled && !warningsEnabled && !errorsEnabled then
+	  (printPosition pos;
+	  print_string " : Log : ";
+	  print_string msg;
     print_string end_output)
-
+  else
+    ()
 (********************************************************************
 *impossible:
 * Prints an internal compiler error, then throws an exception

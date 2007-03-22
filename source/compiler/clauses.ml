@@ -4,20 +4,31 @@ type pos = Errormsg.pos
 type universalvardefinition = (Absyn.atypesymbol * Absyn.aterm list)
 type newclause = NewClause of (Absyn.aconstant * Absyn.aterm list)
 
+let getNewClauseConstant = function
+  NewClause(c,_) -> c
+
+let getNewClauseClause = function
+  NewClause(_,c) -> c
+
+type hiddenconstant =
+  HiddenConstant of (Absyn.aconstant * Absyn.atypesymbol)
+
 type deorifygoalresult =
   DeOrifyGoalResult of (Absyn.aterm list * Absyn.atypesymbol list *
-    universalvardefinition list * bool * newclause list)
+    universalvardefinition list * bool * newclause list * hiddenconstant list)
 
 let getDeOrifyGoalResultGoals = function
-  DeOrifyGoalResult(g,_,_,_,_) -> g
+  DeOrifyGoalResult(g,_,_,_,_,_) -> g
 let getDeOrifyGoalResultFVS = function
-  DeOrifyGoalResult(_,fvs,_,_,_) -> fvs
+  DeOrifyGoalResult(_,fvs,_,_,_,_) -> fvs
 let getDeOrifyGoalResultUVDefs = function
-  DeOrifyGoalResult(_,_,uvdefs,_,_) -> uvdefs
+  DeOrifyGoalResult(_,_,uvdefs,_,_,_) -> uvdefs
 let getDeOrifyGoalResultHasCut = function
-  DeOrifyGoalResult(_,_,_,hc,_) -> hc
+  DeOrifyGoalResult(_,_,_,hc,_,_) -> hc
 let getDeOrifyGoalResultNewClauses = function
-  DeOrifyGoalResult(_,_,_,_,nc) -> nc
+  DeOrifyGoalResult(_,_,_,_,nc,_) -> nc
+let getDeOrifyGoalResultHiddenConsts = function
+  DeOrifyGoalResult(_,_,_,_,_,hc) -> hc
 
 type deorifyclauseresult =
   DeOrifyClauseResult of (Absyn.aterm list * Absyn.atypesymbol list *
@@ -31,10 +42,45 @@ let rec union fvs1 fvs2 =
   fvs1 @ fvs2
 
 (********************************************************************
+*makeHiddenConstant:
+********************************************************************)
+let makeHiddenConstant tsym =
+  let ty = Absyn.getTypeSymbolType tsym in
+  let skel = Absyn.makeSkeleton ty in
+  let c = Absyn.makeHiddenConstant skel in
+  ((Absyn.getTypeSymbolHiddenConstantRef tsym) := Some c;
+  HiddenConstant(c,tsym))
+  
+(********************************************************************
 *newHead:
+* Creats a predicate name and a clause head for a list of clauses
+* corresponding to a disjunctive goal. Skeletonization here is okay
+* since the type skeleton will not be needed again for such predicates.
 ********************************************************************)
 let rec newHead fvs =
-  Errormsg.impossible Errormsg.none "Clauses.newHead: not implemented"
+  let rec argumentsAndTypes fvs =
+    match fvs with
+      [] -> ([], [])
+    | f::fs ->
+        let arg = Absyn.makeBoundVarTerm f Errormsg.none in
+        let ty = Absyn.getTypeSymbolType f in
+        let (args, tys) = argumentsAndTypes fs in
+        (arg::args, ty::tys)
+  in
+    
+  if List.length fvs > 0 then
+    let c = Absyn.makeAnonymousConstant 0 in
+    let t = Absyn.ConstantTerm(c, [], false, Errormsg.none) in
+    (c, t)
+  else
+    let (args, argtys) = argumentsAndTypes fvs in
+    let ty = Absyn.makeArrowType (Absyn.makeKindType Pervasive.kbool) argtys in
+    let tymol = Types.skeletonizeType(ty) in
+    let env = (Types.getMoleculeEnvironment tymol) in
+    let c = Absyn.makeAnonymousConstant (List.length env) in
+    let t = Absyn.ConstantTerm(c, env, false, Errormsg.none) in
+    let t' = Absyn.ApplicationTerm(Absyn.FirstOrderApplication(t, args, List.length args), false, Errormsg.none) in
+    (c, t')
 
 (********************************************************************
 *newPredicate:
@@ -67,6 +113,12 @@ and getClauseHeadAndArguments term =
       let (head, args') = getClauseHeadAndArguments t' in
       (t', args' @ args)
   | _ -> (term, [])
+
+(********************************************************************
+*closeUniversalDefinitions:
+********************************************************************)
+and closeUniversalDefinitions tsym uvdefs =
+  ()
 
 (********************************************************************
 *collectFreeVars:
@@ -127,6 +179,10 @@ and collectArgsFreeVars args fvs bvs =
       (arg'::args', fvs'')
 
 (**********************************************************************
+*distributeQuantifierTerms:
+**********************************************************************)
+and distributeQuantifierTerms 
+(**********************************************************************
 *distributeUniversal:
 * Insert a universal quantification over vtysy over each of the terms
 * in myterms.
@@ -149,8 +205,16 @@ and distributeUniversal term tsym terms =
 (**********************************************************************
 *reverseDistributeImplication:
 **********************************************************************)
-and reverseDistributeImplication head g1 g2 =
-  Errormsg.impossible Errormsg.none "Clauses.reverseDistributeImplication: not implemented"
+and reverseDistributeImplication head goals cls =
+  if List.length goals > 0 then
+    let goal = List.hd goals in
+    let goals' = List.tl goals in
+    
+    let appinfo = Absyn.FirstOrderApplication(Absyn.makeConstantTerm (Pervasive.implConstant) (Errormsg.none), [goal;head], 2) in
+    let cls' = (Absyn.ApplicationTerm(appinfo, false, Errormsg.none)) :: cls in
+    reverseDistributeImplication head goals' cls'
+  else
+    cls
 
 (**********************************************************************
 *distributeImplication:
@@ -178,15 +242,15 @@ and distributeImplication goal cls result =
               let arg1 = List.hd args in
               let tsym = Absyn.getTermAbstractionVar arg1 in
               let body = Absyn.getTermAbstractionBody arg1 in
-              let pos' = Absyn.getTermPos arg1 in
+              let pos' = Absyn.getTermPos body in
               Absyn.ApplicationTerm(
                 Absyn.FirstOrderApplication(
                   f,
-                  [Absyn.AbstractionTerm(Absyn.NestedAbstraction(tsym, distribute goal arg1), false, pos')],
+                  [Absyn.AbstractionTerm(Absyn.NestedAbstraction(tsym, distribute goal body), false, pos')],
                   1),
                 false,
                 Errormsg.none)
-            else if c = Pervasive.implicationConstant then
+            else if c = Pervasive.implConstant then
               let arg1 = List.hd args in
               let arg2 = List.hd (List.tl args) in
               let inner = Absyn.ApplicationTerm(
@@ -239,11 +303,11 @@ and deOrifyGoal goal uvs uvdefs andgoal wholegoal newclauses =
         let arg1 = List.hd args in
         let arg2 = List.hd (List.tl args) in
         (deOrifyAndGoal arg1 arg2 uvs uvdefs andgoal wholegoal newclauses)
-      else if c = Pervasive.implicationConstant then
+      else if c = Pervasive.implConstant then
         let arg1 = List.hd args in
         let arg2 = List.hd (List.tl args) in
         (deOrifyImplicationGoal arg1 arg2 uvs uvdefs andgoal false newclauses)
-      else if c = Pervasive.colonDashConstant then
+      else if c = Pervasive.colondashConstant then
         let arg1 = List.hd args in
         let arg2 = List.hd (List.tl args) in
         (deOrifyImplicationGoal arg2 arg1 uvs uvdefs andgoal false newclauses)
@@ -255,21 +319,59 @@ and deOrifyGoal goal uvs uvdefs andgoal wholegoal newclauses =
 
 (**********************************************************************
 *deOrifyCutGoal:
+* Deorifies a cut goal.  Records that the goal has a cut, but is
+* otherwise routine.
 **********************************************************************)
 and deOrifyCutGoal goal andgoal uvdefs newclauses =
-  Errormsg.impossible Errormsg.none "Clauses.deOrifyCutGoal: not implemented"
+  let getGoal g andgoal =
+    if Option.isSome andgoal then
+      let and' = Option.get andgoal in
+      Absyn.ApplicationTerm(
+        Absyn.FirstOrderApplication(
+          Pervasive.andTerm,
+          [g; and'],
+          2),
+        false,
+      Errormsg.none)
+    else
+      g
+  in
+  DeOrifyGoalResult([getGoal goal andgoal], [], uvdefs, true, newclauses, [])
 
 (**********************************************************************
 *deOrifyUniversalGoal:
 **********************************************************************)
 and deOrifyUniversalGoal t arg1 uvs uvdefs andgoal wholegoal newclauses =
-  Errormsg.impossible Errormsg.none "Clauses.deOrifyUniversalGoal: not implemented"
+  let (body, tsym) = etaFluffQuantifier t arg1 in
+  let hc = makeHiddenConstant tsym in
+  let uvs' = tsym :: uvs in
+  
+  let DeOrifyGoalResult(goals', fvs', uvdefs', hascut', newclauses', hcs') = deOrifyGoal body uvs' uvdefs None wholegoal newclauses in
+  let hcs'' = hc :: hcs' in
+  let uvdefs'' = closeUniversalDefinitions tsym uvdefs' in
+  
+  if List.mem tsym fvs' then
+    let fvs'' = (List.filter ((<>) tsym) fvs') in
+    let goals'' = distributeQuantifierTerms t tsym goals' andgoal in
+    DeOrifyGoalResult(goals'', fvs'', uvdefs'', hascut', newclauses', hcs'')
+  else
+    let goals'' = distributeAndGoal goals' andgoal [] in
+    DeOrifyGoalResult(goals'', fvs', uvdefs'', hascut', newclauses', hcs'')
 
 (**********************************************************************
 *deOrifyExistentialGoal:
 **********************************************************************)
 and deOrifyExistentialGoal t arg1 uvs uvdefs andgoal wholegoal newclauses =
-  Errormsg.impossible Errormsg.none "Clauses.deOrifyExistentialGoal: not implemented"
+  let (body, tsym) = etaFluffQuatifier t arg1 in
+  let DeOrifyGoalResult(goals', fvs', uvdefs', hascut', newclauses', hcs') = deOrifyGoal body uvs uvdefs None wholegoal newclauses in
+  
+  if List.mem tsym fvs' then
+    let fvs'' = (List.filter ((<>) tsym) fvs') in
+    let goals'' = distributeQuantifierTerms t tsym goals' andgoal in
+    DeOrifyGoalResult(goals'', fvs'', uvdefs'', hascut', newclauses', hcs'')
+  else
+    let goals'' = distributeAndGoal goals' andgoal [] in
+    DeOrifyGoalResult(goals'', fvs', uvdefs'', hascut', newclauses', hcs'')
 
 (**********************************************************************
 *deOrifyImplicationGoal:
@@ -430,7 +532,7 @@ and deOrifyAndGoal goal1 goal2 uvs uvdefs andgoal wholegoal newclauses =
 *deOrifyClause:
 * Removes disjunctions from a clause.
 **********************************************************************)
-let rec deOrifyClause term currentclauses fvs uvs uvdefs newclauses =
+and deOrifyClause term currentclauses fvs uvs uvdefs newclauses =
   let checkClauseArguments args fvs =
     Errormsg.impossible Errormsg.none "Clauses.checkClauseArguments: not implemented"
   in
@@ -454,7 +556,7 @@ let rec deOrifyClause term currentclauses fvs uvs uvdefs newclauses =
             let fvs'' = List.filter ((=) tsym) fvs' in
             DeOrifyClauseResult(clauses'' @ currentclauses, fvs'', uvdefs, newclauses')
             
-          else if c = Pervasive.implicationConstant then
+          else if c = Pervasive.implConstant then
             let DeOrifyGoalResult(goals, fvs', uvdefs', hascut', newclauses') = deOrifyGoal arg uvs uvdefs None false newclauses in
             let DeOrifyClauseResult(clauses', fvs'', uvdefs'', newclauses'') = deOrifyClause (List.hd args) [] (union fvs fvs') uvs uvdefs' newclauses' in
             let t = List.hd clauses' in
@@ -494,7 +596,6 @@ and etaFluffQuantifier term arg =
     Absyn.AbstractionTerm(_) ->
       (Absyn.getTermAbstractionBody arg, Absyn.getTermAbstractionVar arg)
   | _ ->
-      let c = Absyn.getTermConstant term in
       let tenv = Absyn.getTermTypeEnv term in
       let tsym = Absyn.BoundVar(Symbol.generate (), ref None, ref true, ref(Some(List.hd tenv))) in
       let bvterm = Absyn.BoundVarTerm(Absyn.NamedBoundVar(tsym), false, Errormsg.none) in
@@ -554,13 +655,13 @@ and normalizeClause clauseterm clauses uvs uvdefs embedded =
         (normalizeClause arg2 (normalizeClause arg1 clauses uvs uvdefs embedded) uvs uvdefs embedded)
       
       (*  Clause is an implication. *)
-      else if c = Pervasive.implicationConstant then
+      else if c = Pervasive.implConstant then
         let arg1 = List.hd args in
         let arg2 = List.hd (List.tl args) in
         (distributeImplication arg1 (normalizeClause arg2 [] uvs uvdefs embedded) clauses)
       
       (*  Clause is: a :- b.  *)
-      else if c = Pervasive.colonDashConstant then
+      else if c = Pervasive.colondashConstant then
         let arg1 = List.hd args in
         let arg2 = List.hd (List.tl args) in
         (distributeImplication arg2 (normalizeClause arg1 [] uvs uvdefs embedded) clauses)
@@ -596,9 +697,9 @@ and normalizeClause clauseterm clauses uvs uvdefs embedded =
           [], false, Errormsg.none) in
         if not (List.mem tsym !uvdefs) then
           (uvdefs := tsym :: !uvdefs;
-          rigidAtom t clauses args)
+          rigidAtom t' clauses args)
         else
-          (rigidAtom t clauses args)
+          (rigidAtom t' clauses args)
       else
         (indeterminate tsym pos)
   | _ ->
@@ -664,9 +765,9 @@ and translateClauses pmod amod =
 
   in  
   let preclauses = Preabsyn.getModuleClauses pmod in
-  let (clauses, newclauses) = parse' preclauses amod [] [] in
+  let (clauses', newclauses') = parse' preclauses amod [] [] in
   
   
   (*  Enter them into the module  *)
-  (*  let _ = (Absyn.getModuleClausesRef amod) := clauses in  *)
+  (*  let _ = (Absyn.getModuleClausesRef amod) := clauses' @ (List.map getNewClauseClause) newclauses') in  *)
   amod
