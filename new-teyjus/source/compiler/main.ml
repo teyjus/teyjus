@@ -56,7 +56,10 @@ let parseArgs =
                     ("--preabsyn", Arg.Set(Compile.printPreAbsyn), "print preabstract syntax");
                     ("--absyn", Arg.Set(Compile.printAbsyn), "print abstract syntax");
                     
-                    ("--debug", Arg.Set(debugEnabled), "enable debugging");] in
+                    ("--no-errors", Arg.Clear(Errormsg.errorsEnabled), "hide errors");
+                    ("--no-warnings", Arg.Clear(Errormsg.warningsEnabled), "hide warnings");
+                    ("--log", Arg.Set(Errormsg.loggingEnabled), "show logging information");
+                    ("--all-errors", Arg.Set(Errormsg.warningsAsErrors), "interpret warnings as errors")] in
     
     (Arg.parse speclist (fun s -> ()) "Usage: tjc --input \"filename\" --output \"filename\"")
 
@@ -70,18 +73,17 @@ let main =
     (******************************************************************
     *getOutfile:
     * Gets the outfile filename.  Defaults to the input filename with
-    * ".txt" appended.
+    * ".bc" appended.
     ******************************************************************)
     let getOutfile = function () ->
       if !outputFilename = "" then
-        !inputFilename ^ ".txt"
+        !inputFilename ^ ".bc"
       else
         !outputFilename
     in
     
     let _ = parseArgs () in
     let infile = !inputFilename in
-    let outfile = getOutfile () in
 
     if infile = "" then
       (print_endline ("Error: No input file specified.");
@@ -91,8 +93,12 @@ let main =
       -1)
     else
       let _ = compile (Filename.chop_extension infile) in
-      (print_endline "Done.";
-      0)
+      if !Errormsg.anyErrors then
+        (print_endline "Compilation failed.";
+        -1)
+      else
+        (print_endline "Compilation succeeded.";
+        0)
 
 (*  Execute main  *)
 let _ = main ()

@@ -29,7 +29,7 @@ and atypevar =
 *Type Var Information:
 *****************************************************************************)
 and atypevarinfo =
-	BoundTypeVar of atype
+	  BindableTypeVar of atype option ref
   |	FreeTypeVar of (atypevar option ref * bool option ref)
 
 
@@ -40,7 +40,7 @@ and atype =
     SkeletonVarType of (int ref)
   | TypeVarType of (atypevarinfo ref)
   |	ArrowType of (atype * atype)
-  | AppType of (akind * atype list)
+  | ApplicationType of (akind * atype list)
   | TypeSetType of (atype * atype list ref)
   | ErrorType
 
@@ -190,7 +190,6 @@ and ahcvarassoc = ((avar * aconstant) list)
  * (head, args, tyargs, numargs, numtargs, body, offset, varmap, tyvarmap   *
  *gesplist, cutvar, hasenv, impmods)                                      *
  ***************************************************************************)
-
 and aclause = 
     Fact of (aconstant * aterm list * atype list * int * int * 
 			   atermvarmap * atypevarmap * int option ref * aimportedmodule list)
@@ -226,6 +225,7 @@ and amodule =
       akind list * aconstant list * aconstant list * aconstant list *
       askeleton list * askeleton list * aclauseinfo ref)
   | Signature of (string * akind list * aconstant list)
+  | ErrorModule
 
 and aimportedmodule = 
   ImportedModule of (string * int * amodule)
@@ -242,11 +242,17 @@ and aclauseinfo =
 *****************************************************************************)
 val printAbsyn : amodule -> out_channel -> unit
 
+val makeKindType : akind -> atype
 val getKindArity : akind -> int
+val getKindArityOption : akind -> int option
 val getKindPos : akind -> pos
 val getKindName : akind -> string
 val string_of_kind : akind -> string
 
+val makeAnonymousConstant : int -> aconstant
+(*  val makeConstantType : aconstant -> atype *)
+val makeConstantTerm : aconstant -> pos -> aterm
+val getConstantRedefinable : aconstant -> bool
 val getConstantPos : aconstant -> pos
 val getConstantFixity : aconstant -> afixity
 val getConstantFixityRef : aconstant -> afixity ref
@@ -265,9 +271,13 @@ val getConstantNoDefs : aconstant -> bool
 val getConstantNoDefsRef : aconstant -> bool ref
 val getConstantClosed : aconstant -> bool
 val getConstantClosedRef : aconstant -> bool ref
+val getConstantUseOnly : aconstant -> bool
+val getConstantUseOnlyRef : aconstant -> bool ref
+val makeHiddenConstant : askeleton -> aconstant
 
 val getSkeletonType : askeleton -> atype
 val getSkeletonIndex : askeleton -> int
+val makeSkeleton : atype -> askeleton
 
 val string_of_fixity : afixity -> string
 val isFixityPrefix : afixity -> bool
@@ -277,10 +287,11 @@ val errorType : atype
 val getArrowTypeTarget : atype -> atype
 val getArrowTypeArguments : atype -> atype list
 val makeTypeVariable : unit -> atype
-val getTypeVariableReference : atype -> atypevar option ref
+val getTypeVariableReference : atype -> atype option ref
 val getTypeSetSet : atype -> atype list ref
 val getTypeSetDefault : atype -> atype
 val getTypeArguments : atype -> atype list
+val getTypeKind : atype -> akind
 val dereferenceType : atype -> atype
 val isArrowType : atype -> bool
 val isVariableType : atype -> bool
@@ -309,6 +320,7 @@ val getTypeSymbolName : atypesymbol -> string
 val getTypeSymbolRawType : atypesymbol -> atype
 val getTypeSymbolSymbol : atypesymbol -> symbol
 val getTypeSymbolHiddenConstant : atypesymbol -> aconstant
+val getTypeSymbolHiddenConstantRef : atypesymbol -> aconstant option ref
 val getTypeSymbolType : atypesymbol -> atype
 
 val getModuleConstantTable : amodule -> aconstant Table.SymbolTable.t
@@ -317,6 +329,4 @@ val getModuleTypeAbbrevTable : amodule -> atypeabbrev Table.SymbolTable.t
 val getModuleClauses : amodule -> aclauseinfo
 val getModuleClausesRef : amodule -> aclauseinfo ref
 val makeTypeEnvironment : int -> atype list
-
-val getConstantCat : aconstant -> aconstanttype
-val makeTypeSetVariable : atype list -> atype
+val makeTypeSetVariable : atype -> atype list -> atype

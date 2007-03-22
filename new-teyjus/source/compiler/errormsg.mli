@@ -14,7 +14,14 @@ type pos = (string * int)
 val string_of_pos : pos -> string
 
 val newLine : pos -> unit
+
 val anyErrors : bool ref
+
+val errorsEnabled : bool ref
+val warningsEnabled : bool ref
+val loggingEnabled : bool ref
+
+val warningsAsErrors : bool ref
 
 val info : string -> string
 val log : pos -> string -> unit
