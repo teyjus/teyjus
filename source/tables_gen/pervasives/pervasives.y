@@ -81,11 +81,11 @@ kind_decls  : kind_decl SEMICOLON kind_decls
 kind_decl   : NUM ID ID NUM
               { cgenKindIndex($1.ival, $3, $1.sval, NULL);
                 cgenKindData($1.ival, $2, $4.sval, NULL);
-                ocamlGenKind($2, $3, $4.sval); }            
+                ocamlGenKind($2, $3, $4.sval, $1.sval); }            
             | comments NUM ID ID NUM
               { cgenKindIndex($2.ival, $4, $2.sval, $1);
                 cgenKindData($2.ival, $3, $5.sval, $1);
-                ocamlGenKind($3, $4, $5.sval); }
+                ocamlGenKind($3, $4, $5.sval, $2.sval); }
             ;
 
 comments    : STRING { $$ = $1;};
@@ -164,7 +164,7 @@ const_decl          : NUM const_name const_ind_name tesize neededness
                         cgenConstData($1.ival, $2, $4.sval, $8, $9, tySkelInd,
                                       $5.sval, NULL);
                         ocamlGenConst($1.sval, $2, $3, $9, $8, $6, $7, $4.ival,
-                                      tySkelInd, $5.ival, $10);
+                                      tySkelInd, $5.ival, $10, $1.sval);
                       }
                     | comments NUM const_name const_ind_name tesize
                       neededness typrev redef prec fixity code_info
@@ -172,7 +172,8 @@ const_decl          : NUM const_name const_ind_name tesize neededness
                         cgenConstData($2.ival, $3, $5.sval, $9, $10, tySkelInd,
                                       $6.sval, $1);
                         ocamlGenConst($2.sval, $3, $4, $10, $9, $7, $8, 
-                                      $5.ival, tySkelInd, $6.ival, $11);
+                                      $5.ival, tySkelInd, $6.ival, $11, 
+                                      $2.sval);
                       }
                     ;
 
