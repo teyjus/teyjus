@@ -9,7 +9,7 @@
 /**************************************************************************/
 /* generating pervasive kind relevant part                                */
 /**************************************************************************/
-void ocamlGenKind(char* kindName, char* kVarName, char* arity);
+void ocamlGenKind(char* kindName, char* kVarName, char* arity, char* offset);
 void ocamlGenKinds();
 
 /**************************************************************************/
@@ -22,7 +22,8 @@ void ocamlGenTySkel(char* ind, Type tySkel);
 /**************************************************************************/
 void ocamlGenConst(char* ind, char* name, char* cVarName, OP_Fixity fixity, 
                    OP_Prec prec, UTIL_Bool tyPrev, UTIL_Bool redef, int tesize,
-                   int tyskelInd, int neededness, OP_Code codeInfo);
+                   int tyskelInd, int neededness, OP_Code codeInfo, 
+                   char* offset);
 
 void ocamlGenConsts();
 

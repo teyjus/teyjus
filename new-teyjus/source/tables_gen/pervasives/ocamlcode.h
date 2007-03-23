@@ -36,9 +36,9 @@ char* OC_mkIsKindFuncDef(char* funcName, char* kindVarName);
 
 
 /* let <varName> = Absyn.PervasiveKind(Symbol.symbol "<kindName>", 
-                  (Some <arity>), ref None, Errormsg.none)
+                  (Some <arity>), ref offset, Errormsg.none)
 */
-char* OC_mkKindVar(char* varName, char* kindName, char* arity);
+char* OC_mkKindVar(char* varName, char* kindName, char* arity, char* offset);
 
 /* let buildPervasiveKinds = 
    function () ->\n <inits> <entries>\n <tabName>\n\n */
@@ -78,12 +78,12 @@ char* OC_mkConstVarDec(char* constVarName);
                    ref <prec>, ref false, ref false, ref false, ref false, 
                    ref false,  ref <typrev>, ref false, ref <tySkel>, 
                    ref <tyenvsize>, ref (Some <neededness>), ref <codeInfo>, 
-                   ref <constantCat>, ref 0, Errormsg.none)
+                   ref <constantCat>, ref offset, Errormsg.none)
 */
 char* OC_mkConstVar(char* constName, OP_Fixity fixity, OP_Prec prec, 
                     UTIL_Bool typrev, char* tySkel, int tyenvsize, 
                     int neededness, OP_Code codeInfo, UTIL_Bool reDef, 
-                    char* varName);
+                    char* varName, char* offset);
 
 /* val <funcName> : Absyn.aconstant -> bool */
 char* OC_mkIsConstFuncDec(char* funcName);

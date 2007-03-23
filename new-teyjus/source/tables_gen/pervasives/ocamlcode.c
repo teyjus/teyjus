@@ -151,7 +151,7 @@ static char* OC_mkArrowType(char* ty1, char* ty2)
 #define VCTR_CONSTANT     "Constant"
 #define VCTR_PERVCONST    "PervasiveConstant"
 #define VCTR_TYSKEL       "Skeleton"
-#define VCTR_APPTYPE      "AppType"
+#define VCTR_APPTYPE      "ApplicationType"
 #define VCTR_ARROWTYPE    "ArrowType"
 #define VCTR_SKELVARTYPE  "SkeletonVarType"
 #define VCTR_BUILTIN      "Builtin"
@@ -363,15 +363,15 @@ char* OC_mkIsKindFuncDef(char* funcName, char* kindVarName)
 
 /*Kind variable definition: 
   let <varName> = Absyn.PervasiveKind(Symbol.symbol "<kindName>", 
-                  (Some <arity>), ref None, Errormsg.none)
+                  (Some <arity>), ref offset, Errormsg.none)
 */
-char* OC_mkKindVar(char* varName, char* kindName, char* arity)
+char* OC_mkKindVar(char* varName, char* kindName, char* arity, char* offset)
 {
     char* kindvar;
     char* ctr    = OC_mkDotStr(ABSYN, VCTR_KIND);
     char* symbol = OC_mkSymbol(kindName);
     char* nargs  = OC_mkSome(arity);
-    char* index  = OC_mkRef("0");
+    char* index  = OC_mkRef(offset);
     char* pos    = OC_mkDotStr(ERRORMSG, VCTR_NULLPOS);
     int   length = strlen(ctr) + strlen(symbol) + strlen(nargs) + 
         strlen(index) + strlen(pos) + 10;
@@ -572,12 +572,14 @@ char* OC_mkTYSkelVar(char* varName, char* tySkel)
 }
 
 
-static char* OC_mkTypeSetVar(char* arglist, char* tyName)
+static char* OC_mkTypeSetVar(char* defaultty, char* arglist, char* tyName)
 {
     char* setVar;
     char* func = OC_mkDotStr(ABSYN, FUNC_MAKETYSETVAR);
-    char* def  = UTIL_mallocStr(strlen(func) + strlen(arglist) + 1);
+    char* def  = UTIL_mallocStr(strlen(func) + strlen(arglist) + strlen(defaultty) + 2);
     strcpy(def, func);          free(func);
+    strcat(def, " ");
+    strcat(def, defaultty);
     strcat(def, " ");
     strcat(def, arglist);
 
@@ -618,10 +620,11 @@ char* OC_mkFixedTySkels(char* tySkels)
 {
     char  *text;
     char* setvarIntReal = 
-        OC_mkTypeSetVar("(Absyn.AppType(kint,[]) :: Absyn.AppType(kreal,[]) :: [])", SETVARIR);
+        OC_mkTypeSetVar("(Absyn.ApplicationType(kint,[]))",
+        "(Absyn.ApplicationType(kint,[]) :: Absyn.ApplicationType(kreal,[]) :: [])", SETVARIR);
     char* setvarIntRealStr = 
-        OC_mkTypeSetVar("(Absyn.AppType(kint,[]) :: Absyn.AppType(kreal,[]) :: Absyn.AppType(kstring, []) :: [])",
-                                             SETVARIRS);
+        OC_mkTypeSetVar("(Absyn.ApplicationType(kint,[]))",
+        "(Absyn.ApplicationType(kint,[]) :: Absyn.ApplicationType(kreal,[]) :: Absyn.ApplicationType(kstring, []) :: [])", SETVARIRS);
     char *tyskelBody, *tyskelBody2;
     char *tyskel, *tyskelText;
     
@@ -643,7 +646,7 @@ char* OC_mkFixedTySkels(char* tySkels)
     text = UTIL_appendStr(tySkels, setvarIntRealStr);   free(setvarIntRealStr);
     tySkels = UTIL_appendStr(text, "\n");               free(text);
 
-    tyskelBody = genTySkelArrow(SETVARIRS, "Absyn.AppType(kbool, [])");   
+    tyskelBody = genTySkelArrow(SETVARIRS, "Absyn.ApplicationType(kbool, [])");   
     tyskelBody2 = genTySkelArrow(SETVARIRS, tyskelBody); free(tyskelBody);
     tyskelText = OC_mkTySkelRef(tyskelBody2);            free(tyskelBody2);
     tyskel = OC_mkVarDef(OVERLOADTYSKEL3, tyskelText);   free(tyskelText);
@@ -826,13 +829,13 @@ static char* OC_mkNeededness(int neededness, int tyenvsize)
 static char* OC_mkConstVarText(char* constName, char* fixity, char* prec,
                                char* typrev, char* tyskel, char* tyenvsize,
                                char* neededness, char* codeinfo, 
-                               char* constcat, char* varname)
+                               char* constcat, char* varname, char* offset)
 {
     char* constVar;
     char* ctr      =  OC_mkDotStr(ABSYN, VCTR_CONSTANT);
     char* symbol   =  OC_mkSymbol(constName);
     char* refFalse =  OC_mkRef("false");
-    char* index    =  OC_mkRef("0");
+    char* index    =  OC_mkRef(offset);
     char* pos      = OC_mkDotStr(ERRORMSG, VCTR_NULLPOS);
 
     int   length   = strlen(ctr) + strlen(symbol) + strlen(fixity) + 
@@ -890,7 +893,7 @@ static char* OC_mkConstVarText(char* constName, char* fixity, char* prec,
 char* OC_mkConstVar(char* constName, OP_Fixity fixity, OP_Prec prec, 
                     UTIL_Bool typrev, char* tySkel, int tyenvsize, 
                     int neededness, OP_Code codeInfo, UTIL_Bool reDef, 
-                    char* varName)
+                    char* varName, char* offset)
 {
     char* constVar;
     char* fixityText     = OC_mkFixity(fixity);
@@ -905,7 +908,7 @@ char* OC_mkConstVar(char* constName, OP_Fixity fixity, OP_Prec prec,
     constVar = OC_mkConstVarText(constName, fixityText, precText,
                                  typrevText, tySkelText, tyenvsizeText,
                                  needednessText, codeInfoText, 
-                                 constCatText, varName);
+                                 constCatText, varName, offset);
 
     free(fixityText); free(precText); free(typrevText); free(tySkelText);
     free(tyenvsizeText); free(needednessText); free(codeInfoText);
@@ -932,7 +935,7 @@ static char* OC_mkOverLoadConstVar(char* name, char* fixity, char* prec,
     constVar = OC_mkConstVarText(name, fixity, prec, "ref true", tyskel,
                                  "ref 0", "ref None", "ref None",
                                  "ref(Absyn.PervasiveConstant(false))",
-                                 varName);
+                                 varName, "0");
     return constVar;
 }
 
@@ -946,7 +949,7 @@ char* OC_mkGenericConstVar(char* varList)
               "ref (Absyn.maxPrec + 2)", "ref false",
               "ref(Some(Absyn.Skeleton(Absyn.ErrorType, ref None, ref false)))",
               "ref 0", "ref None", "ref None",
-              "ref(Absyn.PervasiveConstant(false))", GENERICAPPLY);    
+              "ref(Absyn.PervasiveConstant(false))", GENERICAPPLY, "0");    
     text = UTIL_appendStr(varList, constVar);   free(constVar);
     varList = UTIL_appendStr(text, "\n\n");       free(text);
     
@@ -1323,7 +1326,7 @@ char* OC_mkFixedMLI()
 "let andTerm = Absyn.ConstantTerm(andConstant, [], false, Errormsg.none)       \nlet implicationTerm = Absyn.ConstantTerm(implConstant, [], false, Errormsg.none)\n"
 
 #define PERV_ISPERV_DEF \
-"let isPerv const =                                                            \n  let constCat = Absyn.getConstantCat(const) in                                \n  match constCat with                                                          \n   	Absyn.PervasiveConstant(_) -> true                                        \n  | _ -> false                                                                 \n"
+"let isPerv const =                                                            \n  let constCat = Absyn.getConstantType(const) in                                \n  match constCat with                                                          \n   	Absyn.PervasiveConstant(_) -> true                                        \n  | _ -> false                                                                 \n"
 
 /* 
    let pervasiveKinds = buildPervasiveKinds ()
