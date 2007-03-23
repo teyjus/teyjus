@@ -166,6 +166,13 @@
    AM_preg += INSTR_I1LX_LEN;                                   \
 }
 
+//INSTR_CAT_SEGLX
+#define INSACC_SEGLX(op1, op2) {\
+   (op1) = *((INSTR_ImpSegInd *)(AM_preg + INSTR_SEGLX_SEG));    \
+   (op2) = *((INSTR_CodeLabel *)(AM_preg + INSTR_SEGLX_L));      \
+   AM_preg += INSTR_SEGLX_LEN;                                   \
+}
+
 
 //INSTR_CAT_I1NX 
 #define INSACC_I1NX(op1, op2) {\
@@ -224,13 +231,15 @@
    AM_preg += INSTR_RCI1X_LEN;                                   \
 }
 
-//INSTR_CAT_I1I1LX
-#define INSACC_I1I1LX(op1, op2, op3) {\
-   (op1) = *((INSTR_OneByteInt *)(AM_preg + INSTR_I1I1LX_I11)); \
-   (op2) = *((INSTR_OneByteInt *)(AM_preg + INSTR_I1I1LX_I12)); \
-   (op3) = *((INSTR_CodeLabel *)(AM_preg + INSTR_I1I1LX_L));    \
-   AM_preg += INSTR_I1I1LX_LEN;                                 \
+//INSTR_CAT_SEGI1LX
+#define INSACC_SEGI1LX(op1, op2, op3) {\
+   (op1) = *((INSTR_ImpSegInd *)(AM_preg + INSTR_SEGI1LX_SEG)); \
+   (op2) = *((INSTR_OneByteInt *)(AM_preg + INSTR_SEGI1LX_I1)); \
+   (op3) = *((INSTR_CodeLabel *)(AM_preg + INSTR_SEGI1LX_L));    \
+   AM_preg += INSTR_SEGI1LX_LEN;                                 \
 }
+
+
 
 //specialized
 //INSTR_CAT_LX
