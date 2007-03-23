@@ -6,7 +6,6 @@ val klist : Absyn.akind
 val kinstream : Absyn.akind
 val koutstream : Absyn.akind
 
-val maxSkeletonIndex : int
 
 val iskint : Absyn.akind -> bool
 val iskreal : Absyn.akind -> bool
@@ -226,7 +225,8 @@ val implicationTerm : Absyn.aterm
 val andTerm : Absyn.aterm
 
 val isPerv : Absyn.aconstant -> bool                                          
-val isOverloaded : Absyn.aconstant -> bool
-val getOverload : Absyn.akind -> Absyn.aconstant -> Absyn.aconstant
 val regClobberingPerv : Absyn.aconstant -> bool                                
 val backtrackablePerv : Absyn.aconstant -> bool
+
+
+

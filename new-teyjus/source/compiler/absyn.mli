@@ -21,15 +21,15 @@ and akind =
 * (firstuse, lastuse, perm, safety, heapvar, offset, firstgoal, lastgoal)
 *****************************************************************************)
 and atypevar = 
-    TypeVar of (atype option ref * atype option ref * bool option ref * 
-      bool option ref * bool option ref * int option ref * 
-      int option ref * int option ref)
+  TypeVar of (atype option ref * atype option ref * bool ref * bool ref * 
+				bool ref * int option ref * int ref * int ref)
+
 
 (****************************************************************************
 *Type Var Information:
 *****************************************************************************)
 and atypevarinfo =
-	  BindableTypeVar of atype option ref
+	BindableTypeVar of atype option ref
   |	FreeTypeVar of (atypevar option ref * bool option ref)
 
 
@@ -118,9 +118,8 @@ and atypesymbol =
 *   (oneuse, perm, safety, heapvar, offset, firstgoal, lastgoal, lastuse)
 *****************************************************************************)
 and avar =
-  Var of (bool option ref * bool option ref * bool option ref *
-    bool option ref * int option ref * int option ref * int option ref *
-    aterm option ref)
+  Var of (bool option ref * bool ref * bool ref * bool ref * int option ref * 
+			int ref * int ref * aterm option ref)
 
 (*****************************************************************************
 *Variable occurrences:
@@ -181,9 +180,10 @@ and agoal =
   | SomeGoal of (avar * agoal)
 (*| OrGoal of (agoal * agoal) *)
 
-and adefinitions = ((aconstant * aclausesblock) list)
-and avarinits = (avar list)
-and ahcvarassoc = ((avar * aconstant) list)
+and adefinitions = Definitions of ((aconstant * aclausesblock) list)
+and avarinits = VarInits of (avar list)
+and ahcvarassoc = HCVarAssocs of ((avar * aconstant) list)
+
 
 (****************************************************************************
  *Clauses:
@@ -192,20 +192,20 @@ and ahcvarassoc = ((avar * aconstant) list)
  ***************************************************************************)
 and aclause = 
     Fact of (aconstant * aterm list * atype list * int * int * 
-			   atermvarmap * atypevarmap * int option ref * aimportedmodule list)
+			   atermvarmap * atypevarmap * avar list * int option ref * 
+			   aimportedmodule list)
   | Rule of (aconstant * aterm list * atype list * int * int * atermvarmap *
-			   atypevarmap * agoal * agoalenvassoc ref * avar option ref *
-			   bool ref * aimportedmodule list)
-
+			   atypevarmap * avar list * agoal * agoalenvassoc ref * 
+			   avar option ref * bool ref * aimportedmodule list)
 
 (* Goal number and environment size association list*)
-and agoalenvassoc = ((int * int) list)
+and agoalenvassoc =  GoalEnvAssoc of ((int * int) list)
 
 (* term variable map list *)
-and atermvarmap  = ((avar * avar) list)
+and atermvarmap  = TermVarMap of ((avar * avar) list)
 
 (* type variable map list *)
-and atypevarmap  = ((atypevar * atypevar) list)
+and atypevarmap  = TypeVarMap of ((atypevar * atypevar) list)
 
 (* clauses block: (clauses, last, offset, nextclause, closed, mapped) *)	  
 and aclausesblock = (aclause list ref * aclause ref * int ref * 
@@ -330,3 +330,17 @@ val getModuleClauses : amodule -> aclauseinfo
 val getModuleClausesRef : amodule -> aclauseinfo ref
 val makeTypeEnvironment : int -> atype list
 val makeTypeSetVariable : atype -> atype list -> atype
+
+(* added by Xiaochu *)
+val getTypeSymbolHiddenConst : atypesymbol -> aconstant
+val getTypeSymbolType : atypesymbol -> atype
+
+val setVariableDataLastGoal : avar -> int -> unit
+val setTypeVariableDataLastGoal : atypevar -> int -> unit
+val setVariableDataOffset : avar -> int -> unit
+val setTypeVariableDataOffset : atypevar -> int -> unit
+
+val isPermanentVariable : avar -> bool
+val isPermanentTypeVariable : atypevar -> bool
+val getVariableLastGoal : avar -> int
+val getTypeVariableLastGoal : atypevar -> int
