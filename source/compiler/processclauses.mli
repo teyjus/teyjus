@@ -1,0 +1,17 @@
+(*****************************************************************************)
+(* Module Clauses:                                                           *)
+(* Transform the term representations of clauses into their clauses          *)
+(* representations.                                                          *)
+(* 1. Type environments associated with constants occurrences are trimmed    *)
+(*    according to the type skeleton optimization.                           *)
+(* 2. Lambda-bound variables are transformed into de Bruijn indexes and the  *)
+(*    list of binders in an abstraction term is removed.                     *)
+(* 3. Other variables (type variables) are transformed into logic (type)     *)
+(*    variables with a form suitable for variable annotations; their scope   *)
+(*    information are collected and recorded along with clauses and goals.   *)
+(* 4. Clauses defining a predicate are collected and associated with the     *)
+(*    predicate name being defined.                                          *)
+(* 5. String arguments are collected.                                        *)
+(*****************************************************************************)
+val processClauses: Absyn.amodule -> Absyn.aterm list -> Absyn.aterm list 
+	-> Absyn.amodule
