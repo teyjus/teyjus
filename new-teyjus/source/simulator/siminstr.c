@@ -1364,9 +1364,9 @@ void SINSTR_pop_impl_point()            //pop_impl_point -- X
     AM_settosreg();
 }
 
-void SINSTR_add_imports()               //add_imports n,m,L -- I1_I1_L_X 
+void SINSTR_add_imports()               //add_imports n,m,L -- SEG_I1_L_X 
 {
-    INSACC_I1I1LX(n, m, label);
+    INSACC_SEGI1LX(n, m, label);
     bckfd = AM_cimpBCK(n);
     l = AM_impBCKNo(bckfd);
     if (AM_breg > AM_impBCKMRCP(bckfd)) TR_trailImport(bckfd);
@@ -1376,9 +1376,9 @@ void SINSTR_add_imports()               //add_imports n,m,L -- I1_I1_L_X
     else AM_tosreg = AM_findtos(m);
 }
 
-void SINSTR_remove_imports()            //remove_imports n,L -- I1_L_X
+void SINSTR_remove_imports()            //remove_imports n,L -- SEG_L_X
 {
-    INSACC_I1LX(n, label);
+    INSACC_SEGLX(n, label);
     bckfd = AM_cimpBCK(n);
     l = AM_impBCKNo(bckfd);
     if (AM_breg > AM_impBCKMRCP(bckfd)) TR_trailImport(bckfd);
