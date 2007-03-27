@@ -43,7 +43,7 @@ void LoadHashTab(HashTab_t* HashTab)
   HashTabEnt* tmp=LK_VECTOR_GetPtr((struct Vector*)HashTab,0);
   for(j=0;j<count;j++)
   {
-    tmp[j].index=GetConstInd();
+    tmp[j].index=GetConstInd(PeekInput(),CM);
     tmp[j].addr=GetCodeInd();
   }
 }
@@ -68,8 +68,8 @@ void WriteHashTab(HashTab_t* HashTab)
   HashTabEnt* tmp=LK_VECTOR_GetPtr((struct Vector*)HashTab,0);
   for(i=0;i<count;i++)
   {
-    PutConstInd(tmp[i].index);
-    PutCodeInd(tmp[i].addr);
+    PutConstInd(PeekOutput(),tmp[i].index);
+    PutCodeInd(PeekOutput(),tmp[i].addr);
   }
 }
 

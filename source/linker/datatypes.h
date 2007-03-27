@@ -40,7 +40,7 @@ typedef MarkInd KindInd;
 
 typedef TwoBytes TySkelInd;
 typedef TwoBytes HashTabInd;
-typedef TwoBytes StringSpaceInd;
+typedef TwoBytes StringInd;
 typedef TwoBytes BvrTabInd;
 typedef TwoBytes ImplGoalInd;
 typedef long CodeInd;

@@ -58,10 +58,9 @@ void InitAll()
   CM=NULL;
   InitTLKinds();
   InitTTySkels();
-  InitTGConsts();
   InitTLConsts();
   InitTHConsts();
-  InitTStringSpaces();
+  LK_STRINGS_Init();
   InitTImplGoals();
   InitTHashTabs();
   InitTBvrTabs();
@@ -82,11 +81,11 @@ void LoadTopModule(char* modname)
   
   LoadTySkels(PeekInput(),CM);
   
-  LoadTopGConsts();
-  LoadLConsts();
-  LoadHConsts();
+  LoadTopGConsts(PeekInput(),CM);
+  LoadLConsts(PeekInput(),CM);
+  LoadHConsts(PeekInput(),CM);
   
-  LoadStringSpaces();
+  LK_STRINGS_Load(PeekInput(),CM);
   LoadImplGoals();
   
   LoadHashTabs();
@@ -116,10 +115,10 @@ void LoadAccModule(char* modname)
   LoadTySkels(PeekInput(),CM);
   
   LoadGConsts();
-  LoadLConsts();
-  LoadHConsts();
+  LoadLConsts(PeekInput(),CM);
+  LoadHConsts(PeekInput(),CM);
   
-  LoadStringSpaces();
+  LK_STRINGS_Load(PeekInput(),CM);
   LoadImplGoals();
   
   LoadHashTabs();
@@ -147,10 +146,10 @@ void LoadImpModule(char* modname)
   LoadTySkels(PeekInput(),CM);
   
   LoadGConsts();
-  LoadLConsts();
-  LoadHConsts();
+  LoadLConsts(PeekInput(),CM);
+  LoadHConsts(PeekInput(),CM);
   
-  LoadStringSpaces();
+  LK_STRINGS_Load(PeekInput(),CM);
   LoadImplGoals();
   
   LoadHashTabs();
@@ -239,10 +238,10 @@ void WriteAll(char* modname)
   LK_FILE_PutString(PeekOutput(),modname);
   WriteDependencies();
   WriteCodeSize();
-  WriteKinds();
+  WriteKinds(PeekOutput());
   WriteTySkels(PeekOutput());
-  WriteConsts();
-  WriteStringSpaces();
+  WriteConsts(PeekOutput());
+  LK_STRINGS_Write(PeekOutput());
   WriteImplGoals();
   WriteHashTabs();
   WriteBvrTabs();
@@ -259,12 +258,7 @@ KindInd GetKindInd(int fd, struct Module_st* CMData){
   switch(tmp.gl_flag)
   {
     case LOCAL:
-      if(tmp.index>=CMData->LKindcount)
-      {
-        printf("Invalid Local Kind %d\n",index);
-        exit(0);
-      }
-      tmp.index+=CMData->LKindoffset;
+      LK_ADJUST(tmp.index,CMData->LKindAdj,"Local Kind");
       break;
       
     case GLOBAL:
@@ -286,44 +280,33 @@ KindInd GetKindInd(int fd, struct Module_st* CMData){
   return tmp;
 }
 
-void PutKindInd(KindInd x)
+void PutKindInd(int fd, KindInd x)
 {
-  PUT1(x.gl_flag);
-  PUT2(x.index);
+  LK_FILE_PUT1(fd,x.gl_flag);
+  LK_FILE_PUT2(fd,x.index);
 }
 
-ConstInd GetConstInd(){
+ConstInd GetConstInd(int fd, struct Module_st* CMData){
   ConstInd tmp;
-  tmp.gl_flag=GET1();
-  tmp.index=GET2();
-  //printf("ConstInd:(%d,%d)->",tmp.gl_flag,tmp.index);//DEBUG
+  tmp.gl_flag=LK_FILE_GET1(fd);
+  tmp.index=LK_FILE_GET2(fd);
   switch(tmp.gl_flag)
   {
     case LOCAL:
-      if(tmp.index>=CM->LConstcount)
-      {
-        printf("Invalid Local Constant %d\n",tmp.index);
-        exit(0);
-      }
-      tmp.index+=CM->LConstoffset;
+      LK_ADJUST(tmp.index,CMData->LConstAdj,"Local Constant");
       break;
     
     case HIDDEN:
-      if(tmp.index>=CM->HConstcount)
-      {
-        printf("Invalid Hidden Constant %d\n",tmp.index);
-        exit(0);
-      }
-      tmp.index+=CM->HConstoffset;
+      LK_ADJUST(tmp.index,CMData->HConstAdj,"Hidden Constant");
       break;
       
     case GLOBAL:
-      if(tmp.index>=CM->GConstcount)
+      if(tmp.index>=CMData->GConstcount)
       {
         printf("Invalid Global Constant %d\n",tmp.index);
-        exit(0);
+        EM_THROW(LK_LinkError);
       }
-      tmp=CM->GConst[tmp.index];
+      tmp=CMData->GConst[tmp.index];
       break;
       
     case PERVASIVE:
@@ -331,35 +314,23 @@ ConstInd GetConstInd(){
       
     default:
       printf("Invalid Constant Flag %d\n",tmp.gl_flag);
-      exit(0);
+      EM_THROW(LK_LinkError);
       break;
   }
   //printf("(%d,%d)\n",tmp.gl_flag,tmp.index);//DEBUG
   return tmp;
 }
 
-void PutConstInd(ConstInd x)
+void PutConstInd(int fd, ConstInd x)
 {
-  PUT1(x.gl_flag);
-  PUT2(x.index);
+  LK_FILE_PUT1(fd,x.gl_flag);
+  LK_FILE_PUT2(fd,x.index);
 }
 
-TySkelInd GetTySkelInd(){
-  TySkelInd tmp=GET2();
-  //printf("TySkel:%d->",tmp);//DEBUG
-  if(tmp>=CM->TySkelcount)
-  {
-    printf("Invalid Type Skeleton %d\n",tmp);
-    exit(0);
-  }
-  tmp+=CM->TySkeloffset;
-  //printf("%d\n",tmp);//DEBUG
+TySkelInd GetTySkelInd(int fd, struct Module_st* CMData){
+  TySkelInd tmp=LK_FILE_GET2(fd);
+  LK_ADJUST(tmp,CMData->TySkelAdj,"Type Skeleton");
   return tmp;
-}
-
-void PutTySkelInd(TySkelInd x)
-{
-  PUT2(x);
 }
 
 CodeInd GetCodeInd(){
@@ -373,11 +344,6 @@ CodeInd GetCodeInd(){
   tmp+=CM->CodeOffset;
   //printf("%d\n",tmp);//DEBUG
   return tmp;
-}
-
-void PutCodeInd(CodeInd x)
-{
-  PUTWord((Word)x);
 }
 
 ImportTabInd GetImportTabInd()
@@ -424,38 +390,9 @@ BvrTabInd GetBvrTabInd()
   return CM->BvrTaboffset+x;
 }
 
-StringSpaceInd GetStringSpaceInd()
+StringInd GetStringInd(int fd, struct Module_st* CMData)
 {
-  TwoBytes x=GET2();
-  if(x>=CM->StringSpacecount)
-  {
-    printf("Invalid String %d\n",x);
-    exit(0);
-  }
-  return CM->StringSpaceoffset+x;
-}
-
-void PutImplGoalInd(ImplGoalInd x)
-{
-  PUT2(x);
-}
-
-void PutHashTabInd(HashTabInd x)
-{
-  PUT2(x);
-}
-
-void PutBvrTabInd(BvrTabInd x)
-{
-  PUT2(x);
-}
-
-void PutStringSpaceInd(StringSpaceInd x)
-{
-  PUT2(x);
-}
-
-void PutImportTabInd(ImportTabInd x)
-{
-  PUT2(x);
+  TwoBytes x=LK_FILE_GET2(fd);
+  LK_ADJUST(x,CMData->StringsAdj,"String");
+  return x;
 }

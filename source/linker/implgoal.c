@@ -49,7 +49,7 @@ void LoadImplGoal(TImplGoal_t* ImplGoal)
   ConstInd* tmp=(ConstInd*)LK_VECTOR_GetPtr(vec,0);
   for(j=0;j<count;j++)
   {
-    tmp[j]=GetConstInd();
+    tmp[j]=GetConstInd(PeekInput(),CM);
     //FlagDynamicPred(tmp[j]);
   }
   
@@ -62,7 +62,7 @@ void LoadImplGoal(TImplGoal_t* ImplGoal)
   HashTabEnt* tmp2=(HashTabEnt*)LK_VECTOR_GetPtr(vec,0);
   for(j=0;j<count;j++)
   {
-    tmp2[j].index=GetConstInd();
+    tmp2[j].index=GetConstInd(PeekInput(),CM);
     tmp2[j].addr=GetCodeInd();
   }
 }
@@ -88,7 +88,7 @@ void WriteImplGoal(TImplGoal_t* ImplGoal)
   ConstInd* tmp=(ConstInd*)LK_VECTOR_GetPtr(&(ImplGoal->extPred),0);
   for(j=0;j<count;j++)
   {
-    PutConstInd(tmp[j]);
+    PutConstInd(PeekOutput(),tmp[j]);
   }
   
   PUT1(ImplGoal->findCodeFun);
@@ -99,7 +99,7 @@ void WriteImplGoal(TImplGoal_t* ImplGoal)
   HashTabEnt* tmp2=(HashTabEnt*)LK_VECTOR_GetPtr(&(ImplGoal->findCodeTab),0);
   for(j=0;j<count;j++)
   {
-    PutConstInd(tmp2[j].index);
-    PutCodeInd(tmp2[j].addr);
+    PutConstInd(PeekOutput(),tmp2[j].index);
+    PutCodeInd(PeekOutput(),tmp2[j].addr);
   }
 }

@@ -11,52 +11,32 @@
 //////////////////////////////////////////////////////
 //StringSpace Load and Write Code
 //////////////////////////////////////////////////////
-typedef Name TStringSpace_t;
+struct Vector Strings;
 
-struct Vector StringSpaces;
-
-void InitTStringSpaces();
-void LoadStringSpace(int i);
-void LoadStringSpaces();
-void WriteStringSpace(int i);
-void WriteStringSpaces();
-
-void InitTStringSpaces()
+void LK_STRINGS_Init()
 {
-  LK_VECTOR_Init(&StringSpaces,128,sizeof(TStringSpace_t));
+  LK_VECTOR_Init(&Strings,128,sizeof(char*));
 }
 
-void LoadStringSpace(int i)
+void LoadString(int fd, struct Module_st* CMData,void* entry)
 {
-  TStringSpace_t* tmp=(TStringSpace_t*)LK_VECTOR_GetPtr(&StringSpaces,i);
-  GetName(tmp);
+  *(char**)entry=LK_FILE_GetString(fd);
 }
 
-void LoadStringSpaces()
+void LK_STRINGS_Load(int fd, struct Module_st* CMData)
 {
-  int i;
-  
-  TwoBytes count=CM->StringSpacecount=GET2();
-  int offset=CM->StringSpaceoffset=LK_VECTOR_Grow(&StringSpaces,count);
-  for(i=0;i<count;i++)
-  {
-    LoadStringSpace(offset+i);
-  }
+  LK_VECTOR_Read(fd,&Strings,CMData,&(CMData->StringsAdj),LoadString);
 }
 
-void WriteStringSpace(int i)
+void WriteString(int fd, void* ent)
 {
-  TStringSpace_t* tmp=(TStringSpace_t*)LK_VECTOR_GetPtr(&StringSpaces,i);
-  PutName(*tmp);
+  char* tmp=*(char**)ent;
+  LK_FILE_PutString(fd,tmp);
+  free(tmp);
 }
 
-void WriteStringSpaces()
+void LK_STRINGS_Write(int fd)
 {
-  int i;
-  int size=LK_VECTOR_Size(&StringSpaces);
-  PUT2(size);
-  for(i=0;i<size;i++)
-  {
-    WriteStringSpace(i);
-  }
+  LK_VECTOR_Write(fd, &Strings,&WriteString);
+  LK_VECTOR_Free(&Strings);
 }

@@ -70,7 +70,7 @@ void WriteBvrTab(struct Vector* BvrTab)
   for(j=0;j<count;j++)
   {
     PUT1(tmp[j].index);
-    PutCodeInd(tmp[j].addr);
+    PutCodeInd(PeekOutput(),tmp[j].addr);
   }
 }
 

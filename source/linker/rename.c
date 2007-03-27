@@ -25,7 +25,7 @@ void LK_RENAME_LoadConstRNTabEnt()
 {
   Name name;
   GetName(&name);
-  MarkInd ind=GetConstInd();
+  MarkInd ind=GetConstInd(PeekInput(),CM);
   LK_TREE_Add(&ConstRNTree,name.string,ind);
   Clear(name);
 }

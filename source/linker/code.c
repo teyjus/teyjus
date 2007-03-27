@@ -57,14 +57,14 @@ void LoadCode()
     if(opcode==call)
     {
       code[j]=GET1();
-      tmpIndex=GetConstInd();
+      tmpIndex=GetConstInd(PeekInput(),CM);
       PushCall(tmpIndex,offset+i,0);
       i+=(INSTR_instrSize(opcode)*sizeof(Word));
       continue;
     }
     else if(opcode==execute)
     {
-      tmpIndex=GetConstInd();
+      tmpIndex=GetConstInd(PeekInput(),CM);
       PushCall(tmpIndex,offset+i,1);
       i+=(INSTR_instrSize(opcode)*sizeof(Word));
       continue;
@@ -95,7 +95,7 @@ void LoadCode()
 //           break;
           
         case INSTR_C:
-          *(ConstInd*)(code+j)=GetConstInd();
+          *(ConstInd*)(code+j)=GetConstInd(PeekInput(),CM);
           j+=sizeof(ConstInd);
           break;
           
@@ -125,8 +125,8 @@ void LoadCode()
           break;
           
         case INSTR_S:
-          *(StringSpaceInd*)(code+j)=GetStringSpaceInd();
-          j+=sizeof(StringSpaceInd);
+          *(StringInd*)(code+j)=GetStringInd(PeekInput(),CM);
+          j+=sizeof(StringInd);
           break;
         
         case INSTR_L:
@@ -210,42 +210,42 @@ void WriteCode()
 //           break;
           
         case INSTR_C:
-          PutConstInd(*(ConstInd*)(code+j));
+          PutConstInd(PeekOutput(),*(ConstInd*)(code+j));
           j+=sizeof(ConstInd);
           break;
           
         case INSTR_K:
-          PutKindInd(*(KindInd*)(code+j));
+          PutKindInd(PeekOutput(),*(KindInd*)(code+j));
           j+=sizeof(KindInd);
           break;
           
         case INSTR_MT:
-          PutImportTabInd(*(ImportTabInd*)(code+j));
+          PutImportTabInd(PeekOutput(),*(ImportTabInd*)(code+j));
           j+=sizeof(ImportTabInd);
           break;
           
         case INSTR_IT:
-          PutImplGoalInd(*(ImplGoalInd*)(code+j));
+          PutImplGoalInd(PeekOutput(),*(ImplGoalInd*)(code+j));
           j+=sizeof(ImplGoalInd);
           break;
           
         case INSTR_HT:
-          PutHashTabInd(*(HashTabInd*)(code+j));
+          PutHashTabInd(PeekOutput(),*(HashTabInd*)(code+j));
           j+=sizeof(HashTabInd);
           break;
           
         case INSTR_BVT:
-          PutBvrTabInd(*(BvrTabInd*)(code+j));
+          PutBvrTabInd(PeekOutput(),*(BvrTabInd*)(code+j));
           j+=sizeof(BvrTabInd);
           break;
           
         case INSTR_S:
-          PutStringSpaceInd(*(StringSpaceInd*)(code+j));
-          j+=sizeof(StringSpaceInd);
+          PutStringInd(PeekOutput(),*(StringInd*)(code+j));
+          j+=sizeof(StringInd);
           break;
         
         case INSTR_L:
-          PutCodeInd(*(CodeInd*)(code+j));
+          PutCodeInd(PeekOutput(),*(CodeInd*)(code+j));
           j+=sizeof(CodeInd);
           break;
           

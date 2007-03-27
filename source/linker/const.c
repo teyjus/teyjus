@@ -1,10 +1,13 @@
-#include <stdlib.h>
 #include <stdio.h>
+#include "system/error.h"
 #include "module.h"
 #include "vector.h"
 #include "rename.h"
 #include "file.h"
 #include "tyskel.h"
+#include "const.h"
+#include "linker/VectorRW.h"
+
 /*/////////////////////////////////////////////////////////////////////////////////////
 //This file defines the code for using GConsts and LConsts/////
 ////////////////////////////////////////////////////////////////////////////////////*/
@@ -16,56 +19,16 @@ typedef struct{
   Byte fixity;
   Byte precedence;
   Byte ty_env_size;
-  //Byte ty_preserving_info;
-  Name name;
+  Byte neededness;
+  char* name;
   TySkelInd ty_skel_index;
-}TGConst_t;
+}Const_t;
 
-struct Vector GConsts;
-
-ConstInd* AllocateLGConsts(int count);
-ConstInd LoadGConst();
-void WriteGConst(int i);
-ConstInd LoadTopGConst(int i);
-int CheckGConstEqv(ConstInd i,TGConst_t new);
-
-
-void WriteGConsts();
-void WriteLConsts();
-void WriteHConsts();
-
-void InitTGConsts()
-{
-  LK_VECTOR_Init(&GConsts,128,sizeof(TGConst_t));
-}
-
-ConstInd* AllocateLGConsts(int count)
-{
-  ConstInd* tmp=(ConstInd*)malloc(count*sizeof(ConstInd));
-  if(tmp==NULL)
-  {
-    perror("Memory Allocation Failed");
-    exit(0);
-  }
-  
-  return tmp;
-}
-
-void LoadGConsts()
-{
-  int i;
-  int count=CM->GConstcount=GET2();
-  CM->GConst=AllocateLGConsts(count);
-  printf("Loading %d Global Constants.\n",count);//DEBUG
-  for(i=0;i<count;i++)
-  {
-    CM->GConst[i]=LoadGConst();
-  }
-}
+int CheckGConstEqv(ConstInd i,Const_t new);
 
 ConstInd LoadGConst()
 {
-  TGConst_t tmp;
+  Const_t tmp;
   tmp.fixity=GET1();
   tmp.precedence=GET1();
   tmp.ty_env_size=GET1();;
@@ -73,217 +36,178 @@ ConstInd LoadGConst()
   Name name;
   GetName(&name);
   ConstInd index=LK_RENAME_RenameConst(name);
-  tmp.ty_skel_index=GetTySkelInd();
+  tmp.ty_skel_index=GetTySkelInd(PeekInput(),CM);
   if(!CheckGConstEqv(index,tmp))
   {
-    perror("Constant parameter mismatch");
-    exit(0);
+    EM_THROW(LK_LinkError);
   }
   return index;
 }
 
-void LoadTopGConsts()
+void LoadGConsts()
 {
   int i;
   int count=CM->GConstcount=GET2();
-  LK_VECTOR_Grow(&GConsts,count);
-  CM->GConst=AllocateLGConsts(count);
-  printf("Loading %d Top Level Constants.\n",count);//DEBUG
+  CM->GConst=(ConstInd*)EM_malloc(count*sizeof(ConstInd));
+  printf("Loading %d Global Constants.\n",count);//DEBUG
   for(i=0;i<count;i++)
   {
-    CM->GConst[i]=LoadTopGConst(i);
+    CM->GConst[i]=LoadGConst();
   }
 }
 
-ConstInd LoadTopGConst(int i)
+Const_t* GConstTab=NULL;
+int GConstTabSize=-1;
+
+void LoadTopGConst(int fd, struct Module_st* CMData, int i)
 {
-  ConstInd index;
-  index.index=i;
-  index.gl_flag=GLOBAL;
-  TGConst_t* tmp=(TGConst_t*)LK_VECTOR_GetPtr(&GConsts,i);
-  
-  tmp->fixity=GET1();
-  tmp->precedence=GET1();
-  tmp->ty_env_size=GET1();;
-  //tmp->ty_preserving_info=GET1();
-  GetName(&(tmp->name));
-  tmp->ty_skel_index=GetTySkelInd();
-  
-  return index;
+  GConstTab[i].fixity=LK_FILE_GET1(fd);
+  GConstTab[i].precedence=LK_FILE_GET1(fd);
+  GConstTab[i].ty_env_size=LK_FILE_GET1(fd);;
+  GConstTab[i].neededness=LK_FILE_GET1(fd);
+  GConstTab[i].name=LK_FILE_GetString(fd);
+  GConstTab[i].ty_skel_index=GetTySkelInd(fd,CMData);
 }
 
-void WriteGConsts()
+void LoadTopGConsts(int fd, struct Module_st* CMData)
 {
   int i;
-  int size=LK_VECTOR_Size(&GConsts);
-  PUT2(size);
-  for(i=0;i<size;i++)
+  int count=GConstTabSize=LK_FILE_GET2(fd);
+  GConstTab=(Const_t*)EM_malloc(count*sizeof(Const_t));
+  CMData->GConst=(ConstInd*)EM_malloc(count*sizeof(ConstInd));
+  for(i=0;i<count;i++)
   {
-    WriteGConst(i);
+    CMData->GConst[i].gl_flag=GLOBAL;
+    CMData->GConst[i].gl_flag=i;
+    LoadTopGConst(fd,CMData,i);
   }
 }
 
-void WriteGConst(i)
+void WriteGConst(int fd, int i)
 {
-  TGConst_t* tmp=(TGConst_t*)LK_VECTOR_GetPtr(&GConsts,i);
-  PUT1(tmp->fixity);
-  PUT1(tmp->precedence);
-  PUT1(tmp->ty_env_size);
-  //PUT1(tmp->ty_preserving_info);
-  PutName(tmp->name);
-  PutTySkelInd(tmp->ty_skel_index);
+  LK_FILE_PUT1(fd,GConstTab[i].fixity);
+  LK_FILE_PUT1(fd,GConstTab[i].precedence);
+  LK_FILE_PUT1(fd,GConstTab[i].ty_env_size);
+  LK_FILE_PUT1(fd,GConstTab[i].neededness);
+  LK_FILE_PutString(fd,GConstTab[i].name);
+  PutTySkelInd(fd,GConstTab[i].ty_skel_index);
+}
+
+void WriteGConsts(int fd)
+{
+  int i;
+  int size=GConstTabSize;
+  LK_FILE_PUT2(fd,size);
+  for(i=0;i<size;i++)
+  {
+    WriteGConst(fd,i);
+  }
 }
 
 
 //////////////////////////////////////////////////////
 //LConst Load and Write Code
 //////////////////////////////////////////////////////
-typedef struct{
-  Byte fixity;
-  Byte precedence;
-  Byte ty_env_size;
-  TwoBytes ty_skel_index;
-}TLConst_t;
-
 struct Vector LConsts;
-
-void LoadLConst(int i);
-void WriteLConst(int i);
 
 void InitTLConsts()
 {
-  LK_VECTOR_Init(&LConsts,128,sizeof(TLConst_t));
+  LK_VECTOR_Init(&LConsts,128,sizeof(Const_t));
 }
 
-void LoadLConsts()
+void LoadLConst(int fd, struct Module_st* CMData,void* entry)
 {
-  int i;
-  int count=CM->LConstcount=GET2();
-  int offset=CM->LConstoffset=LK_VECTOR_Grow(&LConsts,count);
-  printf("Loading %d Local Constants.\n",count);//DEBUG
-  for(i=0;i<count;i++)
-  {
-    LoadLConst(offset+i);
-  }
+  Const_t* tmp=(Const_t*)entry;
+  tmp->fixity=LK_FILE_GET1(fd);
+  tmp->precedence=LK_FILE_GET1(fd);
+  tmp->ty_env_size=LK_FILE_GET1(fd);
+  tmp->neededness=LK_FILE_GET1(fd);
+  tmp->ty_skel_index=GetTySkelInd(fd,(struct Module_st*)CMData);
 }
 
-void LoadLConst(int i)
+void LoadLConsts(int fd, struct Module_st* CMData)
 {
-  TLConst_t* tmp=(TLConst_t*)LK_VECTOR_GetPtr(&LConsts,i);
-  tmp->fixity=GET1();
-  tmp->precedence=GET1();
-  tmp->ty_env_size=GET1();
-  tmp->ty_skel_index=GetTySkelInd();
+  LK_VECTOR_Read(fd,&LConsts,CMData,&(CMData->LConstAdj),LoadLConst);
 }
 
-void WriteLConsts()
+void WriteLConst(int fd, void* entry)
 {
-  int i;
-  int size=LK_VECTOR_Size(&LConsts);
-  PUT2(size);
-  for(i=0;i<size;i++)
-  {
-    WriteLConst(i);
-  }
+  Const_t* tmp=(Const_t*)entry;
+  LK_FILE_PUT1(fd,tmp->fixity);
+  LK_FILE_PUT1(fd,tmp->precedence);
+  LK_FILE_PUT1(fd,tmp->ty_env_size);
+  LK_FILE_PUT1(fd,tmp->neededness);
+  PutTySkelInd(fd,tmp->ty_skel_index);
 }
 
-void WriteLConst(i)
+void WriteLConsts(int fd)
 {
-  TLConst_t* tmp=(TLConst_t*)LK_VECTOR_GetPtr(&LConsts,i);
-  PUT1(tmp->fixity);
-  PUT1(tmp->precedence);
-  PUT1(tmp->ty_env_size);
-  PutTySkelInd(tmp->ty_skel_index);
+  LK_VECTOR_Write(fd, &LConsts,&WriteLConst);
+  LK_VECTOR_Free(&LConsts);
 }
 
 //////////////////////////////////////////////////////
 //HConst Load and Write Code
 //////////////////////////////////////////////////////
-typedef struct{
-  Byte ty_env_size;
-  TwoBytes ty_skel_index;
-}THConst_t;
-
 struct Vector HConsts;
-
-void LoadHConst(int i);
-void WriteHConst(int i);
 
 void InitTHConsts()
 {
-  LK_VECTOR_Init(&HConsts,128,sizeof(THConst_t));
+  LK_VECTOR_Init(&HConsts,128,sizeof(Const_t));
 }
 
-void LoadHConsts()
+void LoadHConst(int fd, struct Module_st* CMData,void* entry)
 {
-  int i;
-  int count=CM->HConstcount=GET2();
-  int offset=CM->HConstoffset=LK_VECTOR_Grow(&HConsts,count);
-  printf("Loading %d Hidden Constants.\n",count);//DEBUG
-  for(i=0;i<count;i++)
-  {
-    LoadHConst(offset+i);
-  }
-}
-
-void LoadHConst(int i)
-{
-  THConst_t* tmp=(THConst_t*)LK_VECTOR_GetPtr(&HConsts,i);
+  Const_t* tmp=(Const_t*)entry;
   
-  tmp->ty_env_size=GET1();
-  tmp->ty_skel_index=GetTySkelInd();
+  tmp->ty_env_size=LK_FILE_GET1(fd);
+  tmp->neededness=LK_FILE_GET1(fd);
+  tmp->ty_skel_index=GetTySkelInd(fd,CMData);
 }
 
-void WriteHConsts()
+void LoadHConsts(int fd, struct Module_st* CMData)
 {
-  int i;
-  int size=LK_VECTOR_Size(&HConsts);
-  PUT2(size);
-  for(i=0;i<size;i++)
-  {
-    WriteHConst(i);
-  }
+  LK_VECTOR_Read(fd,&HConsts,CMData,&(CMData->HConstAdj),LoadHConst);
 }
 
-void WriteHConst(i)
+void WriteHConst(int fd, void* entry)
 {
-  THConst_t* tmp=(THConst_t*)LK_VECTOR_GetPtr(&HConsts,i);
-  
-  PUT1(tmp->ty_env_size);
-  PutTySkelInd(tmp->ty_skel_index);
+  Const_t* tmp=(Const_t*)entry;
+  LK_FILE_PUT1(fd,tmp->ty_env_size);
+  LK_FILE_PUT1(fd,tmp->neededness);
+  PutTySkelInd(fd,tmp->ty_skel_index);
 }
+
+void WriteHConsts(int fd)
+{
+  LK_VECTOR_Write(fd, &HConsts,&WriteHConst);
+  LK_VECTOR_Free(&HConsts);
+}
+
 //////////////////////////////////////////////////////////////
-void WriteConsts()
+void WriteConsts(int fd)
 {
-  PUT2(LK_VECTOR_Size(&LConsts)+LK_VECTOR_Size(&GConsts)+LK_VECTOR_Size(&HConsts));
-  WriteGConsts();
-  WriteLConsts();
-  WriteHConsts();
+  LK_FILE_PUT2(fd,LK_VECTOR_Size(&LConsts)+GConstTabSize+LK_VECTOR_Size(&HConsts));
+  WriteGConsts(fd);
+  WriteLConsts(fd);
+  WriteHConsts(fd);
 }
 
 /////////////////////////////////////////////////////////////
 //Utility Functions
 ////////////////////////////////////////////////////////////
-int CheckGConstEqv(ConstInd i,TGConst_t new)
+int CheckGConstEqv(ConstInd i,Const_t new)
 {
   int b=1;
+  Const_t* tmp;
   if(i.gl_flag==LOCAL)
-  {
-    TLConst_t* tmp=(TLConst_t*)LK_VECTOR_GetPtr(&LConsts,i.index);
+    tmp=(Const_t*)LK_VECTOR_GetPtr(&LConsts,i.index);
+  else
+    tmp=&GConstTab[i.index];
   
-    b=b&&tmp->fixity==new.fixity;
-    b=b&&tmp->precedence==new.precedence;
-    b=b&&tmp->ty_env_size==new.ty_env_size;
-    b=b&&0==TySkelCmp(tmp->ty_skel_index,new.ty_skel_index);
-    return b;
-  }
-  //GLOBAL
-  TGConst_t* tmp2=(TGConst_t*)LK_VECTOR_GetPtr(&GConsts,i.index);
-  
-  b=b&&tmp2->fixity==new.fixity;
-  b=b&&tmp2->precedence==new.precedence;
-  b=b&&tmp2->ty_env_size==new.ty_env_size;
-  //b=b&&tmp2->ty_preserving_info==new.ty_preserving_info;
-  b=b&&0==TySkelCmp(tmp2->ty_skel_index,new.ty_skel_index);
+  b=b&&tmp->fixity==new.fixity;
+  b=b&&tmp->precedence==new.precedence;
+  b=b&&tmp->ty_env_size==new.ty_env_size;
+  b=b&&0==TySkelCmp(tmp->ty_skel_index,new.ty_skel_index);
   return b;
 }

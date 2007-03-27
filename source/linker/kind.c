@@ -1,12 +1,12 @@
 #include <stdio.h>
-#include <stdlib.h>
+#include "system/error.h"
 #include "datatypes.h"
 #include "module.h"
 #include "kind.h"
 #include "vector.h"
 #include "rename.h"
 #include "file.h"
-#include "../system/error.h"
+#include "linker/VectorRW.h"
 /*/////////////////////////////////////////////////////////////////////////////////////
 //This file defines the code for using GKinds and LKinds/////
 ////////////////////////////////////////////////////////////////////////////////////*/
@@ -16,8 +16,8 @@
 //////////////////////////////////////////////////////
 typedef struct{
   int arity;
-  Name name;
-}TGKind_t;
+  char* name;
+}Kind_t;
 
 //struct Vector GKinds;
 
@@ -57,7 +57,7 @@ KindInd LoadGKind(int fd)
   return index;
 }
 
-TGKind_t* GKindTab=NULL;
+Kind_t* GKindTab=NULL;
 int GKindTabSize=-1;
 
 void LoadTopGKinds(int fd, struct Module_st* CMData)
@@ -65,7 +65,7 @@ void LoadTopGKinds(int fd, struct Module_st* CMData)
   int i;
   TwoBytes count=GKindTabSize=CMData->GKindcount=LK_FILE_GET2(fd);
   
-  GKindTab=EM_malloc(GKindTabSize*sizeof(TGKind_t));
+  GKindTab=EM_malloc(GKindTabSize*sizeof(Kind_t));
   
   CMData->GKind=EM_malloc(count*sizeof(MarkInd));
   
@@ -82,8 +82,8 @@ KindInd LoadTopGKind(int fd,int i)
   tmp.gl_flag=GLOBAL;
   
   GKindTab[i].arity=LK_FILE_GET1(fd);
-  LK_FILE_GetName(fd,&(GKindTab[i].name));
-  
+  GKindTab[i].name=LK_FILE_GetString(fd);
+  //printf("RGK(%d,%s)%x:\n",GKindTab[i].arity,GKindTab[i].name,GKindTab[i].name);fflush(stdout);
   return tmp;
 }
 
@@ -102,49 +102,36 @@ void WriteGKinds(int fd)
 
 void WriteGKind(int fd, int i)
 {
+  //printf("GK(%d,%s)\n",GKindTab[i].arity,GKindTab[i].name);fflush(stdout);
   LK_FILE_PUT1(fd,GKindTab[i].arity);
-  LK_FILE_PutName(fd,GKindTab[i].name);
+  LK_FILE_PutString(fd,GKindTab[i].name);
 }
 
 
 //////////////////////////////////////////////////////
 //LKind Load and Write Code
 //////////////////////////////////////////////////////
-typedef struct{
-  int arity;
-}TLKind_t;
-
 struct Vector LKinds;
-
-void LoadLKind(int fd, int i);
 
 void InitTLKinds()
 {
-  LK_VECTOR_Init(&LKinds,128,sizeof(TLKind_t));
+  LK_VECTOR_Init(&LKinds,128,sizeof(Kind_t));
+}
+
+void LoadLKind(int fd, struct Module_st* CMData,void* entry)
+{
+  Kind_t* tmp=(Kind_t*)entry;
+  tmp->arity=LK_FILE_GET1(fd);
 }
 
 void LoadLKinds(int fd, struct Module_st* CMData)
 {
-  int i;
-  TwoBytes count=LK_FILE_GET2(fd);
-  CMData->LKindcount=count;
-  int offset=CMData->LKindoffset=LK_VECTOR_Grow(&LKinds,count);
-  
-  for(i=0;i<count;i++)
-  {
-    LoadLKind(fd,offset+i);
-  }
-}
-
-void LoadLKind(int fd, int i)
-{
-  TLKind_t* tmp=LK_VECTOR_GetPtr(&LKinds,i);
-  tmp->arity=LK_FILE_GET1(fd);
+  LK_VECTOR_Read(fd,&LKinds,CMData,&(CMData->LKindAdj),LoadLKind);
 }
 
 void WriteLKind(int fd, void* ent)
 {
-  LK_FILE_PUT1(fd,((TLKind_t*)ent)->arity);
+  LK_FILE_PUT1(fd,((Kind_t*)ent)->arity);
 }
 
 void WriteLKinds(int fd)
@@ -154,11 +141,11 @@ void WriteLKinds(int fd)
 }
 
 ////////////////////////////////////////////////
-void WriteKinds()
+void WriteKinds(int fd)
 {
-  PUT2(LK_VECTOR_Size(&LKinds)+GKindTabSize);
-  WriteGKinds(PeekOutput());
-  WriteLKinds(PeekOutput());
+  LK_FILE_PUT2(fd,LK_VECTOR_Size(&LKinds)+GKindTabSize);
+  WriteGKinds(fd);
+  WriteLKinds(fd);
 }
 
 /////////////////////////////////////////////////////////////
@@ -168,7 +155,7 @@ int CheckKindArity(KindInd i)
 {
   if(i.gl_flag==LOCAL)
   {
-    return ((TLKind_t*)LK_VECTOR_GetPtr(&LKinds,i.index))->arity;
+    return ((Kind_t*)LK_VECTOR_GetPtr(&LKinds,i.index))->arity;
   }
   //GLOBAL_KIND
   return GKindTab[i.index].arity;

@@ -1,8 +1,8 @@
-AM_CPPFLAGS = -I${top_srcdir}/source
+AM_CPPFLAGS = -I${top_srcdir}/source -g
 
 bin_PROGRAMS = linkcheck
 
-TSTSRCS = TestFile.c TestKind.c TestTySkel.c
+TSTSRCS =TestInits.c TestFile.c TestKind.c TestTySkel.c TestConst.c TestModule.c TestString.c
 
 linkcheck_SOURCES =$(TSTSRCS) cutcheck.c
 linkcheck_LDADD = ../liblink.a
