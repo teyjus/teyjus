@@ -7,13 +7,13 @@
 
 extern void InitTGConsts();
 extern void LoadGConsts();
-extern void LoadTopGConsts();
+extern void LoadTopGConsts(int fd, struct Module_st* CMData);
 
 //LConst Header Data
 //Note: Uses CM->LConstoffset & CM->LConstcount
 
 extern void InitTLConsts();
-extern void LoadLConsts();
+extern void LoadLConsts(int fd, struct Module_st* CMData);
 
 //HConst Header Data
 //Note: Uses CM->HConstoffset & CM->HConstcount

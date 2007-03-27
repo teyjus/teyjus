@@ -6,6 +6,7 @@
 #include "kind.h"
 #include "vector.h"
 #include "file.h"
+#include "linker/VectorRW.h"
 
 #define obstack_chunk_alloc EM_malloc
 #define obstack_chunk_free free
@@ -22,6 +23,7 @@ typedef struct{
 struct Vector TySkels;
 
 struct obstack TySkelStack;
+void *StackBot=NULL;
 
 void LK_TYSKEL_obstack_alloc_failed_handler(void)
 {
@@ -66,10 +68,12 @@ void LoadTySkel(int fd, struct Module_st* CMData)
 
 void LoadTySkels(int fd, struct Module_st* CMData)
 {
+  if(StackBot==NULL)
+    StackBot=obstack_alloc(&TySkelStack,1);
   int i;
-  int count=CMData->TySkelcount=LK_FILE_GET2(fd);
+  int count=CMData->TySkelAdj.count=LK_FILE_GET2(fd);
   int offset=LK_VECTOR_Grow(&TySkels,count);
-  CMData->TySkeloffset=offset;
+  CMData->TySkelAdj.offset=offset;
   TySkel_t* tab=LK_VECTOR_GetPtr(&TySkels,offset);
   for(i=0;i<count;i++)
   {
@@ -88,6 +92,9 @@ void WriteTySkel(int fd, void* entry)
 void WriteTySkels(int fd)
 {
   LK_VECTOR_Write(fd,&TySkels,WriteTySkel);
+  LK_VECTOR_Free(&TySkels);
+  obstack_free(&TySkelStack,StackBot);
+  StackBot=NULL;
 }
 
 int TySkelCmp(TySkelInd a, TySkelInd b)

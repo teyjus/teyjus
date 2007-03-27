@@ -78,21 +78,21 @@ void TopImportTab()
   
   for(i=0;i<count;i++)
   {
-    AddInfo(info,GetConstInd());
+    AddInfo(info,GetConstInd(PeekInput(),CM));
   }
   
   //Add exportdef global predicates to info table.
   count=GET2();
   for(i=0;i<count;i++)
   {
-    AddInfo(info,GetConstInd());
+    AddInfo(info,GetConstInd(PeekInput(),CM));
   }
   
   //Add local predicates to info table.
   count=GET2();
   for(i=0;i<count;i++)
   {
-    AddInfo(info,GetConstInd());
+    AddInfo(info,GetConstInd(PeekInput(),CM));
   }
   
   //Set findCodeFun
@@ -116,14 +116,14 @@ void AccImportTab()
   TwoBytes count=GET2();
   for(i=0;i<count;i++)
   {
-    GetConstInd();
+    GetConstInd(PeekInput(),CM);
   }
   
   //Ignore exportdef global predicates
   count=GET2();
   for(i=0;i<count;i++)
   {
-    GetConstInd();
+    GetConstInd(PeekInput(),CM);
   }
   
   
@@ -131,7 +131,7 @@ void AccImportTab()
   count=GET2();
   for(i=0;i<count;i++)
   {
-    AddInfo(info,GetConstInd());
+    AddInfo(info,GetConstInd(PeekInput(),CM));
   }
   
   //Ignore findCodeFun
@@ -164,7 +164,7 @@ void ImpImportTab()
     
   for(i=0;i<count;i++)
   {
-    tmp[i]=GetConstInd();
+    tmp[i]=GetConstInd(PeekInput(),CM);
     AddInfo(info,tmp[i]);
     MarkDynamic(CTID,tmp[i]);
     MarkDynamic(par,tmp[i]);
@@ -175,7 +175,7 @@ void ImpImportTab()
   ConstInd index;
   for(i=0;i<count;i++)
   {
-    index=GetConstInd();
+    index=GetConstInd(PeekInput(),CM);
     MarkDynamic(par,index);
     AddInfo(info,index);
   }
@@ -183,7 +183,7 @@ void ImpImportTab()
   //Add local constants to the predicate info table.
   for(i=0;i<count;i++)
   {
-    AddInfo(info,GetConstInd());
+    AddInfo(info,GetConstInd(PeekInput(),CM));
   }
   
   //Set findCodeFun
@@ -243,7 +243,7 @@ void WriteImportTab(TImportTab_t* ImportTab)
   ConstInd* tmp=LK_VECTOR_GetPtr(vec,0);
   for(i=0;i<count;i++)
   {
-    PutConstInd(tmp[i]);
+    PutConstInd(PeekOutput(),tmp[i]);
   }
   
   vec=&(ImportTab->extPred);
@@ -251,7 +251,7 @@ void WriteImportTab(TImportTab_t* ImportTab)
   tmp=LK_VECTOR_GetPtr(vec,0);
   for(i=0;i<count;i++)
   {
-    PutConstInd(tmp[i]);
+    PutConstInd(PeekOutput(),tmp[i]);
   }
   
   PUT1(1);//FIND_CODE_FUNCTION

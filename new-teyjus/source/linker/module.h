@@ -3,26 +3,28 @@
 
 #include "datatypes.h"
 
+typedef struct{
+  int count;
+  int offset;
+}Adjust_t;
+
+#define LK_ADJUST(x,adj,typestr) if(x>=adj.count){printf("Invalid %s(%d)\n",typestr,x);EM_THROW(LK_LinkError);} x+=adj.offset
+
 struct Module_st{
 	struct Module_st* parent;
 
 	int GKindcount;
 	KindInd* GKind;
 	
-	int LKindcount;
-	int LKindoffset;
+    Adjust_t LKindAdj;
 	
-	int TySkelcount;
-	int TySkeloffset;
+    Adjust_t TySkelAdj;
 	
 	int GConstcount;
 	ConstInd* GConst;
 	
-	int LConstcount;
-	int LConstoffset;
-	
-	int HConstcount;
-	int HConstoffset;
+    Adjust_t LConstAdj;
+    Adjust_t HConstAdj;
 	
 	int ImplGoalcount;
 	int ImplGoaloffset;
@@ -33,8 +35,7 @@ struct Module_st{
 	int BvrTabcount;
 	int BvrTaboffset;
 
-	int StringSpacecount;
-	int StringSpaceoffset;
+    Adjust_t StringsAdj;
 
 	int CodeOffset;
 	int CodeSize;
@@ -54,25 +55,24 @@ extern void WriteAll();
 //Utility Functions///
 //////////////////////
 
-extern ConstInd GetConstInd();
-extern TySkelInd GetTySkelInd();
+extern ConstInd GetConstInd(int fd, struct Module_st* CMData);
+extern TySkelInd GetTySkelInd(int fd, struct Module_st* CMData);
 extern KindInd GetKindInd(int fd, struct Module_st* CMData);
-//extern KindInd FindKindInd(Byte gl_flag,TwoBytes index);
 extern ImplGoalInd GetImplGoalInd();
 extern HashTabInd GetHashTabInd();
 extern BvrTabInd GetBvrTabInd();
-extern StringSpaceInd GetStringSpaceInd();
+extern StringInd GetStringInd(int fd, struct Module_st* CMData);
 extern CodeInd GetCodeInd();
 extern ImportTabInd GetImportTabInd();
 
-extern void PutConstInd(ConstInd x);
-extern void PutTySkelInd(TySkelInd x);
-extern void PutKindInd(KindInd x);
-extern void PutImplGoalInd(ImplGoalInd x);
-extern void PutHashTabInd(HashTabInd x);
-extern void PutBvrTabInd(BvrTabInd x);
-extern void PutStringSpaceInd(StringSpaceInd x);
-extern void PutCodeInd(CodeInd x);
-extern void PutImportTabInd(ImportTabInd x);
+extern void PutConstInd(int fd, ConstInd x);
+#define PutTySkelInd(fd,x) LK_FILE_PUT2(fd,(TwoBytes)x)
+extern void PutKindInd(int fd, KindInd x);
+#define PutImplGoalInd(fd,x) LK_FILE_PUT2(fd,(TwoBytes)x)
+#define PutHashTabInd(fd,x) LK_FILE_PUT2(fd,(TwoBytes)x)
+#define PutBvrTabInd(fd,x) LK_FILE_PUT2(fd,(TwoBytes)x)
+#define PutStringInd(fd,x) LK_FILE_PUT2(fd,(TwoBytes)x)
+#define PutCodeInd(fd,x) LK_FILE_PUTWord(fd,(Word)x)
+#define PutImportTabInd(fd,x) LK_FILE_PUT2(fd,(TwoBytes)x)
 
 #endif //_MODULE_H_

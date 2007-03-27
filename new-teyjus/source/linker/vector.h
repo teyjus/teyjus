@@ -46,13 +46,4 @@ extern void* LK_VECTOR_GetPtr(struct Vector* vec, int index);
 **/
 extern void LK_VECTOR_Free(struct Vector* vec);
 
-/**
-\brief Write the contents of a vector to a file.
-\arg fd A valid file descriptor.
-\arg vec A pointer to the vector to write.
-\arg write_fn A function to call to write each individual entry.
-Writes the vector out in the format 2 byte size followed by that number of entries.
-**/
-extern void LK_VECTOR_Write(int fd, struct Vector* vec,void (*write_fn)(int fd, void* entry));
-
 #endif //_VECTOR_H_
