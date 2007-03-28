@@ -6,45 +6,45 @@
 /* instructions.h */
 /* generating operand types */
 
-void genOpTypes(char *name, char* typeName, char* types, char* comments, 
+void cgenOpTypes(char *name, char* typeName, char* types, char* comments, 
                 int last);
 
-void genOpCodeType(char* optype);
+void cgenOpCodeType(char* optype);
 
-void genOpsH();
+void cgenOpsH();
 
-void genInstrCatH(char* callI1Len);
+void cgenInstrCatH(char* callI1Len);
 
-void genOneInstrCatH(char* name, int last);
+void cgenOneInstrCatH(char* name, int last);
 
-void genInstrLength(char* name, char* length);
+void cgenInstrLength(char* name, char* length);
 
-void genInstrH(char* numInstr);
+void cgenInstrH(char* numInstr);
 
-void genOneInstrH(char* comments, char* opcode, char* name);
+void cgenOneInstrH(char* comments, char* opcode, char* name);
 
 
 /* dump instructions.h" */
-void spitCInstructionsH();
+void cspitCInstructionsH();
 
 /* instructions.c */
 
-void genInstrFormat(char* opType, int last);
+void cgenInstrFormat(char* opType, int last);
 
-void genOneInstrCatC(char* name, int last);
+void cgenOneInstrCatC(char* name, int last);
 
-void genInstrCatC(char* max_op);
+void cgenInstrCatC(char* max_op);
 
-void initInstrC(int numInstr);
-void genOneInstrC(int opcode, char* name, char* cat, char* len, int last);
-void genInstrC();
+void cinitInstrC(int numInstr);
+void cgenOneInstrC(int opcode, char* name, char* cat, char* len, int last);
+void cgenInstrC();
 
 /* dump instructions.c" */
-void spitCInstructionsC();
+void cspitCInstructionsC();
 
 /* simdispatch.c        */
-void initSimDispatch(int size);
-void genOneSimDispatch(int ind, char* instr, int last);
-void genSimDispatch();
+void cinitSimDispatch(int size);
+void cgenOneSimDispatch(int ind, char* instr, int last);
+void cgenSimDispatch();
 
-void spitSimDispatch();
+void cspitSimDispatch();

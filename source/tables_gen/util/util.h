@@ -23,6 +23,8 @@ char* UTIL_mallocStr(int size);
 char* UTIL_appendStr(char* str1, char* str2);
 /* capitalizing       */
 char* UTIL_upperCase(char* str);
+/* to lower cases     */
+char* UTIL_lowerCase(char* str);
 /* covert a non-negative integer to string */
 char* UTIL_itoa(int num);
 

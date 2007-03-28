@@ -59,6 +59,20 @@ char* UTIL_upperCase(char* str)
     return newstr;
 }
 
+//convert to lower cases     
+char* UTIL_lowerCase(char* str)
+{
+    char *newstr, *tmp;
+    newstr = strdup(str);
+    tmp = newstr;
+    while ((*tmp) != '\0'){
+        if ((65 <= (int)*tmp) && ((int)*tmp) <= 90)
+            *tmp = (char)((int)*tmp + 32);
+        tmp++;
+    }
+    return newstr;
+}
+
 //covert an non-negtive integer to string
 char* UTIL_itoa(int num)
 {
