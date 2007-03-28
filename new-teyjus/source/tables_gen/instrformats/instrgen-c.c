@@ -6,7 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "instrgen-c.h"
-
+#include "util.h"
 
 #define INDENT1        "    "
 #define INDENT1_LEN    4
@@ -16,24 +16,6 @@
 #define CATPREFIX_LEN  10
 #define DEF            "#define "
 #define DEF_LEN        8
-
-//covert an non-negtive integer to string
-static char* itoa(int num)
-{
-    char *str;
-    char digit[2];
-    digit[1] = '\0';
-    str = strdup("");
-    do {
-        char *temp = str;
-        digit[0] = num % 10 + '0';
-        str = (char*)malloc(sizeof(char) * (strlen(str) + 2));
-        strcpy(str, digit);
-        strcat(str, temp);
-        free(temp);
-    } while ((num /= 10) > 0);
-    return str;
-}
 
 /*************************************************************************/
 /* instructions.h                                                        */
@@ -62,8 +44,8 @@ static char* itoa(int num)
 static char* opTypes = NULL;
 static char* opTypeMaps = NULL ;
 
-void genOpTypes(char *name, char* typeName, char* types, char* comments, 
-                int last)
+void cgenOpTypes(char *name, char* typeName, char* types, char* comments, 
+                 int last)
 {
     char* myOpTypes = opTypes;
     char* myOpTypeMaps = opTypeMaps;
@@ -71,7 +53,7 @@ void genOpTypes(char *name, char* typeName, char* types, char* comments,
     int   commentLen = comments ?  strlen(comments) : 0;
     length = (opTypes ? strlen(opTypes) : 0) + INDENT1_LEN + PREFIX_LEN + 
              strlen(name) + (comments ?  strlen(comments) : 0) + 30 ;
-    opTypes = (char*)malloc(sizeof(char)*(length + 1));
+    opTypes = UTIL_mallocStr(length);
     if (myOpTypes) { strcpy(opTypes, myOpTypes); strcat(opTypes, INDENT1); }
     else strcpy(opTypes, INDENT1);
     if (comments) {
@@ -89,7 +71,7 @@ void genOpTypes(char *name, char* typeName, char* types, char* comments,
     if (typeName) {
         length = (opTypeMaps ? strlen(opTypeMaps) : 0) + PREFIX_LEN + 
             strlen(types) + strlen(typeName) + 30;
-        opTypeMaps = (char*)malloc(sizeof(char)*(length + 1));
+        opTypeMaps = UTIL_mallocStr(length);
         if (myOpTypeMaps) { 
             strcpy(opTypeMaps, myOpTypeMaps); 
             strcat(opTypeMaps, "typedef ");
@@ -109,10 +91,10 @@ void genOpTypes(char *name, char* typeName, char* types, char* comments,
 
 static char *opcodeType = NULL;
 
-void genOpCodeType(char* optype)
+void cgenOpCodeType(char* optype)
 {
     int length = PREFIX_LEN + strlen(optype) + 50;
-    opcodeType = (char*)malloc(sizeof(char)*(length + 1));
+    opcodeType = UTIL_mallocStr(length);
     strcpy(opcodeType, "typedef ");
     strcat(opcodeType, optype);
     strcat(opcodeType, "  ");
@@ -123,12 +105,12 @@ void genOpCodeType(char* optype)
 
 static char *opsH = NULL;
 
-void genOpsH() //assume neither opTypes nor opTypeMaps is empty
+void cgenOpsH() //assume neither opTypes nor opTypeMaps is empty
 {
     int length = OPTYPES_COMMENTS_H_LEN + OPERAND_TYPE_BEG_LEN +  
         OPTYPEMAP_COMMENT_LEN + OPERAND_TYPE_END_LEN + strlen(opTypes) + 
         strlen(opTypeMaps) + strlen(opcodeType) + 50;
-    opsH = (char*)malloc(sizeof(char)*(length+1));
+    opsH = UTIL_mallocStr(length);
     
     strcpy(opsH, OPTYPES_COMMENTS_H);
     strcat(opsH, OPERAND_TYPE_BEG);
@@ -160,12 +142,12 @@ static char *instrLen = NULL;
 static char *oneInstrLen = NULL;
 static int  catNum = 0;
 
-void genOneInstrCatH(char* name, int last)
+void cgenOneInstrCatH(char* name, int last)
 {   
     char *myInstrCat = instrcat_type, *myInstrLen = instrLen;
     int   length = (myInstrCat ? strlen(myInstrCat) : 0) + strlen(name) +
         CATPREFIX_LEN + INDENT1_LEN + 10;
-    instrcat_type = (char*)malloc(sizeof(char)*(length+1));
+    instrcat_type = UTIL_mallocStr(length);
     if (myInstrCat) {
         strcpy(instrcat_type, myInstrCat);
         strcat(instrcat_type, INDENT1);
@@ -173,7 +155,7 @@ void genOneInstrCatH(char* name, int last)
     strcat(instrcat_type, CATPREFIX);
     strcat(instrcat_type, name);
     strcat(instrcat_type, " = ");
-    strcat(instrcat_type, itoa(catNum));
+    strcat(instrcat_type, UTIL_itoa(catNum));
     if (last) strcat(instrcat_type, "\n");
     else strcat(instrcat_type, ",\n");
     catNum++;
@@ -183,7 +165,7 @@ void genOneInstrCatH(char* name, int last)
     //assume oneInstrLen cannot be empty
     length = (myInstrLen ? strlen(myInstrLen) : 0) + strlen(name) + 
         CATPREFIX_LEN + 10 + strlen(oneInstrLen);
-    instrLen = (char*)malloc(sizeof(char)*(length + 1));
+    instrLen = UTIL_mallocStr(length);
     
     if (myInstrLen) {
         strcpy(instrLen, myInstrLen);
@@ -203,12 +185,12 @@ void genOneInstrCatH(char* name, int last)
 "/**************************************************************************/  \n/* Macros defines instruction lengths and distances between op code and   */   \n/* operands.                                                              */   \n/* The assumption is that the op code occupies 1 byte.                    */   \n/**************************************************************************/   \n\n"
 #define INSTRLEN_COMMENTS_LEN 450
 
-void genInstrLength(char* name, char* len)
+void cgenInstrLength(char* name, char* len)
 {
     char *myInstrLen = oneInstrLen;    
     int length = (myInstrLen ? strlen(myInstrLen) : 0) + DEF_LEN + PREFIX_LEN 
         + strlen(name) + strlen(len) + 10;
-    oneInstrLen = (char*)malloc(sizeof(char)*(length + 1));
+    oneInstrLen = UTIL_mallocStr(length);
     if (myInstrLen) {
         strcpy(oneInstrLen, myInstrLen);
         strcat(oneInstrLen, DEF);
@@ -229,12 +211,12 @@ void genInstrLength(char* name, char* len)
 
 static char *instrCatH = NULL;
 
-void genInstrCatH(char* callI1Len)
+void cgenInstrCatH(char* callI1Len)
 {
     int length = strlen(instrcat_type) + strlen(instrLen) + 
         INSTRCAT_TYPE_BEG_LEN + INSTRCAT_TYPE_END_LEN + INSTRCAT_COMMENTS_H_LEN 
         + INSTRLEN_COMMENTS_LEN + OPTYPE_TAB_H_LEN + 160;
-    instrCatH = (char*)malloc(sizeof(char)*(length+1));
+    instrCatH = UTIL_mallocStr(length);
     
     strcpy(instrCatH, INSTRCAT_COMMENTS_H);
     strcat(instrCatH, INSTRCAT_TYPE_BEG);
@@ -242,7 +224,7 @@ void genInstrCatH(char* callI1Len)
     strcat(instrCatH, INSTRCAT_TYPE_END);
     strcat(instrCatH, DEF);
     strcat(instrCatH, "INSTR_NUM_INSTR_CATS  ");
-    strcat(instrCatH, itoa(catNum));
+    strcat(instrCatH, UTIL_itoa(catNum));
     strcat(instrCatH, "\n\n");
     strcat(instrCatH, DEF);
     strcat(instrCatH, "INSTR_CALL_I1_LEN  ");
@@ -264,13 +246,13 @@ void genInstrCatH(char* callI1Len)
 
 static char* instrH = NULL;
 
-void genOneInstrH(char* comments, char* opCode, char* instrName)
+void cgenOneInstrH(char* comments, char* opCode, char* instrName)
 {
     char* myInstrH = instrH;
     int length = (myInstrH ? strlen(myInstrH) : 0) + strlen(instrName) +
         strlen(opCode) + DEF_LEN + CATPREFIX_LEN + 
         (comments ? strlen(comments) : 0) + 10;
-    instrH = (char*)malloc(sizeof(char)*(length + 1));
+    instrH = UTIL_mallocStr(length);
     if (myInstrH) {
         strcpy(instrH, myInstrH);
         if (comments) {
@@ -304,12 +286,12 @@ void genOneInstrH(char* comments, char* opCode, char* instrName)
 
 char* instrOpc = NULL;
 
-void genInstrH(char* numInstr)
+void cgenInstrH(char* numInstr)
 {
     int length = INSTR_COMMENTS_H_LEN + strlen(instrH) + DEF_LEN + 
         strlen(numInstr) + INSTRTAB_H_LEN + 20;
     
-    instrOpc = (char*)malloc(sizeof(char)*(length + 1));
+    instrOpc = UTIL_mallocStr(length);
     strcpy(instrOpc, INSTR_COMMENTS_H);
     strcat(instrOpc, instrH);
     strcat(instrOpc, "\n\n");
@@ -325,23 +307,20 @@ void genInstrH(char* numInstr)
 
 
 /* dump instructions.h" */
-void spitCInstructionsH()
+void cspitCInstructionsH()
 {
     FILE* outFile;
-    outFile = fopen("../../tables/instructions.h", "w");
-    if (outFile) {
-        fprintf(outFile, "%s\n%s\n%s\n", COMMENTS_BEG_H, COMPDEF_BEG_H, 
-                INCLUDE_H);
-        fprintf(outFile, "%s\n", opsH);
-        fprintf(outFile, "%s\n", instrCatH);
-        fprintf(outFile, "%s\n", instrOpc);
-        fprintf(outFile, "%s\n", COMPDEF_END_H);
-        fclose(outFile);
+    outFile = UTIL_fopenW("../../tables/instructions.h");
+    fprintf(outFile, "%s\n%s\n%s\n", COMMENTS_BEG_H, COMPDEF_BEG_H, INCLUDE_H);
+    fprintf(outFile, "%s\n", opsH);
+    fprintf(outFile, "%s\n", instrCatH);
+    fprintf(outFile, "%s\n", instrOpc);
+    fprintf(outFile, "%s\n", COMPDEF_END_H);
+    UTIL_fclose(outFile);
 
-        free(opsH);
-        free(instrCatH);
-        free(instrOpc);
-    } else printf("cannot open\n");
+    free(opsH);
+    free(instrCatH);
+    free(instrOpc);
 }
 
 
@@ -374,12 +353,12 @@ void spitCInstructionsH()
 
 static char* optypeTabEntry = NULL;
 
-void genInstrFormat(char* opType, int last)
+void cgenInstrFormat(char* opType, int last)
 {
     char* mytabEntry = optypeTabEntry;
     int length = (mytabEntry ? strlen(mytabEntry) : 0) + PREFIX_LEN + 
         strlen(opType) + 5;
-    optypeTabEntry = (char*)malloc(sizeof(char)*(length + 1));
+    optypeTabEntry = UTIL_mallocStr(length);
     
     if (mytabEntry) {
         strcpy(optypeTabEntry, mytabEntry);
@@ -394,13 +373,13 @@ void genInstrFormat(char* opType, int last)
 static char* optypeTab = NULL;
 
 //assume optypeEntry is not empty
-void genOneInstrCatC(char* name, int last)
+void cgenOneInstrCatC(char* name, int last)
 {
     char* myoptypeTab = optypeTab;
     int length = (myoptypeTab ? strlen(myoptypeTab) : 0) + INDENT1_LEN*2 + 
         strlen(optypeTabEntry) + strlen(name) + 10 + CATPREFIX_LEN;
     
-    optypeTab = (char*)malloc(sizeof(char)*(length + 1));
+    optypeTab = UTIL_mallocStr(length);
     
     if (myoptypeTab) {
         strcpy(optypeTab, myoptypeTab);
@@ -427,11 +406,11 @@ void genOneInstrCatC(char* name, int last)
 
 static char* opTypeC = NULL;
 
-void genInstrCatC(char* max_op){
+void cgenInstrCatC(char* max_op){
     int length = OPTYPE_TAB_COMMENTS_LEN + MAX_OP_COMMENTS_LEN + 
         OPTYPE_TAB_TYPE_LEN +  OPTYPE_TAB_BEG_LEN + OPTYPE_TAB_END_LEN +
         strlen(optypeTab) + OPTYPE_FUNC_LEN + strlen(max_op) + 100;
-    opTypeC = (char*)malloc(sizeof(char)*(length+1));
+    opTypeC = UTIL_mallocStr(length);
     strcpy(opTypeC, OPTYPE_TAB_COMMENTS);
     strcat(opTypeC, MAX_OP_COMMENTS);
     strcat(opTypeC, "#define INSTR_MAX_OPERAND     ");
@@ -454,17 +433,17 @@ typedef struct StringArray
 
 static StringArray instrTab;
 
-void initInstrC(int numInstrs)
+void cinitInstrC(int numInstrs)
 {
     instrTab.length = numInstrs;  
-    instrTab.array = (char**)malloc(sizeof(char*)*numInstrs);
+    instrTab.array = (char**)UTIL_malloc(sizeof(char*)*numInstrs);
 }
 
-void genOneInstrC(int opcode, char* name, char* cat, char* len,  int last) 
+void cgenOneInstrC(int opcode, char* name, char* cat, char* len,  int last) 
 {   
     int length = strlen(name) + strlen(cat) + strlen(len) + PREFIX_LEN 
         + CATPREFIX_LEN + 20 + INDENT1_LEN ;
-    char* myText = (char*)malloc(sizeof(char)*(length + 1));
+    char* myText = UTIL_mallocStr(length);
     
     strcpy(myText, INDENT1);
     strcat(myText, "{\"");
@@ -501,14 +480,14 @@ void genOneInstrC(int opcode, char* name, char* cat, char* len,  int last)
 
 static char* instrC = NULL;
 
-void genInstrC()
+void cgenInstrC()
 {
     int i, length;
     char *myText = NULL, *myText2;
     for (i = 0; i < instrTab.length; i++) {
         if (instrTab.array[i]) {
             length = (myText ? strlen(myText) : 0) + strlen(instrTab.array[i]);
-            myText2 = (char*)malloc(sizeof(char)*(length + 100));
+            myText2 = UTIL_mallocStr(length + 100);
             if (myText) {
                 strcpy(myText2, myText);
                 strcat(myText2, instrTab.array[i]);
@@ -522,7 +501,7 @@ void genInstrC()
     length = INSTR_TAB_C_COMMENTS_LEN + INSTR_TAB_TYPE_LEN + 
         INSTR_TAB_BEG_LEN + INSTR_TAB_END_LEN + INSTR_TAB_FUNC_C_LEN +
         strlen(myText);
-    instrC = (char*)malloc(sizeof(char) * (length + 1));
+    instrC = UTIL_mallocStr(length);
     strcpy(instrC, INSTR_TAB_C_COMMENTS);
     strcat(instrC, INSTR_TAB_TYPE);
     strcat(instrC, INSTR_TAB_BEG);
@@ -534,18 +513,17 @@ void genInstrC()
 
 
 /* dump instructions.c" */
-void spitCInstructionsC()
+void cspitCInstructionsC()
 {
     FILE* outFile;
-    outFile = fopen("../../tables/instructions.c", "w");
-    if (outFile) {
-        fprintf(outFile, "%s\n%s\n", COMMENTS_BEG_C, INCLUDE_C);
-        fprintf(outFile, "%s\n", opTypeC);
-        fprintf(outFile, "%s\n", instrC);
-        fclose(outFile);
-        free(opTypeC);
-        free(instrC);
-    } else printf("cannot open\n");
+    outFile = UTIL_fopenW("../../tables/instructions.c");
+    fprintf(outFile, "%s\n%s\n", COMMENTS_BEG_C, INCLUDE_C);
+    fprintf(outFile, "%s\n", opTypeC);
+    fprintf(outFile, "%s\n", instrC);
+    UTIL_fclose(outFile);
+
+    free(opTypeC);
+    free(instrC);
 }
 
 /* simdispatch.c    */
@@ -569,16 +547,16 @@ void spitCInstructionsC()
 
 static StringArray dispatchTab;
 
-void initSimDispatch(int size) 
+void cinitSimDispatch(int size) 
 {
     dispatchTab.length = size;
-    dispatchTab.array = (char**)malloc(sizeof(char*)*size);
+    dispatchTab.array = (char**)UTIL_malloc(sizeof(char*)*size);
 }
 
-void genOneSimDispatch(int ind, char* instr, int last)
+void cgenOneSimDispatch(int ind, char* instr, int last)
 {
     int length = strlen(instr) + SIMPREFIX_LEN + INDENT1_LEN + 10;
-    char* myText = (char*)malloc(sizeof(char)*(length + 1));
+    char* myText = UTIL_mallocStr(length);
     
     strcpy(myText, INDENT1);
     strcat(myText, SIMPREFIX);
@@ -591,7 +569,7 @@ void genOneSimDispatch(int ind, char* instr, int last)
 
 static char* dispatch = NULL;
 
-void genSimDispatch()
+void cgenSimDispatch()
 {
     int i, length;
     char *myText = NULL, *myText2;
@@ -599,7 +577,7 @@ void genSimDispatch()
     for(i = 0; i < dispatchTab.length; i++) {
         if (dispatchTab.array[i]){
             length = (myText ? strlen(myText) : 0)+strlen(dispatchTab.array[i]);
-            myText2 = (char*)malloc(sizeof(char)*(length + 1));
+            myText2 = UTIL_mallocStr(length);
             if (myText){
                 strcpy(myText2, myText);
                 strcat(myText2, dispatchTab.array[i]);
@@ -612,7 +590,7 @@ void genSimDispatch()
     free(dispatchTab.array);
     length = SIMDIS_COMMENTS_LEN + SIMDIS_INCLUDE_LEN + SIMDIS_TAB_BEG_LEN 
         + SIMDIS_TAB_BEG_LEN + SIMDIS_TAB_END_LEN + strlen(myText);
-    dispatch = (char*)malloc(sizeof(char) * (length+ 1));
+    dispatch = UTIL_mallocStr(length);
     strcpy(dispatch, SIMDIS_COMMENTS);
     strcat(dispatch, SIMDIS_INCLUDE);
     strcat(dispatch, SIMDIS_TAB_BEG);
@@ -622,15 +600,14 @@ void genSimDispatch()
     free(myText);
 }
 
-void spitSimDispatch()
+void cspitSimDispatch()
 {
     FILE* outFile;
-    outFile = fopen("../../simulator/simdispatch.c", "w");
-    if (outFile) {
-        fprintf(outFile, "%s\n", dispatch);
-        free(dispatch);
-        fclose(outFile);
-    } else printf("cannot open\n");
+    outFile = UTIL_fopenW("../../simulator/simdispatch.c");
+    fprintf(outFile, "%s\n", dispatch);
+
+    free(dispatch);
+    UTIL_fclose(outFile);
 }
 
 

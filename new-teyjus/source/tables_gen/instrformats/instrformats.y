@@ -2,6 +2,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "instrgen-c.h"
+#include "instrgen-ocaml.h"
+#include "util.h"
 
 int yywrap() {return 1;}
 
@@ -30,32 +32,37 @@ void yyerror(const char* str)
 
 %start          instr_format
 %type  <name>   operand_name operand_tname operand_type instr_name instr_cat 
-                instr_head instr_length
+                instr_head instr_length operand_comp_type
 %type  <text>   comments         
-%type  <isval>  max_operand opcode
+%type  <isval>  max_operand opcode operand_size
 %%
     
 instr_format   : operands instrcats instructions
 
 operands       : OPTYPES operand_decs opcode_type 
-                 { genOpsH();}
+                 { cgenOpsH(); ocgenOps();}
                ;
 
 operand_decs   : operand_dec operand_decs
                | operand_dec_last
                ;
 
-operand_dec    : operand_name operand_tname operand_type comments
-                 { genOpTypes($1, $2, $3, $4, 0); }
+operand_dec    : operand_name operand_tname operand_type operand_size operand_comp_type comments
+                 { cgenOpTypes($1, $2, $3, $6, 0); 
+                   ocgenOpType($1, $4.ival, $5);
+                 }
                | operand_name comments
-                 { genOpTypes($1, NULL, NULL, $2, 0); }       
+                 { cgenOpTypes($1, NULL, NULL, $2, 0); }       
                ;
 
-operand_dec_last :  operand_name operand_tname operand_type comments
-                    { genOpTypes($1, $2, $3, $4, 1); }   
+operand_dec_last :  operand_name operand_tname operand_type operand_size operand_comp_type comments
+                    { cgenOpTypes($1, $2, $3, $6, 1); 
+                      ocgenOpType($1, $4.ival, $5);
+                    }   
                  |  operand_name comments
-                    { genOpTypes($1, NULL, NULL, $2, 1); } 
+                    { cgenOpTypes($1, NULL, NULL, $2, 1); } 
                  ;
+
 
 operand_name   : ID { $$ = $1; }
                ;
@@ -66,14 +73,24 @@ operand_tname  : ID { $$ = $1; }
 operand_type   : ID { $$ = $1; }
                ;
 
+operand_comp_type : ID { $$ = $1; }
+                  ;
+
 comments       : STRING {$$ = $1; }
                ;
 
-opcode_type    : OPCODE ID { genOpCodeType($2); }
+operand_size   : NUM { $$ = $1; }
+               ;
+
+opcode_type    : OPCODE ID operand_size 
+                 { cgenOpCodeType($2); 
+                   ocgenOpCodeType($3.ival);}
                ;
 
 instrcats      : INSTRCAT max_operand instrcat_decs CALL_I1_LEN NUM
-                 { genInstrCatH($5.sval); genInstrCatC($2.sval);}
+                 { cgenInstrCatH($5.sval); cgenInstrCatC($2.sval);
+                   ocgenInstrCat();
+                 }
                ;
 
 max_operand    : MAXOPERAND NUM   { $$ = $2; }
@@ -84,39 +101,54 @@ instrcat_decs  : instrcat_dec instrcat_decs
                ;
 
 instrcat_dec   : ID LBRACKET instr_format RBRACKET instr_lengths
-                 { genOneInstrCatH($1, 0); genOneInstrCatC($1, 0); } 
+                 { cgenOneInstrCatH($1, 0); cgenOneInstrCatC($1, 0);
+                   ocgenOneInstrCat($1);
+                 } 
                ;
 
 instrcat_dec_last : ID LBRACKET instr_format RBRACKET instr_lengths
-                    { genOneInstrCatH($1, 1); genOneInstrCatC($1, 1); } 
+                    { cgenOneInstrCatH($1, 1); cgenOneInstrCatC($1, 1);
+		      ocgenOneInstrCat($1);
+		    } 
                ;
 
 instr_format  : oneOp instr_format
               | lastOp
               ;  
 
-oneOp         : ID { genInstrFormat($1, 0); }
+oneOp         : ID { cgenInstrFormat($1, 0); ocgenInstrFormat($1); }
               ;
 
-lastOp        : ID { genInstrFormat($1, 1); }
+lastOp        : ID { cgenInstrFormat($1, 1); ocgenInstrFormat($1); }
               ;
               
 
-instr_lengths : instr_len SEMICOLON instr_lengths
-              | instr_len
+instr_lengths : instr_len_first SEMICOLON instr_lengths_rest
+              | instr_len_first
               ;
 
-instr_len     : ID NUM  { genInstrLength($1, $2.sval);}
+instr_lengths_rest : instr_len SEMICOLON instr_lengths_rest
+                   | instr_len
+                   ;
+
+instr_len_first : ID NUM 
+                  {cgenInstrLength($1, $2.sval); 
+                   ocgenInstrLength($1, $2.sval);}
+                ;
+
+instr_len     : ID NUM  { cgenInstrLength($1, $2.sval);}
               ;
 
 
 instructions  : instr_head instrs
-                { genInstrH($1); genInstrC(); genSimDispatch();}
+                { cgenInstrH($1); cgenInstrC(); cgenSimDispatch();
+                  ocgenInstr();
+                }
               ;
 
 instr_head    : INSTRUCTIONS NUM  
-                { initInstrC($2.ival); 
-                  initSimDispatch($2.ival); 
+                { cinitInstrC($2.ival); 
+                  cinitSimDispatch($2.ival); 
                   $$ = $2.sval; 
                 }
               ;
@@ -127,26 +159,28 @@ instrs        : instr SEMICOLON instrs
               ;
 
 instr         : comments opcode instr_name instr_cat instr_length
-                { genOneInstrH($1, $2.sval , $3);
-                  genOneInstrC($2.ival, $3, $4, $5, 0);
-                  genOneSimDispatch($2.ival, $3, 0);
+                { cgenOneInstrH($1, $2.sval , $3);
+                  cgenOneInstrC($2.ival, $3, $4, $5, 0);
+                  cgenOneSimDispatch($2.ival, $3, 0);
+                  ocgenOneInstr($2.sval, $3, $4, $5);
                 }
               | opcode instr_name instr_cat instr_length
-                { genOneInstrH(NULL, $1.sval , $2);
-                  genOneInstrC($1.ival, $2, $3, $4, 0);
-                  genOneSimDispatch($1.ival, $2, 0);   
+                { cgenOneInstrH(NULL, $1.sval , $2);
+                  cgenOneInstrC($1.ival, $2, $3, $4, 0);
+                  cgenOneSimDispatch($1.ival, $2, 0);
+                  ocgenOneInstr($1.sval, $2, $3, $4);
                 }
               ;
 
 last_instr    : comments opcode instr_name instr_cat instr_length
-                { genOneInstrH($1, $2.sval , $3);
-                  genOneInstrC($2.ival, $3, $4, $5, 1);
-                  genOneSimDispatch($2.ival, $3, 1); 
+                { cgenOneInstrH($1, $2.sval , $3);
+                  cgenOneInstrC($2.ival, $3, $4, $5, 1);
+                  cgenOneSimDispatch($2.ival, $3, 1); 
                 }
               |  opcode instr_name instr_cat instr_length
-                { genOneInstrH(NULL, $1.sval , $2);
-                  genOneInstrC($1.ival, $2, $3, $4, 1);
-                  genOneSimDispatch($1.ival, $2, 1);                
+                { cgenOneInstrH(NULL, $1.sval , $2);
+                  cgenOneInstrC($1.ival, $2, $3, $4, 1);
+                  cgenOneSimDispatch($1.ival, $2, 1);                
                 }
               ;
  
@@ -171,18 +205,17 @@ int main(argc, argv)
     int argc;
     char * argv[];
 {
-    if (sizeof(void*) == 8) yyin = fopen("instrformats_64.in", "r");
-    else yyin = fopen("instrformats_32.in", "r");
+    if (sizeof(void*) == 8) yyin = UTIL_fopenR("instrformats_64.in");
+    else yyin = UTIL_fopenR("instrformats_32.in");
 
-    if (yyin){
-        yyparse();
-        fclose(yyin);
-        spitCInstructionsH();
-        spitCInstructionsC();
-        spitSimDispatch();
-        printf("Instruction files genereated\n");
-    } else {
-        printf("cannot open input file \n");
-    }
+    yyparse();
+    UTIL_fclose(yyin);
+    cspitCInstructionsH();
+    cspitCInstructionsC();
+    cspitSimDispatch();
+    ocSpitInstructionMLI();
+    ocSpitInstructionML();
+    printf("Instruction files genereated\n");
+
     return 0;
 }

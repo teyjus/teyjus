@@ -1,25 +1,25 @@
 OPERAND TYPES
 
-  P                                 /* (1 byte) padding */
-  WP                                /* (1 word) padding */
-  R      RegInd         Byte        /* argument register number */ 
-  E      EnvInd         Byte        /* environment variable number */
-  N      NextClauseInd  Byte        /* next clause number in impt or impl pt */
-  I1     OneByteInt     Byte        /* 1 byte natural number */
-  CE     ClEnvInd       Byte        /* closure environment variable number */
-  SEG    ImpSegInd      Byte        /* import segment index  */ 
-  C      CstIndex       TwoBytes    /* constant symbol table index */
-  K      KstIndex       TwoBytes    /* kind symbol table index  */ 
-  L      CodeLabel      CSpacePtr   /* code location  */
-  I      Int            int         /* integer immediate value */
-  F      Float          float       /* floating point immediate value */
-  S      Str            DF_StrDataPtr     /* string pointer */
-  MT     ModTab         MemPtr      /* module table address */
-  IT     ImplTab        MemPtr      /* impl table address */
-  HT     HashTab        MemPtr      /* hash table address */
-  BVT    BranchTab      MemPtr      /* branch table for bound var indexing */
-  X                                 /* operand list terminator */
-  OPCODE Byte
+  P                                                  /* (1 byte) padding */
+  WP                                                 /* (1 word) padding */
+  R      RegInd         Byte           1   int       /* argument register number */ 
+  E      EnvInd         Byte           1   int       /* environment variable number */
+  N      NextClauseInd  Byte           1   int       /* next clause number in impt or impl pt */
+  I1     OneByteInt     Byte           1   int       /* 1 byte natural number */
+  CE     ClEnvInd       Byte           1   int       /* closure environment variable number */
+  SEG    ImpSegInd      Byte           1   int       /* import segment index  */ 
+  C      CstIndex       TwoBytes       2   int       /* constant symbol table index */
+  K      KstIndex       TwoBytes       2   int       /* kind symbol table index  */
+  L      CodeLabel      CSpacePtr      8   intref    /* code location  */
+  I      Int            int            4   int       /* integer immediate value */
+  F      Float          float          4   int       /* floating point immediate value */
+  S      Str            DF_StrDataPtr  2   int       /* string pointer */
+  MT     ModTab         MemPtr         2   int       /* module table address */
+  IT     ImplTab        MemPtr         2   int       /* impl table address */
+  HT     HashTab        MemPtr         2   int       /* hash table address */
+  BVT    BranchTab      MemPtr         2   int       /* branch table for bound var indexing */
+  X                                                  /* operand list terminator */
+  OPCODE Byte 1
 
 
 INSTR CATEGORY
