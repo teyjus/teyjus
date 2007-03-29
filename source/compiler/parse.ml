@@ -1090,7 +1090,7 @@ and removeOverloads term =
       Absyn.ApplicationTerm(Absyn.CurriedApplication(f', a'), b, p)
 
   | Absyn.ConstantTerm(c, tl, b, p) ->
-      if Pervasive.isOverloaded c then
+      if Pervasiveutils.isOverloaded c then
         let ty = List.hd tl in
         let ty' = Absyn.dereferenceType ty in
         (match ty' with
@@ -1102,7 +1102,7 @@ and removeOverloads term =
                 Absyn.getTypeKind (List.hd tl)
               else
                 Absyn.getTypeKind default) in
-            Absyn.ConstantTerm(Pervasive.getOverload k c, [], b, p)
+            Absyn.ConstantTerm(Pervasiveutils.getOverload k c, [], b, p)
         | _ -> Absyn.ErrorTerm)
       else
         term

@@ -21,9 +21,8 @@ and akind =
 * (firstuse, lastuse, perm, safety, heapvar, offset, firstgoal, lastgoal)
 *****************************************************************************)
 and atypevar = 
-    TypeVar of (atype option ref * atype option ref * bool option ref * 
-      bool option ref * bool option ref * int option ref * 
-      int option ref * int option ref)
+  TypeVar of (atype option ref * atype option ref * bool ref * bool ref * 
+				bool ref * int option ref * int ref * int ref)
 
 (****************************************************************************
 *Type Var Information:
@@ -118,9 +117,8 @@ and atypesymbol =
 *   (oneuse, perm, safety, heapvar, offset, firstgoal, lastgoal, lastuse)
 *****************************************************************************)
 and avar =
-  Var of (bool option ref * bool option ref * bool option ref *
-    bool option ref * int option ref * int option ref * int option ref *
-    aterm option ref)
+  Var of (bool option ref * bool ref * bool ref * bool ref * int option ref * 
+			int ref * int ref * aterm option ref)
 
 (*****************************************************************************
 *Variable occurrences:
@@ -182,37 +180,36 @@ and agoal =
   | SomeGoal of (avar * agoal)
 (*| OrGoal of (agoal * agoal) *)
 
-and adefinitions = ((aconstant * aclausesblock) list)
-and avarinits = (avar list)
-and ahcvarassoc = ((avar * aconstant) list)
+and adefinitions = Definitions of ((aconstant * aclausesblock) list)
+and avarinits = VarInits of (avar list)
+and ahcvarassoc = HCVarAssocs of ((avar * aconstant) list)
 
-(****************************************************************************
- *Clauses:
- * (head, args, tyargs, numargs, numtargs, body, offset, varmap, tyvarmap   *
- *gesplist, cutvar, hasenv, impmods)                                      *
- ***************************************************************************)
-
+(**********************************************************************
+*Clauses:
+* (head, args, tyargs, numargs, numtargs, body, offset, varmap, tyvarmap
+* gesplist, cutvar, hasenv, impmods)
+**********************************************************************)
 and aclause = 
     Fact of (aconstant * aterm list * atype list * int * int * 
-			   atermvarmap * atypevarmap * int option ref * aimportedmodule list)
+			   atermvarmap * atypevarmap * avar list * int option ref * 
+			   aimportedmodule list)
   | Rule of (aconstant * aterm list * atype list * int * int * atermvarmap *
-			   atypevarmap * agoal * agoalenvassoc ref * avar option ref *
-			   bool ref * aimportedmodule list)
+			   atypevarmap * avar list * agoal * agoalenvassoc ref * 
+			   avar option ref * bool ref * aimportedmodule list)
 
 
 (* Goal number and environment size association list*)
-and agoalenvassoc = ((int * int) list)
+and agoalenvassoc =  GoalEnvAssoc of ((int * int) list)
 
 (* term variable map list *)
-and atermvarmap  = ((avar * avar) list)
+and atermvarmap  = TermVarMap of ((avar * avar) list)
 
 (* type variable map list *)
-and atypevarmap  = ((atypevar * atypevar) list)
+and atypevarmap  = TypeVarMap of ((atypevar * atypevar) list)
 
 (* clauses block: (clauses, last, offset, nextclause, closed, mapped) *)	  
 and aclausesblock = (aclause list ref * aclause ref * int ref * 
 					   int option ref * bool ref * bool ref)
-
 (*****************************************************************************
 *Modules:
 * (modname, imported, accumulated, kind table, constant table,
@@ -225,7 +222,7 @@ and amodule =
     Module of (string * aimportedmodule list * aaccummulatedmodule list *
       aconstant Table.SymbolTable.t ref * akind Table.SymbolTable.t ref *
       atypeabbrev Table.SymbolTable.t * astringinfo list * akind list *
-      akind list * aconstant list * aconstant list * aconstant list *
+      akind list * aconstant list * aconstant list * aconstant list ref *
       askeleton list * askeleton list * aclauseinfo ref)
   | Signature of (string * akind list * aconstant list)
   | ErrorModule
@@ -711,6 +708,25 @@ let rec makeTypeEnvironment i =
         else
           (makeTypeVariable ()) :: (makeTypeEnvironment (i - 1))
 
+let isPermanentTypeVariable = function
+  TypeVar(fu, lu, p, s, h, o, fg, lg) -> !p
+
+let getTypeVariableLastGoalRef = function
+  TypeVar(fu, lu, p, s, h, o, fg, lg) -> lg
+let getTypeVariableLastGoal v = !(getTypeVariableLastGoalRef v)
+let setTypeVariableLastGoal v o = (getTypeVariableLastGoalRef v) := o
+
+let getTypeVariableFirstGoalRef = function
+  TypeVar(fu, lu, p, s, h, o, fg, lg) -> fg
+let getTypeVariableFirstGoal v = !(getTypeVariableFirstGoalRef v)
+let setTypeVariableFirstGoal v o = (getTypeVariableFirstGoalRef v) := o
+
+let getTypeVariableOffsetRef = function
+  TypeVar(fu, lu, p, s, h, o, fg, lg) -> o
+let getTypeVariableOffset v = !(getTypeVariableOffsetRef v)
+let setTypeVariableOffset v o =
+  (getTypeVariableOffsetRef v) := Some o
+
 let getTypeVariableReference = function
   TypeVarType(info) ->
     (match !info with
@@ -864,6 +880,27 @@ let getTypeSymbolSymbol = function
   | BoundVar(s,_,_,_) -> s
 
 let getTypeSymbolName s = (Symbol.name (getTypeSymbolSymbol s))
+
+(**********************************************************************
+*avar accessors.
+**********************************************************************)
+let isPermanentVariable = function
+  Var(oneuse, perm, safety, heapvar, offset, firstgoal, lastgoal, lastuse) ->
+    !perm
+
+let getVariableDataLastGoalRef = function
+  Var(oneuse, perm, safety, heapvar, offset, firstgoal, lastgoal, lastuse) ->
+    lastgoal
+let getVariableDataLastGoal v = !(getVariableDataLastGoalRef v)
+let setVariableDataLastGoal v o = (getVariableDataLastGoalRef v) := o
+
+let getVariableDataOffsetRef = function
+  Var(oneuse, perm, safety, heapvar, offset, firstgoal, lastgoal, lastuse) ->
+    offset
+let setVariableDataOffset v o =
+  (getVariableDataOffsetRef v) := Some o
+
+  
 
 (**********************************************************************
 *Term Context:
@@ -1074,6 +1111,11 @@ let getModuleConstantTable = function
   Module(_,_,_,ctable,_,_,_,_,_,_,_,_,_,_,_) -> !ctable
 | Signature(_) -> Errormsg.impossible Errormsg.none "getModuleConstantTable: not a module"
 | ErrorModule -> Errormsg.impossible Errormsg.none "getModuleConstantTable: invalid module"
+
+let getModuleHiddenConstantsRef = function
+  Module(_,_,_,_,_,_,_,_,_,_,_,hcs,_,_,_) -> hcs
+| Signature(_) -> Errormsg.impossible Errormsg.none "getModuleHiddenConstantsRef: not a module"
+| ErrorModule -> Errormsg.impossible Errormsg.none "getModuleHiddenConstantsRef: invalid module"
 
 let getModuleKindTable = function
   Module(_,_,_,_,ktable,_,_,_,_,_,_,_,_,_,_) -> !ktable

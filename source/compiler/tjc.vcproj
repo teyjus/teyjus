@@ -185,6 +185,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\annvariables.ml"
+				>
+			</File>
+			<File
 				RelativePath=".\clauses.ml"
 				>
 			</File>
@@ -222,7 +226,15 @@
 				>
 			</File>
 			<File
+				RelativePath=".\pervasiveutils.ml"
+				>
+			</File>
+			<File
 				RelativePath=".\preabsyn.ml"
+				>
+			</File>
+			<File
+				RelativePath=".\processclauses.ml"
 				>
 			</File>
 			<File
@@ -261,6 +273,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\annvariables.mli"
+				>
+			</File>
+			<File
 				RelativePath=".\clauses.mli"
 				>
 			</File>
@@ -289,7 +305,15 @@
 				>
 			</File>
 			<File
+				RelativePath=".\pervasiveutils.mli"
+				>
+			</File>
+			<File
 				RelativePath=".\preabsyn.mli"
+				>
+			</File>
+			<File
+				RelativePath=".\processclauses.mli"
 				>
 			</File>
 			<File

@@ -557,7 +557,7 @@ and processAllGoal goalBody =
   (* enter the given variable into the qVars list; and create a hidden     *)
   (* constant variable association pair. *)
   let collectHCpair tysy =
-	let hcData = Absyn.getTypeSymbolHiddenConst tysy in
+	let hcData = Absyn.getTypeSymbolHiddenConstant tysy in
 	let varData = Absyn.Var(ref None, ref false, ref false, ref false, 
 							ref None, ref 0,    ref 0,     ref None)
 	in

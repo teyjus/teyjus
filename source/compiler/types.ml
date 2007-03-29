@@ -254,7 +254,7 @@ let rec skeletonizeType ty =
 
   let (mol, newvars, index) = skeletonize ty [] 0 in
   
-  if index > Pervasive.maxSkeletonIndex then
+  if index > Pervasiveutils.maxSkeletonIndex then
     (Errormsg.error Errormsg.none "unable to skeletonize type: type contains too many free variables";
     errorMolecule)
   else
