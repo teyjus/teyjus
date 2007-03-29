@@ -503,7 +503,7 @@ let assignPermVars goalEnvAssoc notrim =
 		match clauseVar with
 		  TermVar(varData) ->
 			if (Absyn.isPermanentVariable varData) then
-			  (enterVar clauseVar (Absyn.getVariableLastGoal varData);
+			  (enterVar clauseVar (Absyn.getVariableDataLastGoal varData);
 			   collectPermVars rest)
 			else collectPermVars rest
 		| TypeVar(varData) ->
@@ -524,7 +524,7 @@ let assignPermVars goalEnvAssoc notrim =
 		  Absyn.setVariableDataOffset varData ind;
 		  assignOneBucket rest (ind + 1)
 	  | (TypeVar(varData) :: rest) ->
-		  Absyn.setTypeVariableDataOffset varData ind;
+		  Absyn.setTypeVariableOffset varData ind;
 		  assignOneBucket rest (ind + 1)
 	in
 	if (bucketInd >= 0) then 
@@ -673,7 +673,7 @@ and processImpGoal clDefs body last cutvar =
 	match tyVars with 
 	  [] -> ()
 	| (tyVarData :: rest) -> 
-		(Absyn.setTypeVariableDataLastGoal tyVarData lastGoal;
+		(Absyn.setTypeVariableLastGoal tyVarData lastGoal;
 		 setLastGoalTyVars rest lastGoal)
   in
   let (clVars, clTyVars) = processImpDefs clDefs [] [] in

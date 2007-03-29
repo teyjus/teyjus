@@ -3,16 +3,20 @@
 * Compile the given module or signature, based on the file name.
 **********************************************************************)
 let compile = fun basename ->
-  let showTerm = function
-    (Preabsyn.Clause(term)::_, amod) -> let _ = Parse.translateTerm term amod in ()
-  | _ -> ()
-  in
-  
+  (*  Parse the input module and signature and generate preabsyn. *)
   let modresult = Compile.compileModule basename in
   let sigresult = Compile.compileSignature basename in
 
+  (*  Construct an absyn module.  At this point only the module's
+      constant, kind, and type abbrev information is valid. *)
   let absyn = (Translate.translate modresult sigresult) in
-
+  
+  (*  Get the list of clauses and new clauses.  *)
+  let (absyn, clauses, newclauses) = Clauses.translateClauses modresult absyn in
+  
+  (*  Process the clauses.  *)
+  let absyn = Processclauses.processClauses absyn clauses newclauses in
+  
   (*  Print the results (preabsyn module and sig) to the output file  *)
   (if (!Compile.printPreAbsyn) then
     let modchannel = Compile.openFile (basename ^ ".mod.preabsyn.txt") open_out in
@@ -32,10 +36,8 @@ let compile = fun basename ->
     Compile.closeFile outchannel close_out)
   else
     ();
-
-  let clauses = (Preabsyn.getModuleClauses modresult) in
-  (showTerm (clauses, absyn);
-  absyn))
+  
+  ())
 
 let debugEnabled = ref false
 let inputFilename = ref ""

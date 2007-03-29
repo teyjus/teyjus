@@ -13,6 +13,9 @@ let getNewClauseClause = function
 type hiddenconstant =
   HiddenConstant of (Absyn.aconstant * Absyn.atypesymbol)
 
+let getHiddenConstantConstant = function
+  HiddenConstant(c,_) -> c
+
 type deorifygoalresult =
   DeOrifyGoalResult of (Absyn.aterm list * Absyn.atypesymbol list *
     universalvardefinition list * bool * newclause list * hiddenconstant list)
@@ -27,12 +30,12 @@ let getDeOrifyGoalResultHasCut = function
   DeOrifyGoalResult(_,_,_,hc,_,_) -> hc
 let getDeOrifyGoalResultNewClauses = function
   DeOrifyGoalResult(_,_,_,_,nc,_) -> nc
-let getDeOrifyGoalResultHiddenConsts = function
+let getDeOrifyGoalResultHiddenConstants = function
   DeOrifyGoalResult(_,_,_,_,_,hc) -> hc
 
 type deorifyclauseresult =
   DeOrifyClauseResult of (Absyn.aterm list * Absyn.atypesymbol list *
-    universalvardefinition list * newclause list)
+    universalvardefinition list * newclause list * hiddenconstant list)
 
 (********************************************************************
 *union:
@@ -115,10 +118,30 @@ and getClauseHeadAndArguments term =
   | _ -> (term, [])
 
 (********************************************************************
+*getGoal:
+* If the andgoal is not None, the head should actually be an
+* application, with and ("," or "&") at the head, and the
+* original head and the andgoal as arguments.
+********************************************************************)
+and getGoal head andgoal =
+  if Option.isSome andgoal then
+    let andgoal' = Option.get andgoal in
+    let head' = Absyn.ApplicationTerm(
+      Absyn.FirstOrderApplication(
+        Pervasive.andTerm,
+        [head; andgoal'],
+        2),
+      false,
+      Absyn.getTermPos head) in
+    head'
+  else
+    head
+
+(********************************************************************
 *closeUniversalDefinitions:
 ********************************************************************)
 and closeUniversalDefinitions tsym uvdefs =
-  ()
+  []
 
 (********************************************************************
 *collectFreeVars:
@@ -179,9 +202,49 @@ and collectArgsFreeVars args fvs bvs =
       (arg'::args', fvs'')
 
 (**********************************************************************
-*distributeQuantifierTerms:
+*distributeAndGoal:
+* Distributing an AND goal over a list of goals and appending the result
+* to the list given in othergoals.
 **********************************************************************)
-and distributeQuantifierTerms 
+and distributeAndGoal goals othergoals andgoal =
+  (********************************************************************
+  *distribute:
+  * Conjoining a goal on the right to each goal in a list of goals,
+  * with consideration for andgoal.
+  ********************************************************************)
+  let rec distribute goals othergoals andgoal =
+    match goals with
+      [] -> othergoals
+    | g::gs ->
+        (getGoal g andgoal) :: (distribute gs othergoals andgoal)
+  in
+  
+  if (Option.isNone andgoal) && (List.length othergoals = 0) then
+    goals
+  else
+    (distribute goals othergoals andgoal)
+
+(**********************************************************************
+*distributeQuantifierTerms:
+* Distributing a quantifier given by qterm over a variable given by tysy
+* over a list of goals and then forming a conjunction with andgoal.
+**********************************************************************)
+and distributeQuantifierTerms qterm tsym goals andgoal =
+  match goals with
+    [] -> []
+  | g::gs ->
+      let goal =
+        Absyn.ApplicationTerm(
+          Absyn.FirstOrderApplication(
+            qterm,
+            [Absyn.AbstractionTerm(Absyn.NestedAbstraction(tsym, g), false, Errormsg.none)],
+            1),
+          false,
+          Errormsg.none) in
+      
+      let goal' = getGoal goal andgoal in
+      goal' :: (distributeQuantifierTerms qterm tsym gs andgoal)
+ 
 (**********************************************************************
 *distributeUniversal:
 * Insert a universal quantification over vtysy over each of the terms
@@ -206,15 +269,15 @@ and distributeUniversal term tsym terms =
 *reverseDistributeImplication:
 **********************************************************************)
 and reverseDistributeImplication head goals cls =
-  if List.length goals > 0 then
+  match goals with
+    [] -> cls
+  | _ ->
     let goal = List.hd goals in
     let goals' = List.tl goals in
     
     let appinfo = Absyn.FirstOrderApplication(Absyn.makeConstantTerm (Pervasive.implConstant) (Errormsg.none), [goal;head], 2) in
     let cls' = (Absyn.ApplicationTerm(appinfo, false, Errormsg.none)) :: cls in
     reverseDistributeImplication head goals' cls'
-  else
-    cls
 
 (**********************************************************************
 *distributeImplication:
@@ -322,31 +385,18 @@ and deOrifyGoal goal uvs uvdefs andgoal wholegoal newclauses =
 * Deorifies a cut goal.  Records that the goal has a cut, but is
 * otherwise routine.
 **********************************************************************)
-and deOrifyCutGoal goal andgoal uvdefs newclauses =
-  let getGoal g andgoal =
-    if Option.isSome andgoal then
-      let and' = Option.get andgoal in
-      Absyn.ApplicationTerm(
-        Absyn.FirstOrderApplication(
-          Pervasive.andTerm,
-          [g; and'],
-          2),
-        false,
-      Errormsg.none)
-    else
-      g
-  in
-  DeOrifyGoalResult([getGoal goal andgoal], [], uvdefs, true, newclauses, [])
+and deOrifyCutGoal goal andgoal uvdefs newclauses hcs =
+  DeOrifyGoalResult([getGoal goal andgoal], [], uvdefs, true, newclauses, hcs)
 
 (**********************************************************************
 *deOrifyUniversalGoal:
 **********************************************************************)
-and deOrifyUniversalGoal t arg1 uvs uvdefs andgoal wholegoal newclauses =
+and deOrifyUniversalGoal t arg1 uvs uvdefs andgoal wholegoal newclauses hcs =
   let (body, tsym) = etaFluffQuantifier t arg1 in
   let hc = makeHiddenConstant tsym in
   let uvs' = tsym :: uvs in
   
-  let DeOrifyGoalResult(goals', fvs', uvdefs', hascut', newclauses', hcs') = deOrifyGoal body uvs' uvdefs None wholegoal newclauses in
+  let DeOrifyGoalResult(goals', fvs', uvdefs', hascut', newclauses', hcs') = deOrifyGoal body uvs' uvdefs None wholegoal newclauses hcs in
   let hcs'' = hc :: hcs' in
   let uvdefs'' = closeUniversalDefinitions tsym uvdefs' in
   
@@ -355,23 +405,23 @@ and deOrifyUniversalGoal t arg1 uvs uvdefs andgoal wholegoal newclauses =
     let goals'' = distributeQuantifierTerms t tsym goals' andgoal in
     DeOrifyGoalResult(goals'', fvs'', uvdefs'', hascut', newclauses', hcs'')
   else
-    let goals'' = distributeAndGoal goals' andgoal [] in
+    let goals'' = distributeAndGoal goals' [] andgoal in
     DeOrifyGoalResult(goals'', fvs', uvdefs'', hascut', newclauses', hcs'')
 
 (**********************************************************************
 *deOrifyExistentialGoal:
 **********************************************************************)
-and deOrifyExistentialGoal t arg1 uvs uvdefs andgoal wholegoal newclauses =
-  let (body, tsym) = etaFluffQuatifier t arg1 in
-  let DeOrifyGoalResult(goals', fvs', uvdefs', hascut', newclauses', hcs') = deOrifyGoal body uvs uvdefs None wholegoal newclauses in
+and deOrifyExistentialGoal t arg1 uvs uvdefs andgoal wholegoal newclauses hcs =
+  let (body, tsym) = etaFluffQuantifier t arg1 in
+  let DeOrifyGoalResult(goals', fvs', uvdefs', hascut', newclauses', hcs') = deOrifyGoal body uvs uvdefs None wholegoal newclauses hcs in
   
   if List.mem tsym fvs' then
     let fvs'' = (List.filter ((<>) tsym) fvs') in
     let goals'' = distributeQuantifierTerms t tsym goals' andgoal in
-    DeOrifyGoalResult(goals'', fvs'', uvdefs'', hascut', newclauses', hcs'')
+    DeOrifyGoalResult(goals'', fvs'', uvdefs', hascut', newclauses', hcs')
   else
-    let goals'' = distributeAndGoal goals' andgoal [] in
-    DeOrifyGoalResult(goals'', fvs', uvdefs'', hascut', newclauses', hcs'')
+    let goals'' = distributeAndGoal goals' [] andgoal in
+    DeOrifyGoalResult(goals'', fvs', uvdefs', hascut', newclauses', hcs')
 
 (**********************************************************************
 *deOrifyImplicationGoal:
@@ -387,29 +437,11 @@ and deOrifyImplicationGoal t arg1 uvs uvdefs andgoal wholegoal newclauses =
 * Finally, arguments have to be checked for correctness, they have to be
 * rectified and their free variables collected.
 **********************************************************************)
-and deOrifyAtomicGoal head args andgoal uvs uvdefs newclauses =
+and deOrifyAtomicGoal head args andgoal uvs uvdefs newclauses hcs =
   let deorify' head hascut fvs uvdefs =
-    (*  If the andgoal is not None, the head should actually be an
-        application, with and ("," or "&") at the head, and the
-        original head and the andgoal as arguments. *)
-    let getGoal head andgoal =
-      if Option.isSome andgoal then
-          let andgoal' = Option.get andgoal in
-          let head' = Absyn.ApplicationTerm(
-            Absyn.FirstOrderApplication(
-              Pervasive.andTerm,
-              [head; andgoal'],
-              2),
-            false,
-            Absyn.getTermPos head) in
-          DeOrifyGoalResult([head'], fvs, uvdefs, hascut, newclauses)
-        else
-          DeOrifyGoalResult([head], fvs, uvdefs, hascut, newclauses)
-    in
-    
     match args with
       [] ->
-          getGoal head andgoal
+        DeOrifyGoalResult([getGoal head andgoal], fvs, uvdefs, hascut, newclauses, hcs)
     | _ ->
         let (args', fvs') = collectArgsFreeVars args fvs [] in
         let head' = Absyn.ApplicationTerm(
@@ -419,7 +451,7 @@ and deOrifyAtomicGoal head args andgoal uvs uvdefs newclauses =
             List.length args'),
           false,
           Absyn.getTermPos head) in
-        getGoal head' andgoal
+        DeOrifyGoalResult([(getGoal head' andgoal)], fvs, uvdefs, hascut, newclauses, hcs)
   in
   
   match head with
@@ -441,15 +473,15 @@ and deOrifyAtomicGoal head args andgoal uvs uvdefs newclauses =
 * then a new predicate must be introduced to prevent the cut from cutting off
 * choice points in the parent clause.
 **********************************************************************)
-and deOrifyOneOrGoal goal uvs uvdefs andgoal newclauses=
-  let DeOrifyGoalResult(goals', fvs', uvdefs', hascut', newclauses') =
-    (deOrifyGoal goal uvs uvdefs andgoal true newclauses) in
+and deOrifyOneOrGoal goal uvs uvdefs andgoal newclauses hcs =
+  let DeOrifyGoalResult(goals', fvs', uvdefs', hascut', newclauses', hcs') =
+    (deOrifyGoal goal uvs uvdefs andgoal true newclauses hcs) in
   
   if hascut' then
     let (goal', newclauses') = newPredicate goals' fvs' newclauses in
-    DeOrifyGoalResult([goal'], fvs', uvdefs',hascut', newclauses')
+    DeOrifyGoalResult([goal'], fvs', uvdefs',hascut', newclauses', hcs')
   else
-    DeOrifyGoalResult(goals', fvs', uvdefs',hascut', newclauses')
+    DeOrifyGoalResult(goals', fvs', uvdefs',hascut', newclauses', hcs')
 
 (**********************************************************************
 *deOrifyOrGoal:
@@ -461,7 +493,7 @@ and deOrifyOneOrGoal goal uvs uvdefs andgoal newclauses=
 * be reversed to get the right (reverse) ordering for clauses. Also upward
 * propogation of cuts stops here
 **********************************************************************)
-and deOrifyOrGoal goal1 goal2 uvs uvdefs andgoal wholegoal newclauses =
+and deOrifyOrGoal goal1 goal2 uvs uvdefs andgoal wholegoal newclauses hcs =
   let getAndGoal wholegoal andgoal =
     if wholegoal then
       andgoal
@@ -470,20 +502,22 @@ and deOrifyOrGoal goal1 goal2 uvs uvdefs andgoal wholegoal newclauses =
   in
   let andgoal' = (getAndGoal wholegoal andgoal) in
   
-  let result1 = deOrifyOneOrGoal goal2 uvs uvdefs andgoal' newclauses in
+  let result1 = deOrifyOneOrGoal goal2 uvs uvdefs andgoal' newclauses hcs in
   
   let newclauses' = getDeOrifyGoalResultNewClauses result1 in
   let uvdefs' = getDeOrifyGoalResultUVDefs result1 in
-  let result2 = deOrifyOneOrGoal goal1 uvs uvdefs' andgoal' newclauses' in
+  let hcs' = getDeOrifyGoalResultHiddenConstants result1 in
+  let result2 = deOrifyOneOrGoal goal1 uvs uvdefs' andgoal' newclauses' hcs' in
   
   let newclauses'' = getDeOrifyGoalResultNewClauses result2 in
+  let hcs'' = getDeOrifyGoalResultHiddenConstants result2 in
   let fvs' = union (getDeOrifyGoalResultFVS result1) (getDeOrifyGoalResultFVS result2) in
   let uvdefs' = getDeOrifyGoalResultUVDefs result1 in
   
   if wholegoal then
     let goals1 = getDeOrifyGoalResultGoals result1 in
     let goals2 = getDeOrifyGoalResultGoals result2 in
-    DeOrifyGoalResult(goals1 @ goals2, fvs', uvdefs', false, newclauses'')
+    DeOrifyGoalResult(goals1 @ goals2, fvs', uvdefs', false, newclauses'', hcs'')
   else
     let (pred, newclauses''') = newPredicateFromAnd
       (getDeOrifyGoalResultGoals result2)
@@ -499,40 +533,42 @@ and deOrifyOrGoal goal1 goal2 uvs uvdefs andgoal wholegoal newclauses =
           2),
         false,
         Errormsg.none) in
-      DeOrifyGoalResult([goal'], fvs', uvdefs', false, newclauses''')
+      DeOrifyGoalResult([goal'], fvs', uvdefs', false, newclauses''', hcs'')
     else
-      DeOrifyGoalResult([pred], fvs', uvdefs', false, newclauses''')
+      DeOrifyGoalResult([pred], fvs', uvdefs', false, newclauses''', hcs'')
 
 (**********************************************************************
 *deOrifyAndGoal:
 **********************************************************************)
-and deOrifyAndGoal goal1 goal2 uvs uvdefs andgoal wholegoal newclauses =
+and deOrifyAndGoal goal1 goal2 uvs uvdefs andgoal wholegoal newclauses hcs =
   let getAndGoal goals =
     match goals with
       [] -> None
     | g::gs -> Some g
   in
   
-  let result1 = deOrifyGoal goal2 uvs uvdefs andgoal false newclauses in
+  let result1 = deOrifyGoal goal2 uvs uvdefs andgoal false newclauses hcs in
   let r1goals = getDeOrifyGoalResultGoals result1 in
+  let hcs' = getDeOrifyGoalResultHiddenConstants result1 in
   let andgoal' = getAndGoal r1goals in
   
   let uvdefs' = getDeOrifyGoalResultUVDefs result1 in
   let newclauses' = getDeOrifyGoalResultNewClauses result1 in
   
-  let result2 = deOrifyGoal goal1 uvs uvdefs' andgoal' wholegoal newclauses' in
+  let result2 = deOrifyGoal goal1 uvs uvdefs' andgoal' wholegoal newclauses' hcs' in
   let fvs' = union (getDeOrifyGoalResultFVS result1) (getDeOrifyGoalResultFVS result2) in
+  let hcs'' = getDeOrifyGoalResultHiddenConstants result2 in
   let hascut' = (getDeOrifyGoalResultHasCut result1) || (getDeOrifyGoalResultHasCut result2) in
   let uvdefs' = getDeOrifyGoalResultUVDefs result2 in
   let newclauses'' = getDeOrifyGoalResultNewClauses result2 in
   
-  DeOrifyGoalResult(getDeOrifyGoalResultGoals result2, fvs', uvdefs', hascut', newclauses'')
+  DeOrifyGoalResult(getDeOrifyGoalResultGoals result2, fvs', uvdefs', hascut', newclauses'', hcs'')
 
 (**********************************************************************
 *deOrifyClause:
 * Removes disjunctions from a clause.
 **********************************************************************)
-and deOrifyClause term currentclauses fvs uvs uvdefs newclauses =
+and deOrifyClause term currentclauses fvs uvs uvdefs newclauses hcs =
   let checkClauseArguments args fvs =
     Errormsg.impossible Errormsg.none "Clauses.checkClauseArguments: not implemented"
   in
@@ -544,24 +580,24 @@ and deOrifyClause term currentclauses fvs uvs uvdefs newclauses =
       let atomicHead () =  
         let (args', fvs') = checkClauseArguments args fvs in
         let newclause = Absyn.ApplicationTerm(Absyn.FirstOrderApplication(f, args', num),b,pos) in
-        DeOrifyClauseResult(newclause::currentclauses, fvs', uvdefs, newclauses)
+        DeOrifyClauseResult(newclause::currentclauses, fvs', uvdefs, newclauses, hcs)
       in
       
       (match f with
         Absyn.ConstantTerm(c,_,_,_) ->
           if c = Pervasive.allConstant then
             let tsym = Absyn.getTermAbstractionVar arg in
-            let DeOrifyClauseResult(clauses', fvs', uvdefs', newclauses') = deOrifyClause arg [] fvs uvs uvdefs newclauses in
+            let DeOrifyClauseResult(clauses', fvs', uvdefs', newclauses', hcs') = deOrifyClause arg [] fvs uvs uvdefs newclauses hcs in
             let clauses'' = distributeUniversal f tsym clauses' in
             let fvs'' = List.filter ((=) tsym) fvs' in
-            DeOrifyClauseResult(clauses'' @ currentclauses, fvs'', uvdefs, newclauses')
+            DeOrifyClauseResult(clauses'' @ currentclauses, fvs'', uvdefs, newclauses', hcs')
             
           else if c = Pervasive.implConstant then
-            let DeOrifyGoalResult(goals, fvs', uvdefs', hascut', newclauses') = deOrifyGoal arg uvs uvdefs None false newclauses in
-            let DeOrifyClauseResult(clauses', fvs'', uvdefs'', newclauses'') = deOrifyClause (List.hd args) [] (union fvs fvs') uvs uvdefs' newclauses' in
+            let DeOrifyGoalResult(goals, fvs', uvdefs', hascut', newclauses', hcs') = deOrifyGoal arg uvs uvdefs None false newclauses hcs in
+            let DeOrifyClauseResult(clauses', fvs'', uvdefs'', newclauses'', hcs'') = deOrifyClause (List.hd args) [] (union fvs fvs') uvs uvdefs' newclauses' hcs' in
             let t = List.hd clauses' in
             let clauses'' = reverseDistributeImplication t goals currentclauses in
-            DeOrifyClauseResult(clauses'', fvs'', uvdefs'', newclauses'')
+            DeOrifyClauseResult(clauses'', fvs'', uvdefs'', newclauses'', hcs'')
             
           else
             atomicHead ()
@@ -570,20 +606,20 @@ and deOrifyClause term currentclauses fvs uvs uvdefs newclauses =
           atomicHead ())
     
     (*  The term is a propositional head.  *)
-  | _ -> DeOrifyClauseResult(term::currentclauses, fvs, uvdefs, newclauses)
+  | _ -> DeOrifyClauseResult(term::currentclauses, fvs, uvdefs, newclauses, hcs)
 
 (**********************************************************************
 *deOrifyClauses:
 * Removes disjunctions from a list of clauses.  The result is a list
 * of absyn clauses that don't contain disjunctions.
 **********************************************************************)
-and deOrifyClauses clauses currentclauses uvs newclauses =
+and deOrifyClauses clauses currentclauses uvs newclauses hcs =
   match clauses with
     [] ->
-      DeOrifyClauseResult(currentclauses, [], [], newclauses)
+      DeOrifyClauseResult(currentclauses, [], [], newclauses, hcs)
   | c::cs ->
-      let DeOrifyClauseResult(clauses', fvs', uvdefs', newclauses') = deOrifyClauses cs currentclauses uvs newclauses in
-      (deOrifyClause c clauses' fvs' uvs uvdefs' newclauses')
+      let DeOrifyClauseResult(clauses', fvs', uvdefs', newclauses', hcs') = deOrifyClauses cs currentclauses uvs newclauses hcs in
+      (deOrifyClause c clauses' fvs' uvs uvdefs' newclauses' hcs')
 
 (**********************************************************************
 *etaFluffQuantifier:
@@ -733,6 +769,16 @@ and newConstant sym ctable =
 * a preabsyn and absyn module, and returns an updated absyn module.
 **********************************************************************)
 and translateClauses pmod amod =
+  let getNewClauses ncs =
+    let ncs' = List.map getNewClauseClause ncs in
+    ncs'
+  in
+  
+  let setHiddenConstants amod hcs =
+    let _ = (Absyn.getModuleHiddenConstantsRef amod) := (List.map getHiddenConstantConstant hcs) in
+    amod
+  in
+  
   (********************************************************************
   *translateClause:
   * Translates a given preabsyn clause.  It first parses it using the
@@ -740,15 +786,15 @@ and translateClauses pmod amod =
   * the term, and finally deorifies it.  The result is a list of
   * absyn clauses.
   ********************************************************************)
-  let translateClause preclause amod clauses newclauses =
+  let translateClause preclause amod clauses newclauses hcs =
     let preterm = Preabsyn.getClauseTerm preclause in
     let clause =
       Parse.translateClause preterm amod newConstant newKind in
     
     let uvdefs = ref [] in
     let clauses' = normalizeClause clause [] [] uvdefs false in
-    let DeOrifyClauseResult(cls, _, _, newcls) = (deOrifyClauses clauses' clauses [] newclauses) in
-    (cls, newcls)
+    let DeOrifyClauseResult(clauses', _, _, newclauses', hcs') = (deOrifyClauses clauses' clauses [] newclauses hcs) in
+    (clauses', newclauses', hcs')
   in
   
   (********************************************************************
@@ -756,18 +802,19 @@ and translateClauses pmod amod =
   * Auxiliary function that iterates over a list of preabsyn clauses,
   * translates them, and flattens the resulting lists of clauses.
   ********************************************************************)
-  let rec parse' preclauses amod clauses newclauses =
+  let rec parse' preclauses amod clauses newclauses hcs =
     match preclauses with
-      [] -> (clauses, newclauses)
+      [] -> (clauses, newclauses, hcs)
     | c::cs ->
-        let (clauses', newclauses') = translateClause c amod clauses newclauses in
-        parse' cs amod clauses' newclauses'
+        let (clauses', newclauses', hcs') = translateClause c amod clauses newclauses hcs in
+        parse' cs amod clauses' newclauses' hcs'
 
-  in  
+  in
   let preclauses = Preabsyn.getModuleClauses pmod in
-  let (clauses', newclauses') = parse' preclauses amod [] [] in
+  let (clauses', newclauses', hcs') = parse' preclauses amod [] [] [] in
   
   
-  (*  Enter them into the module  *)
-  (*  let _ = (Absyn.getModuleClausesRef amod) := clauses' @ (List.map getNewClauseClause) newclauses') in  *)
-  amod
+  (*  Enter the hidden constants into the module  *)
+  let amod' = setHiddenConstants amod hcs' in
+  let newclauses'' = getNewClauses newclauses' in
+  (amod', clauses', List.concat newclauses'')

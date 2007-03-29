@@ -24,14 +24,12 @@ and atypevar =
   TypeVar of (atype option ref * atype option ref * bool ref * bool ref * 
 				bool ref * int option ref * int ref * int ref)
 
-
 (****************************************************************************
 *Type Var Information:
 *****************************************************************************)
 and atypevarinfo =
-	BindableTypeVar of atype option ref
+	  BindableTypeVar of atype option ref
   |	FreeTypeVar of (atypevar option ref * bool option ref)
-
 
 (*****************************************************************************
 *Type:
@@ -222,7 +220,7 @@ and amodule =
     Module of (string * aimportedmodule list * aaccummulatedmodule list *
       aconstant Table.SymbolTable.t ref * akind Table.SymbolTable.t ref *
       atypeabbrev Table.SymbolTable.t * astringinfo list * akind list *
-      akind list * aconstant list * aconstant list * aconstant list *
+      akind list * aconstant list * aconstant list * aconstant list ref *
       askeleton list * askeleton list * aclauseinfo ref)
   | Signature of (string * akind list * aconstant list)
   | ErrorModule
@@ -328,19 +326,17 @@ val getModuleKindTable : amodule -> akind Table.SymbolTable.t
 val getModuleTypeAbbrevTable : amodule -> atypeabbrev Table.SymbolTable.t
 val getModuleClauses : amodule -> aclauseinfo
 val getModuleClausesRef : amodule -> aclauseinfo ref
+val getModuleHiddenConstantsRef : amodule -> aconstant list ref
 val makeTypeEnvironment : int -> atype list
 val makeTypeSetVariable : atype -> atype list -> atype
 
-(* added by Xiaochu *)
-val getTypeSymbolHiddenConst : atypesymbol -> aconstant
-val getTypeSymbolType : atypesymbol -> atype
-
+val getVariableDataLastGoal : avar -> int
 val setVariableDataLastGoal : avar -> int -> unit
-val setTypeVariableDataLastGoal : atypevar -> int -> unit
 val setVariableDataOffset : avar -> int -> unit
-val setTypeVariableDataOffset : atypevar -> int -> unit
-
 val isPermanentVariable : avar -> bool
-val isPermanentTypeVariable : atypevar -> bool
-val getVariableLastGoal : avar -> int
+
 val getTypeVariableLastGoal : atypevar -> int
+val getTypeVariableFirstGoal : atypevar -> int
+val setTypeVariableOffset : atypevar -> int -> unit
+val setTypeVariableLastGoal : atypevar -> int -> unit
+val isPermanentTypeVariable : atypevar -> bool

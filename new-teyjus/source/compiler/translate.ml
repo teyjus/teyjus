@@ -859,6 +859,8 @@ and translateModule = fun mod' ktable ctable atable ->
                   ktable)
                 else
                   ktable
+            | Some k ->
+                (Errormsg.impossible Errormsg.none "Translate.translateModule: invalid kind")
             | None -> (Table.add s kind ktable))
         | Absyn.LocalKind(s, None, _, p) ->
             (match (Table.find s ktable) with
@@ -1121,7 +1123,7 @@ and translateModule = fun mod' ktable ctable atable ->
         (*  Verify that all constants have a body, and
             all kinds have an arity.  *)
         if (checkConstantBodies ctable) && (checkKindArities ktable) then
-          let amod = Absyn.Module(name, [], [], ref ctable, ref ktable, atable, [], [], [], [], [], [], [], [], ref(Absyn.ClauseBlocks([]))) in
+          let amod = Absyn.Module(name, [], [], ref ctable, ref ktable, atable, [], [], [], [], [], ref [], [], [], ref(Absyn.ClauseBlocks([]))) in
           amod
         else
           Absyn.ErrorModule
