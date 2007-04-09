@@ -24,3 +24,6 @@ val makeConstantMolecule : Absyn.aconstant -> typemolecule
 val makeKindMolecule : Absyn.akind -> typemolecule
 
 val skeletonizeType : Absyn.atype -> typemolecule
+
+(* added by Xiaochu *)
+val equalMappedTypeSkels : Absyn.askeleton -> Absyn.askeleton -> bool
