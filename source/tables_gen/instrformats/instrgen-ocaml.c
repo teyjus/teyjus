@@ -40,7 +40,7 @@ static char* addStr(char* str, char* addOn)
 #define WRITE_PREFIX     "write"
 #define INDENT           "  "
 #define INDENT2          "    "
-#define WRITEBYTE        "Writeutil.writeByte"
+#define WRITE            "Writeutil.write"
 #define INSCAT_PREFIX    "inscat"
 #define INS_PREFIX       "Ins_"
 
@@ -169,8 +169,6 @@ static char* OC_mkArrow(char* left, char* right)
     
     strcpy(arrow, left);
     strcat(arrow, " -> ");
-//    strcat(arrow, INDENT);
-//    strcat(arrow, INDENT);
     strcat(arrow, right);
 
     return arrow;
@@ -197,20 +195,22 @@ static char* opSizesMLI;
 static char* opSizesML;
 static char* writeFuncs;
 
-static char* ocgenWriteOpFunc(char* typeName, int numBytes)
+static char* ocgenWriteOpFunc(char* typeName, char* compType, int numBytes)
 {
     char* funcName = UTIL_appendStr(WRITE_PREFIX, typeName);
     char* numBytesText = UTIL_itoa(numBytes);
     char* arg = "arg";
-    char* funcBody1 = UTIL_appendStr(WRITEBYTE, numBytesText);
+    char* funcBody1 = UTIL_mallocStr(strlen(WRITE) + strlen(compType) +
+                                     strlen(numBytesText));
     char *funcBody2, *func;
     
-    if (strcmp(typeName, "L") == 0) 
-        funcBody2 = UTIL_appendStr(funcBody1, " (!arg)");
-    else funcBody2 = UTIL_appendStr(funcBody1, " arg");
-    func = OC_mkFunc(funcName, arg, funcBody2);
-
-    free(funcName); free(numBytesText);  free(funcBody1); free(funcBody2);
+    strcpy(funcBody1, WRITE);
+    strcat(funcBody1, compType);
+    strcat(funcBody1, numBytesText);                free(numBytesText);
+    
+    funcBody2 = UTIL_appendStr(funcBody1, " arg");  free(funcBody1);
+    func = OC_mkFunc(funcName, arg, funcBody2); 
+    free(funcName); free(funcBody2);
     return func;
 }
 
@@ -223,7 +223,7 @@ void ocgenOpType(char* typeName, int numBytes, char* compType)
     char* myOpType      = OC_mkTypeDec(myTypeName, compType);
     char* myopTypes     = addStr(opTypes, myOpType);
     /* generate write functions */
-    char* func          = ocgenWriteOpFunc(typeName, numBytes);
+    char* func          = ocgenWriteOpFunc(typeName, compType, numBytes);
     char* myWriteFuncs  = addStr(writeFuncs, func);
 
     /* generate sizes */
@@ -255,7 +255,7 @@ void ocgenOpCodeType(int numBytes)
     char* myOpCodeSizeML  = OC_mkVarDef(mySizeName, size);
     char* myopSizeMLI = addLine(opSizesMLI, myOpCodeSizeMLI);
     char* myopSizeML  = addLine(opSizesML, myOpCodeSizeML);
-    char* func = ocgenWriteOpFunc("opcode", numBytes);
+    char* func = ocgenWriteOpFunc("opcode", "int", numBytes);
     char* myWriteFuncs = addLine(writeFuncs, func);
     
     free(size); free(mySizeName);
