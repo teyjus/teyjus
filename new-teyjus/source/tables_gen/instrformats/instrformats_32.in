@@ -12,7 +12,7 @@ OPERAND TYPES
   K      KstIndex       TwoBytes       2   int       /* kind symbol table index  */
   L      CodeLabel      CSpacePtr      4   intref    /* code location  */
   I      Int            int            4   int       /* integer immediate value */
-  F      Float          float          4   int       /* floating point immediate value */
+  F      Float          float          4   float     /* floating point immediate value */
   S      Str            DF_StrDataPtr  2   int       /* string pointer */
   MT     ModTab         MemPtr         2   int       /* module table address */
   IT     ImplTab        MemPtr         2   int       /* impl table address */
