@@ -15,22 +15,8 @@ char* DBG(char* str)
 void TEST_CreateM1GKindTable(int fd)
 {
   LK_FILE_PUT2(fd,2);
-  LK_FILE_PUT1(fd,3); LK_FILE_PutString(fd,"glob0");
-  LK_FILE_PUT1(fd,0); LK_FILE_PutString(fd,"glob1");
-}
-
-void TEST_CheckGKindTable(int fd)
-{
-  char* tmp=NULL;
-  ASSERT(LK_FILE_GET2(fd)==2,"M1 - Global kind count");
-  ASSERT(LK_FILE_GET1(fd)==3,"M1 - GKind0 : Arity");
-  tmp=LK_FILE_GetString(fd);
-  ASSERT(!strcmp(tmp,"glob0"),"M1 - GKind0 : name");
-  free(tmp);
-  ASSERT(LK_FILE_GET1(fd)==0,"M1 - GKind1 : Arity");
-  tmp=LK_FILE_GetString(fd);
-  ASSERT(!strcmp(tmp,"glob1"),"M1 - GKind1 : name");
-  free(tmp);
+  LK_FILE_PUT1(fd,0x7c); LK_FILE_PutString(fd,"glob0");
+  LK_FILE_PUT1(fd,1); LK_FILE_PutString(fd,"glob1");
 }
 
 void TEST_CreateM1LKindTable(int fd)
@@ -40,37 +26,34 @@ void TEST_CreateM1LKindTable(int fd)
   LK_FILE_PUT1(fd,0);
 }
 
-void TEST_CheckLKindTable(int fd)
+void TEST_CreateM1KindTables(int fd)
+{
+  TEST_CreateM1GKindTable(fd);
+  TEST_CreateM1LKindTable(fd);
+}
+
+void TEST_CheckM1GKindTable(int fd)
+{
+  char* tmp=NULL;
+  ASSERT(LK_FILE_GET2(fd)==2,"M1 - Global kind count");
+  ASSERT(LK_FILE_GET1(fd)==0x7c,"M1 - GKind0 : Arity");
+  tmp=LK_FILE_GetString(fd); ASSERT(!strcmp(tmp,"glob0"),"M1 - GKind0 : name"); free(tmp);
+  ASSERT(LK_FILE_GET1(fd)==1,"M1 - GKind1 : Arity");
+  tmp=LK_FILE_GetString(fd); ASSERT(!strcmp(tmp,"glob1"),"M1 - GKind1 : name"); free(tmp);
+}
+
+void TEST_CheckM1LKindTable(int fd)
 {
   ASSERT(LK_FILE_GET2(fd)==2,"M1 - Local kind count");
   ASSERT(LK_FILE_GET1(fd)==1,"M1 - LKind0 : Arity");
   ASSERT(LK_FILE_GET1(fd)==0,"M1 - LKind1 : Arity");
 }
 
-void TEST_CreateM1M2KindRenameTable(int fd)
+void TEST_CheckM1KindTables(int fd)
 {
-  LK_FILE_PUT2(fd,3);
-  LK_FILE_PutString(fd,"foo"); LK_FILE_PUT1(fd,GLOBAL); LK_FILE_PUT2(fd,1);
-  LK_FILE_PutString(fd,"bar"); LK_FILE_PUT1(fd,LOCAL); LK_FILE_PUT2(fd,1);
-  LK_FILE_PutString(fd,"baz"); LK_FILE_PUT1(fd,GLOBAL); LK_FILE_PUT2(fd,0);
-}
-
-void TEST_CreateM2KindTable(int fd)
-{
-  LK_FILE_PUT2(fd,3);
-  LK_FILE_PUT1(fd,0); LK_FILE_PutString(fd,"foo");
-  LK_FILE_PUT1(fd,3); LK_FILE_PutString(fd,"baz");
-  LK_FILE_PUT1(fd,0); LK_FILE_PutString(fd,"bar");
-  LK_FILE_PUT2(fd,1);
-  LK_FILE_PUT1(fd,0x7c);
-}
-
-void TEST_CheckRNKindTable(int fd)
-{
-  ASSERT(LK_FILE_GET2(fd)==3,"RN - Local kind count");
-  ASSERT(LK_FILE_GET1(fd)==1,"RN - LKind0 : Arity");
-  ASSERT(LK_FILE_GET1(fd)==0,"RN - LKind1 : Arity");
-  ASSERT(LK_FILE_GET1(fd)==0x7c,"RN - LKind2 : Arity");
+  ASSERT(LK_FILE_GET2(fd)==4,"M1 - Total Kind count");
+  TEST_CheckM1GKindTable(fd);
+  TEST_CheckM1LKindTable(fd);
 }
 
 void TEST_CreateM1TySkelTable(int fd)
@@ -80,15 +63,18 @@ void TEST_CreateM1TySkelTable(int fd)
   LK_FILE_PUT1(fd,KIND);LK_FILE_PUT1(fd,GLOBAL);LK_FILE_PUT2(fd,1);
   LK_FILE_PUT1(fd,VARIABLE);LK_FILE_PUT1(fd,1);
   LK_FILE_PUT1(fd,VARIABLE);LK_FILE_PUT1(fd,1);
+  LK_FILE_PUT1(fd,VARIABLE);LK_FILE_PUT1(fd,1);
 }
 
-void TEST_CheckTySkelTable(int fd)
+void TEST_CheckM1TySkelTable(int fd)
 {
   ASSERT(LK_FILE_GET2(fd)==2,"NumTySkels");
   ASSERT(LK_FILE_GET1(fd)==ARROW,"->");
   ASSERT(LK_FILE_GET1(fd)==KIND,"K");
   ASSERT(LK_FILE_GET1(fd)==GLOBAL,"G");
   ASSERT(LK_FILE_GET2(fd)==1,"1");
+  ASSERT(LK_FILE_GET1(fd)==VARIABLE,"V");
+  ASSERT(LK_FILE_GET1(fd)==1,"1");
   ASSERT(LK_FILE_GET1(fd)==VARIABLE,"V");
   ASSERT(LK_FILE_GET1(fd)==1,"1");
   
@@ -103,6 +89,33 @@ void TEST_CreateM1GConstTable(int fd)
   LK_FILE_PUT1(fd,3); LK_FILE_PutString(fd,"Glob0");LK_FILE_PUT2(fd,1);
   LK_FILE_PUT1(fd,0);LK_FILE_PUT1(fd,3);LK_FILE_PUT1(fd,3);
   LK_FILE_PUT1(fd,3); LK_FILE_PutString(fd,"Glob1");LK_FILE_PUT2(fd,1);
+}
+
+void TEST_CreateM1LConstTable(int fd)
+{
+  LK_FILE_PUT2(fd,2);
+  
+  LK_FILE_PUT1(fd,3);LK_FILE_PUT1(fd,3);LK_FILE_PUT1(fd,3);
+  LK_FILE_PUT1(fd,3);LK_FILE_PUT2(fd,1);
+  
+  LK_FILE_PUT1(fd,0);LK_FILE_PUT1(fd,3);LK_FILE_PUT1(fd,3);
+  LK_FILE_PUT1(fd,3);LK_FILE_PUT2(fd,1);
+}
+
+void TEST_CreateM1HConstTable(int fd)
+{
+  LK_FILE_PUT2(fd,2);
+  
+  LK_FILE_PUT1(fd,3);LK_FILE_PUT1(fd,3);LK_FILE_PUT2(fd,1);
+  
+  LK_FILE_PUT1(fd,0);LK_FILE_PUT1(fd,3);LK_FILE_PUT2(fd,1);
+}
+
+void TEST_CreateM1ConstTables(int fd)
+{
+  TEST_CreateM1GConstTable(fd);
+  TEST_CreateM1LConstTable(fd);
+  TEST_CreateM1HConstTable(fd);
 }
 
 void TEST_CheckM1GConstTable(int fd)
@@ -127,17 +140,6 @@ void TEST_CheckM1GConstTable(int fd)
   ASSERT(LK_FILE_GET2(fd)==1,"M1 - GConst1 : ty_skel_index");
 }
 
-void TEST_CreateM1LConstTable(int fd)
-{
-  LK_FILE_PUT2(fd,2);
-  
-  LK_FILE_PUT1(fd,3);LK_FILE_PUT1(fd,3);LK_FILE_PUT1(fd,3);
-  LK_FILE_PUT1(fd,3);LK_FILE_PUT2(fd,1);
-  
-  LK_FILE_PUT1(fd,0);LK_FILE_PUT1(fd,3);LK_FILE_PUT1(fd,3);
-  LK_FILE_PUT1(fd,3);LK_FILE_PUT2(fd,1);
-}
-
 void TEST_CheckM1LConstTable(int fd)
 {
   ASSERT(LK_FILE_GET2(fd)==2,"M1 - Local constant count");
@@ -153,15 +155,6 @@ void TEST_CheckM1LConstTable(int fd)
   ASSERT(LK_FILE_GET2(fd)==1,"M1 - LConst1 : ty_skel_index");
 }
 
-void TEST_CreateM1HConstTable(int fd)
-{
-  LK_FILE_PUT2(fd,2);
-  
-  LK_FILE_PUT1(fd,3);LK_FILE_PUT1(fd,3);LK_FILE_PUT2(fd,1);
-  
-  LK_FILE_PUT1(fd,0);LK_FILE_PUT1(fd,3);LK_FILE_PUT2(fd,1);
-}
-
 void TEST_CheckM1HConstTable(int fd)
 {
   ASSERT(LK_FILE_GET2(fd)==2,"M1 - Hidden constant count");
@@ -171,6 +164,14 @@ void TEST_CheckM1HConstTable(int fd)
   ASSERT(LK_FILE_GET1(fd)==0,"M1 - HConst1 : ty_env_size");
   ASSERT(LK_FILE_GET1(fd)==3,"M1 - HConst1 : neededness");
   ASSERT(LK_FILE_GET2(fd)==1,"M1 - HConst1 : ty_skel_index");
+}
+
+void TEST_CheckM1ConstTables(int fd)
+{
+  ASSERT(LK_FILE_GET2(fd)==6,"M1 - Total Const count");
+  TEST_CheckM1GConstTable(fd);
+  TEST_CheckM1LConstTable(fd);
+  TEST_CheckM1HConstTable(fd);
 }
 
 void TEST_CreateM1StringTable(int fd)

@@ -26,34 +26,29 @@ typedef struct{
 
 int CheckGConstEqv(ConstInd i,Const_t new);
 
-ConstInd LoadGConst()
+ConstInd LoadGConst(int fd, struct Module_st* CMData)
 {
   Const_t tmp;
-  tmp.fixity=GET1();
-  tmp.precedence=GET1();
-  tmp.ty_env_size=GET1();;
-  //tmp.ty_preserving_info=GET1();
-  Name name;
-  GetName(&name);
+  tmp.fixity=LK_FILE_GET1(fd);
+  tmp.precedence=LK_FILE_GET1(fd);
+  tmp.ty_env_size=LK_FILE_GET1(fd);
+  tmp.neededness=LK_FILE_GET1(fd);
+  char* name=LK_FILE_GetString(fd);
   ConstInd index=LK_RENAME_RenameConst(name);
-  tmp.ty_skel_index=GetTySkelInd(PeekInput(),CM);
-  if(!CheckGConstEqv(index,tmp))
-  {
-    EM_THROW(LK_LinkError);
-  }
+  free(name);
+  tmp.ty_skel_index=GetTySkelInd(fd,CMData);
+  //if(!CheckGConstEqv(index,tmp))
+  //  EM_THROW(LK_LinkError);
   return index;
 }
 
-void LoadGConsts()
+void LoadGConsts(int fd, struct Module_st* CMData)
 {
   int i;
-  int count=CM->GConstcount=GET2();
-  CM->GConst=(ConstInd*)EM_malloc(count*sizeof(ConstInd));
-  printf("Loading %d Global Constants.\n",count);//DEBUG
+  int count=CMData->GConstcount=LK_FILE_GET2(fd);
+  CMData->GConst=(ConstInd*)EM_malloc(count*sizeof(ConstInd));
   for(i=0;i<count;i++)
-  {
-    CM->GConst[i]=LoadGConst();
-  }
+    CMData->GConst[i]=LoadGConst(fd,CMData);
 }
 
 Const_t* GConstTab=NULL;
@@ -72,7 +67,7 @@ void LoadTopGConst(int fd, struct Module_st* CMData, int i)
 void LoadTopGConsts(int fd, struct Module_st* CMData)
 {
   int i;
-  int count=GConstTabSize=LK_FILE_GET2(fd);
+  int count=GConstTabSize=CMData->GConstcount=LK_FILE_GET2(fd);
   GConstTab=(Const_t*)EM_malloc(count*sizeof(Const_t));
   CMData->GConst=(ConstInd*)EM_malloc(count*sizeof(ConstInd));
   for(i=0;i<count;i++)
@@ -208,6 +203,6 @@ int CheckGConstEqv(ConstInd i,Const_t new)
   b=b&&tmp->fixity==new.fixity;
   b=b&&tmp->precedence==new.precedence;
   b=b&&tmp->ty_env_size==new.ty_env_size;
-  b=b&&0==TySkelCmp(tmp->ty_skel_index,new.ty_skel_index);
+  //b=b&&0==TySkelCmp(tmp->ty_skel_index,new.ty_skel_index);
   return b;
 }

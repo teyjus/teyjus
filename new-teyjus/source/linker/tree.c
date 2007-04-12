@@ -49,6 +49,6 @@ MarkInd LK_TREE_Retrieve(void **root, char* key)
 
 void LK_TREE_Empty(void **root)
 {
-  tdestroy(root,free_node);
+  tdestroy(*root,free_node);
   *root=NULL;
 }
