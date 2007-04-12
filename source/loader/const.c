@@ -39,7 +39,7 @@ int LD_CONST_LoadCst(MEM_GmtEnt* ent)
     cst[i].fixity=LD_FILE_GET1();
     cst[i].precedence=LD_FILE_GET1();
     cst[i].typeEnvSize=LD_FILE_GET1();
-    cst[i].neededness=LD_FILE_GET1();
+    cst[i].neededness=0;
     cst[i].univCount=0;
     cst[i].name=LD_STRING_LoadString(ent);
     cst[i].tskTabIndex=LD_FILE_GET2();
@@ -57,7 +57,7 @@ int LD_CONST_LoadCst(MEM_GmtEnt* ent)
     cst[i].fixity=LD_FILE_GET1();
     cst[i].precedence=LD_FILE_GET1();
     cst[i].typeEnvSize=LD_FILE_GET1();
-    cst[i].neededness=LD_FILE_GET1();
+    cst[i].neededness=0;
     cst[i].univCount=0;
     cst[i].name=NULL;
     cst[i].tskTabIndex=LD_FILE_GET2();
@@ -74,8 +74,8 @@ int LD_CONST_LoadCst(MEM_GmtEnt* ent)
   {
     cst[i].fixity=0;
     cst[i].precedence=0;
-    cst[i].typeEnvSize=LD_FILE_GET1();
-    cst[i].neededness=LD_FILE_GET1();
+    cst[i].typeEnvSize=0;
+    cst[i].neededness=0;
     cst[i].univCount=0;
     cst[i].name=NULL;
     cst[i].tskTabIndex=LD_FILE_GET2();
