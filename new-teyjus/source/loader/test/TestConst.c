@@ -21,20 +21,17 @@ void __CUT__constcheck()
     LD_FILE_PipePUT1(0xfe);
     LD_FILE_PipePUT1(0xfd);
     LD_FILE_PipePUT1(0xfc);
-    LD_FILE_PipePUT1(0xfb);
     LD_FILE_PipePutString("G1");
     LD_FILE_PipePUT2(0xfafa);
     LD_FILE_PipePUT1(0xde);
     LD_FILE_PipePUT1(0xdd);
     LD_FILE_PipePUT1(0xdc);
-    LD_FILE_PipePUT1(0xdb);
     LD_FILE_PipePutString("G2");
     LD_FILE_PipePUT2(0xdada);
     LD_FILE_PipePUT2(1);//Local Consts
     LD_FILE_PipePUT1(0xce);
     LD_FILE_PipePUT1(0xcd);
     LD_FILE_PipePUT1(0xcc);
-    LD_FILE_PipePUT1(0xcb);
     LD_FILE_PipePUT2(0xcaca);
     LD_FILE_PipePUT2(0);//Hidden Consts
     
