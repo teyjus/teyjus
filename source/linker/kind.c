@@ -21,24 +21,9 @@ typedef struct{
 
 //struct Vector GKinds;
 
-KindInd LoadTopGKind(int fd, int i);
-KindInd LoadGKind();
 void WriteGKind(int fd, int i);
 
 void WriteGKinds(int fd);
-void WriteLKinds();
-
-void LoadGKinds(int fd, struct Module_st* CMData)
-{
-  int i;
-  
-  TwoBytes count=CMData->GKindcount=LK_FILE_GET2(fd);
-  CMData->GKind=EM_malloc(count*sizeof(KindInd));
-  for(i=0;i<count;i++)
-  {
-    CMData->GKind[i]=LoadGKind(fd);
-  }
-}
 
 KindInd LoadGKind(int fd)
 {
@@ -57,8 +42,32 @@ KindInd LoadGKind(int fd)
   return index;
 }
 
+void LoadGKinds(int fd, struct Module_st* CMData)
+{
+  int i;
+  
+  TwoBytes count=CMData->GKindcount=LK_FILE_GET2(fd);
+  CMData->GKind=EM_malloc(count*sizeof(KindInd));
+  for(i=0;i<count;i++)
+  {
+    CMData->GKind[i]=LoadGKind(fd);
+  }
+}
+
 Kind_t* GKindTab=NULL;
 int GKindTabSize=-1;
+
+KindInd LoadTopGKind(int fd,int i)
+{
+  KindInd tmp={GLOBAL,i};
+  tmp.index=i;
+  tmp.gl_flag=GLOBAL;
+  
+  GKindTab[i].arity=LK_FILE_GET1(fd);
+  GKindTab[i].name=LK_FILE_GetString(fd);
+  //printf("RGK(%d,%s)%x:\n",GKindTab[i].arity,GKindTab[i].name,GKindTab[i].name);fflush(stdout);
+  return tmp;
+}
 
 void LoadTopGKinds(int fd, struct Module_st* CMData)
 {
@@ -73,18 +82,6 @@ void LoadTopGKinds(int fd, struct Module_st* CMData)
   {
     CMData->GKind[i]=LoadTopGKind(fd,i);
   }
-}
-
-KindInd LoadTopGKind(int fd,int i)
-{
-  KindInd tmp={GLOBAL,i};
-  tmp.index=i;
-  tmp.gl_flag=GLOBAL;
-  
-  GKindTab[i].arity=LK_FILE_GET1(fd);
-  GKindTab[i].name=LK_FILE_GetString(fd);
-  //printf("RGK(%d,%s)%x:\n",GKindTab[i].arity,GKindTab[i].name,GKindTab[i].name);fflush(stdout);
-  return tmp;
 }
 
 void WriteGKinds(int fd)

@@ -102,21 +102,6 @@ int TySkelCmp(TySkelInd a, TySkelInd b)
   if(a==b)
     return 0;
   
-  struct Vector* ap=LK_VECTOR_GetPtr(&TySkels,a);
-  struct Vector* bp=LK_VECTOR_GetPtr(&TySkels,b);
-  
-  int size=LK_VECTOR_Size(ap);
-  if(size!=LK_VECTOR_Size(bp))
-    return -1;
-  
-  char* tmpa=LK_VECTOR_GetPtr(ap,0);
-  char* tmpb=LK_VECTOR_GetPtr(bp,0);
-  int i;
-  for(i=0;i<size;i++)
-  {
-    if(tmpa[i]!=tmpb[i])
-      return -1;
-  }
-  
+  ///\todo Actually make sure type skeletons match.
   return 0;
 }

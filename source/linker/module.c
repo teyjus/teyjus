@@ -114,7 +114,7 @@ void LoadAccModule(char* modname)
   
   LoadTySkels(PeekInput(),CM);
   
-  LoadGConsts();
+  LoadGConsts(PeekInput(),CM);
   LoadLConsts(PeekInput(),CM);
   LoadHConsts(PeekInput(),CM);
   
@@ -145,7 +145,7 @@ void LoadImpModule(char* modname)
   
   LoadTySkels(PeekInput(),CM);
   
-  LoadGConsts();
+  LoadGConsts(PeekInput(),CM);
   LoadLConsts(PeekInput(),CM);
   LoadHConsts(PeekInput(),CM);
   
@@ -184,7 +184,7 @@ void LoadImpModules()
     Name name;
     GetName(&name);
     LK_RENAME_LoadKindRNTable(PeekInput(),CM);
-    LK_RENAME_LoadConstRNTable();
+    LK_RENAME_LoadConstRNTable(PeekInput(),CM);
     CM->Import[i]=NewImportTab();
     LoadImpModule(name.string);
     RestoreImportTab();
@@ -202,7 +202,7 @@ void LoadAccModules()
     Name name;
     GetName(&name);
     LK_RENAME_LoadKindRNTable(PeekInput(),CM);
-    LK_RENAME_LoadConstRNTable();
+    LK_RENAME_LoadConstRNTable(PeekInput(),CM);
     LoadAccModule(name.string);
     Clear(name);
   }
