@@ -1,18 +1,18 @@
-<linkcode version number> --- 1 word
-[Module Name]
-<name size> --- 1 byte
+//Common field formats
+[String] (Strings should not contain a '\0' terminator).
+<length of string in bytes> --- 1 byte
 {
-  <ith character of name> --- 1 byte
+  <ith character of string> --- 1 byte
 }
 
+//Beginning of linkcode description
+<linkcode version number> --- 1 word
+<top-level module name> --- [String]
+
 [Dependency List]
-<number of module files> --- 2 bytes
+<number of module dependencies> --- 2 bytes
 {
-  [Module Name]
-  <name size> --- 1 byte
-  {
-    <ith character of name> --- 1 byte
-  }
+  <dependent module name> --- [String]
 }
 
 <size of code area> --- 1 word
@@ -23,10 +23,7 @@
 {
   [Global Kind]
   <arity> --- 1 byte
-  <name size> --- 1 byte
-  {
-    <ith character of name> --- 1 byte
-  }
+  <name> --- [String]
 }
 
 [Local Kinds]
@@ -63,11 +60,7 @@
   <fixity> --- 1 byte
   <precedence> --- 1 byte
   <type env size> --- 1 byte
-  <neededness info> --- 1 byte
-  <name size> --- 1 byte
-  {
-    <ith character of name> --- 1 byte
-  }
+  <name> --- [String]
   <index into type skeleton list> --- 2 bytes
 }
   
@@ -78,43 +71,37 @@
   <fixity> --- 1 byte
   <precedence> --- 1 byte
   <type env size> --- 1 byte
-  <neededness info> --- 1 byte
   <index into type skeleton list> --- 2 bytes
 }
 
 [Hidden Constants]
 <number of hidden constants> --- 2 bytes
 {
-  [Local Constant]
-  <type env size> --- 1 byte
-  <neededness info> --- 1 byte
+  [Hidden Constant]
   <index into type skeleton list> --- 2 bytes
 }
 
 [Strings]
 <number of strings> --- 2 bytes
 {
-  [String]
-  <string size> --- 1 byte
-  {
-    <ith character of string> --- 1 byte
-  }
+  <ith string> --- [String]
 }
+
 
 [Implication Goal Tables]
 <number of implication goals> --- 2 bytes
 {
   [Implication goal]
-  <number of entries in next clause table>
+  [Next Clause Table]
+  <number of entries in next clause table> --- 2 bytes
   {
-    <mark local/global/hidden> --- 1 byte
-    <index into constant table> --- 2 bytes
+    <entry index> --- [Constant index]
   }
   <find function code> --- 1 byte (1 = hash, 0 = sequential)
+  [Search Table]
   <number of predicates> --- 2 bytes
   {
-    <mark local/global/hidden> --- 1 byte
-    <index into constant table> --- 2 bytes
+    <entry index> --- [Constant index]
     <relative address of code> --- 1 word
   }
 }
@@ -148,22 +135,19 @@
 {
   [Import Table]
   <number of code segments> --- 1 byte
-  <count of 'global' predicates> --- 1 byte
+  <number of relatively global predicates> --- 2 bytes
   {
-    <mark local/global> --- 1 byte
-    <index into constant table> --- 2 bytes
+    <entry index> --- [Constant index]
   }
   <count of local constants> --- 2 bytes
   {
-    <mark local/global> --- 1 byte //Note these are all local
-    <index into local constant table> --- 2 bytes
+    <local constant index> --- [Constant index]
   }
   <find function code> --- 1 byte (1 = hash, 0 = sequential)
-  <number of predicates> --- 2 bytes
-  <table size> --- 1 word
+  [Search Table]
+  <total number of predicates> --- 2 bytes
   {
-    <mark local/global/hidden> --- 1 byte
-    <index into constant table> --- 2 bytes
+    <entry index> --- [Constant index]
     <relative address of code> --- 1 word
   }
 }
