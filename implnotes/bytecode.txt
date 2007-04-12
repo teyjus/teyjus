@@ -114,7 +114,7 @@ first in the file.
 [Module Name]
 <name size> --- 1 byte
 {
-	<ith character of name> --- 1 byte
+  <ith character of name> --- 1 byte
 }
 
 <number of bytes of space needed for code> --- 1 word
@@ -122,189 +122,191 @@ first in the file.
 [Global Kinds]
 <number of global kinds> --- 2 bytes
 {
-	[Global Kind]
-	<arity> --- 1 byte
-	<name size> --- 1 byte
-	{
-		<ith character of name> --- 1 byte
-	}
+  [Global Kind]
+  <arity> --- 1 byte
+  <name size> --- 1 byte
+  {
+    <ith character of name> --- 1 byte
+  }
 }
 
 [Local Kinds]
 <number of local kinds> --- 2 bytes
 {
-	[Local Kind]
-	<arity> --- 1 byte
+  [Local Kind]
+  <arity> --- 1 byte
 }
 
 [Type Skeletons]
 <number of type skeletons> --- 2 bytes
 {
-	[Type Skeleton]
-	<prefix representation of type skeleton> (see bytecode.txt)
+  [Type Skeleton]
+  <prefix representation of type skeleton> (see bytecode.txt)
 }
 
 [Global Constants]
 <number of global constants> --- 2 bytes
 {
-	[Global Constant]
-	<fixity> --- 1 byte
-	<precedence> --- 1 byte
-	<type env size> --- 1 byte
-	//<Needness vector>
-	<name size> --- 1 byte
-	{
-		<ith character of name> --- 1 byte
-	}
-	<index into type skeleton list> --- 2 bytes
+  [Global Constant]
+  <fixity> --- 1 byte
+  <precedence> --- 1 byte
+  <type env size> --- 1 byte
+  <neededness info> --- 1 byte
+  <name size> --- 1 byte
+{
+    <ith character of name> --- 1 byte
+}
+  <index into type skeleton list> --- 2 bytes
 }
 
 [Local Constants]
 <number of local constants> --- 2 bytes
 {
-	[Local Constant]
-	<fixity> --- 1 byte
-	<precedence> --- 1 byte
-	<type env size> --- 1 byte
-	<index into type skeleton list> --- 2 bytes
+  [Local Constant]
+  <fixity> --- 1 byte
+  <precedence> --- 1 byte
+  <type env size> --- 1 byte
+  <neededness info> --- 1 byte
+  <index into type skeleton list> --- 2 bytes
 }
 
 [Hidden Constants]
 <number of hidden constants> --- 2 bytes
 {
-	[Local Constant]
-	<type env size> --- 1 byte
-	<index into type skeleton list> --- 2 bytes
+  [Local Constant]
+  <type env size> --- 1 byte
+  <neededness info> --- 1 byte
+  <index into type skeleton list> --- 2 bytes
 }
 
 [Strings]
 <number of strings> --- 2 bytes
 {
-	[String]
-	<string size> --- 1 byte
-	{
-		<ith character of string> --- 1 byte
-	}
+  [String]
+  <string size> --- 1 byte
+  {
+    <ith character of string> --- 1 byte
+  }
 }
 
 [Implication Goal Tables]
 <number of implication goals> --- 2 bytes
 {
-	[Implication goal]
-	[Next Clause Table]
-	<number of entries in next clause table>
-	{
-		<mark local/global/hidden> --- 1 byte
-		<index into constant table> --- 2 bytes
-	}
-	<find function code> --- 1 byte
-	[Search Table]
-	<number of predicates> --- 2 bytes
-	{
-		<mark local/global/hidden> --- 1 byte
-		<index into constant table> --- 2 bytes
-		<relative address of code> --- 1 word
-	}
+  [Implication goal]
+  [Next Clause Table]
+  <number of entries in next clause table>
+  {
+    <mark local/global/hidden> --- 1 byte
+    <index into constant table> --- 2 bytes
+  }
+  <find function code> --- 1 byte
+  [Search Table]
+  <number of predicates> --- 2 bytes
+  {
+    <mark local/global/hidden> --- 1 byte
+    <index into constant table> --- 2 bytes
+    <relative address of code> --- 1 word
+  }
 }
 
 [Hash Tables]
 <number of hash tables> --- 2 bytes
 {
-	[Hash Table]
-	<number of entries> --- 2 bytes
-	{
-		<mark local/global/hidden> --- 1 byte
-		<index into constant table> --- 2 bytes
-		<relative address of code> --- 1 word
-	}
+  [Hash Table]
+  <number of entries> --- 2 bytes
+  {
+    <mark local/global/hidden> --- 1 byte
+    <index into constant table> --- 2 bytes
+    <relative address of code> --- 1 word
+  }
 }
 
 [Bound Variable Tables]
 <number of bound variable tables>
 {
-	[Bound Variable Table]
-	<number of entries> --- 2 bytes
-	{
-		<index> --- 1 byte
-		<relative address of code> --- 1 word
-	}
+  [Bound Variable Table]
+  <number of entries> --- 2 bytes
+  {
+    <index> --- 1 byte
+    <relative address of code> --- 1 word
+  }
 }
 
 [Import Table]
 [Next Clause Table]
 <number of global, non-exportdef predicates> --- 2 bytes
 {
-	<mark local/global/hidden> --- 1 byte
-	<index into constant table> --- 2 bytes
+  <mark local/global/hidden> --- 1 byte
+  <index into constant table> --- 2 bytes
 }
 [Exportdef Predicates Table]
 <number of exportdef predicates> --- 2 bytes
 {
-	<mark local/global/hidden> --- 1 byte
-	<index into constant table> --- 2 bytes
+  <mark local/global/hidden> --- 1 byte
+  <index into constant table> --- 2 bytes
 }
 [Local Predicates Table]
 <number of local predicates> --- 2 bytes
 {
-	<mark local/global/hidden> --- 1 byte
-	<index into constant table> --- 2 bytes
+  <mark local/global/hidden> --- 1 byte
+  <index into constant table> --- 2 bytes
 }
 <code for function to be used to find predicate definitions>  --- 1 byte
 [Search Table]
 <total number of predicates> --- 2 bytes
 {
-	<mark local/global/hidden> --- 1 byte
-	<index into constant table> --- 2 bytes
-	<relative address of code> --- 1 word
+  <mark local/global/hidden> --- 1 byte
+  <index into constant table> --- 2 bytes
+  <relative address of code> --- 1 word
 }
 
 
 [Accumulated Modules]
 <count of accumulated modules> --- 1 byte
 {
-	[Accumulated Module, in reverse order of accumulation]
-	<size of module name> --- 1 byte
-	<sequence of characters defining name>
-	
-	[Kind Renaming Function]
-	<size of kind renaming function> -- 2 bytes
-	{sequence of fields of the form 
-		<size of kind name> --- 1 byte
-		<sequence of characters constituting name>
-		<kind index> -- 3 bytes  - 1 byte flag, 2 byte index
-	}
-	
-	[Constant Renaming Function]
-	<size of constant renaming function> --- 2 bytes
-	{sequence of fields of the form 
-		<size of constant name> --- 1 byte
-		<sequence of characters defining name> 
-		<kind index> -- 3 bytes  - 1 byte flag, 2 byte index
-	}
+  [Accumulated Module, in reverse order of accumulation]
+  <size of module name> --- 1 byte
+  <sequence of characters defining name>
+  
+  [Kind Renaming Function]
+  <size of kind renaming function> -- 2 bytes
+  {sequence of fields of the form 
+    <size of kind name> --- 1 byte
+    <sequence of characters constituting name>
+    <kind index> -- 3 bytes  - 1 byte flag, 2 byte index
+  }
+  
+  [Constant Renaming Function]
+  <size of constant renaming function> --- 2 bytes
+  {sequence of fields of the form 
+    <size of constant name> --- 1 byte
+    <sequence of characters defining name> 
+    <kind index> -- 3 bytes  - 1 byte flag, 2 byte index
+  }
 }
 
 [Imported Modules]
 <count of accumulated modules> --- 1 byte
 {
-	[Imported Module]
-	<size of module name> --- 1 byte
-	<sequence of characters defining name>
-	
-	[Kind Renaming Function]
-	<size of kind renaming function> -- 2 bytes
-	{sequence of fields of the form 
-		<size of kind name> --- 1 byte
-		<sequence of characters constituting name>
-		<kind index> -- 3 bytes  - 1 byte flag, 2 byte index
-	}
-	
-	[Constant Renaming Function]
-	<size of constant renaming function> --- 2 bytes
-	{sequence of fields of the form 
-		<size of constant name> --- 1 byte
-		<sequence of characters defining name> 
-		<kind index> -- 3 bytes  - 1 byte flag, 2 byte index
-	}
+  [Imported Module]
+  <size of module name> --- 1 byte
+  <sequence of characters defining name>
+  
+  [Kind Renaming Function]
+  <size of kind renaming function> -- 2 bytes
+  {sequence of fields of the form 
+    <size of kind name> --- 1 byte
+    <sequence of characters constituting name>
+    <kind index> -- 3 bytes  - 1 byte flag, 2 byte index
+  }
+  
+  [Constant Renaming Function]
+  <size of constant renaming function> --- 2 bytes
+  {sequence of fields of the form 
+    <size of constant name> --- 1 byte
+    <sequence of characters defining name> 
+    <kind index> -- 3 bytes  - 1 byte flag, 2 byte index
+  }
 }
 
 [Bytecode]
@@ -337,11 +339,11 @@ bytecode is as follows:
    IT (impl. table address)  ---  2 byte index
    HT (hash table address)   ---  2 byte index   
    L  (code location)        ---  4 byte relative address: offset in
-					bytes from start of
-					instruction
+        	bytes from start of
+        	instruction
    I (integer)               ---  4 bytes, encoded as a single long
-					integer
+        	integer
    F (floating point number) ---  8 bytes: first 4 bytes are mantissa,
-					second 4 bytes are exponent.
+        	second 4 bytes are exponent.
    S  (string start address) ---  2 byte index
 }
