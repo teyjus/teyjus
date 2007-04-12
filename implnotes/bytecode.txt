@@ -19,42 +19,6 @@ must be approved by a gatekeeper (GN at UofC) and recorded in this
 file first before they become official. 
 
 
-Representation of type skeletons in bytecode file
--------------------------------------------------
-The byte code file must contain a description of type skeletons that
-correspond to the types of constants and variables in the module. 
-A prefix style representation is used for these. There are, in
-general, 5 kinds of symbol used in these type skeletons: 
-
-       arrow                     (coded as 0)
-       pervasive kind            (coded as 1)
-       local kind                (coded as 2)
-       global kind               (coded as 3)
-       variable                  (coded as 4)
-       
-The first byte will determine the category of symbol using the codes
-indicated, and a subsequent variable length field will determine the
-item within the category. The latter is done as follows:
-
-    (1) For arrow, the argument and target types will
-        follow. 
-
-    (2) Pervasives correspond to builtin kinds such as int, o, string
-        that come hardwired with the system. A two byte field is to be
-        used with these that indexes into a suitable segment of the 
-        symbol table reserved for pervasives. 
-
-    (3) Local kinds will be followed by a two byte index into the
-        local kinds list.
-
-    (4) Global kinds will be followed by a two byte index into the
-        global kinds list. 
-
-    (5) Variables will be followed by 1 byte offsets --- note that
-        variables in type skeletons are treated differently from
-        variables in types represented on the heap. 
-
-
 Code for find code functions
 ----------------------------
 Currently only two possibilities are contemplated: a sequential search
@@ -110,12 +74,24 @@ in the actual bytecode.
 Multibyte integers are stored with the most significant byte appearing
 first in the file.
 
-<bytecode version number> --- 1 word
-[Module Name]
-<name size> --- 1 byte
+//Common field formats
+[String] (Strings should not contain a '\0' terminator).
+<length of string in bytes> --- 1 byte
 {
-  <ith character of name> --- 1 byte
+  <ith character of string> --- 1 byte
 }
+
+[Kind Index]
+<mark global(0)/local(1)/pervasive(3)> --- 1 byte
+<index into kind table> --- 2 bytes
+
+[Constant Index]
+<mark global(0)/local(1)/hidden(2)/pervasive(3)> --- 1 byte
+<index into constant table> --- 2 bytes
+
+//Beginning of Module description
+<bytecode version number> --- 1 word
+<module name> --- [String]
 
 <number of bytes of space needed for code> --- 1 word
 
@@ -124,10 +100,7 @@ first in the file.
 {
   [Global Kind]
   <arity> --- 1 byte
-  <name size> --- 1 byte
-  {
-    <ith character of name> --- 1 byte
-  }
+  <name> --- [String]
 }
 
 [Local Kinds]
@@ -141,7 +114,18 @@ first in the file.
 <number of type skeletons> --- 2 bytes
 {
   [Type Skeleton]
-  <prefix representation of type skeleton> (see bytecode.txt)
+  {
+    <Arrow = 1> --- 1 byte
+    <Left argument> --- [Type Skeleton]
+    <Right argument> --- [Type Skeleton]
+  } or {
+    <Kind = 2> --- 1 byte
+    <index> --- [Kind Index]
+    <arguments> --- kind arity [Type Skeleton]s
+  } or {
+    <Var = 3> --- 1 byte
+    <offset> --- 1 byte
+  }
 }
 
 [Global Constants]
@@ -151,11 +135,7 @@ first in the file.
   <fixity> --- 1 byte
   <precedence> --- 1 byte
   <type env size> --- 1 byte
-  <neededness info> --- 1 byte
-  <name size> --- 1 byte
-{
-    <ith character of name> --- 1 byte
-}
+  <name> --- [String]
   <index into type skeleton list> --- 2 bytes
 }
 
@@ -166,27 +146,20 @@ first in the file.
   <fixity> --- 1 byte
   <precedence> --- 1 byte
   <type env size> --- 1 byte
-  <neededness info> --- 1 byte
   <index into type skeleton list> --- 2 bytes
 }
 
 [Hidden Constants]
 <number of hidden constants> --- 2 bytes
 {
-  [Local Constant]
-  <type env size> --- 1 byte
-  <neededness info> --- 1 byte
+  [Hidden Constant]
   <index into type skeleton list> --- 2 bytes
 }
 
 [Strings]
 <number of strings> --- 2 bytes
 {
-  [String]
-  <string size> --- 1 byte
-  {
-    <ith character of string> --- 1 byte
-  }
+  <ith string> --- [String]
 }
 
 [Implication Goal Tables]
@@ -194,17 +167,15 @@ first in the file.
 {
   [Implication goal]
   [Next Clause Table]
-  <number of entries in next clause table>
+  <number of entries in next clause table> --- 2 bytes
   {
-    <mark local/global/hidden> --- 1 byte
-    <index into constant table> --- 2 bytes
+    <entry index> --- [Constant index]
   }
-  <find function code> --- 1 byte
+  <find function code> --- 1 byte (1 = hash, 0 = sequential)
   [Search Table]
   <number of predicates> --- 2 bytes
   {
-    <mark local/global/hidden> --- 1 byte
-    <index into constant table> --- 2 bytes
+    <entry index> --- [Constant index]
     <relative address of code> --- 1 word
   }
 }
@@ -215,8 +186,7 @@ first in the file.
   [Hash Table]
   <number of entries> --- 2 bytes
   {
-    <mark local/global/hidden> --- 1 byte
-    <index into constant table> --- 2 bytes
+    <entry index> --- [Constant index]
     <relative address of code> --- 1 word
   }
 }
@@ -236,27 +206,23 @@ first in the file.
 [Next Clause Table]
 <number of global, non-exportdef predicates> --- 2 bytes
 {
-  <mark local/global/hidden> --- 1 byte
-  <index into constant table> --- 2 bytes
+  <entry index> --- [Constant index]
 }
 [Exportdef Predicates Table]
 <number of exportdef predicates> --- 2 bytes
 {
-  <mark local/global/hidden> --- 1 byte
-  <index into constant table> --- 2 bytes
+  <entry index> --- [Constant index]
 }
 [Local Predicates Table]
 <number of local predicates> --- 2 bytes
 {
-  <mark local/global/hidden> --- 1 byte
-  <index into constant table> --- 2 bytes
+  <entry index> --- [Constant index]
 }
 <code for function to be used to find predicate definitions>  --- 1 byte
 [Search Table]
 <total number of predicates> --- 2 bytes
 {
-  <mark local/global/hidden> --- 1 byte
-  <index into constant table> --- 2 bytes
+  <entry index> --- [Constant index]
   <relative address of code> --- 1 word
 }
 
@@ -270,18 +236,16 @@ first in the file.
   
   [Kind Renaming Function]
   <size of kind renaming function> -- 2 bytes
-  {sequence of fields of the form 
-    <size of kind name> --- 1 byte
-    <sequence of characters constituting name>
-    <kind index> -- 3 bytes  - 1 byte flag, 2 byte index
+  {
+    <kind name> --- [String]
+    <kind index> --- [Kind index]
   }
   
   [Constant Renaming Function]
   <size of constant renaming function> --- 2 bytes
-  {sequence of fields of the form 
-    <size of constant name> --- 1 byte
-    <sequence of characters defining name> 
-    <kind index> -- 3 bytes  - 1 byte flag, 2 byte index
+  { 
+    <constant name> ---[String]
+    <constant index> --- [Constant index]
   }
 }
 
@@ -294,18 +258,16 @@ first in the file.
   
   [Kind Renaming Function]
   <size of kind renaming function> -- 2 bytes
-  {sequence of fields of the form 
-    <size of kind name> --- 1 byte
-    <sequence of characters constituting name>
-    <kind index> -- 3 bytes  - 1 byte flag, 2 byte index
+  {
+    <kind name> --- [String]
+    <kind index> --- [Kind index]
   }
   
   [Constant Renaming Function]
   <size of constant renaming function> --- 2 bytes
-  {sequence of fields of the form 
-    <size of constant name> --- 1 byte
-    <sequence of characters defining name> 
-    <kind index> -- 3 bytes  - 1 byte flag, 2 byte index
+  { 
+    <constant name> ---[String]
+    <constant index> --- [Constant index]
   }
 }
 
@@ -325,16 +287,8 @@ bytecode is as follows:
    I1 (small integer)        ---  1 byte number
    I2 (larger integer)       ---  2 byte number
    CE (closure env var)      ---  1 byte number
-   C  (constant index)       ---  3 bytes, 
-                                    First byte indicates whether 
-                                      global (0), local (1) or hidden (2)
-                                      pervasive (3)
-                                    Second byte indicates the index
-   K  (kind index)           ---  3 bytes, 
-                                    First byte indicates whether 
-                                      global (0), local (1) or hidden (2), 
-                                      pervasive (3)
-                                    Second byte indicates the index
+   C  (constant index)       ---  [Constant index]
+   K  (kind index)           ---  [Kind index]
    MT (module table address) ---  2 byte index
    IT (impl. table address)  ---  2 byte index
    HT (hash table address)   ---  2 byte index   
