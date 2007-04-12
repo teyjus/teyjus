@@ -86,9 +86,9 @@ void TEST_CreateM1GConstTable(int fd)
 {
   LK_FILE_PUT2(fd,2);
   LK_FILE_PUT1(fd,3);LK_FILE_PUT1(fd,3);LK_FILE_PUT1(fd,3);
-  LK_FILE_PUT1(fd,3); LK_FILE_PutString(fd,"Glob0");LK_FILE_PUT2(fd,1);
+  LK_FILE_PutString(fd,"Glob0");LK_FILE_PUT2(fd,1);
   LK_FILE_PUT1(fd,0);LK_FILE_PUT1(fd,3);LK_FILE_PUT1(fd,3);
-  LK_FILE_PUT1(fd,3); LK_FILE_PutString(fd,"Glob1");LK_FILE_PUT2(fd,1);
+  LK_FILE_PutString(fd,"Glob1");LK_FILE_PUT2(fd,1);
 }
 
 void TEST_CreateM1LConstTable(int fd)
@@ -96,19 +96,19 @@ void TEST_CreateM1LConstTable(int fd)
   LK_FILE_PUT2(fd,2);
   
   LK_FILE_PUT1(fd,3);LK_FILE_PUT1(fd,3);LK_FILE_PUT1(fd,3);
-  LK_FILE_PUT1(fd,3);LK_FILE_PUT2(fd,1);
+  LK_FILE_PUT2(fd,1);
   
   LK_FILE_PUT1(fd,0);LK_FILE_PUT1(fd,3);LK_FILE_PUT1(fd,3);
-  LK_FILE_PUT1(fd,3);LK_FILE_PUT2(fd,1);
+  LK_FILE_PUT2(fd,1);
 }
 
 void TEST_CreateM1HConstTable(int fd)
 {
   LK_FILE_PUT2(fd,2);
   
-  LK_FILE_PUT1(fd,3);LK_FILE_PUT1(fd,3);LK_FILE_PUT2(fd,1);
+  LK_FILE_PUT2(fd,1);
   
-  LK_FILE_PUT1(fd,0);LK_FILE_PUT1(fd,3);LK_FILE_PUT2(fd,1);
+  LK_FILE_PUT2(fd,1);
 }
 
 void TEST_CreateM1ConstTables(int fd)
@@ -125,7 +125,6 @@ void TEST_CheckM1GConstTable(int fd)
   ASSERT(LK_FILE_GET1(fd)==3,"M1 - GConst0 : fixity");
   ASSERT(LK_FILE_GET1(fd)==3,"M1 - GConst0 : precedence");
   ASSERT(LK_FILE_GET1(fd)==3,"M1 - GConst0 : ty_env_size");
-  ASSERT(LK_FILE_GET1(fd)==3,"M1 - GConst0 : neededness");
   tmp=LK_FILE_GetString(fd);
   ASSERT(!strcmp(tmp,"Glob0"),"M1 - GConst0 : name");
   free(tmp);
@@ -133,7 +132,6 @@ void TEST_CheckM1GConstTable(int fd)
   ASSERT(LK_FILE_GET1(fd)==0,"M1 - GConst1 : fixity");
   ASSERT(LK_FILE_GET1(fd)==3,"M1 - GConst1 : precedence");
   ASSERT(LK_FILE_GET1(fd)==3,"M1 - GConst1 : ty_env_size");
-  ASSERT(LK_FILE_GET1(fd)==3,"M1 - GConst1 : neededness");
   tmp=LK_FILE_GetString(fd);
   ASSERT(!strcmp(tmp,"Glob1"),"M1 - GConst1 : name");
   free(tmp);
@@ -146,23 +144,17 @@ void TEST_CheckM1LConstTable(int fd)
   ASSERT(LK_FILE_GET1(fd)==3,"M1 - LConst0 : fixity");
   ASSERT(LK_FILE_GET1(fd)==3,"M1 - LConst0 : precedence");
   ASSERT(LK_FILE_GET1(fd)==3,"M1 - LConst0 : ty_env_size");
-  ASSERT(LK_FILE_GET1(fd)==3,"M1 - LConst0 : neededness");
   ASSERT(LK_FILE_GET2(fd)==1,"M1 - LConst0 : ty_skel_index");
   ASSERT(LK_FILE_GET1(fd)==0,"M1 - LConst1 : fixity");
   ASSERT(LK_FILE_GET1(fd)==3,"M1 - LConst1 : precedence");
   ASSERT(LK_FILE_GET1(fd)==3,"M1 - LConst1 : ty_env_size");
-  ASSERT(LK_FILE_GET1(fd)==3,"M1 - LConst1 : neededness");
   ASSERT(LK_FILE_GET2(fd)==1,"M1 - LConst1 : ty_skel_index");
 }
 
 void TEST_CheckM1HConstTable(int fd)
 {
   ASSERT(LK_FILE_GET2(fd)==2,"M1 - Hidden constant count");
-  ASSERT(LK_FILE_GET1(fd)==3,"M1 - HConst0 : ty_env_size");
-  ASSERT(LK_FILE_GET1(fd)==3,"M1 - HConst0 : neededness");
   ASSERT(LK_FILE_GET2(fd)==1,"M1 - HConst0 : ty_skel_index");
-  ASSERT(LK_FILE_GET1(fd)==0,"M1 - HConst1 : ty_env_size");
-  ASSERT(LK_FILE_GET1(fd)==3,"M1 - HConst1 : neededness");
   ASSERT(LK_FILE_GET2(fd)==1,"M1 - HConst1 : ty_skel_index");
 }
 
