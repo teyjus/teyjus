@@ -142,12 +142,12 @@
   }
 }
 
-<number of code segments> --- 1 byte
-
-[Import Tables] -- The first table is for the top level module.
+[Import Tables]
+<Add code table> --- [Import Table]
 <number of import tables> --- 1 byte
 {
   [Import Table]
+  <number of code segments> --- 1 byte
   <count of 'global' predicates> --- 1 byte
   {
     <mark local/global> --- 1 byte
