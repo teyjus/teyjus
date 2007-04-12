@@ -19,7 +19,6 @@ typedef struct{
   Byte fixity;
   Byte precedence;
   Byte ty_env_size;
-  Byte neededness;
   char* name;
   TySkelInd ty_skel_index;
 }Const_t;
@@ -32,7 +31,6 @@ ConstInd LoadGConst(int fd, struct Module_st* CMData)
   tmp.fixity=LK_FILE_GET1(fd);
   tmp.precedence=LK_FILE_GET1(fd);
   tmp.ty_env_size=LK_FILE_GET1(fd);
-  tmp.neededness=LK_FILE_GET1(fd);
   char* name=LK_FILE_GetString(fd);
   ConstInd index=LK_RENAME_RenameConst(name);
   free(name);
@@ -58,8 +56,7 @@ void LoadTopGConst(int fd, struct Module_st* CMData, int i)
 {
   GConstTab[i].fixity=LK_FILE_GET1(fd);
   GConstTab[i].precedence=LK_FILE_GET1(fd);
-  GConstTab[i].ty_env_size=LK_FILE_GET1(fd);;
-  GConstTab[i].neededness=LK_FILE_GET1(fd);
+  GConstTab[i].ty_env_size=LK_FILE_GET1(fd);
   GConstTab[i].name=LK_FILE_GetString(fd);
   GConstTab[i].ty_skel_index=GetTySkelInd(fd,CMData);
 }
@@ -83,7 +80,6 @@ void WriteGConst(int fd, int i)
   LK_FILE_PUT1(fd,GConstTab[i].fixity);
   LK_FILE_PUT1(fd,GConstTab[i].precedence);
   LK_FILE_PUT1(fd,GConstTab[i].ty_env_size);
-  LK_FILE_PUT1(fd,GConstTab[i].neededness);
   LK_FILE_PutString(fd,GConstTab[i].name);
   PutTySkelInd(fd,GConstTab[i].ty_skel_index);
 }
@@ -116,7 +112,6 @@ void LoadLConst(int fd, struct Module_st* CMData,void* entry)
   tmp->fixity=LK_FILE_GET1(fd);
   tmp->precedence=LK_FILE_GET1(fd);
   tmp->ty_env_size=LK_FILE_GET1(fd);
-  tmp->neededness=LK_FILE_GET1(fd);
   tmp->ty_skel_index=GetTySkelInd(fd,(struct Module_st*)CMData);
 }
 
@@ -131,7 +126,6 @@ void WriteLConst(int fd, void* entry)
   LK_FILE_PUT1(fd,tmp->fixity);
   LK_FILE_PUT1(fd,tmp->precedence);
   LK_FILE_PUT1(fd,tmp->ty_env_size);
-  LK_FILE_PUT1(fd,tmp->neededness);
   PutTySkelInd(fd,tmp->ty_skel_index);
 }
 
@@ -155,8 +149,6 @@ void LoadHConst(int fd, struct Module_st* CMData,void* entry)
 {
   Const_t* tmp=(Const_t*)entry;
   
-  tmp->ty_env_size=LK_FILE_GET1(fd);
-  tmp->neededness=LK_FILE_GET1(fd);
   tmp->ty_skel_index=GetTySkelInd(fd,CMData);
 }
 
@@ -168,8 +160,6 @@ void LoadHConsts(int fd, struct Module_st* CMData)
 void WriteHConst(int fd, void* entry)
 {
   Const_t* tmp=(Const_t*)entry;
-  LK_FILE_PUT1(fd,tmp->ty_env_size);
-  LK_FILE_PUT1(fd,tmp->neededness);
   PutTySkelInd(fd,tmp->ty_skel_index);
 }
 
