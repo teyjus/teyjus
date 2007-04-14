@@ -64,6 +64,9 @@ type cgstrings = StringList of Absyn.astringinfo list * int
 
 (**************************************************************************)
 (* predicates defined in this module;                                     *)
+(* global, non-exportdef predicates in this module;                       *)
+(* (global) exportdef predicates in this module;                          *)
+(* local predicates in this module;                                       *)
 (* predicates whose previous definitions might be extended by the code in *)
 (* the module                                                             *)
 (*========================================================================*)
@@ -123,6 +126,9 @@ and  cgimppredinfo = ImpPredInfo of (Absyn.aconstant * int )
 (*  local constants,                                                      *)
 (*  hidden constants,                                                     *)
 (*  predicates defined in this module,                                    *)
+(*  global, non-exportdef predicates in this module,                      *)
+(*  (global) exportdef predicates in this module,                         *)
+(*  local predicates in this module,                                      *)
 (*  predicates whose previous defintions could be extended by this module,*) 
 (*  type skeletons,                                                       *)
 (*  strings,                                                              *)
@@ -135,9 +141,9 @@ and  cgimppredinfo = ImpPredInfo of (Absyn.aconstant * int )
 (**************************************************************************)   
 type cgmodule =
 	Module of string * cgkinds * cgkinds * cgconsts * cgconsts * 
-	    cgconsts * cgpreds * cgpreds * cgtypeskeletons * cgstrings *
-	    cgrenaming list * cgrenaming list * cginstructions * cghashtabs 
-	    * cgimpgoallist 
+	    cgconsts * cgpreds * cgpreds * cgpreds * cgpreds * cgpreds * 
+		cgtypeskeletons * cgstrings * cgrenaming list * cgrenaming list *
+		cginstructions * cghashtabs * cgimpgoallist 
 		
 
 (*****************************************************************************)
@@ -183,7 +189,7 @@ let rec closeDefs clausesBlocks =
   let isCutFail clause =
     match clause with
       Absyn.Fact(_, _, _, _, _, _, _, _, _, _)             -> false
-    | Absyn.Rule(_, _, _, _, _, _, _, _, goal, _, _, _, _) ->
+    | Absyn.Rule(_, _, _, _, _, _, _, _, _, goal, _, _, _, _) ->
 		match goal with
 		  Absyn.AndGoal(Absyn.AtomicGoal(lpred, _, _, _, _),
 						Absyn.AtomicGoal(rpred, _, _, _, _)) ->
@@ -231,12 +237,16 @@ let assignKindIndex gkinds lkinds =
 (* 1. assign indexes (offsets) to global, local and hidden constants of the *)
 (*    module.                                                               *)
 (* 2. gather predicates have definitions in this module                     *)
+(*    gather non-exportdef global predicates have definitions in this module*)
+(*    gather exportdef (global) predicates have definitions in this module  *)
+(*    gather local predicates have definitions in this module               *)
 (* 3. gather predicates whose previous defintions may be extended by code   *)
 (*    in this module                                                        *)
 (****************************************************************************)
 let assignConstIndex gconsts lconsts hconsts =
 
-  (* assignIndex for local consts; gather predicates having definitions *)
+  (* assignIndex for local consts; gather predicates having definitions, *)
+  (* which are also local predicates with defintions                     *)
   let rec assignLocalConstIndex consts index defs numDefs =
 	match consts with
 	  [] -> (index, defs, numDefs)  (*note defs are in reversed order *)
@@ -264,16 +274,27 @@ let assignConstIndex gconsts lconsts hconsts =
 
   (* global constants; increment predicates having definitions; gather      *)
   (* predicates whose previous definitions coule be extended by this module *)
-  let rec assignGlobalConstIndex consts index defs numDefs extDefs numExtDefs =
+  (* gather non-exportdef predicates; gather exportdef predicates           *)
+  let rec assignGlobalConstIndex consts index defs numDefs extDefs numExtDefs 
+	  nonExpDefs numNonExpDefs expDefs numExpDefs =
 	match consts with
-	  [] -> (index, defs, numDefs, extDefs, numExtDefs) (* need reverse? *)
+	  [] -> (index, defs, numDefs, extDefs, numExtDefs, nonExpDefs, 
+			 numNonExpDefs, expDefs, numExpDefs) (* need reverse? *)
 	| (const :: rest) ->
 		Absyn.setConstantIndex const index; 
-	        let codeInfo = Absyn.getConstantCodeInfo(const) in
-		let (newDefs, newNumDefs) = 
+	    let codeInfo = Absyn.getConstantCodeInfo(const) in
+		let (newDefs, newNumDefs, newNonExpDefs, newNumNonExpDefs,
+			 newExpDefs, newNumExpDefs) = 
 		  match (!codeInfo) with
-			None -> (defs, numDefs)
-		  | Some(Absyn.Clauses(_)) -> (const::defs, (numDefs + 1))
+			None -> (defs, numDefs, nonExpDefs, numNonExpDefs, expDefs, 
+					 numExpDefs)
+		  | Some(Absyn.Clauses(_)) -> 
+			  if (Absyn.getConstantExpDef const) then
+				(const::defs, numDefs + 1, nonExpDefs, numNonExpDefs,
+				 const::expDefs, numExpDefs + 1)
+			  else
+				(const::defs, numDefs + 1, (const::nonExpDefs),numNonExpDefs+1,
+				 expDefs, numExpDefs)
 		  | _ -> raise IllegalConstant
 		in
 		let (newExtDefs, newNumExtDefs) =
@@ -292,20 +313,22 @@ let assignConstIndex gconsts lconsts hconsts =
 		   | _ -> raise IllegalConstant
 		 in
 		 assignGlobalConstIndex rest (index+1) newDefs newNumDefs newExtDefs 
-		  newNumExtDefs
+		  newNumExtDefs newExpDefs newNumExpDefs newNonExpDefs newNumNonExpDefs
   in
 
   (* function body of assignConstIndex *)
   let (numLConsts, defs, numDefs) = assignLocalConstIndex lconsts 0 [] 0 in
   let numHConsts = assignHiddenConstIndex hconsts 0 in
-  let (numGConsts, newDefs, newNumDefs, extDefs, numExtDefs) =
-	assignGlobalConstIndex gconsts 0 defs numDefs [] 0
+  let (numGConsts, newDefs, newNumDefs, extDefs, numExtDefs, nonExpDefs,
+	   numNonExpDefs, expDefs, numExpDefs) =
+	assignGlobalConstIndex gconsts 0 defs numDefs [] 0 [] 0 [] 0
   in
   if (numExtDefs > Instr.i1Size) then raise TooManyExtPreds
   else
     (ConstantList (gconsts, numGConsts), ConstantList (lconsts, numLConsts), 
      ConstantList (hconsts, numHConsts), PredList (newDefs, newNumDefs), 
-     PredList (extDefs, numExtDefs))
+	 PredList(nonExpDefs, numNonExpDefs), PredList(expDefs, numExpDefs),
+	 PredList(defs, numDefs), PredList (extDefs, numExtDefs))
 
 
 (****************************************************************************)
@@ -1090,8 +1113,9 @@ let genModuleCode amod =
       (* 2) gather predicates have definitions in this module;      *)
       (* 3) gather predicates whose previous defintions may be      *)
       (*    extended by code in this module.                        *)
-	  let (cgGConsts, cgLConsts, cgHConsts, cgDefs, cgExtPreds) = 
-		assignConstIndex gconsts lconsts hconsts
+	  let (cgGConsts, cgLConsts, cgHConsts, cgDefs, cgGNonExpDefs, 
+		   cgGExpDefs, cgLDefs, cgExtPreds) = 
+		assignConstIndex gconsts lconsts (!hconsts)
 	  in
       (* merge type skeletons and those of hidden constants; assign indexes *)
       let cgTySkels = assignSkelIndex skels hskels in 
@@ -1114,6 +1138,7 @@ let genModuleCode amod =
       (* back patching "call" and "execute" instructions *)
       Clausegen.backPatch ();
       Module(modname, cgGKinds, cgLKinds, cgGConsts, cgLConsts, cgHConsts,
-             cgDefs, cgExtPreds, cgTySkels, cgStrings, cgImports, 
-             cgAccumulates, cgInstructions, getHashTabs (), cgImpGoals)
+             cgDefs, cgGNonExpDefs, cgGExpDefs, cgLDefs, cgExtPreds, 
+			 cgTySkels, cgStrings, cgImports, cgAccumulates, cgInstructions,
+			 getHashTabs (), cgImpGoals)
   | _ -> raise IllegalModuleStr

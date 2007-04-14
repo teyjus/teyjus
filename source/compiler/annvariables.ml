@@ -502,13 +502,13 @@ let assignPermVars goalEnvAssoc notrim =
 	| (clauseVar :: rest) ->
 		match clauseVar with
 		  TermVar(varData) ->
-			if (Absyn.isPermanentVariable varData) then
+			if (Absyn.getVariableDataPerm varData) then
 			  (enterVar clauseVar (Absyn.getVariableDataLastGoal varData);
 			   collectPermVars rest)
 			else collectPermVars rest
 		| TypeVar(varData) ->
-			if (Absyn.isPermanentTypeVariable varData) then
-			  (enterVar clauseVar (Absyn.getTypeVariableLastGoal varData);
+			if (Absyn.getTypeVariableDataPerm varData) then
+			  (enterVar clauseVar (Absyn.getTypeVariableDataLastGoal varData);
 			   collectPermVars rest)
 			else collectPermVars rest
   in
@@ -524,7 +524,7 @@ let assignPermVars goalEnvAssoc notrim =
 		  Absyn.setVariableDataOffset varData ind;
 		  assignOneBucket rest (ind + 1)
 	  | (TypeVar(varData) :: rest) ->
-		  Absyn.setTypeVariableOffset varData ind;
+		  Absyn.setTypeVariableDataOffset varData ind;
 		  assignOneBucket rest (ind + 1)
 	in
 	if (bucketInd >= 0) then 
@@ -673,7 +673,7 @@ and processImpGoal clDefs body last cutvar =
 	match tyVars with 
 	  [] -> ()
 	| (tyVarData :: rest) -> 
-		(Absyn.setTypeVariableLastGoal tyVarData lastGoal;
+		(Absyn.setTypeVariableDataLastGoal tyVarData lastGoal;
 		 setLastGoalTyVars rest lastGoal)
   in
   let (clVars, clTyVars) = processImpDefs clDefs [] [] in
@@ -796,7 +796,7 @@ and processClause clause =
 	   collectHQVars expHQVars;
 	   processClauseHead args tyargs;
 	   (varMaps, tyVarMaps))
-  | Absyn.Rule(_, args, tyargs, _, _, varMaps, tyVarMaps, expHQVars, goal, 
+  | Absyn.Rule(_, args, tyargs, _, _, varMaps, tyVarMaps, expHQVars, _, goal, 
 			   goalEnvAssoc, cutVar, hasenv, impmods) ->
 	  let perm = (impmods = []) in
 	  let (myhasenv, notrim) = (setPervGoal false;

@@ -77,8 +77,8 @@ and atypeabbrev =
 ***************************************************************************)
 and aconstant = 
   Constant of (symbol * afixity ref * int ref * bool ref * bool ref *
-    bool ref * bool ref * bool ref * bool ref * askeleton option ref * int ref *
-    bool array option ref * acodeinfo option ref *
+	bool ref * bool ref * bool ref * bool ref * askeleton option ref * 
+    int ref * bool array option ref * acodeinfo option ref *
     aconstanttype ref * int ref * pos)
 
 and aconstanttype =
@@ -106,7 +106,8 @@ and acodeinfo =
 *Variables (name based):
 *   (symbol, hidden constant, newtysy, type)
 *****************************************************************************)
-and atypesymbolinfo = (symbol * aconstant option ref * bool ref * atype option ref)
+and atypesymbolinfo = (symbol * aconstant option ref * bool ref * 
+						 atype option ref)
  
 and atypesymbol = 
     ImplicitVar of atypesymbolinfo
@@ -195,8 +196,9 @@ and aclause =
 			   atermvarmap * atypevarmap * avar list * int option ref * 
 			   aimportedmodule list)
   | Rule of (aconstant * aterm list * atype list * int * int * atermvarmap *
-			   atypevarmap * avar list * agoal * agoalenvassoc ref * 
-			   avar option ref * bool ref * aimportedmodule list)
+			   atypevarmap * avar list * int option ref * agoal * 
+               agoalenvassoc ref * avar option ref * bool ref * 
+			   aimportedmodule list)
 
 (* Goal number and environment size association list*)
 and agoalenvassoc =  GoalEnvAssoc of ((int * int) list)
@@ -222,7 +224,7 @@ and amodule =
     Module of (string * aimportedmodule list * aaccummulatedmodule list *
       aconstant Table.SymbolTable.t ref * akind Table.SymbolTable.t ref *
       atypeabbrev Table.SymbolTable.t * astringinfo list * akind list *
-      akind list * aconstant list * aconstant list * aconstant list *
+      akind list * aconstant list * aconstant list * aconstant list ref *
       askeleton list * askeleton list * aclauseinfo ref)
   | Signature of (string * akind list * aconstant list)
   | ErrorModule
@@ -237,21 +239,94 @@ and aclauseinfo =
     ClauseBlocks of aclausesblock list
   | PreClauseBlocks of adefinitions
 
-(*****************************************************************************
-*Auxiliary functions:
-*****************************************************************************)
+(*****************************************************************************)
+(*Auxiliary functions:                                                       *)
+(*****************************************************************************)
 val printAbsyn : amodule -> out_channel -> unit
 
+(*************************************************************************)
+(*  akind:                                                               *)
+(*************************************************************************)
 val makeKindType : akind -> atype
 val getKindArity : akind -> int
 val getKindArityOption : akind -> int option
 val getKindPos : akind -> pos
 val getKindName : akind -> string
+val getKindIndex : akind -> int
+val setKindIndex : akind -> int -> unit
+val isGlobalKind : akind -> bool
 val string_of_kind : akind -> string
 
-val makeAnonymousConstant : int -> aconstant
-(*  val makeConstantType : aconstant -> atype *)
-val makeConstantTerm : aconstant -> pos -> aterm
+(*************************************************************************)
+(*  atypevar:                                                            *)
+(*************************************************************************)
+val getTypeVariableDataLastGoal : atypevar -> int
+val setTypeVariableDataLastGoal : atypevar -> int -> unit
+val getTypeVariableDataOffset : atypevar -> int
+val setTypeVariableDataOffset : atypevar -> int -> unit
+val getTypeVariableDataPerm   : atypevar -> bool
+val getTypeVariableDataLastUse : atypevar -> atype
+val getTypeVariableDataHeapVar : atypevar -> bool
+val setTypeVariableDataHeapVar : atypevar -> bool -> unit
+val getTypeVariableDataSafety  : atypevar -> bool
+val setTypeVariableDataSafety  : atypevar -> bool -> unit
+
+(*************************************************************************)
+(*  atype:                                                               *)
+(*************************************************************************)
+val errorType : atype
+
+val getArrowTypeTarget : atype -> atype
+val getArrowTypeArguments : atype -> atype list
+val isArrowType : atype -> bool
+val makeArrowType : atype -> atype list -> atype
+
+val getTypeArguments : atype -> atype list
+val getTypeKind : atype -> akind
+val isConstantType : atype -> bool
+
+val getTypeSetSet : atype -> atype list ref
+val getTypeSetDefault : atype -> atype
+val isTypeSetType : atype -> bool
+val makeTypeSetVariable : atype -> atype list -> atype
+
+val getTypeVariableReference : atype -> atype option ref
+val dereferenceType : atype -> atype
+val isVariableType : atype -> bool
+
+val getTypeFreeVariableVariableData : atype -> atypevar
+val getTypeFreeVariableFirst : atype -> bool
+val isTypeFreeVariable : atype -> bool
+val makeTypeVariable : unit -> atype
+
+val getSkeletonVariableIndex : atype -> int
+val getSkeletonVariableIndexRef : atype -> int ref
+val isSkeletonVariableType : atype -> bool
+
+val makeTypeEnvironment : int -> atype list
+
+val string_of_type : atype -> string
+
+(*************************************************************************)
+(*  askeleton:                                                           *)
+(*************************************************************************)
+val getSkeletonType : askeleton -> atype
+val makeSkeleton : atype -> askeleton
+val getSkeletonIndex : askeleton -> int
+val setSkeletonIndex : askeleton -> int -> unit
+val getSkeletonNew : askeleton -> bool
+val setSkeletonNew : askeleton -> bool -> unit
+
+(*************************************************************************)
+(*  afixity:                                                             *)
+(*************************************************************************)
+val string_of_fixity : afixity -> string
+val isFixityPrefix : afixity -> bool
+val isFixityPostfix : afixity -> bool
+
+(*************************************************************************)
+(*  aconstant:                                                           *)
+(*************************************************************************)
 val getConstantRedefinable : aconstant -> bool
 val getConstantPos : aconstant -> pos
 val getConstantFixity : aconstant -> afixity
@@ -273,123 +348,94 @@ val getConstantClosed : aconstant -> bool
 val getConstantClosedRef : aconstant -> bool ref
 val getConstantUseOnly : aconstant -> bool
 val getConstantUseOnlyRef : aconstant -> bool ref
+val getConstantExpDef : aconstant -> bool
+val getConstantExpDefRef : aconstant -> bool ref
+val getConstantIndex : aconstant -> int
+val setConstantIndex : aconstant -> int -> unit
+val getConstantNeededness : aconstant -> bool array
+val getConstantCodeInfoBuiltinIndex : aconstant -> int
+(* retrieve the offset field in the clausesBlock of the pred *)
+val getConstantCodeInfoClausesIndex : aconstant -> int
+val getConstantSkeletonValue : aconstant -> askeleton
+
+val constantHasCode  : aconstant -> bool
+val isGlobalConstant : aconstant -> bool
+
+val makeAnonymousConstant : int -> aconstant
 val makeHiddenConstant : askeleton -> aconstant
+val makeConstantTerm : aconstant -> pos -> aterm
+(*  val makeConstantType : aconstant -> atype *)
 
-val getSkeletonType : askeleton -> atype
-val getSkeletonIndex : askeleton -> int
-val makeSkeleton : atype -> askeleton
-
-val string_of_fixity : afixity -> string
-val isFixityPrefix : afixity -> bool
-val isFixityPostfix : afixity -> bool
-
-val errorType : atype
-val getArrowTypeTarget : atype -> atype
-val getArrowTypeArguments : atype -> atype list
-val makeTypeVariable : unit -> atype
-val getTypeVariableReference : atype -> atype option ref
-val getTypeSetSet : atype -> atype list ref
-val getTypeSetDefault : atype -> atype
-val getTypeArguments : atype -> atype list
-val getTypeKind : atype -> akind
-val dereferenceType : atype -> atype
-val isArrowType : atype -> bool
-val isVariableType : atype -> bool
-val isTypeSetType : atype -> bool
-val isConstantType : atype -> bool
-val makeArrowType : atype -> atype list -> atype
-val string_of_type : atype -> string
-val isSkeletonVariableType : atype -> bool
-val getSkeletonVariableIndex : atype -> int
-val getSkeletonVariableIndexRef : atype -> int ref
-
-val errorTerm : aterm
-val string_of_term : aterm -> string
-val makeFreeVarTerm : atypesymbol -> pos -> aterm
-val makeBoundVarTerm : atypesymbol -> pos -> aterm
-val getTermPos : aterm -> pos
-val getTermConstant : aterm -> aconstant
-val getTermTypeEnv : aterm -> atype list
-val getTermAbstractionVar : aterm -> atypesymbol
-val getTermAbstractionBody : aterm -> aterm
-
-val maxPrec : int
-
-(* val getTypeSymbolType : atypesymbol -> atypesymboltype *)
+(*************************************************************************)
+(*  atypesymbol:                                                         *)
+(*************************************************************************)
 val getTypeSymbolName : atypesymbol -> string
 val getTypeSymbolRawType : atypesymbol -> atype
 val getTypeSymbolSymbol : atypesymbol -> symbol
 val getTypeSymbolHiddenConstant : atypesymbol -> aconstant
 val getTypeSymbolHiddenConstantRef : atypesymbol -> aconstant option ref
 val getTypeSymbolType : atypesymbol -> atype
+(* val getTypeSymbolType : atypesymbol -> atypesymboltype *)
 
-val getModuleConstantTable : amodule -> aconstant Table.SymbolTable.t
-val getModuleKindTable : amodule -> akind Table.SymbolTable.t
-val getModuleTypeAbbrevTable : amodule -> atypeabbrev Table.SymbolTable.t
-val getModuleClauses : amodule -> aclauseinfo
-val getModuleClausesRef : amodule -> aclauseinfo ref
-val makeTypeEnvironment : int -> atype list
-val makeTypeSetVariable : atype -> atype list -> atype
-
-(* added by Xiaochu *)
-val getTypeSymbolHiddenConst : atypesymbol -> aconstant
-val getTypeSymbolType : atypesymbol -> atype
-
-val setVariableDataLastGoal : avar -> int -> unit
-val setTypeVariableDataLastGoal : atypevar -> int -> unit
+(*************************************************************************)
+(*  avar:                                                                *)
+(*************************************************************************)
+val getVariableDataOffset : avar -> int
 val setVariableDataOffset : avar -> int -> unit
-val setTypeVariableDataOffset : atypevar -> int -> unit
+val getVariableDataPerm   : avar -> bool
+val getVariableDataLastUse : avar -> aterm
+val getVariableDataHeapVar : avar -> bool
+val setVariableDataHeapVar : avar -> bool -> unit
+val getVariableDataSafety  : avar -> bool
+val setVariableDataSafety  : avar -> bool -> unit
+val getVariableDataLastGoal : avar -> int
+val setVariableDataLastGoal : avar -> int -> unit
 
-val isPermanentVariable : avar -> bool
-val isPermanentTypeVariable : atypevar -> bool
-val getVariableLastGoal : avar -> int
-val getTypeVariableLastGoal : atypevar -> int
+(*************************************************************************)
+(*  aterm:                                                               *)
+(*************************************************************************)
+val string_of_term : aterm -> string
+val maxPrec : int
 
-(* added on March 23 -- Xiaochu *)
-(* module *)
-val getModuleName : amodule -> string
-val getModuleGlobalKindsList : amodule -> akind list
-val getModuleGlobalConstantsList : amodule -> aconstant list
+val getTermPos : aterm -> pos
 
+val errorTerm : aterm
 
-(* imported module *)
-val getImportedModuleModNo : aimportedmodule -> int
+val getTermFreeVariableVariableData : aterm -> avar
+val getTermFreeVariableFirst : aterm -> bool
+val isTermFreeVariable : aterm -> bool
+(* make a name based free variable *)
+val makeFreeVarTerm : atypesymbol -> pos -> aterm
 
-(* clauseInfo *)
-val getClauseInfoClauseBlocks : aclauseinfo -> aclausesblock list
+val getTermBoundVariableDBIndex : aterm -> int
+(* make a name based bound variable *)
+val makeBoundVarTerm : atypesymbol -> pos -> aterm
 
-(* clausesBlock *)
-val getClauseBlockClose : aclausesblock -> bool
-val getClauseBlockNextClause : aclausesblock -> int
-val getClauseBlockClauses : aclausesblock -> aclause list
-val getClauseBlockOffset : aclausesblock -> int
+val getTermConstant : aterm -> aconstant
+val getTermTypeEnv : aterm -> atype list
+val getTermConstantTypeEnv : aterm -> atype list
+val isTermConstant     : aterm -> bool
 
-val setClauseBlockClose : aclausesblock -> bool -> unit
-val setClauseBlockNextClause : aclausesblock -> int -> unit
-val setClauseBlockOffset : aclausesblock -> int -> unit
+val getTermAbstractionVar : aterm -> atypesymbol
+val getTermAbstractionBody : aterm -> aterm
+val getTermAbstractionNumberOfLambda : aterm -> int
 
-(* clause *)
-val isClauseFact : aclause -> bool
+val getTermApplicationFunc : aterm -> aterm
+val getTermApplicationArity : aterm -> int
+val getTermApplicationArgs : aterm -> aterm list
 
-val getClausePred : aclause -> aconstant
-val getClauseNumberOfArgs : aclause -> int
-val getClauseNumberOfTermArgs : aclause -> int
-val getClauseTermArgs : aclause -> aterm list
-val getClauseTypeArgs : aclause -> atype list
-val getClauseOffset : aclause -> int
-val getClauseGoal : aclause -> agoal
-val getClauseCutVarOption : aclause -> avar option
-val getClauseCutVar : aclause -> avar
-val getClauseImports : aclause -> aimportedmodule list
-val getClauseGespList : aclause -> agoalenvassoc
-val getClauseHasEnv : aclause -> bool
-val getClauseTypeVarMaps : aclause -> atypevarmap
-val getClauseTermVarMaps : aclause -> atermvarmap	
+(*************************************************************************)
+(*  astringinfo:                                                         *)
+(*************************************************************************)
+val getStringInfoNew : astringinfo -> bool
+val setStringInfoNew : astringinfo -> bool -> unit
+val setStringInfoIndex : astringinfo -> int -> unit
+val getStringInfoIndex : astringinfo -> int
+val getStringInfoString : astringinfo -> string
 
-val setClauseOffset : aclause -> int -> unit
-val setClauseGespList : aclause -> agoalenvassoc -> unit
-
-(* goal *)
+(*************************************************************************)
+(*  agoal:                                                               *)
+(*************************************************************************)
 val getAtomicGoalNumberOfArgs     : agoal -> int
 val getAtomicGoalNumberOfTermArgs : agoal -> int
 val getAtomicGoalTermArgs         : agoal -> aterm list
@@ -409,76 +455,67 @@ val getImpGoalVarInits            : agoal -> avarinits
 val getImpGoalClauses             : agoal -> adefinitions
 val getImpGoalBody                : agoal -> agoal
 
-(* kind *)
-val setKindIndex : akind -> int -> unit
-val isGlobalKind : akind -> bool
-val getKindIndex : akind -> int 
+(*************************************************************************)
+(*  aclause:                                                             *)
+(*************************************************************************)
+val isClauseFact : aclause -> bool
 
-(* constant *)
-val setConstantIndex : aconstant -> int -> unit
-val getConstantExpDef : aconstant -> bool
-val getConstantIndex : aconstant -> int
-val getConstantNeededness : aconstant -> bool array
-val getConstantCodeInfoBuiltinIndex : aconstant -> int
-(* retrieve the offset field in the clausesBlock of the pred *)
-val getConstantCodeInfoClausesIndex : aconstant -> int
+val getClausePred : aclause -> aconstant
+val getClauseNumberOfArgs : aclause -> int
+val getClauseNumberOfTermArgs : aclause -> int
+val getClauseTermArgs : aclause -> aterm list
+val getClauseTypeArgs : aclause -> atype list
+val getClauseOffset : aclause -> int
+val setClauseOffset : aclause -> int -> unit
+val getClauseGoal : aclause -> agoal
+val getClauseCutVarOption : aclause -> avar option
+val getClauseCutVar : aclause -> avar
+val getClauseImports : aclause -> aimportedmodule list
+val getClauseGespList : aclause -> agoalenvassoc
+val setClauseGespList : aclause -> agoalenvassoc -> unit
+val getClauseHasEnv : aclause -> bool
+val getClauseTypeVarMaps : aclause -> atypevarmap
+val getClauseTermVarMaps : aclause -> atermvarmap	
 
-val constantHasCode  : aconstant -> bool
-val isGlobalConstant : aconstant -> bool
-
-(* type skeleton *)
-val setSkeletonNew : askeleton -> bool -> unit
-val setSkeletonIndex : askeleton -> int -> unit
-
-(* string info *)
-val setStringInfoNew : astringinfo -> bool -> unit
-val setStringInfoIndex : astringinfo -> int -> unit
-val getStringInfoIndex : astringinfo -> int
-val getStringInfoString : astringinfo -> string
-
-(* term *)
-val isTermFreeVariable : aterm -> bool
-val isTermConstant     : aterm -> bool
-val getTermFreeVariableVariableData : aterm -> avar
-val getTermFreeVariableFirst : aterm -> bool
-val getTermApplicationFunc : aterm -> aterm
-val getTermApplicationArity : aterm -> int
-val getTermApplicationArgs : aterm -> aterm list
-val getTermAbstractionBody : aterm -> aterm
-val getTermAbstractionNumberOfLambda : aterm -> int
-val getTermConstantConstantData : aterm -> aconstant
-val getTermConstantTypeEnv : aterm -> atype list
-val getTermBoundVariableDBIndex : aterm -> int
-
-(* type *)
-val isTypeFreeVariable : atype -> bool
-val getTypeFreeVariableVariableData : atype -> atypevar
-val getTypeFreeVariableFirst : atype -> bool
-
-(* variable data (avar) *)
-val getVariableDataOffset : avar -> int
-val getVariableDataPerm   : avar -> bool
-val getVariableDataLastUse : avar -> aterm
-val getVariableDataHeapVar : avar -> bool
-val getVariableDataSafety  : avar -> bool
-
-val setVariableDataHeapVar : avar -> bool -> unit
-val setVariableDataSafety  : avar -> bool -> unit
-
-(* type variable data (atypevar) *)
-val getTypeVariableDataOffset : atypevar -> int
-val getTypeVariableDataPerm   : atypevar -> bool
-val getTypeVariableDataLastUse : atypevar -> atype
-val getTypeVariableDataHeapVar : atypevar -> bool
-val getTypeVariableDataSafety  : atypevar -> bool
-
-val setTypeVariableDataHeapVar : atypevar -> bool -> unit
-val setTypeVariableDataSafety  : atypevar -> bool -> unit
-
-(* agoalenvassoc *)
+(*************************************************************************)
+(*  agoalenvassoc:                                                       *)
+(*************************************************************************)
 (* get the nth entry in this list *) 
 val getGoalEnvAssocNth : agoalenvassoc -> int -> (int * int)
 (* get envsize in the nth entry in this list; 0 is returned if empty list*)
 val getGoalEnvAssocNthEnvSize : agoalenvassoc -> int -> int
 
+(*************************************************************************)
+(*  amodule:                                                             *)
+(*************************************************************************)
+val getModuleName : amodule -> string
+val getModuleGlobalKindsList : amodule -> akind list
+val getModuleGlobalConstantsList : amodule -> aconstant list
+val getModuleHiddenConstantsRef : amodule -> aconstant list ref
+val getModuleConstantTable : amodule -> aconstant Table.SymbolTable.t
+val getModuleKindTable : amodule -> akind Table.SymbolTable.t
+val getModuleTypeAbbrevTable : amodule -> atypeabbrev Table.SymbolTable.t
+val getModuleClauses : amodule -> aclauseinfo
+val getModuleClausesRef : amodule -> aclauseinfo ref
 
+(*************************************************************************)
+(*  aimportedmodule:                                                     *)
+(*************************************************************************)
+val getImportedModuleModNo : aimportedmodule -> int
+
+(*************************************************************************)
+(*  aclauseinfo:                                                         *)
+(*************************************************************************)
+val getClauseInfoClauseBlocks : aclauseinfo -> aclausesblock list
+
+
+(*************************************************************************)
+(*  aclausesblock:                                                       *)
+(*************************************************************************)
+val getClauseBlockClose : aclausesblock -> bool
+val setClauseBlockClose : aclausesblock -> bool -> unit
+val getClauseBlockNextClause : aclausesblock -> int
+val setClauseBlockNextClause : aclausesblock -> int -> unit
+val getClauseBlockClauses : aclausesblock -> aclause list
+val getClauseBlockOffset : aclausesblock -> int
+val setClauseBlockOffset : aclausesblock -> int -> unit

@@ -716,7 +716,7 @@ and genSTermCode regNum term chunk lowval last hasenv normalize =
 	let func = Absyn.getTermApplicationFunc  term in
 	let args = Absyn.getTermApplicationArgs  term in
 	if (Absyn.isTermConstant func) && 
-	   (Pervasive.isconsConstant (Absyn.getTermConstantConstantData func))
+	   (Pervasive.isconsConstant (Absyn.getTermConstant func))
 	then genSTermCodeCons args regNum
 	else                                       (* head code *)
 	  let (headCode, headSize, headReg, varHead, discardReg, freeReg) = 
@@ -1005,7 +1005,7 @@ let rec genATermsCode delayed chunk insts startLoc =
 
   (* structure (first order application) *)
   let genATermCodeStructure func args arity regNum =
-	let funcConst = Absyn.getTermConstantConstantData func in
+	let funcConst = Absyn.getTermConstant func in
 	let (funcCode, funcCodeNext) =
 	  if (Pervasive.isconsConstant funcConst) then 
 		(insts@[Instr.Ins_get_list(regNum)], startLoc + Instr.getSize_get_list)

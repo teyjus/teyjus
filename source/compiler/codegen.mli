@@ -59,8 +59,11 @@ type cgstrings = StringList of Absyn.astringinfo list * int
 
 (**************************************************************************)
 (* predicates defined in this module;                                     *)
+(* global, non-exportdef predicates in this module;                       *)
+(* (global) exportdef predicates in this module;                          *)
+(* local predicates in this module;                                       *)
 (* predicates whose previous definitions might be extended by the code in *)
-(* the module                                                             *)
+(* the module;                                                            *)
 (*========================================================================*)
 (* predicates list: (predicates (names) list, number of predicates)       *)
 (**************************************************************************)
@@ -118,6 +121,9 @@ and  cgimppredinfo = ImpPredInfo of (Absyn.aconstant * int )
 (*  local constants,                                                      *)
 (*  hidden constants,                                                     *)
 (*  predicates defined in this module,                                    *)
+(*  global, non-exportdef predicates in this module,                      *)
+(*  (global) exportdef predicates in this module,                         *)
+(*  local predicates in this module,                                      *)
 (*  predicates whose previous defintions could be extended by this module,*) 
 (*  type skeletons,                                                       *)
 (*  strings,                                                              *)
@@ -130,9 +136,9 @@ and  cgimppredinfo = ImpPredInfo of (Absyn.aconstant * int )
 (**************************************************************************)   
 type cgmodule =
 	Module of string * cgkinds * cgkinds * cgconsts * cgconsts * 
-	    cgconsts * cgpreds * cgpreds * cgtypeskeletons * cgstrings *
-	    cgrenaming list * cgrenaming list * cginstructions * cghashtabs 
-	    * cgimpgoallist 
+	    cgconsts * cgpreds * cgpreds * cgpreds * cgpreds * cgpreds * 
+		cgtypeskeletons * cgstrings * cgrenaming list * cgrenaming list * 
+		cginstructions * cghashtabs * cgimpgoallist 
 		
 
 (*****************************************************************************)
