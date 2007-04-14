@@ -668,7 +668,7 @@ and processImpClause clauseTerm varInits =
   | Rule(pred, args, tyargs, nargs, ntargs, goal) ->
 	  (pred, 
 	   Absyn.Rule(pred, args, tyargs, nargs, ntargs, fvMaps', tyfvMaps', 
-				  expHQVars, goal, ref (Absyn.GoalEnvAssoc []), ref None, 
+				  expHQVars, ref None, goal, ref (Absyn.GoalEnvAssoc []), ref None, 
 				  ref false, []), 
 	   newVarInits)  
 
@@ -788,7 +788,7 @@ let rec processTopLevelClauses clauseTerms impmods clauseDefs anonymous =
 							  tyfvMaps, expHQVars, ref None, impmods))
 		| Rule(pred, args, tyargs, nargs, ntargs, goal) ->
 			(pred, Absyn.Rule(pred, args, tyargs, nargs, ntargs, fvMaps, 
-							  tyfvMaps, expHQVars, goal, 
+							  tyfvMaps, expHQVars, ref None, goal, 
 							  ref (Absyn.GoalEnvAssoc([])), ref None, 
 							  ref false, impmods))
 	  in
