@@ -12,6 +12,12 @@ char* DBG(char* str)
   return str;
 }
 
+int DBGI(int i)
+{
+  printf("Debug(%d)\n",i);
+  return i;
+}
+
 void TEST_CreateM1GKindTable(int fd)
 {
   LK_FILE_PUT2(fd,2);
@@ -192,3 +198,95 @@ void TEST_CheckM1StringTable(int fd)
   ASSERT(!strcmp(tmp,"Yet Another String"),"M1 - String3");
   free(tmp);
 }
+
+void TEST_CreateM1CodeSize(int fd)
+{
+  LK_FILE_PUTWord(fd,(Word)0x2000);
+}
+
+void TEST_CreateM1ImplGoalTable(int fd)
+{
+  LK_FILE_PUT2(fd,1);//count
+  LK_FILE_PUT2(fd,1);//nctsize
+  LK_FILE_PUT1(fd,LOCAL); LK_FILE_PUT2(fd,0);  
+  LK_FILE_PUT1(fd,1);//fcf
+  LK_FILE_PUT2(fd,1);//nop
+  LK_FILE_PUT1(fd,LOCAL); LK_FILE_PUT2(fd,0);  
+  LK_FILE_PUTWord(fd,(Word)0x1000);
+}
+
+void TEST_CheckM1ImplGoalTable(int fd)
+{
+  ASSERT(LK_FILE_GET2(fd)==1,"M1 - ImplGoal count");
+  ASSERT(LK_FILE_GET2(fd)==1,"M1 - ImplGoal1 - NCT Size");
+  ASSERT(LK_FILE_GET1(fd)==LOCAL,"M1 - ImplGoal1 - NCT - L0");
+  ASSERT(LK_FILE_GET2(fd)==0,"M1 - ImplGoal1 - NCT - L0");
+  ASSERT(LK_FILE_GET1(fd)==1,"M1 - ImplGoal1 - FCF");
+  ASSERT(LK_FILE_GET2(fd)==1,"M1 - ImplGoal1 - NOP");
+  ASSERT(LK_FILE_GET1(fd)==LOCAL,"M1 - ImplGoal1 - ST - L0");
+  ASSERT(LK_FILE_GET2(fd)==0,"M1 - ImplGoal1 - ST - L0");
+  ASSERT(LK_FILE_GETWord(fd)==(Word)0x1000,"M1 - ImplGoal1 - ST - L0");
+}
+
+void TEST_CreateM1HashTabs(int fd)
+{
+  LK_FILE_PUT2(fd,1);
+  LK_FILE_PUT2(fd,1);//nop
+  LK_FILE_PUT1(fd,LOCAL); LK_FILE_PUT2(fd,0);  
+  LK_FILE_PUTWord(fd,(Word)0x1000);
+}
+
+void TEST_CheckM1HashTabs(int fd)
+{
+  ASSERT(LK_FILE_GET2(fd)==1,"M1 - HashTab count");
+  ASSERT(LK_FILE_GET2(fd)==1,"M1 - HashTab1 - NOP");
+  ASSERT(LK_FILE_GET1(fd)==LOCAL,"M1 - HashTab1 - L0");
+  ASSERT(LK_FILE_GET2(fd)==0,"M1 - HashTab1 - L0");
+  ASSERT(LK_FILE_GETWord(fd)==(Word)0x1000,"M1 - HashTab1 - L0");
+}
+
+void TEST_CreateM1BvrTabs(int fd)
+{
+  LK_FILE_PUT2(fd,1);
+  LK_FILE_PUT2(fd,1);//nop
+  LK_FILE_PUT1(fd,1);
+  LK_FILE_PUTWord(fd,(Word)0x1000);
+}
+
+void TEST_CheckM1BvrTabs(int fd)
+{
+  ASSERT(LK_FILE_GET2(fd)==1,"M1 - BvrTab count");
+  ASSERT(LK_FILE_GET2(fd)==1,"M1 - BvrTab1 - NOP");
+  ASSERT(LK_FILE_GET1(fd)==1,"M1 - BvrTab1 - Index1 id");
+  ASSERT(LK_FILE_GETWord(fd)==(Word)0x1000,"M1 - HashTab1 - Index1 addr");
+}
+
+void TEST_CreateM1ImportTable(int fd)
+{
+  LK_FILE_PUT2(fd,0);//nctsize
+  LK_FILE_PUT2(fd,0);//nexportdefs
+  LK_FILE_PUT2(fd,1);//nlocalpreds
+  LK_FILE_PUT1(fd,LOCAL); LK_FILE_PUT2(fd,0);  
+  LK_FILE_PUT1(fd,1);//fcf
+  LK_FILE_PUT2(fd,1);//nop
+  LK_FILE_PUT1(fd,LOCAL); LK_FILE_PUT2(fd,0);  
+  LK_FILE_PUTWord(fd,(Word)0x1000);
+}
+
+void TEST_CheckM1ImportTable(int fd)
+{
+  ASSERT(LK_FILE_GET2(fd)==1,"Import tab count");
+  ASSERT(LK_FILE_GET1(fd)==1,"M1 - IT - NumSegs");
+  ASSERT(LK_FILE_GET2(fd)==0,"M1 - IT - NCTSize");
+  ASSERT(LK_FILE_GET2(fd)==2,"M1 - IT - Local Consts");
+  ASSERT(LK_FILE_GET1(fd)==LOCAL,"M1 - IT - Local Consts - L0");
+  ASSERT(LK_FILE_GET2(fd)==0,"M1 - IT - Local Consts - L0");
+  ASSERT(LK_FILE_GET1(fd)==LOCAL,"M1 - IT - Local Consts - L1");
+  ASSERT(LK_FILE_GET2(fd)==1,"M1 - IT - Local Consts - L1");
+  ASSERT(LK_FILE_GET1(fd)==1,"M1 - IT - FCF");
+  ASSERT(LK_FILE_GET2(fd)==1,"M1 - IT - NOP");
+  ASSERT(LK_FILE_GET1(fd)==LOCAL,"M1 - IT - ST - L0");
+  ASSERT(LK_FILE_GET2(fd)==0,"M1 - IT - ST - L0");
+  ASSERT(LK_FILE_GETWord(fd)==(Word)0x1000,"M1 - IT - ST - L0");
+}
+

@@ -2,6 +2,6 @@
 #define _DEPS_H_
 
 extern void AddDependency(char* modname);
-extern void WriteDependencies();
+extern void WriteDependencies(int fd);
 
 #endif

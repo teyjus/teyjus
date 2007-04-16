@@ -8,7 +8,7 @@
 }LImplGoal_t;*/
 
 extern void InitTImplGoals();
-extern void LoadImplGoals();
-extern void WriteImplGoals();
+extern void LoadImplGoals(int fd, struct Module_st* CMData);
+extern void WriteImplGoals(int fd);
 
 #endif //_IMPLGOAL_H_

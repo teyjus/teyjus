@@ -81,6 +81,7 @@ void WriteGConst(int fd, int i)
   LK_FILE_PUT1(fd,GConstTab[i].precedence);
   LK_FILE_PUT1(fd,GConstTab[i].ty_env_size);
   LK_FILE_PutString(fd,GConstTab[i].name);
+  free(GConstTab[i].name);
   PutTySkelInd(fd,GConstTab[i].ty_skel_index);
 }
 
@@ -93,6 +94,7 @@ void WriteGConsts(int fd)
   {
     WriteGConst(fd,i);
   }
+  free(GConstTab);
 }
 
 

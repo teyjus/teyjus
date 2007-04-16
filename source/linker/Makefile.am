@@ -1,3 +1,4 @@
+##AM_CFLAGS= -Wall -Wno-comment
 AM_CPPFLAGS = -I${top_srcdir}/source -g
 
 bin_PROGRAMS = linker

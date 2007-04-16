@@ -1,5 +1,5 @@
 #include <stdlib.h>
-#include <stdio.h>
+#include <search.h>
 #include <string.h>
 #include "../system/error.h"
 #include "tree.h"

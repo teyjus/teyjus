@@ -23,9 +23,6 @@ struct BCFloat{
 struct Vector Code;
 struct Vector Floats;
 
-INT4 GetFloat();
-void PutFloat(INT4);
-
 CodeInd MergeSequence(CodeInd younger, CodeInd older, Byte n);
 void MergeTerm(CodeInd younger, CodeInd older,Byte n);
 
@@ -35,11 +32,27 @@ void InitTCode()
   LK_VECTOR_Init(&Floats,32,sizeof(struct BCFloat));
 }
 
-void LoadCode()
+INT4 GetFloat(int fd)
+{
+  int i=LK_VECTOR_Grow(&Floats,1);
+  struct BCFloat* tmp=(struct BCFloat*)LK_VECTOR_GetPtr(&Floats,i);
+  tmp->mantissa=LK_FILE_GET4(fd);
+  tmp->exponent=LK_FILE_GET4(fd);
+  return i;
+}
+
+void PutFloat(int fd, INT4 i)
+{
+  struct BCFloat* tmp=(struct BCFloat*)LK_VECTOR_GetPtr(&Floats,i);
+  LK_FILE_PUT4(fd,tmp->mantissa);
+  LK_FILE_PUT4(fd,tmp->exponent);
+}
+
+void LoadCode(int fd, struct Module_st* CMData)
 {
   int i,j;
-  int offset=CM->CodeOffset;
-  int size=CM->CodeSize;
+  int offset=CMData->CodeOffset;
+  int size=CMData->CodeSize;
   printf("Loading %d bytes of code to offset %d.\n",size,offset);//DEBUG
   Byte* code=(Byte*)LK_VECTOR_GetPtr(&Code,offset);
   ConstInd tmpIndex;
@@ -52,19 +65,19 @@ void LoadCode()
   for(i=0;i<size;)
   {
     j=i;
-    opcode=code[j++]=GET1();
+    opcode=code[j++]=LK_FILE_GET1(fd);
     //printf("%d:\t%s\n",i,INSTR_instrName(opcode));//DEBUG
     if(opcode==call)
     {
-      code[j]=GET1();
-      tmpIndex=GetConstInd(PeekInput(),CM);
+      code[j]=LK_FILE_GET1(fd);
+      tmpIndex=GetConstInd(fd,CMData);
       PushCall(tmpIndex,offset+i,0);
       i+=(INSTR_instrSize(opcode)*sizeof(Word));
       continue;
     }
     else if(opcode==execute)
     {
-      tmpIndex=GetConstInd(PeekInput(),CM);
+      tmpIndex=GetConstInd(fd,CMData);
       PushCall(tmpIndex,offset+i,1);
       i+=(INSTR_instrSize(opcode)*sizeof(Word));
       continue;
@@ -85,7 +98,7 @@ void LoadCode()
         case INSTR_N:
         case INSTR_I1:
         case INSTR_CE:
-          *(Byte*)(code+j)=GET1();
+          *(Byte*)(code+j)=LK_FILE_GET1(fd);
           j+=sizeof(Byte);
           break;
 
@@ -95,52 +108,52 @@ void LoadCode()
 //           break;
           
         case INSTR_C:
-          *(ConstInd*)(code+j)=GetConstInd(PeekInput(),CM);
+          *(ConstInd*)(code+j)=GetConstInd(fd,CMData);
           j+=sizeof(ConstInd);
           break;
           
         case INSTR_K:
-          *(KindInd*)(code+j)=GetKindInd(PeekInput(),CM);
+          *(KindInd*)(code+j)=GetKindInd(fd,CMData);
           j+=sizeof(KindInd);
           break;
           
         case INSTR_MT:
-          *(ImportTabInd*)(code+j)=GetImportTabInd();
+          *(ImportTabInd*)(code+j)=GetImportTabInd(fd,CMData);
           j+=sizeof(ImportTabInd);
           break;
           
         case INSTR_IT:
-          *(ImplGoalInd*)(code+j)=GetImplGoalInd();
+          *(ImplGoalInd*)(code+j)=GetImplGoalInd(fd,CMData);
           j+=sizeof(ImplGoalInd);
           break;
           
         case INSTR_HT:
-          *(HashTabInd*)(code+j)=GetHashTabInd();
+          *(HashTabInd*)(code+j)=GetHashTabInd(fd,CMData);
           j+=sizeof(HashTabInd);
           break;
           
         case INSTR_BVT:
-          *(BvrTabInd*)(code+j)=GetBvrTabInd();
+          *(BvrTabInd*)(code+j)=GetBvrTabInd(fd,CMData);
           j+=sizeof(BvrTabInd);
           break;
           
         case INSTR_S:
-          *(StringInd*)(code+j)=GetStringInd(PeekInput(),CM);
+          *(StringInd*)(code+j)=GetStringInd(fd,CMData);
           j+=sizeof(StringInd);
           break;
         
         case INSTR_L:
-          *(CodeInd*)(code+j)=GetCodeInd();
+          *(CodeInd*)(code+j)=GetCodeInd(fd,CMData);
           j+=sizeof(CodeInd);
           break;
           
         case INSTR_I:
-          *(INT4*)(code+j)=GET4();
+          *(INT4*)(code+j)=LK_FILE_GET4(fd);
           j+=sizeof(INT4);
           break;
 
         case INSTR_F:
-          *(INT4*)(code+j)=GetFloat();
+          *(INT4*)(code+j)=GetFloat(fd);
           j+=sizeof(INT4);
           break;
           
@@ -155,19 +168,24 @@ void LoadCode()
   }
 }
 
-void LoadCodeSize()
+void LoadCodeSize(int fd, struct Module_st* CMData)
 {
-  int size=CM->CodeSize=(int)GETWord();
-  CM->CodeOffset=LK_VECTOR_Grow(&Code,size);
-  printf("Loaded Codesize = %d, got offset %d.\n",size,CM->CodeOffset);
+  int size=CMData->CodeSize=(int)LK_FILE_GETWord(fd);
+  CMData->CodeOffset=LK_VECTOR_Grow(&Code,size);
+  //printf("Loaded Codesize = %d, got offset %d.\n",size,CMData->CodeOffset);
 }
 
-void WriteCodeSize()
+void FreeCode()
 {
-  PUTWord((Word)LK_VECTOR_Size(&Code));
+  LK_VECTOR_Free(&Code);
 }
 
-void WriteCode()
+void WriteCodeSize(int fd)
+{
+  LK_FILE_PUTWord(fd,(Word)LK_VECTOR_Size(&Code));
+}
+
+void WriteCode(int fd)
 {
   int i,j;
   int size=LK_VECTOR_Size(&Code);
@@ -186,7 +204,7 @@ void WriteCode()
     instrCat=INSTR_instrType(opcode);
     opType=INSTR_operandTypes(instrCat);
     argid=-1;
-    PUT1(opcode);
+    LK_FILE_PUT1(fd,opcode);
     do{
       argid++;
       switch(opType[argid])
@@ -200,7 +218,7 @@ void WriteCode()
         case INSTR_N:
         case INSTR_I1:
         case INSTR_CE:
-          PUT1(*(Byte*)(code+j));
+          LK_FILE_PUT1(fd,*(Byte*)(code+j));
           j+=sizeof(Byte);
           break;
 
@@ -210,52 +228,52 @@ void WriteCode()
 //           break;
           
         case INSTR_C:
-          PutConstInd(PeekOutput(),*(ConstInd*)(code+j));
+          PutConstInd(fd,*(ConstInd*)(code+j));
           j+=sizeof(ConstInd);
           break;
           
         case INSTR_K:
-          PutKindInd(PeekOutput(),*(KindInd*)(code+j));
+          PutKindInd(fd,*(KindInd*)(code+j));
           j+=sizeof(KindInd);
           break;
           
         case INSTR_MT:
-          PutImportTabInd(PeekOutput(),*(ImportTabInd*)(code+j));
+          PutImportTabInd(fd,*(ImportTabInd*)(code+j));
           j+=sizeof(ImportTabInd);
           break;
           
         case INSTR_IT:
-          PutImplGoalInd(PeekOutput(),*(ImplGoalInd*)(code+j));
+          PutImplGoalInd(fd,*(ImplGoalInd*)(code+j));
           j+=sizeof(ImplGoalInd);
           break;
           
         case INSTR_HT:
-          PutHashTabInd(PeekOutput(),*(HashTabInd*)(code+j));
+          PutHashTabInd(fd,*(HashTabInd*)(code+j));
           j+=sizeof(HashTabInd);
           break;
           
         case INSTR_BVT:
-          PutBvrTabInd(PeekOutput(),*(BvrTabInd*)(code+j));
+          PutBvrTabInd(fd,*(BvrTabInd*)(code+j));
           j+=sizeof(BvrTabInd);
           break;
           
         case INSTR_S:
-          PutStringInd(PeekOutput(),*(StringInd*)(code+j));
+          PutStringInd(fd,*(StringInd*)(code+j));
           j+=sizeof(StringInd);
           break;
         
         case INSTR_L:
-          PutCodeInd(PeekOutput(),*(CodeInd*)(code+j));
+          PutCodeInd(fd,*(CodeInd*)(code+j));
           j+=sizeof(CodeInd);
           break;
           
         case INSTR_I:
-          PUT4(*(INT4*)(code+j));
+          LK_FILE_PUT4(fd,*(INT4*)(code+j));
           j+=sizeof(INT4);
           break;
 
         case INSTR_F:
-          PutFloat(*(INT4*)(code+j));
+          PutFloat(fd,*(INT4*)(code+j));
           j+=sizeof(INT4);
           break;
           
@@ -298,23 +316,6 @@ void MakeCall(CodeInd from, int exec_flag, CodeInd to)
     tmp[0]=call;
     *(CodeInd*)(tmp+2)=to;
   }
-}
-
-
-INT4 GetFloat()
-{
-  int i=LK_VECTOR_Grow(&Floats,1);
-  struct BCFloat* tmp=(struct BCFloat*)LK_VECTOR_GetPtr(&Floats,i);
-  tmp->mantissa=GET4();
-  tmp->exponent=GET4();
-  return i;
-}
-
-void PutFloat(INT4 i)
-{
-  struct BCFloat* tmp=(struct BCFloat*)LK_VECTOR_GetPtr(&Floats,i);
-  PUT4(tmp->mantissa);
-  PUT4(tmp->exponent);
 }
 
 CodeInd MergeSubSequence(CodeInd younger, CodeInd older, Byte n)

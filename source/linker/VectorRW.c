@@ -21,7 +21,7 @@ void LK_VECTOR_Write(int fd, struct Vector* vec,void (*write_fn)(int fd, void* e
   int i;
   int size=LK_VECTOR_Size(vec);
   LK_FILE_PUT2(fd,size);
-  void* base = obstack_base(&(vec->obs));
+  void* base = LK_VECTOR_GetPtr(vec,0);
   int objSize= vec->objSize;
   for(i=0;i<size;i++)
   {

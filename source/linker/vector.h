@@ -6,8 +6,16 @@
 //Defines structures and methods for treating extendable arrays//
 /////////////////////////////////////////////////////////////////
 
+/*
 struct Vector{
   struct obstack obs;
+  size_t objSize;
+};*/
+
+struct Vector{
+  void* data;
+  int usesize;
+  int maxsize;
   size_t objSize;
 };
 

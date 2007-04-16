@@ -1,26 +1,25 @@
-
-#include <stdlib.h>
 #include "stringspace.h"
 #include "module.h"
 #include "vector.h"
 #include "file.h"
+#include "VectorRW.h"
 
+typedef struct{
+  char* str;
+}String_t;
 
-#include <stdio.h>
-#define DEBUG(x) printf("%s\n",x)
-//////////////////////////////////////////////////////
-//StringSpace Load and Write Code
-//////////////////////////////////////////////////////
 struct Vector Strings;
 
 void LK_STRINGS_Init()
 {
-  LK_VECTOR_Init(&Strings,128,sizeof(char*));
+  LK_VECTOR_Init(&Strings,10,sizeof(String_t));
 }
 
-void LoadString(int fd, struct Module_st* CMData,void* entry)
+void LoadString(int fd, struct Module_st* CMData, void* entry)
 {
-  *(char**)entry=LK_FILE_GetString(fd);
+  String_t* StrP=(String_t*)entry;
+  char* tmp=LK_FILE_GetString(fd);
+  StrP->str=tmp;
 }
 
 void LK_STRINGS_Load(int fd, struct Module_st* CMData)
@@ -28,15 +27,15 @@ void LK_STRINGS_Load(int fd, struct Module_st* CMData)
   LK_VECTOR_Read(fd,&Strings,CMData,&(CMData->StringsAdj),LoadString);
 }
 
-void WriteString(int fd, void* ent)
+void WriteString(int fd, void* entry)
 {
-  char* tmp=*(char**)ent;
-  LK_FILE_PutString(fd,tmp);
-  free(tmp);
+  String_t* StrP=(String_t*)entry;
+  LK_FILE_PutString(fd,StrP->str);
+  free(StrP->str);
 }
 
 void LK_STRINGS_Write(int fd)
 {
-  LK_VECTOR_Write(fd, &Strings,&WriteString);
+  LK_VECTOR_Write(fd,&Strings,WriteString);
   LK_VECTOR_Free(&Strings);
 }
