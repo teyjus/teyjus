@@ -5,6 +5,8 @@
 #include "file.h"
 #include "hashtab.h"
 #include "code.h"
+
+#include "VectorRW.h"
 //////////////////////////////////////////////////////
 //HashTab Load and Write Code
 //////////////////////////////////////////////////////
@@ -22,55 +24,43 @@ void InitTHashTabs()
   LK_VECTOR_Init(&HashTabs,32,sizeof(HashTab_t));
 }
 
-void LoadHashTabs()
+void LoadHashTabEnt(int fd, struct Module_st* CMData,void* entry)
 {
-  int i;
-  TwoBytes count=CM->HashTabcount=GET2();
-  int offset=CM->HashTaboffset=LK_VECTOR_Grow(&HashTabs,(int)count);
-  HashTab_t* tmp=(HashTab_t*)LK_VECTOR_GetPtr(&HashTabs,offset);
-  for(i=0;i<count;i++)
-  {
-    LoadHashTab(tmp+i);
-  }
+  HashTabEnt* tmp = (HashTabEnt*)entry;
+  tmp->index=GetConstInd(fd,CMData);
+  tmp->addr=GetCodeInd(fd,CMData);
 }
 
-void LoadHashTab(HashTab_t* HashTab)
+void LoadHashTab(int fd, struct Module_st* CMData,void* entry)
 {
-  int j;
-  TwoBytes count=GET2();
-  LK_VECTOR_Init((struct Vector*)HashTab,(int)count,sizeof(HashTabEnt));
-  LK_VECTOR_Grow((struct Vector*)HashTab,(int)count);
-  HashTabEnt* tmp=LK_VECTOR_GetPtr((struct Vector*)HashTab,0);
-  for(j=0;j<count;j++)
-  {
-    tmp[j].index=GetConstInd(PeekInput(),CM);
-    tmp[j].addr=GetCodeInd();
-  }
+  Adjust_t ignore_me;
+  LK_VECTOR_Init((struct Vector*)entry,0,sizeof(HashTabEnt));
+  LK_VECTOR_Read(fd,(struct Vector*)entry,CMData,&ignore_me,LoadHashTabEnt);
 }
 
-void WriteHashTabs()
+void LoadHashTabs(int fd, struct Module_st* CMData)
 {
-  int i;
-  int size=LK_VECTOR_Size(&HashTabs);
-  PUT2(size);
-  HashTab_t* tmp=(HashTab_t*)LK_VECTOR_GetPtr(&HashTabs,0);
-  for(i=0;i<size;i++)
-  {
-    WriteHashTab(tmp+i);
-  }
+  LK_VECTOR_Read(fd,&HashTabs,CMData,&(CMData->HashTabAdj),LoadHashTab);
 }
 
-void WriteHashTab(HashTab_t* HashTab)
+void WriteHashTabEnt(int fd,void* entry)
 {
-  int i;
-  TwoBytes count=LK_VECTOR_Size((struct Vector*)HashTab);
-  PUT2(count);
-  HashTabEnt* tmp=LK_VECTOR_GetPtr((struct Vector*)HashTab,0);
-  for(i=0;i<count;i++)
-  {
-    PutConstInd(PeekOutput(),tmp[i].index);
-    PutCodeInd(PeekOutput(),tmp[i].addr);
-  }
+  HashTabEnt* tmp = (HashTabEnt*)entry;
+  PutConstInd(fd,tmp->index);
+  PutCodeInd(fd,tmp->addr);
+}
+
+void WriteHashTab(int fd, void* entry)
+{
+  LK_VECTOR_Write(fd,(struct Vector*)entry,&WriteHashTabEnt);
+  if(LK_VECTOR_Size((struct Vector*)entry)!=0)
+    LK_VECTOR_Free((struct Vector*)entry);
+}
+
+void WriteHashTabs(int fd)
+{
+  LK_VECTOR_Write(fd, &HashTabs,&WriteHashTab);
+  LK_VECTOR_Free(&HashTabs);
 }
 
 int HashTabSearch(HashTab_t* HashTab, ConstInd x)

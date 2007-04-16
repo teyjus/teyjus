@@ -26,15 +26,12 @@ struct Module_st{
     Adjust_t LConstAdj;
     Adjust_t HConstAdj;
 	
-	int ImplGoalcount;
-	int ImplGoaloffset;
+	Adjust_t ImplGoalAdj;
 	
-	int HashTabcount;
-	int HashTaboffset;
+	Adjust_t HashTabAdj;
 	
-	int BvrTabcount;
-	int BvrTaboffset;
-
+    Adjust_t BvrTabAdj;
+	
     Adjust_t StringsAdj;
 
 	int CodeOffset;

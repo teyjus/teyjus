@@ -12,8 +12,25 @@ extern void TEST_CheckM1TySkelTable(int fd);
 
 extern void TEST_CreateM1GConstTable(int fd);
 extern void TEST_CreateM1LConstTable(int fd);
+extern void TEST_CreateM1HConstTable(int fd);
 
 extern void TEST_CheckM1GConstTable(int fd);
 extern void TEST_CheckM1LConstTable(int fd);
+extern void TEST_CheckM1HConstTable(int fd);
+
+extern void TEST_CreateM1StringTable(int fd);
+extern void TEST_CheckM1StringTable(int fd);
+
+extern void TEST_CreateM1ImplGoalTable(int fd);
+extern void TEST_CheckM1ImplGoalTable(int fd);
+
+extern void TEST_CreateM1HashTabs(int fd);
+extern void TEST_CheckM1HashTabs(int fd);
+
+extern void TEST_CreateM1BvrTabs(int fd);
+extern void TEST_CheckM1BvrTabs(int fd);
+
+extern void TEST_CreateM1ImportTable(int fd);
+extern void TEST_CheckM1ImportTable(int fd);
 
 #endif

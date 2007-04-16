@@ -1,10 +1,15 @@
-AM_CPPFLAGS = -I${top_srcdir}/source -g
+##AM_CFLAGS= -Wall -Wno-comment
+AM_CPPFLAGS = -I${top_srcdir}/source
 
 bin_PROGRAMS = linkcheck
 
-TSTSRCS =TestTree.c TestInits.c TestFile.c TestKind.c TestTySkel.c TestConst.c TestModule.c TestString.c TestM2.c
+TSTUTIL = TestModule.c TestM2.c
 
-linkcheck_SOURCES =$(TSTSRCS) cutcheck.c
+##TSTSRCS = TestTree.c TestInits.c TestFile.c TestKind.c TestTySkel.c TestConst.c TestString.c TestHashTabs.c TestImplGoal.c TestBvrTabs.c
+
+TSTSRCS = TestInits.c TestImportTab.c
+
+linkcheck_SOURCES =$(TSTSRCS) $(TSTUTIL) cutcheck.c
 linkcheck_LDADD = ${top_srcdir}/source/linker/liblink.a
 
 TESTS = linkcheck

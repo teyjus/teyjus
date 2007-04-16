@@ -3,6 +3,8 @@
 #include "datatypes.h"
 #include "module.h"
 #include "code.h"
+
+#include "VectorRW.h"
 //////////////////////////////////////////////////////
 //BvrTab Load and Write Code
 //////////////////////////////////////////////////////
@@ -11,67 +13,54 @@ typedef struct{
   CodeInd addr;
 }BvrTabEnt;
 
+typedef struct Vector BvrTab_t;
+
 struct Vector BvrTabs;
 
 void BVR_AddEntry(struct Vector* BvrTab, BvrTabEnt* entry);
-void LoadBvrTab(struct Vector* BvrTab);
-void WriteBvrTab(struct Vector* BvrTab);
 
 void InitTBvrTabs()
 {
-  LK_VECTOR_Init(&BvrTabs,32,sizeof(struct Vector));
+  LK_VECTOR_Init(&BvrTabs,32,sizeof(BvrTab_t));
 }
 
-void LoadBvrTabs()
+void LoadBvrTabEnt(int fd, struct Module_st* CMData,void* entry)
 {
-  int i;
-  TwoBytes count=CM->BvrTabcount=GET2();
-  int offset=CM->BvrTaboffset=LK_VECTOR_Grow(&BvrTabs,(int)count);
-  struct Vector* tmp=(struct Vector*)LK_VECTOR_GetPtr(&BvrTabs,offset);
-  for(i=0;i<count;i++)
-  {
-    LoadBvrTab(tmp+i);
-  }
+  BvrTabEnt* tmp=(BvrTabEnt*)entry;
+  tmp->index=LK_FILE_GET1(fd);
+  tmp->addr=GetCodeInd(fd,CMData);
 }
 
-void LoadBvrTab(struct Vector* BvrTab)
+void LoadBvrTab(int fd, struct Module_st* CMData,void* entry)
 {
-  int j;
-  Byte count=GET1();
-  LK_VECTOR_Init(BvrTab,(int)count,sizeof(BvrTabEnt));
-  LK_VECTOR_Grow(BvrTab,(int)count);
-  BvrTabEnt* tmp=(BvrTabEnt*)LK_VECTOR_GetPtr(BvrTab,0);
-  for(j=0;j<count;j++)
-  {
-    tmp[j].index=GET1();
-    tmp[j].addr=GetCodeInd();
-  }
-  
+  Adjust_t ignore_me;
+  LK_VECTOR_Init((struct Vector*)entry,0,sizeof(BvrTabEnt));
+  LK_VECTOR_Read(fd,(struct Vector*)entry,CMData,&ignore_me,LoadBvrTabEnt);
 }
 
-void WriteBvrTabs()
+void LoadBvrTabs(int fd, struct Module_st* CMData)
 {
-  int i;
-  int size=LK_VECTOR_Size(&BvrTabs);
-  PUT2(size);
-  struct Vector* tmp=LK_VECTOR_GetPtr(&BvrTabs,0);
-  for(i=0;i<size;i++)
-  {
-    WriteBvrTab(tmp+i);
-  }
+  LK_VECTOR_Read(fd,&BvrTabs,CMData,&(CMData->BvrTabAdj),LoadBvrTab);
 }
 
-void WriteBvrTab(struct Vector* BvrTab)
+void WriteBvrTabEnt(int fd,void* entry)
 {
-  int j;
-  Byte count=LK_VECTOR_Size(BvrTab);
-  PUT1(count);
-  BvrTabEnt* tmp=(BvrTabEnt*)LK_VECTOR_GetPtr(BvrTab,0);
-  for(j=0;j<count;j++)
-  {
-    PUT1(tmp[j].index);
-    PutCodeInd(PeekOutput(),tmp[j].addr);
-  }
+  BvrTabEnt* tmp = (BvrTabEnt*)entry;
+  LK_FILE_PUT1(fd,tmp->index);
+  PutCodeInd(fd,tmp->addr);
+}
+
+void WriteBvrTab(int fd, void* entry)
+{
+  LK_VECTOR_Write(fd,(struct Vector*)entry,&WriteBvrTabEnt);
+  if(LK_VECTOR_Size((struct Vector*)entry)!=0)
+    LK_VECTOR_Free((struct Vector*)entry);
+}
+
+void WriteBvrTabs(int fd)
+{
+  LK_VECTOR_Write(fd, &BvrTabs,&WriteBvrTab);
+  LK_VECTOR_Free(&BvrTabs);
 }
 
 int BvrTabSearch(struct Vector* BvrTab,Byte index)
@@ -109,6 +98,7 @@ void MergeBvrTabs(BvrTabInd a, BvrTabInd b,Byte n)
       tmpa=(BvrTabEnt*)LK_VECTOR_GetPtr(pa,0);
     }
   }
+  LK_VECTOR_Free((struct Vector*)pb);
 }
 
 void BVR_AddEntry(struct Vector* BvrTab, BvrTabEnt* entry)

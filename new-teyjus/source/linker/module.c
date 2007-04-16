@@ -22,40 +22,43 @@ static void LoadAccModule(char* modname);
 static void LoadAccModules();
 static void LoadImpModule(char* modname);
 static void LoadImpModules();
-static void PushModule(char* modname);
-static void PopModule();
-
-static void CheckBytecodeVersion();
-static void CheckModuleName(char* modname);
 
 static int NumSegs=0;
 
-void PushModule(char* modname)
+void CheckBytecodeVersion(int fd)
+{
+  int x=LK_FILE_GET4(fd);
+  printf("Bytecode version %d.\n",x);
+  if(x!=BC_VER)
+  {
+    perror("Incorrect Bytecode Version");
+    EM_THROW(LK_LinkError);
+  }
+}
+
+void CheckModuleName(int fd, char* modname)
+{
+  char* name=LK_FILE_GetString(fd);
+  if(0!=strcmp(modname,name))
+  {
+    perror("Module name mismatch");
+    EM_THROW(LK_LinkError);
+  }
+  free(name);
+}
+
+struct Module_st* NewModule()
 {
   struct Module_st* tmp=calloc(1,sizeof(struct Module_st));
   if(tmp==NULL)
   {
     perror("Memory Allocation Failed");
-    exit(0);
+    EM_THROW(LK_LinkError);
   }
-  tmp->parent=CM;
-  CM=tmp;
-  PushInput(modname);
-  CheckBytecodeVersion();
-  CheckModuleName(modname);
-}
-
-void PopModule()
-{
-  PopInput();
-  struct Module_st* tmp=CM->parent;
-  free(CM);
-  CM=tmp;
 }
 
 void InitAll()
 {
-  CM=NULL;
   InitTLKinds();
   InitTTySkels();
   InitTLConsts();
@@ -70,185 +73,165 @@ void InitAll()
 
 void LoadTopModule(char* modname)
 {
-  printf("Loading Top Level module %s.\n",modname);//DEBUG
-  PushModule(modname);
+  struct Module_st* CMData=NewModule();
+  int fd = LK_FILE_OpenInput(modname, LK_FILE_ByteCodeExt);
+  CheckBytecodeVersion(fd);
+  CheckModuleName(fd,modname);
   
   NewImportTab();
-  LoadCodeSize();
+  LoadCodeSize(fd,CMData);
   
-  LoadTopGKinds(PeekInput(),CM);
-  LoadLKinds(PeekInput(),CM);
+  LoadTopGKinds(fd,CMData);
+  LoadLKinds(fd,CMData);
   
-  LoadTySkels(PeekInput(),CM);
+  LoadTySkels(fd,CMData);
   
-  LoadTopGConsts(PeekInput(),CM);
-  LoadLConsts(PeekInput(),CM);
-  LoadHConsts(PeekInput(),CM);
+  LoadTopGConsts(fd,CMData);
+  LoadLConsts(fd,CMData);
+  LoadHConsts(fd,CMData);
   
-  LK_STRINGS_Load(PeekInput(),CM);
-  LoadImplGoals();
+  LK_STRINGS_Load(fd,CMData);
+  LoadImplGoals(fd,CMData);
   
-  LoadHashTabs();
-  LoadBvrTabs();
+  LoadHashTabs(fd,CMData);
+  LoadBvrTabs(fd,CMData);
   
-  TopImportTab();
-  LoadAccModules();
-  LoadImpModules();
+  TopImportTab(fd,CMData);
+  LoadAccModules(fd,CMData);
+  LoadImpModules(fd,CMData);
   
-  LoadCode();
+  LoadCode(fd,CMData);
   
   RestoreImportTab();
-  PopModule();
-  printf("Finished module %s.\n",modname);//DEBUG
+  LK_FILE_Close(fd);
+  free(CMData);
 }
 
 void LoadAccModule(char* modname)
 {
-  printf("Accumulating module %s.\n",modname);//DEBUG
-  PushModule(modname);
+  struct Module_st* CMData=NewModule();
+  int fd = LK_FILE_OpenInput(modname, LK_FILE_ByteCodeExt);
+  CheckBytecodeVersion(fd);
+  CheckModuleName(fd,modname);
   
-  LoadCodeSize();
+  LoadCodeSize(fd,CMData);
   
-  LoadGKinds(PeekInput(),CM);
-  LoadLKinds(PeekInput(),CM);
+  LoadGKinds(fd,CMData);
+  LoadLKinds(fd,CMData);
   
-  LoadTySkels(PeekInput(),CM);
+  LoadTySkels(fd,CMData);
   
-  LoadGConsts(PeekInput(),CM);
-  LoadLConsts(PeekInput(),CM);
-  LoadHConsts(PeekInput(),CM);
+  LoadGConsts(fd,CMData);
+  LoadLConsts(fd,CMData);
+  LoadHConsts(fd,CMData);
   
-  LK_STRINGS_Load(PeekInput(),CM);
-  LoadImplGoals();
+  LK_STRINGS_Load(fd,CMData);
+  LoadImplGoals(fd,CMData);
   
-  LoadHashTabs();
-  LoadBvrTabs();
+  LoadHashTabs(fd,CMData);
+  LoadBvrTabs(fd,CMData);
   
-  AccImportTab();
-  LoadAccModules();
-  LoadImpModules();
+  AccImportTab(fd,CMData);
+  LoadAccModules(fd,CMData);
+  LoadImpModules(fd,CMData);
   
-  LoadCode();
-  PopModule();
-  printf("Finished module %s.\n",modname);//DEBUG
+  LoadCode(fd,CMData);
+  
+  LK_FILE_Close(fd);
+  free(CMData);
 }
 
 void LoadImpModule(char* modname)
 {
-  printf("Importing module %s.\n",modname);//DEBUG
-  PushModule(modname);
+  struct Module_st* CMData=NewModule();
+  int fd = LK_FILE_OpenInput(modname, LK_FILE_ByteCodeExt);
+  CheckBytecodeVersion(fd);
+  CheckModuleName(fd,modname);
   
-  LoadCodeSize();
+  LoadCodeSize(fd,CMData);
   
-  LoadGKinds(PeekInput(),CM);
-  LoadLKinds(PeekInput(),CM);
+  LoadGKinds(fd,CMData);
+  LoadLKinds(fd,CMData);
   
-  LoadTySkels(PeekInput(),CM);
+  LoadTySkels(fd,CMData);
   
-  LoadGConsts(PeekInput(),CM);
-  LoadLConsts(PeekInput(),CM);
-  LoadHConsts(PeekInput(),CM);
+  LoadGConsts(fd,CMData);
+  LoadLConsts(fd,CMData);
+  LoadHConsts(fd,CMData);
   
-  LK_STRINGS_Load(PeekInput(),CM);
-  LoadImplGoals();
+  LK_STRINGS_Load(fd,CMData);
+  LoadImplGoals(fd,CMData);
   
-  LoadHashTabs();
-  LoadBvrTabs();
+  LoadHashTabs(fd,CMData);
+  LoadBvrTabs(fd,CMData);
   
-  ImpImportTab();
-  LoadAccModules();
-  LoadImpModules();
+  ImpImportTab(fd,CMData);
+  LoadAccModules(fd,CMData);
+  LoadImpModules(fd,CMData);
   
-  LoadCode();
+  LoadCode(fd,CMData);
   
-  PopModule();
-  printf("Finished module %s.\n",modname);//DEBUG
+  LK_FILE_Close(fd);
+  free(CMData);
 }
 
-void LoadImpModules()
+void LoadImpModules(int fd, struct Module_st* CMData)
 {
-  int count=CM->ImportCount=GET1();
+  int count=CMData->ImportCount=LK_FILE_GET1(fd);
   int i;
   printf("Importing %d modules\n",count);//DEBUG
   
   if(!count)
   {
-    CM->SegmentID=-1;
+    CMData->SegmentID=-1;
     return;
   }
-  CM->Import=EM_malloc(sizeof(ImportTabInd)*count);
-  CM->SegmentID=NumSegs++;
+  CMData->Import=EM_malloc(sizeof(ImportTabInd)*count);
+  CMData->SegmentID=NumSegs++;
   
   for(i=0;i<count;i++)
   {
-    Name name;
-    GetName(&name);
-    LK_RENAME_LoadKindRNTable(PeekInput(),CM);
-    LK_RENAME_LoadConstRNTable(PeekInput(),CM);
-    CM->Import[i]=NewImportTab();
-    LoadImpModule(name.string);
+    char* name=LK_FILE_GetString(fd);
+    LK_RENAME_LoadKindRNTable(fd,CMData);
+    LK_RENAME_LoadConstRNTable(fd,CMData);
+    CMData->Import[i]=NewImportTab();
+    LoadImpModule(name);
     RestoreImportTab();
-    Clear(name);
+    free(name);
   }
 }
 
-void LoadAccModules()
+void LoadAccModules(int fd, struct Module_st* CMData)
 {
-  int count=GET1();
+  int count=LK_FILE_GET1(fd);
   printf("Accumulating %d modules\n",count);//DEBUG
   int i;
   for(i=0;i<count;i++)
   {
-    Name name;
-    GetName(&name);
-    LK_RENAME_LoadKindRNTable(PeekInput(),CM);
-    LK_RENAME_LoadConstRNTable(PeekInput(),CM);
-    LoadAccModule(name.string);
-    Clear(name);
+    char* name=LK_FILE_GetString(fd);
+    LK_RENAME_LoadKindRNTable(fd,CMData);
+    LK_RENAME_LoadConstRNTable(fd,CMData);
+    LoadAccModule(name);
+    free(name);
   }
-}
-
-void CheckBytecodeVersion()
-{
-  int x=GET4();
-  printf("Bytecode version %d.\n",x);
-  if(x!=BC_VER)
-  {
-    perror("Incorrect Bytecode Version");
-    exit(0);
-  }
-}
-
-void CheckModuleName(char* modname)
-{
-  Name name;
-  GetName(&name);
-  if(strcmp(modname,name.string)!=0)
-  {
-    perror("Module name mismatch");
-    exit(0);
-  }
-  Clear(name);
 }
 
 void WriteAll(char* modname)
 {
-  SetOutput(modname);
-  PUTWord((Word)LINKCODE_VER);
-  LK_FILE_PutString(PeekOutput(),modname);
-  WriteDependencies();
-  WriteCodeSize();
-  WriteKinds(PeekOutput());
-  WriteTySkels(PeekOutput());
-  WriteConsts(PeekOutput());
-  LK_STRINGS_Write(PeekOutput());
-  WriteImplGoals();
-  WriteHashTabs();
-  WriteBvrTabs();
-  WriteAddCodeTable();
-  PUT1(NumSegs);
-  WriteImportTabs();
-  WriteCode();
+  int fd = LK_FILE_OpenOutput(modname,LK_FILE_LinkCodeExt);
+  LK_FILE_PUTWord(fd,(Word)LINKCODE_VER);
+  LK_FILE_PutString(fd,modname);
+  WriteDependencies(fd);
+  WriteCodeSize(fd);
+  WriteKinds(fd);
+  WriteTySkels(fd);
+  WriteConsts(fd);
+  LK_STRINGS_Write(fd);
+  WriteImplGoals(fd);
+  WriteHashTabs(fd);
+  WriteBvrTabs(fd);
+  WriteImportTabs(fd);
+  WriteCode(fd);
 }
 
 KindInd GetKindInd(int fd, struct Module_st* CMData){
@@ -264,7 +247,7 @@ KindInd GetKindInd(int fd, struct Module_st* CMData){
     case GLOBAL:
       if(tmp.index>=CMData->GKindcount)
       {
-        printf("Invalid Global Kind %d\n",index);
+        printf("Invalid Global Kind %d\n",tmp.index);
         EM_THROW(LK_LinkError);
       }
       tmp=CMData->GKind[tmp.index];
@@ -273,7 +256,7 @@ KindInd GetKindInd(int fd, struct Module_st* CMData){
       break;
       
     default:
-      printf("Invalid Kind Type %d\n",index);
+      printf("Invalid Kind Type %d\n",tmp.gl_flag);
       EM_THROW(LK_LinkError);
       break;
   }
@@ -333,61 +316,47 @@ TySkelInd GetTySkelInd(int fd, struct Module_st* CMData){
   return tmp;
 }
 
-CodeInd GetCodeInd(){
-  CodeInd tmp=(CodeInd)GETWord();
+CodeInd GetCodeInd(int fd, struct Module_st* CMData){
+  CodeInd tmp=(CodeInd)LK_FILE_GETWord(fd);
   //printf("CodeInd:%d->",tmp);//DEBUG
-  if(tmp>=CM->CodeSize)
+  if(tmp>=CMData->CodeSize)
   {
-    printf("Invalid Code Address %d\n",tmp);
+    printf("Invalid Code Address %d\n",(int)tmp);
     exit(0);
   }
-  tmp+=CM->CodeOffset;
+  tmp+=CMData->CodeOffset;
   //printf("%d\n",tmp);//DEBUG
   return tmp;
 }
 
-ImportTabInd GetImportTabInd()
+ImportTabInd GetImportTabInd(int fd, struct Module_st* CMData)
 {
-  TwoBytes x=GET2();
-  if(x>=CM->ImportCount)
+  TwoBytes x=LK_FILE_GET2(fd);
+  if(x>=CMData->ImportCount)
   {
     printf("Invalid Import Table %d\n",x);
     exit(0);
   }
-  return CM->Import[x];
+  return CMData->Import[x];
 }
 
-ImplGoalInd GetImplGoalInd()
-{
-  TwoBytes x=GET2();
-  if(x>=CM->ImplGoalcount)
-  {
-    printf("Invalid Implication Goal %d\n",x);
-    exit(0);
-  }
-  return CM->ImplGoaloffset+x;
+ImplGoalInd GetImplGoalInd(int fd, struct Module_st* CMData){
+  TwoBytes tmp=LK_FILE_GET2(fd);
+  LK_ADJUST(tmp,CMData->ImplGoalAdj,"Type Skeleton");
+  return tmp;
 }
 
-HashTabInd GetHashTabInd()
-{
-  TwoBytes x=GET2();
-  if(x>=CM->HashTabcount)
-  {
-    printf("Invalid Hash Table %d\n",x);
-    exit(0);
-  }
-  return CM->HashTaboffset+x;
+HashTabInd GetHashTabInd(int fd, struct Module_st* CMData){
+  TwoBytes tmp=LK_FILE_GET2(fd);
+  LK_ADJUST(tmp,CMData->HashTabAdj,"Type Skeleton");
+  return tmp;
 }
 
-BvrTabInd GetBvrTabInd()
+BvrTabInd GetBvrTabInd(int fd, struct Module_st* CMData)
 {
-  TwoBytes x=GET2();
-  if(x>=CM->BvrTabcount)
-  {
-    printf("Invalid Bound Variable Table %d\n",x);
-    exit(0);
-  }
-  return CM->BvrTaboffset+x;
+  TwoBytes tmp=LK_FILE_GET2(fd);
+  LK_ADJUST(tmp,CMData->HashTabAdj,"Type Skeleton");
+  return tmp;
 }
 
 StringInd GetStringInd(int fd, struct Module_st* CMData)

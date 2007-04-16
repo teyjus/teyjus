@@ -6,8 +6,8 @@
 //Initialization, Loading and Writing Functions
 //for Hash Tables.
 extern void InitTHashTabs();
-extern void LoadHashTabs();
-extern void WriteHashTabs();
+extern void LoadHashTabs(int fd, struct Module_st* CMData);
+extern void WriteHashTabs(int fd);
 
 typedef struct Vector HashTab_t;
 
@@ -15,8 +15,8 @@ typedef struct Vector HashTab_t;
 //Utilities////////////////////////////
 /////////////////////////////////////////
 
-extern void LoadHashTab(HashTab_t* HashTab);
-extern void WriteHashTab(HashTab_t* HashTab);
+extern void LoadHashTab(int fd, struct Module_st* CMData,void* entry);
+extern void WriteHashTab(int fd, void* entry);
 
 //Returns the index of the hash table entry with key x
 //Returns -1 on failure

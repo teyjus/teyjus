@@ -19,12 +19,6 @@ typedef struct{
   char* name;
 }Kind_t;
 
-//struct Vector GKinds;
-
-void WriteGKind(int fd, int i);
-
-void WriteGKinds(int fd);
-
 KindInd LoadGKind(int fd)
 {
   int arity=LK_FILE_GET1(fd);
@@ -84,6 +78,14 @@ void LoadTopGKinds(int fd, struct Module_st* CMData)
   }
 }
 
+void WriteGKind(int fd, int i)
+{
+  //printf("GK(%d,%s)\n",GKindTab[i].arity,GKindTab[i].name);fflush(stdout);
+  LK_FILE_PUT1(fd,GKindTab[i].arity);
+  LK_FILE_PutString(fd,GKindTab[i].name);
+  free(GKindTab[i].name);
+}
+
 void WriteGKinds(int fd)
 {
   int i;
@@ -95,13 +97,6 @@ void WriteGKinds(int fd)
   }
   free(GKindTab);
   GKindTab=NULL;
-}
-
-void WriteGKind(int fd, int i)
-{
-  //printf("GK(%d,%s)\n",GKindTab[i].arity,GKindTab[i].name);fflush(stdout);
-  LK_FILE_PUT1(fd,GKindTab[i].arity);
-  LK_FILE_PutString(fd,GKindTab[i].name);
 }
 
 

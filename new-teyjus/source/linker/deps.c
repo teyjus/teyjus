@@ -28,17 +28,13 @@ void AddDependency(char* modname)
   files++;
 }
 
-void WriteDependencies()
+void WriteDependencies(int fd)
 {
-  int i;
   struct NameNode* tmp=UsedFile;
-  PUT2(files);
-  Name name;
+  LK_FILE_PUT2(fd,files);
   while(tmp!=NULL)
   {
-    name.string=tmp->name;
-    name.size=strlen(tmp->name)+1;
-    PutName(name);
+    LK_FILE_PutString(fd,tmp->name);
     tmp=tmp->next;
   }
 }
