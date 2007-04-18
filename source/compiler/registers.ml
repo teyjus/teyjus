@@ -58,7 +58,6 @@
 (***************************************************************************)
 (*                       AUXILIARY FLAGS                                   *)
 (***************************************************************************)
-
 (* these variables are used for communication concerning goal argument     *)
 (* registers (that should not be freed even if a variable in them becomes  *)
 (* dead) between atomic goals and the register allocator                   *)
@@ -76,9 +75,6 @@ let getNumGoalArgs ()     = !numGoalArgs
 (***************************************************************************)
 (*                      REGISTER  ARRAY                                    *)
 (***************************************************************************)
-exception RegsArrayUninitialized (* for debugging *)
-exception NoFreeRegister         (* to be replaced to system error handling *)
-
 (* number of available registers: agree with the simulator *)
 let maxRegNum = 255
 
@@ -95,7 +91,8 @@ let initRegsArray ()  = regsArray := Some(Array.make (maxRegNum+1) true)
 (* boundary.                                                                *)
 let setRegsArray ind data =
   match (!regsArray) with
-	None -> raise RegsArrayUninitialized
+	None -> 
+	  Errormsg.impossible Errormsg.none "setRegsArray: regsArray uninitialized"
   | Some(array) -> Array.set array ind data 
 
 (* retrieve the value recorded in the nth element of the current regsArray. *)
@@ -103,22 +100,23 @@ let setRegsArray ind data =
 (* given index is within array length boundary.                             *)
 let getRegsArrayNth ind =
   match (!regsArray) with
-	None -> raise RegsArrayUninitialized
+	None -> 
+	  Errormsg.impossible Errormsg.none "setRegsArray: regsArray uninitialized"
   | Some(array) -> Array.get array ind 
 
 
 (* return the minimal free register with index larger than i *)
 let rec minimalFreeReg i =
-  if (i > maxRegNum) then raise NoFreeRegister
-  else 
+  if (i > maxRegNum) then 
+	(Errormsg.error Errormsg.none "unable to perform register assignment";
+	 1)
+  else  
 	if (getRegsArrayNth i) then i
 	else minimalFreeReg (i + 1)
 
 (*****************************************************************************)
 (*                   VARIABLE REGISTER CORRESPONDENCE LIST                   *)
 (*****************************************************************************)
-exception UnfoundRegNumber   (* for debugging *)
-
 type regused = 
     RegVar   of int * Absyn.avar           (* (regNum, varData) *)
   | RegTyVar of int * Absyn.atypevar * bool(* (regNum, typeVarData, needed) *)
@@ -141,7 +139,9 @@ let setRegUseList myList = regUseList := myList
 let getRegUseListRegNum regNum =
   let rec getRegUseListRegNumAux mylist =
 	match mylist with
-	  [] -> raise UnfoundRegNumber
+	  [] -> 
+		Errormsg.impossible Errormsg.none 
+		  "getRegUseListRegNum: unfound register number in reg use list"
 	| (regUsage :: rest) ->
 		match regUsage with
 		  RegVar(regNum', _) -> 
@@ -186,7 +186,9 @@ let markUnusedReg regNum = setRegsArray regNum true
 (* register is used for a purpose other than to hold a temporary variable   *)
 let getHighFreeReg () =
   let rec getHighFreeRegAux regNum =
-	if regNum = 0 then raise NoFreeRegister
+	if regNum = 0 then 
+	  (Errormsg.error Errormsg.none "unable to perform register assignment";
+	   1)
 	else
 	  if (getRegsArrayNth regNum) then (setRegsArray regNum false; regNum)
 	  else getHighFreeRegAux (regNum - 1)
@@ -417,5 +419,6 @@ let chunkify goal =
 	| Absyn.ImpGoal(_, _, body) -> chunkifyAux body chunks
 	| Absyn.AllGoal(_, body)    -> chunkifyAux body chunks
 	| Absyn.SomeGoal(_, body)   -> chunkifyAux body chunks
+	| _ -> Errormsg.impossible Errormsg.none "chunkify: cutfail goal"
   in
   chunkifyAux goal []

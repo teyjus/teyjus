@@ -179,6 +179,7 @@ and agoal =
   | ImpGoal of (adefinitions * avarinits * agoal)
   | AllGoal of (ahcvarassoc * agoal)
   | SomeGoal of (avar * agoal)
+  | CutFailGoal 
 (*| OrGoal of (agoal * agoal) *)
 
 and adefinitions = Definitions of ((aconstant * aclausesblock) list)
@@ -209,9 +210,9 @@ and atermvarmap  = TermVarMap of ((avar * avar) list)
 (* type variable map list *)
 and atypevarmap  = TypeVarMap of ((atypevar * atypevar) list)
 
-(* clauses block: (clauses, last, offset, nextclause, closed, mapped) *)	  
-and aclausesblock = (aclause list ref * aclause ref * int ref * 
-					   int option ref * bool ref * bool ref)
+(* clauses block: (clauses, lastcutfail, offset, nextclause, closed, mapped)*)
+and aclausesblock = (aclause list ref * bool * int ref * int option ref * 
+					   bool ref * bool ref)
 
 (*****************************************************************************
 *Modules:
@@ -345,6 +346,10 @@ let getTypeVariableDataLastUseRef = function
   TypeVar(_, lu, _, s, _, _, _, _) -> lu
 let getTypeVariableDataLastUse v = 
   Option.get !(getTypeVariableDataLastUseRef v)
+
+let makeNewTypeVariableData () =
+  TypeVar(ref None, ref None, ref false, ref false, ref false, ref None, 
+	  ref 0, ref 0)
 
 (*************************************************************************)
 (*  atype:                                                               *)
@@ -482,6 +487,8 @@ let isTypeFreeVariable = function
   | _ -> false
 
 let makeTypeVariable () = TypeVarType(ref (FreeTypeVar(ref None, ref None)))
+let makeNewTypeVariable varData =
+  TypeVarType (ref (FreeTypeVar(ref (Some varData), ref None)))
 
 (* type skeleton variable            *)
 let getSkeletonVariableIndex = function
@@ -614,6 +621,8 @@ let isGlobalConstant c =
 let getConstantCodeInfo = function
   Constant(_,_,_,_,_,_,_,_,_,_,_,_,ci,_,_,_) ->
     ci
+
+let setConstantCodeInfo c codeInfo = (getConstantCodeInfo c) := codeInfo
 
 let getConstantCodeInfoBuiltinIndex = function
   Constant(_,_,_,_,_,_,_,_,_,_,_,_,ci,_,_,_) ->
@@ -848,7 +857,13 @@ let getVariableDataOffset v = Option.get (!(getVariableDataOffsetRef v))
 let setVariableDataOffset v o =
   (getVariableDataOffsetRef v) := Some o
 
+let makeNewVariableData () =
+  Var(ref None, ref false, ref false, ref false, ref None, ref 0, ref 0,
+      ref None)
 
+let makeCutVariableData gnum =
+  Var(ref None, ref true, ref false, ref false, ref None, ref gnum, 
+	  ref gnum, ref None)
 (*************************************************************************)
 (*  aterm:                                                               *)
 (*************************************************************************)
@@ -919,6 +934,10 @@ let isTermConstant = function
 let getTermAbstractionVar = function
   AbstractionTerm(NestedAbstraction(v,_),_,_) -> v
 | _ -> Errormsg.impossible Errormsg.none "getTermAbstractionVar: invalid term"
+
+let getTermAbstractionVars = function
+  AbstractionTerm(UNestedAbstraction(vars,_,_),_,_) -> vars
+| _ -> Errormsg.impossible Errormsg.none "getTermAbstractionVars: invalid term"
 
 let getTermAbstractionBody = function
   AbstractionTerm(NestedAbstraction(_,b),_,_) -> b
@@ -1454,6 +1473,15 @@ let setClauseBlockOffset clb n =
   let (_,_,offset,_,_,_) = clb in
   offset := n
 
+(* if the given clause has a body as CutFailGoal, then set the second   *)
+(* field true and add an empty list as the clauses list                 *)
+let makeNewClauseBlock cl closed =
+  match cl with
+	Rule(_) ->
+	  if (getClauseGoal cl == CutFailGoal) then 
+		(ref [], true, ref 0, ref None, ref closed, ref false) 
+	  else (ref [cl], false, ref 0, ref None, ref closed, ref false)
+  | _ ->  (ref [cl], false, ref 0, ref None, ref closed, ref false)
 
 (**********************************************************************)
 (*printAbsyn:                                                         *)

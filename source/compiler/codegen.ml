@@ -19,12 +19,6 @@
 (*     translated and information for generating the dump for such tables  *)
 (*     is left in a list.                                                  *)
 (***************************************************************************)
-exception TooManyExtPreds (* to be replaced by system exception *)
-(********************************************************************)
-(* Exceptions for debugging (not really needed)                     *)
-(********************************************************************)
-exception IllegalModuleStr
-exception IllegalConstant
 
 (****************************************************************************)
 (*   DATA STRUCTURES FOR RECORDING INFORMATION NEEDED FOR SPITTING CODE     *)
@@ -61,14 +55,12 @@ type cgtypeskeletons = TypeSkeletonList of Absyn.askeleton list * int
 (**************************************************************************)
 type cgstrings = StringList of Absyn.astringinfo list * int
 
-
 (**************************************************************************)
 (* predicates defined in this module;                                     *)
-(* global, non-exportdef predicates in this module;                       *)
+(* global, non-exportdef predicates in this module (predicates whose      *)
+(* previous defintions could be extended by this module);                 *)
 (* (global) exportdef predicates in this module;                          *)
 (* local predicates in this module;                                       *)
-(* predicates whose previous definitions might be extended by the code in *)
-(* the module                                                             *)
 (*========================================================================*)
 (* predicates list: (predicates (names) list, number of predicates)       *)
 (**************************************************************************)
@@ -126,10 +118,10 @@ and  cgimppredinfo = ImpPredInfo of (Absyn.aconstant * int )
 (*  local constants,                                                      *)
 (*  hidden constants,                                                     *)
 (*  predicates defined in this module,                                    *)
-(*  global, non-exportdef predicates in this module,                      *)
+(*  global, non-exportdef predicates in this module (predicate whose      *)
+(*  previous definitions could be extended by this module),               *)
 (*  (global) exportdef predicates in this module,                         *)
 (*  local predicates in this module,                                      *)
-(*  predicates whose previous defintions could be extended by this module,*) 
 (*  type skeletons,                                                       *)
 (*  strings,                                                              *)
 (*  imported modules renaming info,                                       *)
@@ -141,7 +133,7 @@ and  cgimppredinfo = ImpPredInfo of (Absyn.aconstant * int )
 (**************************************************************************)   
 type cgmodule =
 	Module of string * cgkinds * cgkinds * cgconsts * cgconsts * 
-	    cgconsts * cgpreds * cgpreds * cgpreds * cgpreds * cgpreds * 
+	    cgconsts * cgpreds * cgpreds * cgpreds * cgpreds * 
 		cgtypeskeletons * cgstrings * cgrenaming list * cgrenaming list *
 		cginstructions * cghashtabs * cgimpgoallist 
 		
@@ -177,20 +169,29 @@ let genCodeInitialization () =
   initHashTabs ()
 
 (*****************************************************************************)
-(*                       CLOSE OFF DEFINITIONS                               *)
+(*         CLOSE OFF DEFINITIONS OF UNIVERSAL VARIABLES                      *)
 (*  Close off definitions (clauses in a clause block) ending with clause     *)
-(*            Head :- !, fail.                                               *)
+(*            Head :- cutfail.                                               *)
 (* 1) mark the clausesblock as closed;                                       *)
 (* 2) remove the last clause from the clauses list.                          *)
 (*****************************************************************************)
-exception IllegalClausesBlock
+let rec closeDefs clausesBlocks =
+  match clausesBlocks with
+	[] -> ()
+  | ((clauses, true, _, _, closed, _) :: rest) ->
+	  closed := true;
+	  closeDefs rest
+  | ((clauses, false, _, _, closed, _) :: rest) -> closeDefs rest
+
+(*
 let rec closeDefs clausesBlocks = 
-  (* check whether the clause body is (! , fail.) *)
+  (* check whether the clause body is (cutfail.) *)
   let isCutFail clause =
     match clause with
       Absyn.Fact(_, _, _, _, _, _, _, _, _, _)             -> false
     | Absyn.Rule(_, _, _, _, _, _, _, _, _, goal, _, _, _, _) ->
 		match goal with
+		  (* !!! this condition is not correct. *)
 		  Absyn.AndGoal(Absyn.AtomicGoal(lpred, _, _, _, _),
 						Absyn.AtomicGoal(rpred, _, _, _, _)) ->
 			if (Pervasive.iscutConstant(lpred)) &&
@@ -215,7 +216,7 @@ let rec closeDefs clausesBlocks =
 	     clauses := removeLastClause (!clauses);
 	     closeDefs rest)
       else closeDefs rest
-
+*)
 (*****************************************************************************)
 (*                          ASSIGN KIND INDEXES                              *)
 (* assign indexes (offsets) to global and local kinds of the module          *)
@@ -245,8 +246,9 @@ let assignKindIndex gkinds lkinds =
 (****************************************************************************)
 let assignConstIndex gconsts lconsts hconsts =
 
-  (* assignIndex for local consts; gather predicates having definitions, *)
-  (* which are also local predicates with defintions                     *)
+  (* a). assignIndex for local consts;                                    *)
+  (* b). gather predicates having definitions;                            *)
+  (* c). close the defintions for such predicate.                         *)
   let rec assignLocalConstIndex consts index defs numDefs =
 	match consts with
 	  [] -> (index, defs, numDefs)  (*note defs are in reversed order *)
@@ -258,7 +260,8 @@ let assignConstIndex gconsts lconsts hconsts =
 		  | Some(Absyn.Clauses(clauseBlock)) ->
 			  Absyn.setClauseBlockClose clauseBlock true;
 			  (const :: defs, numDefs + 1)
-		  | _ -> raise IllegalConstant
+		  | _ -> Errormsg.impossible Errormsg.none 
+				   "assignConstIndex: invalid constant codeInfo"
 		in
 		assignLocalConstIndex rest (index + 1) newDefs newNumDefs
   in
@@ -272,63 +275,57 @@ let assignConstIndex gconsts lconsts hconsts =
 		assignHiddenConstIndex rest (index + 1)
   in
 
-  (* global constants; increment predicates having definitions; gather      *)
-  (* predicates whose previous definitions coule be extended by this module *)
-  (* gather non-exportdef predicates; gather exportdef predicates           *)
-  let rec assignGlobalConstIndex consts index defs numDefs extDefs numExtDefs 
-	  nonExpDefs numNonExpDefs expDefs numExpDefs =
-	match consts with
-	  [] -> (index, defs, numDefs, extDefs, numExtDefs, nonExpDefs, 
-			 numNonExpDefs, expDefs, numExpDefs) (* need reverse? *)
+  (* a). assign indexes for global constants;                             *)
+  (* b). increment predicates having definitions;                         *)
+  (* c). gather predicates whose previous definitions could be extended   *)
+  (*     by this module (non-exportDef ones);                             *)
+  (* d). gather exportDef predicates and close off their definitions.     *)
+  let rec assignGlobalConstIndex consts index defs numDefs nonExpDefs 
+	  numNonExpDefs expDefs numExpDefs =
+    match consts with
+	  [] -> (index, defs, numDefs, nonExpDefs, numNonExpDefs, expDefs, 
+			 numExpDefs) (* reverse?! *)
 	| (const :: rest) ->
-		Absyn.setConstantIndex const index; 
-	    let codeInfo = Absyn.getConstantCodeInfo(const) in
-		let (newDefs, newNumDefs, newNonExpDefs, newNumNonExpDefs,
-			 newExpDefs, newNumExpDefs) = 
-		  match (!codeInfo) with
+	    Absyn.setConstantIndex const index;
+	    let codeInfo = Absyn.getConstantCodeInfo const in
+	    let (newDefs, newNumDefs, newNonExpDefs, newNumNonExpDefs, newExpDefs, 
+			 newNumExpDefs) =
+	      match (!codeInfo) with
 			None -> (defs, numDefs, nonExpDefs, numNonExpDefs, expDefs, 
 					 numExpDefs)
-		  | Some(Absyn.Clauses(_)) -> 
+	      | Some(Absyn.Clauses(clauseBlock)) -> 
 			  if (Absyn.getConstantExpDef const) then
-				(const::defs, numDefs + 1, nonExpDefs, numNonExpDefs,
-				 const::expDefs, numExpDefs + 1)
+				(Absyn.setClauseBlockClose clauseBlock true;
+				 (const :: defs, numDefs + 1, nonExpDefs, numNonExpDefs, 
+				  const :: expDefs, numExpDefs + 1))
 			  else
-				(const::defs, numDefs + 1, (const::nonExpDefs),numNonExpDefs+1,
-				 expDefs, numExpDefs)
-		  | _ -> raise IllegalConstant
-		in
-		let (newExtDefs, newNumExtDefs) =
-		  match (!codeInfo) with
-			 None -> (extDefs, numExtDefs)
-		   | Some(Absyn.Clauses(clauseBlock)) ->
-			   if (Absyn.getClauseBlockClose(clauseBlock)) then
-				 (extDefs, numExtDefs)
-			   else 
-				 if (Absyn.getConstantExpDef const) then 
-				   (Absyn.setClauseBlockClose clauseBlock true;
-					(extDefs, numExtDefs))
-				 else
-				   (Absyn.setClauseBlockNextClause clauseBlock (numExtDefs+1);
-					(const::extDefs, numExtDefs + 1))
-		   | _ -> raise IllegalConstant
-		 in
-		 assignGlobalConstIndex rest (index+1) newDefs newNumDefs newExtDefs 
-		  newNumExtDefs newExpDefs newNumExpDefs newNonExpDefs newNumNonExpDefs
+				(Absyn.setClauseBlockNextClause clauseBlock 
+				   (numNonExpDefs + 1);
+				 (const :: defs, numDefs + 1, const :: nonExpDefs, 
+				  numNonExpDefs + 1, expDefs, numExpDefs + 1))
+	      | _ -> Errormsg.impossible Errormsg.none 
+				   "assignConstIndex: invalid constant codeInfo"
+	    in
+	    assignGlobalConstIndex rest (index+1) newDefs newNumDefs newNonExpDefs
+	      newNumNonExpDefs newExpDefs newNumExpDefs
   in
 
   (* function body of assignConstIndex *)
   let (numLConsts, defs, numDefs) = assignLocalConstIndex lconsts 0 [] 0 in
   let numHConsts = assignHiddenConstIndex hconsts 0 in
-  let (numGConsts, newDefs, newNumDefs, extDefs, numExtDefs, nonExpDefs,
-	   numNonExpDefs, expDefs, numExpDefs) =
-	assignGlobalConstIndex gconsts 0 defs numDefs [] 0 [] 0 [] 0
+  let (numGConsts, newDefs, newNumDefs, nonExpDefs, numNonExpDefs, expDefs,
+	   numExpDefs) =
+	assignGlobalConstIndex gconsts 0 defs numDefs [] 0 [] 0 
   in
-  if (numExtDefs > Instr.i1Size) then raise TooManyExtPreds
-  else
-    (ConstantList (gconsts, numGConsts), ConstantList (lconsts, numLConsts), 
-     ConstantList (hconsts, numHConsts), PredList (newDefs, newNumDefs), 
-	 PredList(nonExpDefs, numNonExpDefs), PredList(expDefs, numExpDefs),
-	 PredList(defs, numDefs), PredList (extDefs, numExtDefs))
+  (if (numExpDefs > Instr.i1Size) then 
+	Errormsg.error Errormsg.none  "Too many open predicates in the module"
+  else ());
+  (ConstantList (gconsts, numGConsts), ConstantList (lconsts, numLConsts), 
+   ConstantList (hconsts, numHConsts), 
+   PredList (List.rev newDefs, newNumDefs), 
+   PredList(List.rev nonExpDefs, numNonExpDefs), 
+   PredList(List.rev expDefs, numExpDefs),
+   PredList(List.rev defs, numDefs))
 
 
 (****************************************************************************)
@@ -1051,11 +1048,13 @@ let genImpDefs defs insts startLoc =
 
 	match defs with
 	  [] ->
-		if (extNum > Instr.i1Size) then raise TooManyExtPreds
-		else
-		  (*need reverse extPreds?*)
-		  (insts, startLoc, 
-		   ImpGoalCode(PredList(extPreds, extNum), List.rev predInfo, predNum))
+		(if (extNum > Instr.i1Size) then 
+		  Errormsg.error Errormsg.none 
+			"Too many open predicates in an implication goal"
+		else ());
+		(insts, startLoc, 
+		 ImpGoalCode(PredList(List.rev extPreds, extNum), 
+					 List.rev predInfo, predNum))
 	| ((pred, clauseBlock) :: rest) ->
 		let (newInsts, newStartLoc, newExtNum, newExtPreds, onePredInfo) =
 		  genImpDef pred clauseBlock insts startLoc extNum extPreds 
@@ -1106,15 +1105,18 @@ let genModuleCode amod =
 	Absyn.Module(modname, modimps, modaccs, _, _, _, modstr, gkinds, lkinds, 
 				 gconsts, lconsts, hconsts, skels, hskels, clauses) ->
       (* close off top-level clause definitions ending with (... :- !, fail) *)
-	  closeDefs (Absyn.getClauseInfoClauseBlocks (!clauses)); 
+      (*   closeDefs (Absyn.getClauseInfoClauseBlocks (!clauses)); not needed*)
+
       (* assign indexes to global and local kinds *)				   
 	  let (cgGKinds, cgLKinds) = assignKindIndex gkinds lkinds in
 	  (* 1) assign indexes to global, local and hidden constants;   *)
       (* 2) gather predicates have definitions in this module;      *)
       (* 3) gather predicates whose previous defintions may be      *)
-      (*    extended by code in this module.                        *)
+      (*    extended by code in this module (global non-exportDef)  *)
+      (* 4) gather global export-def predicates                     *)
+      (* 5) gather local predicates                                 *)
 	  let (cgGConsts, cgLConsts, cgHConsts, cgDefs, cgGNonExpDefs, 
-		   cgGExpDefs, cgLDefs, cgExtPreds) = 
+		   cgGExpDefs, cgLDefs) = 
 		assignConstIndex gconsts lconsts (!hconsts)
 	  in
       (* merge type skeletons and those of hidden constants; assign indexes *)
@@ -1138,7 +1140,8 @@ let genModuleCode amod =
       (* back patching "call" and "execute" instructions *)
       Clausegen.backPatch ();
       Module(modname, cgGKinds, cgLKinds, cgGConsts, cgLConsts, cgHConsts,
-             cgDefs, cgGNonExpDefs, cgGExpDefs, cgLDefs, cgExtPreds, 
+             cgDefs, cgGNonExpDefs, cgGExpDefs, cgLDefs, 
 			 cgTySkels, cgStrings, cgImports, cgAccumulates, cgInstructions,
 			 getHashTabs (), cgImpGoals)
-  | _ -> raise IllegalModuleStr
+  | _ -> Errormsg.impossible Errormsg.none 
+		   "genModuleCode: invalid input module"

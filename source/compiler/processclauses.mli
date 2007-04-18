@@ -1,5 +1,5 @@
 (*****************************************************************************)
-(* Module Clauses:                                                           *)
+(* Module Processclauses:                                                    *)
 (* Transform the term representations of clauses into their clauses          *)
 (* representations.                                                          *)
 (* 1. Type environments associated with constants occurrences are trimmed    *)
