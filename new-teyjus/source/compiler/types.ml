@@ -565,3 +565,42 @@ let checkApply = fun fty argty term ->
         (unify' fargty argty (Molecule((Absyn.makeArrowType targskel (List.tl argskels)), fenv)))
       else
         (unify' fargty argty (Molecule(targskel, fenv)))
+
+
+(* Produce a list of type variables that appear free in the given type *)
+(* expression and are new to the given list of type variables.         *)
+let rec freeTypeVars tyexp tyfvs =
+  match tyexp with
+	Absyn.TypeVarType(varInfo) ->
+	  (match (!varInfo) with
+		Absyn.FreeTypeVar(_, _) ->
+		  (* whether the variable appears in the given var list *)
+		  let rec isNewTyFv tyfvs =
+			match tyfvs with
+			  [] -> true
+			| (tyfv :: rest) -> 
+				if (tyfv == tyexp) then false
+				else isNewTyFv rest
+		  in
+		  if (isNewTyFv tyfvs) then (tyexp::tyfvs)
+		  else tyfvs
+	  | Absyn.BindableTypeVar(target) -> 
+		  (match (!target) with
+			Some(targetType) -> freeTypeVars targetType tyfvs
+		  | None -> 
+			  Errormsg.impossible Errormsg.none
+				"freeTypeVars: invalid type expression"))
+  | Absyn.ArrowType(arg, target) ->
+	  freeTypeVars target (freeTypeVars arg tyfvs)
+  | Absyn.ApplicationType(kind, args) ->
+	  let rec freeTypeVarsInTyList tyexps tyfvs =
+		match tyexps with
+		  [] -> tyfvs
+		| (tyexp :: rest) ->
+			freeTypeVarsInTyList rest (freeTypeVars tyexp tyfvs)
+	  in
+	  freeTypeVarsInTyList args tyfvs
+  | _ -> 
+	  Errormsg.impossible Errormsg.none 
+		"freeTypeVars: invalid type expression"
+			

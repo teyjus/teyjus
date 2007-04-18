@@ -26,4 +26,12 @@ val makeKindMolecule : Absyn.akind -> typemolecule
 val skeletonizeType : Absyn.atype -> typemolecule
 
 (* added by Xiaochu *)
+
+(* Check whether the given type skeletons are identical                *)
 val equalMappedTypeSkels : Absyn.askeleton -> Absyn.askeleton -> bool
+
+(* Produce a list of type variables that appear free in the given type *)
+(* expression and are new to the given list of type variables.         *)
+val freeTypeVars : Absyn.atype -> (Absyn.atype list) -> Absyn.atype list
+
+

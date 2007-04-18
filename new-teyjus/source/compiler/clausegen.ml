@@ -1,9 +1,3 @@
-(* for debugging *)
-exception IllegalTypeExp
-exception IllegalTermExp
-exception IllegalRegOrTermList
-exception IllegalPatchList
-
 (***************************************************************************)
 (*                      IMPLICATION DEFINITIONS                            *)
 (*                                                                         *)
@@ -67,7 +61,8 @@ let backPatch () =
     | (Instr.Ins_execute(codeLocRef) :: rest) ->
 	codeLocRef := codeLoc;
 	patchExecute rest codeLoc
-    | _ -> raise IllegalPatchList
+    | _ -> Errormsg.impossible Errormsg.none 
+		     "backPatch: invalid execute patch list"
   in
 
   let rec patchCall insts codeLoc =
@@ -76,7 +71,8 @@ let backPatch () =
     | (Instr.Ins_call(_, codeLocRef) :: rest) ->
 	codeLocRef := codeLoc;
 	patchCall rest codeLoc
-    | _ -> raise IllegalPatchList
+    | _ ->  Errormsg.impossible Errormsg.none 
+		      "backPatch: invalid call patch list"
   in
 
   let rec backPatchAux patchList patchFunc =
@@ -208,7 +204,7 @@ and genSTypeCode regNum tyExp chunk lowval last =
 	  genSTypeStructureCode (Absyn.getKindIndex kind) args 	
   | Absyn.ArrowType(arg, target)      ->           (* type arrow *) 
 	  genSTypeStructureCode (-1) [arg;target] 
-  | _ -> raise IllegalTypeExp
+  | _ -> Errormsg.impossible Errormsg.none "genSTypeCode: invalid type exp"
 
 (****************************************************************)
 (*  genSTypeArgsCode:                                           *)
@@ -349,7 +345,7 @@ let rec genATypesCode delayed chunk =
 		in 
 		(Instr.Ins_get_type_arrow(regNum) :: argsCode, 
 		 Instr.getSize_get_type_arrow + argsCodeSize) 
-	| _ -> raise IllegalTypeExp
+	| _ -> Errormsg.impossible Errormsg.none "genATypesCode: invalid type exp"
   in
   
   let rec genATypesCodeAux delayed insts size =
@@ -483,7 +479,7 @@ type regorterm =
 let getRegTermReg regOrTerm =
   match regOrTerm with
 	RegTmReg (regNum) -> regNum
-  | _ -> raise IllegalRegOrTermList
+  | _ -> Errormsg.impossible Errormsg.none "getRegTermReg: invalid RegTermList"
 
 (************************************************************************)
 (*       GENERATING CODE FOR SYTHESIZING TERMS                          *)
@@ -1565,6 +1561,8 @@ let rec genGoal goal cl goalNum last chunk chunks insts startLoc =
 	  genAllGoal goal cl goalNum last chunk chunks insts startLoc
   | Absyn.SomeGoal(_)   ->
 	  genSomeGoal goal cl goalNum last chunk chunks  insts startLoc
+  | Absyn.CutFailGoal -> 
+	  Errormsg.impossible Errormsg.none "genGoal: cutfail goal"
 
 
 (****************************************************************************)

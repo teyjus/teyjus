@@ -179,6 +179,7 @@ and agoal =
   | ImpGoal of (adefinitions * avarinits * agoal)
   | AllGoal of (ahcvarassoc * agoal)
   | SomeGoal of (avar * agoal)
+  | CutFailGoal
 (*| OrGoal of (agoal * agoal) *)
 
 and adefinitions = Definitions of ((aconstant * aclausesblock) list)
@@ -209,9 +210,10 @@ and atermvarmap  = TermVarMap of ((avar * avar) list)
 (* type variable map list *)
 and atypevarmap  = TypeVarMap of ((atypevar * atypevar) list)
 
-(* clauses block: (clauses, last, offset, nextclause, closed, mapped) *)	  
-and aclausesblock = (aclause list ref * aclause ref * int ref * 
-					   int option ref * bool ref * bool ref)
+(* clauses block: (clauses, lastcutfail, offset, nextclause, closed, mapped)*)
+and aclausesblock = (aclause list ref * bool * int ref * int option ref * 
+					   bool ref * bool ref)
+
 
 (*****************************************************************************
 *Modules:
@@ -271,6 +273,7 @@ val setTypeVariableDataHeapVar : atypevar -> bool -> unit
 val getTypeVariableDataSafety  : atypevar -> bool
 val setTypeVariableDataSafety  : atypevar -> bool -> unit
 
+val makeNewTypeVariableData : unit -> atypevar
 (*************************************************************************)
 (*  atype:                                                               *)
 (*************************************************************************)
@@ -298,6 +301,7 @@ val getTypeFreeVariableVariableData : atype -> atypevar
 val getTypeFreeVariableFirst : atype -> bool
 val isTypeFreeVariable : atype -> bool
 val makeTypeVariable : unit -> atype
+val makeNewTypeVariable : atypevar -> atype 
 
 val getSkeletonVariableIndex : atype -> int
 val getSkeletonVariableIndexRef : atype -> int ref
@@ -340,6 +344,7 @@ val getConstantName : aconstant -> string
 val getConstantType : aconstant -> aconstanttype
 val getConstantTypeRef : aconstant -> aconstanttype ref
 val getConstantCodeInfo : aconstant -> acodeinfo option ref
+val setConstantCodeInfo : aconstant -> acodeinfo option -> unit
 val getConstantTypeEnvSize : aconstant -> int
 val getConstantTypeEnvSizeRef : aconstant -> int ref
 val getConstantNoDefs : aconstant -> bool
@@ -391,6 +396,8 @@ val setVariableDataSafety  : avar -> bool -> unit
 val getVariableDataLastGoal : avar -> int
 val setVariableDataLastGoal : avar -> int -> unit
 
+val makeNewVariableData : unit -> avar
+val makeCutVariableData : int -> avar
 (*************************************************************************)
 (*  aterm:                                                               *)
 (*************************************************************************)
@@ -417,6 +424,7 @@ val getTermConstantTypeEnv : aterm -> atype list
 val isTermConstant     : aterm -> bool
 
 val getTermAbstractionVar : aterm -> atypesymbol
+val getTermAbstractionVars : aterm -> atypesymbol list
 val getTermAbstractionBody : aterm -> aterm
 val getTermAbstractionNumberOfLambda : aterm -> int
 
@@ -519,3 +527,6 @@ val setClauseBlockNextClause : aclausesblock -> int -> unit
 val getClauseBlockClauses : aclausesblock -> aclause list
 val getClauseBlockOffset : aclausesblock -> int
 val setClauseBlockOffset : aclausesblock -> int -> unit
+(* if the given clause has a body as CutFailGoal, then set the second   *)
+(* field true and add an empty list as the clauses list                 *)
+val makeNewClauseBlock : aclause -> bool -> aclausesblock
