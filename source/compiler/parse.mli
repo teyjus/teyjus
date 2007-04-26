@@ -9,3 +9,5 @@ val translateTerm : Preabsyn.pterm -> Absyn.amodule -> Absyn.aterm
 val translateClause : Preabsyn.pterm -> Absyn.amodule -> ptnewconstant -> ptnewkind -> Absyn.aterm
 
 val illegalConstant : Absyn.aconstant -> pos -> bool
+
+val unitTests : unit -> unit

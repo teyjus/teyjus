@@ -340,14 +340,14 @@ arglist
 
 atomterm
   : constvar                      {$1}
-  | LPAREN term RPAREN            {Preabsyn.SeqTerm($2, getPos 2)}
+  | LPAREN term RPAREN            {Preabsyn.SeqTerm(List.rev $2, getPos 2)}
   | LPAREN error RPAREN           {print_endline "error: atomterm"; Preabsyn.ErrorTerm}
   | LPAREN error                  {print_endline "error: atomterm"; Preabsyn.ErrorTerm}
   | LBRACK error RBRACK           {print_endline "error: atomterm"; Preabsyn.ErrorTerm}
   | LBRACK error                  {print_endline "error: atomterm"; Preabsyn.ErrorTerm}
   | LBRACK RBRACK                 {Preabsyn.IdTerm((Symbol.symbol "[]"), None, Preabsyn.ConstID, getPos 1)}
   | LBRACK term RBRACK            {Preabsyn.ListTerm($2, getPos 1)}
-  | LBRACK term VBAR term RBRACK  {Preabsyn.ConsTerm($2, Preabsyn.SeqTerm($4, getPos 1), getPos 1)}
+  | LBRACK term VBAR term RBRACK  {Preabsyn.ConsTerm($2, Preabsyn.SeqTerm(List.rev $4, getPos 1), getPos 1)}
   ;
 
 constvar      

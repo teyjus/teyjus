@@ -1099,7 +1099,7 @@ let rec genImpPointCode impPoints insts startLoc impGoals numImpPoints =
 (*****************************************************************************)
 (*                CODE GENERATION FOR A MODULE                               *)
 (*****************************************************************************)
-let genModuleCode amod =
+let generateModuleCode amod =
   genCodeInitialization ();
   match amod with
 	Absyn.Module(modname, modimps, modaccs, _, _, _, modstr, gkinds, lkinds, 

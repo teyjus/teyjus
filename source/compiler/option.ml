@@ -4,11 +4,11 @@ let isSome = function
   
 let isNone = function
     Some _ -> false
-  | None -> false
+  | None -> true
 
 let get = function
     Some value -> value
-  | None -> raise Not_found
+  | None -> Errormsg.impossible Errormsg.none "Option.get: Invalid option"
 
 let string_of_option v p =
   match v with

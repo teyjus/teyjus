@@ -100,8 +100,8 @@ let getStackState = function Stack(_,state,_,_) -> state
 let getStackPrec = function Stack(_,_,prec,_) -> prec
 let getStackFixity = function Stack(_,_,_,fix) -> fix
 
-let printStack = fun stack ->
-  let rec print' = fun data ->
+let printStack stack =
+  let rec print' data =
     match data with
       (StackOp(c,_,_))::ds -> "{" ^ (Absyn.getConstantName c) ^ "}" ^ (print' ds)
     | (StackTerm(t))::ds -> "{" ^ (Absyn.string_of_term (getTermTerm t)) ^ "}" ^ (print' ds)
@@ -111,7 +111,8 @@ let printStack = fun stack ->
   
   let data = getStackStack stack in
   let str = (print' data) in
-  print_endline ("Stack: " ^ str)
+  (*  Errormsg.log Errormsg.none ("Stack: " ^ str)  *)
+  ()
 
 let contains env v =
   let find tsym =
@@ -124,10 +125,11 @@ let get = fun env v ->
     (Absyn.getTypeSymbolSymbol tsym) = v
   in
   
-  if contains env v then
+  try
     List.find find env
-  else
-    Errormsg.impossible Errormsg.none "Parse.get: entry not found"
+  with 
+    Not_found ->
+      Errormsg.impossible Errormsg.none "Parse.get: entry not found"
 
 let add = fun env sym tsym ->
   if (contains env sym) then
@@ -230,15 +232,17 @@ let rec translateClause = fun term amodule newconstant newkind ->
   let booltype = Types.makeKindMolecule boolkind in
   
   if (Types.unify type' booltype) <> (Types.Success) then
-    (Errormsg.error (Absyn.getTermPos term') ("expecting term of boolean type" ^ 
+    (Errormsg.error (Absyn.getTermPos term') ("expecting term of type: o" ^ 
       (Errormsg.info "encountered term:") ^
       (Errormsg.info (Absyn.string_of_term term'')) ^
       (Errormsg.info "of type:") ^
-      (Errormsg.info (Absyn.string_of_type (Types.getMoleculeType type'))));
+      (Errormsg.info (Types.string_of_typemolecule type')));
     Absyn.errorTerm)
   else
-   
-  (normalizeTerm term'')
+  
+  let term''' = (normalizeTerm term'') in
+  
+  (term''')
 
 (**********************************************************************
 *translateTerm:
@@ -266,19 +270,30 @@ and translateTerm = fun term amodule ->
 * module.
 **********************************************************************)
 and parseTerm = fun term fvs bvs amodule stack ->
+  let _ = printStack stack in
   match term with
     Preabsyn.SeqTerm([term], pos) -> (parseTerm term fvs bvs amodule stack)
-  | Preabsyn.SeqTerm(terms, pos) -> (parseTerms terms fvs bvs amodule (reduceToTerm) newStack)
-  | Preabsyn.ListTerm(terms, pos) -> (parseTerms terms fvs bvs amodule (reduceToListTerm (Some(makeConstantTerm Pervasive.nilConstant pos))) newStack)
+  | Preabsyn.SeqTerm(terms, pos) -> (parseTerms terms fvs bvs amodule (reduceToTerm false) newStack)
+  | Preabsyn.ListTerm(terms, pos) ->
+      let terms' = terms @ [Preabsyn.IdTerm(Symbol.symbol "::", None, Preabsyn.ConstID, Errormsg.none); Preabsyn.IdTerm(Symbol.symbol "nil", None, Preabsyn.ConstID, Errormsg.none)] in
+      (parseTerms terms' fvs bvs amodule (reduceToTerm true) newStack)
+  
+  (*  | Preabsyn.ListTerm(terms, pos) -> (parseTerms terms fvs bvs amodule (reduceToListTerm (Some(makeConstantTerm Pervasive.nilConstant pos))) newStack)  *)
+  
   | Preabsyn.ConsTerm(headterms, tailterm, pos) ->
       (*  Translate the tail term first, then translate the head with respect to the new
           set of free variables.  Reduce using the tail term. *)
+      (*
       let (tv, _, bvs', stack') = (parseTerm tailterm fvs bvs amodule stack) in
       let TermAndVariables(term', fvs') = tv in
       (parseTerms headterms fvs' bvs' amodule (reduceToListTerm (Some term')) newStack)
+      *)
+      let terms' = headterms @ [Preabsyn.IdTerm(Symbol.symbol "::", None, Preabsyn.ConstID, Errormsg.none); tailterm] in
+      (parseTerms terms' fvs bvs amodule (reduceToTerm true) newStack)
+
   | Preabsyn.LambdaTerm(b, t, pos) ->
       let bbvs = parseTypeSymbols b amodule in
-      let (tv', fvs', bvs', stack') = parseTerms t fvs (bbvs @ bvs) amodule (reduceToTerm) newStack in
+      let (tv', fvs', bvs', stack') = parseTerms t fvs (bbvs @ bvs) amodule (reduceToTerm false) newStack in
       let term' = getTermAndVariablesTerm tv' in
       (TermAndVariables(makeAbstraction term' bbvs pos, fvs'), fvs', bbvs, stack)
   | Preabsyn.IntTerm(i, pos) -> (TermAndVariables((makeType (Absyn.IntTerm(i, false, pos)) "int" (Absyn.getModuleKindTable amodule) pos), fvs), fvs, bvs, stack)
@@ -309,11 +324,11 @@ and parseTerms terms fvs bvs amodule oper stack =
     *simple:
     * Translate the current term as usual and attempt to stack it.
     ******************************************************************)
-    let simple = fun () ->
+    let simple () =
       let (term', fvs', bvs', stack') = (parseTerm t fvs bvs amodule stack) in
 
       try
-        ((stackTerm (getTermAndVariablesTerm term') None amodule stack'), fvs', bvs')
+        ((stackTerm (getTermAndVariablesTerm term') false amodule stack), fvs', bvs')
       with
         TermException -> (errorStack, bvs, fvs)
     in
@@ -329,8 +344,8 @@ and parseTerms terms fvs bvs amodule oper stack =
         let (ot, fvs', bvs') = (translateId t fvs bvs amodule) in
         (try
           (match ot with
-            StackOp(_) -> ((stackOperation ot None amodule stack), fvs', bvs')
-          | StackTerm(t) -> ((stackTerm t None amodule stack), fvs', bvs')
+            StackOp(_) -> ((stackOperation ot false amodule stack), fvs', bvs')
+          | StackTerm(t) -> ((stackTerm t false amodule stack), fvs', bvs')
           | StackError -> (errorStack, fvs', bvs'))
         with
           TermException -> (errorStack, fvs', bvs'))
@@ -340,6 +355,7 @@ and parseTerms terms fvs bvs amodule oper stack =
 
   (*  Translate each term in turn.  Once the end of the list has been
       reached, execute the given termination operation. *)
+  let _ = printStack stack in
   match terms with
     (t::ts) ->
       let (stack', fvs', bvs') = translate' t in
@@ -483,7 +499,7 @@ and varToOpTerm = fun term typesym fvs bvs amodule makeVarFunc ->
 * Reduces the given stack to a term.  Commas encountered in this mode
 * are interpereted as conjunctions.
 **********************************************************************)
-and reduceToTerm = fun fvs bvs amodule stack ->
+and reduceToTerm = fun list fvs bvs amodule stack ->
   (********************************************************************
   *reduce':
   * Reduces the term.
@@ -497,7 +513,7 @@ and reduceToTerm = fun fvs bvs amodule stack ->
           ((makeError fvs), fvs, bvs, errorStack)
       | _ ->
           try
-            let stack' = reduceOperation None amodule stack in
+            let stack' = reduceOperation list amodule stack in
             (reduce' stack')
           with 
             TermException -> ((makeError fvs), fvs, bvs, errorStack)
@@ -526,6 +542,7 @@ and reduceToTerm = fun fvs bvs amodule stack ->
 * are interpereted as list separators.  Appends the given term to the
 * parsed list.
 **********************************************************************)
+(*
 and reduceToListTerm = fun list fvs bvs amodule stack ->
   let rec reduce' = fun stack ->
     let default = fun () ->
@@ -578,6 +595,7 @@ and reduceToListTerm = fun list fvs bvs amodule stack ->
     let cons = (makeConstantTerm Pervasive.consConstant pos) in
     let term' = makeBinaryApply cons (getTermAndVariablesTerm term) item in
     (TermAndVariables(term', fvs'), fvs', bvs', stack')
+*)
 
 (**********************************************************************
 *reduceOperation:
@@ -625,6 +643,13 @@ and reduceOperation = fun list amodule stack ->
     | _ -> (Errormsg.impossible Errormsg.none "reduceOperation: invalid stack state")
   in
   
+  (********************************************************************
+  *reduceApply:
+  * Reduces an "apply operator" on the stack.  An "apply operator" is
+  * the dummy inserted between adjacent terms.  The apply operator is
+  * removed from the stack, and the top two terms (not includeing the
+  * dummy) are put into an applicaiton.
+  ********************************************************************)
   let reduceApply = fun stack ->
     let top = List.hd (getStackStack stack) in
     let pp = List.hd (List.tl (List.tl (getStackStack stack))) in
@@ -635,6 +660,13 @@ and reduceOperation = fun list amodule stack ->
     newParseState stack'
   in
   
+  (********************************************************************
+  *reduceComma:
+  * Reduces a comma operator, where the operator could be either a list
+  * separator or conjunction.  If the list argument contains a term,
+  * then the operator should be parsed as a list separator; otherwise,
+  * it is a conjunction.
+  ********************************************************************)
   let reduceComma = fun stack ->
     let top = List.hd (getStackStack stack) in
     let comma = List.hd (List.tl (getStackStack stack)) in
@@ -642,13 +674,13 @@ and reduceOperation = fun list amodule stack ->
     let rest = List.tl (List.tl (List.tl (getStackStack stack))) in
 
     match list with
-      Some(term) ->
+      true ->
         let pos = (getStackItemPos comma) in
         let cons = makeConstantTerm Pervasive.consConstant pos in
         let newTop = makeBinaryApply cons (getStackTermTerm pp) (getStackTermTerm top) in
         let stack' = Stack((StackTerm(newTop))::rest, getStackState stack, getStackPrec stack, getStackFixity stack) in
         newParseState stack'
-    | None ->
+    | false ->
         let pos = getStackItemPos comma in
         let conj = makeConstantTerm Pervasive.andConstant pos in
         let newTop = makeBinaryApply conj (getStackTermTerm pp) (getStackTermTerm top) in
@@ -1007,6 +1039,7 @@ and makeAbstraction term bvs pos =
   let mol = getTermMolecule term in
   let env' = Types.getMoleculeEnvironment mol in
   Term(term', Types.Molecule(ty', env'))
+
 (**********************************************************************
 *makeError:
 * Builds a term and type representation of an error.
@@ -1094,12 +1127,12 @@ and removeOverloads term =
         let ty = List.hd tl in
         let ty' = Absyn.dereferenceType ty in
         (match ty' with
-          Absyn.TypeSetType(default, l) ->
+          Absyn.TypeSetType(default, l, _) ->
             let k =
               (if (List.length (!l)) = 0 then
                 Errormsg.impossible p "Parse.removeOverloads: invalid type set"
               else if (List.length (!l)) = 1 then
-                Absyn.getTypeKind (List.hd tl)
+                Absyn.getTypeKind (List.hd !l)
               else
                 Absyn.getTypeKind default) in
             Absyn.ConstantTerm(Pervasiveutils.getOverload k c, [], b, p)
@@ -1107,6 +1140,7 @@ and removeOverloads term =
       else
         term
   | Absyn.ErrorTerm -> Absyn.ErrorTerm
+
 (**********************************************************************
 *Beta normalization:
 **********************************************************************)
@@ -1231,12 +1265,47 @@ and normalizeTerm = fun term ->
   (getEntryTerm result)
 
 and fixTerm term =
-  Absyn.errorTerm
-  
+  let _ = Errormsg.error Errormsg.none "Parse.fixTerm: not implemented" in
+  term
+
 let illegalConstant c pos =
-  if c = Pervasive.implConstant || c = Pervasive.colondashConstant then
+  if c == Pervasive.implConstant || c == Pervasive.colondashConstant then
     (Errormsg.error pos ("symbol " ^ (Absyn.getConstantName c) ^
       " cannot be embedded in predicate arguments");
     true)
   else
     false
+
+let unitTests () =
+  let absyn = Absyn.Module("UnitTests", [], [],
+    ref (Pervasive.pervasiveConstants), ref (Pervasive.pervasiveKinds), Table.empty,
+    [], [], [], [], [], ref [], [], [], ref (Absyn.ClauseBlocks([])))
+  in
+
+  let test t =
+    let t' = translateTerm t absyn in
+    let _ = Errormsg.log Errormsg.none ("Preabsyn Term: " ^ (Preabsyn.string_of_term t)) in
+    let _ = Errormsg.log Errormsg.none ("Absyn Term: " ^ (Absyn.string_of_term t')) in
+    ()
+  in
+  
+  let _ = Errormsg.log Errormsg.none ("Parse Unit Tests:") in
+    
+  let t1 = Preabsyn.SeqTerm([Preabsyn.IdTerm(Symbol.symbol "true", None, Preabsyn.ConstID, Errormsg.none)], Errormsg.none) in
+  let t2 = Preabsyn.SeqTerm([Preabsyn.IntTerm(1, Errormsg.none); Preabsyn.IdTerm(Symbol.symbol "+", None, Preabsyn.ConstID, Errormsg.none); Preabsyn.IntTerm(1, Errormsg.none)], Errormsg.none) in
+  let t3 = 
+    Preabsyn.SeqTerm([Preabsyn.IntTerm(1, Errormsg.none); Preabsyn.IdTerm(Symbol.symbol "+", None, Preabsyn.ConstID, Errormsg.none); t2], Errormsg.none) in  
+
+  let t5 = Preabsyn.ListTerm([Preabsyn.IntTerm(1, Errormsg.none); Preabsyn.IdTerm(Symbol.symbol ",", None, Preabsyn.ConstID, Errormsg.none); Preabsyn.IntTerm(2, Errormsg.none)], Errormsg.none) in
+  let t6 = Preabsyn.SeqTerm([Preabsyn.IntTerm(1, Errormsg.none); Preabsyn.IdTerm(Symbol.symbol "::", None, Preabsyn.ConstID, Errormsg.none); Preabsyn.IdTerm(Symbol.symbol "nil", None, Preabsyn.ConstID, Errormsg.none)], Errormsg.none) in
+  let t7 = Preabsyn.SeqTerm([Preabsyn.IntTerm(1, Errormsg.none); Preabsyn.IdTerm(Symbol.symbol "::", None, Preabsyn.ConstID, Errormsg.none); Preabsyn.IntTerm(2, Errormsg.none); Preabsyn.IdTerm(Symbol.symbol "::", None, Preabsyn.ConstID, Errormsg.none); Preabsyn.IdTerm(Symbol.symbol "nil", None, Preabsyn.ConstID, Errormsg.none)], Errormsg.none) in
+
+  let _ = test t1 in
+  let _ = test t2 in
+  let _ = test t3 in
+  let _ = test t5 in
+  let _ = test t6 in
+  let _ = test t7 in
+  
+  let _ = Errormsg.log Errormsg.none ("Parse Unit Tests Compete.\n") in
+  ()
