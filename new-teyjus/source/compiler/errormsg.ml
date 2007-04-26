@@ -66,7 +66,7 @@ let string_of_pos = function (file, pos) ->
 		match (find file (!fileTable)) with
 			Some(lines) ->
 				p (!lines) (List.length (!lines))
-		|	None -> raise Not_found
+		|	None -> raise InternalError
 
 (********************************************************************
 *printPosition:
@@ -82,7 +82,7 @@ let rec printPosition = fun p ->
 let newLine = function (file, pos) ->
 	match (find file (!fileTable)) with
 		Some(lines) -> lines := pos :: !lines
-	|	None -> raise Not_found
+	|	None -> raise InternalError
 
 (********************************************************************
 *reset:

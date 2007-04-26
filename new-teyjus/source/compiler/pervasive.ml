@@ -41,11 +41,11 @@ let iskoutstream tm = (tm == koutstream)
 
 
 
-let tyskel0 = (Some (Absyn.Skeleton(Absyn.SkeletonVarType((ref 1)), (ref None), (ref false))))
+let tyskel0 = (Some (Absyn.Skeleton(Absyn.SkeletonVarType((ref 0)), (ref None), (ref false))))
 
-let tyskel1 = (Some (Absyn.Skeleton(Absyn.ApplicationType(klist, (Absyn.SkeletonVarType((ref 1)) :: [])), (ref None), (ref false))))
+let tyskel1 = (Some (Absyn.Skeleton(Absyn.ApplicationType(klist, (Absyn.SkeletonVarType((ref 0)) :: [])), (ref None), (ref false))))
 
-let tyskel2 = (Some (Absyn.Skeleton(Absyn.ArrowType(Absyn.SkeletonVarType((ref 1)), Absyn.ArrowType(Absyn.ApplicationType(klist, (Absyn.SkeletonVarType((ref 1)) :: [])), Absyn.ApplicationType(klist, (Absyn.SkeletonVarType((ref 1)) :: [])))), (ref None), (ref false))))
+let tyskel2 = (Some (Absyn.Skeleton(Absyn.ArrowType(Absyn.SkeletonVarType((ref 0)), Absyn.ArrowType(Absyn.ApplicationType(klist, (Absyn.SkeletonVarType((ref 0)) :: [])), Absyn.ApplicationType(klist, (Absyn.SkeletonVarType((ref 0)) :: [])))), (ref None), (ref false))))
 
 let tyskel3 = (Some (Absyn.Skeleton(Absyn.ApplicationType(kint, []), (ref None), (ref false))))
 
@@ -85,9 +85,9 @@ let tyskel20 = (Some (Absyn.Skeleton(Absyn.ArrowType(Absyn.ApplicationType(kstri
 
 let tyskel21 = (Some (Absyn.Skeleton(Absyn.ArrowType(Absyn.ApplicationType(kbool, []), Absyn.ArrowType(Absyn.ApplicationType(kbool, []), Absyn.ApplicationType(kbool, []))), (ref None), (ref false))))
 
-let tyskel22 = (Some (Absyn.Skeleton(Absyn.ArrowType(Absyn.ArrowType(Absyn.SkeletonVarType((ref 1)), Absyn.ApplicationType(kbool, [])), Absyn.ApplicationType(kbool, [])), (ref None), (ref false))))
+let tyskel22 = (Some (Absyn.Skeleton(Absyn.ArrowType(Absyn.ArrowType(Absyn.SkeletonVarType((ref 0)), Absyn.ApplicationType(kbool, [])), Absyn.ApplicationType(kbool, [])), (ref None), (ref false))))
 
-let tyskel23 = (Some (Absyn.Skeleton(Absyn.ArrowType(Absyn.SkeletonVarType((ref 1)), Absyn.ArrowType(Absyn.SkeletonVarType((ref 1)), Absyn.ApplicationType(kbool, []))), (ref None), (ref false))))
+let tyskel23 = (Some (Absyn.Skeleton(Absyn.ArrowType(Absyn.SkeletonVarType((ref 0)), Absyn.ArrowType(Absyn.SkeletonVarType((ref 0)), Absyn.ApplicationType(kbool, []))), (ref None), (ref false))))
 
 let tyskel24 = (Some (Absyn.Skeleton(Absyn.ApplicationType(kinstream, []), (ref None), (ref false))))
 
@@ -101,9 +101,9 @@ let tyskel28 = (Some (Absyn.Skeleton(Absyn.ArrowType(Absyn.ApplicationType(kinst
 
 let tyskel29 = (Some (Absyn.Skeleton(Absyn.ArrowType(Absyn.ApplicationType(koutstream, []), Absyn.ApplicationType(kbool, [])), (ref None), (ref false))))
 
-let tyskel30 = (Some (Absyn.Skeleton(Absyn.ArrowType(Absyn.SkeletonVarType((ref 1)), Absyn.ArrowType(Absyn.ApplicationType(kstring, []), Absyn.ApplicationType(kbool, []))), (ref None), (ref false))))
+let tyskel30 = (Some (Absyn.Skeleton(Absyn.ArrowType(Absyn.SkeletonVarType((ref 0)), Absyn.ArrowType(Absyn.ApplicationType(kstring, []), Absyn.ApplicationType(kbool, []))), (ref None), (ref false))))
 
-let tyskel31 = (Some (Absyn.Skeleton(Absyn.ArrowType(Absyn.ApplicationType(kstring, []), Absyn.ArrowType(Absyn.SkeletonVarType((ref 1)), Absyn.ApplicationType(kbool, []))), (ref None), (ref false))))
+let tyskel31 = (Some (Absyn.Skeleton(Absyn.ArrowType(Absyn.ApplicationType(kstring, []), Absyn.ArrowType(Absyn.SkeletonVarType((ref 0)), Absyn.ApplicationType(kbool, []))), (ref None), (ref false))))
 
 let tyskel32 = (Some (Absyn.Skeleton(Absyn.ArrowType(Absyn.ApplicationType(koutstream, []), Absyn.ArrowType(Absyn.ApplicationType(kstring, []), Absyn.ApplicationType(kbool, []))), (ref None), (ref false))))
 
@@ -113,11 +113,11 @@ let tyskel34 = (Some (Absyn.Skeleton(Absyn.ArrowType(Absyn.ApplicationType(kinst
 
 let tyskel35 = (Some (Absyn.Skeleton(Absyn.ArrowType(Absyn.ApplicationType(kstring, []), Absyn.ApplicationType(kbool, [])), (ref None), (ref false))))
 
-let tyskel36 = (Some (Absyn.Skeleton(Absyn.ArrowType(Absyn.SkeletonVarType((ref 1)), Absyn.ApplicationType(kbool, [])), (ref None), (ref false))))
+let tyskel36 = (Some (Absyn.Skeleton(Absyn.ArrowType(Absyn.SkeletonVarType((ref 0)), Absyn.ApplicationType(kbool, [])), (ref None), (ref false))))
 
-let tyskel37 = (Some (Absyn.Skeleton(Absyn.ArrowType(Absyn.ApplicationType(koutstream, []), Absyn.ArrowType(Absyn.SkeletonVarType((ref 1)), Absyn.ApplicationType(kbool, []))), (ref None), (ref false))))
+let tyskel37 = (Some (Absyn.Skeleton(Absyn.ArrowType(Absyn.ApplicationType(koutstream, []), Absyn.ArrowType(Absyn.SkeletonVarType((ref 0)), Absyn.ApplicationType(kbool, []))), (ref None), (ref false))))
 
-let tyskel38 = (Some (Absyn.Skeleton(Absyn.ArrowType(Absyn.ApplicationType(kinstream, []), Absyn.ArrowType(Absyn.SkeletonVarType((ref 1)), Absyn.ApplicationType(kbool, []))), (ref None), (ref false))))
+let tyskel38 = (Some (Absyn.Skeleton(Absyn.ArrowType(Absyn.ApplicationType(kinstream, []), Absyn.ArrowType(Absyn.SkeletonVarType((ref 0)), Absyn.ApplicationType(kbool, []))), (ref None), (ref false))))
 
 let tyskel39 = (Some (Absyn.Skeleton(Absyn.ArrowType(Absyn.ApplicationType(kbool, []), Absyn.ApplicationType(kbool, [])), (ref None), (ref false))))
 
@@ -134,9 +134,9 @@ let overloadTySkel3 = (ref (Some (Absyn.Skeleton(Absyn.ArrowType(tysetvarIRS, Ab
 
 let univConstant = Absyn.Constant((Symbol.symbol "<constant>"), (ref Absyn.NoFixity), (ref 0), (ref false), (ref false), (ref false), (ref false), (ref true), (ref false), (ref tyskel0), (ref 0), (ref None), (ref None), (ref (Absyn.PervasiveConstant(false))), (ref 85), Errormsg.none)
 
-let nilConstant = Absyn.Constant((Symbol.symbol "nil"), (ref Absyn.NoFixity), (ref 0), (ref false), (ref false), (ref false), (ref false), (ref true), (ref false), (ref tyskel1), (ref 0), (ref None), (ref None), (ref (Absyn.PervasiveConstant(false))), (ref 89), Errormsg.none)
+let nilConstant = Absyn.Constant((Symbol.symbol "nil"), (ref Absyn.NoFixity), (ref 0), (ref false), (ref false), (ref false), (ref false), (ref true), (ref false), (ref tyskel1), (ref 1), (ref None), (ref None), (ref (Absyn.PervasiveConstant(false))), (ref 89), Errormsg.none)
 
-let consConstant = Absyn.Constant((Symbol.symbol "::"), (ref Absyn.Infixr), (ref 140), (ref false), (ref false), (ref false), (ref false), (ref true), (ref false), (ref tyskel2), (ref 0), (ref None), (ref None), (ref (Absyn.PervasiveConstant(false))), (ref 93), Errormsg.none)
+let consConstant = Absyn.Constant((Symbol.symbol "::"), (ref Absyn.Infixr), (ref 140), (ref false), (ref false), (ref false), (ref false), (ref true), (ref false), (ref tyskel2), (ref 1), (ref None), (ref None), (ref (Absyn.PervasiveConstant(false))), (ref 93), Errormsg.none)
 
 let intcConstant = Absyn.Constant((Symbol.symbol "<int_constant>"), (ref Absyn.NoFixity), (ref 0), (ref false), (ref false), (ref false), (ref false), (ref true), (ref false), (ref tyskel3), (ref 0), (ref None), (ref None), (ref (Absyn.PervasiveConstant(false))), (ref 90), Errormsg.none)
 

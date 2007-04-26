@@ -8,6 +8,7 @@ let typeAbbrevTable = Table.SymbolTable.empty
 
 let printPreAbsyn = ref false
 let printAbsyn = ref false
+let printClauses = ref false
 
 (******************************************************************
 *openFile:

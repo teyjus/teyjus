@@ -41,7 +41,7 @@ and atype =
   | TypeVarType of (atypevarinfo ref)
   |	ArrowType of (atype * atype)
   | ApplicationType of (akind * atype list)
-  | TypeSetType of (atype * atype list ref)
+  | TypeSetType of (atype * atype list ref * atype option ref)
   | ErrorType
 
 (*****************************************************************************
@@ -278,6 +278,7 @@ val makeNewTypeVariableData : unit -> atypevar
 (*  atype:                                                               *)
 (*************************************************************************)
 val errorType : atype
+val isErrorType : atype -> bool
 
 val getArrowTypeTarget : atype -> atype
 val getArrowTypeArguments : atype -> atype list
@@ -289,6 +290,7 @@ val getTypeKind : atype -> akind
 val isConstantType : atype -> bool
 
 val getTypeSetSet : atype -> atype list ref
+val getTypeSetRef : atype -> atype option ref
 val getTypeSetDefault : atype -> atype
 val isTypeSetType : atype -> bool
 val makeTypeSetVariable : atype -> atype list -> atype
@@ -306,6 +308,10 @@ val makeNewTypeVariable : atypevar -> atype
 val getSkeletonVariableIndex : atype -> int
 val getSkeletonVariableIndexRef : atype -> int ref
 val isSkeletonVariableType : atype -> bool
+
+val getApplicationTypeHead : atype -> akind
+val getApplicationTypeArgs : atype -> atype list
+val isApplicationType : atype -> bool
 
 val makeTypeEnvironment : int -> atype list
 
@@ -402,6 +408,7 @@ val makeCutVariableData : int -> avar
 (*  aterm:                                                               *)
 (*************************************************************************)
 val string_of_term : aterm -> string
+val string_of_term_ast : aterm -> string
 val maxPrec : int
 
 val getTermPos : aterm -> pos
@@ -428,6 +435,7 @@ val getTermAbstractionVars : aterm -> atypesymbol list
 val getTermAbstractionBody : aterm -> aterm
 val getTermAbstractionNumberOfLambda : aterm -> int
 
+val getTermApplicationHeadAndArguments : aterm -> (aterm * aterm list)
 val getTermApplicationFunc : aterm -> aterm
 val getTermApplicationArity : aterm -> int
 val getTermApplicationArgs : aterm -> aterm list

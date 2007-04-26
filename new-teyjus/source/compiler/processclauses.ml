@@ -112,7 +112,10 @@ let rec transType tyExp =
  		  in 
 		  Absyn.makeNewTypeVariable tyVarData;
 	  | Absyn.BindableTypeVar(target) ->(*bound type variable: type reference*)
-		  transType (Option.get (!target)))
+	    if Option.isSome (!target) then
+  		  transType (Option.get (!target))
+  		else
+  		  Errormsg.impossible Errormsg.none "Processclauses.transType: Invalid Absyn.BindableTypeVar")
   | Absyn.ArrowType(arg, target) ->
 	  Absyn.ArrowType(transType arg, transType target)
   | Absyn.ApplicationType(kind, args) ->

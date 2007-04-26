@@ -189,7 +189,15 @@
 				>
 			</File>
 			<File
+				RelativePath=".\clausegen.ml"
+				>
+			</File>
+			<File
 				RelativePath=".\clauses.ml"
+				>
+			</File>
+			<File
+				RelativePath=".\codegen.ml"
 				>
 			</File>
 			<File
@@ -198,6 +206,10 @@
 			</File>
 			<File
 				RelativePath=".\errormsg.ml"
+				>
+			</File>
+			<File
+				RelativePath=".\instr.ml"
 				>
 			</File>
 			<File
@@ -238,6 +250,14 @@
 				>
 			</File>
 			<File
+				RelativePath=".\registers.ml"
+				>
+			</File>
+			<File
+				RelativePath=".\spitcode.ml"
+				>
+			</File>
+			<File
 				RelativePath=".\symbol.ml"
 				>
 				<FileConfiguration
@@ -262,6 +282,10 @@
 				RelativePath=".\types.ml"
 				>
 			</File>
+			<File
+				RelativePath=".\writeutil.ml"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -277,7 +301,15 @@
 				>
 			</File>
 			<File
+				RelativePath=".\clausegen.mli"
+				>
+			</File>
+			<File
 				RelativePath=".\clauses.mli"
+				>
+			</File>
+			<File
+				RelativePath=".\codegen.mli"
 				>
 			</File>
 			<File
@@ -286,6 +318,10 @@
 			</File>
 			<File
 				RelativePath=".\errormsg.mli"
+				>
+			</File>
+			<File
+				RelativePath=".\instr.mli"
 				>
 			</File>
 			<File
@@ -317,6 +353,14 @@
 				>
 			</File>
 			<File
+				RelativePath=".\registers.mli"
+				>
+			</File>
+			<File
+				RelativePath=".\spitcode.mli"
+				>
+			</File>
+			<File
 				RelativePath=".\symbol.mli"
 				>
 			</File>
@@ -330,6 +374,10 @@
 			</File>
 			<File
 				RelativePath=".\types.mli"
+				>
+			</File>
+			<File
+				RelativePath=".\writeutil.mli"
 				>
 			</File>
 		</Filter>

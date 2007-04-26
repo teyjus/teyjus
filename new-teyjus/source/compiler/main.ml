@@ -1,21 +1,20 @@
+let unitTests = ref false
+
 (**********************************************************************
 *compile:
 * Compile the given module or signature, based on the file name.
 **********************************************************************)
-let compile = fun basename ->
+let compile = fun basename outfile ->
   (*  Parse the input module and signature and generate preabsyn. *)
   let modresult = Compile.compileModule basename in
+  if !Errormsg.anyErrors then
+    1
+  else 
+  
   let sigresult = Compile.compileSignature basename in
-
-  (*  Construct an absyn module.  At this point only the module's
-      constant, kind, and type abbrev information is valid. *)
-  let absyn = (Translate.translate modresult sigresult) in
-  
-  (*  Get the list of clauses and new clauses.  *)
-  let (absyn, clauses, newclauses) = Clauses.translateClauses modresult absyn in
-  
-  (*  Process the clauses.  *)
-  let absyn = Processclauses.processClauses absyn clauses newclauses in
+  if !Errormsg.anyErrors then
+    1
+  else 
   
   (*  Print the results (preabsyn module and sig) to the output file  *)
   (if (!Compile.printPreAbsyn) then
@@ -29,15 +28,75 @@ let compile = fun basename ->
   else
     ();
 
+  if !Errormsg.anyErrors then
+    1
+  else 
+
+  (*  Construct an absyn module.  At this point only the module's
+      constant, kind, and type abbrev information is valid. *)
+  let absyn = (Translate.translate modresult sigresult) in
+  if !Errormsg.anyErrors then
+    1
+  else
+  
+  (*  Get the list of clauses and new clauses.  *)
+  let (absyn, clauses, newclauses) = Clauses.translateClauses modresult absyn in
+  if !Errormsg.anyErrors then
+    1
+  else
+  
+  (*  Print the results (clauses) to the output file  *)
+  (if !Compile.printClauses then
+    let outchannel = Compile.openFile (basename ^ ".clauses.txt") open_out in
+    (Clauses.printTranslatedClauses clauses newclauses outchannel;
+    Compile.closeFile outchannel close_out)
+  else
+    ();
+  if !Errormsg.anyErrors then
+    1
+  else
+  
+  (*  Process the clauses.  *)
+  let absyn = Processclauses.processClauses absyn clauses newclauses in
+  if !Errormsg.anyErrors then
+    1
+  else 
+  
   (*  Print the results (absyn module) to the output file *)
-  if !Compile.printAbsyn then
+  (if !Compile.printAbsyn then
     let outchannel = Compile.openFile (basename ^ ".absyn.txt") open_out in
     (Absyn.printAbsyn absyn outchannel;
     Compile.closeFile outchannel close_out)
   else
     ();
+  if !Errormsg.anyErrors then
+    1
+  else
   
-  ())
+  (*  Process the clauses.  *)
+  let _ = Annvariables.processClauses absyn in
+  if !Errormsg.anyErrors then
+    1
+  else
+  
+  (*  Construct a codegen module. *)
+  let cg = Codegen.generateModuleCode absyn in
+  if !Errormsg.anyErrors then
+    1
+  else
+  
+  (*  Open the correct output file. *)
+  let _ = Writeutil.openOutChannel outfile in
+  if !Errormsg.anyErrors then
+    1
+  else
+  
+  (*  Write the code to the output file.  *)
+  let _ = Spitcode.writeByteCode cg in
+  if !Errormsg.anyErrors then
+    1
+  else
+    0)))
 
 let debugEnabled = ref false
 let inputFilename = ref ""
@@ -57,50 +116,74 @@ let parseArgs =
                     
                     ("--preabsyn", Arg.Set(Compile.printPreAbsyn), "print preabstract syntax");
                     ("--absyn", Arg.Set(Compile.printAbsyn), "print abstract syntax");
+                    ("--clauses", Arg.Set(Compile.printClauses), "print clauses");
                     
-                    ("--no-errors", Arg.Clear(Errormsg.errorsEnabled), "hide errors");
+                    ("--no-errors", Arg.Clear(Errormsg.errorsEnabled), "hide errors and warnings");
                     ("--no-warnings", Arg.Clear(Errormsg.warningsEnabled), "hide warnings");
                     ("--log", Arg.Set(Errormsg.loggingEnabled), "show logging information");
-                    ("--all-errors", Arg.Set(Errormsg.warningsAsErrors), "interpret warnings as errors")] in
+                    ("--all-errors", Arg.Set(Errormsg.warningsAsErrors), "interpret warnings as errors");
+                    
+                    ("--unit-tests", Arg.Set(unitTests), "run unit tests")] in
     
     (Arg.parse speclist (fun s -> ()) "Usage: tjc --input \"filename\" --output \"filename\"")
+
+(**********************************************************************
+*runUnitTests:
+* Runs unit tests for all modules.
+**********************************************************************)
+let runUnitTests () =
+  let _ = Types.unitTests () in
+  let _ = Parse.unitTests () in
+  ()
 
 (**********************************************************************
 *main:
 * Main compiler loop.  Reads command line arguments to set up options,
 * and then compiles the given file.
 **********************************************************************)
-let main =
-  fun () ->
-    (******************************************************************
-    *getOutfile:
-    * Gets the outfile filename.  Defaults to the input filename with
-    * ".bc" appended.
-    ******************************************************************)
-    let getOutfile = function () ->
-      if !outputFilename = "" then
-        !inputFilename ^ ".bc"
-      else
-        !outputFilename
-    in
-    
-    let _ = parseArgs () in
-    let infile = !inputFilename in
-
-    if infile = "" then
-      (print_endline ("Error: No input file specified.");
-      -1)
-    else if (Filename.check_suffix infile ".mod") = false then
-      (print_endline ("Error: Invalid input filename.  File must have extension '*.mod'.");
-      -1)
+let main () =
+  (******************************************************************
+  *getOutfile:
+  * Gets the outfile filename.  Defaults to the input filename with
+  * ".bc" appended.
+  ******************************************************************)
+  let getOutfile infile =
+    if !outputFilename = "" then
+      infile ^ ".bc"
     else
-      let _ = compile (Filename.chop_extension infile) in
-      if !Errormsg.anyErrors then
-        (print_endline "Compilation failed.";
-        -1)
-      else
-        (print_endline "Compilation succeeded.";
-        0)
+      !outputFilename
+  in
+  
+  (*  Parse the command line arguments.  This sets up error, warning, and log output,
+      and so must be called before any output needs to occur. *)
+  let _ = parseArgs () in
+  
+  (*  Run unit tests. *)
+  let _ =
+    if !unitTests then
+      (Errormsg.loggingEnabled := true;
+      runUnitTests ())
+    else
+      ()
+  in
+  
+  let infile = !inputFilename in
+  let outfile = getOutfile infile in
+  
+  if infile = "" then
+    (print_endline ("Error: No input file specified.");
+    -1)
+  else if (Filename.check_suffix infile ".mod") = false then
+    (print_endline ("Error: Invalid input filename.  File must have extension '*.mod'.");
+    -1)
+  else
+    let result = compile (Filename.chop_extension infile) outfile in
+    if !Errormsg.anyErrors then
+      (print_endline "Compilation failed.";
+      result)
+    else
+      (print_endline "Compilation succeeded.";
+      result)
 
 (*  Execute main  *)
 let _ = main ()

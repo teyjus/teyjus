@@ -37,6 +37,9 @@ type deorifyclauseresult =
   DeOrifyClauseResult of (Absyn.aterm list * Absyn.atypesymbol list *
     universalvardefinition list * newclause list * hiddenconstant list)
 
+let getUniversalDefinitionTypeSymbol = function
+  (tsym,_) -> tsym
+
 (********************************************************************
 *union:
 * Returns the union of two lists of free variables.
@@ -106,18 +109,6 @@ and newPredicateFromAnd goals1 goals2 fvs newclauses =
   (head, newclause::newclauses)
 
 (********************************************************************
-*getClauseHeadAndArguments:
-* Gets the clause head and arguments, flattening an applications at
-* the head.
-********************************************************************)
-and getClauseHeadAndArguments term =  
-  match term with
-    Absyn.ApplicationTerm(Absyn.FirstOrderApplication(t', args, _), _, pos) ->
-      let (head, args') = getClauseHeadAndArguments t' in
-      (t', args' @ args)
-  | _ -> (term, [])
-
-(********************************************************************
 *getGoal:
 * If the andgoal is not None, the head should actually be an
 * application, with and ("," or "&") at the head, and the
@@ -138,11 +129,48 @@ and getGoal head andgoal =
     head
 
 (********************************************************************
-*closeUniversalDefinitions:
+*closeUniversalDefinition:
+* Adding closure clauses for a universally quantified variable. Such
+* clauses are needed only if uvdefs contains an entry for the variable.
+* If it does, then the entry takes the form of a list of implication
+* goals whose antecedents must be added to. At the end, uvdefs must be
+* shorn of such an entry.
 ********************************************************************)
 and closeUniversalDefinitions tsym uvdefs =
-  []
-
+  let cutfail t =
+    let cft = Pervasive.andTerm in
+    let app = Absyn.FirstOrderApplication(Pervasive.implicationTerm, [cft; t], 2) in
+    Absyn.ApplicationTerm(app, false, Errormsg.none)
+  in
+  
+  let makeBound t =
+    let ts = Absyn.BoundVar(Symbol.generate (), ref None, ref false, ref (Some t)) in
+    (Absyn.makeBoundVarTerm ts Errormsg.none)
+  in
+  
+  let close t = uvdefs
+  in
+    
+  let findTypeSymbol tsym uvdef =
+    let tsym' = getUniversalDefinitionTypeSymbol uvdef in
+    (tsym == tsym')
+  in
+  
+  let defs = List.filter (findTypeSymbol tsym) uvdefs in
+  if (List.length defs) > 0 then
+    let ty = Absyn.getTypeSymbolType tsym in
+    let t = Absyn.ConstantTerm(Absyn.getTypeSymbolHiddenConstant tsym, [], false, Errormsg.none) in
+    
+    if Absyn.isArrowType ty then
+      let args = Absyn.getArrowTypeArguments ty in
+      let args' = List.map makeBound args in
+      let t' = Absyn.ApplicationTerm(Absyn.FirstOrderApplication(t,args', List.length args'),
+        false, Errormsg.none) in
+      close (cutfail t')
+    else
+      close (cutfail t)
+  else
+    uvdefs
 (********************************************************************
 *collectFreeVars:
 * Accumulates the free variables in a term onto the given fvs list.
@@ -175,7 +203,7 @@ and collectFreeVars term fvs bvs =
       (term', fvs')
   | Absyn.ApplicationTerm(_) ->
       let pos = Absyn.getTermPos term in
-      let (head, args) = getClauseHeadAndArguments term in
+      let (head, args) = Absyn.getTermApplicationHeadAndArguments term in
       let (head', fvs') = collectFreeVars head fvs bvs in
       let (args', fvs'') = collectArgsFreeVars args fvs' bvs in
       let term' = Absyn.ApplicationTerm(
@@ -348,7 +376,7 @@ and distributeImplication goal cls result =
 * wholegoal is true and a disjunction free form otherwise.
 **********************************************************************)
 and deOrifyGoal goal uvs uvdefs andgoal wholegoal newclauses =
-  let (t, args) = getClauseHeadAndArguments goal in
+  let (t, args) = Absyn.getTermApplicationHeadAndArguments goal in
   
   match t with
     Absyn.ConstantTerm(c,_,_,pos) ->
@@ -570,7 +598,15 @@ and deOrifyAndGoal goal1 goal2 uvs uvdefs andgoal wholegoal newclauses hcs =
 **********************************************************************)
 and deOrifyClause term currentclauses fvs uvs uvdefs newclauses hcs =
   let checkClauseArguments args fvs =
-    Errormsg.impossible Errormsg.none "Clauses.checkClauseArguments: not implemented"
+    let rec check' args fvs =
+      match args with
+        [] -> ([], fvs)
+      | a::aa ->
+          let (args', fvs') = check' aa fvs in
+          let (arg', fvs'') = collectFreeVars a fvs' [] in
+          (arg'::args', fvs')
+    in
+    check' args fvs
   in
   
   match term with
@@ -578,11 +614,11 @@ and deOrifyClause term currentclauses fvs uvs uvdefs newclauses hcs =
     Absyn.ApplicationTerm(Absyn.FirstOrderApplication(f, arg::args, num), b, pos) ->
       (*  atomicHead: regular head with arguments.  *)
       let atomicHead () =  
-        let (args', fvs') = checkClauseArguments args fvs in
+        let (args', fvs') = checkClauseArguments (arg::args) fvs in
         let newclause = Absyn.ApplicationTerm(Absyn.FirstOrderApplication(f, args', num),b,pos) in
         DeOrifyClauseResult(newclause::currentclauses, fvs', uvdefs, newclauses, hcs)
       in
-      
+
       (match f with
         Absyn.ConstantTerm(c,_,_,_) ->
           if c = Pervasive.allConstant then
@@ -675,7 +711,7 @@ and normalizeClause clauseterm clauses uvs uvdefs embedded =
     clauseterm::clauses
   else
   
-  let (t, args) = getClauseHeadAndArguments clauseterm in
+  let (t, args) = Absyn.getTermApplicationHeadAndArguments clauseterm in
   
   match t with
     Absyn.ConstantTerm(c, env, b, pos) ->
@@ -725,8 +761,10 @@ and normalizeClause clauseterm clauses uvs uvdefs embedded =
       else if embedded then
         ((Absyn.getConstantClosedRef c) := false;
         rigidAtom t clauses args)
+
       else
         (rigidAtom t clauses args)
+
   | Absyn.BoundVarTerm(Absyn.NamedBoundVar(tsym), _, pos) ->
       if List.mem tsym uvs then
         let t' = Absyn.ConstantTerm(Absyn.getTypeSymbolHiddenConstant tsym,
@@ -739,7 +777,8 @@ and normalizeClause clauseterm clauses uvs uvdefs embedded =
       else
         (indeterminate tsym pos)
   | _ ->
-      (Errormsg.impossible (Absyn.getTermPos t) "Clauses.normalizeClause: invalid term type")
+      (Errormsg.impossible (Absyn.getTermPos t) ("Clauses.normalizeClause: Invalid term type: " ^
+        (Absyn.string_of_term_ast t) ^ "; " ^ (Absyn.string_of_term_ast clauseterm)))
       
 (**********************************************************************
 *newKind:
@@ -813,8 +852,22 @@ and translateClauses pmod amod =
   let preclauses = Preabsyn.getModuleClauses pmod in
   let (clauses', newclauses', hcs') = parse' preclauses amod [] [] [] in
   
-  
   (*  Enter the hidden constants into the module  *)
   let amod' = setHiddenConstants amod hcs' in
   let newclauses'' = getNewClauses newclauses' in
   (amod', clauses', List.concat newclauses'')
+
+let printTranslatedClauses clauses newclauses out =
+  (*  Text output functions *)
+  let output s = (output_string out s) in
+  let output_line s = (output_string out (s ^ "\n")) in
+  
+  let printClause t =
+    (output_line (Absyn.string_of_term_ast t))
+  in
+  
+  (output_line "Clauses:";
+  List.iter printClause clauses;
+  output_line "";
+  output_line "New Clauses:";
+  List.iter printClause newclauses)
