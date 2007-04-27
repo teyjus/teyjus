@@ -222,7 +222,7 @@ and aclausesblock = (aclause list ref * bool ref * int ref * int option ref)
 * skeleton list, hskeleton list, clauses blocks list)
 *****************************************************************************)
 and amodule = 
-    Module of (string * aimportedmodule list * aaccummulatedmodule list *
+    Module of (string * aimportedmodule list * aaccumulatedmodule list *
       aconstant Table.SymbolTable.t ref * akind Table.SymbolTable.t ref *
       atypeabbrev Table.SymbolTable.t * astringinfo list * akind list *
       akind list * aconstant list * aconstant list * aconstant list ref *
@@ -233,8 +233,8 @@ and amodule =
 and aimportedmodule = 
   ImportedModule of (string * int * amodule)
 
-and aaccummulatedmodule =
-  AccummulatedModule of (string * amodule)
+and aaccumulatedmodule =
+  AccumulatedModule of (string * amodule)
 
 and aclauseinfo = 
     ClauseBlocks of aclausesblock list
@@ -380,7 +380,7 @@ val makeGlobalConstant : symbol -> afixity -> int -> bool -> bool -> int
   -> askeleton -> int -> aconstant
 val makeAnonymousConstant : int -> aconstant
 val makeHiddenConstant : askeleton -> aconstant
-val makeConstantTerm : aconstant -> pos -> aterm
+val makeConstantTerm : aconstant -> atype list -> pos -> aterm
 (*  val makeConstantType : aconstant -> atype *)
 
 (*************************************************************************)
@@ -392,6 +392,7 @@ val getTypeSymbolSymbol : atypesymbol -> symbol
 val getTypeSymbolHiddenConstant : atypesymbol -> aconstant
 val getTypeSymbolHiddenConstantRef : atypesymbol -> aconstant option ref
 val getTypeSymbolType : atypesymbol -> atype
+
 (* val getTypeSymbolType : atypesymbol -> atypesymboltype *)
 
 (*************************************************************************)
