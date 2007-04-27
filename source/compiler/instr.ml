@@ -1,3 +1,8 @@
+
+type intref    = int ref
+type aconstant = Absyn.aconstant
+type akind     = Absyn.akind
+	
 let wordSize = 8
 
 
@@ -25,8 +30,8 @@ let writeN arg = Writeutil.writeint1 arg
 let writeI1 arg = Writeutil.writeint1 arg
 let writeCE arg = Writeutil.writeint1 arg
 let writeSEG arg = Writeutil.writeint1 arg
-let writeC arg = Writeutil.writeint2 arg
-let writeK arg = Writeutil.writeint2 arg
+let writeC arg = Writeutil.writeaconstant2 arg
+let writeK arg = Writeutil.writeakind2 arg
 let writeL arg = Writeutil.writeintref8 arg
 let writeI arg = Writeutil.writeint4 arg
 let writeF arg = Writeutil.writefloat4 arg
@@ -40,15 +45,14 @@ let writeopcode arg = Writeutil.writeint1 arg
 
 
 
-type intref = int ref
 type rtype = int
 type etype = int
 type ntype = int
 type i1type = int
 type cetype = int
 type segtype = int
-type ctype = int
-type ktype = int
+type ctype = aconstant
+type ktype = akind
 type ltype = intref
 type itype = int
 type ftype = float
@@ -57,8 +61,6 @@ type mttype = int
 type ittype = int
 type httype = int
 type bvttype = int
-
-
 
 
 type inscatRX = rtype
@@ -330,6 +332,7 @@ type instruction = Ins_put_variable_t of inscatRRX
   | Ins_stop
   | Ins_halt
   | Ins_fail
+  | Ins_create_type_variable of inscatEX
 
 let getSize_put_variable_t = inscatRRX_LEN
 let getSize_put_variable_p = inscatERX_LEN
@@ -472,6 +475,7 @@ let getSize_builtin = inscatI1X_LEN
 let getSize_stop = inscatX_LEN
 let getSize_halt = inscatX_LEN
 let getSize_fail = inscatX_LEN
+let getSize_create_type_variable = inscatEX_LEN
 
 
 let writeInstruction inst =
@@ -617,3 +621,4 @@ let writeInstruction inst =
   | Ins_stop -> writeopcode 138
   | Ins_halt -> writeopcode 139
   | Ins_fail -> writeopcode 140
+  | Ins_create_type_variable(arg) -> writeopcode 141; writeEX arg

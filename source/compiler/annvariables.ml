@@ -1,33 +1,40 @@
-(****************************************************************************)
-(* process clause representations in a module, annotate type and term       *)
-(* variables as temporary or permanent, and decide offset for permanent     *)
-(* variables. Fill in variable related information for clause               *)
-(* representations: hasenv, cutvar and goal-environment size association.   *)
-(****************************************************************************)
+(*****************************************************************************)
+(* Module annvariables:                                                      *)
+(* processing clause representations in a module, annotate type and term     *)
+(* variables as temporary or permanent, and decide offset for permanent      *)
+(* variables. Fill in variable related information for clause                *)
+(* representations: hasenv, cutvar and goal-environment size association.    *)
+(*****************************************************************************)
 
-(****************************************************************************)
-(* GLOBAL FLAGS AND LISTS AND ACCESS FUNCTIONS                              *)
-(****************************************************************************)
-(* whether in an embedded context *)
+(** ********************************************************************** **)
+(** GLOBAL FLAGS AND LISTS AND ACCESS FUNCTIONS                            **)
+(** ********************************************************************** **)
+(**************************************************************************)
+(* whether in an embedded context                                         *)
+(**************************************************************************)
 let embedded : bool ref = ref false
 let isEmbedded () = !embedded
 let setEmbedded flag = embedded := flag
 
-(* the goal number of the goal currently being processed *)
+(**************************************************************************)
+(* the goal number of the goal currently being processed                  *)
+(**************************************************************************)
 let goalNumber : int ref = ref 1
 let getGoalNum ()     = !goalNumber
 let incGoalNum ()     = goalNumber := !goalNumber + 1
 let setGoalNum number = goalNumber := number 
 
+(**************************************************************************)
 (* whether the previous goal being processed is a non-register-clobbering *)
 (* pervasive                                                              *)
+(**************************************************************************)
 let pervGoal : bool ref = ref false
 let isPervGoal () = !pervGoal
 let setPervGoal flag = pervGoal := flag
 
-
-(* global variable lists *)
-
+(**************************************************************************)
+(* global variable lists                                                  *)
+(**************************************************************************)
 (* is a member of the given list? *)
 let rec isMember data dataList =
   match dataList with
@@ -36,8 +43,10 @@ let rec isMember data dataList =
 	  if (data == data') then true
 	  else isMember data rest
 		  
-(* add new element to a global variable list *)
-let gListAdd var varList = varList := (var :: !varList)
+(* add new element to a global variable list                  *)
+let gListAdd var varList     = varList := (var :: !varList)
+(* append a list of vars to the end of a global variable list *)
+let gListAppend vars varList = varList := (!varList @ vars)
 
 (*********************************************************************)
 (* Term variables that are explicitly quantified in the body of the  *)
@@ -46,9 +55,9 @@ let gListAdd var varList = varList := (var :: !varList)
 let qVars : Absyn.avar list ref = ref []
 let isQVar   var      = isMember var (!qVars)
 let addQVars var      = gListAdd var qVars
+let appQVars dataList = gListAppend dataList qVars 
 let getQVars ()       = !qVars
 let setQVars dataList = qVars := dataList		  
-
 
 (*********************************************************************)
 (* Term variables that are explicitly quantified at the head of the  *)
@@ -56,7 +65,6 @@ let setQVars dataList = qVars := dataList
 (*********************************************************************)
 let hqVars : Absyn.avar list ref = ref []
 let isHQVar   var      = isMember var (!hqVars)
-let addHQVars var      = gListAdd var hqVars
 let getHQVars ()       = !hqVars
 let setHQVars dataList = hqVars := dataList
 
@@ -67,8 +75,10 @@ let setHQVars dataList = hqVars := dataList
 let expqVars : Absyn.avar list ref = ref []
 let isExpQVar   var      = isMember var (!expqVars)
 let addExpQVars var      = gListAdd var expqVars
+let appExpQVars dataList = gListAppend dataList expqVars
 let getExpQVars ()       = !expqVars
 let setExpQVars dataList = expqVars := dataList
+
 
 (*********************************************************************)
 (* Term and type variables that appear in a clause                   *)
@@ -79,20 +89,59 @@ type termtypevar =
 
 let clVars: termtypevar list ref = ref []
 
-let addClTypeVar tyVarOpt  = clVars := TypeVar(Option.get tyVarOpt) :: (!clVars)
+let addClTypeVar tyVarData = clVars := TypeVar(tyVarData)::(!clVars)
 let addClTermVar tmVarData = clVars := TermVar(tmVarData) :: (!clVars)
 let setClVars    dataList  = clVars := dataList
 let getClVars    ()        = !clVars
 
-(****************************************************************************)
-(*                       PROCESS TERMS AND TYPES                            *)
-(****************************************************************************)
-let isCrossGoal gnumber = not(gnumber = getGoalNum ())
-let firstEncountered firstgoal = ((!firstgoal) = 0)
+(*****************************************************************************)
+(* Auxiliary functions for processing terms and types                        *)
+(*****************************************************************************)
+let isCrossGoal gNumber = not (gNumber = getGoalNum ())
 
-(*************************************************************************)
-(*                          PROCESS TYPES                                *)
-(*************************************************************************)
+(** *********************************************************************** **)
+(**                          PROCESS TYPES                                  **)
+(** *********************************************************************** **)
+(*******************************************************************)
+(* check whether it is the first occurrence of a type variable, in *)
+(* which case, the first goal number field contains a zero         *)
+(*******************************************************************)
+let firstEncounteredTypeVar var =
+  match var with
+	Absyn.TypeVar(_, _, _, _, _, _, firstgoal, _) -> (!firstgoal) = 0
+
+
+(*******************************************************************)
+(* fill in fields for a type variable data when it is first        *)
+(* encountered and collect the variable data into the clause       *)
+(* variable list                                                   *)
+(*******************************************************************)
+let initTypeVarData varData perm safety heapvar usage =
+  match varData with
+	Absyn.TypeVar(firstuse, lastuse, lperm, lsafety, lheapvar, _, firstgoal, 
+				  lastgoal) ->
+					let goalNum = getGoalNum () in
+					firstuse  := usage;
+					lastuse   := usage;
+					lperm     := perm && not (safety && heapvar);
+					lsafety   := safety;
+					firstgoal := goalNum;
+					lastgoal  := goalNum;
+					
+					addClTypeVar varData
+
+(********************************************************************)
+(* update relevant fields for a type variable data for its subsquent*)
+(* occurrences                                                      *)
+(********************************************************************)
+let updateTypeVarData varData perm usage =
+  match varData with
+	Absyn.TypeVar(_, lastuse, lperm, _, _, _, firstgoal, lastgoal) ->
+	  lastuse  := usage;
+	  lperm    := (perm || isCrossGoal (!firstgoal));
+	  lastgoal := getGoalNum ()
+		  
+  
 (**********************************************************************)
 (* processTypeVar:                                                    *)
 (* Annotating a type variable data (and its type variable occurrence).*)
@@ -107,230 +156,219 @@ let firstEncountered firstgoal = ((!firstgoal) = 0)
 (* are updated; the variable occurrence is marked as subsequent       *)
 (* occurrence.                                                        *)
 (**********************************************************************) 
-let processTypeVar tyVar first tyVarOcc perm safety heapvar =
-  let goalNum = getGoalNum () in
-  match (!tyVar) with
-	Some(Absyn.TypeVar(firstuse, lastuse, lperm, lsafety, lheapvar,
-					   _, firstgoal, lastgoal)) ->
-	  if (firstEncountered firstgoal) then (*first encountered *)
-		(firstuse := Some(tyVarOcc); (*type variable data*) 
-		 lastuse := Some(tyVarOcc);
-		 lperm := perm && not(safety && heapvar);
-		 lsafety := safety;
-		 lheapvar := heapvar;
-		 firstgoal := goalNum;
-		 lastgoal  := goalNum;
-		 
-		 first := Some(true);        (*type variable occurrence*)
-		 addClTypeVar (!tyVar))
-	  else (*subsequent occurrence *)
-		let myperm = !lperm in
-		lastuse := Some(tyVarOcc);  (* type variable data *)
-		lperm := (myperm || isCrossGoal (!firstgoal));
-		lastgoal := goalNum;
-		
-		first := Some(false)        (* type variable occurrence *) 
-  | _ -> Errormsg.impossible Errormsg.none 
-		"processTypeVar: uninitialized type variable"
-
-(***************************************************************************)
-(*               PROCESSING TYPES IN ANALYSIS MODE:                        *)
-(***************************************************************************)
-(**************************************************************************)
-(* Annotating a list of types in analysis mode delayed from processing    *)
-(* type args.                                                             *)
-(**************************************************************************)
-let rec aProcessTypes tylist =
+let processTypeVar varData firstRef tyVarOcc perm safety heapvar =
+  if firstEncounteredTypeVar varData then
+	(initTypeVarData varData perm safety heapvar (Some tyVarOcc);
+	 firstRef := Some(true))
+  else (* subsequent occurrence *)
+	(updateTypeVarData varData (Absyn.getTypeVariableDataPerm varData) 
+	   (Some tyVarOcc);
+	 firstRef := Some(false))
+				 
+(** **************************************************************** **)
+(**      PROCESSING TYPE IN ANALYSIS MODE                            **)
+(** **************************************************************** **)
+(**********************************************************************)
+(* Annotating a list of argument types of a term constant or a clause *)
+(* head. In the latter case, the heapvar argument is FALSE, since the *)
+(* head type environment arrives in registers.                        *)
+(* Following the analysis processing order, the processing of embedded*)
+(* structures (type application and type arrow) is delayed.           *)
+(**********************************************************************)
+let rec analyseTypeArgs tylist heapvar =
+  let rec analyseTypeArgsAux tylist delayed =
+	match tylist with
+	  [] -> analyseTypes (List.rev delayed)
+	| (ty :: rest) ->
+		match ty with
+		  Absyn.TypeVarType(_) -> 
+			processTypeVar (Absyn.getTypeFreeVariableVariableData ty) 
+			  (Absyn.getTypeFreeVariableFirstRef ty) ty false true heapvar;
+			analyseTypeArgsAux rest delayed 
+		| _ -> analyseTypeArgsAux rest (ty :: delayed)
+  in
+  analyseTypeArgsAux tylist []
+			  		
+(**********************************************************************)
+(* Anotating a list of types in analysis mode delayed from processing *)
+(* type args.                                                         *)
+(**********************************************************************)
+and analyseTypes tylist =
   match tylist with
 	[] -> ()
   | (ty :: rest) ->
-	  match ty with
-		Absyn.ArrowType(arg, target) ->
-		  aProcessTypeArgs (arg::target::[]) [] true; 
-		  aProcessTypes rest
+	  (match ty with
+		Absyn.ArrowType(arg, target) ->	
+		  analyseTypeArgs [arg ; target] true
 	  | Absyn.ApplicationType(_, args) ->
-		  aProcessTypeArgs args [] true; 
-		  aProcessTypes rest
-	  | _ -> Errormsg.impossible Errormsg.none "aProcessTypes: invalid type"
-
-(***************************************************************************)
-(* Annotating a list of argument types of a term constant or a clause head.*)
-(* In the latter case, the heapvar argument is FALSE, since the head type  *)
-(* environment arrives in registers.                                       *)
-(* Following the analysis processing order, the processing of embedded     *)
-(* structures (type application and type arrow) is delayed.                *)
-(***************************************************************************)
-and aProcessTypeArgs tylist delayed heapvar =
-  match tylist with
-	[] -> aProcessTypes (List.rev delayed) 
-  | (ty :: rest) -> 
-	  match ty with
-		Absyn.TypeVarType(typeVarInfo) ->
-		  (match (!typeVarInfo) with
-			Absyn.FreeTypeVar(tyVar, first) ->
-			  processTypeVar tyVar first ty false true heapvar; 
-			  aProcessTypeArgs rest delayed heapvar
-		  | _ -> Errormsg.impossible Errormsg.none 
-				"aProcessTypeArgs: invalid type variable rep")
-	  | _ -> aProcessTypeArgs rest (ty :: delayed) heapvar (*arrow or app *)
-
-(***************************************************************************)
-(*               PROCESSING TYPES IN SYNTHESIS MODE:                       *)
-(***************************************************************************)
-(**************************************************************************)
-(* Annotating a type in synthesis mode: the incoming type could be one as *)
-(* a type argument of a term constant (invoked from sProcessTypeArgs) or  *)
-(* one as a type argument of a goal head (invoked from sProcessTypes).    *)
-(**************************************************************************)
-let rec sProcessType ty perm =
+		  analyseTypeArgs args true
+	  | _ -> Errormsg.impossible Errormsg.none "analyseTypes: invalid type");
+	  analyseTypes rest 
+		
+(** **************************************************************** **)
+(**      PROCESSING TYPE IN SYNTHESIS MODE                           **)
+(** **************************************************************** **)
+(**********************************************************************)
+(* Annotating a list of argument types of a term constant in          *)
+(* synthesis mode: the processing of variables are delayed after all  *)
+(* the embedded structures (type application and type arrow).         *)
+(**********************************************************************)
+let rec synthesizeTypeArgs tylist =
+  let rec synthesizeTypeArgsAux tylist delayed =
+	match tylist with
+	  [] -> (* processing delayed type variables *)
+		let rec synthesizeTypeVars typeVars =
+		  match typeVars with
+			[] -> ()
+		  | (typeVar :: rest) ->
+			  processTypeVar (Absyn.getTypeFreeVariableVariableData typeVar)
+				(Absyn.getTypeFreeVariableFirstRef typeVar) typeVar 
+				false true true;
+			  synthesizeTypeVars rest
+		in
+		synthesizeTypeVars (List.rev delayed)
+	| (ty :: rest) -> 
+		match ty with
+		  Absyn.TypeVarType(_) -> synthesizeTypeArgsAux rest (ty :: delayed)
+		| _ -> 
+			synthesizeType ty false;
+			synthesizeTypeArgsAux rest delayed
+  in
+  synthesizeTypeArgsAux tylist []
+				
+(**********************************************************************)
+(* Annotating a type in synthesis mode: the incoming type could be one*) 
+(* as a type argument of a term constant (invoked from                *)
+(* synthesizeTypeArgs) or one as a type argument of a goal head       *)
+(* (invoked from synthesizeTypes).                                    *)
+(**********************************************************************)
+and synthesizeType ty perm =
   match ty with 
-	Absyn.TypeVarType(typeVarInfo) ->
-	  (match (!typeVarInfo) with 
-		Absyn.FreeTypeVar(tyVar, first) ->
-		  processTypeVar tyVar first ty perm false false
-	  | _ -> Errormsg.impossible Errormsg.none 
-			"sProcessType: invalid type variable rep")
-  | Absyn.ArrowType(arg, target) ->
-	  sProcessTypeArgs (arg::target::[]) []
-  | Absyn.ApplicationType(_, args) ->
-	  sProcessTypeArgs args []
-  | _ -> Errormsg.impossible Errormsg.none "sProcessType: invalid type exp"
+	Absyn.TypeVarType(_)           ->
+	  processTypeVar (Absyn.getTypeFreeVariableVariableData ty) 
+		(Absyn.getTypeFreeVariableFirstRef ty) ty perm false false
+  | Absyn.ArrowType(arg, target)   -> synthesizeTypeArgs [arg ; target]
+  | Absyn.ApplicationType(_, args) -> synthesizeTypeArgs args
+  | _ -> Errormsg.impossible Errormsg.none "synthesizeType: invalid type exp"
 
-(**************************************************************************)
-(* Annotating a list of argument types of a term constant in synthesis    *)
-(* mode: the processing of variables are delayed after all the embedded   *)
-(* structures (type application and type arrow).                          *)
-(**************************************************************************)
-and sProcessTypeArgs tylist delayed =
-  match tylist with 
-	[] -> 
-	  (* processing delayed type variables *)
-	  let rec sProcessTypeVars typeVars =
-		match typeVars with
-		  [] -> ()
-		| (ty :: rest) ->
-			match ty with
-			  Absyn.TypeVarType(typeVarInfo) ->
-				(match (!typeVarInfo) with
-				  Absyn.FreeTypeVar(tyVar, first) ->
-					processTypeVar tyVar first ty false true true;
-					sProcessTypeVars rest
-				| _ -> Errormsg.impossible Errormsg.none 
-					  "sProcessTypeArgs: invalid type variable rep")
-			| _ -> Errormsg.impossible Errormsg.none
-				  "sProcessTypeArgs: non-type-variable is delayed"
-	  in
-	  sProcessTypeVars (List.rev delayed)
-
-  | (ty :: rest) ->
-	  match ty with
-		Absyn.TypeVarType(_) ->  sProcessTypeArgs rest (ty :: delayed)
-	  | _ -> 
-		  sProcessType ty false;
-		  sProcessTypeArgs rest delayed
-
-(**************************************************************************)
-(* Annotating a list of argument types of a goal head in synthesis mode.  *)
-(**************************************************************************)
-let rec sProcessTypes tylist perm =
+(***********************************************************************)
+(* Annotating a list of argument types of a goal head in synthesis mode*)
+(***********************************************************************)
+let rec synthesizeTypes tylist perm =
   match tylist with
 	[] -> ()
   | (ty :: rest) -> 
-	  (sProcessType ty perm; sProcessTypes rest perm)
+	  (synthesizeType ty perm; synthesizeTypes rest perm)
 
-(*************************************************************************)
-(*                          PROCESS TERMS                                *)
-(*************************************************************************)
+(** *********************************************************************** **)
+(**                          PROCESS TERMS                                  **)
+(** *********************************************************************** **)
+(*******************************************************************)
+(* check whether it is the first occurrence of a type variable, in *)
+(* which case, the first goal number field contains a zero         *)
+(*******************************************************************)
+let firstEncounteredVar var =
+  match var with
+	Absyn.Var(_, _, _, _, _, firstgoal, _, _) -> (!firstgoal) = 0
+
+(*******************************************************************)
 (* fill in fields for a variable data when it is first encountered *)
+(* and collect the variable data into the clause variable list     *)
+(*******************************************************************)
 let initVarData varData oneuse perm safety heapvar varOcc =
   match varData with
 	Absyn.Var(loneuse, lperm, lsafety, lheapvar, _, firstgoal, lastgoal,
 			  lastuse) ->
-	  let goalNum = getGoalNum () in
-	  loneuse := oneuse;
-	  lperm := perm && (not (safety && heapvar));
-	  lsafety := safety;
-	  lheapvar := heapvar;
-	  firstgoal := goalNum;
-	  lastgoal := goalNum;
-	  lastuse := varOcc;
-	  
-	  addClTermVar varData
+				let goalNum = getGoalNum () in
+				loneuse := oneuse;
+				lperm := perm && (not (safety && heapvar));
+				lsafety := safety;
+				lheapvar := heapvar;
+				firstgoal := goalNum;
+				lastgoal := goalNum;
+				lastuse := varOcc;
+				
+				addClTermVar varData
 
+(********************************************************************)
+(* update relevant fields for a variable data for its subsquent     *)
+(* occurrences                                                      *)
+(********************************************************************)
+let updateVarData varData perm usage =
+  match varData with
+	Absyn.Var(oneuse, lperm, _, _, _, firstgoal, lastgoal, lastuse) ->
+	  oneuse   := Some(false);
+	  lperm    := (perm || isCrossGoal (!firstgoal));
+	  lastgoal := getGoalNum ();
+	  lastuse  := usage		  
 
-(* update relevant fields of a variable data for its subsequent occurrences *)
-let subVarDataUpdate oneuseFd permFd lastgoalFd lastuseFd perm lastuse =
-  oneuseFd := Some(false);
-  permFd := perm;
-  lastgoalFd := getGoalNum ();
-  lastuseFd := Some(lastuse)
-  
-(****************************************************************************)
-(*               PROCESS TERMS IN SYNTHESIS MODE                            *)
-(****************************************************************************)
+(** **************************************************************** **)
+(**      PROCESSING TERM IN SYNTHESIS MODE                           **)
+(** **************************************************************** **)
 (**************************************************************************)
 (* Annotating a list of terms in synthesis mode. The list of terms could  *)
 (* be the arguments of an atomic goal or those delayed in the synthesis   *)
 (* processing.                                                            *)
 (**************************************************************************)
-let rec sProcessTerms termList perm heapvar =
+let rec synthesizeTerms termList perm heapvar =
   match termList with
 	[] -> ()
-  | (term::rest) -> 
-	  (sProcessTerm term perm heapvar; sProcessTerms rest perm heapvar)
-
+  | (term :: rest) -> 
+	  (synthesizeTerm term perm heapvar; synthesizeTerms rest perm heapvar)
+		 
 (**************************************************************************)
 (* Annotating a term in synthesis mode.                                   *)
 (**************************************************************************)
-and sProcessTerm term perm heapvar =
+and synthesizeTerm term perm heapvar =
   match term with 
 	Absyn.ConstantTerm(_, tyenv, _, _) ->
-	  sProcessTypeArgs tyenv []
+	  synthesizeTypeArgs tyenv
   | Absyn.FreeVarTerm(freeVarInfo, _, _) ->
-	  sProcessFreeVarTerm freeVarInfo term perm heapvar
+	  synthesizeFreeVarTerm term perm heapvar
   | Absyn.AbstractionTerm(abstInfo, _, _) ->
-	  sProcessAbstractionTerm abstInfo
+	  synthesizeAbstractionTerm abstInfo
   | Absyn.ApplicationTerm(appInfo, _, _) ->
-	  sProcessApplicationTerm appInfo 
+	  synthesizeApplicationTerm appInfo 
   | _ -> ()
 
 (* Annotating an abstraction term *)
-and sProcessAbstractionTerm abstInfo =
+and synthesizeAbstractionTerm abstInfo =
   match abstInfo with 
 	Absyn.UNestedAbstraction(_, _, abstBody) -> 
-	  sProcessTerm abstBody false false
+	  synthesizeTerm abstBody false false
   | _ -> Errormsg.impossible Errormsg.none 
-		"sProcessAbstractionTerm: invalid abstraction rep"
+		"synthesizeAbstractionTerm: invalid abstraction rep"
 
 (* Annotating an application term in synthesis mode *)
-and sProcessApplicationTerm appInfo =
+and synthesizeApplicationTerm appInfo =
+  (* Annotating a list of term arguments of an application in synthesis mode:*)
+  (* the processing of (free) variables and constants are delayed after all  *)
+  (* the embedded structures (application, abstraction)                      *)
+  let rec synthesizeAppArgs termList delayed =
+	match termList with
+	  [] -> synthesizeTerms (List.rev delayed) false true 
+	| (term :: rest) -> 
+		match term with
+		  Absyn.ConstantTerm(_) ->
+			synthesizeAppArgs rest (term :: delayed)
+		| Absyn.FreeVarTerm(_) -> 
+			synthesizeAppArgs rest (term :: delayed)
+		| Absyn.AbstractionTerm(abstInfo, _, _) ->
+			synthesizeAbstractionTerm abstInfo;
+			synthesizeAppArgs rest delayed
+		| Absyn.ApplicationTerm(appInfo, _, _) ->
+			synthesizeApplicationTerm appInfo;
+			synthesizeAppArgs rest delayed 
+		| _ -> synthesizeAppArgs rest delayed
+  in
+  
+  (* function body of synthesizeApplicationTerm *)
   match appInfo with
 	Absyn.FirstOrderApplication(head, args, _) ->
-	  (sProcessTerm head false false; (* const/fv/bv *)
-	   sProcessAppArgs args [])
+	  (synthesizeTerm head false false; (* const/fv/bv *)
+	   synthesizeAppArgs args [])
   | _ -> Errormsg.impossible Errormsg.none 
-		"sProcessApplicationTerm: invalid application rep"
-
-(* Annotating a list of term arguments of an application in synthesis mode:*)
-(* the processing of (free) variables and constants are delayed after all  *)
-(* the embedded structures (application, abstraction)                      *)
-and sProcessAppArgs termList delayed =
-  match termList with
-	[] -> sProcessTerms (List.rev delayed) false true 
-  | (term :: rest) -> 
-	  match term with
-		Absyn.ConstantTerm(_) ->
-		  sProcessAppArgs rest (term :: delayed)
-	  | Absyn.FreeVarTerm(_) -> 
-		  sProcessAppArgs rest (term :: delayed)
-	  | Absyn.AbstractionTerm(abstInfo, _, _) ->
-		  sProcessAbstractionTerm abstInfo;
-		  sProcessAppArgs rest delayed
-	  | Absyn.ApplicationTerm(appInfo, _, _) ->
-		  sProcessApplicationTerm appInfo;
-		  sProcessAppArgs rest delayed 
-	  | _ -> sProcessAppArgs rest delayed
-
+		"synthesizeApplicationTerm: invalid application rep"
 
 (* Annotating a variable encountered in synthesis processing.            *)
 (* The variable could be one explicitly bound in the body of the clause  *)
@@ -338,92 +376,93 @@ and sProcessAppArgs termList delayed =
 (* clause currently being processed,  one implicitly bound at the head   *)
 (* of the top-level clause, or one bound in the embedding context of an  *)
 (* embedded clause.                                                      *)
-and sProcessFreeVarTerm freeVarInfo term perm heapvar =
-  match freeVarInfo with
-	Absyn.FreeVar(varData, first) ->
-	  (match varData with
-		Absyn.Var(oneuse, lperm, lsafety, lheapvar, _, firstgoal, lastgoal,
-				  lastuse) ->				 
-		  if (firstEncountered firstgoal) then (*first encountered*)
-			let (myfirst, myperm, mysafety) =
-			  if (isHQVar varData) || not (isEmbedded ()) then
-				(true, perm && (not heapvar), heapvar)
-			  else (* embedded && not a hq var && not a qvar: quantified at*)
-                   (* the enclosing context for an embedded clause *)
-                if (isExpQVar varData) then (*explicitly quant*)
-                  (false, perm && (not heapvar) , true)
-                else (*implicitly quant at the head of top-level clause*)
-                  (false, (isCrossGoal !firstgoal) || perm, true)
-			in
-			(* set variable data *)
-			initVarData varData (Some(myfirst)) myperm mysafety heapvar 
-			  (Some(term));
-			(* set variable occurrence *)
-			first := Some(myfirst)
-		  else (*subsequent occurrence *)
-			let myperm =
-			  if (isQVar varData) then (*explicitly body quant*)
-				(!lperm || (isCrossGoal !firstgoal) || perm)
-			  else (!lperm || (isCrossGoal !firstgoal))
-			in
-			(*update variable data *)
-			subVarDataUpdate oneuse lperm lastgoal lastuse myperm term;
-			(*set variable occurrence *)
-			first := Some(false))
-  | _ -> Errormsg.impossible Errormsg.none 
-		  "sProcessFreeVarTerm: invalid free variable rep"  
-
-(****************************************************************************)
-(*               PROCESS TERMS IN ANALYSIS MODE                             *)
-(****************************************************************************)
-
+and synthesizeFreeVarTerm var perm heapvar =
+  let varData = Absyn.getTermFreeVariableVariableData var in
+  if (firstEncounteredVar varData) then
+	let (myfirst, myperm, mysafety) =
+	  if (isHQVar varData || not (isEmbedded ())) then
+		(true, perm && (not heapvar), heapvar)
+	  else (* embedded && not a hq var && not a qvar: quantified at*)
+           (* the enclosing context for an embedded clause *)
+		if (isExpQVar varData) then (*explicitly quant*)
+		  (false, perm && (not heapvar), true)
+		else (*implicitly quant at the head of top-level clause*)
+		  (false,(isCrossGoal (Absyn.getVariableDataFirstGoal varData))|| perm,
+		   true)
+	in
+	initVarData varData (Some myfirst) myperm mysafety heapvar (Some var);
+	Absyn.setTermFreeVariableFirst var myfirst
+	
+  else (* subsequent occurrence *)
+	let oldPerm = Absyn.getVariableDataPerm varData in
+	let newPerm = 
+	  if (isQVar varData) then (*explicitly body quant*)
+		(oldPerm || (isCrossGoal (Absyn.getVariableDataFirstGoal varData)) ||
+		 perm)
+	  else (oldPerm || (isCrossGoal (Absyn.getVariableDataFirstGoal varData)))
+	in
+	updateVarData varData newPerm (Some var);
+	Absyn.setTermFreeVariableFirst var false
+  
+		
+(** **************************************************************** **)
+(**      PROCESSING TERM IN ANALYSIS MODE                            **)
+(** **************************************************************** **)	
+(*************************************************************************)
 (* Annotating a list of term arguments which might be those of a head of *)
 (* a clause or those of a first-order application in analysis mode.      *)
 (* The value of heapargs indicates which; clause head args arrive in     *)
 (* registers.                                                            *)
 (* Following the analysis processing order, the processing of embedded   *)
-(* compound terms is delayed.                                            *)
-let rec aProcessAppArgs termList delayed heaparg =
-  match termList with
-	[] -> aProcessTerms (List.rev delayed)
-  | (term :: rest) ->
+(* compound terms is delayed.                                            *)	
+(*************************************************************************)
+let rec analyseAppArgs terms heaparg =
+  let rec analyseAppArgsAux terms delayed =
+	match terms with
+	  [] -> analyseTerms (List.rev delayed)
+	| (term :: rest) ->
 	  match term with
 		Absyn.ConstantTerm(_, tyenv, _, _) ->
-		  aProcessTypeArgs tyenv [] true;
-		  aProcessAppArgs rest delayed heaparg
+		  analyseTypeArgs tyenv true;
+		  analyseAppArgsAux  rest delayed
 	  | Absyn.FreeVarTerm(freeVarInfo, _, _) ->
-		  aProcessFreeVarTerm freeVarInfo term heaparg;
-		  aProcessAppArgs rest delayed heaparg
+		  analyseFreeVarTerm term heaparg;
+		  analyseAppArgsAux rest delayed 
 	  | Absyn.AbstractionTerm(_) ->
-		  aProcessAppArgs rest (term :: delayed) heaparg
+		  analyseAppArgsAux rest (term :: delayed) 
 	  | Absyn.ApplicationTerm(_) ->
-		  aProcessAppArgs rest (term :: delayed) heaparg
-	  | _ -> aProcessAppArgs rest delayed heaparg
-		
+		  analyseAppArgsAux rest (term :: delayed) 
+	  | _ -> analyseAppArgsAux rest delayed 
+  in
+  analyseAppArgsAux terms []
+
+(***********************************************************************)
 (* Annotating a list of terms delayed from processing application args *)
 (* Note that a delayed term can only be an abstraction or an           *)
 (* application.                                                        *)
-and aProcessTerms termList =
-  match termList with
+(***********************************************************************)
+and analyseTerms terms =
+  match terms with
 	[] -> ()
   | (term :: rest) ->
 	  match term with
-		Absyn.AbstractionTerm(abstInfo, _, _)->sProcessAbstractionTerm abstInfo
-	  | Absyn.ApplicationTerm(applInfo, _, _)->aProcessApplicationTerm applInfo
-	  | _ -> Errormsg.impossible Errormsg.none "aProcessTerms: invalid term"
-
-			
+		Absyn.AbstractionTerm(abstInfo, _, _) -> 
+		  synthesizeAbstractionTerm abstInfo
+	  | Absyn.ApplicationTerm(applInfo, _, _) -> 
+		  analyseApplicationTerm applInfo
+	  | _ -> Errormsg.impossible Errormsg.none "analyseTerms: invalid term"
+		
 (* Annotating an application term in analysis mode. The head is examined *)
 (* first to determine whether to process in analysis or synthesis mode.  *)
 (* If the mode is analysis, the type environment of the head constant is *)
 (* processed and then the arguments of the term.                         *)
-and aProcessApplicationTerm applInfo =
+and analyseApplicationTerm applInfo =
   match applInfo with
 	Absyn.FirstOrderApplication(
-	  Absyn.ConstantTerm(c, tyenv, _, _), args, _) ->
-		aProcessTypeArgs tyenv [] true;
-		aProcessAppArgs args [] true
-  | _ -> sProcessApplicationTerm applInfo 
+	  Absyn.ConstantTerm(_, tyenv, _, _), args, _) ->
+		analyseTypeArgs tyenv true;
+		analyseAppArgs args true
+  | _ -> synthesizeApplicationTerm applInfo 			
 
 
 (* Annotating a free variable encountered in analysis processing.        *)
@@ -442,30 +481,21 @@ and aProcessApplicationTerm applInfo =
 (* attributes are updated to false and the current term occurrence       *)
 (* respectively. (lastgoal and perm remains the same since the current   *)
 (* goal number must be one.)                                             *)
-and aProcessFreeVarTerm freeVarInfo varOcc heapvar = 
-  match freeVarInfo with
-	Absyn.FreeVar(varData, first) ->
-	  (match varData with
-		Absyn.Var(oneuse, lperm, lsafety, lheapvar, _, firstgoal, lastgoal,
-				  lastuse) ->
-		  if (firstEncountered firstgoal) then (*not encountered*)
-			(initVarData varData (Some (not (isEmbedded ()))) false true heapvar
-						 (Some varOcc);  (* variable data *)
-			 
-			 first := Some (not (isEmbedded ())))   (* variable occurrence *)
-	  
-		  else (* has been processed *)
-			(oneuse := Some(false);           (* variable data *)
-			 lastuse := Some(varOcc);
+and analyseFreeVarTerm var heapvar = 
+  let varData = Absyn.getTermFreeVariableVariableData var in
+  if (firstEncounteredVar varData) then
+	let first = not (isEmbedded ()) in
+	initVarData varData (Some first) false true heapvar (Some var);
+	Absyn.setTermFreeVariableFirst var first
+  else
+	(Absyn.setVariableDataOneUse varData false;
+	 Absyn.setVariableDataLastUse varData var;
+	 Absyn.setTermFreeVariableFirst var false)
 
-			 first := Some(false)             (* variable occurrence *)
-			))
-  | _ -> Errormsg.impossible Errormsg.none 
-		   "aProcessFreeVarTerm: invalid variable rep"
+(** *********************************************************************** **)
+(**                          PROCESS CLAUSES                                **)
+(** *********************************************************************** **)
 
-(****************************************************************************)
-(*                        PROCESS CLAUSES                                   *)
-(****************************************************************************)
 (**************************************************************************)
 (* Assigning environment slots to permanent variables. For environment    *)
 (* trimming, the longest-lived variable should be assigned the lowest slot*)
@@ -543,94 +573,90 @@ let assignPermVars goalEnvAssoc notrim =
   goalEnvAssoc := Absyn.GoalEnvAssoc(gespList)
 
 
-(**********************************************************************)
-(* process a clause:                                                  *)
-(**********************************************************************)
-let rec processClause clause =  
+(*****************************************************************************)
+(*                         PROCESS A CLAUSE                                  *)
+(*****************************************************************************)
+let rec processClause clause =
   (* collect explicitly head quantified variables into hqVars and expQVars *)
   (* The order of this variables in the global lists does not matter.      *)
   let collectHQVars varList =
-	match varList with
-	  [] -> ()
-	| (var :: rest) -> addHQVars var; addExpQVars var
+	setHQVars varList; 
+	appExpQVars varList
   in
 
+  (* process a clause head: annotate the type arguments and term arguments *)
+  (* in analysis mode                                                      *)
+  let processClauseHead args tyArgs =  
+	analyseTypeArgs tyArgs false;
+	analyseAppArgs args false  
+  in
+  
   (* function body of processClause *)
   match clause with
-	Absyn.Fact(_, args, tyargs, _, _, varMaps, tyVarMaps, expHQVars, _, 
-			   impMods) ->
+	Absyn.Fact(_, args, tyargs, _, _, _, _, expHQVars, _, impMods) ->
+	  collectHQVars expHQVars;         
+	  processClauseHead args tyargs  (* annotate clause (type) args *) 
+  | Absyn.Rule(_, args, tyargs, _, _, _, _, expHQVars, _, goal, 
+			   goalEnvAssoc, cutVarRef, hasenv, impmods) ->
 	  collectHQVars expHQVars;
-	  processClauseHead args tyargs;
-	  (varMaps, tyVarMaps)
-  | Absyn.Rule(_, args, tyargs, _, _, varMaps, tyVarMaps, expHQVars, _, goal, 
-			   goalEnvAssoc, cutVar, hasenv, impmods) ->
-	  collectHQVars expHQVars;
-	  processClauseHead args tyargs;
-	  let perm = (impmods = []) in
-	  let (myhasenv, notrim) = processGoal goal perm true cutVar in
-	  hasenv := myhasenv || notrim || perm;
-	  assignPermVars goalEnvAssoc (notrim || perm);
-      (varMaps, tyVarMaps)
+	  processClauseHead args tyargs; (* annotate clause (type) args *)
+	  let perm = (impmods = []) in   (* process goal                *)
+	  let (myhasenv, notrim) = processGoal goal perm true cutVarRef in
+	  hasenv := myhasenv || notrim || perm; (* decide whether has environment*)
+	  assignPermVars goalEnvAssoc (notrim || perm) (* decide perm var offset *)
 
-
-(******************************************************************)
-(* process a clause head: process the type arguments and term     *)
-(* arguments of the clause head in analysis mode.                 *) 
-(******************************************************************)
-and processClauseHead args tyArgs =  
-  aProcessTypeArgs tyArgs [] false;
-  aProcessAppArgs args [] false
-
-(******************************************************************)
-(* process a goal:                                                *)
-(******************************************************************)
-and processGoal goal perm last cutvar = 
+(*****************************************************************************)
+(*                         PROCESS A GOAL                                    *)
+(*****************************************************************************)
+and processGoal goal perm last cutVarRef = 
   match goal with
 	Absyn.AtomicGoal(pred, _, _, args, tyargs) ->
-	  processAtomicGoal pred args tyargs perm last cutvar
+	  processAtomicGoal pred args tyargs perm last cutVarRef
   | Absyn.AndGoal(andl, andr) ->
-	  let _ = processGoal andl true false cutvar in
-	  processGoal andr perm last cutvar 
+	  let _ = processGoal andl true false cutVarRef in
+	  processGoal andr perm last cutVarRef 
   | Absyn.SomeGoal(varData, body) ->
-	  processSomeGoal varData body perm last cutvar
+	  processSomeGoal varData body perm last cutVarRef
   | Absyn.AllGoal(Absyn.HCVarAssocs(hcVarAssoc), body) ->
-	  (processAllGoal hcVarAssoc body last cutvar, true) 
-  | Absyn.ImpGoal(Absyn.Definitions(clDefs), _, body) ->
-	  (processImpGoal clDefs body last cutvar, true)
+	  (processAllGoal hcVarAssoc body last cutVarRef, true) 
+  | Absyn.ImpGoal(Absyn.Definitions(clDefs), _, _, body) ->
+	  (processImpGoal clDefs body last cutVarRef, true)
   | _ -> Errormsg.impossible Errormsg.none "processGoal: invalid CutFailGoal"
-  
-(**************************************************************************)
-(* process an atomic goal (assumed to be rigid). In the situation of a    *)
-(* deep cut, the cutvar of the entire clause is set or updated. hasenv and*)
-(* notrim are decided and pervGoal and goalNum are updated if necessary.  *)
-(**************************************************************************)
-and processAtomicGoal pred args tyargs perm last cutvar =
 
-  (* process a cut goal *)
-  let processCutGoal cutvar last =
-	(* initiate a cutvar for the clause or update an existing one *)
-	let processCutVar cutvar gnum deepcut=
-	  if (deepcut) then
-		match (!cutvar) with
-		  None ->
-			let cutvarData = Absyn.makeCutVariableData gnum in
-			cutvar := Some(cutvarData);
-			addClTermVar (cutvarData) (* add to clause variable list *)
-		| Some(cutvarData) -> Absyn.setVariableDataLastGoal cutvarData gnum
-	  else () 
-	in
-	let hasenv = false in (* hasenv set to false for a cut goal *)
-	let notrim = last && (isPervGoal ()) in(*notrim set to isPervGoal if last *)
-	let goalNum = getGoalNum () in
-	processCutVar cutvar goalNum (goalNum > 1);
-	if (last) then (incGoalNum (); (hasenv, notrim))
-	else (hasenv, notrim)
+(**************************************************************************)
+(* processAtomicGoal:                                                     *)
+(* a). annotate type arguments and term arguments of the goal in synthesis*)
+(*     mode;                                                              *)
+(* b). check whether the goal is deep cut, and set the cutVarRef field for*)
+(*     the enclosing clause if it is the situation;                       *)
+(* c). calculate hasenv and notrim and set goalNum and PervGoal           *)
+(**************************************************************************)
+and processAtomicGoal pred args tyargs perm last cutVarRef =
+  (* process a cut goal:                                                *)
+  (* 1.update the cutVarRef field of the enclosing clause if a deepcut; *)
+  (* 2.hasenv is set to false;                                          *)
+  (* 3.notrim is set to last && (isPervGoal ())                         *)  
+  let processCutGoal () =
+	let myGoalNum = getGoalNum () in
+	(* manage cutvar *)
+	(if (myGoalNum > 1) then (* deep cut *)
+	  match (!cutVarRef) with
+		None -> 
+		  let cutvarData = Absyn.makeCutVariableData myGoalNum in
+		  cutVarRef := Some(cutvarData);
+		  addClTermVar (cutvarData) (* add to clause variable list *)
+	  | Some(cutvarData) -> Absyn.setVariableDataLastGoal cutvarData myGoalNum
+	else ());
+	(* increate goal number if necessary *)
+	(if last then incGoalNum ()
+	else ());
+	(* decide hasenv and notrim *)
+	(false, last && (isPervGoal ())) 
   in
-
-  (* calculate hasenv, notrim and set goalNum and pervGoal *)
-  let collectHasenvAndNotrim last pred =
-	let hasenv = not last in (*hasenv*)
-	let notrim = (* calculate notrim and set goalNum and pervGoal *)
+  
+  (* calculate hasenv, notrim and set goal number of pervGoal *)
+  let hasenvAndNotrim () =
+	let notrim = 
 	  if (not(Pervasive.isPerv(pred)) || Pervasive.regClobberingPerv(pred) ||
 	      Pervasive.backtrackablePerv(pred)) 
 	  then
@@ -642,32 +668,31 @@ and processAtomicGoal pred args tyargs perm last cutvar =
 		if (last) then (incGoalNum (); isPervGoal ())
 		else (setPervGoal true; false)
 	in
-	(hasenv, notrim)
+	(not last, notrim)
   in
 
   (* function body of processAtomicGoal *)
-  if (Pervasive.iscutConstant pred) then processCutGoal cutvar last
+  if (Pervasive.iscutConstant pred) then processCutGoal ()
   else (* other than cut goal*)
-	 (sProcessTypes tyargs perm;     (*process type args in synthesis mode *)
-	  sProcessTerms args perm false; (*process term args in synthesis mode *)
-	  collectHasenvAndNotrim last pred)		
-
-
+	(synthesizeTypes tyargs perm;     (*process type args in synthesis mode *)
+	 synthesizeTerms args perm false; (*process term args in synthesis mode *)
+	 hasenvAndNotrim ())		
+		
 (************************************************************************)
 (* process a some goal: initiate the existentially quantitied variable  *)
-(* data and collect it into variable list of the clause, hqVars and     *)
+(* data and collect it into variable list of the clause, qVars and      *)
 (* expQVars.                                                            *)
 (************************************************************************)
-and processSomeGoal varData body perm last cutvar =
+and processSomeGoal varData body perm last cutVarRef =
   initVarData varData None perm false false None;
-  addHQVars varData;
+  addQVars varData;
   addExpQVars varData;
-  processGoal body perm last cutvar
+  processGoal body perm last cutVarRef
 
 (************************************************************************)
 (* process an all goal: initiate the list of the universally quantified *)
 (* variable data and collect them into variable list of the clause,     *)
-(* hqVars and expQVars.                                                 *)
+(* qVars and expQVars.                                                  *)
 (************************************************************************)
 and processAllGoal hcVarAssoc body last cutvar =
   (* init universally quantified vars and collect them into lists *)
@@ -676,7 +701,7 @@ and processAllGoal hcVarAssoc body last cutvar =
 	  [] -> ()
 	| ((varData, _)::rest) -> 
 		(initVarData varData None true false false None;
-		 addHQVars varData;
+		 addQVars varData;
 		 addExpQVars varData)
   in  
   
@@ -686,157 +711,122 @@ and processAllGoal hcVarAssoc body last cutvar =
 
 (************************************************************************)
 (* process an implication goal:                                         *)
+(* a). process the embedded clauses;                                    *)
+(* b). process the body goal;                                           *)
+(* c). process (type) variable mapping, update their last goal, and set *)
+(*     those from variable data that are already processed to permanent;*)
+(*     initialize those are not.                                        *)
 (************************************************************************)
-and processImpGoal clDefs body last cutvar =
-  (* process embedded clauses *)
-  let rec processImpDefs clDefs clVars clTyVars=
+and processImpGoal clDefs body last cutVarRef =
+  let rec processImpDefs clDefs goalNumber =
 	match clDefs with
-	  [] -> (clVars, clTyVars)
-	| ((_, (clauses, _, _, _, _, _)) :: rest) ->
-		let rec processImpClauses cls clVars clTyVars =
-		  match cls with
-			[] ->  (clVars, clTyVars)
-		  | (cl :: rest) -> 
-			  let (newClVars,newClTyVars)=processImpClause cl clVars clTyVars in
-			  processImpClauses rest newClVars newClTyVars
-		in
-		let (newClVars, newClTyVars) = 
-		  processImpClauses (!clauses) clVars clTyVars 
-		in
-		processImpDefs rest newClVars newClTyVars
-  in 
- 
-  (* update lastgoal for a list of variabe data *)
-  let rec setLastGoalVars vars lastGoal =
-	match vars with 
 	  [] -> ()
-	| (varData :: rest) -> 
-		(Absyn.setVariableDataLastGoal varData lastGoal;
-		 setLastGoalVars rest lastGoal)
+	| ((_, (cls, _, _, _)) :: rest) ->
+		let rec processEmbeddedClauses cls =
+		  match cls with 
+			[] -> ()
+		  | (cl :: rest) ->
+			  processEmbeddedClause cl goalNumber; 
+			  processEmbeddedClauses rest 
+		in
+		processEmbeddedClauses (!cls);
+		processImpDefs rest goalNumber	  
   in
-
-  (* update lastgoal for a list of type variable data *)
-  let rec setLastGoalTyVars tyVars lastGoal =
-	match tyVars with 
-	  [] -> ()
-	| (tyVarData :: rest) -> 
-		(Absyn.setTypeVariableDataLastGoal tyVarData lastGoal;
-		 setLastGoalTyVars rest lastGoal)
-  in  
 
   (* function body of processImpGoal *)
   let myisPervGoal = isPervGoal () in
-  let (clVars, clTyVars) = processImpDefs clDefs [] [] in
+  let myGoalNum    = getGoalNum () in
+  (* process embedded definitions (and their variable mapping) *)
+  processImpDefs clDefs (if last then myGoalNum - 1 else myGoalNum);
+  (* process implication body *)
   setPervGoal myisPervGoal;
-  let (hasenv, _) = processGoal body true last cutvar in
-  let goalNum = getGoalNum () in
-  let lastGoal = if (last) then (goalNum - 1) else goalNum in 
-  setLastGoalVars clVars lastGoal; 
-  setLastGoalTyVars clTyVars lastGoal;
-  hasenv	
-
+  let (hasenv, _) = processGoal body true last cutVarRef in
+  hasenv
+	
 (***********************************************************************)
-(* process an embedded clause including the (types) variables in its   *)
-(* map lists; and collect lists of (type) variable data whose lastgoal *)
-(* fields should be updated.                                           *)
-(***********************************************************************) 
-and processImpClause clause clVars clTyVars =
+(* process an embedded clause and its term/type variable mapping       *)
+(***********************************************************************)  
+and processEmbeddedClause clause goalNumber =
 
-  (* process variable data in the termVarMap list *)
-  let rec processVarMaps varMaps clVars=
-	match varMaps with
-	  [] -> clVars
-	| ((fromVarData, toVarData)::rest) ->
-		match fromVarData with
-		  Absyn.Var(_, perm, _, _, _, firstgoal, _, _) ->
-			if (firstEncountered firstgoal) then (*first encountered*)
-			  ((initVarData fromVarData None true false false None);
-			   processVarMaps rest (fromVarData :: clVars))
-			else (* has encountered *)
-			  (perm := true;
-  			   processVarMaps rest (fromVarData :: clVars))
-  in
-
-  (* process type variable data in the typeVarMap list *)
-  let rec processTyVarMaps tyVarMaps clTyVars =
-	let processToVar varData =
-	  match varData with
-		Absyn.TypeVar(firstuse, _, _, safety, heapvar, _, _, _) ->
-		  safety := true;
-		  heapvar := false;
-		  match (!firstuse) with
-			Some (Absyn.TypeVarType tyvarInfo) ->
-			  (match (!tyvarInfo) with
-				Absyn.FreeTypeVar(tyvarData, first) -> first := Some false
-			  | _ -> Errormsg.impossible Errormsg.none 
-					   "processTyVarMaps: invalid type variable rep")
-		  | _ -> ()
-	in			
-	match tyVarMaps with
-	  [] -> clTyVars
-	| ((fromTyVarData, toTyVarData) :: rest) ->
-		let goalNum = getGoalNum () in
-		processToVar toTyVarData;
-		match fromTyVarData with
-		  Absyn.TypeVar(_, _, perm, safety, heapvar, _, firstgoal, 
-						lastgoal) ->
-			if (firstEncountered firstgoal) then (* first encountered *)
-			  (perm := true;
-			   safety := true;
-			   heapvar := false;
-			   firstgoal := goalNum;
-			   lastgoal := goalNum;
-			   
-			   addClTypeVar (Some(fromTyVarData));
-			   processTyVarMaps rest (fromTyVarData :: clTyVars))
-			else 
-			  (perm := true;
-			   processTyVarMaps rest (fromTyVarData :: clTyVars))
-  in  
-
-  (* function body of processImpClause *)
-  (*bookkeeping global info *)
+  (* process the embedded clause *)
   let (lqVars, lhqVars, lexpqVars, lclVars, lembedded, lgoalNum) =
 	(getQVars (), getHQVars (), getExpQVars (), getClVars (), 
 	 isEmbedded (), getGoalNum ())
-  in
-  (*processing the embedded clause with empty global lists *)
+  in  
   setQVars []; setHQVars []; setClVars []; setEmbedded true; setGoalNum 1;
-  let (Absyn.TermVarMap(varMaps), Absyn.TypeVarMap(tyVarMaps)) =  
-	processClause clause
-  in
+  processClause clause;
+  (* process (type) variable mapping lists *) 
   setQVars lqVars; setHQVars lhqVars; setClVars lclVars; 
   setEmbedded lembedded; setGoalNum lgoalNum;
-  (* processing variable data in varMaps *)
-  let newClVars = processVarMaps varMaps clVars in
-  (* processing type variable data in tyVarMaps *)
-  let newClTyVars = processTyVarMaps tyVarMaps clTyVars in
-  (newClVars, newClTyVars)  
-
+  processVarMaps (Absyn.getClauseTermVarMaps clause) 
+	(Absyn.getClauseTypeVarMaps clause) goalNumber
 
 (**********************************************************************)
-(* process top-level clauses of the module                            *)
+(* set from variable data in term/type variable mappings              *)
 (**********************************************************************)
-let rec processTopLevelClDefs clDefs = 
+and processVarMaps tmVarMaps tyVarMaps newLastGoalNum =
+  
+  let rec processTmVarMaps tmVars =
+	match tmVars with
+	  [] -> ()
+	| ((fromVarData, _) :: rest) ->
+		if firstEncounteredVar fromVarData then (* first encountered *)
+		  initVarData fromVarData None true false false None
+		else Absyn.setVariableDataPerm fromVarData true;
+		Absyn.setVariableDataLastGoal fromVarData newLastGoalNum;
+		processTmVarMaps rest
+  in
+  
+  let rec processTyVarMaps tyVars =
+	match tyVars with
+	  [] -> ()
+	| ((fromVarData, toVarData) :: rest) ->
+		(* treat fromVarData *)
+		(if firstEncounteredTypeVar fromVarData then (* first encountered *)
+		  initTypeVarData fromVarData true false false None
+		else Absyn.setTypeVariableDataPerm fromVarData true);
+		Absyn.setTypeVariableDataLastGoal fromVarData newLastGoalNum;
+        (* treat toVarData *)
+		Absyn.setTypeVariableDataSafety toVarData true;
+		Absyn.setTypeVariableDataHeapVar toVarData true;
+		let firstuse = Absyn.getTypeVariableDataFirstUseOpt toVarData in
+		(if (Option.isSome firstuse) then
+		  Absyn.setTypeFreeVariableFirst (Option.get firstuse) false
+		else ());
+		(* process others *)
+		processTyVarMaps rest
+  in
+  
+  let (Absyn.TermVarMap(tmVars)) = tmVarMaps in
+  let (Absyn.TypeVarMap(tyVars)) = tyVarMaps in
+  processTmVarMaps tmVars;
+  processTyVarMaps tyVars
+
+(*****************************************************************************)
+(*                   PROCESS TOP LEVEL DEFINITIONS                           *)
+(*****************************************************************************)
+let rec processTopLevelDefs clDefs =
   match clDefs with
-	[] -> ()
+	[] -> []
   | ((_, clausesBlock) :: rest) ->
-	  let processDef cls = (* annotate each clause in the clause block *)
+	  (* process each clause contained in the def block *)
+	  let processDef cls = 
 		match cls with
 		  [] -> ()
-		| (cl :: rest) ->
-			setQVars []; setHQVars []; setClVars []; 
+		| (cl :: rest) -> 
+			setQVars []; setHQVars []; setExpQVars []; setClVars []; 
 			setEmbedded false; setGoalNum 1; setPervGoal false;
-			let _ = processClause cl in ()
+			processClause cl
 	  in
 	  processDef (Absyn.getClauseBlockClauses clausesBlock);
-	  processTopLevelClDefs rest
-
-(****************************************************************************)
-(*                        INTERFACE FUNCTION                                *)
-(****************************************************************************)
+	  (clausesBlock :: (processTopLevelDefs rest))
+			
+(** *********************************************************************** **)
+(**                          INTERFACE FUNCTION                             **)
+(** *********************************************************************** **)
 let processClauses amod =
   match (Absyn.getModuleClauses amod) with
 	Absyn.PreClauseBlocks(Absyn.Definitions(clauseDefs)) ->
-	  processTopLevelClDefs clauseDefs;
+	  Absyn.setModuleClauses amod 
+		(Absyn.ClauseBlocks(processTopLevelDefs clauseDefs))
   | _ -> Errormsg.impossible Errormsg.none "processClauses: invalid clause rep"

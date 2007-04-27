@@ -10,13 +10,14 @@
 (*    variables with a form suitable for variable annotations; their scope   *)
 (*    information are collected and recorded along with clauses and goals.   *)
 (* 4. Clauses defining a predicate are collected and associated with the     *)
-(*    predicate name being defined.                                          *)
+(*    predicate name being defined;                                          *)
 (* 5. String arguments are collected.                                        *)
 (*****************************************************************************)
 
-(***************************************************************************)
-(* Global variables and access functions                                   *)
-(***************************************************************************)
+
+(** ********************************************************************** **)
+(** Global variables and access functions                                  **)
+(** ********************************************************************** **)
 
 (*********************************************************************)
 (* the string list of a module                                       *)
@@ -32,30 +33,36 @@ let embeddedClause : bool ref = ref false
 let isEmbedded () = !embeddedClause
 let setEmbedded flag = embeddedClause := flag
 
+(*****************************************************************************)
+(*               Global variable (type variable) lists                       *)
+(*****************************************************************************)
 (*********************************************************************)
-(* Term variables (the association of variable name and variable     *)
-(* information) appearing free in a clause                           *)
+(* 1.Term variables (the association of variable name and variable   *)
+(*   information) appearing free in a clause                         *)
 (*********************************************************************)
 let tVars : (Absyn.atypesymbol * Absyn.avar) list ref = ref []
 
 (*********************************************************************)
-(* Type variables appearing free in a clause                         *)
+(* 2.Type variables appearing free in a clause                       *)
 (*********************************************************************)
 let tyVars : (Absyn.atype * Absyn.atypevar) list ref = ref []
 
 (*********************************************************************)
-(* Term variables (the association of variable name and variable     *)
-(* information) that are (explicitly) quantified in the body of a    *)
-(* clause                                                            *)
+(* 3.Term variables (the association of variable name and variable   *)
+(*   information) that are (explicitly) quantified in the body of a  *)
+(*   clause                                                          *)
 (*********************************************************************)
 let qVars: (Absyn.atypesymbol * Absyn.avar) list ref = ref []
 
 (*********************************************************************)
-(* Term variables that are explicitly quantified at the head of a    *)
-(* clause                                                            *)
+(* 4. Term variables that are explicitly quantified at the head of a *)
+(*    clause                                                         *)
 (*********************************************************************)
 let hqVars : (Absyn.atypesymbol * (Absyn.avar option ref)) list ref = ref []
 
+(*****************************************************************************)
+(* Global variable (type variable) lists access functions:                   *)
+(*****************************************************************************)
 (*********************************************************************)
 (* gListAdd: add a new item to the front of one of the global list   *)
 (*********************************************************************)
@@ -63,9 +70,11 @@ let gListAdd index data glist = (glist := (index, data) :: !glist)
 
 (*********************************************************************)
 (* gListFind:                                                        *)
-(* find information associated with a given index in one of the      *)
+(* find information associated with a given "index" in one of the    *)
 (* global list                                                       *)
-(* None is returned if the index does not occur.                     *)
+(* None is returned if the "index" does not occur.                   *)
+(* Note that the index is usually an address (of mutable structures) *)
+(* and so "==" is used for their comparison.                         *)
 (*********************************************************************)
 let gListFind index glist =
   let rec find assocs =
@@ -85,51 +94,61 @@ let gListsSet ntVars ntyVars nqVars nhqVars =
   (tVars := ntVars; tyVars := ntyVars; qVars := nqVars; hqVars := nhqVars)
 
 
-(****************************************************************************)
-(*                         PROCESS TYPES                                    *)
-(****************************************************************************)
-(*****************************************************************************)
-(* Processing type arguments of a clause:                                    *)
-(* transform a type into a form suitable for variable annotation; as a side  *)
-(* effect, free type variables are collected into tyVars.                    *)
-(*****************************************************************************)
+(** ********************************************************************** **)
+(**                        PROCESS TYPES                                   **)
+(** ********************************************************************** **)
+(**************************************************************************)
+(* transType:                                                             *)
+(* Transforming a type into a form suitable for variable annotation:      *)
+(* a). the result type expression is reference free;                      *)
+(* b). the occurrences of free type variables and their actual variable   *)
+(*     data are seperated;                                                *)
+(* c). as a side effect, the association of the (original) type variable  *)
+(*     and the newly introduced type variable data is collected into      *)
+(*     tyVars.                                                            *)
+(**************************************************************************)
 let rec transType tyExp =
   match tyExp with 
-	Absyn.TypeVarType(typeVarInfo) ->
-	  (match (!typeVarInfo) with
-		Absyn.FreeTypeVar(_) -> (* free type variable *)
-	   (* If the type variable has already occurred, used the associated type*)
-	   (* variable information; otherwise, create a new type variable cell   *)
-	   (* and enter it into tyVars together with the type variable.          *)
-		  let tyVarData =
-			let tyVarDataInfo = gListFind tyExp tyVars in 
-			match tyVarDataInfo with
-			  None -> 
-				let varData = Absyn.makeNewTypeVariableData () in
-				gListAdd tyExp varData tyVars;
-				varData
-			| Some(varData) -> varData
- 		  in 
-		  Absyn.makeNewTypeVariable tyVarData;
-	  | Absyn.BindableTypeVar(target) ->(*bound type variable: type reference*)
-	    if Option.isSome (!target) then
-  		  transType (Option.get (!target))
-  		else
-  		  Errormsg.impossible Errormsg.none "Processclauses.transType: Invalid Absyn.BindableTypeVar")
+	Absyn.TypeVarType(typeVarInfo) -> 
+	  (* it is assumed the typeVarInfo here must take form of BindableTypeVar*)
+	  (match (!typeVarInfo) with 
+		Absyn.BindableTypeVar(binding) ->
+		  if Option.isNone (!binding) then (*actually a free var *)
+			let tyVarData =
+			  match gListFind tyExp tyVars with
+				None -> (*not encountered yet *)
+				  let varData = Absyn.makeNewTypeVariableData () in
+				  gListAdd tyExp varData tyVars; (* add into tyVars *)
+				  varData
+			  | Some(varData) -> varData
+			in
+			Absyn.makeNewTypeVariable tyVarData
+		  else transType (Option.get (!binding)) (* a type reference *)
+	  | _ -> Errormsg.impossible 
+			   Errormsg.none "transType: invalid type expression")
   | Absyn.ArrowType(arg, target) ->
 	  Absyn.ArrowType(transType arg, transType target)
   | Absyn.ApplicationType(kind, args) ->
 	  Absyn.ApplicationType(kind, List.map transType args)
   | _ -> Errormsg.impossible Errormsg.none "transType: invalid type expression"
-	  
 
-(****************************************************************************)
-(*                         PROCESS TERMS                                    *)
-(****************************************************************************)
-(*****************************************************************************)
-(* Processing term arguments of a clause:                                    *)
-(* transform a term into a form suitable for variable annotation             *)
-(*****************************************************************************)
+(** ********************************************************************** **)
+(**                        PROCESS TERMS                                   **)
+(** ********************************************************************** **)
+(**************************************************************************)
+(* transTerm:                                                             *)
+(* transforming terms into a form suitable for variable annotation:       *)
+(* a). term variables are separated into term variable occurrences and    *)
+(*     term variable data which is based on a nameless representation;    *)
+(* b). type environment is trimmed for constant occurrences based on the  *)
+(*     type skeleton optimization result;                                 *)
+(* c). strings are transformed into a stringData, and the text is collect *)
+(*     into the module string list;                                       *)
+(* d). bound variables are transformed into de Bruijn indexes and the     *)
+(*     binder (name) list of abstractions are removed.                    *)
+(* Note it is assumed that the application and abstraction sub structures *)
+(* contained in the input term are unnested.                              *)
+(**************************************************************************)
 let rec transTerm bvs tm = 
   match tm with
 	Absyn.IntTerm(v, _, _)            -> Absyn.IntTerm(v, false, Errormsg.none)
@@ -155,6 +174,7 @@ and transTermStr s =
 	  Absyn.StringTerm(strdata, false, Errormsg.none)
   | _ -> Errormsg.impossible Errormsg.none "transTermStr: invalid string rep"
 
+
 (**************************************************************************)
 (* transform constants:                                                   *)
 (* TO ADD: rearrange type environment according to information provided   *)
@@ -173,32 +193,29 @@ and transTermConst c tyenv =
 (* 3. explicitly or implicitly quantified at the embedding context for    *)
 (*    an embedded goal; implicitly quantified at the head for a top-level *)
 (*    goal.                                                               *)
-(**************************************************************************) 
+(**************************************************************************)
 and transTermVar tysy =
-  let qVar = gListFind tysy qVars in (*body quantified? *)
-  match qVar with
-	Some(qVarData) -> qVarData
-  | None ->
-	  let hqVar = gListFind tysy hqVars in (* exp head quantified?*)
-	  match hqVar with
-		Some(hqVarInfo) ->
-		  (match (!hqVarInfo) with
-			Some(hqVarData) -> hqVarData
-		  | None -> (*exp head quant; but first encountered *)
+  match gListFind tysy qVars with
+	Some(qVarData) ->  qVarData (* body quantified *)
+  | None -> 
+	  match gListFind tysy hqVars with
+		Some(hqVar) ->          (* exp head quant *)
+		  (match !hqVar with
+			Some(hqVarData) -> hqVarData 
+		  | None ->   (*exp head quant; but first encountered *)
 			  let hqVarData = Absyn.makeNewVariableData () in
-			  hqVarInfo := Some(hqVarData); (*update hqVars*)
+			  hqVar := Some(hqVarData);      (* update hqVars *)
 			  hqVarData)
 	  | None -> (* implicitly quantified at head of top-level clause or     *) 
 				(* implicitly/explicitly quantified in embedding context of *)
                 (* embedded clauses.                                        *)
-          let var = gListFind tysy tVars in
-          match var with
-            Some(myVarData) -> myVarData 
-          | None -> 
-              let myVarData = Absyn.makeNewVariableData () in
-			  gListAdd tysy myVarData tVars; (*update tVars*)
+		  match (gListFind tysy tVars) with
+			Some(varData) -> varData
+		  | None -> (* first encountered *)
+			  let myVarData = Absyn.makeNewVariableData () in
+			  gListAdd tysy myVarData tVars; (*add into tVars*)
 			  myVarData
-
+		  
 (**************************************************************************)
 (* transform free variables:                                              *)
 (* This variable could be implicitly quantified at the head of the top    *)
@@ -244,7 +261,7 @@ and transTermBoundVar var bvs =
 		Absyn.FreeVarTerm(Absyn.FreeVar(transTermVar tysy, ref None), false, 
 						  Errormsg.none)
   | _ -> Errormsg.impossible Errormsg.none "transTermBoundVar: invalid var rep"
-
+		
 
 (**************************************************************************)
 (* transform abstractions:                                                *)
@@ -275,19 +292,20 @@ and transTermAppl bvs applTerm =
 									nargs), false, Errormsg.none)
   | _ -> Errormsg.impossible Errormsg.none "transTermAppl: invalid app rep"
 
-(****************************************************************************)
-(*                        PROCESS CLAUSES                                   *)
-(****************************************************************************)
-
-(*******************************************************************)
-(* Insert a clause into clauses definition list:                   *)
-(* If the clause is not embedded in an implication goal, it should *)
-(* also be inserted into the clause block associated with its      *)
-(* predicate name.                                                 *)
-(* NOTE: The clauses in a clause block are inserted in an order    *)
-(* reversed to that in which they are encountered; the definitions *)
-(* are the reversed order to that in which they are encountered.   *) 
-(*******************************************************************)
+(** ********************************************************************** **)
+(**                       PROCESS CLAUSES                                  **)
+(** ********************************************************************** **)
+(***************************************************************************)
+(* INSERT A CLAUSE INTO PREDICATE DEFINITION LIST:                         *)
+(***************************************************************************)
+(* Add the clause into the defintition block of its head predicate; a new  *)
+(* definition block is created if there exists none for the predicate, and *)
+(* if the clause is at top-level, the new defintition block is associated  *)
+(* with the predicate name constant itself too as its codeinfo.            *)
+(* Note that it is assumed the clauses being processed by this function are*)
+(* in an order reversed to their appearence in the program (their actual   *)
+(* order), and are reversed again in the process of insertion.             *)
+(***************************************************************************) 
 let insertClause pred clause clDefs embedded closed =
 
   (* looking for the clause block defining a predicate name from a given *)
@@ -302,36 +320,37 @@ let insertClause pred clause clDefs embedded closed =
 
   let clBlock = findClBlock clDefs in
   match clBlock with
-	None -> 
+	None -> (* has to create a new definition block *)
 	  let newClBlock = Absyn.makeNewClauseBlock clause closed in
 	  (* record the clause block into the code info field of the predicate *)
 	  (* name if top-level *)
-	  (if (not embedded) then
-		Absyn.setConstantCodeInfo pred (Some (Absyn.Clauses newClBlock))
-	   else ());
+	  (if embedded then ()
+	   else Absyn.setConstantCodeInfo pred (Some (Absyn.Clauses newClBlock)));
 	  ((pred, newClBlock) :: clDefs) 
-  | Some(cls, _, _, _, _, _) ->
+  | Some(cls, _, _, _) -> (* one exists: add one more clause *)
 	  cls := clause :: !cls;
 	  clDefs
 
-(*******************************************************************)
-(* A pre clause representation.                                    *)
-(*******************************************************************)
+
+(**************************************************************************)
+(*               A PRE CLAUSE REPRESENTATION                              *)
+(**************************************************************************)
 (* (pred, term args, type args, number term args, number type args (, body)) *)
 type preclause = 
     Fact of Absyn.aconstant * Absyn.aterm list * Absyn.atype list * int * int
   | Rule of Absyn.aconstant * Absyn.aterm list * Absyn.atype list * int * int
 		* Absyn.agoal
 
-(**********************************************************************)
-(* Process Clause:                                                    *)
-(* Absyn.aterm -> (preclause * (Absyn.atysy * Absyn.avar) list *      *)
-(*              (Absyn.atype * Absyn.atypevar) list * Absyn.avar list)*)
-(* Transform term representation of a clause into a pre clause paired *)
-(* with the association lists of term variables and type variables    *)
-(* appearing free in the clause and the list of universal variables   *)
-(* explicitly quantified at the clause head.                          *) 
-(**********************************************************************)
+(****************************************************************************)
+(*                         PROCESS CLAUSE                                   *)
+(****************************************************************************)
+(*  Transform term representation of a clause into a pre clause paired      *)
+(*  with the association lists of term variables and type variables         *)
+(*  appearing free in the clause and the list of universal variables        *)
+(*  explicitly quantified at the clause head.                               *)
+(*  The main action carried out here is to recurse over the top-level for   *)
+(*  all structures and records such variables into the global hqVars list.  *)
+(****************************************************************************)
 let rec processClause clauseTerm =
   (* collect variable data of explicitly head quantified variables that are*)
   (* used in the clause *)
@@ -341,11 +360,12 @@ let rec processClause clauseTerm =
 		[] -> vars
 	  | ((tysy, varInfo):: rest) ->
 		  match (!varInfo) with
-			None -> collectHQVarsAux rest vars
+			None -> collectHQVarsAux rest vars (* not used *)
 		  | Some(hqVarData) ->  collectHQVarsAux rest (hqVarData :: vars)
 	in
 	collectHQVarsAux hqVarAssocs []
   in
+  (* function body of processClause *)
   match clauseTerm with
     Absyn.ConstantTerm(head, tyenv, _, _) -> (* proposition fact *)
       let (preClause, freeVars, freeTyVars) = processFact head tyenv [] 0 in
@@ -355,24 +375,24 @@ let rec processClause clauseTerm =
       let args = Absyn.getTermApplicationArgs clauseTerm in
       let head = Absyn.getTermConstant func in
       if (Pervasive.isallConstant head) then
-	let arg = List.hd args in
-	gListAdd (List.hd (Absyn.getTermAbstractionVars arg)) (ref None) hqVars; 
-	processClause (Absyn.getTermAbstractionBody arg)
+		let arg = List.hd args in 
+		gListAdd (List.hd (Absyn.getTermAbstractionVars arg)) 
+		  (ref None) hqVars; 
+		processClause (Absyn.getTermAbstractionBody arg)
       else
-	let (preClause, freeVars, freeTyVars) =
-	if (Pervasive.isimplConstant head) then (* process rule *)
-	  processRule (List.hd args) (List.hd (List.tl args))
-	else (* process fact *)
-	  processFact head (Absyn.getTermTypeEnv func) args
-	    (Absyn.getTermApplicationArity clauseTerm)
-	in
-	(preClause, freeVars, freeTyVars, collectHQVars (!hqVars))
-	
+		let (preClause, freeVars, freeTyVars) =
+		  if (Pervasive.isimplConstant head) then (* process rule *)
+			processRule (List.hd args) (List.hd (List.tl args))
+		  else (* process fact *)
+			processFact head (Absyn.getTermTypeEnv func) args
+			  (Absyn.getTermApplicationArity clauseTerm)
+		in
+		(preClause, freeVars, freeTyVars, collectHQVars (!hqVars))
+
+
 (***************************************************************************)
 (* process clause head:                                                    *)
-(* Absyn.aterm list -> Absyn.atype list ->                                 *)
-(*                            (Absyn.aterm list * Absyn.atype list)        *)
-(* transform term arguments, type arguments of a clause head into a form   *)
+(* Transform term arguments, type arguments of a clause head into a form   *)
 (* suitable for variable annotation.                                       *)
 (* Note the type skeleton reductions should have no effect for predicate   *)
 (* names, and so are not concerned here.                                   *)
@@ -388,10 +408,8 @@ and processClauseHead args tyargs =
 (***************************************************************************)
 and processFact pred tyargs tmargs ntmargs =
   let (predArgs, predTyArgs) = processClauseHead tmargs tyargs in
-  let preClause = Fact(pred, predArgs, predTyArgs, 
-					   ntmargs + Absyn.getConstantTypeEnvSize(pred), ntmargs) 
-  in
-  (preClause, !tVars, !tyVars)
+  (Fact(pred, predArgs, predTyArgs, ntmargs+Absyn.getConstantTypeEnvSize(pred),
+		ntmargs), !tVars, !tyVars)
 
 (***************************************************************************)
 (* process a rule:                                                         *)
@@ -413,13 +431,13 @@ and processRule clauseHead clauseBody =
   let (predArgs, predTyArgs) = processClauseHead args tyenv in
   let goal = processGoal clauseBody in
   (Rule(pred, predArgs, predTyArgs, Absyn.getConstantTypeEnvSize pred + arity,
-		arity, goal),
-   !tVars, !tyVars)
+		arity, goal), !tVars, !tyVars)
 
 (*****************************************************************************)
-(* Process Goal:                                                             *)
-(*          Absyn.aterm -> Absyn.agoal                                       *)
+(* process a goal:                                                           *)
 (* transform a goal from its term representation into its goal representation*)
+(* Note that the goal that is introduced from closing off universal          *)
+(* variable's defintions gets special treatment and representation.          *)
 (*****************************************************************************)
 and processGoal gltm = 
   match gltm with
@@ -444,7 +462,6 @@ and processGoal gltm =
 		| _ -> processAtomicGoal gltm head [] 0)     (* flex atomic goal *)
   | _-> processAtomicGoal gltm gltm [] 0 (* proposition goal: flex or rig*)
 		
-		
 (**************************************************************************)
 (* process atomic goal:                                                   *)
 (* Note a flex goal of form (F t1... tn) is transformed into              *)
@@ -453,17 +470,19 @@ and processGoal gltm =
 and processAtomicGoal gltm head args arity =
   match head with
 	Absyn.FreeVarTerm(Absyn.NamedFreeVar(_), _, _) -> (* free var head *)
-	  Absyn.AtomicGoal(Pervasive.solveConstant, 1, 1, [(transTerm [] gltm)], [])
+	  Absyn.AtomicGoal(Pervasive.solveConstant, 1, 1, [(transTerm [] gltm)],[])
   | Absyn.ConstantTerm(pred, tyenv, _, _) ->
 	  Absyn.AtomicGoal(pred, arity + Absyn.getConstantTypeEnvSize(pred), arity,
 					   List.map (transTerm []) args, List.map transType tyenv)
   | _ -> Errormsg.impossible Errormsg.none "processAtomicGoal: invalid pred"
+
 
 (***************************************************************************)
 (* process and goal:                                                       *)
 (***************************************************************************)
 and processAndGoal andl andr =
   Absyn.AndGoal(processGoal andl, processGoal andr)
+
 
 (***************************************************************************)
 (* process some goal:                                                      *)
@@ -473,7 +492,7 @@ and processAndGoal andl andr =
 and processSomeGoal goalBody =
   let tysy = List.hd (Absyn.getTermAbstractionVars goalBody) in
   let varData = Absyn.makeNewVariableData () in
-  gListAdd tysy varData qVars; (* update qVars *)
+  gListAdd tysy varData qVars; (* add into qVars *)
   Absyn.SomeGoal(varData, processGoal (Absyn.getTermAbstractionBody goalBody))
 
 (***************************************************************************)
@@ -483,6 +502,7 @@ and processSomeGoal goalBody =
 (* hidden constants are collected and recorded  with the goal structure.   *) 
 (***************************************************************************)
 and processAllGoal goalBody =
+  
   (* enter the given variable into the qVars list; and create a hidden     *)
   (* constant variable association pair. *)
   let collectHCpair tysy =
@@ -491,14 +511,16 @@ and processAllGoal goalBody =
     gListAdd tysy varData qVars; (* update qVars *)
     (varData, hcData)
   in
-  
+
+  (* recurse over for-all structures, and collect universally quantified *)
+  (* variables into qVars.                                               *)  
   let rec processAllGoalAux goal hcPairs =
     match goal with
       Absyn.ApplicationTerm(_) ->
 		let head = Absyn.getTermApplicationFunc goal in
 		let args = Absyn.getTermApplicationArgs goal in
 		if Pervasive.isallConstant (Absyn.getTermConstant head) then
-		   (*all goal*)
+          (*all goal*)
 		  let arg = List.hd args in
 		  let tysy = List.hd (Absyn.getTermAbstractionVars arg) in
 		  processAllGoalAux (Absyn.getTermAbstractionBody arg) 
@@ -508,118 +530,151 @@ and processAllGoal goalBody =
     | _ -> (* other than all goal *)
 		Absyn.AllGoal(Absyn.HCVarAssocs(List.rev hcPairs), processGoal goal)
   in
-  
+
   let tysy = List.hd (Absyn.getTermAbstractionVars goalBody) in
-  processAllGoalAux (Absyn.getTermAbstractionBody goalBody) [collectHCpair tysy]
-   
-(**************************************************************************)
-(* process imp goal:                                                      *)
-(* a). transform the body goal;                                           *)
-(* b). collect definitions in the ancester;                               *)
-(* c). collect the variable init list                                     *)
-(**************************************************************************)
+  processAllGoalAux (Absyn.getTermAbstractionBody goalBody) 
+	[collectHCpair tysy]
+
+
+(****************************************************************************)
+(* process implication goal:                                                *)
+(* Actions carried out here are:                                            *)
+(* a). transform the body goal;                                             *)
+(* b). transform the clauses in the ancester and collect them into the      *)
+(*     definition list for the implication goal;                            *)
+(* c). collect list of term variables and type variables that should be     *)
+(*     initialized upon entering the implication goal (those variables      *)
+(*     having their scopes outside of the implication goal, but having      *)
+(*     their first appearence inside the ancester of the goal.              *)
+(****************************************************************************)
 and processImpGoal clauseTerm goalTerm =
-  let (clauseDefs, varInits) = processImpClauses clauseTerm [] [] in
-  Absyn.ImpGoal(Absyn.Definitions(clauseDefs), 
-				Absyn.VarInits(List.rev varInits), 
-				processGoal goalTerm)		
-    
-(********************************************************************)
-(* process clauses embedded in an implication goal; collect their   *)
-(* definitions in suitable form and collect variables that should   *)
-(* be initialized before using the clause.                          *)
-(********************************************************************)
-and processImpClauses clauseTerm clauseDefs varInits =
-  let collectDefsAndVarInits cltm clDefs myvarInits =
-	let (pred, clause, newVarInits) = processImpClause cltm varInits in
-	let newClDefs = insertClause pred clause clDefs true false in
-	(newClDefs, newVarInits)
+  (* recurse over the conjunctive structures *)
+  let rec processImpClauses clauseTerm clauseDefs varInits tyVarInits =
+	match clauseTerm with 
+	  Absyn.ApplicationTerm(_) -> 
+		let args = Absyn.getTermApplicationArgs clauseTerm in
+		let head = Absyn.getTermApplicationFunc clauseTerm in
+		if Pervasive.isandConstant (Absyn.getTermConstant head) then
+		  let (newClDefs, newVarInits, newTyVarInits) = 
+			processImpClauses (List.hd args) clauseDefs varInits tyVarInits
+		  in
+		  processImpClauses (List.hd (List.tl args)) newClDefs newVarInits
+			newTyVarInits
+		else
+		  processImpClause clauseTerm clauseDefs varInits tyVarInits
+	| _ -> processImpClause clauseTerm clauseDefs varInits tyVarInits 
   in
 
-  match clauseTerm with
-    Absyn.ApplicationTerm(_) -> (* recurse over the conjunctive structure *)
-      let args = Absyn.getTermApplicationArgs clauseTerm in
-      let head = Absyn.getTermApplicationFunc clauseTerm in
-      if Pervasive.isandConstant (Absyn.getTermConstant head) then
-		let (newClDefs, newVarInits) = 
-		  processImpClauses (List.hd args) clauseDefs varInits
-		in
-		processImpClauses (List.hd (List.tl args)) newClDefs newVarInits
-      else
-		collectDefsAndVarInits clauseTerm clauseDefs varInits
-  | _ -> collectDefsAndVarInits clauseTerm clauseDefs varInits
-		
+  let (clauseDefs, varInits, tyVarInits) = 
+	processImpClauses clauseTerm [] [] [] 
+  in
+  Absyn.ImpGoal(Absyn.Definitions(clauseDefs), 
+				Absyn.VarInits(List.rev varInits),
+				Absyn.TypeVarInits(List.rev tyVarInits),
+				processGoal goalTerm)
+
 (********************************************************************)
-(* process an embedded clause:                                      *)
-(* Mapping of type and term variables free in the embedded clause   *)
-(* are generated; free term variables having their first occurrence *)
-(* in the embedded clause is collected in variable initialization   *)
-(* list. The scope of free type variables are reflected in the type *)
-(* variable mapping list: those occurring in the type association   *)
-(* of a free term variable are assumed to have the same scopes of   *)
-(* the corresponding term variables and therefore are collected in  *)
-(* the type variable mapping; other free type variables are assumed *)
-(* to have their scopes at the head of the embedded clause.         *)  
+(* processImpClause:                                                *)
+(* Processing a clause embedded in an implication goal:             *)
+(* a. transform into clause representation and insert it into the   *)
+(*    definition list of the implication goal;                      *)
+(* b. collect term and type variables with their scopes outside the *)
+(*    clause but with first appearence inside;                      *)
+(* c. generate mapping for type and term variables with their scopes*)
+(*    outside the clause; the scopes of free type variables are     *)
+(*    reflected by this mapping list: those occurring in the type   *)
+(*    association of a free term variable are assumed to have the   *)
+(*    same scopes the corresponding term variables and therefore    *)
+(*    are collected in the type variable mapping if the term        *)
+(*    variable has its scope outside; other free type variables     *)
+(*    are assumed to have their scopes at the head of the embedded  *)
+(*    clause.                                                       *)  
 (********************************************************************)
-and processImpClause clauseTerm varInits =
-  (* book keeping global lists and flags *)
-  let (ltVars, ltyVars, lqVars, lhqVars, lembedded) =
+and processImpClause clauseTerm clauseDefs varInits tyVarInits =
+  (* process the embedded clause *)
+  let (ltVars, ltyVars, lqVars, lhqVars, lembedded) =    (* bookkeeping *)
 	(!tVars, !tyVars, !qVars, !hqVars, isEmbedded ()) 
   in
-  (* process the embedded clause with empty global lists *) 
-  gListsSet [] [] [] []; 
-  setEmbedded true;
+  gListsSet [] [] [] [];  (* set global (type) variable list to empty   *)
+  setEmbedded true;       (* set embedded flag to true                  *)
   let (preClause, fvAssoc, tyfvAssoc, expHQVars) = processClause clauseTerm in
-  (* recover global lists and flags; generate variable mappings and *)
-  (* accumulate variable initialization list *)
-  gListsSet ltVars ltyVars lqVars lhqVars;
-  setEmbedded lembedded;
-  let (fvMaps, tyfvMaps, newVarInits)= mapFreeVars fvAssoc tyfvAssoc varInits in
-  let fvMaps' = Absyn.TermVarMap(fvMaps) in
-  let tyfvMaps' = Absyn.TypeVarMap(tyfvMaps) in
-  match preClause with
-	Fact(pred, args, tyargs, nargs, ntargs) ->
-	  (pred, 
-	   Absyn.Fact(pred, args, tyargs, nargs, ntargs, fvMaps', tyfvMaps', 
-				  expHQVars, ref None, []), 
-	   newVarInits)
-  | Rule(pred, args, tyargs, nargs, ntargs, goal) ->
-	  (pred, 
-	   Absyn.Rule(pred, args, tyargs, nargs, ntargs, fvMaps', tyfvMaps', 
-				  expHQVars, ref None, goal, ref (Absyn.GoalEnvAssoc []), 
-				  ref None, ref false, []), 
-	   newVarInits)  
-
-(*********************************************************************)
-(* Generate variable mappings for type and term variables free in    *)
-(* the embedded clause. Accumulate variable initialization lists for *)
-(* free term variables having first occurrence in the embedded clause*)  
-(*********************************************************************)
-and mapFreeVars fvAssocs tyfvAssocs varInits =
   
-  (*******************************************************************)
-  (* Collect term variable mapping; collect free type variables that *)
-  (* global to the embedded clause; accumulate variable              *)
-  (* initialization list.                                            *)
-  (*******************************************************************)
-  let rec collectFvMaps fvAssocs fvMaps varInits globalTyVars =
-	match fvAssocs with
-	  [] -> (fvMaps, varInits, globalTyVars) 
+  (* collect (type) variable mapping information for this clause and    *)
+  (* increment (type) variable initialization                           *) 
+  gListsSet ltVars ltyVars lqVars lhqVars;   (* recover global lists    *)   
+  setEmbedded lembedded;                     (* recover embedded flag   *)
+  let (fvMaps, tyfvMaps, newVarInits, newTyVarInits) = 
+	mapFreeVars fvAssoc tyfvAssoc varInits tyVarInits
+  in
+  let fvMaps'   = Absyn.TermVarMap(fvMaps)   in
+  let tyfvMaps' = Absyn.TypeVarMap(tyfvMaps) in
+
+  (* create clause representation *)
+  let (pred, clause) =
+	match preClause with
+	  Fact(pred, args, tyargs, nargs, ntargs) ->
+		(pred, 
+		 Absyn.Fact(pred, args, tyargs, nargs, ntargs, fvMaps', tyfvMaps', 
+					expHQVars, ref None, []))
+	| Rule(pred, args, tyargs, nargs, ntargs, goal) ->
+		(pred, 
+		 Absyn.Rule(pred, args, tyargs, nargs, ntargs, fvMaps', tyfvMaps', 
+					expHQVars, ref None, goal, ref (Absyn.GoalEnvAssoc []), 
+					ref None, ref false, []))
+  in
+  (* insert the new clause into the definition list of the impl goal *)
+  (insertClause pred clause clauseDefs true false, newVarInits, newTyVarInits)
+
+
+(********************************************************************)
+(* mapFreeVars:                                                     *)
+(* Generate variable mappings for type and term variables free in   *)
+(* the embedded clause. Accumulate variable and type variable       *)
+(* initialization lists.                                            *)
+(********************************************************************)
+and mapFreeVars fvs tyfvs varInits tyVarInits =
+  
+  (******************************************************************)
+  (* recurse over the given free variable (typesymbol,              *)
+  (* variable data association) list and                            *)
+  (* a). generate free variable mapping:                            *)
+  (*     looking for the variable's typesymbol from the current     *)
+  (*     qVar, hqVar and tyVar lists (which records the variables   *)
+  (*     of the enclosing clause). If the variable is found in      *)
+  (*     those lists and it does have an associated variable data   *)
+  (*     then use the variable data to form a variable mapping.     *)
+  (*     Otherwise, it implies the variable has a scope outside of  *)
+  (*     the current (embedded) clause but yet has an occurrence,   *)
+  (*     so that a new variable data is created for initialization, *)
+  (*     and a variable mapping is formed with this newly created   *)
+  (*     one.                                                       *)
+  (* b). increment variable initialization list for those with      *)
+  (*     scopes outside of the clause, but are not encountered      *)
+  (*     in the enclosing clause yet. Namely, all the variable data *)
+  (*     newly created in the previous step belongs to this category*)
+  (*     and should be collected.                                   *)
+  (* c). collect type variables appearing in the type environment   *)
+  (*     of the variables that are free in the current clause: this *)
+  (*     information is needed for deciding the scopes of type      *)
+  (*     variables appearing free in the current clause in          *)
+  (*     collectTyVarMaps.                                          *)
+  (******************************************************************)
+  let rec collectVarMaps fvs fvMaps varInits globalTyVars =
+	match fvs with
+	  [] -> (fvMaps, varInits, globalTyVars)
 	| ((tysy, toVarData) :: rest) ->
 		(* collect global type variables *)
 		let newGlobalTyVars = 
 		  Types.freeTypeVars (Absyn.getTypeSymbolType tysy) globalTyVars
 		in
-		(* collect variable mapping and initialization *)
+		(* collect var map and var init *)
 		let (fromVarData, newVarInits) =
-		  let qVar = gListFind tysy qVars in (* body quantified? *)
-		  match qVar with
-			Some(qVarData) -> (qVarData, varInits)
-		  | None -> 
-			  let hqVar = gListFind tysy hqVars in (* exp head quantified? *)
-			  match hqVar with
-				Some(hqVarInfo) ->
-				  (match (!hqVarInfo) with
+		  match gListFind tysy qVars with
+			Some(qVarData) -> (qVarData, varInits) (* body quantified     *)
+		  | None ->
+			  match gListFind tysy hqVars with
+				Some(hqVarInfo) ->                 (* exp head quantified *)
+				  (match (!hqVarInfo) with  
 					Some(hqVarData) -> (hqVarData, varInits)
 				  | None -> (*exp head quant with first occ in embedded cl:*)
                             (*should be initiated*)
@@ -627,54 +682,68 @@ and mapFreeVars fvAssocs tyfvAssocs varInits =
 				      hqVarInfo := Some(hqVarData); (*update hqVars *)
 				      (hqVarData, (hqVarData :: varInits)))
 			  | None -> 
-			      (* implicitly quantified at head of top-level clause or     *)
-			      (* implicitly/explicitly quantified in embedding context of *)
-			      (* embedded clauses.                                        *)
-			      let var = gListFind tysy tVars in
-			      match var with
+			      (* implicitly quantified at head of top-level clause or    *)
+			      (* implicitly/explicitly quantified in embedding context of*)
+			      (* embedded clauses.                                       *)
+			      match gListFind tysy tVars with
 					Some(varData) -> (varData, varInits)
-			      | None ->
+			      | None -> 
 					  let varData = Absyn.makeNewVariableData () in
-					  let newVarInits =
-						if not (isEmbedded ()) then (varData :: varInits)
-						else varInits
-					  in
 					  gListAdd tysy varData tVars; (*update tyVars*)
-					  (varData, newVarInits)
+					  (varData, 
+					   if not (isEmbedded ()) then (varData :: varInits )
+					   else varInits)
 		in
-		collectFvMaps rest ((fromVarData, toVarData)::fvMaps) newVarInits
+		collectVarMaps rest ((fromVarData, toVarData)::fvMaps) newVarInits
 		  newGlobalTyVars
   in
-
+  
   (******************************************************************)
-  (* Decide the scopes of free type variables, and collect those    *)
-  (* that are not bound at the head of the embedded clause to the   *)
-  (* free variable mapping.                                         *)
+  (* recurse over the given free type variable (type - type variable*)
+  (* data association) list: if the free type variable is not       *)
+  (* contained in the feeding in globalTyVars list, then it has its *)
+  (* scope just over the embedded clause, and needs not be          *)
+  (* considered for type variable mapping and initialization;       *)
+  (* otherwise, the following actions are carried out:              *)
+  (* a). generate free type variable mapping:                       *)
+  (*     look for the type variable through the current tyVars list *)
+  (*     which is assumed to contain the encountered type variables *)
+  (*     in the enclosing clause. If one is found, then use the     *)
+  (*     associated type variable data to form a type variable      *)
+  (*     mapping; otherwise, the type variable has outside scope    *)
+  (*     but has first occurrence inside this embedded clause, and  *)
+  (*     a new type variable data is created, and used to form a    *)
+  (*     type variable mapping;                                     *)
+  (* b). the type variable initialization list is incremented by    *)
+  (*     those newly created type variable data in the previous step*)
   (******************************************************************)
-  let rec collectTyFvMaps tyfvAssocs globalTyVars tyfvMaps =
-	match tyfvAssocs with
-	  [] -> tyfvMaps
+  let rec collectTyVarMaps typeVars globalTyVars tyVarMaps tyVarInits =
+	match typeVars with
+	  [] -> (tyVarMaps, tyVarInits)
 	| ((tyVar, toTyVarData)::rest) ->
-		if (List.mem tyVar globalTyVars)
-		then (*have scope outside of the embedded clause*)
-		  let fromTyVarData =
-			let tyvarInfo = gListFind tyVar tyVars in
-			match tyvarInfo with
-			  Some(tyVarData) -> tyVarData
-			| None ->
+		if (List.mem tyVar globalTyVars) then
+		  let (fromTyVarData, newTyVarInits) =
+			match gListFind tyVar tyVars with
+			  Some(tyVarData) -> (tyVarData, tyVarInits)
+			| None -> (* global, but not encountered outside yet *)
 				let tyVarData = Absyn.makeNewTypeVariableData () in
 				gListAdd tyVar tyVarData tyVars; (*update tyVars *)
-				tyVarData
+				(tyVarData, tyVarData :: tyVarInits)
 		  in
-		  collectTyFvMaps rest globalTyVars 
-		    ((fromTyVarData, toTyVarData)::tyfvMaps)
-		else collectTyFvMaps rest globalTyVars tyfvMaps
+		  collectTyVarMaps rest globalTyVars 
+			((fromTyVarData, toTyVarData) :: tyVarMaps) newTyVarInits
+		else (* not really global *)
+		  collectTyVarMaps rest globalTyVars tyVarMaps tyVarInits
   in
 
   (* function body of mapFreeVars *)
-  let (fvMaps,newVarInits,globalTyVars)=collectFvMaps fvAssocs [] varInits [] in
-  let tyfvMaps = collectTyFvMaps tyfvAssocs globalTyVars [] in
-  (fvMaps, tyfvMaps, newVarInits)
+  let (fvMaps, newVarInits, globalTyVars) = 
+	collectVarMaps fvs [] varInits [] 
+  in
+  let (tyFvMaps, newTyVarInits) = 
+	collectTyVarMaps tyfvs globalTyVars [] tyVarInits 
+  in
+  (fvMaps, tyFvMaps, newVarInits, newTyVarInits)
 
 (****************************************************************************)
 (*      PROCESS TOP LEVEL (INCLUDING ANONYMOUS) CLAUSES                     *)
@@ -691,10 +760,11 @@ let rec processTopLevelClauses clauseTerms impmods clauseDefs anonymous =
   match clauseTerms with
 	[] -> clauseDefs
   | (clauseTerm :: rest) ->
-	  (* transform from term representation to clause representation *)
+	  (* transform from term representation to clause representation      *)
 	  gListsSet [] [] [] []; (* initialize global variable info lists *)
-	  setEmbedded false;     (* initialize embeddedClause flag *)
-	  (* transfer a clause *)
+	  setEmbedded false;     (* initialize embeddedClause flag        *)
+	  (* transfer a clause (varMap and tyVarMap for top-level modules are *)
+      (* always empty                                                     *)
 	  let (preClause, _, _, expHQVars) = processClause clauseTerm in
 	  (* term/type variable mapping is always empty for top-level clauses *)
 	  let fvMaps = Absyn.TermVarMap([]) in
@@ -714,15 +784,14 @@ let rec processTopLevelClauses clauseTerms impmods clauseDefs anonymous =
 							  ref (Absyn.GoalEnvAssoc([])), ref None, 
 							  ref false, impmods))
 	  in
-	  (* collect predicate definitions *)
+	  (* collect this clause into the module definitions which is organized *)
+      (* around predicate names.                                            *)
 	  let newClDefs = insertClause pred clause clauseDefs false anonymous in
 	  processTopLevelClauses rest impmods newClDefs anonymous	  
- 
 
-
-(*****************************************************************************)
-(*                          PROCESS CLAUSES                                  *)
-(*****************************************************************************)
+(** ********************************************************************** **)
+(**                       INTERFACE FUNCTION                               **)
+(** ********************************************************************** **)
 let processClauses amod clTerms newClTerms =
   match amod with
 	Absyn.Module(modname, modimps, modaccs, ctable, ktable, atable, _,
@@ -730,13 +799,15 @@ let processClauses amod clTerms newClTerms =
 	->
 	  (* process clauses *)
 	  let clDefs = processTopLevelClauses clTerms modimps [] false in
-	  (* process anonymous clauses: (new clauses introduced in deorification*) 
-	  (* Note: the import module field of anonymous clauses should be empty *)
+	  (* process anonymous clauses (those introduced for deorification), and*)
+      (* increment them into the module definition list.                    *)
+      (* Note: 1) the import module field of anonymous clauses should be    *)
+      (*          empty;                                                    *)
+      (*       2) the definitions of anonymous clauses are always closed    *)
 	  let newClDefs = processTopLevelClauses newClTerms [] clDefs true in
       (* Insert the clauses definitions and the string list into the module *)
       (* abstract syntax.                                                   *)
-	  Absyn.Module(modname, modimps, modaccs, ctable, ktable, atable, 
-				   !modStr, gkinds, lkinds, gconsts, lconsts, hconsts, skels,
-				   hskels, 
+	  Absyn.Module(modname, modimps, modaccs, ctable, ktable, atable, !modStr, 
+                   gkinds, lkinds, gconsts, lconsts, hconsts, skels, hskels, 
 				   ref (Absyn.PreClauseBlocks(Absyn.Definitions(newClDefs))))
   | _ -> Errormsg.impossible Errormsg.none "processClauses: invalid module"

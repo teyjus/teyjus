@@ -169,55 +169,6 @@ let genCodeInitialization () =
   initHashTabs ()
 
 (*****************************************************************************)
-(*         CLOSE OFF DEFINITIONS OF UNIVERSAL VARIABLES                      *)
-(*  Close off definitions (clauses in a clause block) ending with clause     *)
-(*            Head :- cutfail.                                               *)
-(* 1) mark the clausesblock as closed;                                       *)
-(* 2) remove the last clause from the clauses list.                          *)
-(*****************************************************************************)
-let rec closeDefs clausesBlocks =
-  match clausesBlocks with
-	[] -> ()
-  | ((clauses, true, _, _, closed, _) :: rest) ->
-	  closed := true;
-	  closeDefs rest
-  | ((clauses, false, _, _, closed, _) :: rest) -> closeDefs rest
-
-(*
-let rec closeDefs clausesBlocks = 
-  (* check whether the clause body is (cutfail.) *)
-  let isCutFail clause =
-    match clause with
-      Absyn.Fact(_, _, _, _, _, _, _, _, _, _)             -> false
-    | Absyn.Rule(_, _, _, _, _, _, _, _, _, goal, _, _, _, _) ->
-		match goal with
-		  (* !!! this condition is not correct. *)
-		  Absyn.AndGoal(Absyn.AtomicGoal(lpred, _, _, _, _),
-						Absyn.AtomicGoal(rpred, _, _, _, _)) ->
-			if (Pervasive.iscutConstant(lpred)) &&
-			   (Pervasive.isfailConstant(rpred)) then true
-			else false
-		| _ -> false      
-  in
-  (* remove the last clause from clauses list: assume the given clauses list *)
-  (* must not be empty.                                                      *)
-  let rec removeLastClause clauses = 
-	let (head, tail) =(List.hd clauses, List.tl clauses) in 
-	if (tail = []) then [] (* head is the last element *)
-	else (head :: (removeLastClause tail)) 
-  in
-
-  (* function body of closeDefs *)
-  match clausesBlocks with
-    [] -> ()
-  | ((clauses, lastClause, _, _, closed, _) :: rest) ->
-      if (isCutFail (!lastClause)) then 
-		(closed  := true;
-	     clauses := removeLastClause (!clauses);
-	     closeDefs rest)
-      else closeDefs rest
-*)
-(*****************************************************************************)
 (*                          ASSIGN KIND INDEXES                              *)
 (* assign indexes (offsets) to global and local kinds of the module          *)
 (*****************************************************************************)
@@ -1033,8 +984,6 @@ let genImpDefs defs insts startLoc =
   let rec genImpDefsAux defs insts startLoc extNum extPreds predNum predInfo =
 	(* generate code for one definition *)
 	let rec genImpDef pred clauseBlock insts startLoc extNum extPreds =
-
-	  closeDefs [clauseBlock]; (* close off clause definitions *)
       let (newExtPreds, newExtNum) =
 		if (Absyn.getClauseBlockClose clauseBlock) then (extPreds, extNum)
 		else
@@ -1099,14 +1048,11 @@ let rec genImpPointCode impPoints insts startLoc impGoals numImpPoints =
 (*****************************************************************************)
 (*                CODE GENERATION FOR A MODULE                               *)
 (*****************************************************************************)
-let generateModuleCode amod =
+let genModuleCode amod =
   genCodeInitialization ();
   match amod with
 	Absyn.Module(modname, modimps, modaccs, _, _, _, modstr, gkinds, lkinds, 
 				 gconsts, lconsts, hconsts, skels, hskels, clauses) ->
-      (* close off top-level clause definitions ending with (... :- !, fail) *)
-      (*   closeDefs (Absyn.getClauseInfoClauseBlocks (!clauses)); not needed*)
-
       (* assign indexes to global and local kinds *)				   
 	  let (cgGKinds, cgLKinds) = assignKindIndex gkinds lkinds in
 	  (* 1) assign indexes to global, local and hidden constants;   *)

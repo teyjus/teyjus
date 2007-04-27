@@ -176,7 +176,7 @@ and aterm =
 and agoal = 
     AtomicGoal of (aconstant * int * int * aterm list * atype list)
   | AndGoal of (agoal * agoal)
-  | ImpGoal of (adefinitions * avarinits * agoal)
+  | ImpGoal of (adefinitions * avarinits * atypevarinits * agoal)
   | AllGoal of (ahcvarassoc * agoal)
   | SomeGoal of (avar * agoal)
   | CutFailGoal
@@ -184,6 +184,7 @@ and agoal =
 
 and adefinitions = Definitions of ((aconstant * aclausesblock) list)
 and avarinits = VarInits of (avar list)
+and atypevarinits = TypeVarInits of (atypevar list)
 and ahcvarassoc = HCVarAssocs of ((avar * aconstant) list)
 
 
@@ -210,10 +211,8 @@ and atermvarmap  = TermVarMap of ((avar * avar) list)
 (* type variable map list *)
 and atypevarmap  = TypeVarMap of ((atypevar * atypevar) list)
 
-(* clauses block: (clauses, lastcutfail, offset, nextclause, closed, mapped)*)
-and aclausesblock = (aclause list ref * bool * int ref * int option ref * 
-					   bool ref * bool ref)
-
+(* clauses block: (clauses, closed, offset, nextclause)*)
+and aclausesblock = (aclause list ref * bool ref * int ref * int option ref) 
 
 (*****************************************************************************
 *Modules:
@@ -259,6 +258,7 @@ val setKindIndex : akind -> int -> unit
 val isGlobalKind : akind -> bool
 val string_of_kind : akind -> string
 
+val makeGlobalKind : symbol -> int -> int -> akind
 (*************************************************************************)
 (*  atypevar:                                                            *)
 (*************************************************************************)
@@ -267,7 +267,9 @@ val setTypeVariableDataLastGoal : atypevar -> int -> unit
 val getTypeVariableDataOffset : atypevar -> int
 val setTypeVariableDataOffset : atypevar -> int -> unit
 val getTypeVariableDataPerm   : atypevar -> bool
+val setTypeVariableDataPerm   : atypevar -> bool -> unit
 val getTypeVariableDataLastUse : atypevar -> atype
+val getTypeVariableDataFirstUseOpt : atypevar -> atype option 
 val getTypeVariableDataHeapVar : atypevar -> bool
 val setTypeVariableDataHeapVar : atypevar -> bool -> unit
 val getTypeVariableDataSafety  : atypevar -> bool
@@ -300,7 +302,9 @@ val dereferenceType : atype -> atype
 val isVariableType : atype -> bool
 
 val getTypeFreeVariableVariableData : atype -> atypevar
+val getTypeFreeVariableFirstRef : atype -> bool option ref 
 val getTypeFreeVariableFirst : atype -> bool
+val setTypeFreeVariableFirst : atype -> bool -> unit
 val isTypeFreeVariable : atype -> bool
 val makeTypeVariable : unit -> atype
 val makeNewTypeVariable : atypevar -> atype 
@@ -372,6 +376,8 @@ val getConstantSkeletonValue : aconstant -> askeleton
 val constantHasCode  : aconstant -> bool
 val isGlobalConstant : aconstant -> bool
 
+val makeGlobalConstant : symbol -> afixity -> int -> bool -> bool -> int 
+  -> askeleton -> int -> aconstant
 val makeAnonymousConstant : int -> aconstant
 val makeHiddenConstant : askeleton -> aconstant
 val makeConstantTerm : aconstant -> pos -> aterm
@@ -394,11 +400,15 @@ val getTypeSymbolType : atypesymbol -> atype
 val getVariableDataOffset : avar -> int
 val setVariableDataOffset : avar -> int -> unit
 val getVariableDataPerm   : avar -> bool
+val setVariableDataPerm   : avar -> bool -> unit
 val getVariableDataLastUse : avar -> aterm
+val setVariableDataLastUse : avar -> aterm -> unit
+val setVariableDataOneUse  : avar -> bool -> unit
 val getVariableDataHeapVar : avar -> bool
 val setVariableDataHeapVar : avar -> bool -> unit
 val getVariableDataSafety  : avar -> bool
 val setVariableDataSafety  : avar -> bool -> unit
+val getVariableDataFirstGoal : avar -> int
 val getVariableDataLastGoal : avar -> int
 val setVariableDataLastGoal : avar -> int -> unit
 
@@ -417,6 +427,8 @@ val errorTerm : aterm
 
 val getTermFreeVariableVariableData : aterm -> avar
 val getTermFreeVariableFirst : aterm -> bool
+val setTermFreeVariableFirst : aterm -> bool -> unit
+val getTermFreeVariableTypeSymbol : aterm -> atypesymbol
 val isTermFreeVariable : aterm -> bool
 (* make a name based free variable *)
 val makeFreeVarTerm : atypesymbol -> pos -> aterm
@@ -468,6 +480,7 @@ val getSomeGoalQuantVar           : agoal -> avar
 val getSomeGoalBody               : agoal -> agoal
 
 val getImpGoalVarInits            : agoal -> avarinits
+val getImpGoalTypeVarInits        : agoal -> atypevarinits
 val getImpGoalClauses             : agoal -> adefinitions
 val getImpGoalBody                : agoal -> agoal
 
@@ -511,8 +524,10 @@ val getModuleHiddenConstantsRef : amodule -> aconstant list ref
 val getModuleConstantTable : amodule -> aconstant Table.SymbolTable.t
 val getModuleKindTable : amodule -> akind Table.SymbolTable.t
 val getModuleTypeAbbrevTable : amodule -> atypeabbrev Table.SymbolTable.t
-val getModuleClauses : amodule -> aclauseinfo
+
 val getModuleClausesRef : amodule -> aclauseinfo ref
+val getModuleClauses : amodule -> aclauseinfo
+val setModuleClauses : amodule -> aclauseinfo -> unit
 
 (*************************************************************************)
 (*  aimportedmodule:                                                     *)
