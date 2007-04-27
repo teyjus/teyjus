@@ -7,6 +7,8 @@ val kinstream : Absyn.akind
 val koutstream : Absyn.akind
 
 
+val numberPervasiveKinds : int
+
 val iskint : Absyn.akind -> bool
 val iskreal : Absyn.akind -> bool
 val iskbool : Absyn.akind -> bool
@@ -114,6 +116,8 @@ val overloadGTConstant : Absyn.aconstant
 val overloadLEConstant : Absyn.aconstant
 val overloadGEConstant : Absyn.aconstant
 
+
+val numberPervasiveConstants : int
 
 val isunivConstant : Absyn.aconstant -> bool
 val isnilConstant : Absyn.aconstant -> bool
