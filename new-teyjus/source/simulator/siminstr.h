@@ -140,6 +140,9 @@ void SINSTR_unify_envty_local_value_t();
 void SINSTR_unify_envty_local_value_p();
 void SINSTR_unify_type_constant();
 
+/* init type var for implication goal */
+void SINSTR_create_type_variable();
+
 /*****************************************************************************/
 /*   HIGHER-ORDER INSTRUCTIONS                                               */
 /*****************************************************************************/
@@ -215,5 +218,4 @@ void SINSTR_builtin();
 void SINSTR_stop();
 void SINSTR_halt();
 void SINSTR_fail();
-
 #endif //SIMINSTR_H
