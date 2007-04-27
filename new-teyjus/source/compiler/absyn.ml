@@ -176,7 +176,7 @@ and aterm =
 and agoal = 
     AtomicGoal of (aconstant * int * int * aterm list * atype list)
   | AndGoal of (agoal * agoal)
-  | ImpGoal of (adefinitions * avarinits * agoal)
+  | ImpGoal of (adefinitions * avarinits * atypevarinits * agoal)
   | AllGoal of (ahcvarassoc * agoal)
   | SomeGoal of (avar * agoal)
   | CutFailGoal 
@@ -184,6 +184,7 @@ and agoal =
 
 and adefinitions = Definitions of ((aconstant * aclausesblock) list)
 and avarinits = VarInits of (avar list)
+and atypevarinits = TypeVarInits of (atypevar list)
 and ahcvarassoc = HCVarAssocs of ((avar * aconstant) list)
 
 
@@ -210,9 +211,8 @@ and atermvarmap  = TermVarMap of ((avar * avar) list)
 (* type variable map list *)
 and atypevarmap  = TypeVarMap of ((atypevar * atypevar) list)
 
-(* clauses block: (clauses, lastcutfail, offset, nextclause, closed, mapped)*)
-and aclausesblock = (aclause list ref * bool * int ref * int option ref * 
-					   bool ref * bool ref)
+(* clauses block: (clauses, closed, offset, nextclause)*)
+and aclausesblock = (aclause list ref * bool ref * int ref * int option ref)
 
 (*****************************************************************************
 *Modules:
@@ -299,6 +299,11 @@ let isGlobalKind = function
    GlobalKind(_) -> true
 | _ -> false
 
+
+let makeGlobalKind symbol arity index =
+  (* to check: is this the correct usage of option for arity? *)
+  let arityInfo = if (arity = 0) then None else Some arity in
+  GlobalKind(symbol, arityInfo, ref index, Errormsg.none)
 (*************************************************************************)
 (*  atypevar:                                                            *)
 (*************************************************************************)
@@ -342,9 +347,14 @@ let setTypeVariableDataSafety v s = (getTypeVariableDataSafetyRef v) := s
 
 (* last use *)
 let getTypeVariableDataLastUseRef = function
-  TypeVar(_, lu, _, s, _, _, _, _) -> lu
+  TypeVar(_, lu, _, _, _, _, _, _) -> lu
 let getTypeVariableDataLastUse v = 
   Option.get !(getTypeVariableDataLastUseRef v)
+
+
+(* first use *)
+let getTypeVariableDataFirstUseOpt = function
+	TypeVar(fu, _, _, _, _, _, _, _) -> !fu 
 
 let makeNewTypeVariableData () =
   TypeVar(ref None, ref None, ref false, ref false, ref false, ref None, 
@@ -489,15 +499,15 @@ let getTypeFreeVariableVariableData = function
      | _ -> (Errormsg.impossible Errormsg.none "getTypeFreeVariableVariableData: bound variable"))
  |_ -> (Errormsg.impossible Errormsg.none "getTypeFreeVariableVariableData: not a type variable")
 
-let getTypeFreeVariableFirst = function
+let getTypeFreeVariableFirstRef = function
   TypeVarType(r) ->
-    (match !r with
-      FreeTypeVar(_, firstRef) -> 
-        (match !firstRef with
-           Some(first) -> first
-         | None -> (Errormsg.impossible Errormsg.none "getTypeFreeVariableFirst: varData"))
-     | _ -> (Errormsg.impossible Errormsg.none "getTypeFreeVariableFirst: bound variable"))
- |_ -> (Errormsg.impossible Errormsg.none "getTypeFreeVariableFirst: not a type variable")
+	(match !r with
+	  FreeTypeVar(_, firstRef) -> firstRef
+	|  _ -> (Errormsg.impossible Errormsg.none "getTypeFreeVariableFirstRef: bound variable"))
+  |_ -> (Errormsg.impossible Errormsg.none "getTypeFreeVariableFirstRef: not a type variable")
+
+let getTypeFreeVariableFirst var = Option.get !(getTypeFreeVariableFirstRef var)
+let setTypeFreeVariableFirst var first = (getTypeFreeVariableFirstRef var) := Some(first)
 
 let isTypeFreeVariable = function
   TypeVarType(r) ->
@@ -674,7 +684,7 @@ let getConstantCodeInfoBuiltinIndex = function
 let getConstantCodeInfoClausesIndex = function
   Constant(_,_,_,_,_,_,_,_,_,_,_,_,ci,_,_,_) ->
    match (!ci) with
-     Some(Clauses(_,_,offset,_,_,_ )) -> !offset
+     Some(Clauses(_,_,offset,_)) -> !offset
    | Some(_) -> 
       (Errormsg.impossible Errormsg.none
          "getConstantCodeInfoClausesIndex: builtin pred")
@@ -747,6 +757,10 @@ let getConstantRedefinable c =
       PervasiveConstant(b) -> b
     | _ -> false
 
+let makeGlobalConstant symbol fixity prec expDef useOnly tyEnvSize tySkel index =
+  Constant(symbol, ref fixity, ref prec, ref expDef, ref useOnly, ref false,
+		   ref true, ref false, ref false, ref (Some tySkel), ref tyEnvSize,
+		   ref None, ref None, ref GlobalConstant, ref index, Errormsg.none)
 
 let makeAnonymousConstant i =
   Constant(Symbol.symbol "", ref NoFixity, ref (-1), ref true, ref false,
@@ -821,8 +835,20 @@ let getTypeSymbolType ty =
 let getVariableDataPerm = function
   Var(_,p,_,_,_,_,_,_) -> !p
 
+let setVariableDataPerm v perm =
+  match v with
+	Var(_,p,_,_,_,_,_,_) -> p := perm
+
 let getVariableDataLastUse = function
   Var(_,_,_,_,_,_,_,lu) -> Option.get (!lu)
+
+let setVariableDataLastUse v u =
+  match v with
+	Var(_,_,_,_,_,_,_,lu) -> lu := Some u
+
+let setVariableDataOneUse v o =
+  match v with
+	Var(oneuse,_,_,_,_,_,_,_) -> oneuse := Some o
 
 let getVariableDataHeapVar = function
   Var(_,_,_,h,_,_,_,_) -> !h
@@ -837,6 +863,12 @@ let getVariableDataSafety = function
 let setVariableDataSafety varData safety =
   let Var(_,_,s,_,_,_,_,_) = varData in
   s := safety 
+
+let getVariableDataFirstGoalRef = function
+ Var(_,_,_,_,_,f,_,_) -> f
+let getVariableDataFirstGoal v = !(getVariableDataFirstGoalRef v)
+let setVariableDataFirstGoal v o =
+  (getVariableDataFirstGoalRef v) := o
 
 let getVariableDataLastGoalRef = function
   Var(oneuse, perm, safety, heapvar, offset, firstgoal, lastgoal, lastuse) ->
@@ -1111,6 +1143,18 @@ let getTermFreeVariableFirst = function
 | _ -> Errormsg.impossible Errormsg.none 
         "getTermFreeVariablFirst: invalid term"
 
+let setTermFreeVariableFirst var f = 
+  match var with
+	FreeVarTerm(FreeVar(_, first),_,_) -> first := Some(f)
+  | _ -> Errormsg.impossible Errormsg.none 
+        "getTermFreeVariablFirst: invalid term"	
+
+let getTermFreeVariableTypeSymbol = function
+  FreeVarTerm(NamedFreeVar(tySymbol),_, _) -> tySymbol
+| _ -> Errormsg.impossible Errormsg.none
+	    "getTernFreeVariableTypeSymbol: invalid term"
+
+
 let isTermFreeVariable = function
   FreeVarTerm(_) -> true
 | _ -> false
@@ -1220,8 +1264,7 @@ let setStringInfoIndex stringInfo index =
 
 let getStringInfoString = function
   StringData(str,_,_) -> str
-|_ -> Errormsg.impossible Errormsg.none 
-         "getStringInfoString: invalid term"   
+| StringLiteral(str)  -> str
 
 (*************************************************************************)
 (*  agoal:                                                               *)
@@ -1230,7 +1273,7 @@ let rec string_of_goal g =
   match g with
     AtomicGoal(c,_,_,tl,_) -> (string_of_constant c)
   | AndGoal(g1, g2) -> "(" ^ (string_of_goal g1) ^ " & " ^ (string_of_goal g2) ^ ")"
-  | ImpGoal(defs, vis, g) -> (string_of_goal g)
+  | ImpGoal(defs, vis, tvis, g) -> (string_of_goal g)
   | AllGoal(vars, g) -> (string_of_goal g)
   | SomeGoal(var, g) -> (string_of_goal g)
   | CutFailGoal -> "(" ^ "!, fail" ^ ")"
@@ -1296,17 +1339,22 @@ let getSomeGoalBody = function
 
 (* imp goal *)
 let getImpGoalVarInits = function
-  ImpGoal(_, varInits, _) -> varInits
+  ImpGoal(_, varInits, _, _) -> varInits
 | _ -> Errormsg.impossible Errormsg.none 
          "getImpGoalVarInits: invalid goal" 
 
+let getImpGoalTypeVarInits = function
+  ImpGoal(_, _, tyVarInits, _) -> tyVarInits
+| _ -> Errormsg.impossible Errormsg.none 
+         "getImpGoalTyVarInits: invalid goal" 
+
 let getImpGoalClauses = function
-  ImpGoal(defs, _, _) -> defs
+  ImpGoal(defs, _, _, _) -> defs
 | _ -> Errormsg.impossible Errormsg.none 
          "getImpGoalClauses: invalid goal"
 
 let getImpGoalBody = function
-  ImpGoal(_, _, body) -> body
+  ImpGoal(_, _, _, body) -> body
 | _ -> Errormsg.impossible Errormsg.none 
          "getImpGoalBody: invalid goal"      
 
@@ -1452,17 +1500,14 @@ let getModuleTypeAbbrevTable = function
 | Signature(_) -> Errormsg.impossible Errormsg.none "getModuleTypeAbbrevTable: not a module"
 | ErrorModule -> Errormsg.impossible Errormsg.none "getModuleTypeAbbrevTable: invalid module"
 
-
-let getModuleClauses = function
-  Module(_,_,_,_,_,_,_,_,_,_,_,_,_,_,c) -> !c
-| Signature(_) -> Errormsg.impossible Errormsg.none "getModuleClauses: not a module"
-| ErrorModule -> Errormsg.impossible Errormsg.none "getModuleClauses: invalid module"
-
-
 let getModuleClausesRef = function
   Module(_,_,_,_,_,_,_,_,_,_,_,_,_,_,c) -> c
 | Signature(_) -> Errormsg.impossible Errormsg.none "getModuleClausesRef: argument is a signature"
 | ErrorModule -> Errormsg.impossible Errormsg.none "getModuleClausesRef: argument is invalid"
+
+let getModuleClauses amod = !(getModuleClausesRef amod)
+let setModuleClauses amod cls = (getModuleClausesRef amod) := cls
+
 
 (*************************************************************************)
 (*  aimportedmodule:                                                     *)
@@ -1482,27 +1527,27 @@ let getClauseInfoClauseBlocks = function
 (*  aclausesblock:                                                       *)
 (*************************************************************************)
 let getClauseBlockClose = function
-  (_,_,_,_,closed,_) -> !closed
+  (_,closed,_,_) -> !closed
 
 let setClauseBlockClose clb close = 
-  let (_,_,_,_,closed,_) = clb in
+  let (_,closed,_,_) = clb in
   closed := close
 
 let getClauseBlockNextClause = function
-  (_,_,_,ncl,_,_) -> Option.get !ncl
+  (_,_,_,ncl) -> Option.get !ncl
 
 let setClauseBlockNextClause clb nextClause =
-  let (_,_,_,ncl,_,_) = clb in
+  let (_,_,_,ncl) = clb in
   ncl := Some(nextClause)
 
 let getClauseBlockClauses = function
-  (cls,_,_,_,_,_) -> !cls
+  (cls,_,_,_) -> !cls
 
 let getClauseBlockOffset = function
-  (_,_,offset,_,_,_) -> !offset
+  (_,_,offset,_) -> !offset
 
 let setClauseBlockOffset clb n =
-  let (_,_,offset,_,_,_) = clb in
+  let (_,_,offset,_) = clb in
   offset := n
 
 (* if the given clause has a body as CutFailGoal, then set the second   *)
@@ -1511,9 +1556,9 @@ let makeNewClauseBlock cl closed =
   match cl with
 	Rule(_) ->
 	  if (getClauseGoal cl == CutFailGoal) then 
-		(ref [], true, ref 0, ref None, ref closed, ref false) 
-	  else (ref [cl], false, ref 0, ref None, ref closed, ref false)
-  | _ ->  (ref [cl], false, ref 0, ref None, ref closed, ref false)
+		(ref [], ref true, ref 0, ref None) 
+	  else (ref [cl], ref closed, ref 0, ref None)
+  | _ ->  (ref [cl], ref closed, ref 0, ref None)
 
 (**********************************************************************)
 (*printAbsyn:                                                         *)

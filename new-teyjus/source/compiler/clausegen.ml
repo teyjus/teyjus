@@ -171,22 +171,18 @@ and genSTypeCode regNum tyExp chunk lowval last =
   in
 
   (* AUX FUNC2: generate type synthesis code for a sort *)
-  let genSTypeSortCode kindInd =
-	([Instr.Ins_put_type_const(regNum, kindInd)], Instr.getSize_put_type_const)
+  let genSTypeSortCode kind =
+	([Instr.Ins_put_type_const(regNum, kind)], Instr.getSize_put_type_const)
   in
 
-  (* AUX FUNC3: generate type synthesis code for a type structure or    *)    
-  (* type arrow: the latter is the case if kindInd is -1                *)
-  let genSTypeStructureCode kindInd args =
+  (* AUX FUNC3: generate type synthesis code for a type structure       *)    
+  let genSTypeStructureCode kind args =
 	let (argsCode, argsCodeSize, regOrTypeList) =
 	  genSTypeArgsCode args chunk lowval 
 	in
 	let (putCode, putCodeSize) =
-	  if (kindInd = -1) then  (* type arrow *)
-		(Instr.Ins_put_type_arrow(regNum), Instr.getSize_put_type_arrow)
-	  else (* type structure *)
-		(Instr.Ins_put_type_structure(regNum,kindInd), 
-		 Instr.getSize_put_type_structure)
+	  (Instr.Ins_put_type_structure(regNum,kind), 
+	   Instr.getSize_put_type_structure)
 	in
 	let (argsSettingCode, argsSettingCodeSize) =
 	  genTypeSettingCode regOrTypeList chunk lowval
@@ -194,16 +190,32 @@ and genSTypeCode regNum tyExp chunk lowval last =
 	(argsCode @ (putCode :: argsSettingCode), 
 	 argsCodeSize + putCodeSize + argsSettingCodeSize)
   in
+  
+  (* AUX FUNC4: generate type synthesis code for a type arrow           *)
+  let genSTypeArrowCode args =
+	let (argsCode, argsCodeSize, regOrTypeList) =
+	  genSTypeArgsCode args chunk lowval
+	in
+	let (putCode, putCodeSize) =
+	  (Instr.Ins_put_type_arrow(regNum), Instr.getSize_put_type_arrow)
+	in
+	let (argsSettingCode, argsSettingCodeSize) =
+	  genTypeSettingCode regOrTypeList chunk lowval
+	in
+	(argsCode @ (putCode :: argsSettingCode), 
+	 argsCodeSize + putCodeSize + argsSettingCodeSize)	
+  in
+
   (* dispatching *)
   match tyExp with
     Absyn.TypeVarType(_)              ->           (* type variable *) 
 	  genSTypeVarCode tyExp 
   | Absyn.ApplicationType(kind, [])   ->           (* sort *)
-	  genSTypeSortCode (Absyn.getKindIndex kind)  
+	  genSTypeSortCode kind  
   | Absyn.ApplicationType(kind, args) ->           (* type structure *)
-	  genSTypeStructureCode (Absyn.getKindIndex kind) args 	
+	  genSTypeStructureCode kind args 	
   | Absyn.ArrowType(arg, target)      ->           (* type arrow *) 
-	  genSTypeStructureCode (-1) [arg;target] 
+	  genSTypeArrowCode [arg;target] 
   | _ -> Errormsg.impossible Errormsg.none "genSTypeCode: invalid type exp"
 
 (****************************************************************)
@@ -308,7 +320,7 @@ and genTypeSettingCode regTypeList chunk lowval =
 		  (Instr.getSize_set_type_value_t + size)
 	| ((RegTyTy (Absyn.ApplicationType(kind, []))) :: rest) ->  (* sort *)
 		genTypeSettingCodeAux rest
-		  (Instr.Ins_set_type_constant(Absyn.getKindIndex kind) :: insts)
+		  (Instr.Ins_set_type_constant(kind) :: insts)
 		  (Instr.getSize_set_type_constant + size)
 	| ((RegTyTy var) :: rest) -> (* type variable *)
 		let (inst, instSize) = genTypeSettingCodeVar var in
@@ -333,12 +345,12 @@ let rec genATypesCode delayed chunk =
   let genATypeCode tyExp regNum =
 	match tyExp with
 	  Absyn.ApplicationType(kind, [])   ->  (* sort *)
-		([Instr.Ins_get_type_constant(regNum, Absyn.getKindIndex kind)],
+		([Instr.Ins_get_type_constant(regNum, kind)],
 		 Instr.getSize_get_type_constant)
 	| Absyn.ApplicationType(kind, args) ->  (* structure *)
 		let (argsCode, argsCodeSize) = genATypeArgsCode args chunk false in 
-		(Instr.Ins_get_type_structure(regNum,Absyn.getKindIndex kind) 
-		 :: argsCode, Instr.getSize_get_type_structure + argsCodeSize)
+		(Instr.Ins_get_type_structure(regNum, kind) :: argsCode, 
+		 Instr.getSize_get_type_structure + argsCodeSize)
 	| Absyn.ArrowType(arg, target)      ->  (* type arrow *)
 		let (argsCode, argsCodeSize) = 
 		  genATypeArgsCode [arg ; target] chunk false 
@@ -457,7 +469,7 @@ and genATypeArgsCode args chunk constEnv =
 			genATypeArgsCodeAux rest delayed (myinst :: insts) (mysize + size)
 		| Absyn.ApplicationType(kind, []) -> (* sort *)
 			genATypeArgsCodeAux rest delayed 
-			  (Instr.Ins_unify_type_constant(Absyn.getKindIndex kind)::insts)
+			  (Instr.Ins_unify_type_constant(kind)::insts)
 			  (Instr.getSize_unify_type_constant + size)
 		| _ -> (* type structure or type arrow *)
 			let regNum = Registers.getHighFreeReg () in
@@ -656,17 +668,16 @@ and genSTermCode regNum term chunk lowval last hasenv normalize =
 	if (Pervasive.isnilConstant c) then
 	  ([Instr.Ins_put_list(regNum)], Instr.getSize_put_list, false)
 	else
-	  ([Instr.Ins_put_m_const(regNum, Absyn.getConstantIndex c)], 
-	   Instr.getSize_put_m_const, false)
+	  ([Instr.Ins_put_m_const(regNum, c)], Instr.getSize_put_m_const, false)
   in
 
   (* constant with type associations *)
-  let genSTermCodePConst constInd tyenv regNum =
+  let genSTermCodePConst c tyenv regNum =
 	let (typeCode, typeCodeSize, regTypePairs) =
 	  genSTypeArgsCode tyenv chunk lowval 
 	in
 	let (inst, size) = 
-	  (Instr.Ins_put_p_const(regNum, constInd), Instr.getSize_put_p_const)
+	  (Instr.Ins_put_p_const(regNum, c), Instr.getSize_put_p_const)
 	in
 	let (typeSettingCode, typeSettingCodeSize) =
 	  genTypeSettingCode regTypePairs chunk lowval 
@@ -777,7 +788,7 @@ and genSTermCode regNum term chunk lowval last hasenv normalize =
   | Absyn.ConstantTerm(c, [], _, _)    -> 
 	  genSTermCodeMConst c regNum 
   | Absyn.ConstantTerm(c, tyenv, _, _) ->
-	  genSTermCodePConst (Absyn.getConstantIndex c) tyenv regNum
+	  genSTermCodePConst c tyenv regNum
   | Absyn.FreeVarTerm(_)               ->
 	  let (inst, size) =
 		genPuttingVarCode term regNum chunk lowval last normalize
@@ -832,15 +843,14 @@ and genTermSettingCode regTermList chunk lowval hasenv =
 	  if (Pervasive.isnilConstant c) then
 		([Instr.Ins_set_nil], Instr.getSize_set_nil)
 	  else 
-		([Instr.Ins_set_m_const(Absyn.getConstantIndex c)],
-		 Instr.getSize_set_m_const)
+		([Instr.Ins_set_m_const(c)], Instr.getSize_set_m_const)
 	in
 	
 	(* constant with type association *)
-	let genSettingPConstCode constInd tyenv =
+	let genSettingPConstCode c tyenv =
 	  let (tyCode,tySize,regTypeList) = genSTypeArgsCode tyenv chunk lowval in
 	  let (inst, size) = 
-		(Instr.Ins_set_p_const(constInd), Instr.getSize_set_p_const)
+		(Instr.Ins_set_p_const(c), Instr.getSize_set_p_const)
 	  in
 	  let (tySettingCode, tySettingSize) =
 		genTypeSettingCode regTypeList chunk lowval
@@ -928,7 +938,7 @@ and genTermSettingCode regTermList chunk lowval hasenv =
 	| Absyn.ConstantTerm(c, [], _, _) ->  
 		genSettingMConstCode c 
 	| Absyn.ConstantTerm(c, tys, _, _)->  
-		genSettingPConstCode (Absyn.getConstantIndex c) tys
+		genSettingPConstCode c tys
 	| _  -> (* must be free variable then *) 
 		genSettingVarCode term 
   in		
@@ -981,7 +991,7 @@ let rec genATermsCode delayed chunk insts startLoc =
 	  if (Pervasive.isnilConstant c) then 
 		(insts @ [Instr.Ins_get_nil(regNum)], startLoc + Instr.getSize_get_nil)
 	  else 
-		(insts @ [Instr.Ins_get_m_constant(regNum, Absyn.getConstantIndex c)],
+		(insts @ [Instr.Ins_get_m_constant(regNum, c)],
 		 startLoc + Instr.getSize_get_m_constant)
 	in
 	Registers.markUnusedReg regNum;
@@ -989,9 +999,9 @@ let rec genATermsCode delayed chunk insts startLoc =
   in
 
   (* constant with type association *)
-  let genATermCodePConst constInd tyEnv regNum =
+  let genATermCodePConst c tyEnv regNum =
 	let typeCodeNextRef = ref 0 in
-	let instr = Instr.Ins_get_p_constant(regNum, constInd, typeCodeNextRef) in
+	let instr = Instr.Ins_get_p_constant(regNum, c, typeCodeNextRef) in
 	let (typesCode, typesSize) = genATypeArgsCode tyEnv chunk true in
 	let typesCodeNextLoc = startLoc+typesSize+Instr.getSize_get_p_constant  in
 	Registers.markUnusedReg regNum;
@@ -1006,15 +1016,14 @@ let rec genATermsCode delayed chunk insts startLoc =
 	  if (Pervasive.isconsConstant funcConst) then 
 		(insts@[Instr.Ins_get_list(regNum)], startLoc + Instr.getSize_get_list)
 	  else
-		let constInd = Absyn.getConstantIndex funcConst  in
 		let tyenv    = Absyn.getTermConstantTypeEnv func in
 		if (tyenv = []) then 
-		  (insts @ [Instr.Ins_get_m_structure(regNum, constInd, arity)],
+		  (insts @ [Instr.Ins_get_m_structure(regNum, funcConst, arity)],
 		   startLoc + Instr.getSize_get_m_structure)
 		else
 		  let (tyenvCode, tyenvSize) = genATypeArgsCode tyenv chunk true in
 		  (insts @ 
-		   (Instr.Ins_get_p_structure(regNum, constInd, arity) :: tyenvCode),
+		   (Instr.Ins_get_p_structure(regNum, funcConst, arity) :: tyenvCode),
 		   startLoc + Instr.getSize_get_p_structure + tyenvSize)
 	in
 	Registers.markUnusedReg regNum;
@@ -1051,7 +1060,7 @@ let rec genATermsCode delayed chunk insts startLoc =
 	| Absyn.FreeVarTerm(_, _, _)       -> genATermCodeFreeVar term regNum 
 	| Absyn.ConstantTerm(c, [], _, _)  -> genATermCodeMConst c regNum
 	| Absyn.ConstantTerm(c, tys, _, _) -> 
-		genATermCodePConst (Absyn.getConstantIndex c) tys regNum
+		genATermCodePConst c tys regNum
 	| Absyn.ApplicationTerm(_, _, _)   ->
 		let func = Absyn.getTermApplicationFunc term in
 		if (Absyn.isTermFreeVariable func) then
@@ -1082,15 +1091,14 @@ and genAStrTermArgsCode args chunk insts startLoc =
 	  let (inst, size) =
 		if (Pervasive.isnilConstant c)
 		then (Instr.Ins_unify_nil, Instr.getSize_unify_nil)
-		else (Instr.Ins_unify_m_constant(Absyn.getConstantIndex c),
-			  Instr.getSize_unify_m_constant)
+		else (Instr.Ins_unify_m_constant(c), Instr.getSize_unify_m_constant)
 	  in
 	  (insts @ [inst], startLoc + size, delayed)
 	in
 	(* constant argument with type associations *)
-	let genAStrTermArgPConst constInd tyenv =
+	let genAStrTermArgPConst c tyenv =
 	  let typeCodeNextRef = ref 0 in
-	  let inst = Instr.Ins_unify_p_constant(constInd, typeCodeNextRef) in
+	  let inst = Instr.Ins_unify_p_constant(c, typeCodeNextRef) in
 	  let (typesCode, typesSize) = genATypeArgsCode tyenv chunk true in
 	  let typeCodeNextLoc = 
 		startLoc + typesSize +  Instr.getSize_unify_p_constant
@@ -1176,8 +1184,7 @@ and genAStrTermArgsCode args chunk insts startLoc =
 			  (insts @ [Instr.Ins_unify_string(Absyn.getStringInfoIndex s)],
 			   startLoc + Instr.getSize_unify_string, delayed) 
 		  | Absyn.ConstantTerm(c, [], _, _)  ->  genAStrTermArgMConst c
-		  | Absyn.ConstantTerm(c, tys, _, _) ->  
-			  genAStrTermArgPConst (Absyn.getConstantIndex c) tys
+		  | Absyn.ConstantTerm(c, tys, _, _) ->  genAStrTermArgPConst c tys
 		  | Absyn.FreeVarTerm(_, _, _)       ->  genAStrTermArgVar term 
 		  | _ -> 
 			  let regNum = Registers.getHighFreeReg () in
@@ -1665,7 +1672,7 @@ and genAtomicGoal goal cl goalNum last chunk chunks insts startLoc =
   in
 
   (* generate "execute" code *)
-  let genExecute pred predInd = 
+  let genExecute pred = 
 	if (Absyn.getConstantClosed pred) then
 	  let expdef = (Absyn.getConstantExpDef pred) in
 	  if (Absyn.constantHasCode pred) && 
@@ -1678,15 +1685,15 @@ and genAtomicGoal goal cl goalNum last chunk chunks insts startLoc =
 	  else (* do not have code *)
 		if (expdef) then ([Instr.Ins_fail], Instr.getSize_fail, goalNum)
 		else 
-		  ([Instr.Ins_execute_name(predInd)], Instr.getSize_execute_name, 
+		  ([Instr.Ins_execute_name(pred)], Instr.getSize_execute_name, 
 		   goalNum)
 	else (* not closed *)
-	  ([Instr.Ins_execute_name(predInd)], Instr.getSize_execute_name,
+	  ([Instr.Ins_execute_name(pred)], Instr.getSize_execute_name,
 	   goalNum) 
   in
 
   (* generate "call" code *)
-  let genCall pred predInd envsize =
+  let genCall pred envsize =
 	let myGoalNum = goalNum + 1 in
 	if (Absyn.getConstantClosed pred) then
 	  let expdef = (Absyn.getConstantExpDef pred) in
@@ -1700,10 +1707,10 @@ and genAtomicGoal goal cl goalNum last chunk chunks insts startLoc =
 	  else (* do not have code *)
 		if (expdef) then ([Instr.Ins_fail], Instr.getSize_fail, myGoalNum)
 		else 
-		  ([Instr.Ins_call_name(envsize, predInd)], Instr.getSize_call_name, 
+		  ([Instr.Ins_call_name(envsize, pred)], Instr.getSize_call_name, 
 		   myGoalNum)
 	else (* not closed *)
-	  ([Instr.Ins_call_name(envsize, predInd)], Instr.getSize_call_name,
+	  ([Instr.Ins_call_name(envsize, pred)], Instr.getSize_call_name,
 	   myGoalNum)
   in
 	  
@@ -1712,8 +1719,8 @@ and genAtomicGoal goal cl goalNum last chunk chunks insts startLoc =
 	let hasEnv =  Absyn.getClauseHasEnv cl in
 	let (argsCode, argsCodeSize, newChunk) = genAtomicGoalArgs chunk hasEnv in
 	let (callCode, callCodeSize, newGoalNum) =
-	  if (last) then genExecute pred (Absyn.getConstantIndex pred)
-	  else genCall pred (Absyn.getConstantIndex pred) envSize
+	  if (last) then genExecute pred 
+	  else genCall pred envSize
 	in
 	(insts @ argsCode @ callCode, startLoc + argsCodeSize + callCodeSize,
 	 newChunk, newGoalNum)
@@ -1754,8 +1761,7 @@ and genAndGoal goal cl goalNum last chunk chunks insts startLoc =
 and genAllGoal goal cl goalNum last chunk chunks insts startLoc =
   (* for each univ quantified variable *)
   let genAllGoalHCVar (varData, constData) =
-	(Instr.Ins_set_univ_tag (Absyn.getVariableDataOffset varData, 
-							 Absyn.getConstantIndex constData),
+	(Instr.Ins_set_univ_tag (Absyn.getVariableDataOffset varData, constData),
 	 Instr.getSize_set_univ_tag)
   in
   (* for fold mapping result *)
@@ -1823,6 +1829,11 @@ and genImpGoal goal cl goalNum last chunk chunks insts startLoc =
 	(Instr.Ins_tag_variable(Absyn.getVariableDataOffset varData), 
 	 Instr.getSize_tag_variable)
   in
+  (* create init type variable *)
+  let genTyVarInit varData =
+	(Instr.Ins_create_type_variable(Absyn.getTypeVariableDataOffset varData),
+	 Instr.getSize_create_type_variable)
+  in
   (* for fold mapping result *)
   let collectMapCode (insts, totalSize) (inst, size) =
 	(inst :: insts, totalSize + size)
@@ -1835,6 +1846,11 @@ and genImpGoal goal cl goalNum last chunk chunks insts startLoc =
   let (varInitCode, varInitCodeSize) =
 	List.fold_left collectMapCode ([], 0) (List.map genVarInit varList)
   in
+  (* instructions for creating type variable init *)
+  let Absyn.TypeVarInits(tyVarList) = Absyn.getImpGoalTypeVarInits goal in
+  let (tyvarInitCode, tyvarInitCodeSize) =
+	List.fold_left collectMapCode ([], 0) (List.map genTyVarInit tyVarList)
+  in
   (* record definitions to be processed later *)
   addImpPointList (Absyn.getImpGoalClauses goal);
   (* instructions for push impl point and for the goal body *)
@@ -1842,8 +1858,9 @@ and genImpGoal goal cl goalNum last chunk chunks insts startLoc =
     genGoal (Absyn.getImpGoalBody goal) cl goalNum false newChunk newChunks
 	  (insts @ (List.rev 
 				  (Instr.Ins_push_impl_point(envSize, getNumImpPoints ()) ::
-				   varInitCode)))
-	  (startLoc + varInitCodeSize + Instr.getSize_push_impl_point)
+				   (tyvarInitCode @ varInitCode))))
+	  (startLoc + varInitCodeSize + tyvarInitCodeSize + 
+		 Instr.getSize_push_impl_point)
   in
   (* pop impl point instructions and those for continuation if necessary *)
   let (endCode, endCodeSize) =

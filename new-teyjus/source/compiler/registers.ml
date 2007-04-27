@@ -416,7 +416,7 @@ let chunkify goal =
 	| Absyn.AndGoal(lgoal, rgoal) ->
 		let newChunks = chunkifyAux lgoal chunks in
 		chunkifyAux rgoal newChunks
-	| Absyn.ImpGoal(_, _, body) -> chunkifyAux body chunks
+	| Absyn.ImpGoal(_, _, _, body) -> chunkifyAux body chunks
 	| Absyn.AllGoal(_, body)    -> chunkifyAux body chunks
 	| Absyn.SomeGoal(_, body)   -> chunkifyAux body chunks
 	| _ -> Errormsg.impossible Errormsg.none "chunkify: cutfail goal"

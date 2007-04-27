@@ -1,3 +1,8 @@
+
+type intref    = int ref
+type aconstant = Absyn.aconstant
+type akind     = Absyn.akind
+	
 val wordSize : int
 
 
@@ -19,15 +24,14 @@ val opcodeSize : int
 
 
 
-type intref = int ref
 type rtype = int
 type etype = int
 type ntype = int
 type i1type = int
 type cetype = int
 type segtype = int
-type ctype = int
-type ktype = int
+type ctype = aconstant
+type ktype = akind
 type ltype = intref
 type itype = int
 type ftype = float
@@ -36,8 +40,6 @@ type mttype = int
 type ittype = int
 type httype = int
 type bvttype = int
-
-
 
 
 type inscatRX = rtype
@@ -223,6 +225,7 @@ type instruction = Ins_put_variable_t of inscatRRX
   | Ins_stop
   | Ins_halt
   | Ins_fail
+  | Ins_create_type_variable of inscatEX
 
 val getSize_put_variable_t : int
 val getSize_put_variable_p : int
@@ -365,6 +368,7 @@ val getSize_builtin : int
 val getSize_stop : int
 val getSize_halt : int
 val getSize_fail : int
+val getSize_create_type_variable : int
 
 
 val writeInstruction : instruction -> unit

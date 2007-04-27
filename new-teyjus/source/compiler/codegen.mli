@@ -143,7 +143,7 @@ type cgmodule =
 (*****************************************************************************)
 (*                CODE GENERATION FOR A MODULE                               *)
 (*****************************************************************************)
-val generateModuleCode : Absyn.amodule -> cgmodule 
+val genModuleCode : Absyn.amodule -> cgmodule 
 
 
 
