@@ -151,6 +151,7 @@ SDP_InstrFunctionPtr SDP_dispatchTable[INSTR_NUM_INSTRS] = {
     SINSTR_builtin,
     SINSTR_stop,
     SINSTR_halt,
-    SINSTR_fail
+    SINSTR_fail,
+    SINSTR_create_type_variable
 };
 
