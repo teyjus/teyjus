@@ -388,7 +388,7 @@ let collectAccs accs =
   let rec collectAccsAux accs renamingInfo =
     match accs with
       [] -> (*(List.rev renamingInfo)*) renamingInfo (*reversed order *)
-    | (Absyn.AccummulatedModule(_, amod) :: rest) ->
+    | (Absyn.AccumulatedModule(_, amod) :: rest) ->
 	collectAccsAux rest ((collectRenamingInfo amod) :: renamingInfo)
   in 
   collectAccsAux accs []
@@ -437,7 +437,7 @@ let calculateIndexing clauses =
   let rec termHead term =
 	match term with
 	  Absyn.AbstractionTerm(_) -> termHead (Absyn.getTermAbstractionBody term)
-	| Absyn.ApplicationTerm(_) -> termHead (Absyn.getTermApplicationFunc term)
+	| Absyn.ApplicationTerm(_) -> termHead (Absyn.getTermApplicationHead term)
 	| _ -> term
   in
 
@@ -1048,7 +1048,7 @@ let rec genImpPointCode impPoints insts startLoc impGoals numImpPoints =
 (*****************************************************************************)
 (*                CODE GENERATION FOR A MODULE                               *)
 (*****************************************************************************)
-let genModuleCode amod =
+let generateModuleCode amod =
   genCodeInitialization ();
   match amod with
 	Absyn.Module(modname, modimps, modaccs, _, _, _, modstr, gkinds, lkinds, 

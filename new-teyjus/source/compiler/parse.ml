@@ -109,9 +109,12 @@ let printStack stack =
     | [] -> ""
   in
   
+  (*
   let data = getStackStack stack in
   let str = (print' data) in
-  (*  Errormsg.log Errormsg.none ("Stack: " ^ str)  *)
+  Errormsg.log Errormsg.none ("Stack: " ^ str)
+  *)
+  
   ()
 
 let contains env v =
@@ -228,6 +231,7 @@ let rec translateClause = fun term amodule newconstant newkind ->
     Absyn.errorTerm
   else
   
+  (*  Make sure it is of type o.  *)
   let boolkind = Pervasive.kbool in
   let booltype = Types.makeKindMolecule boolkind in
   
@@ -240,10 +244,8 @@ let rec translateClause = fun term amodule newconstant newkind ->
     Absyn.errorTerm)
   else
   
-  let term''' = (normalizeTerm term'') in
-  
-  (term''')
-
+  (normalizeTerm term'')
+ 
 (**********************************************************************
 *translateTerm:
 * Given an abstract syntax representation of a module and a preabsyn
@@ -255,9 +257,10 @@ and translateTerm = fun term amodule ->
   let term' = getTermTerm (getTermAndVariablesTerm tv) in
   let mol' = getTermMolecule (getTermAndVariablesTerm tv) in
   let _ = Errormsg.log (Absyn.getTermPos term') ("parsed term: " ^ (Absyn.string_of_term term') ^ " : " ^ (Types.string_of_typemolecule mol')) in
-  let term'' = normalizeTerm term' in
-  let _ = Errormsg.log (Absyn.getTermPos term'') ("parsed, normalized term: " ^ (Absyn.string_of_term term'')) in
-  let fixedterm = fixTerm term' in
+  let term'' = removeOverloads term' in
+  let term''' = normalizeTerm term'' in
+  let _ = Errormsg.log (Absyn.getTermPos term''') ("parsed, normalized term: " ^ (Absyn.string_of_term term''')) in
+  let fixedterm = fixTerm term''' in
   (Errormsg.log (Absyn.getTermPos term'') ("parsed, normalized, fixed term: " ^ (Absyn.string_of_term fixedterm));
   fixedterm)
 
@@ -391,40 +394,41 @@ and parseTypeSymbols tsymlist amodule =
 * depends on what sort of ID it is.  A better description is in order.
 **********************************************************************)
 and translateId term fvs bvs amodule =
-  let Preabsyn.IdTerm(sym, ty, k, pos) = term in
-  
-  (*  Anonymous Variable  *) 
-  if k = Preabsyn.AVID then
-    (makeVarToOpTerm term fvs bvs amodule makeAnonymousTypeSymbol)
-  else
-
-  (*  Variable  *)
-  if k = Preabsyn.VarID then
-    if (contains fvs sym) then
-      (varToOpTerm term (get fvs sym) fvs bvs amodule (Absyn.makeFreeVarTerm))
-    else
-      (makeVarToOpTerm term fvs bvs amodule makeAnonymousTypeSymbol)
-  else
-  
-  if (contains bvs sym) then
-    (varToOpTerm term (get bvs sym) fvs bvs amodule (Absyn.makeBoundVarTerm))
-  else
-  
-  match (Table.find sym (Absyn.getModuleConstantTable amodule)) with
-    Some(c) -> (constantToOpTerm term c fvs bvs amodule)
-  | None ->
-  
-    if k = Preabsyn.CVID then
-      if (contains fvs sym) then
-        (varToOpTerm term (get fvs sym) fvs bvs amodule Absyn.makeFreeVarTerm)
+  match term with
+    Preabsyn.IdTerm(sym, ty, k, pos) ->
+      (*  Anonymous Variable  *) 
+      if k = Preabsyn.AVID then
+        (makeVarToOpTerm term fvs bvs amodule makeAnonymousTypeSymbol)
       else
-        (makeVarToOpTerm term fvs bvs amodule makeImplicitTypeSymbol)
-    else
-    
-    (*  At this point the constant is assumed to be unknown.
-        Simply raise an error.  *)
-    (Errormsg.error pos ("undeclared constant " ^ (Symbol.name sym));
-    (StackError, fvs, bvs))
+
+      (*  Variable  *)
+      if k = Preabsyn.VarID then
+        if (contains fvs sym) then
+          (varToOpTerm term (get fvs sym) fvs bvs amodule (Absyn.makeFreeVarTerm))
+        else
+          (makeVarToOpTerm term fvs bvs amodule makeAnonymousTypeSymbol)
+      else
+
+      if (contains bvs sym) then
+        (varToOpTerm term (get bvs sym) fvs bvs amodule (Absyn.makeBoundVarTerm))
+      else
+
+      let o = (Table.find sym (Absyn.getModuleConstantTable amodule)) in
+      if Option.isSome o then
+        let c = Option.get o in
+        (constantToOpTerm term c fvs bvs amodule)
+      else
+        if k = Preabsyn.CVID then
+          if (contains fvs sym) then
+            (varToOpTerm term (get fvs sym) fvs bvs amodule Absyn.makeFreeVarTerm)
+          else
+            (makeVarToOpTerm term fvs bvs amodule makeImplicitTypeSymbol)
+        else
+          (*  At this point the constant is assumed to be unknown.
+              Simply raise an error.  *)
+          (Errormsg.error pos ("undeclared constant " ^ (Symbol.name sym));
+          (StackError, fvs, bvs))
+  | _ -> (Errormsg.impossible (Preabsyn.getTermPos term) "Parse.translateId: invalid term")
 
 and constantToOpTerm = fun term constant fvs bvs amodule ->
   let make' = fun tmol pos ->

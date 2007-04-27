@@ -3,3 +3,4 @@ type pos = Errormsg.pos
 
 val translateClauses : Preabsyn.pmodule -> Absyn.amodule -> (Absyn.amodule * Absyn.aterm list * Absyn.aterm list)
 val printTranslatedClauses : Absyn.aterm list -> Absyn.aterm list -> out_channel -> unit
+val unitTests : unit -> unit

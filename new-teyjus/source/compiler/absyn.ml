@@ -1227,11 +1227,11 @@ let rec getTermApplicationHeadAndArguments term =
       (head, args' @ [r])
   | _ -> (term, [])
 
-let rec getTermApplicationFunc t =
+let rec getTermApplicationHead t =
   let (f,_) = getTermApplicationHeadAndArguments t in
   f
 
-let rec getTermApplicationArgs t =
+let rec getTermApplicationArguments t =
   let (_,args) = getTermApplicationHeadAndArguments t in
   args
  

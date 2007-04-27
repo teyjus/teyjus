@@ -34,7 +34,7 @@ let compile = fun basename outfile ->
 
   (*  Construct an absyn module.  At this point only the module's
       constant, kind, and type abbrev information is valid. *)
-  let absyn = (Translate.translate modresult sigresult) in
+  let (absyn, sigabsyn) = (Translate.translate modresult sigresult) in
   if !Errormsg.anyErrors then
     1
   else
@@ -64,9 +64,12 @@ let compile = fun basename outfile ->
   
   (*  Print the results (absyn module) to the output file *)
   (if !Compile.printAbsyn then
-    let outchannel = Compile.openFile (basename ^ ".absyn.txt") open_out in
-    (Absyn.printAbsyn absyn outchannel;
-    Compile.closeFile outchannel close_out)
+    let modoutchannel = Compile.openFile (basename ^ ".mod.absyn.txt") open_out in
+    let sigoutchannel = Compile.openFile (basename ^ ".sig.absyn.txt") open_out in
+    (Absyn.printAbsyn absyn modoutchannel;
+    Absyn.printAbsyn sigabsyn sigoutchannel;
+    Compile.closeFile modoutchannel close_out;
+    Compile.closeFile sigoutchannel close_out)
   else
     ();
   if !Errormsg.anyErrors then
@@ -134,6 +137,7 @@ let parseArgs =
 let runUnitTests () =
   let _ = Types.unitTests () in
   let _ = Parse.unitTests () in
+  let _ = Clauses.unitTests () in
   ()
 
 (**********************************************************************
