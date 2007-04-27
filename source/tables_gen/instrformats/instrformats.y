@@ -28,16 +28,19 @@ void yyerror(const char* str)
                 CALL_I1_LEN SEMICOLON ERROR LBRACKET RBRACKET
 %token <name>   ID
 %token <isval>  NUM
-%token <text>   STRING
+%token <text>   STRING STRING2
 
 %start          instr_format
 %type  <name>   operand_name operand_tname operand_type instr_name instr_cat 
                 instr_head instr_length operand_comp_type
-%type  <text>   comments         
+%type  <text>   comments compiler_include        
 %type  <isval>  max_operand opcode operand_size
 %%
     
-instr_format   : operands instrcats instructions
+instr_format   : compiler_include operands instrcats instructions
+
+compiler_include : STRING2 { ocgenInclude($1);}
+
 
 operands       : OPTYPES operand_decs opcode_type 
                  { cgenOpsH(); ocgenOps();}

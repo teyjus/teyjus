@@ -13,8 +13,9 @@ ID     ({LETTER}|{SYMBOL})({LETTER}|{DIGIT}|{SYMBOL})*
 NUM    {DIGIT}+
 WSPACE [ \t]+
 STRING [^*/]+
+STRING2 [^}]+
 
-%x COMMENT COMMENT2
+%x COMMENT COMMENT2 INCLUDE
 
 %%
 <INITIAL,COMMENT>"\n"      {continue;                                      }
@@ -30,11 +31,11 @@ STRING [^*/]+
 <INITIAL>{WSPACE}          {continue;                                      }  
 <INITIAL>"/%"              {commentLev = 1; BEGIN(COMMENT); continue;      }
 <INITIAL>"/*"              {BEGIN(COMMENT2); continue;                     }
+<INITIAL>"{"               {BEGIN(INCLUDE); continue;                      }
 <INITIAL>{ID}              {yylval.name = strdup(yytext); return ID;       }
 <INITIAL>{NUM}             {yylval.isval.ival = atoi(yytext); 
                             yylval.isval.sval = strdup(yytext); 
                             return NUM;                                    }
-
 <COMMENT2>"*/"             {BEGIN(INITIAL); continue;                      }
 <COMMENT2>{STRING}         {yylval.text = strdup(yytext); return STRING;   }
 
@@ -42,5 +43,6 @@ STRING [^*/]+
 <COMMENT>"/%"              {commentLev++; continue;                        }
 <COMMENT>"%/"              {commentLev--;
                             if (!commentLev) BEGIN(INITIAL); continue;     }
-
+<INCLUDE>"}"               {BEGIN(INITIAL); continue;                      }
+<INCLUDE>{STRING2}         {yylval.text = strdup(yytext); return STRING2;  }
 .                          {return ERROR;                                  }

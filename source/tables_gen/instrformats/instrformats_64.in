@@ -1,3 +1,10 @@
+{
+type intref    = int ref
+type aconstant = Absyn.aconstant
+type akind     = Absyn.akind
+	
+}
+
 OPERAND TYPES
 
   P                                                  /* (1 byte) padding */
@@ -8,8 +15,8 @@ OPERAND TYPES
   I1     OneByteInt     Byte           1   int       /* 1 byte natural number */
   CE     ClEnvInd       Byte           1   int       /* closure environment variable number */
   SEG    ImpSegInd      Byte           1   int       /* import segment index  */ 
-  C      CstIndex       TwoBytes       2   int       /* constant symbol table index */
-  K      KstIndex       TwoBytes       2   int       /* kind symbol table index  */
+  C      CstIndex       TwoBytes       2   aconstant /* constant symbol table index */
+  K      KstIndex       TwoBytes       2   akind     /* kind symbol table index  */
   L      CodeLabel      CSpacePtr      8   intref    /* code location  */
   I      Int            int            4   int       /* integer immediate value */
   F      Float          float          4   float     /* floating point immediate value */
@@ -152,7 +159,7 @@ INSTR CATEGORY
   CALL_I1_LEN 15
 
 
-INSTRUCTIONS 141
+INSTRUCTIONS 142
 
    /*  Instructions for term unification and creation  */
 
@@ -327,5 +334,8 @@ INSTRUCTIONS 141
    137       builtin                    I1X          I1X_LEN;
    138       stop                       X            X_LEN;
    139       halt                       X            X_LEN;
-   140       fail                       X            X_LEN
+   140       fail                       X            X_LEN;
 
+   /* new added */
+
+   141       create_type_variable       EX           EX_LEN
