@@ -1266,6 +1266,13 @@ void SINSTR_unify_type_constant()       //unify_type_constant k -- K_X
         EM_THROW(EM_FAIL);
     }
 }
+
+/* init type var for implication goal */
+void SINSTR_create_type_variable()      //create_type_variable Yi -- E_X
+{
+    INSACC_EX(envY);
+    DF_mkFreeVarType((MemPtr)envY);
+}
     
 /*****************************************************************************/
 /*   HIGHER-ORDER INSTRUCTIONS                                               */

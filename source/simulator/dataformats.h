@@ -217,7 +217,7 @@ typedef union
 typedef DF_StrData *DF_StrDataPtr;
 
 //#define DF_STRDATA_HEAD_SIZE   (int)ceil((double)sizeof(DF_StrData)/WORD_SIZE)
-#define DF_STRDATA_HEAD_SIZE  1     
+#define DF_STRDATA_HEAD_SIZE  2     
 
 //a generic environment item in suspension
 typedef struct DF_env
@@ -327,7 +327,7 @@ void DF_mkVar(MemPtr loc, int uc);                 //unbound variable
 void DF_mkBV(MemPtr loc, int ind);                 //de Bruijn index
 void DF_mkConst(MemPtr loc, int uc, int ind);      //const 
 void DF_mkTConst(MemPtr loc, int uc, int ind, DF_TypePtr typeEnv);
-                                                   //const with type association
+                                                  //const with type association
 void DF_mkInt(MemPtr loc, long value);             //int
 void DF_mkFloat(MemPtr loc, float value);          //float
 void DF_mkStr(MemPtr loc, DF_StrDataPtr data);     //string
