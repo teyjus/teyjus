@@ -13,6 +13,8 @@ let kinstream = Absyn.PervasiveKind((Symbol.symbol "in_stream"), (Some 0), (ref 
 let koutstream = Absyn.PervasiveKind((Symbol.symbol "out_stream"), (Some 0), (ref 6), Errormsg.none)
 
 
+let numberPervasiveKinds = 7
+
 let buildPervasiveKinds = function () ->
   let t = Table.SymbolTable.empty in
   let t = Table.add (Symbol.symbol "int") kint t in
@@ -134,9 +136,9 @@ let overloadTySkel3 = (ref (Some (Absyn.Skeleton(Absyn.ArrowType(tysetvarIRS, Ab
 
 let univConstant = Absyn.Constant((Symbol.symbol "<constant>"), (ref Absyn.NoFixity), (ref 0), (ref false), (ref false), (ref false), (ref false), (ref true), (ref false), (ref tyskel0), (ref 0), (ref None), (ref None), (ref (Absyn.PervasiveConstant(false))), (ref 85), Errormsg.none)
 
-let nilConstant = Absyn.Constant((Symbol.symbol "nil"), (ref Absyn.NoFixity), (ref 0), (ref false), (ref false), (ref false), (ref false), (ref true), (ref false), (ref tyskel1), (ref 1), (ref None), (ref None), (ref (Absyn.PervasiveConstant(false))), (ref 89), Errormsg.none)
+let nilConstant = Absyn.Constant((Symbol.symbol "nil"), (ref Absyn.NoFixity), (ref 0), (ref false), (ref false), (ref false), (ref false), (ref true), (ref false), (ref tyskel1), (ref 1), (ref (Some (Array.init 1 (fun x -> if x >= 0 then false else true)))), (ref None), (ref (Absyn.PervasiveConstant(false))), (ref 89), Errormsg.none)
 
-let consConstant = Absyn.Constant((Symbol.symbol "::"), (ref Absyn.Infixr), (ref 140), (ref false), (ref false), (ref false), (ref false), (ref true), (ref false), (ref tyskel2), (ref 1), (ref None), (ref None), (ref (Absyn.PervasiveConstant(false))), (ref 93), Errormsg.none)
+let consConstant = Absyn.Constant((Symbol.symbol "::"), (ref Absyn.Infixr), (ref 140), (ref false), (ref false), (ref false), (ref false), (ref true), (ref false), (ref tyskel2), (ref 1), (ref (Some (Array.init 1 (fun x -> if x >= 0 then false else true)))), (ref None), (ref (Absyn.PervasiveConstant(false))), (ref 93), Errormsg.none)
 
 let intcConstant = Absyn.Constant((Symbol.symbol "<int_constant>"), (ref Absyn.NoFixity), (ref 0), (ref false), (ref false), (ref false), (ref false), (ref true), (ref false), (ref tyskel3), (ref 0), (ref None), (ref None), (ref (Absyn.PervasiveConstant(false))), (ref 90), Errormsg.none)
 
@@ -326,6 +328,8 @@ let overloadLEConstant = Absyn.Constant((Symbol.symbol "<"), ref Absyn.Infix, re
 
 let overloadGEConstant = Absyn.Constant((Symbol.symbol ">="), ref Absyn.Infix, ref 130, (ref false), (ref false), (ref false), (ref false), ref true, (ref false), overloadTySkel3, ref 0, ref None, ref None, ref(Absyn.PervasiveConstant(false)), (ref 0), Errormsg.none)
 
+
+let numberPervasiveConstants = 94
 
 let buildPervasiveConstants = function () ->
   let t = Table.SymbolTable.empty in
