@@ -32,9 +32,8 @@
 #include "../system/operators.h"
 #include "../tables/pervasives.h"
 
-/* This variable, imported from io-interface.c, records the number of
-query variables */
-int     PRINT_numQueryVars;
+/* This variable records the number of query variables */
+int PRINT_numQueryVars;
 
 /* flag determining whether or not to print sensible names for free vars */
 Boolean PRINT_names = FALSE;
@@ -88,6 +87,7 @@ static Boolean PRINT_parenNeeded(OP_FixityType opfx, int opprec,
 static long PRINT_makeNumberName(DF_TermPtr tmPtr)
 { return (long)tmPtr - (long)AM_heapBeg;                      }
 
+
 /****************************************************************************
  * Routines for printing out keywords and punctuation symbols in the course *
  * of displaying lambda terms. These have been extracted out of the other   *
@@ -114,6 +114,7 @@ static void PRINT_writeLam(WordPtr outStream, int numabs)
 
 static void PRINT_writeSpace(WordPtr outStream, int i)
 { while (i--) STREAM_printf(outStream, " ");                 }    
+
 
 /***************************************************************************
  * Writing out terms corresponding to the builtin constants.               *
@@ -203,7 +204,6 @@ static void PRINT_writeConst(WordPtr outStream, DF_TermPtr tmPtr)
     else PRINT_writeHCName(outStream, constInd, DF_constUnivCount(tmPtr));
 }
 
-
 /****************************************************************************
  * Writing out a free variable. Two situations are possible, one where a    *
  * symbolic name is to be produced and the other where the `address' could  *
@@ -218,13 +218,13 @@ static int  PRINT_fvcounter = 1;
 
 /* Create a free term variable name; this starts with _ has a standard
    string prefix and then a digit sequence */
-static MCSTR_Str PRINT_makeFVarName()
+static DF_StrDataPtr PRINT_makeFVarName()
 {
-    int       digits = 0;
-    int       i = PRINT_fvcounter;
-    int       length;
-    char*     cname;
-    MCSTR_Str fvname;
+    int           digits = 0;
+    int           i = PRINT_fvcounter;
+    int           length;
+    char*         cname;
+    DF_StrDataPtr fvname;
 
     while(i) { digits++; i = i/10; }
 
@@ -242,20 +242,24 @@ static MCSTR_Str PRINT_makeFVarName()
     }
     PRINT_fvcounter++;
 
-    fvname = (MCSTR_Str)EM_malloc(sizeof(Word)*MCSTR_numWords(length));
-    MCSTR_toString(fvname, cname, length);
-
+    fvname = (DF_StrDataPtr)EM_malloc(sizeof(Word)*MCSTR_numWords(length) +
+                                      DF_STRDATA_HEAD_SIZE);
+    DF_mkStrDataHead((MemPtr)fvname);
+    MCSTR_toString((MemPtr)((MemPtr)fvname + DF_STRDATA_HEAD_SIZE),
+                   cname, length);
     free(cname);
     return fvname;
 }
 
 /* Does a made up name occur in the free term variable table? Clash can
 only occur with names in the user query */
-static Boolean PRINT_nameInFVTab(MCSTR_Str name)
+static Boolean PRINT_nameInFVTab(DF_StrDataPtr name)
 {
     int i;
     for (i = 0; i < PRINT_numQueryVars ; i++){
-       if (MCSTR_sameStrs(name, IO_freeVarTab[i].varName)) return TRUE;
+      if (MCSTR_sameStrs(DF_strDataValue(name), 
+			 DF_strDataValue(IO_freeVarTab[i].varName)))
+	return TRUE;
     }
     return FALSE;
 }
@@ -263,16 +267,18 @@ static Boolean PRINT_nameInFVTab(MCSTR_Str name)
 /* The main routine for printing out an unbound term variable */
 static void PRINT_writeFVar(WordPtr outStream, DF_TermPtr tmPtr)
 {
-    int       fvind = 0;
-    MCSTR_Str fvname;
-    
+    int           fvind = 0;
+    DF_StrDataPtr fvname;
+
     if (PRINT_names) {
-        IO_freeVarTab[IO_ftabTop].rigdes = tmPtr;
+        IO_freeVarTab[IO_freeVarTabTop].rigdes = tmPtr;
         
         while (tmPtr != IO_freeVarTab[fvind].rigdes) fvind++;
         
-        if (fvind == IO_ftabTop) { /* i.e., a free variable not seen before */
-            if (IO_ftabTop == IO_MAX_FREE_VARS) EM_error(BI_ERROR_TYFVAR_CAP);
+        if (fvind == IO_freeVarTabTop) {
+            /* i.e., a free variable not seen before */
+            if (IO_freeVarTabTop == IO_MAX_FREE_VARS) 
+                EM_error(BI_ERROR_TYFVAR_CAP);
             
             while(1) {//make a name
                 fvname = PRINT_makeFVarName();
@@ -281,9 +287,10 @@ static void PRINT_writeFVar(WordPtr outStream, DF_TermPtr tmPtr)
             }
             
             IO_freeVarTab[fvind].varName = fvname;
-            IO_ftabTop++;
+            IO_freeVarTabTop++;
         }
-        STREAM_printf(outStream,MCSTR_toCString(IO_freeVarTab[fvind].varName));
+        STREAM_printf(outStream, 
+	       MCSTR_toCString(DF_strDataValue(IO_freeVarTab[fvind].varName)));
     } else { //PRINT_names = FALSE
         STREAM_printf(outStream, "_%ld", PRINT_makeNumberName(tmPtr));
     }
@@ -311,8 +318,8 @@ static void PRINT_writeCons(WordPtr outStream, DF_TermPtr tmPtr,
     DF_TermPtr    arg;
     OP_FixityType consfix  = AM_cstFixity(PERV_CONS_INDEX);
     int           consprec = AM_cstPrecedence(PERV_CONS_INDEX);
-    Boolean       pparen   = PRINT_parenNeeded(consfix, consprec, tc, fx, prec);
-    
+    Boolean       pparen   = PRINT_parenNeeded(consfix, consprec, tc, fx,prec);
+
     if (pparen) PRINT_writeLParen(outStream);
     PRINT_writeTerm(outStream, args, consfix, consprec, OP_LEFT_TERM);    
     PRINT_writeConsSymbol(outStream);
@@ -346,9 +353,9 @@ static void PRINT_writeAbst(WordPtr outStream, DF_TermPtr tmPtr,
     }
     PRINT_writeLam(outStream, numabs);
     PRINT_writeRParen(outStream);
-    PRINT_writeTerm(outStream, tmPtr, OP_LAM_FIXITY, OP_LAM_PREC,OP_RIGHT_TERM);
+    PRINT_writeTerm(outStream, tmPtr, OP_LAM_FIXITY,OP_LAM_PREC,OP_RIGHT_TERM);
     if (pparen) PRINT_writeRParen(outStream);
-}    
+}      
 
 /****************************************************************************
  *                      WRITING OUT AN APPLICATION                          *
@@ -388,7 +395,7 @@ that the operator must be a constant here and that the pointer to it is
 fully dereferenced */
 static void PRINT_writePrefixTerm(WordPtr outStream, DF_TermPtr head,
                                   OP_FixityType opfx, int opprec,
-                                  OP_TermContext tc, OP_FixityType fx, int prec,
+                                  OP_TermContext tc, OP_FixityType fx,int prec,
                                   DF_TermPtr args)
 {
     Boolean pparen = PRINT_parenNeeded(opfx, opprec, tc, fx, prec);
@@ -417,7 +424,7 @@ static void PRINT_writeInfixTerm(WordPtr outStream, DF_TermPtr head,
 
 static void PRINT_writePostfixTerm(WordPtr outStream, DF_TermPtr head,
                                    OP_FixityType opfx, int opprec, 
-                                   OP_TermContext tc, OP_FixityType fx,int prec,
+                                   OP_TermContext tc,OP_FixityType fx,int prec,
                                    DF_TermPtr args) 
 {
     Boolean pparen = PRINT_parenNeeded(opfx, opprec, tc, fx, prec);
@@ -484,13 +491,13 @@ static void PRINT_writeApp(WordPtr outStream, DF_TermPtr tmPtr,
     /* print the arguments (if any) of the application */
     while (arity > 0) {
         PRINT_writeSpace(outStream, 1);
-        PRINT_writeTerm(outStream,args,OP_APP_FIXITY,OP_APP_PREC,OP_RIGHT_TERM);
+        PRINT_writeTerm(outStream, args, OP_APP_FIXITY, OP_APP_PREC,
+			OP_RIGHT_TERM);
         args++;
         arity--;
     }
     if (pparen) PRINT_writeRParen(outStream);
 }
-
 
 
 /*****************************************************************************
@@ -519,9 +526,6 @@ static void PRINT_writeTerm(WordPtr outStream, DF_TermPtr tmPtr,
     } /* switch */    
 }
 
-/***************************************************************************
- * 		      INTERFACE ROUTINES FOR PRINTING                              *
- ***************************************************************************/
 
 /* Printing a term to a specified output stream; names will be invented for
 free variables if the boolean variable PRINT_names is set. */
@@ -538,13 +542,12 @@ void PRINT_printTerm(DF_TermPtr tmPtr)
     STREAM_printf(STREAM_stdout, "\n");
 }
 
-
 void PRINT_resetPrintState()
 {
     /* release space for term variables created during printing */
-    while (IO_ftabTop > PRINT_numQueryVars){
-        IO_ftabTop--;
-        free(IO_freeVarTab[IO_ftabTop].varName);
+    while (IO_freeVarTabTop > PRINT_numQueryVars){
+        IO_freeVarTabTop--;
+        free(IO_freeVarTab[IO_freeVarTabTop].varName);
     }
     
     /* reset counters used in names of anonymous term and type variables */

@@ -33,6 +33,6 @@ void PRINT_fPrintTerm(WordPtr outStream, DF_TermPtr tmPtr);
 
 void PRINT_resetPrintState();
 
-//for debugging
+//for debugging (display on stdout )
 void PRINT_printTerm(DF_TermPtr tmPtr);
 #endif   //PRINTTERM_H
