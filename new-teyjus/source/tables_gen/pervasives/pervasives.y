@@ -71,7 +71,9 @@ kind        : kind_header kind_decls
             ;
 
 kind_header : KIND NUM
-              { cgenKindInit($2.ival); cgenNumKinds($2.sval);}
+              { cgenKindInit($2.ival); cgenNumKinds($2.sval); 
+                ocamlGenNumKinds($2.sval);
+              }
             ;
 
 kind_decls  : kind_decl SEMICOLON kind_decls
@@ -102,6 +104,7 @@ const_tyskel : const_tyskel_header const_tyskel_decls  const_property
 const_tyskel_header : CONST NUM TYSKEL NUM 
                       { cgenNumTySkels($4.sval); cgenTySkelInit($4.ival);
                         cgenNumConsts($2.sval);  cgenConstInit($2.ival);
+                        ocamlGenNumConsts($2.sval);
                       }
                     ;
 
@@ -158,21 +161,22 @@ const_decls         : const_decl const_decls
                     | const_decl
                     ;
 
-const_decl          : NUM const_name const_ind_name tesize neededness
+const_decl          : NUM const_name const_ind_name tesize tesize neededness
                       typrev redef prec fixity code_info
                       { cgenConstIndex($1.ival, $3, $1.sval, NULL);
-                        cgenConstData($1.ival, $2, $4.sval, $8, $9, tySkelInd,
+                        cgenConstData($1.ival, $2, $4.sval, $9, $10, tySkelInd,
                                       $5.sval, NULL);
-                        ocamlGenConst($1.sval, $2, $3, $9, $8, $6, $7, $4.ival,
-                                      tySkelInd, $5.ival, $10, $1.sval);
+                        ocamlGenConst($1.sval, $2, $3, $10, $9, $7, $8, 
+                                      $5.ival, tySkelInd, $6.ival, $11,
+                                      $1.sval);
                       }
-                    | comments NUM const_name const_ind_name tesize
+                    | comments NUM const_name const_ind_name tesize tesize
                       neededness typrev redef prec fixity code_info
                       { cgenConstIndex($2.ival, $4, $2.sval, $1);
-                        cgenConstData($2.ival, $3, $5.sval, $9, $10, tySkelInd,
-                                      $6.sval, $1);
-                        ocamlGenConst($2.sval, $3, $4, $10, $9, $7, $8, 
-                                      $5.ival, tySkelInd, $6.ival, $11, 
+                        cgenConstData($2.ival, $3, $5.sval, $10, $11, 
+                                      tySkelInd, $7.sval, $1);
+                        ocamlGenConst($2.sval, $3, $4, $11, $10, $8, $9, 
+                                      $6.ival, tySkelInd, $7.ival, $12, 
                                       $2.sval);
                       }
                     ;

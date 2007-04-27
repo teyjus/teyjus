@@ -37,6 +37,15 @@ static char* addStr(char* str, char* addOn)
 /**************************************************************************/
 /* generating pervasive kind relevant part                                */
 /**************************************************************************/
+static char* numKindsML = NULL;
+static char* numKindsMLI = NULL;
+
+void ocamlGenNumKinds(char* number) 
+{
+    numKindsMLI = strdup("val numberPervasiveKinds : int");
+    numKindsML  = addStr("let numberPervasiveKinds = ", number);
+}
+
 static char* kindVarList = NULL;           //kind variable definitions
 static char* buildPervKindBody = NULL;     //buildPervKind function defs
 static char* kindVarDecs = NULL;           //kind vars in signature
@@ -84,24 +93,29 @@ void ocamlGenKinds()
 {
     char* buildTabFunc = OC_mkBuildKTabFunc(buildPervKindBody);
     int   length = strlen(kindVarList) + strlen(buildTabFunc) +  
-        strlen(isKindFuncDefs) + 1;
+        strlen(isKindFuncDefs) + strlen(numKindsML) + 4;
     
-    kindML = UTIL_mallocStr(length + 1);
+    kindML = UTIL_mallocStr(length);
     strcpy(kindML, kindVarList);
     strcat(kindML, "\n");
+    strcat(kindML, numKindsML);
+    strcat(kindML, "\n\n");
     strcat(kindML, buildTabFunc);
     strcat(kindML, "\n");
     strcat(kindML, isKindFuncDefs);
     
     free(buildPervKindBody); free(buildTabFunc); free(kindVarList);
-    free(isKindFuncDefs);
+    free(isKindFuncDefs); free(numKindsML);
     
-    length = strlen(kindVarDecs) + strlen(isKindFuncDecs) + 2;
+    length = strlen(kindVarDecs) + strlen(isKindFuncDecs) + 
+        strlen(numKindsMLI) + 4;
     kindMLI = UTIL_mallocStr(length);
     strcpy(kindMLI, kindVarDecs);
     strcat(kindMLI, "\n\n");
+    strcat(kindMLI, numKindsMLI);
+    strcat(kindMLI, "\n\n");
     strcat(kindMLI, isKindFuncDecs);
-    free(kindVarDecs);  free(isKindFuncDecs);
+    free(kindVarDecs);  free(isKindFuncDecs); free(numKindsMLI);
 }
 
 /**************************************************************************/
@@ -128,6 +142,15 @@ void ocamlGenTySkel(char* ind, Type tySkel)
 /**************************************************************************/
 /* generating pervasive constants relevant part                           */
 /**************************************************************************/
+static char* numConstsML = NULL;
+static char* numConstsMLI = NULL;
+
+void ocamlGenNumConsts(char* number) 
+{
+    numConstsMLI = strdup("val numberPervasiveConstants : int");
+    numConstsML  = addStr("let numberPervasiveConstants = ", number);
+}
+
 static char* constVarList = NULL;         //constant vars
 static char* buildPervConstBody = NULL;   //buildPervConst function defs
 static char* constVarDecs = NULL;         //constant vars in signature
@@ -193,21 +216,25 @@ void ocamlGenConsts()
     
 
     int   length = strlen(varDefs) + strlen(buildTabFunc) + strlen(funcDefs) 
-        + 2;
+        + strlen(numConstsML) + 4;
     
     tySkelVarList = tyskels;
     
     constML = UTIL_mallocStr(length);
     strcpy(constML, varDefs);          free(varDefs);
     strcat(constML, "\n");
+    strcat(constML, numConstsML);      free(numConstsML);
+    strcat(constML, "\n\n");
     strcat(constML, buildTabFunc);     free(buildTabFunc); free(buildFuncBody);
     strcat(constML, "\n");    
     strcat(constML, funcDefs);         free(funcDefs);
 
-    length = strlen(varDecs) + strlen(funcDecs) + 2;
+    length = strlen(varDecs) + strlen(funcDecs) + strlen(numConstsMLI) + 4;
     constMLI = UTIL_mallocStr(length);
 
     strcpy(constMLI, varDecs);    free(varDecs);
+    strcat(constMLI, "\n\n");
+    strcat(constMLI, numConstsMLI); free(numConstsMLI);
     strcat(constMLI, "\n\n");
     strcat(constMLI, funcDecs);   free(funcDecs);
 }
