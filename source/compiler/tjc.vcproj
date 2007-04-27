@@ -29,7 +29,7 @@
 			<Tool
 				Name="VCCustomBuildTool"
 				Description="Building..."
-				CommandLine="rem ocamake -clean *.mly *.mll *.mli *.ml&#x0D;&#x0A;rem del *.cm*&#x0D;&#x0A;rem del *.obj&#x0D;&#x0A;ocamake *.mly *.mll *.ml *.mli -epp -opt -o tjc.exe&#x0D;&#x0A;"
+				CommandLine="ocamake *.mly *.mll *.ml *.mli -epp -opt -o tjc.exe&#x0D;&#x0A;"
 				AdditionalDependencies=""
 				Outputs="tjc.exe"
 			/>
@@ -250,6 +250,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\readterm.ml"
+				>
+			</File>
+			<File
 				RelativePath=".\registers.ml"
 				>
 			</File>
@@ -276,6 +280,10 @@
 			</File>
 			<File
 				RelativePath=".\translate.ml"
+				>
+			</File>
+			<File
+				RelativePath=".\Typereduction.ml"
 				>
 			</File>
 			<File
@@ -353,6 +361,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\readtermutil.mli"
+				>
+			</File>
+			<File
 				RelativePath=".\registers.mli"
 				>
 			</File>
@@ -370,6 +382,10 @@
 			</File>
 			<File
 				RelativePath=".\translate.mli"
+				>
+			</File>
+			<File
+				RelativePath=".\Typereduction.mli"
 				>
 			</File>
 			<File
@@ -405,6 +421,14 @@
 			</File>
 			<File
 				RelativePath=".\lpyacc.mly"
+				>
+			</File>
+		</Filter>
+		<Filter
+			Name="C Files"
+			>
+			<File
+				RelativePath=".\readterm_stubs.c"
 				>
 			</File>
 		</Filter>

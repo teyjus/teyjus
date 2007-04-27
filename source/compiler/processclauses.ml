@@ -371,8 +371,8 @@ let rec processClause clauseTerm =
       let (preClause, freeVars, freeTyVars) = processFact head tyenv [] 0 in
       (preClause, freeVars, freeTyVars, collectHQVars (!hqVars))
   | _ -> (* must be an application *)
-      let func = Absyn.getTermApplicationFunc clauseTerm in
-      let args = Absyn.getTermApplicationArgs clauseTerm in
+      let func = Absyn.getTermApplicationHead clauseTerm in
+      let args = Absyn.getTermApplicationArguments clauseTerm in
       let head = Absyn.getTermConstant func in
       if (Pervasive.isallConstant head) then
 		let arg = List.hd args in 
@@ -423,9 +423,9 @@ and processRule clauseHead clauseBody =
 	  (*proposition*)
 	  Absyn.ConstantTerm(pred, tyenv, _, _) -> (pred, tyenv, [], 0) 
 	| _ -> (* must be an application *)
-		let head = Absyn.getTermApplicationFunc clauseHead in
+		let head = Absyn.getTermApplicationHead clauseHead in
 		(Absyn.getTermConstant head, Absyn.getTermTypeEnv head,
-		 Absyn.getTermApplicationArgs clauseHead, 
+		 Absyn.getTermApplicationArguments clauseHead, 
 		 Absyn.getTermApplicationArity clauseHead)
   in
   let (predArgs, predTyArgs) = processClauseHead args tyenv in
@@ -442,10 +442,10 @@ and processRule clauseHead clauseBody =
 and processGoal gltm = 
   match gltm with
     Absyn.ApplicationTerm(_) ->
-      if (gltm == Pervasiveutils.cutFail) then Absyn.CutFailGoal
+      if (gltm == Pervasiveutils.cutFailTerm) then Absyn.CutFailGoal
       else 
-		let head = Absyn.getTermApplicationFunc gltm in
-		let args = Absyn.getTermApplicationArgs gltm in
+		let head = Absyn.getTermApplicationHead gltm in
+		let args = Absyn.getTermApplicationArguments gltm in
 		(match head with
 		  Absyn.ConstantTerm(pred, _, _, _) ->
 			if Pervasive.isandConstant pred then               (*and goal *)
@@ -457,7 +457,7 @@ and processGoal gltm =
 			else if Pervasive.isimplConstant pred then         (*imp goal *)
 			  processImpGoal (List.hd args) (List.hd (List.tl args))
 			else                                     (* rigid atomic goal *)
-			  processAtomicGoal gltm head (Absyn.getTermApplicationArgs gltm)
+			  processAtomicGoal gltm head (Absyn.getTermApplicationArguments gltm)
 				(Absyn.getTermApplicationArity gltm)
 		| _ -> processAtomicGoal gltm head [] 0)     (* flex atomic goal *)
   | _-> processAtomicGoal gltm gltm [] 0 (* proposition goal: flex or rig*)
@@ -517,8 +517,8 @@ and processAllGoal goalBody =
   let rec processAllGoalAux goal hcPairs =
     match goal with
       Absyn.ApplicationTerm(_) ->
-		let head = Absyn.getTermApplicationFunc goal in
-		let args = Absyn.getTermApplicationArgs goal in
+		let head = Absyn.getTermApplicationHead goal in
+		let args = Absyn.getTermApplicationArguments goal in
 		if Pervasive.isallConstant (Absyn.getTermConstant head) then
           (*all goal*)
 		  let arg = List.hd args in
@@ -552,8 +552,8 @@ and processImpGoal clauseTerm goalTerm =
   let rec processImpClauses clauseTerm clauseDefs varInits tyVarInits =
 	match clauseTerm with 
 	  Absyn.ApplicationTerm(_) -> 
-		let args = Absyn.getTermApplicationArgs clauseTerm in
-		let head = Absyn.getTermApplicationFunc clauseTerm in
+		let args = Absyn.getTermApplicationArguments clauseTerm in
+		let head = Absyn.getTermApplicationHead clauseTerm in
 		if Pervasive.isandConstant (Absyn.getTermConstant head) then
 		  let (newClDefs, newVarInits, newTyVarInits) = 
 			processImpClauses (List.hd args) clauseDefs varInits tyVarInits

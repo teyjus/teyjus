@@ -449,9 +449,9 @@ val getTermAbstractionBody : aterm -> aterm
 val getTermAbstractionNumberOfLambda : aterm -> int
 
 val getTermApplicationHeadAndArguments : aterm -> (aterm * aterm list)
-val getTermApplicationFunc : aterm -> aterm
+val getTermApplicationHead : aterm -> aterm
 val getTermApplicationArity : aterm -> int
-val getTermApplicationArgs : aterm -> aterm list
+val getTermApplicationArguments : aterm -> aterm list
 
 (*************************************************************************)
 (*  astringinfo:                                                         *)

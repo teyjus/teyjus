@@ -720,8 +720,8 @@ and genSTermCode regNum term chunk lowval last hasenv normalize =
   (* part is dealing with the situation where the head is a free variable; *)
   (* this value may need to be globalized.                                 *)
   let genSTermCodeApp app regNum =
-	let func = Absyn.getTermApplicationFunc  term in
-	let args = Absyn.getTermApplicationArgs  term in
+	let func = Absyn.getTermApplicationHead  term in
+	let args = Absyn.getTermApplicationArguments  term in
 	if (Absyn.isTermConstant func) && 
 	   (Pervasive.isconsConstant (Absyn.getTermConstant func))
 	then genSTermCodeCons args regNum
@@ -1062,11 +1062,11 @@ let rec genATermsCode delayed chunk insts startLoc =
 	| Absyn.ConstantTerm(c, tys, _, _) -> 
 		genATermCodePConst c tys regNum
 	| Absyn.ApplicationTerm(_, _, _)   ->
-		let func = Absyn.getTermApplicationFunc term in
+		let func = Absyn.getTermApplicationHead term in
 		if (Absyn.isTermFreeVariable func) then
 		  genATermCodeHigherOrder term regNum 
 		else 
-		  genATermCodeStructure func (Absyn.getTermApplicationArgs term) 
+		  genATermCodeStructure func (Absyn.getTermApplicationArguments term) 
 			(Absyn.getTermApplicationArity term) regNum
 	| _ -> genATermCodeHigherOrder term regNum (* must be an abstraction then*)
   in

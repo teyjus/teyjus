@@ -104,8 +104,8 @@ let buildTerm fvIndex tyfvIndex terms =
 			  (Absyn.getTermAbstractionNumberOfLambda term);
 			(rest @ [Absyn.getTermAbstractionBody term], types)
 		| _ -> (* application *)
-			let func = Absyn.getTermApplicationFunc term in
-			let args = Absyn.getTermApplicationArgs term in
+			let func = Absyn.getTermApplicationHead term in
+			let args = Absyn.getTermApplicationArguments term in
 			if (Absyn.isTermConstant func) && 
 			   (Pervasive.isconsConstant (Absyn.getTermConstant func)) then
 			  (Readtermutil.buildConsTerm ();
@@ -153,8 +153,8 @@ let termAndTypeSize tm ty =
 			termNodes (rest @ [Absyn.getTermAbstractionBody tm])
 			  (numTmNodes + 1) numTyNodes
 		| Absyn.ApplicationTerm(_)               ->
-			let func = Absyn.getTermApplicationFunc tm in
-			let args  = Absyn.getTermApplicationArgs tm in
+			let func = Absyn.getTermApplicationHead tm in
+			let args  = Absyn.getTermApplicationArguments tm in
 			let arity = Absyn.getTermApplicationArity tm in
 			if (Absyn.isTermConstant func) && 
 		       (Pervasive.isconsConstant (Absyn.getTermConstant func)) then

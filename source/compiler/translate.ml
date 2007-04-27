@@ -728,10 +728,10 @@ and checkFixity f1 f2 =
 *translate:
 * Convert from a preabsyn module to an absyn module.
 **********************************************************************)
-let rec translate mod' sig' =
-    let (ktable, ctable, atable) = translateSignature sig' Pervasive.pervasiveKinds Pervasive.pervasiveConstants Pervasive.pervasiveTypeAbbrevs in
+and translate mod' sig' =
+    let (asig, (ktable, ctable, atable)) = translateSignature sig' Pervasive.pervasiveKinds Pervasive.pervasiveConstants Pervasive.pervasiveTypeAbbrevs in
     let amod = translateModule mod' ktable ctable atable in
-    amod
+    (amod, asig)
 
 (**********************************************************************
 *translateSignature:
@@ -806,7 +806,7 @@ and translateSignature = fun s ktable ctable tabbrevtable ->
   let rec translateAccumSigs = fun sigs ktable ctable atable ->
     match sigs with
       s::rest ->
-        let (ktable', ctable', atable') = translateSignature s ktable ctable atable in
+        let (_, (ktable', ctable', atable')) = translateSignature s ktable ctable atable in
         (translateAccumSigs rest ktable' ctable' atable')
     | [] ->
         (ktable, ctable, atable)
@@ -829,8 +829,9 @@ and translateSignature = fun s ktable ctable tabbrevtable ->
   let ctable = mergeGlobalConstants gconstantlist ctable in
 
   (*  Translate fixities *)
-  let ctable = translateFixities fixities ctable in  
-  (ktable,ctable,tabbrevtable)
+  let ctable = translateFixities fixities ctable in
+ 
+  (Absyn.Signature(name, gkindlist, gconstantlist), (ktable,ctable,tabbrevtable))
 
 (********************************************************************
 *translateModule:
@@ -1071,18 +1072,45 @@ and translateModule = fun mod' ktable ctable atable ->
     | [] -> []
     in
     
+    (******************************************************************
+    *processImpMods:
+    * Convert a list of imported modules filenames into a list of
+    * preabsyn signatures.
+    ******************************************************************)
+    let rec processImpMods = function
+      Preabsyn.Symbol(accum,_,_)::rest ->
+        (Compile.compileSignature ((Symbol.name accum)))::(processImpMods rest)
+    | [] -> []
+    in
+    
     (********************************************************************
     *translateAccumMods:
     * Goes through all of the accumulated modules, parses them, and
-    * gets the appropriate tables and suchlike.  In addition, it 
+    * gets the appropriate tables and suchlike.
     ********************************************************************)
-    let rec translateAccumMods = fun accums ktable ctable atable ->
+    let rec translateAccumMods = fun accums ktable ctable atable sigs ->
       match accums with
         s::rest ->
-          let (ktable', ctable', atable') = translateSignature s ktable ctable atable in
-          (translateAccumMods rest ktable' ctable' atable')
+          let (asig, (ktable', ctable', atable')) = translateSignature s ktable ctable atable in
+          let a = Absyn.AccumulatedModule(Absyn.getModuleName asig, asig) in
+          (translateAccumMods rest ktable' ctable' atable' (a::sigs))
       | [] ->
-          (ktable, ctable, atable)
+          (sigs, (ktable, ctable, atable))
+    in
+    
+    (********************************************************************
+    *translateImpMods:
+    * Goes through all of the imported modules, parses them, and
+    * gets the appropriate tables and suchlike.
+    ********************************************************************)
+    let rec translateImpMods = fun imps ktable ctable atable sigs ->
+      match imps with
+        s::rest ->
+          let (asig, (ktable', ctable', atable')) = translateSignature s ktable ctable atable in
+          let i = Absyn.ImportedModule(Absyn.getModuleName asig, 0, asig) in
+          (translateImpMods rest ktable' ctable' atable' (i::sigs))
+      | [] ->
+          (sigs, (ktable, ctable, atable))
     in
     (*  Get the pieces of the module  *)
     match mod' with
@@ -1092,7 +1120,11 @@ and translateModule = fun mod' ktable ctable atable ->
 
         (*  Translate the accumulated modules *)
         let accummods' = processAccumMods accummods in
-        let (ktable, ctable, atable) = translateAccumMods accummods' ktable ctable atable in
+        let (accums, (ktable, ctable, atable)) = translateAccumMods accummods' ktable ctable atable [] in
+        
+        (*  Translate the imported modules  *)
+        let impmods' = processImpMods impmods in
+        let (imps, (ktable, ctable, atable)) = translateImpMods impmods' ktable ctable atable [] in
         
         (*  Translate local and global kinds, and get associated tables *)
         let gkindlist = translateGlobalKinds gkinds in
@@ -1123,7 +1155,7 @@ and translateModule = fun mod' ktable ctable atable ->
         (*  Verify that all constants have a body, and
             all kinds have an arity.  *)
         if (checkConstantBodies ctable) && (checkKindArities ktable) then
-          let amod = Absyn.Module(name, [], [], ref ctable, ref ktable, atable, [], [], [], [], [], ref [], [], [], ref(Absyn.ClauseBlocks([]))) in
+          let amod = Absyn.Module(name, imps, accums, ref ctable, ref ktable, atable, [], [], [], [], [], ref [], [], [], ref(Absyn.ClauseBlocks([]))) in
           amod
         else
           Absyn.ErrorModule

@@ -78,7 +78,7 @@ let getOverload k c =
 let maxSkeletonIndex = 256
 
 
-let cutFail = 
+let cutFailTerm = 
   Absyn.ApplicationTerm(Absyn.FirstOrderApplication(
 						Absyn.ConstantTerm(Pervasive.andConstant, [], false, Errormsg.none),
 						[Absyn.ConstantTerm(Pervasive.cutConstant, [], false, Errormsg.none) ;
