@@ -21,6 +21,36 @@ let machineBits = ref 0
 
 let setMachineBits number = machineBits := number
 let numberBytesInWord () = (!machineBits) / 8 
+  
+(**********************************************************************)
+(* byte code format flags                                             *)
+(**********************************************************************)
+let byteCodeVersionNumber = 2
+
+(* type skeleton representation *)
+let typeMarkArrow       = 0
+let typeMarkKind        = 1
+let typeMarkSkeletonVar = 2
+
+(* constant fixity *)
+let fixityMarkInfix = 0
+let fixityMarkInfixl = 1
+let fixityMarkInfixr = 2 
+let fixityMarkNoFixity = 3
+let fixityMarkPrefix = 4
+let fixityMarkPrefixr = 5
+let fixityMarkPostfix = 6
+let fixityMarkPostfixl =7
+
+(* constant/kind category *)
+let global = 0
+let local  = 1
+let hidden = 2
+let pervasive = 3
+
+(* find code function: hash or sequence search *)
+let findCodeFuncMarkHash = 0
+let findCodeFuncMarkSeq  = 1
 
 (************************************************************************)
 (* write functions                                                      *)
@@ -68,33 +98,21 @@ let writeString str =
 (* write a word: the number of bytes depend on machine architecture  *)
 let writeWord number = 
   writeNBytes (getOutChannel ()) number (numberBytesInWord ())
-  
-(**********************************************************************)
-(* byte code format flags                                             *)
-(**********************************************************************)
-let byteCodeVersionNumber = 2
 
-(* type skeleton representation *)
-let typeMarkArrow       = 0
-let typeMarkKind        = 1
-let typeMarkSkeletonVar = 2
 
-(* constant fixity *)
-let fixityMarkInfix = 0
-let fixityMarkInfixl = 1
-let fixityMarkInfixr = 2 
-let fixityMarkNoFixity = 3
-let fixityMarkPrefix = 4
-let fixityMarkPrefixr = 5
-let fixityMarkPostfix = 6
-let fixityMarkPostfixl =7
+let writeakind2 kind =
+  (match kind with
+	Absyn.LocalKind(_) -> writeint1 local
+  | Absyn.GlobalKind(_) -> writeint1 global
+  | Absyn.PervasiveKind(_) -> writeint1 pervasive);
+  writeint2 (Absyn.getKindIndex kind)
 
-(* constant/kind category *)
-let global = 0
-let local  = 1
-let hidden = 2
-let pervasive = 3
-
-(* find code function: hash or sequence search *)
-let findCodeFuncMarkHash = 0
-let findCodeFuncMarkSeq  = 1
+let writeaconstant2 const =
+  let constCat = Absyn.getConstantType const in
+  let constIndex = Absyn.getConstantIndex const in
+  (match constCat with
+	Absyn.GlobalConstant -> writeint1 global
+  | Absyn.LocalConstant  -> writeint1 local
+  | Absyn.PervasiveConstant(_) -> writeint1 pervasive
+  | _ (* must be hidden constants*) -> writeint1 hidden);
+  writeint2 constIndex

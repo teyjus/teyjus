@@ -15,6 +15,7 @@ val closeOutChannel : unit -> unit
 (* record the number of bytes contained by a word (needed for writing *)
 (* a word.                                                            *)
 val setMachineBits : int -> unit
+val numberBytesInWord : unit -> int
 
 val writeint1 : int -> unit           (* one   byte  *)
 val writeint2 : int -> unit           (* two   bytes *)
@@ -30,6 +31,9 @@ val writefloat4 :  float -> unit
 (* write a string: the leading byte contains the length of the string*)
 (* and is followed by a sequence of characters.                      *)
 val writeString :  string -> unit 
+
+val writeaconstant2 : Absyn.aconstant -> unit
+val writeakind2 : Absyn.akind -> unit
 
 (**********************************************************************)
 (* byte code format flags                                             *)
