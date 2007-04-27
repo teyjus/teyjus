@@ -222,7 +222,7 @@ and aclausesblock = (aclause list ref * bool ref * int ref * int option ref)
 * skeleton list, hskeleton list, clauses blocks list)
 *****************************************************************************)
 and amodule = 
-    Module of (string * aimportedmodule list * aaccummulatedmodule list *
+    Module of (string * aimportedmodule list * aaccumulatedmodule list *
       aconstant Table.SymbolTable.t ref * akind Table.SymbolTable.t ref *
       atypeabbrev Table.SymbolTable.t * astringinfo list * akind list *
       akind list * aconstant list * aconstant list * aconstant list ref *
@@ -233,8 +233,8 @@ and amodule =
 and aimportedmodule = 
   ImportedModule of (string * int * amodule)
 
-and aaccummulatedmodule =
-  AccummulatedModule of (string * amodule)
+and aaccumulatedmodule =
+  AccumulatedModule of (string * amodule)
 
 and aclauseinfo = 
     ClauseBlocks of aclausesblock list
@@ -540,16 +540,18 @@ let rec makeTypeEnvironment i =
       0 -> []
     | i' ->
         if i' < 0 then
-          Errormsg.impossible Errormsg.none "makeTypeEnvironment: invalid environment size"
+          Errormsg.impossible Errormsg.none "Absyn.makeTypeEnvironment: invalid environment size"
         else
           (makeTypeVariable ()) :: (makeTypeEnvironment (i - 1))
 
 let getApplicationTypeHead = function
-  ApplicationType(k,_) -> k
+    ApplicationType(k,_) -> k
+  | _ -> Errormsg.impossible Errormsg.none "Absyn.getApplicationTypeHead: invalid type"
 
 let getApplicationTypeArgs = function
-  ApplicationType(_,args) -> args
-  
+    ApplicationType(_,args) -> args
+  | _ -> Errormsg.impossible Errormsg.none "Absyn.getApplicationTypeArgs: invalid type"
+
 let isApplicationType t =
   match t with
     ApplicationType(_) -> true
@@ -763,7 +765,7 @@ let makeGlobalConstant symbol fixity prec expDef useOnly tyEnvSize tySkel index 
 		   ref None, ref None, ref GlobalConstant, ref index, Errormsg.none)
 
 let makeAnonymousConstant i =
-  Constant(Symbol.symbol "", ref NoFixity, ref (-1), ref true, ref false,
+  Constant(Symbol.generate (), ref NoFixity, ref (-1), ref true, ref false,
     ref false, ref true, ref false, ref false, ref None, ref i, ref None,
     ref None, ref AnonymousConstant, ref 0, Errormsg.none)
 
@@ -772,13 +774,13 @@ let makeHiddenConstant skel =
     ref false, ref true, ref false, ref false, ref (Some skel), ref 0, ref None,
     ref None, ref HiddenConstant, ref 0, Errormsg.none)
 
-let makeConstantTerm c pos =
+let makeConstantTerm c env pos =
   let esize = getConstantTypeEnvSize c in
-  if esize = 0 then
-    ConstantTerm(c, [], false, pos)
+  if esize = (List.length env) then
+    ConstantTerm(c, env, false, pos)
   else
     Errormsg.impossible (getConstantPos c)
-      "makeConstantTerm: constant has non-zero environment size"
+      "makeConstantTerm: constant environment size and given environment don't match"
 
 
 
@@ -1560,9 +1562,10 @@ let makeNewClauseBlock cl closed =
 	  else (ref [cl], ref closed, ref 0, ref None)
   | _ ->  (ref [cl], ref closed, ref 0, ref None)
 
-(**********************************************************************)
-(*printAbsyn:                                                         *)
-(**********************************************************************)
+(**********************************************************************
+*printAbsyn:
+* Prints the absyn representation of a module to the given out_channel.
+**********************************************************************)
 let printAbsyn = fun m out ->
   (*  Text output functions *)
   let output = function s -> (output_string out s) in
@@ -1637,8 +1640,11 @@ let printAbsyn = fun m out ->
   | ErrorType ->
       (output "Error")
 
+  and printConstant const =
+    printconstant' (Symbol.symbol "") const
+  
   (*  Print a constant.  For use with printTable. *)
-  and printConstant = fun sym const ->
+  and printconstant' sym const =
     let printConstantType = function
       GlobalConstant -> output "Global"
     | LocalConstant -> output "Local"
@@ -1756,7 +1762,7 @@ let printAbsyn = fun m out ->
       output_line ", ";
       
       output_line "ConstantTable:";
-      printTable printConstant !ctable;
+      printTable printconstant' !ctable;
       output_line "";
       
       output_line "KindTable:";
@@ -1769,9 +1775,14 @@ let printAbsyn = fun m out ->
       *)
       output_line ")")
       
-  | Signature(name, consts, kinds) ->
+  | Signature(name, kinds, consts) ->
       (output "Signature(";
-      output name;
+      output_line name;
+      output_line "Kinds:";
+      List.iter printKind kinds;
+      output_line "";
+      output_line "Constants:";
+      List.iter printConstant consts;
       output_line ")")
   | ErrorModule ->
       (output "ErrorModule")
