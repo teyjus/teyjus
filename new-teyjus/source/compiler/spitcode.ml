@@ -74,8 +74,9 @@ let writeTypeSkels tyskels =
   let rec writeType tySkel =
     match tySkel with
       Absyn.ApplicationType(kind, args) ->
-	Writeutil.writeint1 Writeutil.typeMarkKind; 
+		Writeutil.writeint1 Writeutil.typeMarkKind; 
         writeKindIndex kind;
+		Writeutil.writeint1 (List.length args);
         map writeType args
     | Absyn.ArrowType(lop, rop) ->
 		Writeutil.writeint1 Writeutil.typeMarkArrow;
