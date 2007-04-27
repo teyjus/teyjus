@@ -188,6 +188,16 @@ static char* OC_mkStructure(char* func, char* arg)
 }
 
 /**************************************************************************/
+/* type definitions                                                       */
+/**************************************************************************/
+static char* typeDefs;
+
+void ocgenInclude(char* include)
+{
+    typeDefs = include;
+}
+
+/**************************************************************************/
 /* operand types                                                          */
 /**************************************************************************/
 static char* opTypes;
@@ -267,8 +277,6 @@ void ocgenOpCodeType(int numBytes)
     writeFuncs = myWriteFuncs;
 }
 
-#define INTREF "type intref = int ref\n"
-
 static char* opMLI;
 static char* opML;
 
@@ -278,19 +286,17 @@ void ocgenOps()
     char* wordSizeMLI  = OC_mkVarDec(wordSizeName, "int");
     char* wordSize     = UTIL_itoa(sizeof(void*));
     char* wordSizeML   = OC_mkVarDef(wordSizeName, wordSize);
-    char* myOpTypes    = addLine(INTREF, opTypes);
     char* text;
     
-    free(wordSize);  free(opTypes);
-
+    free(wordSize);
     opMLI = addLine(opMLI, wordSizeMLI); free(wordSizeMLI);
     text = addLine(opMLI, opSizesMLI);   free(opMLI); free(opSizesMLI);
-    opMLI = addLine(text, myOpTypes);    free(text); 
+    opMLI = addLine(text, opTypes);      free(text); 
 
     opML = addLine(opML, wordSizeML);    free(wordSizeML);
     text = addLine(opML, opSizesML);     free(opML); free(opSizesML);
     opML = addLine(text, writeFuncs);    free(text); free(writeFuncs);
-    text = addLine(opML, myOpTypes);     free(opML); free(myOpTypes);
+    text = addLine(opML, opTypes);       free(opML); free(opTypes);
     opML = text;
 }
 
@@ -502,6 +508,7 @@ void ocSpitInstructionMLI()
 {
     FILE* outFile;
     outFile = UTIL_fopenW("../../compiler/instr.mli");
+    fprintf(outFile, typeDefs);          
     fprintf(outFile, opMLI);             free(opMLI);
     fprintf(outFile, instrCatMLI);       free(instrCatMLI);
     fprintf(outFile, "\n\n");
@@ -514,6 +521,7 @@ void ocSpitInstructionML()
 {
     FILE* outFile;
     outFile = UTIL_fopenW("../../compiler/instr.ml");
+    fprintf(outFile, typeDefs);          free(typeDefs);
     fprintf(outFile, opML);              free(opML);
     fprintf(outFile, instrCatML);        free(instrCatML);
     fprintf(outFile, instrML);           free(instrML);

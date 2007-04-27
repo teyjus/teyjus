@@ -1,6 +1,9 @@
 /*************************************************************************/
 /* functions for generating ocaml instr.mli and instr.ml                 */
 /*************************************************************************/
+/* include */
+void ocgenInclude(char* include);
+
 /* operand types */
 void ocgenOpType(char* typeName, int numBytes, char* compType);
 void ocgenOpCodeType(int numBytes);

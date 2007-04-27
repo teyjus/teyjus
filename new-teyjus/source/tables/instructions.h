@@ -459,9 +459,11 @@ INSTR_OperandType* INSTR_operandTypes(INSTR_InstrCategory index);
 #define stop   138
 #define halt   139
 #define fail   140
+// new added 
+#define create_type_variable   141
 
 
-#define INSTR_NUM_INSTRS   141
+#define INSTR_NUM_INSTRS   142
 
 /***************************************************************************/ 
 /*              INSTRUCTION INFORMATION TABLE                              */ 

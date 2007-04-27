@@ -266,7 +266,8 @@ INSTR_InstrInfoTab INSTR_instrInfoTable ={
     {"builtin",  INSTR_CAT_I1X,   INSTR_I1X_LEN},
     {"stop",  INSTR_CAT_X,   INSTR_X_LEN},
     {"halt",  INSTR_CAT_X,   INSTR_X_LEN},
-    {"fail",  INSTR_CAT_X,   INSTR_X_LEN}
+    {"fail",  INSTR_CAT_X,   INSTR_X_LEN},
+    {"create_type_variable",  INSTR_CAT_EX,   INSTR_EX_LEN}
 };
 
 /* Accessing functions */                                                     
