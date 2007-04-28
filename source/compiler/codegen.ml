@@ -363,15 +363,15 @@ let collectRenamingInfo amod =
   in 
 
   (* function body of collectRenamingInfo *)
-  let gkinds = Absyn.getModuleGlobalKindsList amod in
-  let gconsts = Absyn.getModuleGlobalConstantsList amod in
+  let gkinds = Absyn.getSignatureGlobalKindsList amod in
+  let gconsts = Absyn.getSignatureGlobalConstantsList amod in
   let (renamingKinds, numRenamingKinds) = 
     collectLocals gkinds [] 0 Absyn.isGlobalKind 
   in
   let (renamingConsts, numRenamingConsts) =
     collectLocals gconsts [] 0 Absyn.isGlobalConstant
   in
-  RenamingInfo(Absyn.getModuleName amod, 
+  RenamingInfo(Absyn.getSignatureName amod, 
 	       KindList(renamingKinds, numRenamingKinds),
 	       ConstantList(renamingConsts, numRenamingConsts))
 
@@ -379,7 +379,7 @@ let collectImports imps =
   let rec collectImportsAux imps renamingInfo =
     match imps with
       [] -> (List.rev renamingInfo)
-    | (Absyn.ImportedModule(_, _, amod) :: rest) ->
+    | (Absyn.ImportedModule(_, amod) :: rest) ->
 	collectImportsAux rest ((collectRenamingInfo amod) :: renamingInfo)
   in 
   collectImportsAux imps []

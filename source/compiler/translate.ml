@@ -1107,7 +1107,7 @@ and translateModule = fun mod' ktable ctable atable ->
       match imps with
         s::rest ->
           let (asig, (ktable', ctable', atable')) = translateSignature s ktable ctable atable in
-          let i = Absyn.ImportedModule(Absyn.getModuleName asig, 0, asig) in
+          let i = Absyn.ImportedModule(Absyn.getModuleName asig, asig) in
           (translateImpMods rest ktable' ctable' atable' (i::sigs))
       | [] ->
           (sigs, (ktable, ctable, atable))
