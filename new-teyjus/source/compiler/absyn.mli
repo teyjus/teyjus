@@ -231,7 +231,7 @@ and amodule =
   | ErrorModule
 
 and aimportedmodule = 
-  ImportedModule of (string * int * amodule)
+  ImportedModule of (string * amodule)
 
 and aaccumulatedmodule =
   AccumulatedModule of (string * amodule)
@@ -530,10 +530,9 @@ val getModuleClausesRef : amodule -> aclauseinfo ref
 val getModuleClauses : amodule -> aclauseinfo
 val setModuleClauses : amodule -> aclauseinfo -> unit
 
-(*************************************************************************)
-(*  aimportedmodule:                                                     *)
-(*************************************************************************)
-val getImportedModuleModNo : aimportedmodule -> int
+val getSignatureName : amodule -> string
+val getSignatureGlobalKindsList : amodule -> akind list
+val getSignatureGlobalConstantsList : amodule -> aconstant list
 
 (*************************************************************************)
 (*  aclauseinfo:                                                         *)

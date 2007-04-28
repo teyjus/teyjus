@@ -231,7 +231,7 @@ and amodule =
   | ErrorModule
 
 and aimportedmodule = 
-  ImportedModule of (string * int * amodule)
+  ImportedModule of (string * amodule)
 
 and aaccumulatedmodule =
   AccumulatedModule of (string * amodule)
@@ -1510,12 +1510,21 @@ let getModuleClausesRef = function
 let getModuleClauses amod = !(getModuleClausesRef amod)
 let setModuleClauses amod cls = (getModuleClausesRef amod) := cls
 
+let getSignatureGlobalKindsList = function
+  Signature(_,kl,_) -> kl
+| Module(_) -> Errormsg.impossible Errormsg.none "getSignatureGlobalKindsList: argument is a module"
+| ErrorModule -> Errormsg.impossible Errormsg.none "getSignatureGlobalKindsList: argument invalid"
+  
+  
+let getSignatureGlobalConstantsList = function
+  Signature(_,_,cl) -> cl
+| Module(_) -> Errormsg.impossible Errormsg.none "getSignatureGlobalConstantsList: argument is a module"
+| ErrorModule -> Errormsg.impossible Errormsg.none "getSignatureGlobalConstantsList: argument invalid"
 
-(*************************************************************************)
-(*  aimportedmodule:                                                     *)
-(*************************************************************************)
-let getImportedModuleModNo = function
-  ImportedModule(_,n,_) -> n
+let getSignatureName = function
+  Signature(n,_,_) -> n
+| Module(_) -> Errormsg.impossible Errormsg.none "getSignatureName: argument is a module"
+| ErrorModule -> Errormsg.impossible Errormsg.none "getSignatureName: argument invalid"  
 
 (*************************************************************************)
 (*  aclauseinfo:                                                         *)

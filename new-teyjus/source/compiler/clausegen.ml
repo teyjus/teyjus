@@ -1889,12 +1889,11 @@ let genClauseBodyCode cl chunks insts startLoc =
 
   (* generate add_imports and push_import's *)
   let genPushImports insts startLoc =
-    let rec genPushImportsAux imports insts startLoc = 
+    let rec genPushImportsAux imports ind insts startLoc = 
       match imports with
 		[] -> (insts, startLoc) 
       | (import :: rest) ->
-		  let impNum = Absyn.getImportedModuleModNo import in
-		  genPushImportsAux rest (insts @ [Instr.Ins_push_import(impNum)])
+		  genPushImportsAux rest (ind+1) (insts @ [Instr.Ins_push_import(ind)])
 	        (startLoc + Instr.getSize_push_import)
     in
     let envSize = 
@@ -1906,7 +1905,7 @@ let genClauseBodyCode cl chunks insts startLoc =
     (*      push_imports instructions   *)
     (*   L:                             *)
     let (newInsts, nextCodeLoc) =
-      genPushImportsAux impseg (insts @ [add_imports]) 
+      genPushImportsAux impseg 0 (insts @ [add_imports]) 
 	                (startLoc + Instr.getSize_add_imports)
     in
     nextCodeLocRef := nextCodeLoc;
