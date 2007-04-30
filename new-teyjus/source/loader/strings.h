@@ -19,7 +19,7 @@ void LD_STRING_LoadStrings(MEM_GmtEnt* ent);
  **/
 DF_StrDataPtr LD_STRING_LoadString(MEM_GmtEnt* ent);
 
-DF_StrDataPtr LD_STRING_GetStringAddr(int ind);
+DF_StrDataPtr LD_STRING_GetStringAddr();
 
 void LD_STRING_Cleanup();
 

@@ -11,14 +11,7 @@
 #define LINKCODE_EXT ".bc"
 #define BYTECODE_EXT ".lp"
 
-//Values needing only during loading.
-//TwoBytes LD_LOADER_numLKinds;
-
-//TwoBytes LD_LOADER_numTySkels;
-
-//TwoBytes LD_LOADER_numHConsts;
-
-int LD_LOADER_LoadLinkcodeVer();
+void LD_LOADER_LoadLinkcodeVer();
 
 void LD_LOADER_LinkOpen(char* modname);
 int LD_LOADER_LoadModuleName(char* modname);
@@ -26,7 +19,6 @@ int LD_LOADER_LoadDependencies(char* modname);
 MEM_GmtEnt* LD_LOADER_GetNewGMTEnt();
 void* LD_LOADER_ExtendModSpace(MEM_GmtEnt* ent, int size);
 int LD_LOADER_SetName(MEM_GmtEnt* ent,char* modname);
-void LD_CODE_LoadCodeSize(MEM_GmtEnt* ent);
 
 
 
@@ -37,34 +29,33 @@ void LD_CODE_LoadCodeSize(MEM_GmtEnt* ent);
 int LD_LOADER_Load(char* modname)
 {
   EM_TRY{
-    printf("Opening...");
     LD_LOADER_LinkOpen(modname);
-    printf("\nChecking Version...");
     LD_LOADER_LoadLinkcodeVer();
-    printf("\nChecking Name...");
     LD_LOADER_LoadModuleName(modname);
-    printf("\nChecking Dependencies...");
     LD_LOADER_LoadDependencies(modname);
   }EM_CATCH{
+    return -1;///\todo Throw error instead?
+  }
+  MEM_GmtEnt* gmtEnt=LD_LOADER_GetNewGMTEnt();
+  EM_TRY{
+    LD_LOADER_SetName(gmtEnt,modname);
+    LD_CODE_LoadCodeSize(gmtEnt);
+    LD_KIND_LoadKst(gmtEnt);
+    LD_TYSKEL_LoadTst(gmtEnt);
+    LD_CONST_LoadCst(gmtEnt);
+    LD_STRING_LoadStrings(gmtEnt);
+    LD_IMPLGOAL_LoadImplGoals(gmtEnt);
+    LD_HASHTAB_LoadHashTabs(gmtEnt);
+    LD_BVRTAB_LoadBvrTabs(gmtEnt);
+    LD_IMPORTTAB_LoadImportTabs(gmtEnt);
+    LD_CODE_LoadCode(gmtEnt);
+  }EM_CATCH{
+    ///\todo Clean up after failed load.
+    LD_LOADER_DropGMTEnt(gmtEnt);
     return -1;
   }
-  /*
-  printf("\nInitializing Module Table Entry...");
-  fflush(stdout);
-  MEM_GmtEnt* gmtEnt=LD_LOADER_GetNewGMTEnt();
-  LD_LOADER_SetName(gmtEnt,modname);
-  printf("\nLoading Code Size\n");
-  LD_CODE_LoadCodeSize(gmtEnt);
-  printf("Loading Kind Table\n");
-  LD_KIND_LoadKst(gmtEnt);
-  printf("Loading Type Skeleton Table\n");
-  LD_TYSKEL_LoadTst(gmtEnt);
-  printf("Loading Constant Table\n");
-  LD_CONST_LoadCst(gmtEnt);
-  printf("Done\n");
-  LD_STRING_LoadStrings(gmtEnt);
-  */
-return 0;
+    
+  return 0;
 }
 
 void LD_LOADER_LinkOpen(char* modname)
@@ -74,31 +65,34 @@ void LD_LOADER_LinkOpen(char* modname)
   LD_FILE_Open(modname,LINKCODE_EXT);
 }
 
-int LD_LOADER_LoadLinkcodeVer()
+///\todo Move this
+#define LINKCODE_VER 1
+void LD_LOADER_LoadLinkcodeVer()
 {
-	int tmp=(int)LD_FILE_GETWORD();
-	printf("Version is %d.\n",tmp);
-	if(tmp!=1)
-		return -1;
-	return 0;
+  int tmp=(int)LD_FILE_GETWORD();
+  printf("Version is %d.\n",tmp);
+  if(tmp!=LINKCODE_VER)
+    EM_THROW(LD_LoadError);
 }
 
+///\note Check Purpose of module name in file
 int LD_LOADER_LoadModuleName(char* modname)
 {
-	if(LD_FILE_GET1()!=strlen(modname)+1)
-		return -1;
-	
-	char c;
-	int i=0;
-	do
-	{
-		c=LD_FILE_GET1();
-		if(c!=modname[i++])
-			return -1;
-	}while(c!='\0');
-	return 0;
+  if(LD_FILE_GET1()!=strlen(modname)+1)
+    return -1;
+  
+  char c;
+  int i=0;
+  do
+  {
+    c=LD_FILE_GET1();
+    if(c!=modname[i++])
+      return -1;
+  }while(c!='\0');
+  return 0;
 }
 
+///\note Consider removing
 int LD_LOADER_LoadDependencies(char* modname)
 {
   char namelen=0;
@@ -126,17 +120,17 @@ int LD_LOADER_LoadDependencies(char* modname)
 
 MEM_GmtEnt* LD_LOADER_GetNewGMTEnt()
 {
-	int i;
-	for(i=0;i<MEM_MAX_MODULES;i++)
-	{
-		if(MEM_modTable[i].modname==NULL)
-		{
-			MEM_modTable[i].modSpaceEnd=MEM_modTable[i].modSpaceBeg=MEM_memTop;
+  int i;
+  for(i=0;i<MEM_MAX_MODULES;i++)
+  {
+    if(MEM_modTable[i].modname==NULL)
+    {
+      MEM_modTable[i].modSpaceEnd=MEM_modTable[i].modSpaceBeg=MEM_memTop;
             MEM_modTable[i].codeSpaceEnd=MEM_modTable[i].codeSpaceBeg=(CSpacePtr)MEM_memBot;
-			return MEM_modTable+i;
-		}
-	}
-	return NULL;
+      return MEM_modTable+i;
+    }
+  }
+  return NULL;
 }
 
 void LD_LOADER_DropGMTEnt(MEM_GmtEnt* ent)
@@ -152,15 +146,15 @@ void LD_LOADER_AddGMTEnt(MEM_GmtEnt* ent)
 
 void* LD_LOADER_ExtendModSpace(MEM_GmtEnt* ent, int size)
 {
-	void* tmp=(void*)ent->modSpaceEnd;
-	ent->modSpaceEnd+=size;
-	return tmp;
+  void* tmp=(void*)ent->modSpaceEnd;
+  ent->modSpaceEnd+=size;
+  return tmp;
 }
 
 int LD_LOADER_SetName(MEM_GmtEnt* ent,char* modname)
 {
-	char* namebuf=(char*)LD_LOADER_ExtendModSpace(ent,strlen(modname)+1);
-	strcpy(namebuf,modname);
-	ent->modname=namebuf;
-	return 0;
+  char* namebuf=(char*)LD_LOADER_ExtendModSpace(ent,strlen(modname)+1);
+  strcpy(namebuf,modname);
+  ent->modname=namebuf;
+  return 0;
 }

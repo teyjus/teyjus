@@ -21,9 +21,12 @@ void __CUT__stringscheck()
     LD_FILE_PipePutString("foobaz");
     
     LD_STRING_LoadStrings(gmtEnt);
-    ASSERT(0==strcmp(MCSTR_toCString((MCSTR_Str)(LD_STRING_GetStringAddr(0)+DF_STRDATA_HEAD_SIZE)),"foo"),"1st String");
-    ASSERT(0==strcmp(MCSTR_toCString((MCSTR_Str)(LD_STRING_GetStringAddr(1)+DF_STRDATA_HEAD_SIZE)),"bar"),"2nd String");
-    ASSERT(0==strcmp(MCSTR_toCString((MCSTR_Str)(LD_STRING_GetStringAddr(2)+DF_STRDATA_HEAD_SIZE)),"foobaz"),"3rd String");
+    LD_FILE_PipePUT2(0);
+    LD_FILE_PipePUT2(1);
+    LD_FILE_PipePUT2(2);
+    ASSERT(0==strcmp(MCSTR_toCString((MCSTR_Str)(LD_STRING_GetStringAddr()+DF_STRDATA_HEAD_SIZE)),"foo"),"1st String");
+    ASSERT(0==strcmp(MCSTR_toCString((MCSTR_Str)(LD_STRING_GetStringAddr()+DF_STRDATA_HEAD_SIZE)),"bar"),"2nd String");
+    ASSERT(0==strcmp(MCSTR_toCString((MCSTR_Str)(LD_STRING_GetStringAddr()+DF_STRDATA_HEAD_SIZE)),"foobaz"),"3rd String");
     LD_STRING_Cleanup();
     
     LD_LOADER_DropGMTEnt(gmtEnt);
