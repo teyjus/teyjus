@@ -512,7 +512,7 @@ and analyseFreeVarTerm var heapvar =
 let assignPermVars goalEnvAssoc notrim =
   (* number of permanent variable "buckets" *)
   let tmpGoalNum = getGoalNum () in
-  let goalnumber = if (notrim) then tmpGoalNum - 1 else tmpGoalNum - 2 in  
+  let goalnumber = if (notrim) then tmpGoalNum - 1 else tmpGoalNum - 2 in 
   (* create an array of (termtypevar) lists for the buckets *)
   let buckets = (Array.make goalnumber []) in
   
@@ -600,7 +600,7 @@ let rec processClause clause =
 			   goalEnvAssoc, cutVarRef, hasenv, impmods) ->
 	  collectHQVars expHQVars;
 	  processClauseHead args tyargs; (* annotate clause (type) args *)
-	  let perm = (impmods = []) in   (* process goal                *)
+	  let perm = not (impmods = []) in   (* process goal                *)
 	  let (myhasenv, notrim) = processGoal goal perm true cutVarRef in
 	  hasenv := myhasenv || notrim || perm; (* decide whether has environment*)
 	  assignPermVars goalEnvAssoc (notrim || perm) (* decide perm var offset *)
@@ -808,15 +808,16 @@ and processVarMaps tmVarMaps tyVarMaps newLastGoalNum =
 let rec processTopLevelDefs clDefs =
   match clDefs with
 	[] -> []
-  | ((_, clausesBlock) :: rest) ->
+  | ((p, clausesBlock) :: rest) ->
 	  (* process each clause contained in the def block *)
-	  let processDef cls = 
+	  let rec processDef cls = 
 		match cls with
 		  [] -> ()
-		| (cl :: rest) -> 
+		| (cl :: restCls) -> 
 			setQVars []; setHQVars []; setExpQVars []; setClVars []; 
 			setEmbedded false; setGoalNum 1; setPervGoal false;
-			processClause cl
+			processClause cl;
+			processDef restCls
 	  in
 	  processDef (Absyn.getClauseBlockClauses clausesBlock);
 	  (clausesBlock :: (processTopLevelDefs rest))
