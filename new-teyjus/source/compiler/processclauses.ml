@@ -328,6 +328,15 @@ let insertClause pred clause clDefs embedded closed =
 	   else Absyn.setConstantCodeInfo pred (Some (Absyn.Clauses newClBlock)));
 	  ((pred, newClBlock) :: clDefs) 
   | Some(cls, _, _, _) -> (* one exists: add one more clause *)
+	  (*let rec show_clause cls = 
+		match cls with 
+		  [] -> ()
+		| (cl :: rest) -> 
+			print_string ("clauseName: " ^ 
+						  (Absyn.getConstantName (Absyn.getClausePred cl)) ^
+						  "\n");
+			show_clause rest
+	  in*)
 	  cls := clause :: !cls;
 	  clDefs
 
@@ -382,7 +391,7 @@ let rec processClause clauseTerm =
       else
 		let (preClause, freeVars, freeTyVars) =
 		  if (Pervasive.isimplConstant head) then (* process rule *)
-			processRule (List.hd args) (List.hd (List.tl args))
+			processRule (List.hd (List.tl args)) (List.hd args)
 		  else (* process fact *)
 			processFact head (Absyn.getTermTypeEnv func) args
 			  (Absyn.getTermApplicationArity clauseTerm)
@@ -792,7 +801,7 @@ let rec processTopLevelClauses clauseTerms impmods clauseDefs anonymous =
 (** ********************************************************************** **)
 (**                       INTERFACE FUNCTION                               **)
 (** ********************************************************************** **)
-let processClauses amod clTerms newClTerms =
+let processClauses amod clTerms newClTerms = 
   match amod with
 	Absyn.Module(modname, modimps, modaccs, ctable, ktable, atable, _,
 				 gkinds, lkinds, gconsts, lconsts, hconsts, skels, hskels, _)
