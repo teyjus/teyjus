@@ -82,7 +82,7 @@ int LD_CODE_LoadCode(MEM_GmtEnt* ent)
           break;
           
         case INSTR_S:
-          *(DF_StrDataPtr*)(code+j)=LD_STRING_GetStringAddr(LD_FILE_GET2());///\todo Unify where addresses get read.
+          *(DF_StrDataPtr*)(code+j)=LD_STRING_GetStringAddr();
           j+=sizeof(WordPtr);
           break;
           

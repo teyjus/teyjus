@@ -14,8 +14,6 @@ WordPtr LD_IMPORTTAB_LoadImportTab(MEM_GmtEnt* ent);
 void LD_IMPORTTAB_LoadImportTabs(MEM_GmtEnt* ent)
 {
   int i;
-  ///\todo do something with number of segments
-  LD_FILE_GET2();//Get number of segments.
   TwoBytes count=LD_IMPORTTAB_numImportTabs=LD_FILE_GET2();
   LD_IMPORTTAB_ImportTabs=(WordPtr*)EM_malloc(count*sizeof(WordPtr));
   
@@ -34,6 +32,8 @@ WordPtr LD_IMPORTTAB_LoadImportTab(MEM_GmtEnt* ent)
   WordPtr tab=LD_LOADER_ExtendModSpace(ent,(3)*sizeof(Word));
   int cst;
   int i;
+  int numSegs = LD_FILE_GET2();//Get number of segments.
+  MEM_impPutNCSEG(tab,numSegs);
   //Load Next Clause Table
   int nctSize=(int)LD_FILE_GET2();
   MEM_impPutLTS(tab,nctSize);

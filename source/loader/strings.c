@@ -4,18 +4,18 @@
 #include "../system/memory.h"
 #include "../simulator/mcstring.h"
 
-TwoBytes LD_LOADER_numStrings;
-DF_StrDataPtr* LD_LOADER_Strings;
+TwoBytes LD_STRING_numStrings;
+DF_StrDataPtr* LD_STRING_Strings;
 
 void LD_STRING_LoadStrings(MEM_GmtEnt* ent)
 {
   int i;
-  TwoBytes count=LD_LOADER_numStrings=LD_FILE_GET2();
-  LD_LOADER_Strings=(DF_StrDataPtr*)EM_malloc(count*sizeof(char*));
+  TwoBytes count=LD_STRING_numStrings=LD_FILE_GET2();
+  LD_STRING_Strings=(DF_StrDataPtr*)EM_malloc(count*sizeof(char*));
   
   for(i=0;i<count;i++)
   {
-    LD_LOADER_Strings[i]= LD_STRING_LoadString(ent);
+    LD_STRING_Strings[i]= LD_STRING_LoadString(ent);
   }
   return;
 }
@@ -35,13 +35,19 @@ DF_StrDataPtr LD_STRING_LoadString(MEM_GmtEnt* ent)
   return loc;
 }
 
-DF_StrDataPtr LD_STRING_GetStringAddr(int i)
+DF_StrDataPtr LD_STRING_GetStringAddr()
 {
-  return LD_LOADER_Strings[i];
+  int i =(int) LD_FILE_GET2();
+  if(0>i || i>LD_STRING_numStrings)
+    EM_THROW(LD_LoadError);
+  return LD_STRING_Strings[i];
 }
 
 void LD_STRING_Cleanup()
 {
-  if(LD_LOADER_Strings)
-    free(LD_LOADER_Strings);
+  if(LD_STRING_Strings)
+  {
+    free(LD_STRING_Strings);
+    LD_STRING_Strings=NULL;
+  }
 }
