@@ -867,7 +867,8 @@ static char* OC_mkConstVarText(char* constName, char* fixity, char* prec,
     strcat(def, tyskel);  
     strcat(def, ", "); 
     strcat(def, tyenvsize);
-    strcat(def, ", "); 
+    strcat(def, ", ");
+    strcat(def, "(ref None), ");  /* All skeletons start without skeleton neededness info.*/
     strcat(def, neededness);
     strcat(def, ", "); 
     strcat(def, codeinfo);
