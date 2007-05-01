@@ -250,10 +250,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\readterm.ml"
-				>
-			</File>
-			<File
 				RelativePath=".\registers.ml"
 				>
 			</File>
@@ -283,7 +279,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\Typereduction.ml"
+				RelativePath=".\typereduction.ml"
 				>
 			</File>
 			<File
@@ -361,10 +357,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\readtermutil.mli"
-				>
-			</File>
-			<File
 				RelativePath=".\registers.mli"
 				>
 			</File>
@@ -385,7 +377,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\Typereduction.mli"
+				RelativePath=".\typereduction.mli"
 				>
 			</File>
 			<File
@@ -421,14 +413,6 @@
 			</File>
 			<File
 				RelativePath=".\lpyacc.mly"
-				>
-			</File>
-		</Filter>
-		<Filter
-			Name="C Files"
-			>
-			<File
-				RelativePath=".\readterm_stubs.c"
 				>
 			</File>
 		</Filter>

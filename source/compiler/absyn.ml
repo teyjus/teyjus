@@ -77,9 +77,9 @@ and atypeabbrev =
 ***************************************************************************)
 and aconstant = 
   Constant of (symbol * afixity ref * int ref * bool ref * bool ref *
-	bool ref * bool ref * bool ref * bool ref * askeleton option ref * 
-    int ref * bool array option ref * acodeinfo option ref *
-    aconstanttype ref * int ref * pos)
+	  bool ref * bool ref * bool ref * bool ref * askeleton option ref * 
+    int ref * bool array option ref * bool array option ref *
+    acodeinfo option ref * aconstanttype ref * int ref * pos)
 
 and aconstanttype =
     GlobalConstant
@@ -323,7 +323,13 @@ let setTypeVariableDataFirstGoal v o = (getTypeVariableDataFirstGoalRef v) := o
 (* offset     *)
 let getTypeVariableDataOffsetRef = function
   TypeVar(fu, lu, p, s, h, o, fg, lg) -> o
-let getTypeVariableDataOffset v = Option.get !(getTypeVariableDataOffsetRef v)
+let getTypeVariableDataOffset v =
+  let r = !(getTypeVariableDataOffsetRef v) in
+  if (Option.isSome r) then
+    Option.get r
+  else
+    Errormsg.impossible Errormsg.none "Absyn.getTypeVariableDataOffset: invalid type variable"
+
 let setTypeVariableDataOffset v o =
   (getTypeVariableDataOffsetRef v) := Some o
 
@@ -349,7 +355,11 @@ let setTypeVariableDataSafety v s = (getTypeVariableDataSafetyRef v) := s
 let getTypeVariableDataLastUseRef = function
   TypeVar(_, lu, _, _, _, _, _, _) -> lu
 let getTypeVariableDataLastUse v = 
-  Option.get !(getTypeVariableDataLastUseRef v)
+  let r = !(getTypeVariableDataLastUseRef v) in
+  if Option.isSome r then
+    Option.get r
+  else
+    Errormsg.impossible Errormsg.none "Absyn.getTypeVariableDataLastUse: invalid type variable"
 
 
 (* first use *)
@@ -506,7 +516,13 @@ let getTypeFreeVariableFirstRef = function
 	|  _ -> (Errormsg.impossible Errormsg.none "getTypeFreeVariableFirstRef: bound variable"))
   |_ -> (Errormsg.impossible Errormsg.none "getTypeFreeVariableFirstRef: not a type variable")
 
-let getTypeFreeVariableFirst var = Option.get !(getTypeFreeVariableFirstRef var)
+let getTypeFreeVariableFirst var = 
+  let r = !(getTypeFreeVariableFirstRef var) in
+  if Option.isSome r then
+    Option.get r
+  else
+    Errormsg.impossible Errormsg.none "Absyn.getTypeFreeVariableFirst: invalid variable"
+
 let setTypeFreeVariableFirst var first = (getTypeFreeVariableFirstRef var) := Some(first)
 
 let isTypeFreeVariable = function
@@ -613,66 +629,74 @@ let isFixityPostfix = function
 (*  aconstant:                                                           *)
 (*************************************************************************)
 let string_of_constant = function
-  Constant(s,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_) ->
+  Constant(s,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_) ->
     Symbol.name s
 
 let getConstantPos = function
-  Constant(_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,p) ->
+  Constant(_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,p) ->
     p
 
 let getConstantFixityRef = function
-  Constant(_,fix,_,_,_,_,_,_,_,_,_,_,_,_,_,_) ->
+  Constant(_,fix,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_) ->
     fix
     
 let getConstantFixity = function
-  Constant(_,fix,_,_,_,_,_,_,_,_,_,_,_,_,_,_) ->
+  Constant(_,fix,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_) ->
     !fix
 
 let getConstantPrec = function
-  Constant(_,_,prec,_,_,_,_,_,_,_,_,_,_,_,_,_) ->
+  Constant(_,_,prec,_,_,_,_,_,_,_,_,_,_,_,_,_,_) ->
     !prec
 
 let getConstantPrecRef = function
-  Constant(_,_,prec,_,_,_,_,_,_,_,_,_,_,_,_,_) ->
+  Constant(_,_,prec,_,_,_,_,_,_,_,_,_,_,_,_,_,_) ->
     prec
 
 let getConstantSymbol = function
-  Constant(sym,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_) -> sym
+  Constant(sym,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_) -> sym
+
+let getConstantReducible = function
+  Constant(_,_,_,_,_,_,_,_,r,_,_,_,_,_,_,_,_) ->
+    !r
 
 let getConstantSkeleton = function
-  Constant(_,_,_,_,_,_,_,_,_,s,_,_,_,_,_,_) ->
+  Constant(_,_,_,_,_,_,_,_,_,s,_,_,_,_,_,_,_) ->
     !s
 
 let getConstantSkeletonValue = function 
-  Constant(_,_,_,_,_,_,_,_,_,s,_,_,_,_,_,_) ->
-    Option.get (!s)
+  Constant(_,_,_,_,_,_,_,_,_,s,_,_,_,_,_,_,_) ->
+    if Option.isSome (!s) then
+      Option.get (!s)
+    else
+      Errormsg.impossible Errormsg.none "Absyn.getConstantSkeletonValue: invalid skeleton"
+
 
 let getConstantSkeletonRef = function
-  Constant(_,_,_,_,_,_,_,_,_,s,_,_,_,_,_,_) ->
+  Constant(_,_,_,_,_,_,_,_,_,s,_,_,_,_,_,_,_) ->
     s
 
 let getConstantName = fun c ->
   (Symbol.name (getConstantSymbol c))
 
 let getConstantType = function
-  Constant(_,_,_,_,_,_,_,_,_,_,_,_,_,ctype,_,_) ->
+  Constant(_,_,_,_,_,_,_,_,_,_,_,_,_,_,ctype,_,_) ->
     !ctype
 
 let getConstantTypeRef = function
-  Constant(_,_,_,_,_,_,_,_,_,_,_,_,_,ctype,_,_) ->
+  Constant(_,_,_,_,_,_,_,_,_,_,_,_,_,_,ctype,_,_) ->
     ctype
 
 let isGlobalConstant c = 
   (getConstantType c) = GlobalConstant
 
 let getConstantCodeInfo = function
-  Constant(_,_,_,_,_,_,_,_,_,_,_,_,ci,_,_,_) ->
+  Constant(_,_,_,_,_,_,_,_,_,_,_,_,_,ci,_,_,_) ->
     ci
 
 let setConstantCodeInfo c codeInfo = (getConstantCodeInfo c) := codeInfo
 
 let getConstantCodeInfoBuiltinIndex = function
-  Constant(_,_,_,_,_,_,_,_,_,_,_,_,ci,_,_,_) ->
+  Constant(_,_,_,_,_,_,_,_,_,_,_,_,_,ci,_,_,_) ->
    match (!ci) with
      Some(Builtin(index)) -> index
    | Some(_) -> 
@@ -684,7 +708,7 @@ let getConstantCodeInfoBuiltinIndex = function
 
 (* retrieve the offset field in the clausesBlock of the pred *)
 let getConstantCodeInfoClausesIndex = function
-  Constant(_,_,_,_,_,_,_,_,_,_,_,_,ci,_,_,_) ->
+  Constant(_,_,_,_,_,_,_,_,_,_,_,_,_,ci,_,_,_) ->
    match (!ci) with
      Some(Clauses(_,_,offset,_)) -> !offset
    | Some(_) -> 
@@ -695,63 +719,81 @@ let getConstantCodeInfoClausesIndex = function
          "getConstantCodeInfoClausesIndex: no definition")   
 
 let constantHasCode = function
-  Constant(_,_,_,_,_,_,_,_,_,_,_,_,ci,_,_,_) ->
+  Constant(_,_,_,_,_,_,_,_,_,_,_,_,_,ci,_,_,_) ->
    match (!ci) with
      Some(_) -> true
    | None -> false
 
 let getConstantTypeEnvSize = function
-  Constant(_,_,_,_,_,_,_,_,_,_,s,_,_,_,_,_) ->
+  Constant(_,_,_,_,_,_,_,_,_,_,s,_,_,_,_,_,_) ->
     !s
 
 let getConstantTypeEnvSizeRef = function
-  Constant(_,_,_,_,_,_,_,_,_,_,s,_,_,_,_,_) ->
+  Constant(_,_,_,_,_,_,_,_,_,_,s,_,_,_,_,_,_) ->
     s
 
+let getConstantSkeletonNeededness = function
+  Constant(_,_,_,_,_,_,_,_,_,_,_,n,_,_,_,_,_) ->
+    !n
+
+let getConstantSkeletonNeedednessRef = function
+  Constant(_,_,_,_,_,_,_,_,_,_,_,n,_,_,_,_,_) ->
+    n
+
+let getConstantNeededness = function
+  Constant(_,_,_,_,_,_,_,_,_,_,_,_,n,_,_,_,_) ->
+    !n
+
+let getConstantNeedednessRef = function
+  Constant(_,_,_,_,_,_,_,_,_,_,_,_,n,_,_,_,_) ->
+    n
+
+let getConstantNeedednessValue = function
+  Constant(_,_,_,_,_,_,_,_,_,_,_,_,n,_,_,_,_) ->
+    if Option.isSome (!n) then
+      Option.get (!n)
+    else
+      Errormsg.impossible Errormsg.none "Absyn.getConstantNeedednessValue: invalid neededness"
+
 let getConstantNoDefs = function
-  Constant(_,_,_,_,_,nd,_,_,_,_,_,_,_,_,_,_) ->
+  Constant(_,_,_,_,_,nd,_,_,_,_,_,_,_,_,_,_,_) ->
     !nd
 
 let getConstantNoDefsRef = function
-  Constant(_,_,_,_,_,nd,_,_,_,_,_,_,_,_,_,_) ->
+  Constant(_,_,_,_,_,nd,_,_,_,_,_,_,_,_,_,_,_) ->
     nd
 
 let getConstantClosed = function
-  Constant(_,_,_,_,_,_,c,_,_,_,_,_,_,_,_,_) ->
+  Constant(_,_,_,_,_,_,c,_,_,_,_,_,_,_,_,_,_) ->
     !c
 
 let getConstantClosedRef = function
-  Constant(_,_,_,_,_,_,c,_,_,_,_,_,_,_,_,_) ->
+  Constant(_,_,_,_,_,_,c,_,_,_,_,_,_,_,_,_,_) ->
     c
 
 let getConstantUseOnly = function
-  Constant(_,_,_,_,u,_,_,_,_,_,_,_,_,_,_,_) ->
+  Constant(_,_,_,_,u,_,_,_,_,_,_,_,_,_,_,_,_) ->
     !u
 
 let getConstantUseOnlyRef = function
-  Constant(_,_,_,_,u,_,_,_,_,_,_,_,_,_,_,_) ->
+  Constant(_,_,_,_,u,_,_,_,_,_,_,_,_,_,_,_,_) ->
     u
 
-let getConstantExpDef = function
-  Constant(_,_,_,e,_,_,_,_,_,_,_,_,_,_,_,_) ->
+let getConstantExportDef = function
+  Constant(_,_,_,e,_,_,_,_,_,_,_,_,_,_,_,_,_) ->
     !e
 
-let getConstantExpDefRef = function
-  Constant(_,_,_,e,_,_,_,_,_,_,_,_,_,_,_,_) ->
+let getConstantExportDefRef = function
+  Constant(_,_,_,e,_,_,_,_,_,_,_,_,_,_,_,_,_) ->
     e
   
 let getConstantIndex = function
-  Constant(_,_,_,_,_,_,_,_,_,_,_,_,_,_,i,_) ->
+  Constant(_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,i,_) ->
     !i
 
 let setConstantIndex c index =
-  let Constant(_,_,_,_,_,_,_,_,_,_,_,_,_,_,i,_) = c in
+  let Constant(_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,i,_) = c in
   i := index 
-
-
-let getConstantNeededness = function
-  Constant(_,_,_,_,_,_,_,_,_,_,_,n,_,_,_,_) ->
-    Option.get (!n)
 
 let getConstantRedefinable c =
   let t = getConstantType c in
@@ -762,17 +804,17 @@ let getConstantRedefinable c =
 let makeGlobalConstant symbol fixity prec expDef useOnly tyEnvSize tySkel index =
   Constant(symbol, ref fixity, ref prec, ref expDef, ref useOnly, ref false,
 		   ref true, ref false, ref false, ref (Some tySkel), ref tyEnvSize,
-		   ref None, ref None, ref GlobalConstant, ref index, Errormsg.none)
+		   ref None, ref None, ref None, ref GlobalConstant, ref index, Errormsg.none)
 
 let makeAnonymousConstant i =
   Constant(Symbol.generate (), ref NoFixity, ref (-1), ref true, ref false,
-    ref false, ref true, ref false, ref false, ref None, ref i, ref None,
-    ref None, ref AnonymousConstant, ref 0, Errormsg.none)
+    ref false, ref true, ref false, ref false, ref None, ref i,
+    ref None, ref None, ref None, ref AnonymousConstant, ref 0, Errormsg.none)
 
 let makeHiddenConstant skel =
   Constant(Symbol.symbol "", ref NoFixity, ref (-1), ref true, ref false,
-    ref false, ref true, ref false, ref false, ref (Some skel), ref 0, ref None,
-    ref None, ref HiddenConstant, ref 0, Errormsg.none)
+    ref false, ref true, ref false, ref false, ref (Some skel), ref 0,
+    ref None, ref None, ref None, ref HiddenConstant, ref 0, Errormsg.none)
 
 let makeConstantTerm c env pos =
   let esize = getConstantTypeEnvSize c in
@@ -781,8 +823,6 @@ let makeConstantTerm c env pos =
   else
     Errormsg.impossible (getConstantPos c)
       "makeConstantTerm: constant environment size and given environment don't match"
-
-
 
 (*************************************************************************)
 (*  atypesymbol:                                                         *)
@@ -842,7 +882,11 @@ let setVariableDataPerm v perm =
 	Var(_,p,_,_,_,_,_,_) -> p := perm
 
 let getVariableDataLastUse = function
-  Var(_,_,_,_,_,_,_,lu) -> Option.get (!lu)
+  Var(_,_,_,_,_,_,_,lu) ->
+    if Option.isSome (!lu) then
+      Option.get (!lu)
+    else
+      Errormsg.impossible Errormsg.none "Absyn.getVariableDataLastUse: invalid variable"
 
 let setVariableDataLastUse v u =
   match v with
@@ -881,7 +925,13 @@ let setVariableDataLastGoal v o = (getVariableDataLastGoalRef v) := o
 let getVariableDataOffsetRef = function
   Var(oneuse, perm, safety, heapvar, offset, firstgoal, lastgoal, lastuse) ->
     offset
-let getVariableDataOffset v = Option.get (!(getVariableDataOffsetRef v))
+let getVariableDataOffset v =
+  let r = !(getVariableDataOffsetRef v) in
+  if Option.isSome (r) then
+      Option.get (r)
+  else
+    Errormsg.impossible Errormsg.none "Absyn.getVariableDataOffset: invalid variable"
+
 let setVariableDataOffset v o =
   (getVariableDataOffsetRef v) := Some o
 
@@ -1141,7 +1191,12 @@ let getTermFreeVariableVariableData = function
         "getTermFreeVariableVariableData: invalid term"
 
 let getTermFreeVariableFirst = function
-  FreeVarTerm(FreeVar(_, first),_,_) -> Option.get (!first)
+  FreeVarTerm(FreeVar(_, first),_,_) ->
+    if Option.isSome !first then
+      Option.get (!first)
+    else
+      Errormsg.impossible Errormsg.none 
+        "getTermFreeVariablFirst: invalid term free variable"
 | _ -> Errormsg.impossible Errormsg.none 
         "getTermFreeVariablFirst: invalid term"
 
@@ -1537,6 +1592,9 @@ let getClauseInfoClauseBlocks = function
 (*************************************************************************)
 (*  aclausesblock:                                                       *)
 (*************************************************************************)
+let getClauseBlockClauses = function
+  (c,_,_,_) -> c
+  
 let getClauseBlockClose = function
   (_,closed,_,_) -> !closed
 
@@ -1678,7 +1736,7 @@ let printAbsyn = fun m out ->
     
     match const with
       Constant(sym,fix,prec,exportdef,useonly,nodefs,closed,typepreserv,
-        reducible,skel,envsize,_,codeinfo,ctype,index,pos) ->
+        reducible,skel,envsize,_,_,codeinfo,ctype,index,pos) ->
         (output "Constant(";
         output (Symbol.name sym);
         output ", ";

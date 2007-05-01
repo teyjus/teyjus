@@ -431,7 +431,7 @@ and translateGlobalConstants = fun clist kindtable typeabbrevtable ->
   let buildConstant = fun sym ty tyskel esize pos ->
     Absyn.Constant(sym, ref Absyn.NoFixity, ref (-1), ref false, ref false,
       ref false, ref false, ref false, ref false, tyskel,
-      ref esize, ref None, ref None,
+      ref esize, ref None, ref None, ref None,
       ref Absyn.GlobalConstant, ref 0, pos)
   in
   translateConstants clist kindtable typeabbrevtable buildConstant
@@ -443,7 +443,7 @@ and translateLocalConstants = fun clist kindtable typeabbrevtable ->
   let buildConstant = fun sym ty tyskel esize pos ->
     Absyn.Constant(sym, ref Absyn.NoFixity, ref (-1), ref false, ref false,
       ref false, ref false, ref false, ref false, tyskel,
-      ref esize, ref None, ref None,
+      ref esize, ref None, ref None, ref None,
       ref Absyn.LocalConstant, ref 0, pos)
   in
   translateConstants clist kindtable typeabbrevtable buildConstant
@@ -455,7 +455,7 @@ and translateUseOnlyConstants = fun clist kindtable typeabbrevtable ->
   let buildConstant = fun sym ty tyskel esize pos ->
     Absyn.Constant(sym, ref Absyn.NoFixity, ref (-1), ref false, ref true,
       ref false, ref false, ref false, ref false, tyskel,
-      ref esize, ref None, ref None,
+      ref esize, ref None, ref None, ref None,
       ref Absyn.GlobalConstant, ref 0, pos)
   in
   translateConstants clist kindtable typeabbrevtable buildConstant
@@ -467,7 +467,7 @@ and translateClosedConstants = fun clist kindtable typeabbrevtable ->
   let buildConstant = fun sym ty tyskel esize pos ->
     Absyn.Constant(sym, ref Absyn.NoFixity, ref (-1), ref false, ref false,
       ref false, ref true, ref false, ref false, tyskel,
-      ref esize, ref None, ref None,
+      ref esize, ref None, ref None, ref None,
       ref Absyn.GlobalConstant, ref 0, pos)
   in
   translateConstants clist kindtable typeabbrevtable buildConstant

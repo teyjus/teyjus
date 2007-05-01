@@ -245,7 +245,7 @@ let assignConstIndex gconsts lconsts hconsts =
 			None -> (defs, numDefs, nonExpDefs, numNonExpDefs, expDefs, 
 					 numExpDefs)
 	      | Some(Absyn.Clauses(clauseBlock)) -> 
-			  if (Absyn.getConstantExpDef const) then
+			  if (Absyn.getConstantExportDef const) then
 				(Absyn.setClauseBlockClose clauseBlock true;
 				 (const :: defs, numDefs + 1, nonExpDefs, numNonExpDefs, 
 				  const :: expDefs, numExpDefs + 1))

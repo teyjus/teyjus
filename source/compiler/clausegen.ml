@@ -1412,7 +1412,7 @@ let genClauseHeadCode cl chunk insts startLoc =
     let (tyArgsCode, tyArgsSize, regTypePairs) =
       genHeadTyVarsCode (Absyn.getClauseTypeArgs cl)
        	((Absyn.getClauseNumberOfTermArgs cl)+1)
-	    (Absyn.getConstantNeededness (Absyn.getClausePred cl)) 
+	    (Absyn.getConstantNeedednessValue (Absyn.getClausePred cl)) 
     in
 	let (tyCode, tySize) = genATypesCode regTypePairs chunk in
     
@@ -1503,7 +1503,7 @@ let setUpGoalArgs goal chunk last hasenv =
   (* function body of setUpGoalArgs *)
   let numTermArgs = Absyn.getAtomicGoalNumberOfTermArgs goal in
   let neededness  = 
-	Absyn.getConstantNeededness (Absyn.getAtomicGoalPredicate goal)
+	Absyn.getConstantNeedednessValue (Absyn.getAtomicGoalPredicate goal)
   in
   let numGoalArgs = Registers.getNumGoalArgs () in
   let (regTypePairs, typeConflictCode, typeConflictSize) =
@@ -1674,7 +1674,7 @@ and genAtomicGoal goal cl goalNum last chunk chunks insts startLoc =
   (* generate "execute" code *)
   let genExecute pred = 
 	if (Absyn.getConstantClosed pred) then
-	  let expdef = (Absyn.getConstantExpDef pred) in
+	  let expdef = (Absyn.getConstantExportDef pred) in
 	  if (Absyn.constantHasCode pred) && 
 		((not (Absyn.isGlobalConstant pred)) || expdef) then
 		let (instr, size) = 
@@ -1696,7 +1696,7 @@ and genAtomicGoal goal cl goalNum last chunk chunks insts startLoc =
   let genCall pred envsize =
 	let myGoalNum = goalNum + 1 in
 	if (Absyn.getConstantClosed pred) then
-	  let expdef = (Absyn.getConstantExpDef pred) in
+	  let expdef = (Absyn.getConstantExportDef pred) in
 	  if (Absyn.constantHasCode pred) && 
 		((not (Absyn.isGlobalConstant pred)) || expdef) then
 		let (instr, size) = 

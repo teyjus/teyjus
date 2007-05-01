@@ -69,6 +69,7 @@ and atypeabbrev =
 *            marked as useonly in the imported and accumulated modules)
 * Skeleton
 * Type Environment Size
+* Skeleton Neededness
 * Neededness
 * Code Info
 * Constant Type
@@ -78,8 +79,8 @@ and atypeabbrev =
 and aconstant = 
   Constant of (symbol * afixity ref * int ref * bool ref * bool ref *
 	bool ref * bool ref * bool ref * bool ref * askeleton option ref * 
-    int ref * bool array option ref * acodeinfo option ref *
-    aconstanttype ref * int ref * pos)
+    int ref * bool array option ref * bool array option ref *
+    acodeinfo option ref * aconstanttype ref * int ref * pos)
 
 and aconstanttype =
     GlobalConstant
@@ -188,11 +189,11 @@ and atypevarinits = TypeVarInits of (atypevar list)
 and ahcvarassoc = HCVarAssocs of ((avar * aconstant) list)
 
 
-(****************************************************************************
- *Clauses:
- * (head, args, tyargs, numargs, numtargs, body, offset, varmap, tyvarmap   *
- *gesplist, cutvar, hasenv, impmods)                                      *
- ***************************************************************************)
+(**********************************************************************
+*Clauses:
+* (head, args, tyargs, numargs, numtargs, body, offset, varmap, tyvarmap
+* gesplist, cutvar, hasenv, impmods)
+**********************************************************************)
 and aclause = 
     Fact of (aconstant * aterm list * atype list * int * int * 
 			   atermvarmap * atypevarmap * avar list * int option ref * 
@@ -342,14 +343,21 @@ val isFixityPostfix : afixity -> bool
 (*  aconstant:                                                           *)
 (*************************************************************************)
 val getConstantRedefinable : aconstant -> bool
+val getConstantReducible : aconstant -> bool
 val getConstantPos : aconstant -> pos
 val getConstantFixity : aconstant -> afixity
 val getConstantFixityRef : aconstant -> afixity ref
 val getConstantPrec : aconstant -> int
 val getConstantPrecRef : aconstant -> int ref
 val getConstantSymbol : aconstant -> symbol
+val getConstantSkeletonValue : aconstant -> askeleton
 val getConstantSkeleton : aconstant -> askeleton option
 val getConstantSkeletonRef : aconstant -> askeleton option ref
+val getConstantSkeletonNeededness : aconstant -> bool array option
+val getConstantSkeletonNeedednessRef : aconstant -> bool array option ref
+val getConstantNeededness : aconstant -> bool array option
+val getConstantNeedednessRef : aconstant -> bool array option ref
+val getConstantNeedednessValue : aconstant -> bool array
 val getConstantName : aconstant -> string
 val getConstantType : aconstant -> aconstanttype
 val getConstantTypeRef : aconstant -> aconstanttype ref
@@ -363,15 +371,13 @@ val getConstantClosed : aconstant -> bool
 val getConstantClosedRef : aconstant -> bool ref
 val getConstantUseOnly : aconstant -> bool
 val getConstantUseOnlyRef : aconstant -> bool ref
-val getConstantExpDef : aconstant -> bool
-val getConstantExpDefRef : aconstant -> bool ref
+val getConstantExportDef : aconstant -> bool
+val getConstantExportDefRef : aconstant -> bool ref
 val getConstantIndex : aconstant -> int
 val setConstantIndex : aconstant -> int -> unit
-val getConstantNeededness : aconstant -> bool array
 val getConstantCodeInfoBuiltinIndex : aconstant -> int
 (* retrieve the offset field in the clausesBlock of the pred *)
 val getConstantCodeInfoClausesIndex : aconstant -> int
-val getConstantSkeletonValue : aconstant -> askeleton
 
 val constantHasCode  : aconstant -> bool
 val isGlobalConstant : aconstant -> bool
@@ -543,6 +549,7 @@ val getClauseInfoClauseBlocks : aclauseinfo -> aclausesblock list
 (*************************************************************************)
 (*  aclausesblock:                                                       *)
 (*************************************************************************)
+val getClauseBlockClauses : aclausesblock -> aclause list
 val getClauseBlockClose : aclausesblock -> bool
 val setClauseBlockClose : aclausesblock -> bool -> unit
 val getClauseBlockNextClause : aclausesblock -> int

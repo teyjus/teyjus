@@ -149,11 +149,11 @@ let main () =
   (******************************************************************
   *getOutfile:
   * Gets the outfile filename.  Defaults to the input filename with
-  * ".bc" appended.
+  * ".lp" appended.
   ******************************************************************)
   let getOutfile infile =
     if !outputFilename = "" then
-      infile ^ ".bc"
+      infile ^ ".lp"
     else
       !outputFilename
   in
