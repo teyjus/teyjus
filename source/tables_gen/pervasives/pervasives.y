@@ -12,7 +12,7 @@ int yywrap() {return 1;}
 
 void yyerror(const char* str)
 {
-    printf("%s\n", str);
+    printf("Error: Unable to parse input: %s\n", str);
 }
 
 static int tySkelInd = 0;
@@ -278,6 +278,7 @@ int main(argc, argv)
       printf("Error: no input file specified.\n");
       return 1;
     }
+	printf("Generating pervasive files...\n");
     yyin = UTIL_fopenR(argv[1]);
     yyparse();
     UTIL_fclose(yyin);
@@ -285,6 +286,6 @@ int main(argc, argv)
     spitCPervasivesC(); 
     spitOCPervasiveMLI();
     spitOCPervasiveML(); 
-    printf("Pervasive files genereated\n");
+    printf("Done.\n");
     return 0;
 }
