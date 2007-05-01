@@ -11,10 +11,10 @@
 /* Space allocation                                                       */
 /**************************************************************************/
 /* allocate space */
-void* UTIL_malloc(int size);
+void* UTIL_malloc(size_t size);
 
 /* allocate space for a string of given size */
-char* UTIL_mallocStr(int size);
+char* UTIL_mallocStr(size_t size);
 
 /**************************************************************************/
 /* string operation                                                       */

@@ -9,7 +9,7 @@
 /**************************************************************************/
 /* generating pervasive kind relevant part                                */
 /**************************************************************************/
-void occamlGenNumKinds(char* number);
+void ocamlGenNumKinds(char* number);
 void ocamlGenKind(char* kindName, char* kVarName, char* arity, char* offset);
 void ocamlGenKinds();
 
