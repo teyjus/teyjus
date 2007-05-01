@@ -14,34 +14,34 @@ let map func mylist =
 let writeKindIndex kind =
   let cat =
     match kind with
-      Absyn.LocalKind(_) -> Writeutil.local
-    | Absyn.GlobalKind(_) -> Writeutil.global
-    | Absyn.PervasiveKind(_) -> Writeutil.pervasive
+      Absyn.LocalKind(_) -> Bytecode.local
+    | Absyn.GlobalKind(_) -> Bytecode.global
+    | Absyn.PervasiveKind(_) -> Bytecode.pervasive
   in
-  Writeutil.writeint1 cat;
-  Writeutil.writeint2 (Absyn.getKindIndex kind)
+  Bytecode.writeint1 cat;
+  Bytecode.writeint2 (Absyn.getKindIndex kind)
 
 let getConstantMark constCat =
   match constCat with 
-	Absyn.GlobalConstant -> Writeutil.global
-  | Absyn.LocalConstant  -> Writeutil.local
-  | Absyn.PervasiveConstant (_) -> Writeutil.pervasive
-  | _ -> Writeutil.hidden (* assumed to be hidden constant *)		
+	Absyn.GlobalConstant -> Bytecode.global
+  | Absyn.LocalConstant  -> Bytecode.local
+  | Absyn.PervasiveConstant (_) -> Bytecode.pervasive
+  | _ -> Bytecode.hidden (* assumed to be hidden constant *)		
   
 let writeConstIndex const =
-  Writeutil.writeint1 (getConstantMark (Absyn.getConstantType const));
-  Writeutil.writeint2 (Absyn.getConstantIndex const)
+  Bytecode.writeint1 (getConstantMark (Absyn.getConstantType const));
+  Bytecode.writeint2 (Absyn.getConstantIndex const)
 
 (*****************************************************************************)
 (*                  WRITING OUT MODULE HEADER INFORMATION                    *)
 (*****************************************************************************)
 let writeHeader modName codeSize =
   (* <bytecode version number> *)
-  Writeutil.writeWord Writeutil.byteCodeVersionNumber;
+  Bytecode.writeWord Bytecode.byteCodeVersionNumber;
   (* [module name] *)
-  Writeutil.writeString modName;
+  Bytecode.writeString modName;
   (* <code size in bytes> *)
-  Writeutil.writeWord codeSize
+  Bytecode.writeWord codeSize
 
 (****************************************************************************)
 (*                     WRITING OUT KIND INFORMATION                         *)
@@ -49,17 +49,17 @@ let writeHeader modName codeSize =
 let writeKindInfo gkinds lkinds = 
   (* global kind: arity, name *)
   let writeGlobalKind kind =
-	Writeutil.writeint1 (Absyn.getKindArity kind);
-	Writeutil.writeString (Absyn.getKindName kind)
+	Bytecode.writeint1 (Absyn.getKindArity kind);
+	Bytecode.writeString (Absyn.getKindName kind)
   in
   (* local kind : arity *)
   let writeLocalKind kind =
-	Writeutil.writeint1 (Absyn.getKindArity kind)
+	Bytecode.writeint1 (Absyn.getKindArity kind)
   in
   
   let writeKindsAux kinds writeKindFunc =
 	let Codegen.KindList(kindList, numKinds) = kinds in
-	Writeutil.writeint2 numKinds;
+	Bytecode.writeint2 numKinds;
 	map writeKindFunc kindList 
   in
 
@@ -74,16 +74,16 @@ let writeTypeSkels tyskels =
   let rec writeType tySkel =
     match tySkel with
       Absyn.ApplicationType(kind, args) ->
-		Writeutil.writeint1 Writeutil.typeMarkKind; 
+		Bytecode.writeint1 Bytecode.typeMarkKind; 
         writeKindIndex kind;
-		Writeutil.writeint1 (List.length args);
+		Bytecode.writeint1 (List.length args);
         map writeType args
     | Absyn.ArrowType(lop, rop) ->
-		Writeutil.writeint1 Writeutil.typeMarkArrow;
+		Bytecode.writeint1 Bytecode.typeMarkArrow;
 		map writeType [lop ; rop] 
     | _ -> (* type skeleton variable *)
-		Writeutil.writeint1 Writeutil.typeMarkSkeletonVar;
-		Writeutil.writeint1 (Absyn.getSkeletonVariableIndex tySkel)
+		Bytecode.writeint1 Bytecode.typeMarkSkeletonVar;
+		Bytecode.writeint1 (Absyn.getSkeletonVariableIndex tySkel)
   in
 
   let writeOneTypeSkel tySkel =
@@ -93,7 +93,7 @@ let writeTypeSkels tyskels =
   in
 
   let Codegen.TypeSkeletonList(tySkelList, numTySkels) = tyskels in
-  Writeutil.writeint2 numTySkels; 
+  Bytecode.writeint2 numTySkels; 
   map writeOneTypeSkel tySkelList 
 
 (*****************************************************************************)
@@ -101,37 +101,37 @@ let writeTypeSkels tyskels =
 (*****************************************************************************)
 let writeFixity fixity =
   match fixity with
-    Absyn.Infix      -> Writeutil.writeint1 Writeutil.fixityMarkInfix
-  | Absyn.Infixl     -> Writeutil.writeint1 Writeutil.fixityMarkInfixl
-  | Absyn.Infixr     -> Writeutil.writeint1 Writeutil.fixityMarkInfixr
-  | Absyn.Prefix     -> Writeutil.writeint1 Writeutil.fixityMarkPrefix
-  | Absyn.Prefixr    -> Writeutil.writeint1 Writeutil.fixityMarkPrefixr
-  | Absyn.Postfix    -> Writeutil.writeint1 Writeutil.fixityMarkPostfix
-  | Absyn.Postfixl   -> Writeutil.writeint1 Writeutil.fixityMarkPostfixl
-  | Absyn.NoFixity   -> Writeutil.writeint1 Writeutil.fixityMarkNoFixity 
+    Absyn.Infix      -> Bytecode.writeint1 Bytecode.fixityMarkInfix
+  | Absyn.Infixl     -> Bytecode.writeint1 Bytecode.fixityMarkInfixl
+  | Absyn.Infixr     -> Bytecode.writeint1 Bytecode.fixityMarkInfixr
+  | Absyn.Prefix     -> Bytecode.writeint1 Bytecode.fixityMarkPrefix
+  | Absyn.Prefixr    -> Bytecode.writeint1 Bytecode.fixityMarkPrefixr
+  | Absyn.Postfix    -> Bytecode.writeint1 Bytecode.fixityMarkPostfix
+  | Absyn.Postfixl   -> Bytecode.writeint1 Bytecode.fixityMarkPostfixl
+  | Absyn.NoFixity   -> Bytecode.writeint1 Bytecode.fixityMarkNoFixity 
 
 let writeConstInfo gconsts lconsts hconsts =
   (* global constant: fixity, precedence, type env size, name, tyskelind *)
   (* local constant: fixity, precedence, type env size, tyskelind *)
   let writeConst global const =
     writeFixity (Absyn.getConstantFixity const);
-    Writeutil.writeint1 (Absyn.getConstantPrec const);
-    Writeutil.writeint1 (Absyn.getConstantTypeEnvSize const);
-    (if (global) then Writeutil.writeString (Absyn.getConstantName const)
+    Bytecode.writeint1 (Absyn.getConstantPrec const);
+    Bytecode.writeint1 (Absyn.getConstantTypeEnvSize const);
+    (if (global) then Bytecode.writeString (Absyn.getConstantName const)
      else ());
-    Writeutil.writeint2 (Absyn.getSkeletonIndex 
+    Bytecode.writeint2 (Absyn.getSkeletonIndex 
 			   (Absyn.getConstantSkeletonValue const))
   in
 
   (* hidden constant: tyskelind *)
   let writeHConst const =
-    Writeutil.writeint2 (Absyn.getSkeletonIndex 
+    Bytecode.writeint2 (Absyn.getSkeletonIndex 
 			   (Absyn.getConstantSkeletonValue const))
   in
   
   let writeConstInfoAux consts writeConstFunc =
     let Codegen.ConstantList(constList, numConsts) = consts in
-    Writeutil.writeint2 numConsts;
+    Bytecode.writeint2 numConsts;
     map writeConstFunc constList 
   in
 
@@ -145,12 +145,12 @@ let writeConstInfo gconsts lconsts hconsts =
 let writeStrings strs =
   let writeOneString str =
     if (Absyn.getStringInfoNew str) then
-      Writeutil.writeString (Absyn.getStringInfoString str)
+      Bytecode.writeString (Absyn.getStringInfoString str)
     else ()
   in
 
   let Codegen.StringList(strInfo, numStrs) = strs in
-  Writeutil.writeint2 numStrs;
+  Bytecode.writeint2 numStrs;
   map writeOneString strInfo 
 
 
@@ -161,7 +161,7 @@ let writeImpGoalInfo implGoals =
   let writeDef def =
 	let Codegen.ImpPredInfo(pred, offset) = def in
 	writeConstIndex pred;
-	Writeutil.writeWord offset
+	Bytecode.writeWord offset
   in
 
   let writeImpGoal impGoal = 
@@ -169,18 +169,18 @@ let writeImpGoalInfo implGoals =
 							impPredList, numDefs) =  impGoal
 	in
 	(* [next clause table]*)
-	Writeutil.writeint2 numExtPreds;
+	Bytecode.writeint2 numExtPreds;
 	map writeConstIndex extPreds; 
 	(* <find code function> *)
-	Writeutil.writeint1 Writeutil.findCodeFuncMarkHash;
+	Bytecode.writeint1 Bytecode.findCodeFuncMarkHash;
 	(* [search table] *)
-	Writeutil.writeint2 numDefs;
+	Bytecode.writeint2 numDefs;
 	map writeDef impPredList
   in 
 
   let Codegen.ImpGoalList(impGoalList, numImpGoals) = implGoals in
   (* <number of implication goals>*)
-  Writeutil.writeint2 numImpGoals;
+  Bytecode.writeint2 numImpGoals;
   (* [implication goal info] *)
   map writeImpGoal impGoalList
 
@@ -190,23 +190,23 @@ let writeImpGoalInfo implGoals =
 let writeHashTabInfo hashTabs =
   let writeHashEntry hashEntry =
 	let Codegen.ConstHashTabEntry(constCat, index, codeLoc) = hashEntry in
-	Writeutil.writeint1 (getConstantMark constCat);
-	Writeutil.writeint2 index;
-	Writeutil.writeWord codeLoc
+	Bytecode.writeint1 (getConstantMark constCat);
+	Bytecode.writeint2 index;
+	Bytecode.writeWord codeLoc
   in
 
   (* [hash table] *)
   let writeHashTab hashTab =
 	let Codegen.ConstHashTab(numEntries, hashChains) = hashTab in
         (* <number of entries>*)
-	Writeutil.writeint2 numEntries;
+	Bytecode.writeint2 numEntries;
         (* [hash table entries] *)
 	map writeHashEntry hashChains
   in
 	
   let Codegen.ConstHashTabs(hashTabList, numHashTabs) = hashTabs in
   (* <number of hash tables> *)
-  Writeutil.writeint2 numHashTabs;
+  Bytecode.writeint2 numHashTabs;
   (* [hash tables] *)
   map writeHashTab hashTabList	
 
@@ -217,19 +217,19 @@ let writeModDefsInfo nonExpDefs expDefs localDefs defs =
   let writePredTabs predlist =
 	let Codegen.PredList(predNames, numPreds) = predlist in
         (* <number of predicates> *)
-	Writeutil.writeint2 numPreds;
+	Bytecode.writeint2 numPreds;
         (* [constant indexes]*)
 	map writeConstIndex predNames
   in
 
   let writeSearchTabEntry pred =
 	writeConstIndex pred;
-	Writeutil.writeWord (Absyn.getConstantCodeInfoClausesIndex pred)
+	Bytecode.writeWord (Absyn.getConstantCodeInfoClausesIndex pred)
   in
 
   let writeSearchTab defs =
     let Codegen.PredList(predNames, numPreds) = defs in
-	Writeutil.writeint2 numPreds;
+	Bytecode.writeint2 numPreds;
 	map writeSearchTabEntry predNames
   in
 
@@ -240,7 +240,7 @@ let writeModDefsInfo nonExpDefs expDefs localDefs defs =
   (* [local predicate table] *)
   writePredTabs localDefs;
   (* <find code function> *)
-  Writeutil.writeint1 Writeutil.findCodeFuncMarkHash;
+  Bytecode.writeint1 Bytecode.findCodeFuncMarkHash;
   (* [search table] *)
   writeSearchTab defs
 
@@ -252,29 +252,29 @@ let writeRenamingInfo renamingList =
   let writeRenamingInfoOneMod renaming =
 	let writeRenamingKinds kinds =
           let writeRenamingKind kind =
-	    Writeutil.writeString (Absyn.getKindName kind);
+	    Bytecode.writeString (Absyn.getKindName kind);
 	    writeKindIndex kind
 	  in
 
 	  let Codegen.KindList(kindList, numKinds) = kinds in
-	  Writeutil.writeint2 numKinds;
+	  Bytecode.writeint2 numKinds;
 	  map writeRenamingKind kindList
 	in
 	
 	let writeRenamingConsts consts =
 	  let writeRenamingConst const =
-	    Writeutil.writeString (Absyn.getConstantName const);
+	    Bytecode.writeString (Absyn.getConstantName const);
 	    writeConstIndex const;
 	  in
 
 	  let Codegen.ConstantList(constList, numConsts) = consts in
-	  Writeutil.writeint2 numConsts;
+	  Bytecode.writeint2 numConsts;
 	  map writeRenamingConst constList
 	in
 	
 	let Codegen.RenamingInfo(modName, kinds, consts) = renaming in
         (* <module name>*)
-	Writeutil.writeString modName;
+	Bytecode.writeString modName;
         (* [kind renaming functions] *)
 	writeRenamingKinds kinds;
         (* [constant renaming functions] *)
@@ -283,7 +283,7 @@ let writeRenamingInfo renamingList =
 
   let modNumber = List.length renamingList in
   (* <number of acc/imp modules>*)
-  Writeutil.writeint1 modNumber;
+  Bytecode.writeint1 modNumber;
   (* [renaming functions] *)
   map writeRenamingInfoOneMod renamingList 
 
@@ -321,7 +321,7 @@ let writeByteCode cgModule =
       (* [hash tables] *)
       writeHashTabInfo hashTabs;
       (* [bound variable tables] *)
-	  Writeutil.writeint2 0;
+	  Bytecode.writeint2 0;
       (* [import table] *)
 	  writeModDefsInfo nonExpDefs expDefs localDefs defs;
       (* [accumulated modules] *)

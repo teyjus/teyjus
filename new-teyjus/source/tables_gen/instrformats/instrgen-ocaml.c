@@ -40,7 +40,7 @@ static char* addStr(char* str, char* addOn)
 #define WRITE_PREFIX     "write"
 #define INDENT           "  "
 #define INDENT2          "    "
-#define WRITE            "Writeutil.write"
+#define WRITE            "Bytecode.write"
 #define INSCAT_PREFIX    "inscat"
 #define INS_PREFIX       "Ins_"
 

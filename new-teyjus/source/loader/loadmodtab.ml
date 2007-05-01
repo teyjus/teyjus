@@ -3,10 +3,10 @@
 (***************************************************************************)
 let loadHeaderInfo () =
   (* check bytecode version number *)
-  (if (Readutil.readWord () = Writeutil.byteCodeVersionNumber) then ()
+  (if (Bytecode.readWord () = Bytecode.byteCodeVersionNumber) then ()
    else Errormsg.error Errormsg.none "Loader: inconsistent bytecode version");
-  let modName = Readutil.readString () in
-  Readutil.skipNWords 1;
+  let modName = Bytecode.readString () in
+  Bytecode.skipNWords 1;
   modName
 
 
@@ -16,8 +16,8 @@ let loadHeaderInfo () =
 let rec loadGlobalKinds kindSymTab index numberGlobalKinds =
   (* load one kind and add into kind symbol table *)
   let loadKind kindSymTab index =
-	let arity  = Readutil.readOneByte () in
-	let symbol = Symbol.symbol (Readutil.readString ()) in
+	let arity  = Bytecode.readOneByte () in
+	let symbol = Symbol.symbol (Bytecode.readString ()) in
 	let kind   = Absyn.makeGlobalKind symbol arity index in
 	Table.add symbol kind kindSymTab
   in
@@ -34,12 +34,12 @@ let collectKindIndexMap kindSymbolTab numberKinds =
   kindIndexMap
 
 let skipLocalKinds () =
-  let numLocalKinds = Readutil.readTwoBytes () in
-  Readutil.skipNBytes numLocalKinds
+  let numLocalKinds = Bytecode.readTwoBytes () in
+  Bytecode.skipNBytes numLocalKinds
 
 let loadKindSymTab () =
   (* load global kinds *)
-  let numberGlobalKinds = Readutil.readTwoBytes () in
+  let numberGlobalKinds = Bytecode.readTwoBytes () in
   let kindSymbolTab =
 	loadGlobalKinds (Pervasive.pervasiveKinds) (Pervasive.numberPervasiveKinds)
 	  numberGlobalKinds
@@ -57,26 +57,26 @@ let loadKindSymTab () =
 (*                 LOAD TYPE SKELETON TABLE                                 *)
 (****************************************************************************)
 let rec loadTypeSkeleton kindIndexMap = 
-  let cat = Readutil.readOneByte () in
-  if cat = Writeutil.typeMarkArrow then
+  let cat = Bytecode.readOneByte () in
+  if cat = Bytecode.typeMarkArrow then
 	let l = loadTypeSkeleton kindIndexMap in
 	let r = loadTypeSkeleton kindIndexMap in
 	Absyn.ArrowType(l, r)
-  else if cat = Writeutil.typeMarkSkeletonVar then
-	let offset = Readutil.readOneByte () in
+  else if cat = Bytecode.typeMarkSkeletonVar then
+	let offset = Bytecode.readOneByte () in
 	Absyn.SkeletonVarType (ref offset)
   else (* typeMarkKind *)
 	loadApplicationType kindIndexMap 
 
 and loadApplicationType kindIndexMap =
   (* get kind information *)
-  let cat = Readutil.readOneByte () in
-  let kindInd = Readutil.readTwoBytes () in
+  let cat = Bytecode.readOneByte () in
+  let kindInd = Bytecode.readTwoBytes () in
   (* get arity and arguments *)
-  let arity = Readutil.readOneByte () in
+  let arity = Bytecode.readOneByte () in
   let args  = loadApplicationTypeArgs arity kindIndexMap in
-  if (cat = Writeutil.local) then Absyn.ErrorType
-  else if (cat = Writeutil.global) then
+  if (cat = Bytecode.local) then Absyn.ErrorType
+  else if (cat = Bytecode.global) then
 	let kind = 
 	  Option.get (Array.get kindIndexMap 
 					(Pervasive.numberPervasiveKinds + kindInd))
@@ -98,7 +98,7 @@ and loadApplicationTypeArgs numArgs kindIndexMap =
 
 (* load type skeletons and enter them into type skeleton table *)
 let loadTypeSkeletons kindIndexMap =
-  let numberTypeSkels = Readutil.readTwoBytes () in
+  let numberTypeSkels = Bytecode.readTwoBytes () in
   let typeSkeletonTab = Array.make (numberTypeSkels - 1) Absyn.ErrorType in
 
   let rec loadTypeSkeletonsAux index =
@@ -116,27 +116,27 @@ let loadTypeSkeletons kindIndexMap =
 (*                   LOAD (GLOBAL) CONSTANTS                                *)
 (****************************************************************************)
 let loadFixity () =
-  let number = Readutil.readOneByte () in
-  if (number = Writeutil.fixityMarkInfix) then Absyn.Infix
-  else if (number = Writeutil.fixityMarkInfixl) then Absyn.Infixl
-  else if (number = Writeutil.fixityMarkInfixr) then Absyn.Infixr
-  else if (number = Writeutil.fixityMarkNoFixity) then Absyn.NoFixity
-  else if (number = Writeutil.fixityMarkPrefix) then Absyn.Prefix
-  else if (number = Writeutil.fixityMarkPrefixr) then Absyn.Prefixr
-  else if (number = Writeutil.fixityMarkPostfix) then Absyn.Postfix
+  let number = Bytecode.readOneByte () in
+  if (number = Bytecode.fixityMarkInfix) then Absyn.Infix
+  else if (number = Bytecode.fixityMarkInfixl) then Absyn.Infixl
+  else if (number = Bytecode.fixityMarkInfixr) then Absyn.Infixr
+  else if (number = Bytecode.fixityMarkNoFixity) then Absyn.NoFixity
+  else if (number = Bytecode.fixityMarkPrefix) then Absyn.Prefix
+  else if (number = Bytecode.fixityMarkPrefixr) then Absyn.Prefixr
+  else if (number = Bytecode.fixityMarkPostfix) then Absyn.Postfix
   else Absyn.Postfixl
 
 let loadConstSkel tySkelTab =
-  let ind = Readutil.readTwoBytes () in
+  let ind = Bytecode.readTwoBytes () in
   Absyn.Skeleton(Array.get tySkelTab ind, ref (Some ind), ref false)
 
 let rec loadGlobalConsts constSymTab index numConsts tySkelTab =
   (* load one constant and add it into const symbol table *)
   let loadConst constSymTab index =
 	let fixity = loadFixity () in
-	let prec  = Readutil.readOneByte () in
-	let tyEnvSize = Readutil.readOneByte () in
-	let symbol = Symbol.symbol (Readutil.readString ()) in
+	let prec  = Bytecode.readOneByte () in
+	let tyEnvSize = Bytecode.readOneByte () in
+	let symbol = Symbol.symbol (Bytecode.readString ()) in
 	let tySkel = loadConstSkel tySkelTab in
 	let const = 
 	  Absyn.makeGlobalConstant symbol fixity prec false false tyEnvSize 
@@ -150,7 +150,7 @@ let rec loadGlobalConsts constSymTab index numConsts tySkelTab =
 	  tySkelTab
 
 let loadConstSymTab tySkeletonTab = 
-  let numberGConsts = Readutil.readTwoBytes () in
+  let numberGConsts = Bytecode.readTwoBytes () in
   loadGlobalConsts (Pervasive.pervasiveConstants)
 	(Pervasive.numberPervasiveConstants) numberGConsts tySkeletonTab 
   
@@ -162,7 +162,8 @@ let loadModuleTable () =
   let (kindSymTab, kindIndexMap) = loadKindSymTab () in
   let tySkeletonTab = loadTypeSkeletons kindIndexMap in
   let constSymTab = loadConstSymTab tySkeletonTab in 
-  Absyn.Module(modName, [], [], ref constSymTab, ref kindSymTab, 
-			   Table.empty, [], [], [], [], [], ref [], [], [], 
-			   ref (Absyn.ClauseBlocks [])) 
+  Modtab.enterModuleTable 
+	(Absyn.Module(modName, [], [], ref constSymTab, ref kindSymTab, 
+				  Table.empty, [], [], [], [], [], ref [], [], [], 
+				  ref (Absyn.ClauseBlocks []))) 
 
