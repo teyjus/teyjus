@@ -561,9 +561,10 @@ void PERV_copyTySkelTab(PERV_TySkelData* dst)
 }
 
 
-/****************************************************************************/
-/*   PERVASIVE KIND                                                         */ 
-/****************************************************************************/ 
+/***************************************************************************/ 
+/*   PERVASIVE CONSTANTS                                                   */  
+/***************************************************************************/
+
 //pervasive constant data table (array)                                       
 PERV_ConstData   PERV_constDataTab[PERV_CONST_NUM] = {                         
     //name,   tesize, tst, neededness, UC, prec,  fixity                       
