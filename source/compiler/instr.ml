@@ -24,23 +24,23 @@ let opcodeSize = 255
 
 
 
-let writeR arg = Writeutil.writeint1 arg
-let writeE arg = Writeutil.writeint1 arg
-let writeN arg = Writeutil.writeint1 arg
-let writeI1 arg = Writeutil.writeint1 arg
-let writeCE arg = Writeutil.writeint1 arg
-let writeSEG arg = Writeutil.writeint1 arg
-let writeC arg = Writeutil.writeaconstant2 arg
-let writeK arg = Writeutil.writeakind2 arg
-let writeL arg = Writeutil.writeintref8 arg
-let writeI arg = Writeutil.writeint4 arg
-let writeF arg = Writeutil.writefloat4 arg
-let writeS arg = Writeutil.writeint2 arg
-let writeMT arg = Writeutil.writeint2 arg
-let writeIT arg = Writeutil.writeint2 arg
-let writeHT arg = Writeutil.writeint2 arg
-let writeBVT arg = Writeutil.writeint2 arg
-let writeopcode arg = Writeutil.writeint1 arg
+let writeR arg = Bytecode.writeint1 arg
+let writeE arg = Bytecode.writeint1 arg
+let writeN arg = Bytecode.writeint1 arg
+let writeI1 arg = Bytecode.writeint1 arg
+let writeCE arg = Bytecode.writeint1 arg
+let writeSEG arg = Bytecode.writeint1 arg
+let writeC arg = Bytecode.writeaconstant2 arg
+let writeK arg = Bytecode.writeakind2 arg
+let writeL arg = Bytecode.writeintref8 arg
+let writeI arg = Bytecode.writeint4 arg
+let writeF arg = Bytecode.writefloat4 arg
+let writeS arg = Bytecode.writeint2 arg
+let writeMT arg = Bytecode.writeint2 arg
+let writeIT arg = Bytecode.writeint2 arg
+let writeHT arg = Bytecode.writeint2 arg
+let writeBVT arg = Bytecode.writeint2 arg
+let writeopcode arg = Bytecode.writeint1 arg
 
 
 

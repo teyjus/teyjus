@@ -89,17 +89,17 @@ let compile = fun basename outfile ->
   else
   
   (*  Open the correct output file. *)
-  let _ = Writeutil.openOutChannel outfile in
+  let _ = Bytecode.openOutChannel outfile in
   if !Errormsg.anyErrors then
     1
   else
-  
+  (Bytecode.setWordSize ();
   (*  Write the code to the output file.  *)
   let _ = Spitcode.writeByteCode cg in
   if !Errormsg.anyErrors then
     1
   else
-    0)))
+    0))))
 
 let debugEnabled = ref false
 let inputFilename = ref ""
