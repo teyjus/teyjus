@@ -11,7 +11,7 @@
 
 static char* addLine(char* str, char* addOn)
 {
-    int length = (str ? strlen(str) : 0) + strlen(addOn) + 2;
+    size_t length = (str ? strlen(str) : 0) + strlen(addOn) + 2;
     char* newStr = UTIL_mallocStr(length);
     
     if (str) {
@@ -24,7 +24,7 @@ static char* addLine(char* str, char* addOn)
 
 static char* addStr(char* str, char* addOn)
 {
-    int length = (str ? strlen(str) : 0) + strlen(addOn);
+    size_t length = (str ? strlen(str) : 0) + strlen(addOn);
     char* newStr = UTIL_mallocStr(length);
     
     if (str) {
@@ -92,7 +92,7 @@ static char* kindMLI = NULL;           //kind relevant code in pervasive.mli
 void ocamlGenKinds()
 {
     char* buildTabFunc = OC_mkBuildKTabFunc(buildPervKindBody);
-    int   length = strlen(kindVarList) + strlen(buildTabFunc) +  
+    size_t length = strlen(kindVarList) + strlen(buildTabFunc) +  
         strlen(isKindFuncDefs) + strlen(numKindsML) + 4;
     
     kindML = UTIL_mallocStr(length);
@@ -128,7 +128,7 @@ void ocamlGenTySkel(char* ind, Type tySkel)
     char* varName = OC_mkTySkelVarName(ind);
     char* tySkelText = OC_genTySkel(tySkel);
     char* tySkelVarDef = OC_mkTYSkelVar(varName, tySkelText);
-    int   length = (tySkelVarList ? strlen(tySkelVarList) : 0) + 
+    size_t length = (tySkelVarList ? strlen(tySkelVarList) : 0) + 
         strlen(tySkelVarDef) + 1;
     char* mytySkelVarList = UTIL_mallocStr(length + 1);
     
@@ -215,7 +215,7 @@ void ocamlGenConsts()
     char* funcDecs = OC_mkGenericConstFuncDecs(isConstFuncDecs);
     
 
-    int   length = strlen(varDefs) + strlen(buildTabFunc) + strlen(funcDefs) 
+    size_t length = strlen(varDefs) + strlen(buildTabFunc) + strlen(funcDefs) 
         + strlen(numConstsML) + 4;
     
     tySkelVarList = tyskels;

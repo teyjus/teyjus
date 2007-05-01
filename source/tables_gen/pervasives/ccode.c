@@ -20,7 +20,7 @@
 /* // <comments> */
 char* C_mkOneLineComments(char* comments)
 {
-  int length = strlen(comments) + 5;
+  size_t length = strlen(comments) + 5;
   char* commentsText = UTIL_mallocStr(length);
 
   strcpy(commentsText, "// ");
@@ -32,7 +32,7 @@ char* C_mkOneLineComments(char* comments)
 /* <varName> = <varValue> */
 char* C_mkAssign(char* varName, char* varValue)
 {
-  int length = strlen(varName) + strlen(varValue) + 5;
+  size_t length = strlen(varName) + strlen(varValue) + 5;
   char* assign = UTIL_mallocStr(length);
 
   strcpy(assign, varName);
@@ -45,7 +45,7 @@ char* C_mkAssign(char* varName, char* varValue)
 /* #define <macroName> <macroValue> */
 char* C_mkDefine(char* macroName, char* macroValue)
 {
-  int length = strlen(macroName) + strlen(macroValue) + 10;
+  size_t length = strlen(macroName) + strlen(macroValue) + 10;
   char* def = UTIL_mallocStr(length);
   
   strcpy(def, "#define ");
@@ -59,7 +59,7 @@ char* C_mkDefine(char* macroName, char* macroValue)
 /* enum <typeName>\n {\n <body> } */
 char* C_mkEnum(char* typeName, char* body)
 {
-  int length = strlen(typeName) + strlen(body) + 15;
+  size_t length = strlen(typeName) + strlen(body) + 15;
   char* enumText = UTIL_mallocStr(length);
   
   strcpy(enumText, "enum ");
@@ -74,7 +74,7 @@ char* C_mkEnum(char* typeName, char* body)
 /* typedef <typeStr> <typeName>; \n\n */
 char* C_mkTypeDef(char* typeStr, char* typeName)
 {
-  int length = strlen(typeStr) + strlen(typeName) + 15;
+  size_t length = strlen(typeStr) + strlen(typeName) + 15;
   char* typeDefText = UTIL_mallocStr(length);
   
   strcpy(typeDefText, "typedef ");
@@ -106,7 +106,7 @@ char* C_mkTypeDef(char* typeStr, char* typeName)
 char* C_mkIndexName(char* name)
 {
   char* nameUC = UTIL_upperCase(name);
-  int   length = strlen(nameUC) + strlen(C_PREFIX) + strlen(C_SUFFIX);
+  size_t   length = strlen(nameUC) + strlen(C_PREFIX) + strlen(C_SUFFIX);
   char* indexName = UTIL_mallocStr(length);
 
   strcpy(indexName, C_PREFIX);
@@ -119,14 +119,14 @@ char* C_mkIndexName(char* name)
 /* PERV_<name> */
 char* C_mkIndexName2(char* name)
 {
-    char* nameUC = UTIL_upperCase(name);
-    int   length = strlen(nameUC) + strlen(C_PREFIX);
-    char* indexName = UTIL_mallocStr(length);
+  char* nameUC = UTIL_upperCase(name);
+  size_t length = strlen(nameUC) + strlen(C_PREFIX);
+  char* indexName = UTIL_mallocStr(length);
 
-    strcpy(indexName, C_PREFIX);
-    strcat(indexName, nameUC);          free(nameUC);
+  strcpy(indexName, C_PREFIX);
+  strcat(indexName, nameUC);          free(nameUC);
 
-    return indexName;    
+  return indexName;    
 }
 
 /* 
@@ -138,7 +138,7 @@ char* C_mkIndex(char* name, char* indexNum, char* comments)
   char* commentText = (comments) ? C_mkOneLineComments(comments) : NULL;
   char* varName = C_mkIndexName(name);
   char* assign  = C_mkAssign(varName, indexNum);
-  int   length  = ((commentText) ? strlen(commentText) + strlen(C_INDENT): 0) 
+  size_t length  = ((commentText) ? strlen(commentText) + strlen(C_INDENT): 0) 
       + strlen(assign) + strlen(C_INDENT) + 5;
   char* index = UTIL_mallocStr(length);
 
@@ -172,7 +172,7 @@ char* C_mkIndex2(char* name, char* indexNum)
 /*    // empty */
 char* C_mkEmptyComments()
 {
-    int   length = strlen(C_INDENT) + 10;
+    size_t length = strlen(C_INDENT) + 10;
     char* text = UTIL_mallocStr(length);
     
     strcpy(text, C_INDENT);
@@ -196,7 +196,7 @@ char* C_mkEmptyComments()
 char* C_mkNumKinds(char* num)
 {
   char* def = C_mkDefine(C_NUMKINDS, num);
-  int   length = strlen(def) + strlen(C_NUMKINDS_COMMENTS) + 5;
+  size_t length = strlen(def) + strlen(C_NUMKINDS_COMMENTS) + 5;
   char* numKinds = UTIL_mallocStr(length);
 
   strcpy(numKinds, C_NUMKINDS_COMMENTS);
@@ -217,7 +217,7 @@ char* C_mkKindIndexType(char* body)
 {
     char* enumText = C_mkEnum(C_TY_KINDIND, body);
     char* typeDefText = C_mkTypeDef(enumText, C_TY_KINDIND);
-    int   length = strlen(typeDefText) + strlen(C_KINDINDEX_COMMENTS);
+    size_t length = strlen(typeDefText) + strlen(C_KINDINDEX_COMMENTS);
     char* kindIndexType = UTIL_mallocStr(length);
     
     strcpy(kindIndexType, C_KINDINDEX_COMMENTS);
@@ -247,7 +247,7 @@ char* C_mkKindIndexType(char* body)
 "//pervasive kind table copy function (used in module space initialization)    \n//this functiion relies on the assumption that the pervasive kind data         \n//has the same structure as that of the run-time kind symbol table entries.    \nvoid PERV_copyKindDataTab(PERV_KindData* dst);                               \n\n"
 char* C_mkKindH(char* kindIndexType, char* numKinds)
 {
-    int length = strlen(C_KIND_COMMENTS) + strlen(kindIndexType) + 
+    size_t length = strlen(C_KIND_COMMENTS) + strlen(kindIndexType) + 
         strlen(numKinds) + strlen(C_KINDDATA_TYPE_DEF) + 
         strlen(C_KINDDATATAB_DEC) + strlen(C_GETKINDDATA_DEC) + 
         strlen(C_COPYKINDDATATAB_DEC);
@@ -274,7 +274,7 @@ char* C_mkKindH(char* kindIndexType, char* numKinds)
 char* C_mkKindTabEntry(char* name, char* arity, char* comments)
 {
     char* commentText = (comments) ? C_mkOneLineComments(comments) : NULL;
-    int   length = ((commentText) ? strlen(commentText) + strlen(C_INDENT): 0) 
+    size_t length = ((commentText) ? strlen(commentText) + strlen(C_INDENT): 0) 
         + strlen(name) + strlen(arity) + strlen(C_INDENT)*2 + 10;
     char* entry = UTIL_mallocStr(length);
     
@@ -303,7 +303,7 @@ char* C_mkKindTabEntry(char* name, char* arity, char* comments)
 */
 char* C_mkKindTab(char* body)
 {
-    int length = strlen(C_KIND_TAB_BEG) + strlen(C_KIND_TAB_END) + strlen(body);
+    size_t length = strlen(C_KIND_TAB_BEG) + strlen(C_KIND_TAB_END) + strlen(body);
     char* kindTab = UTIL_mallocStr(length);
     
     strcpy(kindTab, C_KIND_TAB_BEG);
@@ -322,7 +322,7 @@ char* C_mkKindTab(char* body)
 
 char* C_mkKindC(char* kindTab)
 {
-    int length = strlen(C_KIND_COMMENTS) + strlen(kindTab) +
+    size_t length = strlen(C_KIND_COMMENTS) + strlen(kindTab) +
         strlen(C_GETKINDDATA_DEF) + strlen(C_COPYKINDDATATAB_DEF);
     char* kindC = UTIL_mallocStr(length);
     
@@ -349,7 +349,7 @@ char* C_mkKindC(char* kindTab)
 char* C_mkNumTySkels(char* num)
 {
   char* def = C_mkDefine(C_NUMTYSKELS, num);
-  int   length = strlen(def) + strlen(C_NUMTYSKELS_COMMENTS) + 5;
+  size_t length = strlen(def) + strlen(C_NUMTYSKELS_COMMENTS) + 5;
   char* numTySkels = UTIL_mallocStr(length);
 
   strcpy(numTySkels, C_NUMTYSKELS_COMMENTS);
@@ -380,7 +380,7 @@ char* C_mkNumTySkels(char* num)
 
 char* C_mkTySkelsH(char* numTySkels)
 {
-    int length = strlen(C_TYSKEL_COMMENTS) + strlen(numTySkels) + 
+    size_t length = strlen(C_TYSKEL_COMMENTS) + strlen(numTySkels) + 
         strlen(C_TYSKELDATA_TYPE_DEF) + strlen(C_TYSKELTAB_DEC) + 
         strlen(C_TYSKELTABINIT_DEC) + strlen(C_COPYTYSKELTAB_DEC);
     char* tySkelsH = UTIL_mallocStr(length);
@@ -576,7 +576,7 @@ char* C_genTySkel(Type tyskel, char* comments)
     Types tyskels;
     char* tyskelText1;
     char* tyskelText2;
-    int   length; 
+    size_t length; 
     
     tyskels.length = 1;
     tyskels.types  = addItem(tyskel, NULL);
@@ -658,7 +658,7 @@ char* C_mkTySkelsC(char* tySkelTab)
 char* C_mkNumConsts(char* num)
 {
     char* def = C_mkDefine(C_NUMCONSTS, num); 
-    int   length = strlen(def) + strlen(C_NUMCONSTS_COMMENTS) + 5;
+    size_t length = strlen(def) + strlen(C_NUMCONSTS_COMMENTS) + 5;
     char* numConsts = UTIL_mallocStr(length);
     
     strcpy(numConsts, C_NUMCONSTS_COMMENTS);
@@ -675,7 +675,7 @@ char* C_mkConstIndexType(char* body)
 {
     char* enumText = C_mkEnum(C_TY_CONSTIND, body);
     char* typeDefText = C_mkTypeDef(enumText, C_TY_CONSTIND);
-    int   length = strlen(typeDefText) + strlen(C_CONSTINDEX_COMMENTS);
+    size_t length = strlen(typeDefText) + strlen(C_CONSTINDEX_COMMENTS);
     char* constIndexType = UTIL_mallocStr(length);
     
     strcpy(constIndexType, C_CONSTINDEX_COMMENTS);
@@ -718,7 +718,7 @@ char* C_mkConstIndexType(char* body)
 
 char*  C_mkConstH(char* constIndexType, char* numConsts, char* property)
 {
-    int length = strlen(C_CONST_COMMENTS) + strlen(constIndexType) + 
+    size_t length = strlen(C_CONST_COMMENTS) + strlen(constIndexType) + 
         strlen(numConsts) + strlen(C_CONSTDATA_TYPE) + 
         strlen(C_CONSTDATA_TAB_DEC) + strlen(C_GETCONSTDATA_DEC) + 
         strlen(C_COPYCONSTDATATAB_DEC) + strlen(property) +
@@ -762,6 +762,7 @@ static char* C_mkFixity(OP_Fixity fixity)
     case OP_POSTFIX      : return strdup("OP_POSTFIX");
     case OP_POSTFIXL     : return strdup("OP_POSTFIXL");
     case OP_NONE         : return strdup("OP_NONE");
+    default              : return strdup("OP_NONE");
     }
 }
 
@@ -774,7 +775,7 @@ char* C_mkConstTabEntry(char* name, char* tesize, OP_Prec prec,
     char* commentText = (comments) ? C_mkOneLineComments(comments) : NULL;
     char* precText    = C_mkPrec(prec);
     char* fixityText  = C_mkFixity(fixity);
-    int   length = ((commentText) ? strlen(commentText) + strlen(C_INDENT): 0)
+    size_t length = ((commentText) ? strlen(commentText) + strlen(C_INDENT): 0)
         + strlen(name) + strlen(tesize) + strlen(tyskelInd)  
         + strlen(neededness) + strlen(precText) + strlen(fixityText) 
         + strlen(C_INDENT)*7 + 15;
@@ -820,7 +821,7 @@ char* C_mkConstTabEntry(char* name, char* tesize, OP_Prec prec,
 */
 char* C_mkConstTab(char* body)
 {
-    int length = strlen(C_CONST_TAB_BEG) + strlen(C_CONST_TAB_END) + 
+    size_t length = strlen(C_CONST_TAB_BEG) + strlen(C_CONST_TAB_END) + 
         strlen(body);
     char* constTab = UTIL_mallocStr(length);
     
@@ -857,13 +858,13 @@ char* C_mkConstTab(char* body)
 
 char* C_mkConstC(char* constTab)
 {
-    int length = strlen(C_CONST_COMMENTS) + strlen(constTab) +
+    size_t length = strlen(C_CONST_COMMENTS) + strlen(constTab) +
         strlen(C_GETCONSTDATA_DEF) + strlen(C_COPYCONSTDATATAB_DEF) +
         strlen(C_ISLOGICSYMB_DEF) + strlen(C_ISPREDSYMB_DEF) + 
         strlen(C_LOGICSYMB_DEF) + strlen(C_PREDBUILTIN_DEF);
     char* constC = UTIL_mallocStr(length);
     
-    strcpy(constC, C_KIND_COMMENTS);
+    strcpy(constC, C_CONST_COMMENTS);
     strcat(constC, constTab);               
     strcat(constC, C_GETCONSTDATA_DEF);
     strcat(constC, C_COPYCONSTDATATAB_DEF);
@@ -881,7 +882,7 @@ char* C_mkConstC(char* constTab)
 
 char* C_mkLSTypeDec(char* body)
 {
-    int length = strlen(LOGICSYMBTYPE_DEC_BEG) + strlen(LOGICSYMBTYPE_DEC_END)
+    size_t length = strlen(LOGICSYMBTYPE_DEC_BEG) + strlen(LOGICSYMBTYPE_DEC_END)
         + strlen(body);
     char* text = UTIL_mallocStr(length);
     
@@ -902,7 +903,7 @@ char* C_mkLSRange(char* start, char* end)
     char* range;
     char* startInd = C_mkIndexName(start);
     char* endInd   = C_mkIndexName(end);
-    int length = strlen(startInd) + strlen(LSSTART_BEG) + strlen(LSSTART_END) +
+    size_t length = strlen(startInd) + strlen(LSSTART_BEG) + strlen(LSSTART_END) +
         strlen(endInd) + strlen(LSEND_BEG) + strlen(LSEND_END) + 5;
 
     range = UTIL_mallocStr(length);    
@@ -930,7 +931,7 @@ char* C_mkPredRange(char* start, char* end)
     char* range;
     char* startInd = C_mkIndexName(start);
     char* endInd   = C_mkIndexName(end);
-    int length = strlen(startInd) + strlen(PREDSTART_BEG) + 
+    size_t length = strlen(startInd) + strlen(PREDSTART_BEG) + 
         strlen(PREDSTART_END) + strlen(endInd) + strlen(PREDEND_BEG) + 
         strlen(PREDEND_END) + 5;
 

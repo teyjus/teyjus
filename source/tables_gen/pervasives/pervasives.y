@@ -273,6 +273,11 @@ int main(argc, argv)
     int argc;
     char * argv[];
 {
+    if(argc < 2)
+    {
+      printf("Error: no input file specified.\n");
+      return 1;
+    }
     yyin = UTIL_fopenR(argv[1]);
     yyparse();
     UTIL_fclose(yyin);

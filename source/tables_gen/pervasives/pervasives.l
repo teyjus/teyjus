@@ -3,6 +3,7 @@
 #include "op.h" 
 #include "types.h"
 #include "y.tab.h"
+#include <stdlib.h>
 #include <string.h> 
 
 static int commentLev = 0;

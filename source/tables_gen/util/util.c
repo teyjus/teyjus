@@ -8,7 +8,7 @@
 /* Space allocation                                                       */
 /**************************************************************************/
 /* allocate space of n bytes*/
-void* UTIL_malloc(int n)
+void* UTIL_malloc(size_t n)
 {
     void* ptr = (void*)malloc(n);
     if (ptr) return ptr;
@@ -19,7 +19,7 @@ void* UTIL_malloc(int n)
 
 
 /* allocate space for a string of given size */
-char* UTIL_mallocStr(int size)
+char* UTIL_mallocStr(size_t size)
 {
     char* ptr = (char*)malloc(sizeof(char)*(size + 1));
     if (ptr) return ptr;
@@ -35,7 +35,7 @@ char* UTIL_mallocStr(int size)
 /* Append two strings */
 char* UTIL_appendStr(char* str1, char* str2)
 {
-  int length = strlen(str1) + strlen(str2);
+  size_t length = strlen(str1) + strlen(str2);
   char* ptr = UTIL_mallocStr(length + 1);
   
   strcpy(ptr, str1);
@@ -76,18 +76,8 @@ char* UTIL_lowerCase(char* str)
 //covert an non-negtive integer to string
 char* UTIL_itoa(int num)
 {
-    char *str;
-    char digit[2];
-    digit[1] = '\0';
-    str = strdup("");
-    do {
-        char *temp = str;
-        digit[0] = num % 10 + '0';
-        str = UTIL_mallocStr(strlen(str) + 1);
-        strcpy(str, digit);
-        strcat(str, temp);
-        free(temp);
-    } while ((num /= 10) > 0);
+    char *str = UTIL_mallocStr(33);
+    sprintf(str, "%d", num);
     return str;
 }
 

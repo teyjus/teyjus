@@ -18,7 +18,7 @@
 /* Make a string of form  <first>.<second> */
 static char* OC_mkDotStr(char* first, char* second)
 {
-  int length = strlen(first) + strlen(second) + 1;
+  size_t length = strlen(first) + strlen(second) + 1;
   char* ptr = UTIL_mallocStr(length+1);
 
   strcpy(ptr, first);
@@ -33,7 +33,7 @@ static char* OC_mkDotStr(char* first, char* second)
 */
 char* OC_mkSome(char* info)
 {
-  int length = strlen(info) + 10;
+  size_t length = strlen(info) + 10;
   char* rtptr = UTIL_mallocStr(length + 1);
 
   strcpy(rtptr, "(Some ");
@@ -48,7 +48,7 @@ char* OC_mkSome(char* info)
 */
 char* OC_mkRef(char* info)
 {
-  int length = strlen(info) + 10;
+  size_t length = strlen(info) + 10;
   char* rtptr = UTIL_mallocStr(length + 1);
 
   strcpy(rtptr, "(ref ");
@@ -64,7 +64,7 @@ char* OC_mkRef(char* info)
 */
 static char* OC_mkVarDef(char* varName, char* defs)
 {
-  int length = strlen(varName) + strlen(defs) + 10;
+  size_t length = strlen(varName) + strlen(defs) + 10;
   char* vardef = UTIL_mallocStr(length + 1);
 
   strcpy(vardef, "let ");
@@ -80,7 +80,7 @@ static char* OC_mkVarDef(char* varName, char* defs)
 */
 static char* OC_mkVarDec(char* varName, char* varType)
 {
-  int length = strlen(varName) + strlen(varType) + 10;
+  size_t length = strlen(varName) + strlen(varType) + 10;
   char* vardec = UTIL_mallocStr(length + 1);
 
   strcpy(vardec, "val ");
@@ -97,7 +97,7 @@ static char* OC_mkVarDec(char* varName, char* varType)
 */
 static char* OC_mkArrowType(char* ty1, char* ty2)
 {
-  int length = strlen(ty1) + strlen(ty2) + 5;
+  size_t length = strlen(ty1) + strlen(ty2) + 5;
   char* arrowType = UTIL_mallocStr(length);
 
   strcpy(arrowType, ty1);
@@ -204,7 +204,7 @@ static char* OC_mkArrowType(char* ty1, char* ty2)
 static char* OC_mkSymbol(char* name)
 {
   char* symbolCtr = OC_mkDotStr(SYMBOL, VCTR_SYMBOL);
-  int   length = strlen(symbolCtr) + strlen(name) + 10;
+  size_t length = strlen(symbolCtr) + strlen(name) + 10;
   char* rtptr= UTIL_mallocStr(length + 1);
 
   strcpy(rtptr, "(");
@@ -222,7 +222,7 @@ char* OC_mkTabEntry(char* name, char* varName)
   char* entry;
   char* tableAdd  = OC_mkDotStr(TABLE, FUNC_ADD);
   char* symbol    = OC_mkSymbol(name);
-  int   length    = strlen(tableAdd) + strlen(symbol) + strlen(varName) +
+  size_t length   = strlen(tableAdd) + strlen(symbol) + strlen(varName) +
     strlen(TAB) + 15;
   char* def       = UTIL_mallocStr(length + 1);
 
@@ -244,7 +244,7 @@ static char* OC_mkTabInit()
 {
   char* init;
   char* emptyTab = OC_mkDotStr(TABLE, VCTR_EMPTYTAB);
-  int   length   = strlen(emptyTab) + 10;
+  size_t length   = strlen(emptyTab) + 10;
   char* def      = UTIL_mallocStr(length + 1);
 
   strcpy(def, emptyTab);             free(emptyTab);
@@ -261,7 +261,7 @@ static char* OC_mkBuildTabFunc(char* funcName, char* entries)
 {
   char* func;
   char* inits = OC_mkTabInit();
-  int   length = strlen(entries) + strlen(TAB) + strlen(inits) + 30;
+  size_t length = strlen(entries) + strlen(TAB) + strlen(inits) + 30;
   char* def    = UTIL_mallocStr(length + 1);
 
   strcpy(def, "function () ->\n  ");
@@ -279,7 +279,7 @@ static char* OC_mkBuildTabFunc(char* funcName, char* entries)
 static char* OC_mkTab(char* tabName, char* buildFuncName)
 {
   char* tab;
-  int   length = strlen(buildFuncName) + 10;
+  size_t length = strlen(buildFuncName) + 10;
   char* def    = UTIL_mallocStr(length + 1);
 
   strcpy(def, buildFuncName);
@@ -296,7 +296,7 @@ static char* OC_mkTabDec(char* tabName, char* typeName)
   char* dec;
   char* symbolTab = OC_mkDotStr(TABLE, TY_SYMTAB);
   char* myType    = OC_mkDotStr(ABSYN, typeName);
-  int   length    = strlen(symbolTab) + strlen(myType) + 5;
+  size_t length    = strlen(symbolTab) + strlen(myType) + 5;
   char* typedec   = UTIL_mallocStr(length + 1);
 
   strcpy(typedec, myType);        free(myType);
@@ -373,7 +373,7 @@ char* OC_mkKindVar(char* varName, char* kindName, char* arity, char* offset)
   char* nargs  = OC_mkSome(arity);
   char* index  = OC_mkRef(offset);
   char* pos    = OC_mkDotStr(ERRORMSG, VCTR_NULLPOS);
-  int   length = strlen(ctr) + strlen(symbol) + strlen(nargs) +
+  size_t length = strlen(ctr) + strlen(symbol) + strlen(nargs) +
     strlen(index) + strlen(pos) + 10;
 
   char* def = UTIL_mallocStr(length + 1);
@@ -409,7 +409,7 @@ static char* genTySkelVar(char* ind)
 {
   char* ctr       = OC_mkDotStr(ABSYN, VCTR_SKELVARTYPE);
   char* ref       = OC_mkRef(ind);
-  int   length    = strlen(ctr) + strlen(ref) + 5;
+  size_t length    = strlen(ctr) + strlen(ref) + 5;
   char* skelVar   = UTIL_mallocStr(length + 1);
 
   strcpy(skelVar, ctr);        free(ctr);
@@ -425,7 +425,7 @@ static char* genTySkelVar(char* ind)
 static char* genTySkelArrow(char* type1, char* type2)
 {
   char* ctr       = OC_mkDotStr(ABSYN, VCTR_ARROWTYPE);
-  int   length    = strlen(ctr) + strlen(type1) + strlen(type2) + 5;
+  size_t length    = strlen(ctr) + strlen(type1) + strlen(type2) + 5;
   char* arrowtype = UTIL_mallocStr(length + 1);
 
   strcpy(arrowtype, ctr);      free(ctr);
@@ -444,7 +444,7 @@ static char* genTySkelApp(char* sortName, char* args)
 {
   char* ctr     = OC_mkDotStr(ABSYN, VCTR_APPTYPE);
   char* sortVar = OC_mkKVarName(sortName);
-  int   length  = strlen(ctr) + strlen(sortVar) + strlen(args) + 5;
+  size_t length  = strlen(ctr) + strlen(sortVar) + strlen(args) + 5;
   char* apptype = UTIL_mallocStr(length + 1);
 
   strcpy(apptype, ctr);        free(ctr);
@@ -469,7 +469,7 @@ char* OC_genTySkel(Type args);
 
 static char* OC_genTySkelArgs(TypeList args)
 {
-  int   length;
+  size_t length;
   char* mytext1 = NULL;
   char* mytext  = NULL;
   char* oneTypeText = NULL;
@@ -532,6 +532,8 @@ char* OC_genTySkel(Type tyskel)
       free(mytext1); free(mytext2);
       return mytext3;
     }
+  default:
+    return strdup("");
   }
 }
 
@@ -550,7 +552,7 @@ char* OC_mkTYSkelVar(char* varName, char* tySkel)
   char* ctr      = OC_mkDotStr(ABSYN, VCTR_TYSKEL);
   char* index    = OC_mkRef("None");
   char* adjust   = OC_mkRef("false");
-  int   length   = strlen(ctr) + strlen(index) + strlen(adjust) +
+  size_t length   = strlen(ctr) + strlen(index) + strlen(adjust) +
     strlen(tySkel) + 15;
   char* def      = UTIL_mallocStr(length + 1);
   char* somedef;
@@ -595,7 +597,7 @@ static char* OC_mkTySkelRef(char* tySkel)
   char* ctr      = OC_mkDotStr(ABSYN, VCTR_TYSKEL);
   char* index    = OC_mkRef("None");
   char* adjust   = OC_mkRef("false");
-  int   length   = strlen(ctr) + strlen(index) + strlen(adjust) +
+  size_t length   = strlen(ctr) + strlen(index) + strlen(adjust) +
     strlen(tySkel) + 15;
   char* def      = UTIL_mallocStr(length + 1);
   char* somedef;
@@ -819,24 +821,21 @@ static char* OC_mkNeededness(int neededness, int tyenvsize)
   char* some;
   char* ref;
 
-  if (tyenvsize == 0) some = strdup("None");
-  else{
-    if (neededness == tyenvsize) {
-      init = UTIL_mallocStr(strlen(length) + 20);
-      strcpy(init, "(Array.make ");
-      strcat(init, length);            free(length);
-      strcat(init, " true)");
-    } else {
-      char* num = UTIL_itoa(neededness);
-      init = UTIL_mallocStr(strlen(length) + strlen(num) + 60);
-      strcpy(init, "(Array.init ");
-      strcat(init, length);            free(length);
-      strcat(init, " (fun x -> if x >= ");
-      strcat(init, num);               free(num);
-      strcat(init, " then false else true))");
-    }
-    some = OC_mkSome(init);    free(init);
+  if (neededness == tyenvsize) {
+    init = UTIL_mallocStr(strlen(length) + 20);
+    strcpy(init, "(Array.make ");
+    strcat(init, length);            free(length);
+    strcat(init, " true)");
+  } else {
+    char* num = UTIL_itoa(neededness);
+    init = UTIL_mallocStr(strlen(length) + strlen(num) + 60);
+    strcpy(init, "(Array.init ");
+    strcat(init, length);            free(length);
+    strcat(init, " (fun x -> if x >= ");
+    strcat(init, num);               free(num);
+    strcat(init, " then false else true))");
   }
+  some = OC_mkSome(init);    free(init);
   ref  = OC_mkRef(some);     free(some);
   return ref;
 }
@@ -854,7 +853,7 @@ static char* OC_mkConstVarText(char* constName, char* fixity, char* prec,
   char* index    =  OC_mkRef(offset);
   char* pos      = OC_mkDotStr(ERRORMSG, VCTR_NULLPOS);
 
-  int   length   = strlen(ctr) + strlen(symbol) + strlen(fixity) +
+  size_t length   = strlen(ctr) + strlen(symbol) + strlen(fixity) +
     strlen(prec) + strlen(typrev) + strlen(tyskel) + strlen(tyenvsize) +
     strlen(skelneededness) + strlen(neededness) + strlen(codeinfo) +
     strlen(constcat) + strlen(index) + strlen(pos) + strlen(refFalse) * 6 + 35;
@@ -1323,7 +1322,7 @@ char* OC_mkFixedMLI()
   char* kindDec    = OC_mkTabDec(PERVKIND, TY_KIND);
   char* constDec   = OC_mkTabDec(PERVCONST, TY_CONST);
   char* tyabbrDec  = OC_mkTabDec(PERVTYABBR, TY_TYABBREV);
-  int   length     = strlen(kindDec) + strlen(constDec) + strlen(tyabbrDec) +
+  size_t length     = strlen(kindDec) + strlen(constDec) + strlen(tyabbrDec) +
     strlen(TERM_DECS) + strlen(PERV_FUNC_DECS) + 10;
   char* decs       = UTIL_mallocStr(length + 1);
 
@@ -1359,7 +1358,7 @@ char* OC_mkFixedML()
   char* constDef    = OC_mkTab(PERVCONST, BUILDPERVCONST);
   char* emptyTab    = OC_mkDotStr(TABLE, VCTR_EMPTYTAB);
   char* tyabbrDef   = OC_mkVarDef(PERVTYABBR, emptyTab);
-  int   length      = strlen(kindDef) + strlen(constDef) + strlen(tyabbrDef) +
+  size_t length      = strlen(kindDef) + strlen(constDef) + strlen(tyabbrDef) +
     strlen(TERM_DEFS)  + strlen(PERV_ISPERV_DEF)  + 10;
   char* defs        = UTIL_mallocStr(length + 1);
 
