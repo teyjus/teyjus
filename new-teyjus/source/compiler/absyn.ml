@@ -284,6 +284,12 @@ let getKindName = function
 | GlobalKind(n,_,_,_) -> (Symbol.name n)
 | PervasiveKind(n,_,_,_) -> (Symbol.name n)
 
+(* getKindSymbol:                          *)
+let getKindSymbol = function
+  LocalKind(n,_,_,_) ->  n
+| GlobalKind(n,_,_,_) -> n
+| PervasiveKind(n,_,_,_) -> n
+
 (* getKindIndexRef:                      *)
 let getKindIndexRef = function
    LocalKind(_,_,index,_) -> index
@@ -304,6 +310,11 @@ let makeGlobalKind symbol arity index =
   (* to check: is this the correct usage of option for arity? *)
   let arityInfo = if (arity = 0) then None else Some arity in
   GlobalKind(symbol, arityInfo, ref index, Errormsg.none)
+
+let makeLocalKind symbol arity index =
+  let arityInfo = if (arity = 0) then None else Some arity in
+  LocalKind(symbol, arityInfo, ref index, Errormsg.none)
+
 (*************************************************************************)
 (*  atypevar:                                                            *)
 (*************************************************************************)
@@ -804,7 +815,14 @@ let getConstantRedefinable c =
 let makeGlobalConstant symbol fixity prec expDef useOnly tyEnvSize tySkel index =
   Constant(symbol, ref fixity, ref prec, ref expDef, ref useOnly, ref false,
 		   ref true, ref false, ref false, ref (Some tySkel), ref tyEnvSize,
-		   ref None, ref None, ref None, ref GlobalConstant, ref index, Errormsg.none)
+		   ref None, ref None, ref None, ref GlobalConstant, ref index, 
+		   Errormsg.none)
+
+let makeLocalConstant symbol fixity prec tyEnvSize tySkel index =
+  Constant(symbol, ref fixity, ref prec, ref false, ref false, ref false,
+		   ref true, ref false, ref false, ref (Some tySkel), ref tyEnvSize,
+		   ref None, ref None, ref None, ref LocalConstant, ref index, 
+		   Errormsg.none)
 
 let makeAnonymousConstant i =
   Constant(Symbol.generate (), ref NoFixity, ref (-1), ref true, ref false,

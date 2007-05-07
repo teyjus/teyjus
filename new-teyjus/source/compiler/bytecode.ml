@@ -3,9 +3,9 @@
 (* reading bytecode files.                                                *)
 (**************************************************************************)
 
-(**********************************************************************)
-(* byte code format flags                                             *)
-(**********************************************************************)
+(** ******************************************************************** **)
+(**                       BYTECODE FORMAT                                **)
+(** ******************************************************************** **)
 let byteCodeVersionNumber = 2
 
 (* type skeleton representation *)
@@ -33,9 +33,10 @@ let pervasive = 3
 let findCodeFuncMarkHash = 0
 let findCodeFuncMarkSeq  = 1
 
-(***********************************************************************)
-(*                     IO facilities                                   *)
-(***********************************************************************)
+(** ******************************************************************** **)
+(**                       IO FACILITIES                                  **)
+(** ******************************************************************** **)
+
 (**********************************************************************)
 (* record the number of bytes contained by a word (needed for reading *)
 (* or writing a word).                                                *)
@@ -80,6 +81,10 @@ let openInChannel name =
 let closeInChannel () =
   close_in (getInChannel ());
   setInChannel stdin
+
+(** ******************************************************************* **)
+(**                      WRITE FUNCTIONS                                **)
+(** ******************************************************************* **)
 
 (*******************************************************************)
 (* functions for writing certain numbers of bytes to output channel*)
@@ -155,6 +160,10 @@ let writeaconstant2 const =
   | _ (* must be hidden constants*) -> writeint1 hidden);
   writeint2 constIndex
 
+(** ******************************************************************* **)
+(**                       READ FUNCTIONS                                **)
+(** ******************************************************************* **)
+
 (********************************************************************)
 (* functions for reading certain numbers of bytes from input channel*)
 (********************************************************************)
@@ -201,3 +210,190 @@ let skipNBytes numberBytes =
 (* skip n words *)
 let skipNWords numberWords = 
   skipNBytes (numberWords * (getWordSize ()))
+
+(********************************************************************)
+(* functions for reading certain data structures                    *)
+(********************************************************************)
+
+(* read kind index *)
+let readKindIndex getKindFn =
+  let kindCat = readOneByte  () in
+  let kindInd = readTwoBytes () in
+  getKindFn kindCat kindInd
+
+(* read constant index *)
+let readConstantIndex getConstFn =
+  let constCat = readOneByte  () in
+  let constInd = readTwoBytes () in
+  getConstFn constCat constInd
+
+(* read a global kind *)
+let readGlobalKind ind =
+  let arity = readTwoBytes () in
+  let name  = Symbol.symbol (readString ()) in
+  Absyn.makeGlobalKind name arity ind
+
+(* read a local kind *)
+let readLocalKind ind =
+  Absyn.makeLocalKind (Symbol.symbol "") (readTwoBytes ()) ind
+
+(* read a type skeleton *)
+let readTypeSkeleton getKindFn =
+
+  let rec readTypeSkeletonAux () =
+	let cat = readOneByte () in
+	if cat  = typeMarkArrow then               (* arrow type *)
+	  let arg = readTypeSkeletonAux () in
+	  let target = readTypeSkeletonAux () in
+	  Absyn.ArrowType(arg, target)
+	else if cat = typeMarkSkeletonVar then     (* type skeleton variable *)
+	  let offset = readOneByte () in
+	  Absyn.SkeletonVarType (ref offset)
+	else if cat = typeMarkKind then            (* sort or type application *)
+	  let kindOpt = readKindIndex getKindFn in
+	  let arity   = readOneByte () in
+	  let args    = readTypeSkeletons arity [] in
+	  if Option.isNone kindOpt then Absyn.ErrorType 
+	  else
+		Absyn.ApplicationType(Option.get kindOpt, args)
+	else
+	  (Errormsg.error Errormsg.none 
+		 "readTypeSkeleton: invalid type skeleton in bytecode";
+	   Absyn.ErrorType)
+
+  and readTypeSkeletons number tyskels =
+	if (number = 0) then (List.rev tyskels)
+	else
+	  readTypeSkeletons (number - 1) ((readTypeSkeletonAux ()) :: tyskels)
+	  
+  in
+  readTypeSkeletonAux () 
+
+(* read fixity *)
+let readFixity () =
+  let number = readOneByte () in
+  if (number = fixityMarkInfix) then Absyn.Infix
+  else if (number = fixityMarkInfixl) then Absyn.Infixl
+  else if (number = fixityMarkInfixr) then Absyn.Infixr
+  else if (number = fixityMarkNoFixity) then Absyn.NoFixity
+  else if (number = fixityMarkPrefix) then Absyn.Prefix
+  else if (number = fixityMarkPrefixr) then Absyn.Prefixr
+  else if (number = fixityMarkPostfix) then Absyn.Postfix
+  else Absyn.Postfixl
+
+(* read global constant *)
+let readGlobalConstant getTypeSkelFn ind =
+  let fixity    = readFixity  () in
+  let prec      = readOneByte () in
+  let tyEnvSize = readOneByte () in
+  let symbol    = Symbol.symbol (readString ()) in
+  let tySkelInd = readOneByte () in
+  let tySkel    = getTypeSkelFn tySkelInd in
+  Absyn.makeGlobalConstant symbol fixity prec false false tyEnvSize tySkel ind
+
+(* read local constant *)
+let readLocalConstant getTypeSkelFn ind =
+  let fixity    = readFixity  () in
+  let prec      = readOneByte () in
+  let tyEnvSize = readOneByte () in
+  let tySkelInd = readOneByte () in
+  let tySkel    = getTypeSkelFn tySkelInd in
+  Absyn.makeLocalConstant (Symbol.symbol "") fixity prec tyEnvSize tySkel ind
+
+(* read hidden constant *)
+let readHiddenConstant getTypeSkelFn ind =
+  let tySkelInd = readOneByte () in
+  let tySkel    = getTypeSkelFn tySkelInd in
+  let const     = Absyn.makeHiddenConstant tySkel in
+  Absyn.setConstantIndex const ind;
+  const
+
+(* read findcode function *)
+let readFindCodeFn () = readOneByte ()
+
+(* read instruction operands *)
+let readint1 () = readOneByte ()
+let readint2 () = readTwoBytes ()
+let readint4 () = readNBytes (getInChannel ()) 4
+let readint8 () = readNBytes (getInChannel ()) 8
+
+(* read lable *)
+let getLabelFn : (int -> unit) option ref = ref None
+let setGetLabelFn func = getLabelFn := Some func
+
+(* read label *)
+let readintref4 () = 
+  let offset = readWord () in
+  (Option.get (!getLabelFn)) offset;
+  (ref offset)
+
+let readintref8 () =
+  let offset = readWord () in
+  (Option.get (!getLabelFn)) offset;
+  (ref offset)
+
+(* read float *)
+let readfloat4 () =
+  let input = getInChannel () in
+  let mantissa = float_of_int (readNBytes input 4) in
+  let exponent = readNBytes input 4 in
+  let (significant, _) = frexp mantissa in
+  ldexp significant exponent
+
+(* read kind/constant *)
+let getKindFn : (int -> int -> Absyn.akind option) option ref = ref None
+let getConstantFn : (int -> int -> Absyn.aconstant option) option ref 
+	= ref None
+  
+let setGetKindFn func = getKindFn := Some(func)
+let setGetConstantFn func = getConstantFn := Some(func)
+
+let readakind2 () =  Option.get (readKindIndex (Option.get (!getKindFn))) 
+let readaconstant2 () = 
+  Option.get (readConstantIndex (Option.get(!getConstantFn)))
+
+(** ******************************************************************* **)
+(**          DISPLAY FUNCTIONS FOR DISASSEMBLY                          **)
+(** ******************************************************************* **)
+let findLabelFn : (int -> string) option ref = ref None
+let setFindLabelFn func = findLabelFn := Some func
+
+let displayR   regNum = "A" ^ (string_of_int regNum)
+let displayE   envNum = "Y" ^ (string_of_int envNum)
+let displayN   number = "#" ^ (string_of_int number)
+let displayI1  number = "#" ^ (string_of_int number)
+let displayCE  number = "Y" ^ (string_of_int number)
+let displaySEG number = "#" ^ (string_of_int number)
+let displayI   number = (string_of_int number)
+let displayF   number = (string_of_float number)
+let displayS   number = "<string #" ^ (string_of_int number) ^ ">"
+let displayMT  number = "<import #" ^ (string_of_int number) ^ ">"
+let displayIT  number = "<impl #" ^ (string_of_int number) ^ ">"
+let displayHT  number = "<hash #" ^ (string_of_int number) ^ ">"
+let displayBVT number = "<bvt #" ^ (string_of_int number) ^ ">"
+let displayL   offset = (Option.get (!findLabelFn)) (!offset)
+
+(* display a kind data *)
+let displayK kind =
+  match kind with
+	Absyn.GlobalKind(_) -> Absyn.getKindName kind
+  | Absyn.LocalKind(_)  -> 
+	  "<local kind #" ^ (string_of_int (Absyn.getKindIndex kind)) ^ ">"
+  | Absyn.PervasiveKind(_) -> Absyn.getKindName kind
+
+(* display a constant data *)
+let displayC const =
+  let cat = Absyn.getConstantType const in
+  match cat with
+	Absyn.GlobalConstant -> Absyn.getConstantName const
+  | Absyn.PervasiveConstant(_) -> Absyn.getConstantName const
+  | Absyn.LocalConstant -> 
+	  "<local const #" ^ (string_of_int (Absyn.getConstantIndex const)) ^ ">"
+  | Absyn.HiddenConstant -> 
+	  "<hidden const #" ^ (string_of_int (Absyn.getConstantIndex const)) ^ ">"
+  | _ -> Errormsg.impossible Errormsg.none "displayaconstant2: invalid const"
+	  
+(* display find code function *)
+let displayFindCodeFn mark =
+  if mark = findCodeFuncMarkHash then "hash"
+  else "sequential"

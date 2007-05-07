@@ -84,3 +84,62 @@ let cutFailTerm =
 						[Absyn.ConstantTerm(Pervasive.cutConstant, [], false, Errormsg.none) ;
 						 Absyn.ConstantTerm(Pervasive.failConstant, [], false, Errormsg.none)], 2),
 						false, Errormsg.none)
+
+(**************************************************************************)
+(* pervasive kind and constant index-data mapping table: needed for       *)
+(* loading and disassembling.                                             *)
+(**************************************************************************)
+let pervasiveKindIndexMapping : ((Absyn.akind option) array) ref =
+  ref (Array.make Pervasive.numberPervasiveKinds None)
+
+let getPervasiveKindIndexMapping () = !pervasiveKindIndexMapping
+let setPervasiveKindIndexMapping m  = pervasiveKindIndexMapping := m
+
+(* fill in the pervasive kinds index-kind data mapping:                   *)
+(* Note only those appearing in the run-time symbol table (which are      *)
+(* assumed to have indexes smaller than "numberPervasivekinds") are needed*)
+(* and filled in.                                                         *)   
+let pervasiveKindIndexMappingInit () =
+  let kindIndexMapping = getPervasiveKindIndexMapping () in
+
+  let collectKindIndexMapping symbol kind =
+	let index = Absyn.getKindIndex kind in
+	if (index < Pervasive.numberPervasiveKinds) then
+	  Array.set kindIndexMapping index (Some kind)
+	else
+	  ()
+  in
+  Table.iter collectKindIndexMapping Pervasive.pervasiveKinds;
+  setPervasiveKindIndexMapping kindIndexMapping
+  
+(* find kind data from the mapping table through its index *) 
+let findKindIndexMapping index =
+  Array.get (getPervasiveKindIndexMapping ()) index
+
+let pervasiveConstantIndexMapping : ((Absyn.aconstant option) array) ref =
+  ref (Array.make Pervasive.numberPervasiveConstants None)
+	
+let getPervasiveConstantIndexMapping () = !pervasiveConstantIndexMapping
+let setPervasiveConstantIndexMapping m  = pervasiveConstantIndexMapping := m
+
+(* fill in the pervasive constants index-constant data mapping:           *)
+(* Note only those appearing in the run-time symbol table (which are      *)
+(* assumed to have indexes smaller than "numberPervasivekinds") are needed*)
+(* and filled in.                                                         *)   
+let pervasiveConstantIndexMappingInit () =
+  let constIndexMapping = getPervasiveConstantIndexMapping () in
+  
+  let collectConstIndexMapping symbol const =
+	let index = Absyn.getConstantIndex const in
+	if (index < Pervasive.numberPervasiveConstants) then
+	  Array.set constIndexMapping index (Some const)
+	else
+	  ()
+		
+  in
+  Table.iter collectConstIndexMapping Pervasive.pervasiveConstants;
+  setPervasiveConstantIndexMapping constIndexMapping
+
+(* find constant data from the mapping table through its index *)
+let findConstantIndexMapping index =
+  Array.get (getPervasiveConstantIndexMapping ()) index
