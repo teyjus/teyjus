@@ -38,9 +38,13 @@ static char* addStr(char* str, char* addOn)
 #define TYPE_SUFFIX      "type"
 #define SIZE_SUFFIX      "Size"
 #define WRITE_PREFIX     "write"
+#define READ_PREFIX      "read"
+#define DISPLAY_PREFIX   "display"
 #define INDENT           "  "
 #define INDENT2          "    "
 #define WRITE            "Bytecode.write"
+#define READ             "Bytecode.read"
+#define DISPLAY          "Bytecode.display"
 #define INSCAT_PREFIX    "inscat"
 #define INS_PREFIX       "Ins_"
 
@@ -162,6 +166,21 @@ static char* OC_mkArgList(char* prev, char* new)
   return args;
 }
 
+static char* OC_mkStrConcat(char* prev, char* new)
+{
+    int length = strlen(prev) + strlen(new) + 10;
+    char* str = UTIL_mallocStr(length);
+  
+    strcpy(str, "(");
+    strcat(str, prev);
+    strcat(str, ") ^ (");
+    strcat(str, new);
+    strcat(str, ")");
+
+    return str;
+}
+
+
 static char* OC_mkArrow(char* left, char* right)
 {
     int length = strlen(left) + strlen(right) + 20;
@@ -187,6 +206,22 @@ static char* OC_mkStructure(char* func, char* arg)
     return app;
 }
 
+static char* OC_mkCond(char* cond, char* branch) 
+{
+    int length = strlen(cond) + strlen(branch) + 20;
+    char* str = UTIL_mallocStr(length);
+    
+    strcpy(str, INDENT);
+    strcat(str, "if ");
+    strcat(str, cond);
+    strcat(str, " then ");
+    strcat(str, branch);
+    strcat(str, "\n");
+    strcat(str, INDENT);
+    strcat(str, "else");
+    
+    return str;
+}
 /**************************************************************************/
 /* type definitions                                                       */
 /**************************************************************************/
@@ -204,6 +239,7 @@ static char* opTypes;
 static char* opSizesMLI;
 static char* opSizesML;
 static char* writeFuncs;
+static char* readFuncs;
 
 static char* ocgenWriteOpFunc(char* typeName, char* compType, int numBytes)
 {
@@ -224,6 +260,24 @@ static char* ocgenWriteOpFunc(char* typeName, char* compType, int numBytes)
     return func;
 }
 
+static char* ocgenReadOpFunc(char* typeName, char* compType, int numBytes)
+{
+    char* funcName = UTIL_appendStr(READ_PREFIX, typeName);
+    char* numBytesText = UTIL_itoa(numBytes);
+    char* arg = "arg";
+    char* funcBody1 = UTIL_mallocStr(strlen(READ) + strlen(compType) + 
+                                      strlen(numBytesText));
+    char* funcBody2, *func;
+    
+    strcpy(funcBody1, READ);
+    strcat(funcBody1, compType);
+    strcat(funcBody1, numBytesText);                free(numBytesText);
+    
+    funcBody2 = UTIL_appendStr(funcBody1, " arg");  free(funcBody1);
+    func = OC_mkFunc(funcName, arg, funcBody2);
+    free(funcName); free(funcBody2);
+    return func;
+}
 
 void ocgenOpType(char* typeName, int numBytes, char* compType)
 {
@@ -235,6 +289,9 @@ void ocgenOpType(char* typeName, int numBytes, char* compType)
     /* generate write functions */
     char* func          = ocgenWriteOpFunc(typeName, compType, numBytes);
     char* myWriteFuncs  = addStr(writeFuncs, func);
+    /* generate read functions */
+    char* readFunc      = ocgenReadOpFunc(typeName, compType, numBytes);
+    char* myReadFuncs   = addStr(readFuncs, readFunc);
 
     /* generate sizes */
     if (numBytes < 4) {
@@ -255,6 +312,8 @@ void ocgenOpType(char* typeName, int numBytes, char* compType)
     opTypes = myopTypes;
     free(writeFuncs); free(func);
     writeFuncs = myWriteFuncs;
+    free(readFuncs);  free(readFunc);
+    readFuncs = myReadFuncs;
 }
 
 void ocgenOpCodeType(int numBytes)
@@ -267,14 +326,18 @@ void ocgenOpCodeType(int numBytes)
     char* myopSizeML  = addLine(opSizesML, myOpCodeSizeML);
     char* func = ocgenWriteOpFunc("opcode", "int", numBytes);
     char* myWriteFuncs = addLine(writeFuncs, func);
+    char* readFunc = ocgenReadOpFunc("opcode", "int", numBytes);
+    char* myReadFuncs = addLine(readFuncs, readFunc);
     
     free(size); free(mySizeName);
     free(opSizesMLI);   free(myOpCodeSizeMLI);
     free(opSizesML);    free(myOpCodeSizeML);  
     free(writeFuncs);   free(func);
+    free(readFuncs);    free(readFunc);
     opSizesMLI = myopSizeMLI;
     opSizesML  = myopSizeML;
     writeFuncs = myWriteFuncs;
+    readFuncs  = myReadFuncs;
 }
 
 static char* opMLI;
@@ -296,14 +359,16 @@ void ocgenOps()
     opML = addLine(opML, wordSizeML);    free(wordSizeML);
     text = addLine(opML, opSizesML);     free(opML); free(opSizesML);
     opML = addLine(text, writeFuncs);    free(text); free(writeFuncs);
-    text = addLine(opML, opTypes);       free(opML); free(opTypes);
-    opML = text;
+    text = addLine(opML, readFuncs);     free(opML); free(readFuncs);
+    opML = addLine(text, opTypes);       free(text); free(opTypes);
 }
 
 /****************************************************************************/
 /* instruction categories                                                   */
 /****************************************************************************/
 static char* instrCatWriteFunc = NULL;
+static char* instrCatReadFunc  = NULL;
+static char* instrCatDisplayFunc = NULL;
 static char* instrCatType      = NULL;
 static int   argInd            = 1;
 static char* argList           = NULL;  
@@ -311,7 +376,8 @@ static char* argList           = NULL;
 void ocgenInstrFormat(char* opName)
 {
   char *myop, *myOpName, *myFuncName, *myArgInd, *myFuncCall, *myArg, 
-    *myArgList, *myinstrCatWriteFunc, *myinstrCatType;
+      *myArgList, *myinstrCatType, *myinstrCatWriteFunc,
+      *myinstrCatReadFunc, * myinstrCatDisplayFunc;
     
     if (strcmp(opName, "P") == 0 || strcmp(opName, "WP") == 0 || 
         strcmp(opName, "X") == 0) return;
@@ -334,6 +400,7 @@ void ocgenInstrFormat(char* opName)
       myArgList = OC_mkArgList(argList, myArg); free(argList);
       argList = myArgList;
     } else argList = myArg;
+    
     //write function
     myFuncName = UTIL_appendStr(WRITE_PREFIX, opName);
     myFuncCall = UTIL_mallocStr(strlen(myFuncName) + strlen(myArg) + 5);
@@ -346,41 +413,94 @@ void ocgenInstrFormat(char* opName)
         instrCatWriteFunc = myinstrCatWriteFunc;
         free(myFuncCall);
     } else instrCatWriteFunc =  myFuncCall;
+    
+    //read function
+    myFuncName = UTIL_appendStr(READ_PREFIX, opName);
+    myFuncCall = UTIL_mallocStr(strlen(myFuncName) + 5);
+    strcpy(myFuncCall, myFuncName);   free(myFuncName);
+    strcat(myFuncCall, " ()");
+    if (instrCatReadFunc) {
+        myinstrCatReadFunc = OC_mkArgList(instrCatReadFunc, myFuncCall);
+        free(instrCatReadFunc);
+        instrCatReadFunc = myinstrCatReadFunc;
+        free(myFuncCall);
+    } else instrCatReadFunc = myFuncCall;
 
+    //display function
+    myFuncName = UTIL_appendStr(DISPLAY, opName);
+    myFuncCall = UTIL_mallocStr(strlen(myFuncName) + strlen(myArg) + 5);
+    strcpy(myFuncCall, myFuncName);     free(myFuncName);
+    strcat(myFuncCall, " ");
+    strcat(myFuncCall, myArg);      
+    if (instrCatDisplayFunc) {
+        myinstrCatDisplayFunc = OC_mkStrConcat(instrCatDisplayFunc, myFuncCall);
+        free(instrCatDisplayFunc);
+        instrCatDisplayFunc = myinstrCatDisplayFunc;
+        free(myFuncCall);
+    } else instrCatDisplayFunc =  myFuncCall;
 }
 
 static char* instrCatTypes;
 static char* instrCatWriteFuncs;
+static char* instrCatReadFuncs;
+static char* instrCatDisplayFuncs;
+
 
 void ocgenOneInstrCat(char* catName)
 {
-  char  *mycat, *myCatName, *myInstrCatType, *myInstrCatTypes, *myWriteFuncName,
-    *myWriteFunc, *myInstrCatWriteFuncs, *myArgs;
+  char *myCatName, *myInstrCatType, *myInstrCatTypes, *myArgs,
+      *myWriteFuncName, *myWriteFunc, *myInstrCatWriteFuncs, 
+      *myReadFuncName, *myReadFunc, *myReadFuncBody, *myInstrCatReadFuncs, 
+      *myDisplayFuncName, *myDisplayFunc, *myInstrCatDisplayFuncs;
 
   if (instrCatType) {
-      //mycat = UTIL_lowerCase(catName);
     myCatName = UTIL_appendStr(INSCAT_PREFIX, catName); 
     myInstrCatType = OC_mkTypeDec(myCatName, instrCatType);
     myInstrCatTypes = addStr(instrCatTypes, myInstrCatType);
 
-    myWriteFuncName = UTIL_appendStr(WRITE_PREFIX, catName);
     myArgs = UTIL_mallocStr(strlen(argList) + 5);
     strcpy(myArgs, "(");
     strcat(myArgs, argList);           
     strcat(myArgs, ")");
+
+    /* write function */
+    myWriteFuncName = UTIL_appendStr(WRITE_PREFIX, catName);
     myWriteFunc = OC_mkFunc(myWriteFuncName, myArgs, instrCatWriteFunc);
     myInstrCatWriteFuncs = addStr(instrCatWriteFuncs, myWriteFunc);
     
-    //free(mycat); 
-    free(myCatName); free(myWriteFuncName);
-    free(myInstrCatType); free(myWriteFunc);
-    free(instrCatType); free(instrCatWriteFunc); free(argList);
-    free(instrCatTypes); free(instrCatWriteFuncs);
+    /* read function */
+    myReadFuncName = UTIL_appendStr(READ_PREFIX, catName);
+    myReadFuncBody = UTIL_mallocStr(strlen(instrCatReadFunc) + 5);
+    strcpy(myReadFuncBody, "(");
+    strcat(myReadFuncBody, instrCatReadFunc);
+    strcat(myReadFuncBody, ")");
+    myReadFunc = OC_mkFunc(myReadFuncName, "()", myReadFuncBody);
+    myInstrCatReadFuncs = addStr(instrCatReadFuncs, myReadFunc);
 
-    instrCatType = NULL; instrCatWriteFunc = NULL; argList = NULL; argInd = 1;
+    /* display function */
+    myDisplayFuncName = UTIL_appendStr(DISPLAY_PREFIX, catName);
+    myDisplayFunc = OC_mkFunc(myDisplayFuncName, myArgs, instrCatDisplayFunc);
+    myInstrCatDisplayFuncs = addStr(instrCatDisplayFuncs, myDisplayFunc);
+
+    
+    free(myCatName); free(myInstrCatType); 
+    free(instrCatType); free(instrCatTypes);
+    free(myWriteFuncName); free(myWriteFunc); 
+    free(instrCatWriteFunc);  free(instrCatWriteFuncs);
+    free(myReadFuncName); free(myReadFunc);
+    free(instrCatReadFunc); free(instrCatReadFuncs);
+    free(myDisplayFuncName); free(myDisplayFunc);
+    free(instrCatDisplayFunc); free(instrCatDisplayFuncs);
+    free(argList);
+
+    argList = NULL; argInd = 1;
+    instrCatType = NULL; 
+    instrCatWriteFunc = NULL; instrCatReadFunc = NULL; 
+    instrCatDisplayFunc = NULL;
     instrCatTypes = myInstrCatTypes; 
     instrCatWriteFuncs = myInstrCatWriteFuncs;
-					       
+    instrCatReadFuncs = myInstrCatReadFuncs;
+    instrCatDisplayFuncs = myInstrCatDisplayFuncs;					       
   }
 }
 
@@ -404,9 +524,18 @@ void ocgenInstrCat()
   char* text2 = addLine(text, "\n");
   
   instrCatMLI = text;
-  instrCatML  = addLine(text2, instrCatWriteFuncs); free(instrCatWriteFuncs);
-  text = addLine(instrCatML, instrCatLength); free(instrCatML); free(instrCatLength);
-  instrCatML = text;
+  
+  text        = addLine(text2, instrCatWriteFuncs); 
+  free(instrCatWriteFuncs); free(text2);
+  
+  text2 = addLine(text, instrCatReadFuncs);
+  free(instrCatReadFuncs); free(text);
+  
+  text = addLine(text2, instrCatDisplayFuncs);
+  free(instrCatDisplayFuncs); free(text2);
+  
+  instrCatML = addLine(text, instrCatLength);  
+  free(text); free(instrCatLength);
 }
 
 /****************************************************************************/
@@ -417,10 +546,112 @@ void ocgenInstrCat()
 
 static char* instructionTypes;
 static char* insWriteFuncBody;
+static char* insReadFuncBody;
+static char* insDisplayFuncBody;
 static char* insSizesDec;
 static char* insSizesDef;
 
-void ocgenOneInstr(char* opcode, char* insName, char* insCat, char* insLength)
+static void ocgenReadFuncBody(char* opcode, char* myInsName, char* myInsLength, char* insCat, 
+                              int last)
+{
+    char *ins, *readArgs, *returnValue, *myReadFuncBody, *mycond, *tmp;    
+    
+    if (strcmp(insCat, "X") == 0) ins = myInsName;
+    else {
+        readArgs = UTIL_appendStr(READ_PREFIX, insCat); 
+        ins = UTIL_mallocStr(strlen(readArgs) + strlen(myInsName) + 10);
+        strcpy(ins, myInsName);
+        strcat(ins, " (");
+        strcat(ins, readArgs);
+        strcat(ins, " ())");
+        free(readArgs);
+    }
+    returnValue = UTIL_mallocStr(strlen(ins) + strlen(myInsLength) + 5);
+    strcpy(returnValue, "(");
+    strcat(returnValue,  ins);
+    strcat(returnValue, ", ");
+    strcat(returnValue, myInsLength);
+    strcat(returnValue, ")");
+    
+    if (last) { 
+        tmp = UTIL_appendStr(" ", returnValue); free(returnValue);
+    }else {
+        mycond = UTIL_mallocStr(strlen(opcode) + 10);
+        strcpy(mycond, "opcode = ");
+        strcat(mycond, opcode);
+        tmp = OC_mkCond(mycond, returnValue); 
+        free(mycond); free(returnValue);
+    }
+    
+    if (insReadFuncBody) {
+        myReadFuncBody = UTIL_appendStr(insReadFuncBody, tmp);
+        free(insReadFuncBody); free(tmp);
+        insReadFuncBody = myReadFuncBody;
+    } else insReadFuncBody = tmp;
+
+}
+
+static char* OC_mkWS(int size) 
+{
+    int   i;
+    char* text;
+    
+    if (size > 0) {
+        text = UTIL_mallocStr(size);
+        for (i = 0; i < size; i++) text[i]= ' ';
+        text[size] = '\0';
+    } else text = strdup(" ");
+    
+    return text;
+}    
+
+static void ocgenDisplayFuncBody(char* pattern, char* insName, char* insLength,
+                                 char* insCat)
+{
+    char *displayargs, *funcBody, *myInsName, *ins, *returnValue, *insText,
+        *myDisplayFuncBody;
+    
+    myInsName = UTIL_appendStr(insName, OC_mkWS(25 - strlen(insName)));
+    insText   = UTIL_mallocStr(strlen(myInsName) + 5);  
+    strcpy(insText, "\"");
+    strcat(insText, myInsName);       free(myInsName);
+    strcat(insText, "\"");
+    
+
+    if (strcmp(insCat, "X") == 0) ins = insText;
+    else {
+        displayargs = UTIL_appendStr(DISPLAY_PREFIX, insCat); 
+        ins = UTIL_mallocStr(strlen(displayargs) + strlen(insText) + 10);
+        strcpy(ins, insText);
+        strcat(ins, "^ (");
+        strcat(ins, displayargs);
+        strcat(ins, " arg)");
+        free(displayargs); free(insText);
+    }
+
+    returnValue = UTIL_mallocStr(strlen(ins) + strlen(insLength) + 5);
+    strcpy(returnValue, "(");
+    strcat(returnValue,  ins);
+    strcat(returnValue, ", ");
+    strcat(returnValue, insLength);
+    strcat(returnValue, ")");
+
+    funcBody = OC_mkArrow(pattern, returnValue);
+    free(returnValue);
+
+    if (insDisplayFuncBody) {
+        myDisplayFuncBody =  OC_mkDisjValueCtrs(insDisplayFuncBody, funcBody);
+        free(insDisplayFuncBody); free(funcBody);
+        insDisplayFuncBody = myDisplayFuncBody;
+    } else {
+        insDisplayFuncBody = UTIL_appendStr(INDENT2, funcBody);
+        free(funcBody);
+    }
+}
+
+
+void ocgenOneInstr(char* opcode, char* insName, char* insCat, char* insLength,
+                   int last)
 {
     char *myCatName, *myInsName, *myValueCtr, *myInstrTypes;
     char *myInsSizeName, *myInsLength, *mySizeDef, *mySizeDec, *mySizeDefs, 
@@ -444,17 +675,19 @@ void ocgenOneInstr(char* opcode, char* insName, char* insCat, char* insLength)
     /* write function body */
     myWriteOpCodeFunc = UTIL_appendStr(WRITEOPCODE, opcode);
     if (strcmp(insCat, "X") == 0) {
-        myPattern  = strdup(myInsName);   free(myInsName);
+        myPattern  = strdup(myInsName);   
         myfuncBody = myWriteOpCodeFunc;
     } else {
         char* myWriteArgsName = UTIL_appendStr(WRITE_PREFIX, insCat);
         char* myWriteArgs = UTIL_mallocStr(strlen(myWriteArgsName) + 5);
-        myPattern = OC_mkStructure(myInsName, "arg");   free(myInsName);
+        myPattern = OC_mkStructure(myInsName, "arg"); 
         strcpy(myWriteArgs, myWriteArgsName);           free(myWriteArgsName);
         strcat(myWriteArgs, " arg");
-        myfuncBody = OC_mkFuncSeq(myWriteOpCodeFunc, myWriteArgs); free(myWriteArgs);
+        myfuncBody = OC_mkFuncSeq(myWriteOpCodeFunc, myWriteArgs);
+        free(myWriteArgs);
     }
-    myFunc = OC_mkArrow(myPattern, myfuncBody); free(myPattern); free(myfuncBody);
+    myFunc = OC_mkArrow(myPattern, myfuncBody); 
+    free(myfuncBody);
     if (insWriteFuncBody) {
         myInsWriteFuncBody =  OC_mkDisjValueCtrs(insWriteFuncBody, myFunc);
         free(insWriteFuncBody); free(myFunc);
@@ -463,24 +696,41 @@ void ocgenOneInstr(char* opcode, char* insName, char* insCat, char* insLength)
         insWriteFuncBody = UTIL_appendStr(INDENT2, myFunc);
         free(myFunc);
     }
-
     /* instruction sizes */
     myInsSizeName = UTIL_appendStr(GETSIZE_PREFIX, insName); 
     myInsLength = UTIL_appendStr(INSCAT_PREFIX, insLength); 
-    mySizeDef =  OC_mkVarDef(myInsSizeName, myInsLength); free(myInsLength);
+    mySizeDef =  OC_mkVarDef(myInsSizeName, myInsLength); 
     mySizeDec =  OC_mkVarDec(myInsSizeName, "int");       free(myInsSizeName);
     
-    mySizeDefs = addStr(insSizesDef, mySizeDef); free(insSizesDef); free(mySizeDef);
-    mySizeDecs = addStr(insSizesDec, mySizeDec); free(insSizesDec); free(mySizeDec);
+    mySizeDefs = addStr(insSizesDef, mySizeDef); 
+    free(insSizesDef); free(mySizeDef);
+    mySizeDecs = addStr(insSizesDec, mySizeDec);
+    free(insSizesDec); free(mySizeDec);
     
     insSizesDef = mySizeDefs;
     insSizesDec = mySizeDecs;
+
+    ocgenReadFuncBody(opcode, myInsName, myInsLength, insCat, last);
+    ocgenDisplayFuncBody(myPattern, insName, myInsLength, insCat);
+    
+    free(myInsName); free(myInsLength); free(myPattern);
 }
 
 #define INSTRTYPE_HEAD "type instruction = "
 
 #define INSTWRITEFUNC_DEF_HEAD "let writeInstruction inst =\n  match inst with\n"
 #define INSTWRITEFUNC_DEC "val writeInstruction : instruction -> unit\n"
+
+#define INSTREADFUNC_DEF_HEAD \
+"let readInstruction getKindFunc getConstantFunc =                             \n  Bytecode.setGetKindFn getKindFunc;                                           \n  Bytecode.setGetConstantFn getConstantFunc;                                   \n  let opcode = readopcode () in\n"
+
+#define INSTREADFUNC_DEC \
+"val readInstruction :                                                          \n(int -> int -> Absyn.akind option) -> (int -> int -> Absyn.aconstant option) ->\n(instruction * int)\n"
+
+#define INSTDISPLAYFUNC_DEF_HEAD \
+"let displayInstruction inst =\n match inst with\n"
+#define INSTDISPLAYFUNC_DEC \
+"val displayInstruction : instruction -> (string * int)\n"
 
 static char* instrMLI;
 static char* instrML;
@@ -493,11 +743,22 @@ void ocgenInstr()
     free(instructionTypes); free(text);
 
     text = addLine(text2, insSizesDec); free(insSizesDec);
-    instrMLI = addLine(text, INSTWRITEFUNC_DEC); free(text);
+    instrMLI = addStr(text, INSTWRITEFUNC_DEC); free(text);
+    text = addStr(instrMLI, INSTREADFUNC_DEC);  free(instrMLI);
+    instrMLI = addStr(text, INSTDISPLAYFUNC_DEC); free(text);
     
     text =  addLine(text2, insSizesDef); free(text2); free(insSizesDef);
     text2 = addStr(text, INSTWRITEFUNC_DEF_HEAD);    free(text);    
-    instrML = addStr(text2, insWriteFuncBody);   free(text2); free(insWriteFuncBody);
+    instrML = addStr(text2, insWriteFuncBody);   
+    free(text2); free(insWriteFuncBody);
+    text  = addStr(instrML, "\n\n"); free(instrML);
+    text2 = addStr(text, INSTREADFUNC_DEF_HEAD);     free(text);
+    instrML = addStr(text2, insReadFuncBody);        
+    free(text2); free(insReadFuncBody);
+    text = addStr(instrML, "\n\n"); free(instrML);
+    text2 = addStr(text, INSTDISPLAYFUNC_DEF_HEAD);  free(text);
+    instrML = addStr(text2, insDisplayFuncBody);
+    free(text2); free(insDisplayFuncBody);
 }
 
 /****************************************************************************/

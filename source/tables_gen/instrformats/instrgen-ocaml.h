@@ -16,7 +16,8 @@ void ocgenInstrLength(char* varName, char* numBytes);
 void ocgenInstrCat();
 
 /* instructions */
-void ocgenOneInstr(char* opcode, char* insName, char* insCat, char* insLength);
+void ocgenOneInstr(char* opcode, char* insName, char* insCat, char* insLength,
+                   int last);
 void ocgenInstr();
 
 

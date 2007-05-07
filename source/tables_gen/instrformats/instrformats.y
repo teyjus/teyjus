@@ -165,13 +165,13 @@ instr         : comments opcode instr_name instr_cat instr_length
                 { cgenOneInstrH($1, $2.sval , $3);
                   cgenOneInstrC($2.ival, $3, $4, $5, 0);
                   cgenOneSimDispatch($2.ival, $3, 0);
-                  ocgenOneInstr($2.sval, $3, $4, $5);
+                  ocgenOneInstr($2.sval, $3, $4, $5, 0);
                 }
               | opcode instr_name instr_cat instr_length
                 { cgenOneInstrH(NULL, $1.sval , $2);
                   cgenOneInstrC($1.ival, $2, $3, $4, 0);
                   cgenOneSimDispatch($1.ival, $2, 0);
-                  ocgenOneInstr($1.sval, $2, $3, $4);
+                  ocgenOneInstr($1.sval, $2, $3, $4, 0);
                 }
               ;
 
@@ -179,13 +179,13 @@ last_instr    : comments opcode instr_name instr_cat instr_length
                 { cgenOneInstrH($1, $2.sval , $3);
                   cgenOneInstrC($2.ival, $3, $4, $5, 1);
                   cgenOneSimDispatch($2.ival, $3, 1); 
-                  ocgenOneInstr($2.sval, $3, $4, $5);
+                  ocgenOneInstr($2.sval, $3, $4, $5, 1);
                 }
               |  opcode instr_name instr_cat instr_length
                 { cgenOneInstrH(NULL, $1.sval , $2);
                   cgenOneInstrC($1.ival, $2, $3, $4, 1);
                   cgenOneSimDispatch($1.ival, $2, 1);
-                  ocgenOneInstr($1.sval, $2, $3, $4);
+                  ocgenOneInstr($1.sval, $2, $3, $4, 1);
                 }
               ;
  
