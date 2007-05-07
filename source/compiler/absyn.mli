@@ -254,12 +254,14 @@ val getKindArity : akind -> int
 val getKindArityOption : akind -> int option
 val getKindPos : akind -> pos
 val getKindName : akind -> string
+val getKindSymbol : akind -> symbol
 val getKindIndex : akind -> int
 val setKindIndex : akind -> int -> unit
 val isGlobalKind : akind -> bool
 val string_of_kind : akind -> string
 
 val makeGlobalKind : symbol -> int -> int -> akind
+val makeLocalKind : symbol -> int -> int -> akind
 (*************************************************************************)
 (*  atypevar:                                                            *)
 (*************************************************************************)
@@ -384,6 +386,8 @@ val isGlobalConstant : aconstant -> bool
 
 val makeGlobalConstant : symbol -> afixity -> int -> bool -> bool -> int 
   -> askeleton -> int -> aconstant
+val makeLocalConstant : symbol -> afixity -> int -> int -> askeleton ->
+  int -> aconstant
 val makeAnonymousConstant : int -> aconstant
 val makeHiddenConstant : askeleton -> aconstant
 val makeConstantTerm : aconstant -> atype list -> pos -> aterm

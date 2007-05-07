@@ -3,9 +3,9 @@
 (* reading bytecode files.                                                *)
 (**************************************************************************)
 
-(**********************************************************************)
-(* byte code format flags                                             *)
-(**********************************************************************)
+(** ******************************************************************** **)
+(**                       BYTECODE FORMAT                                **)
+(** ******************************************************************** **)
 val byteCodeVersionNumber : int
 
 (* type skeleton representation *)
@@ -33,9 +33,10 @@ val pervasive : int
 val findCodeFuncMarkHash : int 
 val findCodeFuncMarkSeq  : int 
 
-(***********************************************************************)
-(*                     IO facilities                                   *)
-(***********************************************************************)
+(** ******************************************************************** **)
+(**                       IO FACILITIES                                  **)
+(** ******************************************************************** **)
+
 (**********************************************************************)
 (* record the number of bytes contained by a word (needed for reading *)
 (* or writing a word).                                                *)
@@ -54,6 +55,10 @@ val closeOutChannel : unit   -> unit
 (******************************************************************)
 val openInChannel   : string -> unit
 val closeInChannel  : unit   -> unit
+
+(** ******************************************************************* **)
+(**                      WRITE FUNCTIONS                                **)
+(** ******************************************************************* **)
 
 (*******************************************************************)
 (* functions for writing certain numbers of bytes to output channel*)
@@ -89,6 +94,10 @@ val writeakind2 : Absyn.akind -> unit
 (* followed by two bytes constant table index.         *)
 val writeaconstant2 : Absyn.aconstant -> unit
 
+(** ******************************************************************* **)
+(**                       READ FUNCTIONS                                **)
+(** ******************************************************************* **)
+
 (********************************************************************)
 (* functions for reading certain numbers of bytes from input channel*)
 (********************************************************************)
@@ -99,3 +108,75 @@ val readString   : unit -> string (* read a string  *)
 
 val skipNBytes : int -> unit (* skip n bytes   *)
 val skipNWords : int -> unit (* skip n words   *)
+
+(********************************************************************)
+(* functions for reading certain data structures                    *)
+(********************************************************************)
+(* kind/constant indexes *)
+val readKindIndex  : 
+	(int -> int -> Absyn.akind option) -> Absyn.akind option
+val readConstantIndex : 
+	(int -> int -> Absyn.aconstant option) -> Absyn.aconstant option
+
+(* kind data *)
+val readGlobalKind : int -> Absyn.akind  (* read a global kind *)
+val readLocalKind  : int -> Absyn.akind  (* read a local kind  *)
+
+(* constant data *)
+val readGlobalConstant :                 (* read a global constant *)
+	(int -> Absyn.askeleton) -> int -> Absyn.aconstant
+val readLocalConstant  :                 (* read a local constant  *)
+	(int -> Absyn.askeleton) -> int -> Absyn.aconstant
+val readHiddenConstant :                 (* read a hidden constant *)
+	(int -> Absyn.askeleton) -> int -> Absyn.aconstant 
+
+(* read a type skeleton *)
+val readTypeSkeleton : (int -> int -> Absyn.akind option) -> Absyn.atype 
+
+(* find code function *)
+val readFindCodeFn : unit -> int
+
+(* read instruction operands *)
+val readint1 : unit -> int
+val readint2 : unit -> int
+val readint4 : unit -> int
+val readint8 : unit -> int
+val readintref4 : unit -> int ref
+val readintref8 : unit -> int ref
+val readfloat4  : unit -> float
+val readakind2  : unit -> Absyn.akind
+val readaconstant2 : unit -> Absyn.aconstant
+
+val setGetKindFn : (int -> int -> Absyn.akind option) -> unit
+val setGetConstantFn : (int -> int -> Absyn.aconstant option) -> unit
+val setGetLabelFn : (int -> unit) -> unit
+
+(** ******************************************************************* **)
+(**          DISPLAY FUNCTIONS FOR DISASSEMBLY                          **)
+(** ******************************************************************* **)
+val setFindLabelFn : (int -> string) -> unit
+
+val displayR   : int -> string
+val displayE   : int -> string
+val displayN   : int -> string
+val displayI1  : int -> string
+val displayCE  : int -> string
+val displaySEG : int -> string
+val displayI   : int -> string
+val displayF   : float -> string
+val displayS   : int -> string
+val displayMT  : int -> string
+val displayIT  : int -> string
+val displayHT  : int -> string
+val displayBVT : int -> string
+val displayL   : int ref -> string
+
+(* display a kind data     *)
+val displayK : Absyn.akind -> string
+(* display a constant data *)
+val displayC : Absyn.aconstant -> string
+
+(* display find code function *)
+val displayFindCodeFn : int -> string
+
+
