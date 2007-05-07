@@ -372,5 +372,7 @@ val getSize_create_type_variable : int
 
 
 val writeInstruction : instruction -> unit
-
-
+val readInstruction :                                                          
+(int -> int -> Absyn.akind option) -> (int -> int -> Absyn.aconstant option) ->
+(instruction * int)
+val displayInstruction : instruction -> (string * int)
