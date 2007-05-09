@@ -1174,7 +1174,7 @@ and translateModule = fun mod' ktable ctable atable ->
         (*  Verify that all constants have a body, and
             all kinds have an arity.  *)
         if (checkConstantBodies ctable) && (checkKindArities ktable) then
-          let amod = Absyn.Module(name, imps, accums, ref ctable, ref ktable, atable, [], [], [], localconstants, globalconstants, ref [], [], [], ref(Absyn.ClauseBlocks([]))) in
+          let amod = Absyn.Module(name, imps, accums, ref ctable, ref ktable, atable, [], [], [], globalconstants, localconstants, ref [], [], [], ref(Absyn.ClauseBlocks([]))) in
           amod
         else
           Absyn.ErrorModule
