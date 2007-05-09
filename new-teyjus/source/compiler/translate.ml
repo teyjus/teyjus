@@ -841,6 +841,18 @@ and translateSignature = fun s ktable ctable tabbrevtable ->
 * Translates a module from preabsyn to absyn.
 ********************************************************************)
 and translateModule = fun mod' ktable ctable atable ->
+    (******************************************************************
+    *getConstant:
+    * Used when folding over a table to collect all constants of a
+    * particular kind (Global, Local, etc).
+    ******************************************************************)
+    let getConstant kind sym constant result =
+      if (Absyn.getConstantType constant) = kind then
+        constant :: result
+      else
+        result
+    in
+    
     (********************************************************************
     *mergeLocalKinds:
     * Merges the list of local kinds and the kind table.  Any local
@@ -1155,10 +1167,14 @@ and translateModule = fun mod' ktable ctable atable ->
         (*  Apply fixity flags  *)
         let ctable = translateFixities fixities ctable in
         
+        (*  Get local and global constant lists.  *)
+        let globalconstants = Table.fold (getConstant Absyn.GlobalConstant) ctable [] in
+        let localconstants = Table.fold (getConstant Absyn.LocalConstant) ctable [] in
+
         (*  Verify that all constants have a body, and
             all kinds have an arity.  *)
         if (checkConstantBodies ctable) && (checkKindArities ktable) then
-          let amod = Absyn.Module(name, imps, accums, ref ctable, ref ktable, atable, [], [], [], [], [], ref [], [], [], ref(Absyn.ClauseBlocks([]))) in
+          let amod = Absyn.Module(name, imps, accums, ref ctable, ref ktable, atable, [], [], [], localconstants, globalconstants, ref [], [], [], ref(Absyn.ClauseBlocks([]))) in
           amod
         else
           Absyn.ErrorModule
