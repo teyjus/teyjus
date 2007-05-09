@@ -218,8 +218,8 @@ and aclausesblock = (aclause list ref * bool ref * int ref * int option ref)
 (*****************************************************************************
 *Modules:
 * (modname, imported, accumulated, kind table, constant table,
-* type abbre table, string list, local kind list, global kind list,
-* local constant list, global constant list, hidden constant list,
+* type abbre table, string list, global kind list, local kind list, 
+* global constant list, local constant list, hidden constant list,
 * skeleton list, hskeleton list, clauses blocks list)
 *****************************************************************************)
 and amodule = 
