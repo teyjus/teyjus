@@ -827,12 +827,14 @@ let makeLocalConstant symbol fixity prec tyEnvSize tySkel index =
 let makeAnonymousConstant i =
   Constant(Symbol.generate (), ref NoFixity, ref (-1), ref true, ref false,
     ref false, ref true, ref false, ref false, ref None, ref i,
-    ref None, ref None, ref None, ref AnonymousConstant, ref 0, Errormsg.none)
+    ref (Some(Array.make i true)), ref (Some(Array.make i true)),
+    ref None, ref AnonymousConstant, ref 0, Errormsg.none)
 
 let makeHiddenConstant skel =
   Constant(Symbol.symbol "", ref NoFixity, ref (-1), ref true, ref false,
     ref false, ref true, ref false, ref false, ref (Some skel), ref 0,
-    ref None, ref None, ref None, ref HiddenConstant, ref 0, Errormsg.none)
+    ref (Some(Array.make 0 true)), ref (Some(Array.make 0 true)),
+    ref None, ref HiddenConstant, ref 0, Errormsg.none)
 
 let makeConstantTerm c env pos =
   let esize = getConstantTypeEnvSize c in
