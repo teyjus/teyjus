@@ -504,7 +504,7 @@ let getRegTermReg regOrTerm =
 let genPuttingVarCode var regNum chunk lowval last normalize =
 
   (* first occurrence of a temporary variable *)
-  let genPuttingFirstTempVar varData offset regNum lastUse =
+  let genPuttingFirstTempVar varData regNum lastUse =
 	let newRegNum =  
 	  if (lastUse) then Registers.getHighFreeReg()
 	  else Registers.assignTmReg varData chunk lowval
@@ -548,19 +548,19 @@ let genPuttingVarCode var regNum chunk lowval last normalize =
 
   (* function body of genPuttingVarCode *)
   let varData = Absyn.getTermFreeVariableVariableData var in
-  let offset  = Absyn.getVariableDataOffset varData   in
   let lastUse = (Absyn.getVariableDataLastUse varData) == var in
   match (Absyn.getTermFreeVariableFirst var), 
 	    (Absyn.getVariableDataPerm varData)
   with
 	true,  true  -> (* first occurrence of a  permanent variable *)
-	  ([Instr.Ins_put_variable_p(offset, regNum)],Instr.getSize_put_variable_p)
+	  ([Instr.Ins_put_variable_p(Absyn.getVariableDataOffset varData, regNum)],
+	   Instr.getSize_put_variable_p)
   | true,  false -> (* first occurrence of a temporary variable *)
-	  genPuttingFirstTempVar varData offset regNum lastUse
+	  genPuttingFirstTempVar varData regNum lastUse
   | false, true  -> (* subsequent occurrence of a permanent variable *)
-	  genPuttingSubPermVar varData offset regNum
+	  genPuttingSubPermVar varData (Absyn.getVariableDataOffset varData) regNum
   | false, false -> (* subsequent occurrence of a temporary variable *)
-	  genPuttingSubTempVar offset regNum lastUse
+	  genPuttingSubTempVar (Absyn.getVariableDataOffset varData) regNum lastUse
 
 
 (************************************************************************)
@@ -907,20 +907,22 @@ and genTermSettingCode regTermList chunk lowval hasenv =
 
 	  (* function body of genSettingVarCode *)
 	  let varData = Absyn.getTermFreeVariableVariableData var in
-	  let offset  = Absyn.getVariableDataOffset varData in
 	  let lastUse = (Absyn.getVariableDataLastUse varData) == var in
 	  match (Absyn.getTermFreeVariableFirst var),
 		    (Absyn.getVariableDataPerm  varData)
 	  with
 		true  , true  -> (* first occurrence of a permanent variable *)
-		  ([Instr.Ins_set_variable_p(offset)], Instr.getSize_set_variable_p)
+		  ([Instr.Ins_set_variable_p(Absyn.getVariableDataOffset varData)], 
+		   Instr.getSize_set_variable_p)
 	  | true  , false -> (* first occurrence of a temporary variable *)
 	      genSettingFirstTempVarCode varData lastUse
 	  | false , true  -> (* subsequent occurrence of a permanent variable *)
-	      genSettingSubPermVarCode varData offset
+	      genSettingSubPermVarCode varData 
+			(Absyn.getVariableDataOffset varData)
 	  | false , false -> (* subsequent occurrence of a temporary variable *)
-	      genSettingSubTempVarCode varData offset
-		(Absyn.getVariableDataLastUse varData == var)
+	      genSettingSubTempVarCode varData 
+			(Absyn.getVariableDataOffset varData)
+			(Absyn.getVariableDataLastUse varData == var)
 	in
 
 	(* function body of genTermSettingCodeTerm *)
@@ -1150,20 +1152,21 @@ and genAStrTermArgsCode args chunk insts startLoc =
 	  
 	  (* function body of genAStrTermArgVar *)
 	  let varData = Absyn.getTermFreeVariableVariableData var in
-	  let offset  = Absyn.getVariableDataOffset varData       in
 	  let lastUse = (Absyn.getVariableDataLastUse varData) == var in
 	  let (inst, size) =
 		match (Absyn.getTermFreeVariableFirst var),
 		      (Absyn.getVariableDataPerm varData)
 		with
 		  true , true  -> (* first occurrence of a permanent variable *)
-			(Instr.Ins_unify_variable_p(offset),Instr.getSize_unify_variable_p)
+			(Instr.Ins_unify_variable_p(Absyn.getVariableDataOffset varData),
+			 Instr.getSize_unify_variable_p)
 		| true , false -> (* first occurrence of a temporary variable *)
 			genAFirstTempVar varData lastUse
 		| false, true  -> (* subsequent occurrence of a permanent variable *)
-			genASubPermVar varData offset
+			genASubPermVar varData (Absyn.getVariableDataOffset varData)
 		| false, false -> (* subsequent occurrence of a temporary variable *)
-			genASubTempVar varData offset lastUse
+			genASubTempVar varData (Absyn.getVariableDataOffset varData)
+			  lastUse
 	  in
 	  (insts @ [inst], startLoc + size, delayed)
 	in
@@ -1594,9 +1597,9 @@ and genAtomicGoal goal cl goalNum last chunk chunks insts startLoc =
   let genCutCode chunk =
 	let (cutInst, cutInstSize) =
 	  if (goalNum = 1) then (Instr.Ins_neck_cut, Instr.getSize_neck_cut)
-	  else (Instr.Ins_cut(Absyn.getVariableDataOffset 
-							(Absyn.getClauseCutVar cl)),
-			Instr.getSize_cut)
+	  else 
+		(Instr.Ins_cut(Absyn.getVariableDataOffset (Absyn.getClauseCutVar cl)),
+		 Instr.getSize_cut)
 	in
 	let (inst, size) =
 	  if (last) then
@@ -1974,8 +1977,8 @@ let genClauseCode cl insts startLoc =
       match cutVar with
 		None -> (insts, startLoc)
       | Some(vData) -> 
-	  (insts @ [Instr.Ins_get_level(Absyn.getVariableDataOffset(vData))],
-	   startLoc + Instr.getSize_get_level)
+		  (insts @ [Instr.Ins_get_level(Absyn.getVariableDataOffset(vData))],
+		   startLoc + Instr.getSize_get_level)
   in
   
   (* generate code for body *)
