@@ -181,8 +181,19 @@ and transTermStr s =
 (* by type reduction.                                                     *)
 (**************************************************************************)
 and transTermConst c tyenv = 
-  (* May need to rearrange type environment according to type skel opt *)
-  Absyn.ConstantTerm(c, (List.map transType tyenv), false, Errormsg.none)
+  let skeletonNeededness = 
+	Option.get (Absyn.getConstantSkeletonNeededness c) 
+  in
+  let rec trimTypeEnvironment tyenv index newtyenv =
+	match tyenv with
+	  [] -> List.rev newtyenv 
+	| (ty :: rest) ->
+		if Array.get skeletonNeededness index then
+		  trimTypeEnvironment rest (index + 1) ((transType ty) :: newtyenv)
+		else
+		  trimTypeEnvironment rest (index + 1) newtyenv
+  in
+  Absyn.ConstantTerm(c, trimTypeEnvironment tyenv 0 [], false, Errormsg.none)
 
 (**************************************************************************)
 (* transform variables:                                                   *)
@@ -466,7 +477,8 @@ and processGoal gltm =
 			else if Pervasive.isimplConstant pred then         (*imp goal *)
 			  processImpGoal (List.hd args) (List.hd (List.tl args))
 			else                                     (* rigid atomic goal *)
-			  processAtomicGoal gltm head (Absyn.getTermApplicationArguments gltm)
+			  processAtomicGoal gltm head 
+				(Absyn.getTermApplicationArguments gltm)
 				(Absyn.getTermApplicationArity gltm)
 		| _ -> processAtomicGoal gltm head [] 0)     (* flex atomic goal *)
   | _-> processAtomicGoal gltm gltm [] 0 (* proposition goal: flex or rig*)
