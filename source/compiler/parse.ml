@@ -1283,7 +1283,7 @@ let illegalConstant c pos =
 let unitTests () =
   let absyn = Absyn.Module("UnitTests", [], [],
     ref (Pervasive.pervasiveConstants), ref (Pervasive.pervasiveKinds), Table.empty,
-    [], [], [], [], [], ref [], [], [], ref (Absyn.ClauseBlocks([])))
+    [], [], [], [], [], ref [], [], ref [], ref (Absyn.ClauseBlocks([])))
   in
 
   let test t =

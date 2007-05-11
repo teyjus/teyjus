@@ -226,7 +226,7 @@ and amodule =
       aconstant Table.SymbolTable.t ref * akind Table.SymbolTable.t ref *
       atypeabbrev Table.SymbolTable.t * astringinfo list * akind list *
       akind list * aconstant list * aconstant list * aconstant list ref *
-      askeleton list * askeleton list * aclauseinfo ref)
+      askeleton list * askeleton list ref * aclauseinfo ref)
   | Signature of (string * akind list * aconstant list)
   | ErrorModule
 
@@ -830,10 +830,10 @@ let makeAnonymousConstant i =
     ref (Some(Array.make i true)), ref (Some(Array.make i true)),
     ref None, ref AnonymousConstant, ref 0, Errormsg.none)
 
-let makeHiddenConstant skel =
+let makeHiddenConstant skel envsize =
   Constant(Symbol.symbol "", ref NoFixity, ref (-1), ref true, ref false,
     ref false, ref true, ref false, ref false, ref (Some skel), ref 0,
-    ref (Some(Array.make 0 true)), ref (Some(Array.make 0 true)),
+    ref (Some(Array.make envsize true)), ref (Some(Array.make envsize true)),
     ref None, ref HiddenConstant, ref 0, Errormsg.none)
 
 let makeConstantTerm c env pos =
@@ -1550,7 +1550,6 @@ let getModuleGlobalKindsList = function
 | Signature(_) -> Errormsg.impossible Errormsg.none "getModuleGlobalKindList: not a module"
 | ErrorModule -> Errormsg.impossible Errormsg.none "getModuleGlobalKindList: invalid module"
 
-
 let getModuleGlobalConstantsList = function
   Module(_,_,_,_,_,_,_,_,_,gconsts,_,_,_,_,_) -> gconsts
 | Signature(_) -> Errormsg.impossible Errormsg.none "getModuleGlobalConstList: not a module"
@@ -1561,6 +1560,15 @@ let getModuleHiddenConstantsRef = function
 | Signature(_) -> Errormsg.impossible Errormsg.none "getModuleHiddenConstantsRef: not a module"
 | ErrorModule -> Errormsg.impossible Errormsg.none "getModuleHiddenConstantsRef: invalid module"
 
+let getModuleHiddenConstantSkeletonsRef = function
+  Module(_,_,_,_,_,_,_,_,_,_,_,_,_,hs,_) -> hs
+| Signature(_) -> Errormsg.impossible Errormsg.none "getModuleHiddenConstantSkeletonsRef: not a module"
+| ErrorModule -> Errormsg.impossible Errormsg.none "getModuleHiddenConstantSkeletonsRef: invalid module"
+
+let getModuleHiddenConstantSkeletons = function
+  Module(_,_,_,_,_,_,_,_,_,_,_,_,_,hs,_) -> !hs
+| Signature(_) -> Errormsg.impossible Errormsg.none "getModuleHiddenConstantSkeletons: not a module"
+| ErrorModule -> Errormsg.impossible Errormsg.none "getModuleHiddenConstantSkeletons: invalid module"
 
 let getModuleConstantTable = function
   Module(_,_,_,ctable,_,_,_,_,_,_,_,_,_,_,_) -> !ctable
