@@ -1066,7 +1066,7 @@ let generateModuleCode amod =
 		assignConstIndex gconsts lconsts (!hconsts)
 	  in
       (* merge type skeletons and those of hidden constants; assign indexes *)
-      let cgTySkels = assignSkelIndex skels hskels in 
+      let cgTySkels = assignSkelIndex skels !hskels in 
       (* assign indexes to strings *)
       let cgStrings = assignStringIndex modstr in
       (* generate code for top-level predicate defintions *)

@@ -218,7 +218,7 @@ and aclausesblock = (aclause list ref * bool ref * int ref * int option ref)
 (*****************************************************************************
 *Modules:
 * (modname, imported, accumulated, kind table, constant table,
-* type abbre table, string list, global kind list, local kind list, 
+* type abbre table, string list, global kind list, local kind list,
 * global constant list, local constant list, hidden constant list,
 * skeleton list, hskeleton list, clauses blocks list)
 *****************************************************************************)
@@ -227,7 +227,7 @@ and amodule =
       aconstant Table.SymbolTable.t ref * akind Table.SymbolTable.t ref *
       atypeabbrev Table.SymbolTable.t * astringinfo list * akind list *
       akind list * aconstant list * aconstant list * aconstant list ref *
-      askeleton list * askeleton list * aclauseinfo ref)
+      askeleton list * askeleton list ref * aclauseinfo ref)
   | Signature of (string * akind list * aconstant list)
   | ErrorModule
 
@@ -389,7 +389,7 @@ val makeGlobalConstant : symbol -> afixity -> int -> bool -> bool -> int
 val makeLocalConstant : symbol -> afixity -> int -> int -> askeleton ->
   int -> aconstant
 val makeAnonymousConstant : int -> aconstant
-val makeHiddenConstant : askeleton -> aconstant
+val makeHiddenConstant : askeleton -> int -> aconstant
 val makeConstantTerm : aconstant -> atype list -> pos -> aterm
 (*  val makeConstantType : aconstant -> atype *)
 
@@ -532,6 +532,8 @@ val getModuleName : amodule -> string
 val getModuleGlobalKindsList : amodule -> akind list
 val getModuleGlobalConstantsList : amodule -> aconstant list
 val getModuleHiddenConstantsRef : amodule -> aconstant list ref
+val getModuleHiddenConstantSkeletonsRef : amodule -> askeleton list ref
+val getModuleHiddenConstantSkeletons : amodule -> askeleton list
 val getModuleConstantTable : amodule -> aconstant Table.SymbolTable.t
 val getModuleKindTable : amodule -> akind Table.SymbolTable.t
 val getModuleTypeAbbrevTable : amodule -> atypeabbrev Table.SymbolTable.t

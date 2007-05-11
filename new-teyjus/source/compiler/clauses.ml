@@ -57,8 +57,11 @@ let rec union fvs1 fvs2 =
 ********************************************************************)
 let makeHiddenConstant tsym =
   let ty = Absyn.getTypeSymbolType tsym in
-  let skel = Absyn.makeSkeleton ty in
-  let c = Absyn.makeHiddenConstant skel in
+  let mol = Types.skeletonizeType ty in
+  let ty' = Types.getMoleculeType mol in
+  let envsize = List.length (Types.getMoleculeEnvironment mol) in
+  let skel = Absyn.makeSkeleton ty' in
+  let c = Absyn.makeHiddenConstant skel envsize in
   ((Absyn.getTypeSymbolHiddenConstantRef tsym) := Some c;
   HiddenConstant(c,tsym))
   
@@ -877,7 +880,10 @@ and translateClauses pmod amod =
   in
   
   let setHiddenConstants amod hcs =
-    let _ = (Absyn.getModuleHiddenConstantsRef amod) := (List.map getHiddenConstantConstant hcs) in
+    let hiddenconstants = (List.map getHiddenConstantConstant hcs) in
+    let skels = (List.map (Absyn.getConstantSkeletonValue) hiddenconstants) in
+    let _ = (Absyn.getModuleHiddenConstantsRef amod) := hiddenconstants in
+    let _ = (Absyn.getModuleHiddenConstantSkeletonsRef amod) := skels in
     amod
   in
   
@@ -920,6 +926,11 @@ and translateClauses pmod amod =
   let newclauses'' = getNewClauses newclauses' in
   (amod', clauses', List.concat newclauses'')
 
+(**********************************************************************
+*printTranslatedClauses:
+* Takes the results of translateClauses (namely the clauses themselves,
+* and the new clauses) along with an out_channel, and prints them.
+**********************************************************************)
 let printTranslatedClauses clauses newclauses out =
   (*  Text output functions *)
   let output s = (output_string out s) in
