@@ -26,10 +26,108 @@ struct Vector Floats;
 CodeInd MergeSequence(CodeInd younger, CodeInd older, Byte n);
 void MergeTerm(CodeInd younger, CodeInd older,Byte n);
 
+#define EXECUTE 0
+#define CALL 1
+#define ADDR 0
+#define NAME 1
+#define LABEL 0
+#define ARITY 1
+int callOffsets[2][2][2];
+
+void InitOffsets()
+{
+  int j;
+  int argid;
+  j=1;
+  argid=0;
+  INSTR_InstrCategory instrCat = INSTR_instrType(call);
+  INSTR_OperandType* opType = INSTR_operandTypes(instrCat);
+  do{
+    switch(opType[argid])
+    {
+      case INSTR_P:
+        j++;
+        break;
+          
+      case INSTR_I1:
+        callOffsets[CALL][ADDR][ARITY]=j++;
+        break;
+        
+      case INSTR_L:
+        callOffsets[CALL][ADDR][LABEL]=j;
+        j+=sizeof(CodeInd);
+        break;
+    }
+    argid++;
+  }while(opType[argid]!=INSTR_X);
+  
+  j=1;
+  argid=0;
+  instrCat = INSTR_instrType(execute);
+  opType = INSTR_operandTypes(instrCat);
+  do{
+    switch(opType[argid])
+    {
+      case INSTR_P:
+        j++;
+        break;
+          
+      case INSTR_L:
+        callOffsets[EXECUTE][ADDR][LABEL]=j;
+        j+=sizeof(CodeInd);
+        break;
+    }
+    argid++;
+  }while(opType[argid]!=INSTR_X);
+  
+  j=1;
+  argid=0;
+  instrCat = INSTR_instrType(call_name);
+  opType = INSTR_operandTypes(instrCat);
+  do{
+    switch(opType[argid])
+    {
+      case INSTR_P:
+        j++;
+        break;
+          
+      case INSTR_I1:
+        callOffsets[CALL][NAME][ARITY]=j++;
+        break;
+        
+      case INSTR_C:
+        callOffsets[CALL][NAME][LABEL]=j;
+        j+=sizeof(ConstInd);
+        break;
+    }
+    argid++;
+  }while(opType[argid]!=INSTR_X);
+  
+  j=1;
+  argid=0;
+  instrCat = INSTR_instrType(execute_name);
+  opType = INSTR_operandTypes(instrCat);
+  do{
+    switch(opType[argid])
+    {
+      case INSTR_P:
+        j++;
+        break;
+          
+      case INSTR_C:
+        callOffsets[EXECUTE][NAME][LABEL]=j;
+        j+=sizeof(ConstInd);
+        break;
+    }
+    argid++;
+  }while(opType[argid]!=INSTR_X);
+}
+
 void InitTCode()
 {
   LK_VECTOR_Init(&Code,1024,sizeof(char));
   LK_VECTOR_Init(&Floats,32,sizeof(struct BCFloat));
+  InitOffsets();
 }
 
 INT4 GetFloat(int fd)
@@ -71,14 +169,14 @@ void LoadCode(int fd, struct Module_st* CMData)
     {
       code[j]=LK_FILE_GET1(fd);
       tmpIndex=GetConstInd(fd,CMData);
-      PushCall(tmpIndex,offset+i,0);
+      PushCall(CMData->Pit,tmpIndex,offset+i,code[j]);
       i+=(INSTR_instrSize(opcode)*sizeof(Word));
       continue;
     }
     else if(opcode==execute)
     {
       tmpIndex=GetConstInd(fd,CMData);
-      PushCall(tmpIndex,offset+i,1);
+      PushCall(CMData->Pit,tmpIndex,offset+i,-1);
       i+=(INSTR_instrSize(opcode)*sizeof(Word));
       continue;
     }
@@ -288,33 +386,35 @@ void WriteCode(int fd)
   }
 }
 
-void MakeCallName(CodeInd from, int exec_flag, ConstInd to)
+void MakeCallName(CodeInd from, int arity, ConstInd to)
 {
   Byte* tmp=LK_VECTOR_GetPtr(&Code,from);
-  if(exec_flag)
+  if(-1==arity)
   {
     tmp[0]=execute_name;
-    *(ConstInd*)(tmp+1)=to;
+    *(ConstInd*)(tmp+callOffsets[EXECUTE][NAME][LABEL])=to;
   }
   else
   {
     tmp[0]=call_name;
-    *(ConstInd*)(tmp+2)=to;
+    tmp[callOffsets[CALL][NAME][ARITY]]=arity;
+    *(ConstInd*)(tmp+callOffsets[CALL][NAME][LABEL])=to;
   }
 }
   
-void MakeCall(CodeInd from, int exec_flag, CodeInd to)
+void MakeCall(CodeInd from, int arity, CodeInd to)
 {
   Byte* tmp=LK_VECTOR_GetPtr(&Code,from);
-  if(exec_flag)
+  if(-1==arity)
   {
     tmp[0]=execute;
-    *(CodeInd*)(tmp+1)=to;
+    *(CodeInd*)(tmp+callOffsets[EXECUTE][ADDR][LABEL])=to;
   }
   else
   {
     tmp[0]=call;
-    *(CodeInd*)(tmp+2)=to;
+    tmp[callOffsets[CALL][ADDR][ARITY]]=arity;
+    *(CodeInd*)(tmp+callOffsets[CALL][ADDR][LABEL])=to;
   }
 }
 

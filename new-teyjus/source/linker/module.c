@@ -13,7 +13,6 @@
 #include "importtab.h"
 #include "file.h"
 #include "rename.h"
-#include "deps.h"
 
 #define BC_VER 3
 #define LINKCODE_VER 1
@@ -49,12 +48,14 @@ void CheckModuleName(int fd, char* modname)
 
 struct Module_st* NewModule()
 {
-  struct Module_st* tmp=calloc(1,sizeof(struct Module_st));
-  if(tmp==NULL)
+  struct Module_st* CMData=calloc(1,sizeof(struct Module_st));
+  if(CMData==NULL)
   {
     perror("Memory Allocation Failed");
     EM_THROW(LK_LinkError);
   }
+  CMData->Pit=GetPredInfoTab();
+  return CMData;
 }
 
 void InitAll()
@@ -73,12 +74,12 @@ void InitAll()
 
 void LoadTopModule(char* modname)
 {
+  NewImportTab();
   struct Module_st* CMData=NewModule();
   int fd = LK_FILE_OpenInput(modname, LK_FILE_ByteCodeExt);
   CheckBytecodeVersion(fd);
   CheckModuleName(fd,modname);
   
-  NewImportTab();
   LoadCodeSize(fd,CMData);
   
   LoadTopGKinds(fd,CMData);
@@ -102,9 +103,9 @@ void LoadTopModule(char* modname)
   
   LoadCode(fd,CMData);
   
-  RestoreImportTab();
   LK_FILE_Close(fd);
   free(CMData);
+  RestoreImportTab();
 }
 
 void LoadAccModule(char* modname)
@@ -221,7 +222,6 @@ void WriteAll(char* modname)
   int fd = LK_FILE_OpenOutput(modname,LK_FILE_LinkCodeExt);
   LK_FILE_PUTWord(fd,(Word)LINKCODE_VER);
   LK_FILE_PutString(fd,modname);
-  WriteDependencies(fd);
   WriteCodeSize(fd);
   WriteKinds(fd);
   WriteTySkels(fd);
