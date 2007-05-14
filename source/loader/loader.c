@@ -13,9 +13,7 @@
 
 void LD_LOADER_LoadLinkcodeVer();
 
-void LD_LOADER_LinkOpen(char* modname);
 int LD_LOADER_LoadModuleName(char* modname);
-int LD_LOADER_LoadDependencies(char* modname);
 MEM_GmtEnt* LD_LOADER_GetNewGMTEnt();
 void* LD_LOADER_ExtendModSpace(MEM_GmtEnt* ent, int size);
 int LD_LOADER_SetName(MEM_GmtEnt* ent,char* modname);
@@ -29,10 +27,9 @@ int LD_LOADER_SetName(MEM_GmtEnt* ent,char* modname);
 int LD_LOADER_Load(char* modname)
 {
   EM_TRY{
-    LD_LOADER_LinkOpen(modname);
+    LD_FILE_Open(modname,LINKCODE_EXT);
     LD_LOADER_LoadLinkcodeVer();
     LD_LOADER_LoadModuleName(modname);
-    LD_LOADER_LoadDependencies(modname);
   }EM_CATCH{
     return -1;///\todo Throw error instead?
   }
@@ -58,14 +55,6 @@ int LD_LOADER_Load(char* modname)
   return 0;
 }
 
-void LD_LOADER_LinkOpen(char* modname)
-{
-  if(!LD_FILE_Exists(modname,LINKCODE_EXT))
-      LD_FILE_Link(modname);
-  LD_FILE_Open(modname,LINKCODE_EXT);
-}
-
-///\todo Move this
 #define LINKCODE_VER 1
 void LD_LOADER_LoadLinkcodeVer()
 {
@@ -78,44 +67,13 @@ void LD_LOADER_LoadLinkcodeVer()
 ///\note Check Purpose of module name in file
 int LD_LOADER_LoadModuleName(char* modname)
 {
-  if(LD_FILE_GET1()!=strlen(modname)+1)
-    return -1;
-  
-  char c;
-  int i=0;
-  do
-  {
-    c=LD_FILE_GET1();
-    if(c!=modname[i++])
-      return -1;
-  }while(c!='\0');
-  return 0;
-}
-
-///\note Consider removing
-int LD_LOADER_LoadDependencies(char* modname)
-{
-  char namelen=0;
-  char name[256];
-  TwoBytes count = LD_FILE_GET2();
-  int i;
-  int linktime=LD_FILE_ModTime(modname,LINKCODE_EXT);
-  for(i=0;i<count;i++)
-  {
-    namelen=LD_FILE_GET1();
-    LD_FILE_GetString(name,namelen);
-    if(LD_FILE_ModTime(name,BYTECODE_EXT)>linktime)
-    {
-      free(name);
-      LD_FILE_Link(modname);
-      LD_FILE_Open(modname,LINKCODE_EXT);
-      LD_LOADER_LoadLinkcodeVer();
-      LD_LOADER_LoadModuleName(modname);
-      count=LD_FILE_GET2();
-      i=-1;
-    }
-  }
-  return 1;
+  char buf[1024];
+  int len=LD_FILE_GET1();
+  if(len!=strlen(modname)+1)
+    EM_THROW(LD_LoadError);
+  LD_FILE_GetString(buf,len);
+  if(0!=strcmp(buf,modname))
+    EM_THROW(LD_LoadError);
 }
 
 MEM_GmtEnt* LD_LOADER_GetNewGMTEnt()
