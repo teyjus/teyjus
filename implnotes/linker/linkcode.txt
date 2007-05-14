@@ -9,12 +9,6 @@
 <linkcode version number> --- 1 word
 <top-level module name> --- [String]
 
-[Dependency List]
-<number of module dependencies> --- 2 bytes
-{
-  <dependent module name> --- [String]
-}
-
 <size of code area> --- 1 word
 
 <total number of kinds>  --- 2 bytes
@@ -129,13 +123,12 @@
   }
 }
 
-[Import Tables]
-<Add code table> --- [Import Table]
+[Import Tables]//Table 0 is for top level module
 <number of import tables> --- 1 byte
 {
   [Import Table]
   <number of code segments> --- 1 byte
-  <number of relatively global predicates> --- 2 bytes
+  <number of entries in next clause table> --- 2 bytes
   {
     <entry index> --- [Constant index]
   }
