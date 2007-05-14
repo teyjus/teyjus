@@ -1,15 +1,18 @@
 #ifndef _HASHTAB_H_
 #define _HASHTAB_H_
 
+#include "vector.h"
+
+typedef struct Vector HashTab_t;
+
 #include "datatypes.h"
+#include "module.h"
 
 //Initialization, Loading and Writing Functions
 //for Hash Tables.
 extern void InitTHashTabs();
 extern void LoadHashTabs(int fd, struct Module_st* CMData);
 extern void WriteHashTabs(int fd);
-
-typedef struct Vector HashTab_t;
 
 /////////////////////////////////////////
 //Utilities////////////////////////////

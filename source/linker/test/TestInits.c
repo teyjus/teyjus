@@ -12,6 +12,7 @@
 #include "linker/hashtab.h"
 #include "linker/bvrtab.h"
 #include "linker/code.h"
+#include "linker/importtab.h"
 
 void __CUT__inits()
 {

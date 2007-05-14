@@ -1,5 +1,5 @@
 ##AM_CFLAGS= -Wall -Wno-comment
-AM_CPPFLAGS = -I${top_srcdir}/source -g
+AM_CFLAGS = -I${top_srcdir}/source
 
 bin_PROGRAMS = linker
 
@@ -11,7 +11,7 @@ SYSSRCS = ../system/error.c  ../system/memory.c  ../system/message.c  ../system/
 
 TABSRCS = ../tables/instructions.c  ../tables/pervasives.c
 
-LKSRCS = bvrtab.c const.c hashtab.c importtab.c rename.c tyskel.c code.c file.c implgoal.c kind.c module.c stringspace.c tree.c vector.c deps.c VectorRW.c
+LKSRCS = CallResolution.c bvrtab.c const.c hashtab.c importtab.c rename.c tyskel.c code.c file.c implgoal.c kind.c module.c stringspace.c tree.c vector.c VectorRW.c
 
 liblink_a_SOURCES = $(LKSRCS) $(TABSRCS) $(SIMSRCS) $(SYSSRCS)
 

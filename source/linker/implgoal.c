@@ -36,7 +36,7 @@ void LoadImplGoal(int fd, struct Module_st* CMData,void* entry)
   for(i=0;i<nctSize;i++)
   {
     tmp[i]=GetConstInd(fd,CMData);
-    //FlagDynamicPred(tmp[j]);
+    MarkDynamic(CMData->Pit,tmp[i]);
   }
   
   ImplGoal->findCodeFun=LK_FILE_GET1(fd);

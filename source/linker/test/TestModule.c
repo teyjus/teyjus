@@ -5,6 +5,7 @@
 #include "linker/file.h"
 #include "linker/module.h"
 #include "TestModule.h"
+#include "tables/instructions.h"
 
 char* DBG(char* str)
 {
@@ -199,9 +200,11 @@ void TEST_CheckM1StringTable(int fd)
   free(tmp);
 }
 
+const int M1CodeSize=0x200;
+
 void TEST_CreateM1CodeSize(int fd)
 {
-  LK_FILE_PUTWord(fd,(Word)0x2000);
+  LK_FILE_PUTWord(fd,(Word)M1CodeSize);
 }
 
 void TEST_CreateM1ImplGoalTable(int fd)
@@ -212,7 +215,7 @@ void TEST_CreateM1ImplGoalTable(int fd)
   LK_FILE_PUT1(fd,1);//fcf
   LK_FILE_PUT2(fd,1);//nop
   LK_FILE_PUT1(fd,LOCAL); LK_FILE_PUT2(fd,0);  
-  LK_FILE_PUTWord(fd,(Word)0x1000);
+  LK_FILE_PUTWord(fd,(Word)0x100);
 }
 
 void TEST_CheckM1ImplGoalTable(int fd)
@@ -225,7 +228,7 @@ void TEST_CheckM1ImplGoalTable(int fd)
   ASSERT(LK_FILE_GET2(fd)==1,"M1 - ImplGoal1 - NOP");
   ASSERT(LK_FILE_GET1(fd)==LOCAL,"M1 - ImplGoal1 - ST - L0");
   ASSERT(LK_FILE_GET2(fd)==0,"M1 - ImplGoal1 - ST - L0");
-  ASSERT(LK_FILE_GETWord(fd)==(Word)0x1000,"M1 - ImplGoal1 - ST - L0");
+  ASSERT(LK_FILE_GETWord(fd)==(Word)0x100,"M1 - ImplGoal1 - ST - L0");
 }
 
 void TEST_CreateM1HashTabs(int fd)
@@ -233,7 +236,7 @@ void TEST_CreateM1HashTabs(int fd)
   LK_FILE_PUT2(fd,1);
   LK_FILE_PUT2(fd,1);//nop
   LK_FILE_PUT1(fd,LOCAL); LK_FILE_PUT2(fd,0);  
-  LK_FILE_PUTWord(fd,(Word)0x1000);
+  LK_FILE_PUTWord(fd,(Word)0x100);
 }
 
 void TEST_CheckM1HashTabs(int fd)
@@ -242,7 +245,7 @@ void TEST_CheckM1HashTabs(int fd)
   ASSERT(LK_FILE_GET2(fd)==1,"M1 - HashTab1 - NOP");
   ASSERT(LK_FILE_GET1(fd)==LOCAL,"M1 - HashTab1 - L0");
   ASSERT(LK_FILE_GET2(fd)==0,"M1 - HashTab1 - L0");
-  ASSERT(LK_FILE_GETWord(fd)==(Word)0x1000,"M1 - HashTab1 - L0");
+  ASSERT(LK_FILE_GETWord(fd)==(Word)0x100,"M1 - HashTab1 - L0");
 }
 
 void TEST_CreateM1BvrTabs(int fd)
@@ -250,7 +253,7 @@ void TEST_CreateM1BvrTabs(int fd)
   LK_FILE_PUT2(fd,1);
   LK_FILE_PUT2(fd,1);//nop
   LK_FILE_PUT1(fd,1);
-  LK_FILE_PUTWord(fd,(Word)0x1000);
+  LK_FILE_PUTWord(fd,(Word)0x100);
 }
 
 void TEST_CheckM1BvrTabs(int fd)
@@ -258,7 +261,7 @@ void TEST_CheckM1BvrTabs(int fd)
   ASSERT(LK_FILE_GET2(fd)==1,"M1 - BvrTab count");
   ASSERT(LK_FILE_GET2(fd)==1,"M1 - BvrTab1 - NOP");
   ASSERT(LK_FILE_GET1(fd)==1,"M1 - BvrTab1 - Index1 id");
-  ASSERT(LK_FILE_GETWord(fd)==(Word)0x1000,"M1 - HashTab1 - Index1 addr");
+  ASSERT(LK_FILE_GETWord(fd)==(Word)0x100,"M1 - HashTab1 - Index1 addr");
 }
 
 void TEST_CreateM1ImportTable(int fd)
@@ -266,11 +269,11 @@ void TEST_CreateM1ImportTable(int fd)
   LK_FILE_PUT2(fd,0);//nctsize
   LK_FILE_PUT2(fd,0);//nexportdefs
   LK_FILE_PUT2(fd,1);//nlocalpreds
-  LK_FILE_PUT1(fd,LOCAL); LK_FILE_PUT2(fd,0);  
+  LK_FILE_PUT1(fd,LOCAL); LK_FILE_PUT2(fd,0);
   LK_FILE_PUT1(fd,1);//fcf
   LK_FILE_PUT2(fd,1);//nop
-  LK_FILE_PUT1(fd,LOCAL); LK_FILE_PUT2(fd,0);  
-  LK_FILE_PUTWord(fd,(Word)0x1000);
+  LK_FILE_PUT1(fd,LOCAL); LK_FILE_PUT2(fd,0);
+  LK_FILE_PUTWord(fd,(Word)0x100);
 }
 
 void TEST_CheckM1ImportTable(int fd)
@@ -287,6 +290,32 @@ void TEST_CheckM1ImportTable(int fd)
   ASSERT(LK_FILE_GET2(fd)==1,"M1 - IT - NOP");
   ASSERT(LK_FILE_GET1(fd)==LOCAL,"M1 - IT - ST - L0");
   ASSERT(LK_FILE_GET2(fd)==0,"M1 - IT - ST - L0");
-  ASSERT(LK_FILE_GETWord(fd)==(Word)0x1000,"M1 - IT - ST - L0");
+  ASSERT(LK_FILE_GETWord(fd)==(Word)0x100,"M1 - IT - ST - L0");
 }
 
+void TEST_CreateM1Code(int fd)
+{
+  int i=0;
+  LK_FILE_PUT1(fd,execute);
+  LK_FILE_PUT1(fd,LOCAL);
+  LK_FILE_PUT2(fd,0);
+  i+=INSTR_instrSize(execute)*sizeof(Word);
+  while(i<M1CodeSize)
+  {
+    LK_FILE_PUT1(fd,fail);
+    i+=INSTR_instrSize(fail)*sizeof(Word);
+  }
+}
+
+void TEST_CheckM1Code(int fd)
+{
+  int i=0;
+  ASSERT(execute==LK_FILE_GET1(fd),"M1 - Execute");
+  ASSERT(LK_FILE_GETWord(fd)==(Word)0x100,"M1 - Execute - L0");
+  i+=INSTR_instrSize(execute)*sizeof(Word);
+  while(i<M1CodeSize)
+  {
+    ASSERT(fail==LK_FILE_GET1(fd),"M1 - Instr");
+    i+=INSTR_instrSize(fail)*sizeof(Word);
+  }
+}

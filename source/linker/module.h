@@ -3,6 +3,10 @@
 
 #include "datatypes.h"
 
+struct Module_st;
+
+#include "CallResolution.h"
+
 typedef struct{
   int count;
   int offset;
@@ -40,6 +44,8 @@ struct Module_st{
 	int ImportCount;
 	ImportTabInd* Import;
 	int SegmentID;
+    
+    PredInfoTab* Pit;
 };
 
 struct Module_st* CM; 		//The module currently being loaded
@@ -47,6 +53,8 @@ struct Module_st* CM; 		//The module currently being loaded
 extern void LoadTopModule(char* filename);
 extern void InitAll();
 extern void WriteAll();
+extern struct Module_st* NewModule();
+
 
 //////////////////////
 //Utility Functions///
