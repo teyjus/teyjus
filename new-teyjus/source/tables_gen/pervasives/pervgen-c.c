@@ -7,7 +7,7 @@
 #include <string.h>
 #include "pervgen-c.h"
 #include "ccode.h"
-#include "util.h"
+#include "../util/util.h"
 
 //dynamic string array type
 typedef struct StringArray 

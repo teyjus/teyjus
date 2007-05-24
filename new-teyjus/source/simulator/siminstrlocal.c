@@ -12,7 +12,6 @@
 #include "hopu.h"
 #include "../system/error.h" //to be modified
 
-#include "print.h" //to be removed
 #include <stdio.h> //to be removed
 
 //Bind a free variable to a constant (without type association)

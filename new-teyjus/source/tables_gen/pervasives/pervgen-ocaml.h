@@ -4,7 +4,7 @@
 /*****************************************************************************/
 #include "op.h"
 #include "types.h"
-#include "util.h"
+#include "../util/util.h"
 
 /**************************************************************************/
 /* generating pervasive kind relevant part                                */

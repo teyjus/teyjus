@@ -1,7 +1,7 @@
 %{
 #include <stdio.h>
 #include <stdlib.h>
-#include "util.h" 
+#include "../util/util.h" 
 #include "op.h" 
 #include "types.h"
 #include "pervgen-c.h"

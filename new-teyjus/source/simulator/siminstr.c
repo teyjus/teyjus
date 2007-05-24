@@ -20,7 +20,6 @@
 #include "../tables/instructions.h"//to be modifed
 
 #include <stdio.h>  //to be removed
-#include "print.h"  //to be removed
 
 static AM_DataTypePtr regX, regA;
 static AM_DataTypePtr envY, clenvY;

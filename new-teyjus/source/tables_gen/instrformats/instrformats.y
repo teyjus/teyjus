@@ -3,7 +3,7 @@
 #include <stdlib.h>
 #include "instrgen-c.h"
 #include "instrgen-ocaml.h"
-#include "util.h"
+#include "../util/util.h"
 
 int yywrap() {return 1;}
 

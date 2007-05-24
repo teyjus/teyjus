@@ -1,0 +1,55 @@
+SYS_SRCS[] =
+	$(SYS)/error
+	$(SYS)/memory
+	$(SYS)/message
+	$(SYS)/stream
+
+SIM_SRCS[] =
+	$(SIM)/mcstring
+	$(SIM)/dataformats
+	$(SIM)/io-datastructures
+
+TAB_SRCS[] =
+	$(TAB)/instructions
+	$(TAB)/pervasives
+
+LK_SRCS[] =
+	CallResolution
+	bvrtab
+	const
+	hashtab
+	importtab
+	rename
+	tyskel
+	code
+	file
+	implgoal
+	kind
+	module
+	stringspace
+	tree
+	vector
+	VectorRW
+
+LIB_FILES[] =
+	$(SIM_SRCS)
+	$(SYS_SRCS)
+	$(TAB_SRCS)
+	$(LK_SRCS)
+
+# linker library
+
+LIB = liblink
+
+.DEFAULT: $(StaticCLibrary $(LIB), $(LIB_FILES))
+
+# linker program
+
+MAIN = linker
+
+MAIN_FILES[] =
+	main
+
+LIBS = $(LIB)
+
+CProgram($(MAIN), $(MAIN_FILES))

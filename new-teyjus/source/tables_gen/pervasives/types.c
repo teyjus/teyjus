@@ -4,7 +4,7 @@
 /****************************************************************************/
 #include <stdlib.h>
 #include "types.h"
-#include "util.h"
+#include "../util/util.h"
 
 Type mkSortType(char* name)
 {

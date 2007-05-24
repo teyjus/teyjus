@@ -1,7 +1,7 @@
-#include "linker/VectorRW.h"
-#include "linker/file.h"
-#include "linker/vector.h"
-#include "linker/module.h"
+#include "VectorRW.h"
+#include "file.h"
+#include "vector.h"
+#include "module.h"
 
 void LK_VECTOR_Read(int fd, struct Vector* vec, struct Module_st* CMData, Adjust_t* adj,void (*read_fn)(int fd, struct Module_st* CMData, void* entry))
 {

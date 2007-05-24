@@ -1,12 +1,12 @@
 #include <stdio.h>
-#include "system/error.h"
+#include "../system/error.h"
 #include "module.h"
 #include "vector.h"
 #include "rename.h"
 #include "file.h"
 #include "tyskel.h"
 #include "const.h"
-#include "linker/VectorRW.h"
+#include "VectorRW.h"
 
 /*/////////////////////////////////////////////////////////////////////////////////////
 //This file defines the code for using GConsts and LConsts/////

@@ -1,5 +1,5 @@
 %{
-#include "util.h" 
+#include "../util/util.h" 
 #include "op.h" 
 #include "types.h"
 #include "y.tab.h"

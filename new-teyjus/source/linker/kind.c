@@ -1,12 +1,12 @@
 #include <stdio.h>
-#include "system/error.h"
+#include "../system/error.h"
 #include "datatypes.h"
 #include "module.h"
 #include "kind.h"
 #include "vector.h"
 #include "rename.h"
 #include "file.h"
-#include "linker/VectorRW.h"
+#include "VectorRW.h"
 /*/////////////////////////////////////////////////////////////////////////////////////
 //This file defines the code for using GKinds and LKinds/////
 ////////////////////////////////////////////////////////////////////////////////////*/
