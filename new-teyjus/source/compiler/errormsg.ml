@@ -8,7 +8,9 @@
 *	This has not yet been tested almost at all.
 **********************************************************************)
 exception InternalError
-type pos = (string * int)
+open Lexing
+
+type pos = position
 
 let anyErrors = ref false
 
@@ -18,55 +20,25 @@ let loggingEnabled = ref false
 
 let warningsAsErrors = ref false
 
-let end_output = "\n"
-
-(**********************************************************************
-*File Table:
-**********************************************************************)
-module Ordered =
-struct
-	type t = string
-	let compare = compare
-end
-module FileTable = Map.Make(Ordered)
-
-let fileTable = ref FileTable.empty
-
-let find =
-	fun f table ->
-		try
-			let v = FileTable.find f table in
-			Some v
-		with Not_found -> None
-
 (********************************************************************
 *none:
 *	An empty pos, useful when printing internal compiler errors that
 *	are unrelated to a particular file or location.
 ********************************************************************)
-let none = ("", 0)
-
+let none = { pos_fname = "none" ;
+             pos_lnum = 0 ;
+             pos_bol = 0 ;
+             pos_cnum = 0 }
+  
 (********************************************************************
 *string_of_pos:
 *	Convert a pos to a string.
 ********************************************************************)
-let string_of_pos = function (file, pos) ->
-	let rec p = fun lines num ->
-		match lines with
-			a::rest ->
-				if a < pos then
-					(file ^ "(" ^ (string_of_int num) ^ "." ^ (string_of_int (pos - a)) ^ ")")
-				else
-					p rest (num - 1)
-			| [] -> (file ^ "(0.0)")
-	in
-	if (file, pos) = none then
-		"none(0.0)"
-	else
-		match (find file (!fileTable)) with
-			Some(lines) ->
-				p (!lines) (List.length (!lines))
-		|	None -> raise InternalError
+let string_of_pos = function pos ->
+  let file = pos.pos_fname in
+  let line = pos.pos_lnum in
+  let char = pos.pos_cnum in
+    file ^ "(" ^ (string_of_int line) ^ "," ^ (string_of_int char) ^ ")"
 
 (********************************************************************
 *printPosition:
@@ -76,21 +48,10 @@ let rec printPosition = fun p ->
 	print_string (string_of_pos p)
 
 (********************************************************************
-*newLine:
-* Call with a character position when a newline is reached.
-********************************************************************)
-let newLine = function (file, pos) ->
-	match (find file (!fileTable)) with
-		Some(lines) -> lines := pos :: !lines
-	|	None -> raise InternalError
-
-(********************************************************************
 *reset:
 * Just resets the error message module.
 ********************************************************************)
-let reset = fun () ->
-		(anyErrors:=false;
-		fileTable := FileTable.empty)
+let reset = fun () -> anyErrors:=false
 
 (********************************************************************
 *info:
@@ -116,7 +77,7 @@ let error = fun pos (msg:string) ->
 		printPosition pos;
 		print_string " : Error : ";
 		print_string msg;
-		print_string end_output)
+        print_newline ())
   else
     ()
 (********************************************************************
@@ -132,7 +93,7 @@ let warning = fun pos (msg:string) ->
 	  printPosition pos;
 	  print_string " : Warning : ";
 	  print_string msg;
-	  print_string end_output)
+      print_newline ())
   else
     ()		
 (********************************************************************
@@ -144,7 +105,7 @@ let log = fun pos msg ->
 	  (printPosition pos;
 	  print_string " : Log : ";
 	  print_string msg;
-    print_string end_output)
+      print_newline ())
   else
     ()
 (********************************************************************
@@ -157,18 +118,5 @@ let impossible = fun pos msg ->
 		printPosition pos;
 		print_string " : Internal Error : ";
 		print_string msg; 
-		print_string end_output;
+		print_newline ();
 		raise InternalError)
-
-	
-(********************************************************************
-*addFile:
-*	Set the current file.  If the file hasn't been seen yet, add it to
-*	the table.
-********************************************************************)
-let addFile = fun file ->
-	match (find file (!fileTable)) with
-		Some f -> ()
-	|	None ->
-			let lines = ref [1] in
-			(fileTable := (FileTable.add file lines (!fileTable)))

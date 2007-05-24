@@ -6,6 +6,12 @@
 ****************************************************************************)
 open Lexing
 
+let currentFile = ref ""
+let currentModuleName = ref ""
+let setCurrentFile = fun s ->
+  (currentFile := s;
+  currentModuleName := (Filename.chop_extension s))
+
 type pos = Errormsg.pos
 
 let maxPrecedence = 255
@@ -82,8 +88,7 @@ let clearResults = fun () ->
 * Gets the character position of the given token.
 **********************************************************************)
 let getPos = fun i ->
-  let p = Parsing.rhs_start_pos i in
-    (!Lplex.currentFile, p.pos_cnum)
+  Parsing.rhs_start_pos i
 
 (* Accessors for IDs  *)
 let getIDName = fun (name, _) -> name
@@ -145,7 +150,7 @@ let makeSymbol = fun pos t ->
 parseModule
   : modheader modpreamble modbody modend  {
       reverseResults ();
-      let m = Preabsyn.Module(!Lplex.currentModuleName, !globalConstants, !localConstants,
+      let m = Preabsyn.Module(!currentModuleName, !globalConstants, !localConstants,
                       !closedConstants, !useOnlyList, !fixityList, !globalKinds, !localKinds, 
                       !globalTypeAbbrevs, !clauseList, !accumulatedModList, 
                       !accumulatedSigList, !useSigList, !importedModList) in
@@ -153,7 +158,7 @@ parseModule
       m)}
   | error modpreamble modbody modend      {
       reverseResults ();
-      let m = Preabsyn.Module(!Lplex.currentModuleName, !globalConstants, !localConstants,
+      let m = Preabsyn.Module(!currentModuleName, !globalConstants, !localConstants,
                       !closedConstants, !useOnlyList, !fixityList, !globalKinds, !localKinds,
                       !globalTypeAbbrevs, !clauseList,
                       !accumulatedModList, !accumulatedSigList,
@@ -165,14 +170,14 @@ parseModule
 parseSignature
   : sigheader sigpreamble signdecls sigend  {
       reverseResults ();
-      let s = Preabsyn.Signature(!Lplex.currentModuleName, !globalConstants,
+      let s = Preabsyn.Signature(!currentModuleName, !globalConstants,
                         !globalKinds, !globalTypeAbbrevs, !fixityList,
                         !accumulatedSigList) in
       (clearResults ();
       s)}
   | error signdecls sigend                  {
       reverseResults ();
-      let s = Preabsyn.Signature(!Lplex.currentModuleName, !globalConstants,
+      let s = Preabsyn.Signature(!currentModuleName, !globalConstants,
                         !globalKinds, !globalTypeAbbrevs, !fixityList,
                         !accumulatedSigList) in
       (clearResults ();
@@ -187,16 +192,16 @@ tok
   ;
 
 modheader
-  :   MODULE tok PERIOD {if ((getIDName $2) <> !Lplex.currentModuleName) then
-                            Errormsg.error (getPos 1) ("Expected module name '" ^ !Lplex.currentModuleName ^ "'.")
+  :   MODULE tok PERIOD {if ((getIDName $2) <> !currentModuleName) then
+                            Errormsg.error (getPos 1) ("Expected module name '" ^ !currentModuleName ^ "'.")
                           else
                             ()}
   ;
 
 
 sigheader
-  : SIG tok PERIOD  {if ((getIDName $2) <> !Lplex.currentModuleName) then
-                      Errormsg.error (getPos 1) ("Expected signature name '" ^ !Lplex.currentModuleName ^ "'.")
+  : SIG tok PERIOD  {if ((getIDName $2) <> !currentModuleName) then
+                      Errormsg.error (getPos 1) ("Expected signature name '" ^ !currentModuleName ^ "'.")
                     else
                       ()}
   ;
