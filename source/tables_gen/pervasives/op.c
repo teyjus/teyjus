@@ -1,6 +1,6 @@
 #include <stdlib.h>
 #include <string.h>
-#include "util.h"
+#include "../util/util.h"
 #include "op.h"
 
 OP_Prec OP_mkPrecMin1()

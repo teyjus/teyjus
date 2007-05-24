@@ -10,7 +10,7 @@
 /***************************************************************************/
 #include "types.h"
 #include "op.h"
-#include "util.h"
+#include "../util/util.h"
 
 /***************************************************************************/
 /* Functions for making program components                                 */

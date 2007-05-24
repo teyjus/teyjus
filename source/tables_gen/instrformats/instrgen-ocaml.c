@@ -1,7 +1,7 @@
 /*************************************************************************/
 /* functions for generating ocaml instr.mli and instr.ml                 */
 /*************************************************************************/
-#include "util.h"
+#include "../util/util.h"
 #include <string.h>
 #include <stdio.h>
 #include <math.h>

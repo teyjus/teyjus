@@ -6,7 +6,7 @@
 #include "kind.h"
 #include "vector.h"
 #include "file.h"
-#include "linker/VectorRW.h"
+#include "VectorRW.h"
 
 #define obstack_chunk_alloc EM_malloc
 #define obstack_chunk_free free

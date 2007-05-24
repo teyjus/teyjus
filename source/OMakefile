@@ -1,0 +1,34 @@
+SYS = $(dir system)
+SIM = $(dir simulator)
+TAB = $(dir tables)
+
+.SUBDIRS: compiler linker loader simulator system tables tables_gen
+   if $(file-exists OMakefile)
+      include OMakefile
+
+# Generated Files
+
+INSTR_FILES[] =
+	tables/instructions.h
+	tables/instructions.c
+	simulator/simdispatch.c
+	compiler/instr.mli
+	compiler/instr.ml
+
+PERV_FILES[] =
+	tables/pervasives.h
+	tables/pervasives.c
+	compiler/pervasive.mli
+	compiler/pervasive.ml
+
+LocalCGeneratedFiles($(INSTR_FILES) $(PERV_FILES))
+
+INSTR_GEN = tables_gen/instrformats/instr_gen
+$(INSTR_FILES): $(INSTR_GEN)
+	cd $(dirname $(INSTR_GEN)) && ./$(basename $(INSTR_GEN))
+
+
+PERV_GEN = tables_gen/pervasives/perv_gen
+PERV_IN = pervasives.in
+$(PERV_FILES): $(PERV_GEN)
+	cd $(dirname $(PERV_GEN)) && ./$(basename $(PERV_GEN)) $(PERV_IN)

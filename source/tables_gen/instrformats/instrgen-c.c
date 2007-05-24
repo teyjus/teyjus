@@ -6,7 +6,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "instrgen-c.h"
-#include "util.h"
+#include "../util/util.h"
 
 #define INDENT1        "    "
 #define INDENT1_LEN    4
