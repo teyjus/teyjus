@@ -1,10 +1,10 @@
 LocalCGeneratedFiles(y.tab.c y.tab.h lex.yy.c)
 
 y.tab.c y.tab.h: pervasives.y
-	yacc -d pervasives.y
+	$(YACC) -d pervasives.y
 
 lex.yy.c: pervasives.l y.tab.h
-	flex pervasives.l
+	$(LEX) pervasives.l
 
 MAIN = perv_gen
 
