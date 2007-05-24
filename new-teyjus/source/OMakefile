@@ -1,3 +1,11 @@
+if $(equal $(OSTYPE), Cygwin)
+  YACC = bison -by
+  LEX = flex
+  EXE = .exe
+  export
+
+# Subdirectories
+
 SYS = $(dir system)
 SIM = $(dir simulator)
 TAB = $(dir tables)
@@ -6,29 +14,43 @@ TAB = $(dir tables)
    if $(file-exists OMakefile)
       include OMakefile
 
+
 # Generated Files
 
-INSTR_FILES[] =
-	tables/instructions.h
-	tables/instructions.c
-	simulator/simdispatch.c
+INSTR_ML_FILES[] =
 	compiler/instr.mli
 	compiler/instr.ml
 
-PERV_FILES[] =
-	tables/pervasives.h
-	tables/pervasives.c
+INSTR_C_FILES[] =
+	tables/instructions.h
+	tables/instructions.c
+	simulator/simdispatch.c
+
+INSTR_FILES[] =
+	$(INSTR_ML_FILES)
+	$(INSTR_C_FILES)
+
+PERV_ML_FILES[] =
 	compiler/pervasive.mli
 	compiler/pervasive.ml
 
-LocalCGeneratedFiles($(INSTR_FILES) $(PERV_FILES))
+PERV_C_FILES[] =
+	tables/pervasives.h
+	tables/pervasives.c
 
-INSTR_GEN = tables_gen/instrformats/instr_gen
+PERV_FILES[] =
+	$(PERV_ML_FILES)
+	$(PERV_C_FILES)
+
+LocalCGeneratedFiles($(INSTR_C_FILES) $(PERV_C_FILES))
+LocalOCamlGeneratedFiles($(INSTR_ML_FILES) $(PERV_ML_FILES))
+
+INSTR_GEN = tables_gen/instrformats/instr_gen$(EXE)
 $(INSTR_FILES): $(INSTR_GEN)
 	cd $(dirname $(INSTR_GEN)) && ./$(basename $(INSTR_GEN))
 
 
-PERV_GEN = tables_gen/pervasives/perv_gen
+PERV_GEN = tables_gen/pervasives/perv_gen$(EXE)
 PERV_IN = pervasives.in
 $(PERV_FILES): $(PERV_GEN)
 	cd $(dirname $(PERV_GEN)) && ./$(basename $(PERV_GEN)) $(PERV_IN)
