@@ -1,0 +1,7 @@
+open build/C
+open build/OCaml
+
+# TODO - remove following line to enable warn-error
+OCAMLFLAGS =
+
+.SUBDIRS: .
