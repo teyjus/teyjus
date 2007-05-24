@@ -9,11 +9,9 @@
 **********************************************************************)
 exception InternalError
 
-type pos = (string * int)
+type pos = Lexing.position
 
 val string_of_pos : pos -> string
-
-val newLine : pos -> unit
 
 val anyErrors : bool ref
 
@@ -29,6 +27,5 @@ val warning : pos -> string -> unit
 val error : pos -> string -> unit
 val impossible : pos -> string -> 'a   (* raises InternalError *)
 val see : pos -> string -> string
-val addFile : string -> unit
 val reset : unit -> unit
 val none : pos
