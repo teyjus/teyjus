@@ -1,0 +1,10 @@
+compile:
+
+  make
+
+  (make clean for removing .cmx files)
+
+
+run:
+
+  ./tjdis --input <filename>

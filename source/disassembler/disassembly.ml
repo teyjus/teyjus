@@ -18,20 +18,20 @@ let getKind gkinds lkinds cat index =
 	   None)
   
 let getConstant gconsts lconsts hconsts cat index =
-	if cat = Bytecode.global then
-	  Array.get gconsts index
-	else if cat = Bytecode.local then
-	  Array.get lconsts index
-	else if cat = Bytecode.hidden then
-	  Array.get hconsts index
-	else (* pervasive *)
-	  Pervasiveutils.findConstantIndexMapping index
+  if cat = Bytecode.global then
+	Array.get gconsts index
+  else if cat = Bytecode.local then
+	Array.get lconsts index
+  else if cat = Bytecode.hidden then
+	Array.get hconsts index
+  else (* pervasive *)
+	Pervasiveutils.findConstantIndexMapping index
 
 (***************************************************************************)
 (* disassemble clause tables                                               *)
 (***************************************************************************)
 let disassembleClauseTable gconsts lconsts hconsts =
-  let numberClauses = Bytecode.readTwoBytes () in
+  let numberClauses = Bytecode.readTwoBytes () in  
   
   let rec disassembleClauseTableAux preds index =
 	if (index = numberClauses) then List.rev preds
@@ -88,8 +88,10 @@ let disassembleHashTable gconsts lconsts hconsts =
 (***************************************************************************)
 let disassembleHeaderInfo filename =
   (* check bytecode version number *)
-  if (Bytecode.readWord () = Bytecode.byteCodeVersionNumber) then 
-	(Bytecode.readString (), Bytecode.readWord ())
+  if Bytecode.readWord () = Bytecode.byteCodeVersionNumber then
+	  let modName = Bytecode.readString () in
+	  let codeSize = Bytecode.readWord () in
+	  (modName, codeSize)
   else
 	(Errormsg.error Errormsg.none "Loader: inconsistent bytecode version";
 	 ("", 0))
@@ -115,10 +117,10 @@ let disassembleKinds makeKindFn =
 (***************************************************************************)
 let disassembleTypeSkeletons gkinds lkinds  =
 
-  let maxIndex = (Bytecode.readTwoBytes ()) - 1 in
+  let numTySkels = Bytecode.readTwoBytes () in
   
   let rec disassembleTypeSkeletonsAux ind tyskels =
-	if (ind = maxIndex) then (List.rev tyskels)
+	if (ind = numTySkels) then (List.rev tyskels)
 	else
 	  let tyskel = Bytecode.readTypeSkeleton (getKind gkinds lkinds) in
 	  disassembleTypeSkeletonsAux (ind + 1) (tyskel :: tyskels)
