@@ -168,12 +168,12 @@ static char* OC_mkArgList(char* prev, char* new)
 
 static char* OC_mkStrConcat(char* prev, char* new)
 {
-    int length = strlen(prev) + strlen(new) + 10;
+    int length = strlen(prev) + strlen(new) + 20;
     char* str = UTIL_mallocStr(length);
   
     strcpy(str, "(");
     strcat(str, prev);
-    strcat(str, ") ^ (");
+    strcat(str, ") ^ \", \" ^ (");
     strcat(str, new);
     strcat(str, ")");
 
@@ -222,6 +222,22 @@ static char* OC_mkCond(char* cond, char* branch)
     
     return str;
 }
+
+static char* OC_mkLetIn(char* varName, char* def)
+{
+    int length = strlen(varName) + strlen(def) + 20;
+    char* str = UTIL_mallocStr(length);
+    
+    strcpy(str, INDENT);
+    strcat(str, "let ");
+    strcat(str, varName);
+    strcat(str, " = ");
+    strcat(str, def);
+    strcat(str, " in\n");
+    
+    return str;
+}
+
 /**************************************************************************/
 /* type definitions                                                       */
 /**************************************************************************/
@@ -264,7 +280,7 @@ static char* ocgenReadOpFunc(char* typeName, char* compType, int numBytes)
 {
     char* funcName = UTIL_appendStr(READ_PREFIX, typeName);
     char* numBytesText = UTIL_itoa(numBytes);
-    char* arg = "arg";
+    char* arg = "()";
     char* funcBody1 = UTIL_mallocStr(strlen(READ) + strlen(compType) + 
                                       strlen(numBytesText));
     char* funcBody2, *func;
@@ -273,7 +289,7 @@ static char* ocgenReadOpFunc(char* typeName, char* compType, int numBytes)
     strcat(funcBody1, compType);
     strcat(funcBody1, numBytesText);                free(numBytesText);
     
-    funcBody2 = UTIL_appendStr(funcBody1, " arg");  free(funcBody1);
+    funcBody2 = UTIL_appendStr(funcBody1, " ()");  free(funcBody1);
     func = OC_mkFunc(funcName, arg, funcBody2);
     free(funcName); free(funcBody2);
     return func;
@@ -376,7 +392,7 @@ static char* argList           = NULL;
 void ocgenInstrFormat(char* opName)
 {
   char *myop, *myOpName, *myFuncName, *myArgInd, *myFuncCall, *myArg, 
-      *myArgList, *myinstrCatType, *myinstrCatWriteFunc,
+      *myArgList, *myinstrCatType, *myinstrCatWriteFunc, *myReadBody,
       *myinstrCatReadFunc, * myinstrCatDisplayFunc;
     
     if (strcmp(opName, "P") == 0 || strcmp(opName, "WP") == 0 || 
@@ -419,12 +435,13 @@ void ocgenInstrFormat(char* opName)
     myFuncCall = UTIL_mallocStr(strlen(myFuncName) + 5);
     strcpy(myFuncCall, myFuncName);   free(myFuncName);
     strcat(myFuncCall, " ()");
+    myReadBody = OC_mkLetIn(myArg, myFuncCall); free(myFuncCall);
     if (instrCatReadFunc) {
-        myinstrCatReadFunc = OC_mkArgList(instrCatReadFunc, myFuncCall);
+        myinstrCatReadFunc = UTIL_appendStr(instrCatReadFunc, myReadBody);
         free(instrCatReadFunc);
         instrCatReadFunc = myinstrCatReadFunc;
-        free(myFuncCall);
-    } else instrCatReadFunc = myFuncCall;
+        free(myReadBody);
+    } else instrCatReadFunc = myReadBody;
 
     //display function
     myFuncName = UTIL_appendStr(DISPLAY, opName);
@@ -451,7 +468,7 @@ void ocgenOneInstrCat(char* catName)
   char *myCatName, *myInstrCatType, *myInstrCatTypes, *myArgs,
       *myWriteFuncName, *myWriteFunc, *myInstrCatWriteFuncs, 
       *myReadFuncName, *myReadFunc, *myReadFuncBody, *myInstrCatReadFuncs, 
-      *myDisplayFuncName, *myDisplayFunc, *myInstrCatDisplayFuncs;
+      *myDisplayFuncName, *myDisplayFunc, *myInstrCatDisplayFuncs, *myArgs2, *temp;
 
   if (instrCatType) {
     myCatName = UTIL_appendStr(INSCAT_PREFIX, catName); 
@@ -470,10 +487,9 @@ void ocgenOneInstrCat(char* catName)
     
     /* read function */
     myReadFuncName = UTIL_appendStr(READ_PREFIX, catName);
-    myReadFuncBody = UTIL_mallocStr(strlen(instrCatReadFunc) + 5);
-    strcpy(myReadFuncBody, "(");
-    strcat(myReadFuncBody, instrCatReadFunc);
-    strcat(myReadFuncBody, ")");
+    myArgs2 = UTIL_appendStr(INDENT, myArgs);
+    temp = UTIL_appendStr(instrCatReadFunc, myArgs2); free(myArgs2);
+    myReadFuncBody= UTIL_appendStr("\n", temp); free(temp);
     myReadFunc = OC_mkFunc(myReadFuncName, "()", myReadFuncBody);
     myInstrCatReadFuncs = addStr(instrCatReadFuncs, myReadFunc);
 
