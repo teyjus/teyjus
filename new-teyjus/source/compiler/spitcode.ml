@@ -70,6 +70,7 @@ let writeKindInfo gkinds lkinds =
 (*                  WRITING OUT TYPE SKELETON INFORMATION                    *)
 (*****************************************************************************)
 let writeTypeSkels tyskels =
+
   (* writing out the prefix representation of a type skeleton *) 
   let rec writeType tySkel =
     match tySkel with
@@ -88,7 +89,7 @@ let writeTypeSkels tyskels =
 
   let writeOneTypeSkel tySkel =
     if (Absyn.getSkeletonNew tySkel) then 
-	  writeType (Absyn.getSkeletonType tySkel)
+		writeType (Absyn.getSkeletonType tySkel)
     else ()
   in
 
@@ -115,7 +116,10 @@ let writeConstInfo gconsts lconsts hconsts =
   (* local constant: fixity, precedence, type env size, tyskelind *)
   let writeConst global const =
     writeFixity (Absyn.getConstantFixity const);
-    Bytecode.writeint1 (Absyn.getConstantPrec const);
+	let prec = Absyn.getConstantPrec const in
+	(if prec < 0 then Bytecode.writeint1 0
+	 else Bytecode.writeint1 prec);
+    (* Bytecode.writeint1 (Absyn.getConstantPrec const); *)
     Bytecode.writeint1 (Absyn.getConstantTypeEnvSize const);
     (if (global) then Bytecode.writeString (Absyn.getConstantName const)
      else ());

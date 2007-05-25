@@ -155,19 +155,20 @@ and genSTypeCode regNum tyExp chunk lowval last =
 
 	(* function body of genSTypeVarCode *) 
 	let varData = Absyn.getTypeFreeVariableVariableData var in
-    let offset  = Absyn.getTypeVariableDataOffset varData   in
 	let lastUse = (Absyn.getTypeVariableDataLastUse varData == var) in 
     match (Absyn.getTypeFreeVariableFirst var),
 	      (Absyn.getTypeVariableDataPerm varData) with
 	  true , true  -> (* first occurrence of a permanent variable *)
-		([Instr.Ins_put_type_variable_p(offset, regNum)],
+		([Instr.Ins_put_type_variable_p
+			(Absyn.getTypeVariableDataOffset varData, regNum)],
 		 Instr.getSize_put_type_variable_p)
     | true , false -> (* first occurrence of a temporary variable *)
 		genSTypeFirstTempVar varData lastUse
     | false, true  -> (* subsequent occurrence of a permanent variable *)
-		genSTypeSubPermVar varData offset 
+		genSTypeSubPermVar varData (Absyn.getTypeVariableDataOffset varData) 
     | false, false -> (* subsequent occurrence of a temporary variable *)
-		genSTypeSubTempVar varData offset lastUse
+		genSTypeSubTempVar varData (Absyn.getTypeVariableDataOffset varData)
+		  lastUse
   in
 
   (* AUX FUNC2: generate type synthesis code for a sort *)
@@ -294,20 +295,22 @@ and genTypeSettingCode regTypeList chunk lowval =
 
 	(* function body of genTypeSettingCodeVar *)
 	let varData = Absyn.getTypeFreeVariableVariableData var in
-    let offset  = Absyn.getTypeVariableDataOffset varData   in
 	let lastUse = (Absyn.getTypeVariableDataLastUse varData) == var in 
     match (Absyn.getTypeFreeVariableFirst var),
 	      (Absyn.getTypeVariableDataPerm varData) 
 	with  
 	  true , true  -> (* first occurrence of a permanent variable *)
-		(Instr.Ins_set_type_variable_p(offset),
+		(Instr.Ins_set_type_variable_p
+		   (Absyn.getTypeVariableDataOffset varData),
 		 Instr.getSize_set_type_variable_p)
     | true , false -> (* first occurrence of a temporary variable *)
 		genTypeSettingCodeFirstTempVar varData lastUse
     | false, true  -> (* subsequent occurrence of a permanent variable *) 
-		genTypeSettingCodeSubPermVar varData offset
+		genTypeSettingCodeSubPermVar varData 
+		  (Absyn.getTypeVariableDataOffset varData)
     | false, false -> (* subsequent occurrence of a temporary variable *)
-		genTypeSettingCodeSubTempVar varData offset lastUse
+		genTypeSettingCodeSubTempVar varData 
+		  (Absyn.getTypeVariableDataOffset varData) lastUse
     in	  
 
   let rec genTypeSettingCodeAux regTypeList insts size =
@@ -440,21 +443,22 @@ and genATypeArgsCode args chunk constEnv =
 
 	  (* function body of genATypeArgVariable *)
 	  let  varData = Absyn.getTypeFreeVariableVariableData var in
-	  let  offset  = Absyn.getTypeVariableDataOffset varData   in
 	  let  lastUse = (Absyn.getTypeVariableDataLastUse varData) == var in
 	  
 	  match (Absyn.getTypeFreeVariableFirst var),
 	        (Absyn.getTypeVariableDataPerm  varData)  
 	  with
 		true,  true   -> (* first occurrence of a permanent variable *)
-		  (Instr.Ins_unify_type_variable_p(offset),
+		  (Instr.Ins_unify_type_variable_p
+			 (Absyn.getTypeVariableDataOffset varData),
 		   Instr.getSize_unify_type_variable_p)
 	  |	true,  false  -> (* first occurrence of a temporary variable *)
 		  genAFirstTempTypeVar varData lastUse
 	  | false, true   -> (* subsequent occurrence of a permanent variable *)
-		  genASubPermTypeVar varData offset 
+		  genASubPermTypeVar varData (Absyn.getTypeVariableDataOffset varData)
 	  | false, false  -> (* subsequent occurrence of a temporary variable *)
-		  genASubTempTypeVar varData offset lastUse
+		  genASubTempTypeVar varData (Absyn.getTypeVariableDataOffset varData)
+			lastUse
 	in
 
 	(* function body of genATypeArgsCodeAux *)
@@ -501,7 +505,7 @@ let getRegTermReg regOrTerm =
 (* genPuttingVarCode:                                                   *)
 (* auxiliary function for putting a variable in sythesizing terms       *)
 (************************************************************************)
-let genPuttingVarCode var regNum chunk lowval last normalize =
+let genPuttingVarCode var regNum chunk lowval last (* normalize *) =
 
   (* first occurrence of a temporary variable *)
   let genPuttingFirstTempVar varData regNum lastUse =
@@ -526,10 +530,11 @@ let genPuttingVarCode var regNum chunk lowval last normalize =
 			(Instr.Ins_put_unsafe_value(offset, regNum),
 			 Instr.getSize_put_unsafe_value))
 	in
-	if (normalize) then 
+	(* if (normalize) then 
 		([inst ; Instr.Ins_head_normalize_t(regNum)],
 		 size + Instr.getSize_head_normalize_t)
-	else ([inst], size)
+	else *)
+	([inst], size)
   in
 
   (* subsequent occurrence of a temporary variable *)
@@ -540,10 +545,11 @@ let genPuttingVarCode var regNum chunk lowval last normalize =
 	in
 	(if (lastUse) then Registers.mkRegFree offset
 	else ());
-	if (normalize) then
+	(*if (normalize) then
 	  (inst @ [Instr.Ins_head_normalize_t(regNum)],
 	   size + Instr.getSize_head_normalize_t)
-	else (inst, size)
+	else*)
+	(inst, size)
   in
 
   (* function body of genPuttingVarCode *)
@@ -576,7 +582,7 @@ let genGlobalize var chunk lowval =
   (* first occurrence *)
   let genGlobalizeFirstOcc perm =
 	let regNum = Registers.getHighFreeReg () in
-	let (inst, size) = genPuttingVarCode var regNum chunk lowval false false in
+	let (inst, size) = genPuttingVarCode var regNum chunk lowval false (*false*) in
 	let (newInst, newSize) =
 	  if (perm) then 
 		(inst@[Instr.Ins_globalize_t(regNum)],size+Instr.getSize_globalize_t)
@@ -627,7 +633,7 @@ let genGlobalize var chunk lowval =
 
 (************************************************************************)
 (* genSTermsCode:                                                       *)
-(* generate type synthesis code from a list of terms paired with the    *)
+(* generate term synthesis code from a list of terms paired with the    *)
 (* registers in which the created structure is to be put.               *)
 (************************************************************************)
 let rec genSTermsCode regTermPairs chunk lowval last hasenv =
@@ -662,7 +668,7 @@ let rec genSTermsCode regTermPairs chunk lowval last hasenv =
 (* to normalize can only be made at the call site.                          *)
 (****************************************************************************)
 and genSTermCode regNum term chunk lowval last hasenv normalize =
-
+  
   (* constant without type associations *)
   let genSTermCodeMConst c regNum =
 	if (Pervasive.isnilConstant c) then
@@ -791,9 +797,9 @@ and genSTermCode regNum term chunk lowval last hasenv normalize =
 	  genSTermCodePConst c tyenv regNum
   | Absyn.FreeVarTerm(_)               ->
 	  let (inst, size) =
-		genPuttingVarCode term regNum chunk lowval last normalize
+		genPuttingVarCode term regNum chunk lowval last (*normalize*)
 	  in
-	  (inst, size, true) 
+	  (inst, size, false) 
   | Absyn.ApplicationTerm(_)           ->  genSTermCodeApp term regNum 
   | _ -> genSTermCodeAbst term regNum (* must be abstraction then*) 
 
@@ -1264,20 +1270,22 @@ let genHeadTyVarsCode tyargs regNum neededness =
 
 	  (* function body of genHeadTyVarCode *)
    	  let varData = Absyn.getTypeFreeVariableVariableData var in
-	  let offset  = Absyn.getTypeVariableDataOffset varData  in
 	  let lastUse = (Absyn.getTypeVariableDataLastUse varData) == var in
 	  let needed  = (Array.get neededness index) in
 	    match (Absyn.getTypeFreeVariableFirst var), 
 	          (Absyn.getTypeVariableDataPerm varData) 
 		with
 		  true,   true  -> (* first occurrence of a permanent variable *)
-			genHeadFirstPermTypeVar varData offset needed
+			genHeadFirstPermTypeVar varData 
+			  (Absyn.getTypeVariableDataOffset varData) needed
 		| true,   false -> (* first occurrence of a temporay variable *)
 			genHeadFirstTempTypeVar varData lastUse needed
 		| false,  true  -> (* subsequent occurrence of a permanent variable *)
-			genHeadSubPermTypeVar varData offset needed
+			genHeadSubPermTypeVar varData 
+			  (Absyn.getTypeVariableDataOffset varData) needed
 		| false,  false -> (* subsequent occurrence of a tempory variable *)
-			genHeadSubTempTypeVar varData offset lastUse needed	
+			genHeadSubTempTypeVar varData 
+			  (Absyn.getTypeVariableDataOffset varData) lastUse needed	
     in	  
     (* function body of genHeadTyVarsCode *)
     match tyargs with
@@ -1346,17 +1354,17 @@ let genHeadTmVarsCode args =
 (*  This routine also calculates the start address of the new set of         *)
 (*  instructions together with the new next code locations.                  *)
 (*****************************************************************************)
-let genClauseHeadCode cl chunk insts startLoc =
+let genClauseHeadCode cl chunk insts startLoc isFact =
   let numArgs = (Absyn.getClauseNumberOfArgs cl) in
 
   (* generate allocate if clause has environment *)
   let genAllocate insts startLoc =
-    if (Absyn.getClauseHasEnv cl) then
+    (if (Absyn.getClauseHasEnv cl) then
       let envSize = 
 		(Absyn.getGoalEnvAssocNthEnvSize (Absyn.getClauseGespList cl) 1) + 1
       in
       (insts @ [Instr.Ins_allocate(envSize)],startLoc + Instr.getSize_allocate)
-    else (insts, startLoc)
+    else (insts, startLoc))
   in
   
   (* generate code for initialization of closure variables *)
@@ -1410,7 +1418,7 @@ let genClauseHeadCode cl chunk insts startLoc =
   let genUnifCode insts startLoc =
 	(* mark registers "perserved" for arguments passing *)
     Registers.markArgRegs numArgs; 
-    
+											 
     (* unification code for type arguments *)
     let (tyArgsCode, tyArgsSize, regTypePairs) =
       genHeadTyVarsCode (Absyn.getClauseTypeArgs cl)
@@ -1436,7 +1444,10 @@ let genClauseHeadCode cl chunk insts startLoc =
   (* function body of genClauseHeadCode *)
   Absyn.setClauseOffset cl startLoc;
   Registers.setIsGoal false;
-  let (allocCode, allocCodeNext) = genAllocate insts startLoc                in
+  let (allocCode, allocCodeNext) = 
+	if (isFact) then (insts, startLoc)
+	else genAllocate insts startLoc                
+  in
   let (initCode, initCodeNext)   = genClauseInitCode allocCode allocCodeNext in
   let (unifCode, unifCodeNext)   = genUnifCode initCode initCodeNext         in
   (unifCode, unifCodeNext) 
@@ -1960,9 +1971,9 @@ let genClauseCode cl insts startLoc =
   in
 
   (* generate code for clause head *)
-  let genClauseHead insts startLoc  =
+  let genClauseHead insts startLoc'  =
     let (newInsts, newStartLoc) = 
-      genClauseHeadCode cl (List.hd chunks) insts startLoc 
+      genClauseHeadCode cl (List.hd chunks) insts startLoc' isFact
     in
     if isFact 
     then (newInsts @ [Instr.Ins_proceed], newStartLoc + Instr.getSize_proceed)
@@ -1970,7 +1981,7 @@ let genClauseCode cl insts startLoc =
   in
 
   (* generate code if has cut var*)
-  let genClauseCut insts startloc   =
+  let genClauseCut insts startLoc   =
     if isFact then (insts, startLoc)
     else 
       let cutVar = Absyn.getClauseCutVarOption cl in

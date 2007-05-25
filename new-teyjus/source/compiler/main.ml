@@ -55,13 +55,29 @@ let compile = fun basename outfile ->
   if !Errormsg.anyErrors then
     1
   else
+
+  (* reduce skeleton *)
+  let absyn = Typereduction.reduceSkeletons absyn in
+  print_string "passed: reduce skeletons\n";
+  if !Errormsg.anyErrors then 1
+  else 
   
   (*  Process the clauses.  *)
   let absyn = Processclauses.processClauses absyn clauses newclauses in
+  print_string "passed: processClauses\n";
   if !Errormsg.anyErrors then
     1
   else 
   
+  (* reduce predicate types *)
+ (* let absyn = Typereduction.reducePredicates absyn in
+  print_string "passed: reduce predicates\n";
+
+  if !Errormsg.anyErrors then
+    1
+  else 
+	*)
+
   (*  Print the results (absyn module) to the output file *)
   (if !Compile.printAbsyn then
     let modoutchannel = Compile.openFile (basename ^ ".mod.absyn.txt") open_out in
@@ -78,12 +94,14 @@ let compile = fun basename outfile ->
   
   (*  Process the clauses.  *)
   let _ = Annvariables.processClauses absyn in
+  print_string "passed: annvariable\n";
   if !Errormsg.anyErrors then
     1
   else
-  
+
   (*  Construct a codegen module. *)
   let cg = Codegen.generateModuleCode absyn in
+  print_string "passed: codegen\n";
   if !Errormsg.anyErrors then
     1
   else

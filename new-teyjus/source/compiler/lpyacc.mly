@@ -350,7 +350,7 @@ atomterm
   | LPAREN error                  {print_endline "error: atomterm"; Preabsyn.ErrorTerm}
   | LBRACK error RBRACK           {print_endline "error: atomterm"; Preabsyn.ErrorTerm}
   | LBRACK error                  {print_endline "error: atomterm"; Preabsyn.ErrorTerm}
-  | LBRACK RBRACK                 {Preabsyn.IdTerm((Symbol.symbol "[]"), None, Preabsyn.ConstID, getPos 1)}
+  | LBRACK RBRACK                 {Preabsyn.IdTerm((Symbol.symbol "nil"), None, Preabsyn.ConstID, getPos 1)}
   | LBRACK term RBRACK            {Preabsyn.ListTerm($2, getPos 1)}
   | LBRACK term VBAR term RBRACK  {Preabsyn.ConsTerm($2, Preabsyn.SeqTerm(List.rev $4, getPos 1), getPos 1)}
   ;
@@ -401,8 +401,8 @@ sigmaid
 
 
 nilid
-  : NILLIST             {Preabsyn.IdTerm(Symbol.symbol("[]"), None, Preabsyn.ConstID, getPos 1)}
-  | NILLIST COLON type  {Preabsyn.IdTerm(Symbol.symbol("[]"), Some $3, Preabsyn.ConstID, getPos 1)}
+  : NILLIST             {Preabsyn.IdTerm(Symbol.symbol("nil"), None, Preabsyn.ConstID, getPos 1)}
+  | NILLIST COLON type  {Preabsyn.IdTerm(Symbol.symbol("nil"), Some $3, Preabsyn.ConstID, getPos 1)}
   | LPAREN nilid RPAREN {$2}
   ;
 

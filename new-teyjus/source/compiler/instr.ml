@@ -45,23 +45,23 @@ let writeopcode arg = Bytecode.writeint1 arg
 
 
 
-let readR arg = Bytecode.readint1 arg
-let readE arg = Bytecode.readint1 arg
-let readN arg = Bytecode.readint1 arg
-let readI1 arg = Bytecode.readint1 arg
-let readCE arg = Bytecode.readint1 arg
-let readSEG arg = Bytecode.readint1 arg
-let readC arg = Bytecode.readaconstant2 arg
-let readK arg = Bytecode.readakind2 arg
-let readL arg = Bytecode.readintref8 arg
-let readI arg = Bytecode.readint4 arg
-let readF arg = Bytecode.readfloat4 arg
-let readS arg = Bytecode.readint2 arg
-let readMT arg = Bytecode.readint2 arg
-let readIT arg = Bytecode.readint2 arg
-let readHT arg = Bytecode.readint2 arg
-let readBVT arg = Bytecode.readint2 arg
-let readopcode arg = Bytecode.readint1 arg
+let readR () = Bytecode.readint1 ()
+let readE () = Bytecode.readint1 ()
+let readN () = Bytecode.readint1 ()
+let readI1 () = Bytecode.readint1 ()
+let readCE () = Bytecode.readint1 ()
+let readSEG () = Bytecode.readint1 ()
+let readC () = Bytecode.readaconstant2 ()
+let readK () = Bytecode.readakind2 ()
+let readL () = Bytecode.readintref8 ()
+let readI () = Bytecode.readint4 ()
+let readF () = Bytecode.readfloat4 ()
+let readS () = Bytecode.readint2 ()
+let readMT () = Bytecode.readint2 ()
+let readIT () = Bytecode.readint2 ()
+let readHT () = Bytecode.readint2 ()
+let readBVT () = Bytecode.readint2 ()
+let readopcode () = Bytecode.readint1 ()
 
 
 
@@ -169,46 +169,162 @@ let writeI1CWPX (arg1, arg2) = writeI1 arg1; writeC arg2
 let writeI1I1WPX (arg1, arg2) = writeI1 arg1; writeI1 arg2
 
 
-let readRX () = (readR ())
-let readEX () = (readE ())
-let readI1X () = (readI1 ())
-let readCX () = (readC ())
-let readKX () = (readK ())
-let readIX () = (readI ())
-let readFX () = (readF ())
-let readSX () = (readS ())
-let readMTX () = (readMT ())
-let readLX () = (readL ())
-let readRRX () = (readR (), readR ())
-let readERX () = (readE (), readR ())
-let readRCX () = (readR (), readC ())
-let readRIX () = (readR (), readI ())
-let readRFX () = (readR (), readF ())
-let readRSX () = (readR (), readS ())
-let readRI1X () = (readR (), readI1 ())
-let readRCEX () = (readR (), readCE ())
-let readECEX () = (readE (), readCE ())
-let readCLX () = (readC (), readL ())
-let readRKX () = (readR (), readK ())
-let readECX () = (readE (), readC ())
-let readI1ITX () = (readI1 (), readIT ())
-let readI1LX () = (readI1 (), readL ())
-let readSEGLX () = (readSEG (), readL ())
-let readI1LWPX () = (readI1 (), readL ())
-let readI1NX () = (readI1 (), readN ())
-let readI1HTX () = (readI1 (), readHT ())
-let readI1BVTX () = (readI1 (), readBVT ())
-let readCWPX () = (readC ())
-let readI1WPX () = (readI1 ())
-let readRRI1X () = (readR (), readR (), readI1 ())
-let readRCLX () = (readR (), readC (), readL ())
-let readRCI1X () = (readR (), readC (), readI1 ())
-let readSEGI1LX () = (readSEG (), readI1 (), readL ())
-let readI1LLX () = (readI1 (), readL (), readL ())
-let readNLLX () = (readN (), readL (), readL ())
-let readLLLLX () = (readL (), readL (), readL (), readL ())
-let readI1CWPX () = (readI1 (), readC ())
-let readI1I1WPX () = (readI1 (), readI1 ())
+let readRX () = 
+  let arg1 = readR () in
+  (arg1)
+let readEX () = 
+  let arg1 = readE () in
+  (arg1)
+let readI1X () = 
+  let arg1 = readI1 () in
+  (arg1)
+let readCX () = 
+  let arg1 = readC () in
+  (arg1)
+let readKX () = 
+  let arg1 = readK () in
+  (arg1)
+let readIX () = 
+  let arg1 = readI () in
+  (arg1)
+let readFX () = 
+  let arg1 = readF () in
+  (arg1)
+let readSX () = 
+  let arg1 = readS () in
+  (arg1)
+let readMTX () = 
+  let arg1 = readMT () in
+  (arg1)
+let readLX () = 
+  let arg1 = readL () in
+  (arg1)
+let readRRX () = 
+  let arg1 = readR () in
+  let arg2 = readR () in
+  (arg1, arg2)
+let readERX () = 
+  let arg1 = readE () in
+  let arg2 = readR () in
+  (arg1, arg2)
+let readRCX () = 
+  let arg1 = readR () in
+  let arg2 = readC () in
+  (arg1, arg2)
+let readRIX () = 
+  let arg1 = readR () in
+  let arg2 = readI () in
+  (arg1, arg2)
+let readRFX () = 
+  let arg1 = readR () in
+  let arg2 = readF () in
+  (arg1, arg2)
+let readRSX () = 
+  let arg1 = readR () in
+  let arg2 = readS () in
+  (arg1, arg2)
+let readRI1X () = 
+  let arg1 = readR () in
+  let arg2 = readI1 () in
+  (arg1, arg2)
+let readRCEX () = 
+  let arg1 = readR () in
+  let arg2 = readCE () in
+  (arg1, arg2)
+let readECEX () = 
+  let arg1 = readE () in
+  let arg2 = readCE () in
+  (arg1, arg2)
+let readCLX () = 
+  let arg1 = readC () in
+  let arg2 = readL () in
+  (arg1, arg2)
+let readRKX () = 
+  let arg1 = readR () in
+  let arg2 = readK () in
+  (arg1, arg2)
+let readECX () = 
+  let arg1 = readE () in
+  let arg2 = readC () in
+  (arg1, arg2)
+let readI1ITX () = 
+  let arg1 = readI1 () in
+  let arg2 = readIT () in
+  (arg1, arg2)
+let readI1LX () = 
+  let arg1 = readI1 () in
+  let arg2 = readL () in
+  (arg1, arg2)
+let readSEGLX () = 
+  let arg1 = readSEG () in
+  let arg2 = readL () in
+  (arg1, arg2)
+let readI1LWPX () = 
+  let arg1 = readI1 () in
+  let arg2 = readL () in
+  (arg1, arg2)
+let readI1NX () = 
+  let arg1 = readI1 () in
+  let arg2 = readN () in
+  (arg1, arg2)
+let readI1HTX () = 
+  let arg1 = readI1 () in
+  let arg2 = readHT () in
+  (arg1, arg2)
+let readI1BVTX () = 
+  let arg1 = readI1 () in
+  let arg2 = readBVT () in
+  (arg1, arg2)
+let readCWPX () = 
+  let arg1 = readC () in
+  (arg1)
+let readI1WPX () = 
+  let arg1 = readI1 () in
+  (arg1)
+let readRRI1X () = 
+  let arg1 = readR () in
+  let arg2 = readR () in
+  let arg3 = readI1 () in
+  (arg1, arg2, arg3)
+let readRCLX () = 
+  let arg1 = readR () in
+  let arg2 = readC () in
+  let arg3 = readL () in
+  (arg1, arg2, arg3)
+let readRCI1X () = 
+  let arg1 = readR () in
+  let arg2 = readC () in
+  let arg3 = readI1 () in
+  (arg1, arg2, arg3)
+let readSEGI1LX () = 
+  let arg1 = readSEG () in
+  let arg2 = readI1 () in
+  let arg3 = readL () in
+  (arg1, arg2, arg3)
+let readI1LLX () = 
+  let arg1 = readI1 () in
+  let arg2 = readL () in
+  let arg3 = readL () in
+  (arg1, arg2, arg3)
+let readNLLX () = 
+  let arg1 = readN () in
+  let arg2 = readL () in
+  let arg3 = readL () in
+  (arg1, arg2, arg3)
+let readLLLLX () = 
+  let arg1 = readL () in
+  let arg2 = readL () in
+  let arg3 = readL () in
+  let arg4 = readL () in
+  (arg1, arg2, arg3, arg4)
+let readI1CWPX () = 
+  let arg1 = readI1 () in
+  let arg2 = readC () in
+  (arg1, arg2)
+let readI1I1WPX () = 
+  let arg1 = readI1 () in
+  let arg2 = readI1 () in
+  (arg1, arg2)
 
 
 let displayRX (arg1) = Bytecode.displayR arg1
@@ -221,36 +337,36 @@ let displayFX (arg1) = Bytecode.displayF arg1
 let displaySX (arg1) = Bytecode.displayS arg1
 let displayMTX (arg1) = Bytecode.displayMT arg1
 let displayLX (arg1) = Bytecode.displayL arg1
-let displayRRX (arg1, arg2) = (Bytecode.displayR arg1) ^ (Bytecode.displayR arg2)
-let displayERX (arg1, arg2) = (Bytecode.displayE arg1) ^ (Bytecode.displayR arg2)
-let displayRCX (arg1, arg2) = (Bytecode.displayR arg1) ^ (Bytecode.displayC arg2)
-let displayRIX (arg1, arg2) = (Bytecode.displayR arg1) ^ (Bytecode.displayI arg2)
-let displayRFX (arg1, arg2) = (Bytecode.displayR arg1) ^ (Bytecode.displayF arg2)
-let displayRSX (arg1, arg2) = (Bytecode.displayR arg1) ^ (Bytecode.displayS arg2)
-let displayRI1X (arg1, arg2) = (Bytecode.displayR arg1) ^ (Bytecode.displayI1 arg2)
-let displayRCEX (arg1, arg2) = (Bytecode.displayR arg1) ^ (Bytecode.displayCE arg2)
-let displayECEX (arg1, arg2) = (Bytecode.displayE arg1) ^ (Bytecode.displayCE arg2)
-let displayCLX (arg1, arg2) = (Bytecode.displayC arg1) ^ (Bytecode.displayL arg2)
-let displayRKX (arg1, arg2) = (Bytecode.displayR arg1) ^ (Bytecode.displayK arg2)
-let displayECX (arg1, arg2) = (Bytecode.displayE arg1) ^ (Bytecode.displayC arg2)
-let displayI1ITX (arg1, arg2) = (Bytecode.displayI1 arg1) ^ (Bytecode.displayIT arg2)
-let displayI1LX (arg1, arg2) = (Bytecode.displayI1 arg1) ^ (Bytecode.displayL arg2)
-let displaySEGLX (arg1, arg2) = (Bytecode.displaySEG arg1) ^ (Bytecode.displayL arg2)
-let displayI1LWPX (arg1, arg2) = (Bytecode.displayI1 arg1) ^ (Bytecode.displayL arg2)
-let displayI1NX (arg1, arg2) = (Bytecode.displayI1 arg1) ^ (Bytecode.displayN arg2)
-let displayI1HTX (arg1, arg2) = (Bytecode.displayI1 arg1) ^ (Bytecode.displayHT arg2)
-let displayI1BVTX (arg1, arg2) = (Bytecode.displayI1 arg1) ^ (Bytecode.displayBVT arg2)
+let displayRRX (arg1, arg2) = (Bytecode.displayR arg1) ^ ", " ^ (Bytecode.displayR arg2)
+let displayERX (arg1, arg2) = (Bytecode.displayE arg1) ^ ", " ^ (Bytecode.displayR arg2)
+let displayRCX (arg1, arg2) = (Bytecode.displayR arg1) ^ ", " ^ (Bytecode.displayC arg2)
+let displayRIX (arg1, arg2) = (Bytecode.displayR arg1) ^ ", " ^ (Bytecode.displayI arg2)
+let displayRFX (arg1, arg2) = (Bytecode.displayR arg1) ^ ", " ^ (Bytecode.displayF arg2)
+let displayRSX (arg1, arg2) = (Bytecode.displayR arg1) ^ ", " ^ (Bytecode.displayS arg2)
+let displayRI1X (arg1, arg2) = (Bytecode.displayR arg1) ^ ", " ^ (Bytecode.displayI1 arg2)
+let displayRCEX (arg1, arg2) = (Bytecode.displayR arg1) ^ ", " ^ (Bytecode.displayCE arg2)
+let displayECEX (arg1, arg2) = (Bytecode.displayE arg1) ^ ", " ^ (Bytecode.displayCE arg2)
+let displayCLX (arg1, arg2) = (Bytecode.displayC arg1) ^ ", " ^ (Bytecode.displayL arg2)
+let displayRKX (arg1, arg2) = (Bytecode.displayR arg1) ^ ", " ^ (Bytecode.displayK arg2)
+let displayECX (arg1, arg2) = (Bytecode.displayE arg1) ^ ", " ^ (Bytecode.displayC arg2)
+let displayI1ITX (arg1, arg2) = (Bytecode.displayI1 arg1) ^ ", " ^ (Bytecode.displayIT arg2)
+let displayI1LX (arg1, arg2) = (Bytecode.displayI1 arg1) ^ ", " ^ (Bytecode.displayL arg2)
+let displaySEGLX (arg1, arg2) = (Bytecode.displaySEG arg1) ^ ", " ^ (Bytecode.displayL arg2)
+let displayI1LWPX (arg1, arg2) = (Bytecode.displayI1 arg1) ^ ", " ^ (Bytecode.displayL arg2)
+let displayI1NX (arg1, arg2) = (Bytecode.displayI1 arg1) ^ ", " ^ (Bytecode.displayN arg2)
+let displayI1HTX (arg1, arg2) = (Bytecode.displayI1 arg1) ^ ", " ^ (Bytecode.displayHT arg2)
+let displayI1BVTX (arg1, arg2) = (Bytecode.displayI1 arg1) ^ ", " ^ (Bytecode.displayBVT arg2)
 let displayCWPX (arg1) = Bytecode.displayC arg1
 let displayI1WPX (arg1) = Bytecode.displayI1 arg1
-let displayRRI1X (arg1, arg2, arg3) = ((Bytecode.displayR arg1) ^ (Bytecode.displayR arg2)) ^ (Bytecode.displayI1 arg3)
-let displayRCLX (arg1, arg2, arg3) = ((Bytecode.displayR arg1) ^ (Bytecode.displayC arg2)) ^ (Bytecode.displayL arg3)
-let displayRCI1X (arg1, arg2, arg3) = ((Bytecode.displayR arg1) ^ (Bytecode.displayC arg2)) ^ (Bytecode.displayI1 arg3)
-let displaySEGI1LX (arg1, arg2, arg3) = ((Bytecode.displaySEG arg1) ^ (Bytecode.displayI1 arg2)) ^ (Bytecode.displayL arg3)
-let displayI1LLX (arg1, arg2, arg3) = ((Bytecode.displayI1 arg1) ^ (Bytecode.displayL arg2)) ^ (Bytecode.displayL arg3)
-let displayNLLX (arg1, arg2, arg3) = ((Bytecode.displayN arg1) ^ (Bytecode.displayL arg2)) ^ (Bytecode.displayL arg3)
-let displayLLLLX (arg1, arg2, arg3, arg4) = (((Bytecode.displayL arg1) ^ (Bytecode.displayL arg2)) ^ (Bytecode.displayL arg3)) ^ (Bytecode.displayL arg4)
-let displayI1CWPX (arg1, arg2) = (Bytecode.displayI1 arg1) ^ (Bytecode.displayC arg2)
-let displayI1I1WPX (arg1, arg2) = (Bytecode.displayI1 arg1) ^ (Bytecode.displayI1 arg2)
+let displayRRI1X (arg1, arg2, arg3) = ((Bytecode.displayR arg1) ^ ", " ^ (Bytecode.displayR arg2)) ^ ", " ^ (Bytecode.displayI1 arg3)
+let displayRCLX (arg1, arg2, arg3) = ((Bytecode.displayR arg1) ^ ", " ^ (Bytecode.displayC arg2)) ^ ", " ^ (Bytecode.displayL arg3)
+let displayRCI1X (arg1, arg2, arg3) = ((Bytecode.displayR arg1) ^ ", " ^ (Bytecode.displayC arg2)) ^ ", " ^ (Bytecode.displayI1 arg3)
+let displaySEGI1LX (arg1, arg2, arg3) = ((Bytecode.displaySEG arg1) ^ ", " ^ (Bytecode.displayI1 arg2)) ^ ", " ^ (Bytecode.displayL arg3)
+let displayI1LLX (arg1, arg2, arg3) = ((Bytecode.displayI1 arg1) ^ ", " ^ (Bytecode.displayL arg2)) ^ ", " ^ (Bytecode.displayL arg3)
+let displayNLLX (arg1, arg2, arg3) = ((Bytecode.displayN arg1) ^ ", " ^ (Bytecode.displayL arg2)) ^ ", " ^ (Bytecode.displayL arg3)
+let displayLLLLX (arg1, arg2, arg3, arg4) = (((Bytecode.displayL arg1) ^ ", " ^ (Bytecode.displayL arg2)) ^ ", " ^ (Bytecode.displayL arg3)) ^ ", " ^ (Bytecode.displayL arg4)
+let displayI1CWPX (arg1, arg2) = (Bytecode.displayI1 arg1) ^ ", " ^ (Bytecode.displayC arg2)
+let displayI1I1WPX (arg1, arg2) = (Bytecode.displayI1 arg1) ^ ", " ^ (Bytecode.displayI1 arg2)
 
 
 let inscatX_LEN = 8
@@ -730,7 +846,7 @@ let writeInstruction inst =
 
 let readInstruction getKindFunc getConstantFunc =                             
   Bytecode.setGetKindFn getKindFunc;                                           
-  Bytecode.setGetConstantFn getConstantFunc;                                   
+  Bytecode.setGetConstantFn getConstantFunc;  
   let opcode = readopcode () in
   if opcode = 0 then (Ins_put_variable_t (readRRX ()), inscatRRX_LEN)
   else  if opcode = 1 then (Ins_put_variable_p (readERX ()), inscatERX_LEN)

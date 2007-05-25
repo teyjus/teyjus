@@ -253,7 +253,7 @@ let assignConstIndex gconsts lconsts hconsts =
 				(Absyn.setClauseBlockNextClause clauseBlock 
 				   (numNonExpDefs + 1);
 				 (const :: defs, numDefs + 1, const :: nonExpDefs, 
-				  numNonExpDefs + 1, expDefs, numExpDefs + 1))
+				  numNonExpDefs + 1, expDefs, numExpDefs))
 	      | _ -> Errormsg.impossible Errormsg.none 
 				   "assignConstIndex: invalid constant codeInfo"
 	    in
@@ -262,8 +262,10 @@ let assignConstIndex gconsts lconsts hconsts =
   in
 
   (* function body of assignConstIndex *)
-  let (numLConsts, defs, numDefs) = assignLocalConstIndex lconsts 0 [] 0 in
-  let numHConsts = assignHiddenConstIndex hconsts 0 in
+  let (numLConsts, defs, numDefs) = 
+	assignLocalConstIndex lconsts 0 [] 0 
+  in
+  let numHConsts = assignHiddenConstIndex  hconsts 0 in
   let (numGConsts, newDefs, newNumDefs, nonExpDefs, numNonExpDefs, expDefs,
 	   numExpDefs) =
 	assignGlobalConstIndex gconsts 0 defs numDefs [] 0 [] 0 
@@ -287,7 +289,7 @@ let assignSkelIndex skels hskels =
 
   let rec assignSkelIndexAux skels assigned index =
     match skels with
-      [] -> index
+      [] -> (List.rev assigned, index)
     | (skel :: rest) ->
 		(* assign an index to skel: if appeared in skels, then use the index *)
         (* recorded there, otherwise, use the index as the given argument and*)
@@ -299,11 +301,14 @@ let assignSkelIndex skels hskels =
 			  Absyn.setSkeletonIndex skel index;
 			  (skel :: assigned, index + 1)
 		  | (skel' :: rest') ->
-			  if (Types.equalMappedTypeSkels skel skel') then
-				(Absyn.setSkeletonNew skel false;
-				 Absyn.setSkeletonIndex skel (Absyn.getSkeletonIndex skel');
-				 (assigned, index))
-			  else mergeOrAssign rest' 
+			  if (skel' == skel) then (* already dealt with: remove *)		
+				(assigned, index)
+			  else
+				if (Types.equalMappedTypeSkels skel skel') then
+				  (Absyn.setSkeletonNew skel false;
+				   Absyn.setSkeletonIndex skel (Absyn.getSkeletonIndex skel');
+				   (assigned, index))
+				else mergeOrAssign rest' 
 		in
 		let (newAssigned, newIndex) = mergeOrAssign assigned in
 		assignSkelIndexAux rest newAssigned newIndex 
@@ -311,8 +316,8 @@ let assignSkelIndex skels hskels =
 
   (* function body of assignSkelIndex *)
   let mySkels = skels @ hskels in
-  let numTySkels = assignSkelIndexAux mySkels [] 0 in
-  TypeSkeletonList(mySkels, numTySkels)
+  let (newSkels, numTySkels) = assignSkelIndexAux mySkels [] 0 in
+  TypeSkeletonList(newSkels, numTySkels)
 
 (****************************************************************************)
 (*                      ASSIGN TYPE SKELETON INDEXES                        *)
@@ -322,7 +327,7 @@ let assignStringIndex strs =
 
   let rec assignStringIndexAux strs assigned index =
     match strs with
-      [] -> index
+      [] -> (List.rev assigned, index)
     | (str :: rest) ->
 		(* assign an index to str: if appeared in strs, then use the index   *)
         (* recorded there, otherwise, use the index as the given argument and*)
@@ -334,19 +339,21 @@ let assignStringIndex strs =
 			  Absyn.setStringInfoIndex str index;
 			  (str :: assigned, index + 1)
 		  | (str' :: rest') ->
-			  if (Absyn.getStringInfoString str) == 
-				(Absyn.getStringInfoString str') then
-				(Absyn.setStringInfoNew str false;
-				 Absyn.setStringInfoIndex str (Absyn.getStringInfoIndex str');
-				 (assigned, index))
-			  else mergeOrAssign rest' 
+			  if (str' == str) then (assigned, index)
+			  else
+				if (Absyn.getStringInfoString str) == 
+				  (Absyn.getStringInfoString str') then
+				  (Absyn.setStringInfoNew str false;
+				   Absyn.setStringInfoIndex str (Absyn.getStringInfoIndex str');
+				   (assigned, index))
+				else mergeOrAssign rest' 
 		in
 		let (newAssigned, newIndex) = mergeOrAssign assigned in
 		assignStringIndexAux rest newAssigned newIndex
   in
   (* function body of assignStringIndex *)
-  let numStrings = assignStringIndexAux strs [] 0 in
-  StringList(strs, numStrings)
+  let (newStrs, numStrings) = assignStringIndexAux strs [] 0 in
+  StringList(newStrs, numStrings)
 
 (****************************************************************************)
 (*                      COLLECT RENAMING INFORMATION                        *) 
@@ -682,7 +689,7 @@ let genSeqCode cls insts startLoc =
 
   (* generate try code for the first clause *)
   let genTryCode cl =
-	let offset = Absyn.getClauseOffset first in
+	let offset = Absyn.getClauseOffset cl in
 	let try_code = Instr.Ins_try(numArgs, ref offset) in 
 	(try_code, Instr.getSize_try)
   in
@@ -698,7 +705,7 @@ let genSeqCode cls insts startLoc =
   in
   (* generate trust code for the last clause *)
   let genTrustCode cl =
-	let offset = Absyn.getClauseOffset first in
+	let offset = Absyn.getClauseOffset cl in
 	let trust = Instr.Ins_trust(numArgs, ref offset) in 
 	(trust, Instr.getSize_trust)
   in
@@ -804,7 +811,7 @@ let genPartitionCode partition isbeginning isend insts startLoc =
   
   let genSwitchOnTerm allcls conscls partition insts startLoc =
 	(*    switch_on_term V C L V *)
-	let varCodeLoc = startLoc in
+	let varCodeLoc = startLoc + Instr.getSize_switch_on_term in
 	let constCodeLocRef = ref 0 in
 	let consCodeLocRef = ref 0 in
 	let switch_on_term = 
@@ -813,8 +820,7 @@ let genPartitionCode partition isbeginning isend insts startLoc =
 	in
 	(* V: variable code          *) 
 	let (varCode, varCodeNextLoc) =
-	  genVarClausesCode allcls true true (insts @ [switch_on_term]) 
-		(startLoc + Instr.getSize_switch_on_term)
+	  genVarClausesCode allcls true true (insts @ [switch_on_term]) varCodeLoc 
 	in
 	(* C: const code             *)
 	let (constCode, constCodeNextLoc, constCodeLoc) = 
@@ -834,7 +840,7 @@ let genPartitionCode partition isbeginning isend insts startLoc =
 	SwitchInfo(allclauses, trailclauses, _, _, _, _, _, conscls) ->
 	  let emptyTrailCls = trailclauses = [] in
 	  let (newInsts, newStartLoc) =
-		let myisend = isend && (not emptyTrailCls) in
+		let myisend = isend && emptyTrailCls in
 		(* assume allclauses contains at least one clause *)
 		match allclauses with
 		  [cl] -> 
@@ -858,7 +864,13 @@ let genPartitionCode partition isbeginning isend insts startLoc =
 				in
 				nextCodeLocRef := nextCodeLoc;
 				(switchIns, nextCodeLoc)
-			| false, true   ->
+			| false, true  ->
+				(*    trust_me numArgs *)
+				let trust_me = Instr.Ins_trust_me(numArgs) in
+				(*    partition code   *)
+				genSwitchOnTerm allclauses conscls partition 
+				  (insts @ [trust_me]) (startLoc+Instr.getSize_trust_me) 
+			| false, false   ->
 				(*    retry_me_else numArgs L *)
 				let nextCodeLocRef = ref 0 in
 				let retry_me_else =
@@ -873,12 +885,6 @@ let genPartitionCode partition isbeginning isend insts startLoc =
 				in
 				nextCodeLocRef := nextCodeLoc;
 				(switchIns, nextCodeLoc)
-			| false, false  ->
-				(*    trust_me numArgs *)
-				let trust_me = Instr.Ins_trust_me(numArgs) in
-				(*    partition code   *)
-				genSwitchOnTerm allclauses conscls partition 
-				  (insts @ [trust_me]) (startLoc+Instr.getSize_trust_me) 
 	  in
 	  if emptyTrailCls then (newInsts, newStartLoc)
 	  else genVarClausesCode trailclauses false isend newInsts newStartLoc 
@@ -1063,7 +1069,8 @@ let generateModuleCode amod =
       (* 5) gather local predicates                                 *)
 	  let (cgGConsts, cgLConsts, cgHConsts, cgDefs, cgGNonExpDefs, 
 		   cgGExpDefs, cgLDefs) = 
-		assignConstIndex gconsts lconsts (!hconsts)
+		assignConstIndex (List.rev gconsts) (List.rev lconsts) 
+		  (List.rev (!hconsts))
 	  in
       (* merge type skeletons and those of hidden constants; assign indexes *)
       let cgTySkels = assignSkelIndex skels !hskels in 

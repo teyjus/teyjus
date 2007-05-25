@@ -59,9 +59,9 @@ let makeHiddenConstant tsym =
   let ty = Absyn.getTypeSymbolType tsym in
   let mol = Types.skeletonizeType ty in
   let ty' = Types.getMoleculeType mol in
-  let envsize = List.length (Types.getMoleculeEnvironment mol) in
+  (*let envsize = List.length (Types.getMoleculeEnvironment mol) in*)
   let skel = Absyn.makeSkeleton ty' in
-  let c = Absyn.makeHiddenConstant skel envsize in
+  let c = Absyn.makeHiddenConstant skel 0 in
   ((Absyn.getTypeSymbolHiddenConstantRef tsym) := Some c;
   HiddenConstant(c,tsym))
   
