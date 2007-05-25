@@ -5,12 +5,7 @@
 * actions are more or less correct...
 ****************************************************************************)
 open Lexing
-
-let currentFile = ref ""
-let currentModuleName = ref ""
-let setCurrentFile = fun s ->
-  (currentFile := s;
-  currentModuleName := (Filename.chop_extension s))
+open Lplex
 
 type pos = Errormsg.pos
 
