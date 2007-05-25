@@ -84,7 +84,7 @@ let printLine str =
 
 (* print predicate table *)
 let printPredicateTable preds header =
-  let collectPreds preds pred = preds ^ "		" ^ pred ^ "\n" in
+  let collectPreds preds pred = preds ^ "   " ^ pred ^ "\n" in
 
   let numPreds = List.length preds in
   if (numPreds = 0) then ()
@@ -198,10 +198,10 @@ let printImplTables implTabs =
   let printImplTable = function
 	  (nextClauses, findCodefn, searchTab) ->
 		printPredicateTable nextClauses 
-		  "    Predicate definitions possibly extending previous ones: ";
-		printLine ("    Find function type: " ^ 
+		  "  Predicate definitions possibly extending previous ones: ";
+		printLine ("  Find function type: " ^ 
 				   (Bytecode.displayFindCodeFn findCodefn));
-		printPredicateTable searchTab "    In-core table size: "
+		printPredicateTable searchTab "  In-core table size: "
   in
   
   let rec printImplTablesAux implTabs ind =
@@ -259,12 +259,12 @@ let printModuleTable = function
 	print_newline ();
 	printLine "Module table:";
 	printPredicateTable nextClauses 
-	  "    Predicate definitions possibly extending previous ones:";
-	printPredicateTable exportDefs "    Exportdef predicates: ";
-	printPredicateTable localPreds "    Local predicates: ";
-	printLine ("    Find function type: " ^ 
+	  "  Predicate definitions possibly extending previous ones: ";
+	printPredicateTable exportDefs "  Exportdef predicates: ";
+	printPredicateTable localPreds "  Local predicates: ";
+	printLine ("  Find function type: " ^ 
 			   (Bytecode.displayFindCodeFn findCodefn));
-	printPredicateTable searchTab "    In-core table size: "
+	printPredicateTable searchTab "  In-core table size: "
 	  
 (***************************************************************)
 (*               RENAMING TABLES  		                       *)
@@ -349,6 +349,6 @@ let displayModContext = function
 	  printHashTables hashtabs;
 	  printModuleTable moduletable;
 	  printRenamingTables renamingacc "Accumulated tables:";
-	  printRenamingTables renamingimp "Imported tables"
+	  printRenamingTables renamingimp "Imported tables:"
 	  
 
