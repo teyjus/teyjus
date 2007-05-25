@@ -101,8 +101,8 @@ let reduceSkeletons amod =
       if i >= (Array.length resultNeededness) then
         ()
       else
-        let needed = not
-          ((Array.get argsUse i) && (Array.get targetUse i)) in
+        let needed = not (Array.get targetUse i) in
+          (*((Array.get argsUse i) && (Array.get targetUse i)) in*)
         (Array.set resultNeededness i needed;
         computeNeededness (i + 1))
     in
@@ -158,8 +158,15 @@ let reduceSkeletons amod =
     in
     
     let ty = Absyn.getSkeletonType skel in
-    let args = Absyn.getArrowTypeArguments ty in
-    let target = Absyn.getArrowTypeTarget ty in
+	let (args, target) = 
+	  if (Absyn.isArrowType ty) then 
+		(Absyn.getArrowTypeArguments ty, Absyn.getArrowTypeTarget ty)
+	  else
+		([], ty)
+	in
+
+    (*let args = Absyn.getArrowTypeArguments ty in
+      let target = Absyn.getArrowTypeTarget ty in *)
     
     (*  Compute the correct neededness information. *)
     (List.iter processArg args;
@@ -179,14 +186,23 @@ let reduceSkeletons amod =
   * constant.
   ********************************************************************)
   let reduceConstant sym constant =
+	
+	(* calculate new environment size after reduction *)
+	let calculateEnvSize size needed =
+	  if (needed) then (size + 1)
+	  else size
+	in
+
     let skel = Absyn.getConstantSkeleton constant in
     let envsize = Absyn.getConstantTypeEnvSize constant in
-    
+
     if Option.isSome skel then
       (*  Don't reduce the skeleton if there is no environment to reduce. *)
       if envsize > 0 then
         let neededness = (reduceSkeleton (Option.get skel) envsize) in
-        (Absyn.getConstantSkeletonNeedednessRef constant) := (Some(neededness))
+		let newEnvSize = Array.fold_left calculateEnvSize 0 neededness in
+		(Absyn.getConstantTypeEnvSizeRef constant) := newEnvSize;
+		(Absyn.getConstantSkeletonNeedednessRef constant) := (Some(neededness))
       else
         ()
     else

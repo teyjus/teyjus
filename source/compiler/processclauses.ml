@@ -123,7 +123,7 @@ let rec transType tyExp =
 			  | Some(varData) -> varData
 			in
 			Absyn.makeNewTypeVariable tyVarData
-		  else transType (Option.get (!binding)) (* a type reference *)
+		  else (transType (Option.get (!binding))) (* a type reference *)
 	  | _ -> Errormsg.impossible 
 			   Errormsg.none "transType: invalid type expression")
   | Absyn.ArrowType(arg, target) ->
@@ -818,6 +818,7 @@ let processClauses amod clTerms newClTerms =
 	Absyn.Module(modname, modimps, modaccs, ctable, ktable, atable, _,
 				 gkinds, lkinds, gconsts, lconsts, hconsts, skels, hskels, _)
 	->
+	  (*
 	  (* process clauses *)
 	  let clDefs = processTopLevelClauses clTerms modimps [] false in
 	  (* process anonymous clauses (those introduced for deorification), and*)
@@ -825,7 +826,14 @@ let processClauses amod clTerms newClTerms =
       (* Note: 1) the import module field of anonymous clauses should be    *)
       (*          empty;                                                    *)
       (*       2) the definitions of anonymous clauses are always closed    *)
-	  let newClDefs = processTopLevelClauses newClTerms [] clDefs true in
+	  let newClDefs = 
+		processTopLevelClauses (List.rev newClTerms) [] clDefs true 
+	  in
+		 *)
+      let clDefs = 
+         processTopLevelClauses (List.rev newClTerms) [] [] true 
+	  in
+      let newClDefs = processTopLevelClauses clTerms modimps clDefs false in
       (* Insert the clauses definitions and the string list into the module *)
       (* abstract syntax.                                                   *)
 	  Absyn.Module(modname, modimps, modaccs, ctable, ktable, atable, !modStr, 

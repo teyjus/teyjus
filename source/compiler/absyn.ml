@@ -307,13 +307,10 @@ let isGlobalKind = function
 
 
 let makeGlobalKind symbol arity index =
-  (* to check: is this the correct usage of option for arity? *)
-  let arityInfo = if (arity = 0) then None else Some arity in
-  GlobalKind(symbol, arityInfo, ref index, Errormsg.none)
+  GlobalKind(symbol, Some arity, ref index, Errormsg.none)
 
 let makeLocalKind symbol arity index =
-  let arityInfo = if (arity = 0) then None else Some arity in
-  LocalKind(symbol, arityInfo, ref index, Errormsg.none)
+  LocalKind(symbol, Some arity, ref index, Errormsg.none)
 
 (*************************************************************************)
 (*  atypevar:                                                            *)
@@ -1216,15 +1213,15 @@ let getTermFreeVariableFirst = function
       Option.get (!first)
     else
       Errormsg.impossible Errormsg.none 
-        "getTermFreeVariablFirst: invalid term free variable"
+        "getTermFreeVariableFirst: invalid term free variable"
 | _ -> Errormsg.impossible Errormsg.none 
-        "getTermFreeVariablFirst: invalid term"
+        "getTermFreeVariableFirst: invalid term"
 
 let setTermFreeVariableFirst var f = 
   match var with
 	FreeVarTerm(FreeVar(_, first),_,_) -> first := Some(f)
   | _ -> Errormsg.impossible Errormsg.none 
-        "getTermFreeVariablFirst: invalid term"	
+        "getTermFreeVariableFirst: invalid term"	
 
 let getTermFreeVariableTypeSymbol = function
   FreeVarTerm(NamedFreeVar(tySymbol),_, _) -> tySymbol

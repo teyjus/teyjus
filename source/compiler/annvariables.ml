@@ -425,7 +425,7 @@ let rec analyseAppArgs terms heaparg =
 		Absyn.ConstantTerm(_, tyenv, _, _) ->
 		  analyseTypeArgs tyenv true;
 		  analyseAppArgsAux  rest delayed
-	  | Absyn.FreeVarTerm(freeVarInfo, _, _) ->
+	  | Absyn.FreeVarTerm(_, _, _) ->
 		  analyseFreeVarTerm term heaparg;
 		  analyseAppArgsAux rest delayed 
 	  | Absyn.AbstractionTerm(_) ->
@@ -445,12 +445,14 @@ and analyseTerms terms =
   match terms with
 	[] -> ()
   | (term :: rest) ->
-	  match term with
+	  (match term with
 		Absyn.AbstractionTerm(abstInfo, _, _) -> 
 		  synthesizeAbstractionTerm abstInfo
 	  | Absyn.ApplicationTerm(applInfo, _, _) -> 
 		  analyseApplicationTerm applInfo
-	  | _ -> Errormsg.impossible Errormsg.none "analyseTerms: invalid term"
+	  | _ -> Errormsg.impossible Errormsg.none "analyseTerms: invalid term");
+	  analyseTerms rest
+			
 		
 (* Annotating an application term in analysis mode. The head is examined *)
 (* first to determine whether to process in analysis or synthesis mode.  *)
@@ -611,12 +613,13 @@ let rec processClause clause =
 and processGoal goal perm last cutVarRef = 
   match goal with
 	Absyn.AtomicGoal(pred, _, _, args, tyargs) ->
-	  processAtomicGoal pred args tyargs perm last cutVarRef
+	  processAtomicGoal pred args tyargs perm last cutVarRef 
   | Absyn.AndGoal(andl, andr) ->
-	  let _ = processGoal andl true false cutVarRef in
-	  processGoal andr perm last cutVarRef 
+	  let (hasenv1, _)  = processGoal andl true false cutVarRef  in
+	  let (hasenv2, notrim) = processGoal andr perm last cutVarRef in
+	  (hasenv1 || hasenv2, notrim)
   | Absyn.SomeGoal(varData, body) ->
-	  processSomeGoal varData body perm last cutVarRef
+	  processSomeGoal varData body perm last cutVarRef 
   | Absyn.AllGoal(Absyn.HCVarAssocs(hcVarAssoc), body) ->
 	  (processAllGoal hcVarAssoc body last cutVarRef, true) 
   | Absyn.ImpGoal(Absyn.Definitions(clDefs), _, _, body) ->

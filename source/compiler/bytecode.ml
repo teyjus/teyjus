@@ -229,13 +229,13 @@ let readConstantIndex getConstFn =
 
 (* read a global kind *)
 let readGlobalKind ind =
-  let arity = readTwoBytes () in
-  let name  = Symbol.symbol (readString ()) in
-  Absyn.makeGlobalKind name arity ind
+  let arity = readOneByte () in
+  let name  = readString ()   in
+  Absyn.makeGlobalKind (Symbol.symbol name) arity ind
 
 (* read a local kind *)
 let readLocalKind ind =
-  Absyn.makeLocalKind (Symbol.symbol "") (readTwoBytes ()) ind
+  Absyn.makeLocalKind (Symbol.symbol "") (readOneByte ()) ind
 
 (* read a type skeleton *)
 let readTypeSkeleton getKindFn =
@@ -265,7 +265,6 @@ let readTypeSkeleton getKindFn =
 	if (number = 0) then (List.rev tyskels)
 	else
 	  readTypeSkeletons (number - 1) ((readTypeSkeletonAux ()) :: tyskels)
-	  
   in
   readTypeSkeletonAux () 
 
@@ -287,7 +286,7 @@ let readGlobalConstant getTypeSkelFn ind =
   let prec      = readOneByte () in
   let tyEnvSize = readOneByte () in
   let symbol    = Symbol.symbol (readString ()) in
-  let tySkelInd = readOneByte () in
+  let tySkelInd = readTwoBytes () in
   let tySkel    = getTypeSkelFn tySkelInd in
   Absyn.makeGlobalConstant symbol fixity prec false false tyEnvSize tySkel ind
 
@@ -296,7 +295,7 @@ let readLocalConstant getTypeSkelFn ind =
   let fixity    = readFixity  () in
   let prec      = readOneByte () in
   let tyEnvSize = readOneByte () in
-  let tySkelInd = readOneByte () in
+  let tySkelInd = readTwoBytes () in
   let tySkel    = getTypeSkelFn tySkelInd in
   Absyn.makeLocalConstant (Symbol.symbol "") fixity prec tyEnvSize tySkel ind
 
@@ -349,8 +348,8 @@ let setGetKindFn func = getKindFn := Some(func)
 let setGetConstantFn func = getConstantFn := Some(func)
 
 let readakind2 () =  Option.get (readKindIndex (Option.get (!getKindFn))) 
-let readaconstant2 () = 
-  Option.get (readConstantIndex (Option.get(!getConstantFn)))
+let readaconstant2 () =
+	Option.get (readConstantIndex (Option.get(!getConstantFn)))
 
 (** ******************************************************************* **)
 (**          DISPLAY FUNCTIONS FOR DISASSEMBLY                          **)

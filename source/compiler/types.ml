@@ -268,7 +268,7 @@ and occursCheck = fun var skel bindings ->
   match skel with
     Absyn.ErrorType -> skel
   | Absyn.TypeVarType(_) ->
-      if var = skel then
+      if var == skel then
         raise (UnifyException(OccursCheckFailure))
       else
         skel
@@ -378,11 +378,15 @@ let rec unify (tm1 : typemolecule) (tm2 : typemolecule) =
       (*  If both are variables, bind one to the other. *)
       if (Absyn.isVariableType skel2) then
         (*  Only bind if the variables are not equal. *)
-        if (skel1 <> skel2) then
+       (* if (skel1 <> skel2) then
           ((Absyn.getTypeVariableReference skel1) := (Some(skel2));
           skel1::bindings)
         else
-          bindings
+          bindings *)
+		if (skel1 == skel2) then bindings
+		else
+		  ((Absyn.getTypeVariableReference skel1) := (Some(skel2));
+           skel1::bindings) 
       
       (*  Otherwise just bind.  *)
       else
@@ -652,8 +656,7 @@ let equalMappedTypeSkels skel1 skel2 =
         if Absyn.isApplicationType skel2 then
           let k' = Absyn.getApplicationTypeHead skel2 in
           let args' = Absyn.getApplicationTypeArgs skel2 in
-          
-          if k = k' && List.length args = List.length args' then
+          if k == k' && List.length args = List.length args' then
             List.fold_left2 equalMappedTypeSkels' vl args args'
           else
             raise (EqualMappedTypeSkelsFailure)
@@ -667,8 +670,9 @@ let equalMappedTypeSkels skel1 skel2 =
           let t2 = Absyn.getArrowTypeTarget skel2 in
           let args2 = Absyn.getArrowTypeArguments skel2 in
           let vl' = equalMappedTypeSkels' vl t1 t2 in
-          let vl'' = List.fold_left2 equalMappedTypeSkels' vl' args1 args2 in
-          vl''
+		  if (List.length args1 = List.length args2) then
+			(List.fold_left2 equalMappedTypeSkels' vl' args1 args2)
+		  else raise (EqualMappedTypeSkelsFailure)			   
         else
           raise (EqualMappedTypeSkelsFailure)
     | _ -> Errormsg.impossible Errormsg.none "Types.equalMappedTypeSkels: invalid type."
