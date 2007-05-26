@@ -6,6 +6,7 @@ if $(equal $(OSTYPE), Cygwin)
 
 # Subdirectories
 
+CMP = $(dir compiler)
 SYS = $(dir system)
 SIM = $(dir simulator)
 TAB = $(dir tables)
@@ -14,6 +15,9 @@ TAB = $(dir tables)
    if $(file-exists OMakefile)
       include OMakefile
 
+section
+	OCAMLINCLUDES += $(CMP)
+	.SUBDIRS: disassembler
 
 # Generated Files
 
