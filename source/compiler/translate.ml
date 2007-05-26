@@ -1137,7 +1137,8 @@ and translateModule = fun mod' ktable ctable atable ->
       match accums with
         s::rest ->
           let (asig, (ktable', ctable', atable')) = translateSignature s ktable ctable atable in
-          let a = Absyn.AccumulatedModule(Absyn.getModuleName asig, asig) in
+          (*let a = Absyn.AccumulatedModule(Absyn.getModuleName asig, asig) in *)
+		  let a = Absyn.AccumulatedModule(Absyn.getSignatureName asig, asig) in
           (translateAccumMods rest ktable' ctable' atable' (a::sigs))
       | [] ->
           (sigs, (ktable, ctable, atable))
@@ -1152,7 +1153,8 @@ and translateModule = fun mod' ktable ctable atable ->
       match imps with
         s::rest ->
           let (asig, (ktable', ctable', atable')) = translateSignature s ktable ctable atable in
-          let i = Absyn.ImportedModule(Absyn.getModuleName asig, asig) in
+          (*let i = Absyn.ImportedModule(Absyn.getModuleName asig, asig) in*)
+		  let i = Absyn.ImportedModule(Absyn.getSignatureName asig, asig) in
           (translateImpMods rest ktable' ctable' atable' (i::sigs))
       | [] ->
           (sigs, (ktable, ctable, atable))

@@ -822,7 +822,8 @@ and genSTermArgsCode args chunk lowval hasenv  =
   (* recurse over arguments *)
   and genSTermArgsCodeAux args instsBlocks instsSize regTermList =
 	match args with
-	  [] -> (List.flatten (List.rev instsBlocks), instsSize, regTermList)
+	  [] -> (List.flatten (List.rev instsBlocks), instsSize, 
+			 List.rev regTermList)
 	| (term :: rest) ->
 		match term with
 		  Absyn.ApplicationTerm(_) -> 
