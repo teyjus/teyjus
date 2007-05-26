@@ -2,6 +2,7 @@
 *
 **********************************************************************)
 exception Exception
+open Lexing
 open Lpyacc
 
 let typeAbbrevTable = Table.SymbolTable.empty
@@ -27,21 +28,16 @@ let openFile = fun fname f ->
 let closeFile = fun fname f ->
   f fname
 
-let rec compileModule = function
-  basename ->
-    (*  Parse Source  *)
-    let inchannel = (openFile (basename ^ ".mod") open_in) in
-    let _ = Lplex.setCurrentFile (basename ^ ".mod") in
-    let lexbuf = Lexing.from_channel inchannel in
-    let result = Lpyacc.parseModule Lplex.initial lexbuf in
-    (closeFile inchannel close_in;
-    result)
+let compile = fun parse fname ->
+  let inchannel = openFile fname open_in in
+  let lexbuf = Lexing.from_channel inchannel in
+  let _ = Lplex.set_file_name lexbuf fname in
+  let result = parse Lplex.initial lexbuf in
+  let _ = closeFile inchannel close_in in
+    result
+      
+let compileModule = fun basename ->
+  compile Lpyacc.parseModule (basename ^ ".mod")
 
-and compileSignature = function
-  basename ->
-    let inchannel = openFile (basename ^ ".sig") open_in in
-    let _ = Lplex.setCurrentFile (basename ^ ".sig") in
-    let lexbuf = Lexing.from_channel inchannel in
-    let result = Lpyacc.parseSignature Lplex.initial lexbuf in
-    (closeFile inchannel close_in;
-    result)
+let compileSignature = fun basename ->
+  compile Lpyacc.parseSignature (basename ^ ".sig")

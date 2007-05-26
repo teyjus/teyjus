@@ -5,7 +5,9 @@
 * actions are more or less correct...
 ****************************************************************************)
 open Lexing
-open Lplex
+
+let currentModuleName =
+  fun () -> Filename.chop_extension (symbol_start_pos ()).pos_fname
 
 type pos = Errormsg.pos
 
@@ -145,7 +147,7 @@ let makeSymbol = fun pos t ->
 parseModule
   : modheader modpreamble modbody modend  {
       reverseResults ();
-      let m = Preabsyn.Module(!currentModuleName, !globalConstants, !localConstants,
+      let m = Preabsyn.Module(currentModuleName (), !globalConstants, !localConstants,
                       !closedConstants, !useOnlyList, !fixityList, !globalKinds, !localKinds, 
                       !globalTypeAbbrevs, !clauseList, !accumulatedModList, 
                       !accumulatedSigList, !useSigList, !importedModList) in
@@ -153,7 +155,7 @@ parseModule
       m)}
   | error modpreamble modbody modend      {
       reverseResults ();
-      let m = Preabsyn.Module(!currentModuleName, !globalConstants, !localConstants,
+      let m = Preabsyn.Module(currentModuleName (), !globalConstants, !localConstants,
                       !closedConstants, !useOnlyList, !fixityList, !globalKinds, !localKinds,
                       !globalTypeAbbrevs, !clauseList,
                       !accumulatedModList, !accumulatedSigList,
@@ -165,14 +167,14 @@ parseModule
 parseSignature
   : sigheader sigpreamble signdecls sigend  {
       reverseResults ();
-      let s = Preabsyn.Signature(!currentModuleName, !globalConstants,
+      let s = Preabsyn.Signature(currentModuleName (), !globalConstants,
                         !globalKinds, !globalTypeAbbrevs, !fixityList,
                         !accumulatedSigList) in
       (clearResults ();
       s)}
   | error signdecls sigend                  {
       reverseResults ();
-      let s = Preabsyn.Signature(!currentModuleName, !globalConstants,
+      let s = Preabsyn.Signature(currentModuleName (), !globalConstants,
                         !globalKinds, !globalTypeAbbrevs, !fixityList,
                         !accumulatedSigList) in
       (clearResults ();
@@ -187,16 +189,16 @@ tok
   ;
 
 modheader
-  :   MODULE tok PERIOD {if ((getIDName $2) <> !currentModuleName) then
-                            Errormsg.error (getPos 1) ("Expected module name '" ^ !currentModuleName ^ "'.")
+  :   MODULE tok PERIOD {if ((getIDName $2) <> currentModuleName ()) then
+                            Errormsg.error (getPos 1) ("Expected module name '" ^ currentModuleName () ^ "'.")
                           else
                             ()}
   ;
 
 
 sigheader
-  : SIG tok PERIOD  {if ((getIDName $2) <> !currentModuleName) then
-                      Errormsg.error (getPos 1) ("Expected signature name '" ^ !currentModuleName ^ "'.")
+  : SIG tok PERIOD  {if ((getIDName $2) <> currentModuleName ()) then
+                      Errormsg.error (getPos 1) ("Expected signature name '" ^ currentModuleName () ^ "'.")
                     else
                       ()}
   ;

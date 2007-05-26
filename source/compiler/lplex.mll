@@ -6,17 +6,14 @@ open Lexing
 open Errormsg
 open Lpyacc
 
+let set_file_name = fun lexbuf name ->
+  lexbuf.lex_curr_p <- { lexbuf.lex_curr_p with pos_fname = name }
+
 let incrline lexbuf =
   lexbuf.lex_curr_p <- {
     lexbuf.lex_curr_p with
       pos_bol = lexbuf.lex_curr_p.pos_cnum ;
       pos_lnum = 1 + lexbuf.lex_curr_p.pos_lnum }
-
-let currentFile = ref ""
-let currentModuleName = ref ""
-let setCurrentFile = fun s ->
-  (currentFile := s;
-  currentModuleName := (Filename.chop_extension s))
 
 let maxStringLength = 257
 
