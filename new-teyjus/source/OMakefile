@@ -1,7 +1,6 @@
 if $(equal $(OSTYPE), Cygwin)
   YACC = bison -by
   LEX = flex
-  EXE = .exe
   export
 
 # Subdirectories
