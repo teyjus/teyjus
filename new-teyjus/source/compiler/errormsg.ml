@@ -37,7 +37,7 @@ let none = { pos_fname = "none" ;
 let string_of_pos = function pos ->
   let file = pos.pos_fname in
   let line = pos.pos_lnum in
-  let char = pos.pos_cnum in
+  let char = pos.pos_cnum - pos.pos_bol in
     file ^ "(" ^ (string_of_int line) ^ "," ^ (string_of_int char) ^ ")"
 
 (********************************************************************
