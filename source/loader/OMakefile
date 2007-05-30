@@ -1,37 +1,37 @@
 SYS_SRCS[] =
-	$(SYS)/error
-	$(SYS)/memory
-	$(SYS)/message
-	$(SYS)/stream
+    $(SYS)/error
+    $(SYS)/memory
+    $(SYS)/message
+    $(SYS)/stream
 
 SIM_SRCS[] =
-	$(SIM)/mcstring
-	$(SIM)/dataformats
-	$(SIM)/io-datastructures
+    $(SIM)/mcstring
+    $(SIM)/dataformats
+    $(SIM)/io-datastructures
 
 TAB_SRCS[] =
-	$(TAB)/instructions
-	$(TAB)/pervasives
+    $(TAB)/instructions
+    $(TAB)/pervasives
 
 LD_SRCS[] =
-	loader
-	strings
-	file
-	kind
-	const
-	hashtab
-	code
-	bvrtab
-	implgoal
-	searchtab
-	importtab
-	tyskel
+    loader
+    strings
+    file
+    kind
+    const
+    hashtab
+    code
+    bvrtab
+    implgoal
+    searchtab
+    importtab
+    tyskel
 
 LIB_FILES[] =
-	$(SIM_SRCS)
-	$(SYS_SRCS)
-	$(TAB_SRCS)
-	$(LD_SRCS)
+    $(SIM_SRCS)
+    $(SYS_SRCS)
+    $(TAB_SRCS)
+    $(LD_SRCS)
 
 LIB = libloader
 
