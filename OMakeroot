@@ -8,7 +8,4 @@ if $(equal $(OSTYPE), Win32)
 open build/C
 open build/OCaml
 
-# TODO - remove following line to enable warn-error for OCaml
-OCAMLFLAGS =
-
 .SUBDIRS: .
