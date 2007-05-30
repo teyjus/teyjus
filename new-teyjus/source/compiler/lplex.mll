@@ -166,7 +166,7 @@ rule initial = parse
 * This state handles reading a quoted string.
 **********************************************************************)
 and stringstate = parse
-| ['^' '"' '\\' '\n']+  {stringstate lexbuf}
+| [^ '"' '\\' '\n']+  {stringstate lexbuf}
 | '"'                   {STRLIT(!currentString)}
 | '\n'          {Errormsg.error lexbuf.lex_curr_p "Error: String literal ended with newline";
                  incrline lexbuf; STRLIT(!currentString)}
