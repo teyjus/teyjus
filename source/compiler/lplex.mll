@@ -24,47 +24,68 @@ let escapePos = ref 0
 let strErr = ref false
 let quotedid = ref false
 
-let currentString = ref ""
+let stringBuffer = Buffer.create 16
 
 let string_of_char = String.make 1
+
+(**********************************************************************
+*truncateString:
+* Issue a warning and truncate string if longer than maxStringLength
+**********************************************************************)
+let truncateString s pos =
+  if String.length s > maxStringLength then
+    (Errormsg.warning pos ("Maximum string/id length exceeded; truncating to " ^
+                             (string_of_int maxStringLength) ^ " characters") ;
+     String.sub s 0 maxStringLength)
+  else
+    s
+
+(**********************************************************************
+* extractCurrentString:
+*  Return the current string and reset the string buffer
+**********************************************************************)
+let extractCurrentString pos =
+  let str = Buffer.contents stringBuffer in
+  let trim_str = truncateString str pos in
+    Buffer.reset stringBuffer ;
+    trim_str
+      
+(**********************************************************************
+*addString:
+* Add a string to the current string.
+**********************************************************************)
+let addString s =
+  Buffer.add_string stringBuffer s
 
 (**********************************************************************
 *addChar:
 * Add a character to the current string.
 **********************************************************************)
-let addChar = function s ->
-  if (String.length(!currentString) < (maxStringLength - 1)) then
-    (currentString := !currentString ^ s;
-    ())
-(* TODO - we should generate the string in total first and then do one single check on its size
-  else
-    (Errormsg.warning lexbuf.lex_curr_p ("Maximum string/id length exceeded; truncating to " ^ (string_of_int maxStringLength) ^ " characters");
-    ())
-*)
+let addChar c =
+  Buffer.add_char stringBuffer c
 
 (**********************************************************************
 *addHex:
 * This *should* convert the given string into a character by interpreting
 * it as either 1 or 2 hexadecimal characters.
 **********************************************************************)
-let addHex = fun s ->
-  (addChar (String.make 1 (Char.chr(int_of_string ("0x" ^ s)))))
+let addHex s =
+  addChar (Char.chr (int_of_string ("0x" ^ s)))
 
 (**********************************************************************
 *addOctal:
 * This *should* convert the given string into a character by interpreting
 * it as either 1 or 3 octal characters.
 **********************************************************************)
-let addOctal = fun s ->
-  (addChar (String.make 1 (Char.chr(int_of_string ("0o" ^ s)))))
+let addOctal s =
+  addChar (Char.chr (int_of_string ("0o" ^ s)))
 
 (**********************************************************************
 *addControl:
 * This *should* convert the given string into a character control.
 **********************************************************************)
-let addControl = fun s ->
-  (addChar (String.make 1 (Char.chr ((Char.code (String.get s 0)) -
-    (Char.code '@')))))
+let addControl s =
+  addChar (Char.chr ((Char.code (String.get s 0)) - (Char.code '@')))
 }
 
 let DIGIT = ['0'-'9']
@@ -166,57 +187,58 @@ rule initial = parse
 * This state handles reading a quoted string.
 **********************************************************************)
 and stringstate = parse
-| [^ '"' '\\' '\n']+  {stringstate lexbuf}
-| '"'                   {STRLIT(!currentString)}
+| [^ '"' '\\' '\n']+ as text  {addString text; stringstate lexbuf}
+| '"'                         {STRLIT(extractCurrentString lexbuf.lex_curr_p)}
+      
 | '\n'          {Errormsg.error lexbuf.lex_curr_p "Error: String literal ended with newline";
-                 incrline lexbuf; STRLIT(!currentString)}
-| "\\b"         {addChar("\b"); stringstate lexbuf}
-| "\\t"         {addChar("\t"); stringstate lexbuf}
-| "\\n"         {addChar("\n"); stringstate lexbuf}
-| "\\r"         {addChar("\r"); stringstate lexbuf}
-| "\\\\"        {addChar("\\"); stringstate lexbuf}
-| "\\\""        {addChar("\""); stringstate lexbuf}
-| "\"\""        {addChar("\""); stringstate lexbuf}
+                 incrline lexbuf; STRLIT(extractCurrentString lexbuf.lex_curr_p)}
+| "\\b"         {addChar '\b'; stringstate lexbuf}
+| "\\t"         {addChar '\t'; stringstate lexbuf}
+| "\\n"         {addChar '\n'; stringstate lexbuf}
+| "\\r"         {addChar '\r'; stringstate lexbuf}
+| "\\\\"        {addChar '\\'; stringstate lexbuf}
+| "\\\""        {addChar '"'; stringstate lexbuf}
+| "\"\""        {addChar '"'; stringstate lexbuf}
 
-| "\\^"['@'-'z'] as text          {addControl(text); stringstate lexbuf}
-| "\\" OCTAL as text              {addOctal(text); stringstate lexbuf}
-| "\\" OCTAL OCTAL OCTAL as text  {addOctal(text); stringstate lexbuf}
-| "\\x" HEX as text               {addHex(text); stringstate lexbuf}
-| "\\x" HEX HEX as text           {addHex(text); stringstate lexbuf}
+| "\\^"['@'-'z'] as text            {addControl text; stringstate lexbuf}
+| "\\" OCTAL as text                {addOctal text; stringstate lexbuf}
+| "\\" (OCTAL OCTAL OCTAL) as text  {addOctal text; stringstate lexbuf}
+| "\\x" HEX as text                 {addHex text; stringstate lexbuf}
+| "\\x" (HEX HEX) as text           {addHex text; stringstate lexbuf}
 
 | "\\x" _         {Errormsg.error lexbuf.lex_curr_p "Error: Illegal hex character specification";
-                  stringstate lexbuf}
+                   stringstate lexbuf}
 | "\\" FCHAR      {strflush1 lexbuf}
 | "\\\n"          {incrline lexbuf; strflush1 lexbuf}
 | "\\c"           {strflush2 lexbuf}
 | "\\" _          {Errormsg.error lexbuf.lex_curr_p "Error: Illegal escape character in string";
-                  stringstate lexbuf}
+                   stringstate lexbuf}
 
 and strflush1 = parse
 | FCHAR+    {strflush1 lexbuf}
 | "\\"      {strflush1 lexbuf}
 | _ as text {Errormsg.error lexbuf.lex_curr_p "Error: Unterminated string escape sequence";
-            addChar(string_of_char text);
-            stringstate lexbuf}
+             addChar text;
+             stringstate lexbuf}
 
 and strflush2 = parse
 | FCHAR+    {strflush2 lexbuf}
-| _ as text {addChar(string_of_char text); stringstate lexbuf}
+| _ as text {addChar text; stringstate lexbuf}
 
 and comment1 = parse
 | [^ '\n']+       {comment1 lexbuf}
 | "\n"            {incrline lexbuf; initial lexbuf}
 | _ as text       {Errormsg.error lexbuf.lex_curr_p ("Illegal character " ^ (string_of_char text) ^ " in input");
-                  comment1 lexbuf}
+                   comment1 lexbuf}
 
 and comment2 = parse
 | [^ '*' '/' '\n']+   {comment2 lexbuf}
 | "/*"        {commentLev := !commentLev + 1; comment2 lexbuf}
 | "*/"        {commentLev := !commentLev - 1;
-              if(!commentLev = 0) then
-                initial lexbuf
-              else
-                comment2 lexbuf}
+               if !commentLev = 0 then
+                 initial lexbuf
+               else
+                 comment2 lexbuf}
 | "/*"        {comment2 lexbuf}
 | _ as text   {Errormsg.error lexbuf.lex_curr_p ("Illegal character " ^ (string_of_char text) ^ " in input");
-              comment2 lexbuf}
+               comment2 lexbuf}
