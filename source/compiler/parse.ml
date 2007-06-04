@@ -20,14 +20,6 @@ let getTermAndVariablesVariables = function TermAndVariables(_, vars) -> vars
 
 let errorTerm = Term(Absyn.errorTerm, Types.errorMolecule)
 let errorTermAndVariables = TermAndVariables(errorTerm, [])
-let getTermType = function
-  Term(_,ty) -> ty
-
-let getTermTerm = function
-  Term(t,_) -> t
-
-let getTermAndVariablesTerm = function
-  TermAndVariables(term,_) -> term
 
 (**********************************************************************
 *Term-parsing types.
@@ -221,7 +213,7 @@ let rec translateClause = fun term amodule newconstant newkind ->
   let (tv, _, _, _) = parseTerm term [] [] amodule newStack in
   let tv' = (getTermAndVariablesTerm tv) in
   let term' = getTermTerm tv' in
-  let type' = getTermType tv' in
+  let type' = getTermMolecule tv' in
   
   (*  Remove all overloaded operators.  *)
   let term'' = removeOverloads term' in
@@ -298,7 +290,7 @@ and parseTerm = fun term fvs bvs amodule stack ->
       let bbvs = parseTypeSymbols b amodule in
       let (tv', fvs', bvs', stack') = parseTerms t fvs (bbvs @ bvs) amodule (reduceToTerm false) newStack in
       let term' = getTermAndVariablesTerm tv' in
-      (TermAndVariables(makeAbstraction term' bbvs pos, fvs'), fvs', bbvs, stack)
+      (TermAndVariables(makeAbstraction term' bbvs pos, fvs'), fvs', bvs', stack)
   | Preabsyn.IntTerm(i, pos) -> (TermAndVariables((makeType (Absyn.IntTerm(i, false, pos)) "int" (Absyn.getModuleKindTable amodule) pos), fvs), fvs, bvs, stack)
   | Preabsyn.RealTerm(r, pos) -> (TermAndVariables((makeType (Absyn.RealTerm(r, false, pos)) "real" (Absyn.getModuleKindTable amodule) pos), fvs), fvs, bvs, stack)
   | Preabsyn.StringTerm(s, pos) -> (TermAndVariables((makeType (Absyn.StringTerm(Absyn.StringLiteral(s), false, pos)) "string" (Absyn.getModuleKindTable amodule) pos), fvs), fvs, bvs, stack)
@@ -1016,8 +1008,13 @@ and newParseState = fun stack ->
 
 (**********************************************************************
 *makeAbstraction:
+* Makes an abstraction term by abstracting over the given term for all
+* variables in bvs.
 **********************************************************************)
-and makeAbstraction term bvs pos =
+and makeAbstraction termmol bvs pos =
+  (********************************************************************
+  *makeTerm:
+  ********************************************************************)
   let rec makeTerm currentterm bvs =
     match bvs with
       [] -> currentterm
@@ -1028,21 +1025,18 @@ and makeAbstraction term bvs pos =
           pos) in
         (makeTerm term' bvs')
   in
-  
-  let rec makeType ty bvs =
-    match bvs with
-      [] -> Errormsg.impossible Errormsg.none "Parse.makeType: invalid number of bvs."
-    | bv::[] -> (Absyn.getTypeSymbolType bv)
-    | bv::bvs' ->
-        Absyn.ArrowType(ty, (makeType (Absyn.getTypeSymbolType bv) bvs'))
-  in
-  
-  let term' = makeTerm (getTermTerm term) bvs in
-  let ty = getTermType term in
-  let ty' = makeType (Types.getMoleculeType ty) bvs in
-  let mol = getTermMolecule term in
-  let env' = Types.getMoleculeEnvironment mol in
-  Term(term', Types.Molecule(ty', env'))
+
+  if (List.length bvs) == 0 then
+    (Errormsg.impossible Errormsg.none "Parse.makeType: invalid number of bvs.")
+  else
+    let term = getTermTerm termmol in
+    let term' = makeTerm term bvs in
+    
+    let mol = getTermMolecule termmol in
+    let bvtypes = List.rev_map (Absyn.getTypeSymbolType) bvs in
+    let ty' = Absyn.makeArrowType (Types.getMoleculeType mol) bvtypes in
+    let env' = Types.getMoleculeEnvironment mol in
+    Term(term', Types.Molecule(ty', env'))
 
 (**********************************************************************
 *makeError:
@@ -1068,7 +1062,7 @@ and makeApply = fun f arg ->
     Absyn.CurriedApplication(getTermTerm f, getTermTerm arg),
     false,
     Absyn.getTermPos (getTermTerm f)) in
-  let ty = Types.checkApply (getTermType f) (getTermType arg) term in
+  let ty = Types.checkApply (getTermMolecule f) (getTermMolecule arg) term in
   
   if ty = Types.errorMolecule then
     errorTerm
@@ -1091,8 +1085,8 @@ and makeBinaryApply = fun f (arg1 : ptterm) (arg2 : ptterm) ->
     false,
     Absyn.getTermPos (getTermTerm f)) in
   
-  let ty = Types.checkApply (getTermType f) (getTermType arg1) term in
-  let ty' = Types.checkApply ty (getTermType arg2) term in
+  let ty = Types.checkApply (getTermMolecule f) (getTermMolecule arg1) term in
+  let ty' = Types.checkApply ty (getTermMolecule arg2) term in
   
   if ty' = Types.errorMolecule then
     errorTerm
@@ -1186,7 +1180,6 @@ and normalizeTerm = fun term ->
   in
   
   let getEnvironmentSize = List.length in
-  
   let emptyEnvironment = [] in
   
   (*  Find an entry in an environment, if it exists.  *)
@@ -1205,10 +1198,10 @@ and normalizeTerm = fun term ->
   
   let rec normalize = fun term env whnf ->
     match term with
-      Absyn.IntTerm(_) -> (TermEntry(term))
-    | Absyn.RealTerm(_) -> (TermEntry(term))
-    | Absyn.StringTerm(_) -> (TermEntry(term))
-    | Absyn.FreeVarTerm(_) -> (TermEntry(term))
+      Absyn.IntTerm(_)
+    | Absyn.RealTerm(_)
+    | Absyn.StringTerm(_)
+    | Absyn.FreeVarTerm(_)
     | Absyn.ConstantTerm(_) -> (TermEntry(term))
     
     (*  Bound Variables: First check to see if the variable has been
@@ -1216,47 +1209,49 @@ and normalizeTerm = fun term ->
         the corresponding term or suspension.  Otherwise, simply use
         the term. *)
     | Absyn.BoundVarTerm(Absyn.NamedBoundVar(tsym), _, pos) ->
-        (match (findEntry env tsym) with
-          Some(entry) ->
-            if (isEntrySuspension (!entry)) then
-              let susp = (!entry) in
-              let entry' = normalize (getEntrySuspensionTerm susp) 
-                            (getEntrySuspensionEnv susp) whnf in
-              (entry := entry';
-              entry')
-            else
-              (!entry)
-        | None -> (TermEntry(term)))
+        let entryop = (findEntry env tsym) in
+        if (Option.isSome entryop) then
+          let entry = Option.get entryop in
+          if (isEntrySuspension (!entry)) then
+            let susp = (!entry) in
+            let entry' = normalize (getEntrySuspensionTerm susp) 
+                          (getEntrySuspensionEnv susp) whnf in
+            (entry := entry';
+            entry')
+          else
+            (!entry)
+        else
+          (TermEntry(term))
     (*  Application *)
     | Absyn.ApplicationTerm(Absyn.CurriedApplication(l, r), b, p) ->
         let l' = normalize l env true in
         if (isEntrySuspension l') then
           let t' = (getEntrySuspensionTerm l') in
           let sym = (Absyn.getTermAbstractionVar t') in
+          let body = (Absyn.getTermAbstractionBody t') in
           let env' = makeSuspension sym r env (getEntrySuspensionEnv l') in
-          (normalize t' env' whnf)
+          (normalize body env' whnf)
         else
-          let l'' = (getEntryTerm l') in
-          let r' = normalize r env true in
-          let r'' = (getEntryTerm r') in
-          TermEntry(Absyn.ApplicationTerm(Absyn.CurriedApplication(l'', r''), b, p))
+          let l' = (getEntryTerm l') in
+          let r' = (getEntryTerm (normalize r env false)) in
+          TermEntry(Absyn.ApplicationTerm(Absyn.CurriedApplication(l', r'), b, p))
     
-    | Absyn.AbstractionTerm(Absyn.NestedAbstraction(tsym, aterm), b, pos) ->
+    | Absyn.AbstractionTerm(Absyn.NestedAbstraction(tsym, aterm), _, pos) ->
         if whnf then
           SuspensionEntry(term, env)
         else if (getEnvironmentSize env) > 0 then
           let tsym' = Absyn.BoundVar(Absyn.getTypeSymbolSymbol tsym, ref None, ref false, ref(Some(Absyn.getTypeSymbolType tsym))) in
-          let bv = Absyn.BoundVarTerm(Absyn.NamedBoundVar(tsym'),b, pos) in
-          let env' = makeTerm tsym' bv env in
-          let aterm' = (getEntryTerm (normalize aterm env' false)) in
+          let t = Absyn.makeBoundVarTerm tsym' pos in
+          let t' = makeTerm tsym' t env in
+          let aterm' = (getEntryTerm (normalize aterm t' false)) in
           if aterm <> aterm' then
-            TermEntry(Absyn.AbstractionTerm(Absyn.NestedAbstraction(tsym', aterm'), b, pos))
+            TermEntry(Absyn.AbstractionTerm(Absyn.NestedAbstraction(tsym', aterm'), false, pos))
           else
             TermEntry(term)
         else
           let aterm' = (getEntryTerm (normalize aterm emptyEnvironment false)) in
           if aterm <> aterm' then
-            TermEntry(Absyn.AbstractionTerm(Absyn.NestedAbstraction(tsym, aterm'), b, pos))
+            TermEntry(Absyn.AbstractionTerm(Absyn.NestedAbstraction(tsym, aterm'), false, pos))
           else
             TermEntry(term)
     | Absyn.ErrorTerm -> TermEntry(Absyn.ErrorTerm)
@@ -1265,7 +1260,7 @@ and normalizeTerm = fun term ->
         TermEntry(Absyn.ErrorTerm))
   in
 
-  let result = normalize term [] false in
+  let result = normalize term emptyEnvironment false in
   (getEntryTerm result)
 
 and fixTerm term =
@@ -1304,12 +1299,12 @@ let unitTests () =
   let t6 = Preabsyn.SeqTerm([Preabsyn.IntTerm(1, Errormsg.none); Preabsyn.IdTerm(Symbol.symbol "::", None, Preabsyn.ConstID, Errormsg.none); Preabsyn.IdTerm(Symbol.symbol "nil", None, Preabsyn.ConstID, Errormsg.none)], Errormsg.none) in
   let t7 = Preabsyn.SeqTerm([Preabsyn.IntTerm(1, Errormsg.none); Preabsyn.IdTerm(Symbol.symbol "::", None, Preabsyn.ConstID, Errormsg.none); Preabsyn.IntTerm(2, Errormsg.none); Preabsyn.IdTerm(Symbol.symbol "::", None, Preabsyn.ConstID, Errormsg.none); Preabsyn.IdTerm(Symbol.symbol "nil", None, Preabsyn.ConstID, Errormsg.none)], Errormsg.none) in
 
-  let _ = test t1 in
-  let _ = test t2 in
-  let _ = test t3 in
-  let _ = test t5 in
-  let _ = test t6 in
-  let _ = test t7 in
+  let () = test t1 in
+  let () = test t2 in
+  let () = test t3 in
+  let () = test t5 in
+  let () = test t6 in
+  let () = test t7 in
   
   let _ = Errormsg.log Errormsg.none ("Parse Unit Tests Compete.\n") in
   ()

@@ -147,7 +147,8 @@ static char* OC_mkArrowType(char* ty1, char* ty2)
 /* value constructors                                   */
 /********************************************************/
 //absyn
-#define VCTR_KIND         "PervasiveKind"
+#define VCTR_KIND         "Kind"
+#define VCTR_KINDTYPE     "PervasiveKind"
 #define VCTR_CONSTANT     "Constant"
 #define VCTR_PERVCONST    "PervasiveConstant"
 #define VCTR_TYSKEL       "Skeleton"
@@ -372,9 +373,10 @@ char* OC_mkKindVar(char* varName, char* kindName, char* arity, char* offset)
   char* symbol = OC_mkSymbol(kindName);
   char* nargs  = OC_mkSome(arity);
   char* index  = OC_mkRef(offset);
+  char* ktype  = OC_mkDotStr(ABSYN, VCTR_KINDTYPE);
   char* pos    = OC_mkDotStr(ERRORMSG, VCTR_NULLPOS);
   size_t length = strlen(ctr) + strlen(symbol) + strlen(nargs) +
-    strlen(index) + strlen(pos) + 10;
+    strlen(index) + strlen(ktype) + strlen(pos) + 10;
 
   char* def = UTIL_mallocStr(length + 1);
 
@@ -385,6 +387,8 @@ char* OC_mkKindVar(char* varName, char* kindName, char* arity, char* offset)
   strcat(def, nargs);    free(nargs);
   strcat(def, ", ");
   strcat(def, index);    free(index);
+  strcat(def, ", ");
+  strcat(def, ktype);    free(ktype);
   strcat(def, ", ");
   strcat(def, pos);      free(pos);
   strcat(def, ")");
@@ -1075,7 +1079,6 @@ char* OC_mkGenericConstTabEntry(char* entries)
 {
   char* text;
   char* tabEntry;
-  char* entry;
 
   tabEntry = OC_mkTabEntry("~", OVERLOADUMINUS);
   text = UTIL_appendStr(entries, tabEntry);

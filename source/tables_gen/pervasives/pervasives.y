@@ -273,13 +273,21 @@ int main(argc, argv)
     int argc;
     char * argv[];
 {
-    if(argc < 2)
+    if(argc == 1)
     {
-      printf("Error: no input file specified.\n");
+      printf("No input file specified; using 'Pervasives.in'.\n");
+      yyin = UTIL_fopenR("Pervasives.in");
+    }
+    else if(argc == 2)
+    {
+      yyin = UTIL_fopenR(argv[1]);
+    }
+    else
+    {
+      printf("Error: invalid command line arguments.\n");
       return 1;
     }
-	printf("Generating pervasive files...\n");
-    yyin = UTIL_fopenR(argv[1]);
+    printf("Generating pervasive files...\n");
     yyparse();
     UTIL_fclose(yyin);
     spitCPervasivesH();

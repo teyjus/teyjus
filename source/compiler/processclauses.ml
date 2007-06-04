@@ -404,7 +404,7 @@ let rec processClause clauseTerm =
 		  if (Pervasive.isimplConstant head) then (* process rule *)
 			processRule (List.hd (List.tl args)) (List.hd args)
 		  else (* process fact *)
-			processFact head (Absyn.getTermTypeEnv func) args
+			processFact head (Absyn.getTermMoleculeEnv func) args
 			  (Absyn.getTermApplicationArity clauseTerm)
 		in
 		(preClause, freeVars, freeTyVars, collectHQVars (!hqVars))
@@ -444,7 +444,7 @@ and processRule clauseHead clauseBody =
 	  Absyn.ConstantTerm(pred, tyenv, _, _) -> (pred, tyenv, [], 0) 
 	| _ -> (* must be an application *)
 		let head = Absyn.getTermApplicationHead clauseHead in
-		(Absyn.getTermConstant head, Absyn.getTermTypeEnv head,
+		(Absyn.getTermConstant head, Absyn.getTermMoleculeEnv head,
 		 Absyn.getTermApplicationArguments clauseHead, 
 		 Absyn.getTermApplicationArity clauseHead)
   in

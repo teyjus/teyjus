@@ -10,7 +10,7 @@ let compile = fun basename outfile ->
   if !Errormsg.anyErrors then
     1
   else 
-  
+
   let sigresult = Compile.compileSignature basename in
   if !Errormsg.anyErrors then
     1
@@ -39,6 +39,17 @@ let compile = fun basename outfile ->
     1
   else
   
+  (*  Print out the tabling information before trying to do type inference. *)
+  (if !Compile.printAbsyn then
+    let modoutchannel = Compile.openFile (basename ^ ".mod.tables.txt") open_out in
+    let sigoutchannel = Compile.openFile (basename ^ ".sig.tables.txt") open_out in
+    (Absyn.printAbsyn absyn modoutchannel;
+    Absyn.printAbsyn sigabsyn sigoutchannel;
+    Compile.closeFile modoutchannel close_out;
+    Compile.closeFile sigoutchannel close_out)
+  else
+    ();
+  
   (*  Get the list of clauses and new clauses.  *)
   let (absyn, clauses, newclauses) = Clauses.translateClauses modresult absyn in
   if !Errormsg.anyErrors then
@@ -58,20 +69,21 @@ let compile = fun basename outfile ->
 
   (* reduce skeleton *)
   let absyn = Typereduction.reduceSkeletons absyn in
-  print_string "passed: reduce skeletons\n";
+  Errormsg.log Errormsg.none "passed: reduce skeletons";
   if !Errormsg.anyErrors then 1
   else 
   
   (*  Process the clauses.  *)
   let absyn = Processclauses.processClauses absyn clauses newclauses in
-  print_string "passed: processClauses\n";
+  Errormsg.log Errormsg.none "passed: processClauses";
   if !Errormsg.anyErrors then
     1
   else 
   
   (* reduce predicate types *)
- (* let absyn = Typereduction.reducePredicates absyn in
-  print_string "passed: reduce predicates\n";
+  (*
+  let absyn = Typereduction.reducePredicates absyn in
+  Errormsg.log Errormsg.none "passed: reduce predicates";
 
   if !Errormsg.anyErrors then
     1
@@ -88,20 +100,21 @@ let compile = fun basename outfile ->
     Compile.closeFile sigoutchannel close_out)
   else
     ();
+
   if !Errormsg.anyErrors then
     1
   else
   
   (*  Process the clauses.  *)
   let _ = Annvariables.processClauses absyn in
-  print_string "passed: annvariable\n";
+  Errormsg.log Errormsg.none "passed: annvariable";
   if !Errormsg.anyErrors then
     1
   else
 
   (*  Construct a codegen module. *)
   let cg = Codegen.generateModuleCode absyn in
-  print_string "passed: codegen\n";
+  Errormsg.log Errormsg.none "passed: codegen";
   if !Errormsg.anyErrors then
     1
   else
@@ -111,7 +124,10 @@ let compile = fun basename outfile ->
   if !Errormsg.anyErrors then
     1
   else
-  (Bytecode.setWordSize ();
+  
+  (*  Setup the word size.  *)
+  let () = Bytecode.setWordSize () in
+
   (*  Write the code to the output file.  *)
   let _ = Spitcode.writeByteCode cg in
   if !Errormsg.anyErrors then

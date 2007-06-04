@@ -9,12 +9,12 @@ type symbol = Symbol.symbol
 *Kinds:
 * (symbol, arity, index, position)
 *****************************************************************************)
-type akindinfo = (symbol * int option * int ref * pos) 
+type akindtype =
+    LocalKind
+  | GlobalKind
+  | PervasiveKind
 
-and akind = 
-    LocalKind of akindinfo
-  | GlobalKind of akindinfo
-  | PervasiveKind of akindinfo
+and akind = Kind of (symbol * int option * int ref * akindtype * pos) 
 
 (*****************************************************************************
 *Type Variable Data:
@@ -250,6 +250,7 @@ val printAbsyn : amodule -> out_channel -> unit
 (*  akind:                                                               *)
 (*************************************************************************)
 val makeKindType : akind -> atype
+val getKindType : akind -> akindtype
 val getKindArity : akind -> int
 val getKindArityOption : akind -> int option
 val getKindPos : akind -> pos
@@ -258,6 +259,7 @@ val getKindSymbol : akind -> symbol
 val getKindIndex : akind -> int
 val setKindIndex : akind -> int -> unit
 val isGlobalKind : akind -> bool
+val isLocalKind : akind -> bool
 val string_of_kind : akind -> string
 
 val makeGlobalKind : symbol -> int -> int -> akind
@@ -449,7 +451,7 @@ val getTermBoundVariableDBIndex : aterm -> int
 val makeBoundVarTerm : atypesymbol -> pos -> aterm
 
 val getTermConstant : aterm -> aconstant
-val getTermTypeEnv : aterm -> atype list
+val getTermMoleculeEnv : aterm -> atype list
 val getTermConstantTypeEnv : aterm -> atype list
 val isTermConstant     : aterm -> bool
 
