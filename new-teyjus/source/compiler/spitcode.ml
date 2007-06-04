@@ -13,10 +13,10 @@ let map func mylist =
 
 let writeKindIndex kind =
   let cat =
-    match kind with
-      Absyn.LocalKind(_) -> Bytecode.local
-    | Absyn.GlobalKind(_) -> Bytecode.global
-    | Absyn.PervasiveKind(_) -> Bytecode.pervasive
+    match (Absyn.getKindType kind) with
+      Absyn.LocalKind -> Bytecode.local
+    | Absyn.GlobalKind -> Bytecode.global
+    | Absyn.PervasiveKind -> Bytecode.pervasive
   in
   Bytecode.writeint1 cat;
   Bytecode.writeint2 (Absyn.getKindIndex kind)

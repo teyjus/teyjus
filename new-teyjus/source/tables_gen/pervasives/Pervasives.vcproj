@@ -27,6 +27,9 @@
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
+				Description="Copying..."
+				CommandLine="xcopy &quot;$(TargetPath)&quot; &quot;$(SolutionDir)&quot; /Y"
+				Outputs="$(SolutionDir)$(TargetFilename)"
 			/>
 			<Tool
 				Name="VCXMLDataGeneratorTool"

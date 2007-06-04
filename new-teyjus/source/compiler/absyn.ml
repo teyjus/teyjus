@@ -9,12 +9,12 @@ type symbol = Symbol.symbol
 *Kinds:
 * (symbol, arity, index, position)
 *****************************************************************************)
-type akindinfo = (symbol * int option * int ref * pos) 
+type akindtype =
+    LocalKind
+  | GlobalKind
+  | PervasiveKind
 
-and akind = 
-    LocalKind of akindinfo
-  | GlobalKind of akindinfo
-  | PervasiveKind of akindinfo
+and akind = Kind of (symbol * int option * int ref * akindtype * pos)
 
 (*****************************************************************************
 *Type Variable Data:
@@ -248,69 +248,56 @@ and aclauseinfo =
 (*************************************************************************)
 (*  akind:                                                               *)
 (*************************************************************************)
-let string_of_kind = function
-  LocalKind(n,_,_,_) -> (Symbol.name n) 
-| GlobalKind(n,_,_,_) -> (Symbol.name n)
-| PervasiveKind(n,_,_,_) -> (Symbol.name n)
+let string_of_kind (Kind(n,_,_,_,_)) = (Symbol.name n) 
 
 (* makeKindType                          *)
 let makeKindType kind =
   ApplicationType(kind, [])
 
-(* getKindPos:                           *)
-(* Get a kind's position information.    *)
-let getKindPos = function
-  LocalKind(_,_,_,p) -> p
-| GlobalKind(_,_,_,p) -> p
-| PervasiveKind(_,_,_,p) -> p
+(* getKindType:                                   *)
+(*  Get a kind's type (Local, Global, Pervasive)  *)
+let getKindType (Kind(_,_,_,k,_)) = k
+
+(* getKindPos:                            *)
+(* Get a kind's position information.     *)
+let getKindPos (Kind(_,_,_,_,p)) = p
 
 (* getKindArity:                         *)
 (* Get a kind's arity.                   *)
-let getKindArity = function
-  LocalKind(_,Some a,_,_) -> a
-| GlobalKind(_,Some a,_,_) -> a
-| PervasiveKind(_,Some a,_,_) -> a
-| k -> (Errormsg.impossible (getKindPos k)  "getKindArity(): invalid kind arity")
+let getKindArity k =
+  match k with
+      Kind(_,Some a,_,_,_)  -> a
+    | Kind(_,None,_,_,_) ->
+        let pos = (getKindPos k) in
+        (Errormsg.impossible pos  "getKindArity(): invalid kind arity")
 
 (* getKindArityOption:                   *)
-let getKindArityOption = function
-  LocalKind(_,a,_,_) -> a
-| GlobalKind(_,a,_,_) -> a
-| PervasiveKind(_,a,_,_) -> a
+let getKindArityOption (Kind(_,a,_,_,_)) = a
 
 (* getKindName:                          *)
-let getKindName = function
-  LocalKind(n,_,_,_) -> (Symbol.name n)
-| GlobalKind(n,_,_,_) -> (Symbol.name n)
-| PervasiveKind(n,_,_,_) -> (Symbol.name n)
+let getKindName (Kind(n,_,_,_,_)) = (Symbol.name n)
 
 (* getKindSymbol:                          *)
-let getKindSymbol = function
-  LocalKind(n,_,_,_) ->  n
-| GlobalKind(n,_,_,_) -> n
-| PervasiveKind(n,_,_,_) -> n
+let getKindSymbol (Kind(n,_,_,_,_)) =  n
 
 (* getKindIndexRef:                      *)
-let getKindIndexRef = function
-   LocalKind(_,_,index,_) -> index
-|  GlobalKind(_,_,index,_) -> index
-|  PervasiveKind(_,_,index,_) -> index
+let getKindIndexRef (Kind(_,_,index,_,_)) = index
+
 (* getKindIndex:                         *)
 let getKindIndex kind = !(getKindIndexRef kind)
+
 (* setKindIndex:                         *)
 let setKindIndex kind index = (getKindIndexRef kind) :=  index
 
 (* isGlobalKind:                         *)
-let isGlobalKind = function 
-   GlobalKind(_) -> true
-| _ -> false
-
+let isGlobalKind (Kind(_,_,_,k,_)) = (k == GlobalKind)
+let isLocalKind (Kind(_,_,_,k,_)) = (k == LocalKind)
 
 let makeGlobalKind symbol arity index =
-  GlobalKind(symbol, Some arity, ref index, Errormsg.none)
+  Kind(symbol, Some arity, ref index, GlobalKind, Errormsg.none)
 
 let makeLocalKind symbol arity index =
-  LocalKind(symbol, Some arity, ref index, Errormsg.none)
+  Kind(symbol, Some arity, ref index, LocalKind, Errormsg.none)
 
 (*************************************************************************)
 (*  atypevar:                                                            *)
@@ -500,9 +487,9 @@ let isVariableType = function
     (match !r with
       BindableTypeVar(tr) ->
         (match !tr with
-          Some(t) -> (Errormsg.impossible Errormsg.none "isVariableType: bound variable")
+          Some(t) -> (Errormsg.impossible Errormsg.none "Asyn.isVariableType: bound variable")
         | None -> true)
-    | _ -> (Errormsg.impossible Errormsg.none "isVariableType: type variable info"))
+    | _ -> (Errormsg.impossible Errormsg.none "Absyn.isVariableType: type variable info"))
 | _ -> false
 
 
@@ -965,6 +952,8 @@ let makeCutVariableData gnum =
 let maxPrec = 255
 let appFixity = Infixl
 let appPrec = maxPrec + 2
+let lamFixity = Infixr
+let lamPrec = -1
 
 let errorTerm = ErrorTerm
 
@@ -1022,8 +1011,27 @@ let rec needsParens = fun opfix opprec context fix prec ->
       
       | Infixr -> checkRight ()
       | Prefixr -> checkRight ()
-      | _ -> (Errormsg.impossible Errormsg.none "needsParens: invalid fixity"))
+      | _ -> (Errormsg.impossible Errormsg.none "Absyn.needsParens: invalid fixity"))
   | WholeTermContext -> false
+
+(* abstraction term *)
+let getTermAbstractionVar = function
+  AbstractionTerm(NestedAbstraction(v,_),_,_) -> v
+| _ -> Errormsg.impossible Errormsg.none "Absyn.getTermAbstractionVar: invalid term"
+
+let getTermAbstractionVars = function
+  AbstractionTerm(UNestedAbstraction(vars,_,_),_,_) -> vars
+| _ -> Errormsg.impossible Errormsg.none "Absyn.getTermAbstractionVars: invalid term"
+
+let getTermAbstractionBody = function
+  AbstractionTerm(NestedAbstraction(_,b),_,_) -> b
+| AbstractionTerm(UNestedAbstraction(_,_,b),_,_) -> b
+| _ -> Errormsg.impossible Errormsg.none "Absyn.getTermAbstractionBody: invalid term"
+
+let getTermAbstractionNumberOfLambda = function
+  AbstractionTerm(UNestedAbstraction(_,n,_),_,_) -> n
+| _ -> Errormsg.impossible Errormsg.none 
+         "getTermAbstractionNumberOfLambda: invalid term"
 
 (* Converts an absyn term to a string representation. *)
 let rec string_of_term_ast term =
@@ -1035,7 +1043,10 @@ let rec string_of_term_ast term =
   | ConstantTerm(c,_,_,_) -> getConstantName c
   | FreeVarTerm(NamedFreeVar(s),_,_) -> Symbol.name (getTypeSymbolSymbol s)
   | BoundVarTerm(NamedBoundVar(s),_,_) -> Symbol.name (getTypeSymbolSymbol s)
-  | AbstractionTerm(ai,_,_) -> "#ERROR#"
+  | AbstractionTerm(_) ->
+      let aterm = getTermAbstractionBody term in
+      let avar = getTermAbstractionVar term in
+      (getTypeSymbolName avar) ^ "\\" ^ (string_of_term_ast aterm)
   | ApplicationTerm(FirstOrderApplication(h,args,_),_,_) ->
       let rec getargs = function
           [] -> ""
@@ -1063,8 +1074,8 @@ and string_of_term term =
     let opprec = getConstantPrec op in
     let paren = needsParens opfix opprec context fix prec in
     let result = (string_of_term' (List.hd args) LeftTermContext opfix opprec) ^ 
-      " " ^ (getConstantName op) ^ " " ^
-      (string_of_term' (List.hd (List.tl args)) RightTermContext opfix opprec) in
+      " " ^ (string_of_term' (List.hd (List.tl args)) RightTermContext opfix opprec) ^ " " ^
+      (getConstantName op) in
     
     if paren then
       "(" ^ result ^ ")"
@@ -1171,7 +1182,14 @@ and string_of_term term =
     | _ -> Errormsg.impossible (getTermPos term) "string_of_app: term not an application"
 
   and string_of_abstraction = fun term context fix prec ->
-    "error"
+    let paren = needsParens lamFixity lamPrec context fix prec in
+    let aterm = getTermAbstractionBody term in
+    let avar = getTermAbstractionVar term in
+    let result = (getTypeSymbolName avar) ^ "\\ " ^ (string_of_term' aterm RightTermContext lamFixity lamPrec) in
+    if paren then
+      "(" ^ result  ^ ")"
+    else
+      result
   
   and string_of_term' = fun term context fix prec ->
     match term with
@@ -1251,9 +1269,9 @@ let getTermConstant = function
   ConstantTerm(c,_,_,_) -> c
 | t -> Errormsg.impossible Errormsg.none ("Absyn.getTermConstant: invalid term: " ^ (string_of_term t))
 
-let getTermTypeEnv = function
+let getTermMoleculeEnv = function
   ConstantTerm(_,te,_,_) -> te
-| t -> Errormsg.impossible Errormsg.none ("Absyn.getTermTypeEnv: invalid term" ^ (string_of_term t))
+| t -> Errormsg.impossible Errormsg.none ("Absyn.getTermMoleculeEnv: invalid term" ^ (string_of_term t))
 
 let getTermConstantTypeEnv = function
   ConstantTerm(_,te,_,_) -> te
@@ -1263,25 +1281,6 @@ let getTermConstantTypeEnv = function
 let isTermConstant = function
   ConstantTerm(_) -> true
 | _ -> false
-
-(* abstraction term *)
-let getTermAbstractionVar = function
-  AbstractionTerm(NestedAbstraction(v,_),_,_) -> v
-| _ -> Errormsg.impossible Errormsg.none "getTermAbstractionVar: invalid term"
-
-let getTermAbstractionVars = function
-  AbstractionTerm(UNestedAbstraction(vars,_,_),_,_) -> vars
-| _ -> Errormsg.impossible Errormsg.none "getTermAbstractionVars: invalid term"
-
-let getTermAbstractionBody = function
-  AbstractionTerm(NestedAbstraction(_,b),_,_) -> b
-| AbstractionTerm(UNestedAbstraction(_,_,b),_,_) -> b
-| _ -> Errormsg.impossible Errormsg.none "getTermAbstractionBody: invalid term"
-
-let getTermAbstractionNumberOfLambda = function
-  AbstractionTerm(UNestedAbstraction(_,n,_),_,_) -> n
-| _ -> Errormsg.impossible Errormsg.none 
-         "getTermAbstractionNumberOfLambda: invalid term"
 
 (* application term *)
 (********************************************************************
@@ -1783,6 +1782,8 @@ let printAbsyn = fun m out ->
         output ", ";
         printSkeleton !skel;
         output ", ";
+        output (string_of_int !envsize);
+        output ", ";
         printConstantType !ctype;
         output ", ";
         printPos pos;
@@ -1803,17 +1804,20 @@ let printAbsyn = fun m out ->
     in
     
     match k with
-      LocalKind(sym,arity,kmap,p) ->
-        (output "LocalKind(";
+      Kind(sym,arity,kmap,LocalKind,p) ->
+        (output "Kind(";
         print' sym arity kmap;
+        output ", LocalKind, ";
         output ")")
-    | GlobalKind(sym,arity,kmap,p) ->
-        (output "GlobalKind(";
+    | Kind(sym,arity,kmap,GlobalKind,p) ->
+        (output "Kind(";
         print' sym arity kmap;
+        output ", GlobalKind, ";
         output ")")
-    | PervasiveKind(sym,arity,kmap,p) ->
-        (output "PervasiveKind(";
+    | Kind(sym,arity,kmap,PervasiveKind,p) ->
+        (output "Kind(";
         print' sym arity kmap;
+        output ", PervasiveKind, ";
         output ")")
   in
   

@@ -213,23 +213,31 @@ and closeUniversalDefinitions tsym uvdefs =
     uvdefs)
   in
   
-  let uvdef = List.find (findTypeSymbol tsym) uvdefs in
-  let defs = getUVDefDefs uvdef in
-  if (List.length (!defs)) > 0 then
-    let ty = Absyn.getTypeSymbolType tsym in
-    let t = Absyn.ConstantTerm(Absyn.getTypeSymbolHiddenConstant tsym, [], false, Errormsg.none) in
-    
-    if Absyn.isArrowType ty then
-      let args = Absyn.getArrowTypeArguments ty in
-      let (args', tysyl) = List.split (List.map makeBound args) in
-      let t' = Absyn.ApplicationTerm(Absyn.FirstOrderApplication(t,args', List.length args'),
-        false, Errormsg.none) in
-      (close (cutfail t') tysyl defs)
+  let get tsym defs =
+    try
+      Some (List.find (findTypeSymbol tsym) defs)
+    with
+      Not_found -> None
+  in
+  
+  let uvdef = get tsym uvdefs in
+  if Option.isSome uvdef then
+    let defs = getUVDefDefs (Option.get uvdef) in
+    if (List.length (!defs)) > 0 then
+      let ty = Absyn.getTypeSymbolType tsym in
+      let t = Absyn.ConstantTerm(Absyn.getTypeSymbolHiddenConstant tsym, [], false, Errormsg.none) in
+      
+      if Absyn.isArrowType ty then
+        let args = Absyn.getArrowTypeArguments ty in
+        let (args', tysyl) = List.split (List.map makeBound args) in
+        let t' = Absyn.ApplicationTerm(Absyn.FirstOrderApplication(t,args', List.length args'),
+          false, Errormsg.none) in
+        (close (cutfail t') tysyl defs)
+      else
+        (close (cutfail t) [] defs)
     else
-      (close (cutfail t) [] defs)
-  else
-    uvdefs
-
+      uvdefs
+  else uvdefs
 (********************************************************************
 *collectFreeVars:
 * Accumulates the free variables in a term onto the given fvs list.
@@ -477,6 +485,12 @@ and deOrifyCutGoal goal andgoal uvdefs newclauses hcs =
 
 (**********************************************************************
 *deOrifyUniversalGoal:
+* The uv list must be added to, the body processed, each AND goal list
+* returned should be collapsed into a single goal with a universal
+* quantifier ranging over it and then conjoined with the andgoals. Finally,
+* `closure' clauses must be added for possible definitions pertaining to 
+* the universally quantified variable and the free variable list should
+* be pruned.
 **********************************************************************)
 and deOrifyUniversalGoal t arg1 uvs uvdefs andgoal wholegoal newclauses hcs =
   let (body, tsym) = etaFluffQuantifier t arg1 in
@@ -734,7 +748,7 @@ and etaFluffQuantifier term arg =
     Absyn.AbstractionTerm(_) ->
       (Absyn.getTermAbstractionBody arg, Absyn.getTermAbstractionVar arg)
   | _ ->
-      let tenv = Absyn.getTermTypeEnv term in
+      let tenv = Absyn.getTermMoleculeEnv term in
       let tsym = Absyn.BoundVar(Symbol.generate (), ref None, ref true, ref(Some(List.hd tenv))) in
       let bvterm = Absyn.BoundVarTerm(Absyn.NamedBoundVar(tsym), false, Errormsg.none) in
       let term = Absyn.ApplicationTerm(
@@ -852,7 +866,7 @@ and normalizeClause clauseterm clauses uvs uvdefs embedded =
 * Any undefined kind is flagged as an error.
 **********************************************************************)
 and newKind sym arity pos ktable=
-  let k = Absyn.LocalKind(sym, Some arity, ref 0, pos) in
+  let k = Absyn.Kind(sym, Some arity, ref 0, Absyn.LocalKind, pos) in
   let ktable' = Table.add sym k ktable in
   (if arity > 0 then
     Errormsg.error pos ("undefined type constructor " ^

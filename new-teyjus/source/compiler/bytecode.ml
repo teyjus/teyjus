@@ -141,10 +141,10 @@ let writeString str =
 (* a one byte flag indicating the kind category        *)
 (* followed by two bytes kind table index.             *)
 let writeakind2 kind =
-  (match kind with
-	Absyn.LocalKind(_) -> writeint1 local
-  | Absyn.GlobalKind(_) -> writeint1 global
-  | Absyn.PervasiveKind(_) -> writeint1 pervasive);
+  (match (Absyn.getKindType kind) with
+	Absyn.LocalKind -> writeint1 local
+  | Absyn.GlobalKind -> writeint1 global
+  | Absyn.PervasiveKind -> writeint1 pervasive);
   writeint2 (Absyn.getKindIndex kind)
 
 (* write a constant index:                             *)
@@ -374,17 +374,17 @@ let displayL   offset = (Option.get (!findLabelFn)) (!offset)
 
 (* display a kind data *)
 let displayK kind =
-  match kind with
-	Absyn.GlobalKind(_) -> Absyn.getKindName kind
-  | Absyn.LocalKind(_)  -> 
+  match (Absyn.getKindType kind) with
+	  Absyn.GlobalKind -> Absyn.getKindName kind
+  | Absyn.LocalKind  -> 
 	  "<local kind #" ^ (string_of_int (Absyn.getKindIndex kind)) ^ ">"
-  | Absyn.PervasiveKind(_) -> Absyn.getKindName kind
+  | Absyn.PervasiveKind -> Absyn.getKindName kind
 
 (* display a constant data *)
 let displayC const =
   let cat = Absyn.getConstantType const in
   match cat with
-	Absyn.GlobalConstant -> Absyn.getConstantName const
+	  Absyn.GlobalConstant -> Absyn.getConstantName const
   | Absyn.PervasiveConstant(_) -> Absyn.getConstantName const
   | Absyn.LocalConstant -> 
 	  "<local const #" ^ (string_of_int (Absyn.getConstantIndex const)) ^ ">"

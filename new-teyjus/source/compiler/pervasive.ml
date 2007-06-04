@@ -1,16 +1,16 @@
-let kint = Absyn.PervasiveKind((Symbol.symbol "int"), (Some 0), (ref 0), Errormsg.none)
+let kint = Absyn.Kind((Symbol.symbol "int"), (Some 0), (ref 0), Absyn.PervasiveKind, Errormsg.none)
 
-let kreal = Absyn.PervasiveKind((Symbol.symbol "real"), (Some 0), (ref 1), Errormsg.none)
+let kreal = Absyn.Kind((Symbol.symbol "real"), (Some 0), (ref 1), Absyn.PervasiveKind, Errormsg.none)
 
-let kbool = Absyn.PervasiveKind((Symbol.symbol "o"), (Some 0), (ref 2), Errormsg.none)
+let kbool = Absyn.Kind((Symbol.symbol "o"), (Some 0), (ref 2), Absyn.PervasiveKind, Errormsg.none)
 
-let kstring = Absyn.PervasiveKind((Symbol.symbol "string"), (Some 0), (ref 3), Errormsg.none)
+let kstring = Absyn.Kind((Symbol.symbol "string"), (Some 0), (ref 3), Absyn.PervasiveKind, Errormsg.none)
 
-let klist = Absyn.PervasiveKind((Symbol.symbol "list"), (Some 1), (ref 4), Errormsg.none)
+let klist = Absyn.Kind((Symbol.symbol "list"), (Some 1), (ref 4), Absyn.PervasiveKind, Errormsg.none)
 
-let kinstream = Absyn.PervasiveKind((Symbol.symbol "in_stream"), (Some 0), (ref 5), Errormsg.none)
+let kinstream = Absyn.Kind((Symbol.symbol "in_stream"), (Some 0), (ref 5), Absyn.PervasiveKind, Errormsg.none)
 
-let koutstream = Absyn.PervasiveKind((Symbol.symbol "out_stream"), (Some 0), (ref 6), Errormsg.none)
+let koutstream = Absyn.Kind((Symbol.symbol "out_stream"), (Some 0), (ref 6), Absyn.PervasiveKind, Errormsg.none)
 
 
 let numberPervasiveKinds = 7
