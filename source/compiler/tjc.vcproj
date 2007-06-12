@@ -29,7 +29,7 @@
 			<Tool
 				Name="VCCustomBuildTool"
 				Description="Building..."
-				CommandLine="ocamake *.mly *.mll *.ml *.mli -epp -opt -o tjc.exe&#x0D;&#x0A;"
+				CommandLine="compile.bat"
 				AdditionalDependencies=""
 				Outputs="tjc.exe"
 			/>
