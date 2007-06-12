@@ -831,7 +831,7 @@ let makeConstantTerm c env pos =
 (*************************************************************************)
 (*  atypesymbol:                                                         *)
 (*************************************************************************)
-let getTypeSymbolRawType = fun s ->
+let getTypeSymbolRawType s =
   let get' = function
       Some(t) -> t
     | _ -> Errormsg.impossible Errormsg.none "getTypeSymbolRawType: type symbol has no type"
@@ -875,6 +875,11 @@ let getTypeSymbolType ty =
   | AnonymousImplicitVar(_,_,_,t) -> get' !t
   | BoundVar(_,_,_,t) -> get' !t
 
+let copyTypeSymbol sym tsym =
+   match tsym with
+    ImplicitVar(_,c,b,t) -> ImplicitVar(sym,c,b,t)
+  | AnonymousImplicitVar(_,c,b,t) -> AnonymousImplicitVar(sym,c,b,t)
+  | BoundVar(_,c,b,t) -> BoundVar(sym,c,b,t)
 (*************************************************************************)
 (*  avar:                                                                *)
 (*************************************************************************)
@@ -1043,10 +1048,14 @@ let rec string_of_term_ast term =
   | ConstantTerm(c,_,_,_) -> getConstantName c
   | FreeVarTerm(NamedFreeVar(s),_,_) -> Symbol.name (getTypeSymbolSymbol s)
   | BoundVarTerm(NamedBoundVar(s),_,_) -> Symbol.name (getTypeSymbolSymbol s)
-  | AbstractionTerm(_) ->
+  | AbstractionTerm(NestedAbstraction(_),_,_) ->
       let aterm = getTermAbstractionBody term in
       let avar = getTermAbstractionVar term in
       (getTypeSymbolName avar) ^ "\\" ^ (string_of_term_ast aterm)
+  | AbstractionTerm(UNestedAbstraction(_),_,_) ->
+      let aterm = getTermAbstractionBody term in
+      let avars = getTermAbstractionVars term in
+      (String.concat " " (List.map (getTypeSymbolName) avars)) ^ "\\" ^ (string_of_term_ast aterm)
   | ApplicationTerm(FirstOrderApplication(h,args,_),_,_) ->
       let rec getargs = function
           [] -> ""

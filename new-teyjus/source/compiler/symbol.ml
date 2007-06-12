@@ -24,7 +24,10 @@ let symbol = fun(s: string) ->
 let id (s,n) = n
 
 let currentId = ref 0
-let generate () =
-  let s = "_gen_" ^ (string_of_int (!currentId)) in
+let generateName s =
+  let s' = s ^ "_gen_" ^ (string_of_int (!currentId)) in
   let _ = currentId := !currentId + 1 in
-  symbol s
+  symbol s'
+
+let generate () =
+  generateName ""

@@ -404,6 +404,7 @@ val getTypeSymbolSymbol : atypesymbol -> symbol
 val getTypeSymbolHiddenConstant : atypesymbol -> aconstant
 val getTypeSymbolHiddenConstantRef : atypesymbol -> aconstant option ref
 val getTypeSymbolType : atypesymbol -> atype
+val copyTypeSymbol : symbol -> atypesymbol -> atypesymbol
 
 (* val getTypeSymbolType : atypesymbol -> atypesymboltype *)
 
