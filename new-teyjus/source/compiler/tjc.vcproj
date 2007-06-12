@@ -29,7 +29,7 @@
 			<Tool
 				Name="VCCustomBuildTool"
 				Description="Building..."
-				CommandLine="compile.bat"
+				CommandLine="compile.bat&#x0D;&#x0A;"
 				AdditionalDependencies=""
 				Outputs="tjc.exe"
 			/>
