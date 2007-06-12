@@ -1176,7 +1176,43 @@ and removeNestedAbstractions term =
   * Renames all occurences of a tsym to another tsym.
   ********************************************************************)
   let rec rename oldtsym newtsym term =
-    (Errormsg.impossible Errormsg.none "Parse.rename: not implemented")
+    match term with
+      | Absyn.IntTerm(_)
+      | Absyn.RealTerm(_)
+      | Absyn.StringTerm(_)
+      | Absyn.ConstantTerm(_)
+      | Absyn.ErrorTerm -> term
+      
+      | Absyn.FreeVarTerm(Absyn.NamedFreeVar(tsym),p,b) ->
+          if tsym = oldtsym then
+            Absyn.FreeVarTerm(Absyn.NamedFreeVar(newtsym),p,b)
+          else
+            term
+      | Absyn.BoundVarTerm(Absyn.NamedBoundVar(tsym), p, b) ->
+          if tsym = oldtsym then
+            Absyn.BoundVarTerm(Absyn.NamedBoundVar(newtsym),p,b)
+          else
+            term
+      
+      | Absyn.AbstractionTerm(Absyn.NestedAbstraction(tsym,body),p,b) ->
+          if (tsym = oldtsym) then
+            Absyn.AbstractionTerm(Absyn.NestedAbstraction(newtsym,body),p,b)
+          else
+            term
+      | Absyn.ApplicationTerm(Absyn.CurriedApplication(l,r),p,b) ->
+          Absyn.ApplicationTerm(
+            Absyn.CurriedApplication(
+              rename oldtsym newtsym l,
+              rename oldtsym newtsym r),
+            p,b)
+      | Absyn.ApplicationTerm(Absyn.FirstOrderApplication(head,args,i),p,b) ->
+          Absyn.ApplicationTerm(
+            Absyn.FirstOrderApplication(
+              rename oldtsym newtsym head,
+              List.map (rename oldtsym newtsym) args,
+              i),
+            p,b)
+      | _ -> Errormsg.impossible Errormsg.none "Parse.rename: invalid term"
   in
   
   (********************************************************************
