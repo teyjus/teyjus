@@ -1,0 +1,14 @@
+To build the linker, just
+
+gcc -c *.c
+
+gcc -c \
+../simulator/mcstring.c ../simulator/dataformats.c      ../simulator/io-datastructures.c \
+../system/error.c  ../system/memory.c  ../system/message.c  ../system/stream.c \
+../tables/instructions.c  ../tables/pervasives.c
+
+gcc -o tjlink *.o
+
+To run
+tjlink modname
+
