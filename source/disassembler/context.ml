@@ -275,7 +275,7 @@ let printRenamingTables renamings header =
 	match renamings with
 	  [] -> ()
 	| ((from, toInfo) :: rest) ->
-		printLine ("    " ^ from ^ (printFn toInfo));
+		printLine ("    " ^ from ^  " -> " ^(printFn toInfo));
 		printRenamingList rest printFn
   in
 

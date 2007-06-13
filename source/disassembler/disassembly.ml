@@ -93,7 +93,7 @@ let disassembleHeaderInfo filename =
 	  let codeSize = Bytecode.readWord () in
 	  (modName, codeSize)
   else
-	(Errormsg.error Errormsg.none "Loader: inconsistent bytecode version";
+	(Errormsg.error Errormsg.none "Disassembler: inconsistent bytecode version";
 	 ("", 0))
 
 (***************************************************************************)
