@@ -236,15 +236,8 @@ let rec translateClause = fun term amodule newconstant newkind ->
     Absyn.errorTerm)
   else
   
-  (*  Normalize the term. *)
-  let term''' = (normalizeTerm term'') in
-  
-  let _ = Errormsg.log Errormsg.none ("Before removing nested: " ^ (Absyn.string_of_term_ast term''')) in
-  (*  Remove nested abstractions  *)
-  let term'''' = (removeNestedAbstractions term''') in
-  let _ = Errormsg.log Errormsg.none ("After removing nested: " ^ (Absyn.string_of_term_ast term'''')) in
-  term''''
-
+  (normalizeTerm term'')
+ 
 (**********************************************************************
 *translateTerm:
 * Given an abstract syntax representation of a module and a preabsyn
@@ -825,16 +818,13 @@ and stackOperation = fun o list amodule stack ->
       in
       
       match fixity with
-        Absyn.Prefix
+        Absyn.Prefix -> pre ()
       | Absyn.Prefixr -> pre ()
-      
-      | Absyn.Infix
-      | Absyn.Infixr
+      | Absyn.Infix -> infOrPost ()
+      | Absyn.Infixr -> infOrPost ()
       | Absyn.Postfix -> infOrPost ()
-      
-      | Absyn.Infixl
+      | Absyn.Infixl -> inflOrPostl ()
       | Absyn.Postfixl -> inflOrPostl ()
-      
       | Absyn.NoFixity -> stackOperation' stack
     in
     
@@ -870,16 +860,13 @@ and stackOperation = fun o list amodule stack ->
       in
       
       match fixity with
-        Absyn.Prefix
+        Absyn.Prefix -> pre ()
       | Absyn.Prefixr -> pre ()
-      
-      | Absyn.Infix
-      | Absyn.Infixr
+      | Absyn.Infix -> infOrPost ()
+      | Absyn.Infixr -> infOrPost ()
       | Absyn.Postfix -> infOrPost ()
-      
-      | Absyn.Infixl
+      | Absyn.Infixl -> inflOrPostl ()
       | Absyn.Postfixl -> inflOrPostl ()
-      
       | Absyn.NoFixity -> stackOperation' stack
     in
     
@@ -912,16 +899,13 @@ and stackOperation = fun o list amodule stack ->
       in
 
       match fixity with
-        Absyn.Prefix
+        Absyn.Prefix -> pre ()
       | Absyn.Prefixr -> pre ()
-      
-      | Absyn.Infix
-      | Absyn.Infixr
+      | Absyn.Infix -> infOrPost ()
+      | Absyn.Infixr -> infOrPost ()
       | Absyn.Postfix -> infOrPost ()
-      
-      | Absyn.Infixl
+      | Absyn.Infixl -> inflOrPostl ()
       | Absyn.Postfixl -> inflOrPostl ()
-      
       | Absyn.NoFixity -> stackOperation' stack
     in
     
@@ -936,7 +920,7 @@ and stackOperation = fun o list amodule stack ->
       in
       
       match fixity with
-        Absyn.Prefix
+        Absyn.Prefix -> pre ()
       | Absyn.Prefixr -> pre ()
       | _ -> pushOperation o stack
     in
@@ -951,16 +935,16 @@ and stackOperation = fun o list amodule stack ->
           raise TermException)
         else
           (pushOperation o stack)
-    | PrefixState
+    | PrefixState -> preOrInf stack
     | InfixState -> preOrInf stack
     
-    | PrefixrState
+    | PrefixrState -> preOrInfr stack
     | InfixrState -> preOrInfr stack
     
-    | PrefixWithArgState
+    | PrefixWithArgState -> preOrInfWithArg stack
     | InfixWithArgState -> preOrInfWithArg stack
     
-    | PrefixrWithArgState
+    | PrefixrWithArgState -> preOrInfrWithArg stack
     | InfixrWithArgState -> preOrInfrWithArg stack
     
     | PostfixState -> post stack
@@ -992,17 +976,12 @@ and pushOperation = fun o stack ->
   let pos = getStackItemPos o in
   match fix with
     Absyn.Prefix -> Stack(stackdata, PrefixState, prec, fix)
-  
   | Absyn.Prefixr -> Stack(stackdata, PrefixrState, prec, fix)
-  
-  | Absyn.Infix
+  | Absyn.Infix -> Stack(stackdata, InfixState, prec, fix)
   | Absyn.Infixl -> Stack(stackdata, InfixState, prec, fix)
-  
   | Absyn.Infixr -> Stack(stackdata, InfixrState, prec, fix)
-  
-  | Absyn.Postfix
+  | Absyn.Postfix -> Stack(stackdata, PostfixState, prec, fix)
   | Absyn.Postfixl -> Stack(stackdata, PostfixState, prec, fix)
-  
   | Absyn.NoFixity -> (Errormsg.impossible pos "Parse.pushOperation: invalid fixity.")
 
 (**********************************************************************
@@ -1018,14 +997,11 @@ and newParseState = fun stack ->
       let prec' = getStackOpPrec ot in
       let fix' = getStackOpFixity ot in
       (match fix' with
-        Absyn.Prefix
+        Absyn.Prefix -> Stack(list, PrefixWithArgState, prec', fix')
       | Absyn.Prefixr -> Stack(list, PrefixrWithArgState, prec', fix')
-      
-      | Absyn.Infix
+      | Absyn.Infix -> Stack(list, InfixWithArgState, prec', fix')
       | Absyn.Infixl -> Stack(list, InfixWithArgState, prec', fix')
-      
       | Absyn.Infixr -> Stack(list, InfixrWithArgState, prec', fix')
-      
       | _ -> Errormsg.impossible Errormsg.none "Parse.newParseState: invalid fixity")
   | _ ->
     Stack(list, TermState, prec, fix)
@@ -1119,15 +1095,13 @@ and makeBinaryApply = fun f (arg1 : ptterm) (arg2 : ptterm) ->
 
 (**********************************************************************
 *removeOverloads:
-* Change the polymorphic overloaded operator constants to the correct
-* monomorphic version.
 **********************************************************************)
 and removeOverloads term =
   match term with
-    Absyn.IntTerm(_)
-  | Absyn.RealTerm(_)
-  | Absyn.StringTerm(_)
-  | Absyn.FreeVarTerm(_)
+    Absyn.IntTerm(_) -> term
+  | Absyn.RealTerm(_) -> term
+  | Absyn.StringTerm(_) -> term
+  | Absyn.FreeVarTerm(_) -> term
   | Absyn.BoundVarTerm(_) -> term
   
   | Absyn.AbstractionTerm(Absyn.NestedAbstraction(t, body), b, p) ->
@@ -1165,115 +1139,38 @@ and removeOverloads term =
         term
   | Absyn.ErrorTerm -> Absyn.ErrorTerm
 
-(**********************************************************************
-*removeNestedAbstractions:
-* Removes all nested abstractions in a term, converting them to an
-* unnested abstraction.
-**********************************************************************)
+(**********************************************************************)
+(* remove nested abstractions:                                        *)
+(**********************************************************************)
 and removeNestedAbstractions term =
-  (********************************************************************
-  *rename:
-  * Renames all occurences of a tsym to another tsym.
-  ********************************************************************)
-  let rec rename oldtsym newtsym term =
-    match term with
-      | Absyn.IntTerm(_)
-      | Absyn.RealTerm(_)
-      | Absyn.StringTerm(_)
-      | Absyn.ConstantTerm(_)
-      | Absyn.ErrorTerm -> term
-      
-      | Absyn.FreeVarTerm(Absyn.NamedFreeVar(tsym),p,b) ->
-          if tsym = oldtsym then
-            Absyn.FreeVarTerm(Absyn.NamedFreeVar(newtsym),p,b)
-          else
-            term
-      | Absyn.BoundVarTerm(Absyn.NamedBoundVar(tsym), p, b) ->
-          if tsym = oldtsym then
-            Absyn.BoundVarTerm(Absyn.NamedBoundVar(newtsym),p,b)
-          else
-            term
-      
-      | Absyn.AbstractionTerm(Absyn.NestedAbstraction(tsym,body),p,b) ->
-          if (tsym = oldtsym) then
-            Absyn.AbstractionTerm(Absyn.NestedAbstraction(newtsym,body),p,b)
-          else
-            term
-      | Absyn.ApplicationTerm(Absyn.CurriedApplication(l,r),p,b) ->
-          Absyn.ApplicationTerm(
-            Absyn.CurriedApplication(
-              rename oldtsym newtsym l,
-              rename oldtsym newtsym r),
-            p,b)
-      | Absyn.ApplicationTerm(Absyn.FirstOrderApplication(head,args,i),p,b) ->
-          Absyn.ApplicationTerm(
-            Absyn.FirstOrderApplication(
-              rename oldtsym newtsym head,
-              List.map (rename oldtsym newtsym) args,
-              i),
-            p,b)
-      | _ -> Errormsg.impossible Errormsg.none "Parse.rename: invalid term"
-  in
-  
-  (********************************************************************
-  *remove:
-  * Remove the abstractions in a term.  The argument "abstractions"
-  * contains the an option of the list of symbols to be abstracted over.
-  * It starts as None, and remove serves to locate the first nested
-  * abstraction.  From then on it grows with each passed nested abstraction.
-  ********************************************************************)
-  let rec remove term abstractions =
-    match term with
-        Absyn.AbstractionTerm(Absyn.NestedAbstraction(tsym, body),b,p) ->
-          if Option.isSome abstractions then
-            let sym = Absyn.getTypeSymbolSymbol tsym in
-            if (List.exists (fun tsym' -> ((Absyn.getTypeSymbolSymbol tsym') = sym)) (Option.get abstractions)) then
-              let sym' = (Symbol.generateName (Symbol.name sym)) in
-              let tsym' = Absyn.copyTypeSymbol sym' tsym in
-              let body' = rename tsym tsym' body in
-              let abs' = Some (tsym' :: (Option.get abstractions)) in
-              remove body' abs'
-            else
-              let abs' = Some (tsym :: (Option.get abstractions)) in
-              remove body abs'
-          else
-            let abs = Some([tsym]) in
-            let (body', abs') = remove body abs in
-            let tsyms = Option.get abs' in
-            let term' = Absyn.AbstractionTerm(
-              Absyn.UNestedAbstraction(tsyms , List.length tsyms, body'), b, p) in
-            (term', None)
-      | Absyn.AbstractionTerm(Absyn.UNestedAbstraction(_),_,_) ->
-          (Errormsg.impossible Errormsg.none
-            "Parse.removeNestedAbstractions: unexpected unnested abstraction")
+  let rec remove term =
+	match term with
+	  Absyn.AbstractionTerm(abst, b, p) ->
+		let (tsyms, body) = removeAbstraction abst [] in
+		Absyn.AbstractionTerm(Absyn.UNestedAbstraction(tsyms, List.length tsyms, body),
+							  b, p)
+	| Absyn.ApplicationTerm(Absyn.CurriedApplication(t1, t2), b, p) ->
+		let t1' = removeNestedAbstractions t1 in
+		let t2' = removeNestedAbstractions t2 in
+		Absyn.ApplicationTerm(Absyn.CurriedApplication(t1', t2'), b, p) 
+	| Absyn.ApplicationTerm(Absyn.FirstOrderApplication(head, args, l), b, p) ->
+		let head' = removeNestedAbstractions head in
+		let args' = List.map removeNestedAbstractions args in
+		Absyn.ApplicationTerm(Absyn.FirstOrderApplication(head', args', l), b, p)
+	| _ -> term
 
-      | Absyn.IntTerm(_)
-      | Absyn.RealTerm(_)
-      | Absyn.StringTerm(_)
-      | Absyn.ConstantTerm(_)
-      | Absyn.FreeVarTerm(_)
-      | Absyn.BoundVarTerm(_)
-      | Absyn.ErrorTerm -> (term, abstractions)
-      
-      | Absyn.ApplicationTerm(Absyn.CurriedApplication(t1,t2),b,p) ->
-          let (t1', abs') = (remove t1 abstractions) in
-          let (t2', abs'') = (remove t2 abs') in
-          (Absyn.ApplicationTerm(Absyn.CurriedApplication(t1',t2'),b,p), abs'')
-      | Absyn.ApplicationTerm(Absyn.FirstOrderApplication(head, args, i), b, p) ->
-          let rec removeList args abstractions =
-            (match args with
-              [] -> ([], abstractions)
-            | a::aa ->
-                let (a', abs') = remove a abstractions in
-                let (aa', abs'') = removeList aa abs' in
-                (a'::aa', abs''))
-          in
-          let (head', abs') = (remove head abstractions) in
-          let (args', abs'') = (removeList args abstractions) in
-          (Absyn.ApplicationTerm(Absyn.FirstOrderApplication(head', args', i), b, p), abs'')
+  and removeAbstraction abst tsyms =
+	match abst with 
+	  Absyn.NestedAbstraction(tsym, body) ->
+		(match body with
+		  Absyn.AbstractionTerm(abst', b, p) -> removeAbstraction abst' (tsym :: tsyms)
+		| _ -> (List.rev (tsym :: tsyms), remove body))
+	| Absyn.UNestedAbstraction(_) ->
+		(Errormsg.impossible Errormsg.none
+           "Parse.removeNestedAbstractions: unexpected unnested abstraction")
   in
-  let (term', _) = (remove term None) in
-  term'
+  remove term									   
+
 
 (**********************************************************************
 *Beta normalization:
