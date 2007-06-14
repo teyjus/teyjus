@@ -301,7 +301,7 @@ let readLocalConstant getTypeSkelFn ind =
 
 (* read hidden constant *)
 let readHiddenConstant getTypeSkelFn ind =
-  let tySkelInd = readOneByte () in
+  let tySkelInd = readTwoBytes () in
   let tySkel    = getTypeSkelFn tySkelInd in
   let const     = Absyn.makeHiddenConstant tySkel 0 in
   Absyn.setConstantIndex const ind;
