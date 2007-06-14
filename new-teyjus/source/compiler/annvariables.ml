@@ -523,8 +523,9 @@ let assignPermVars goalEnvAssoc notrim =
   let rec collectPermVars clauseVars =
 	(* enter a variable into a bucket (to the front of the var list) *)
 	let enterVar clauseVar lastgoal =
-	  let index = if ((lastgoal = tmpGoalNum - 1) || notrim) then lastgoal - 2
-	              else lastgoal - 1
+	  let index = 
+		if (not(lastgoal = tmpGoalNum - 1) || notrim) then lastgoal - 1
+	    else lastgoal - 2
 	  in
 	  let bucket = (clauseVar :: (Array.get buckets index)) in
 	  Array.set buckets index bucket
