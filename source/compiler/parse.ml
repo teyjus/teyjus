@@ -250,7 +250,7 @@ and translateTerm = fun term amodule ->
   let mol' = getTermMolecule (getTermAndVariablesTerm tv) in
   let _ = Errormsg.log (Absyn.getTermPos term') ("parsed term: " ^ (Absyn.string_of_term term') ^ " : " ^ (Types.string_of_typemolecule mol')) in
   let term'' = removeOverloads term' in
-  let term''' = normalizeTerm term'' in
+  let term''' = removeNestedAbstractions (normalizeTerm term'') in
   let _ = Errormsg.log (Absyn.getTermPos term''') ("parsed, normalized term: " ^ (Absyn.string_of_term term''')) in
   let fixedterm = fixTerm term''' in
   (Errormsg.log (Absyn.getTermPos term'') ("parsed, normalized, fixed term: " ^ (Absyn.string_of_term fixedterm));
