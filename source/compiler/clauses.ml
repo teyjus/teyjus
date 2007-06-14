@@ -264,7 +264,7 @@ and collectFreeVars term fvs bvs =
         (Absyn.errorTerm, [])
       else
         (term, fvs)
-  | Absyn.AbstractionTerm(Absyn.NestedAbstraction(tsym,body),b,pos) ->
+  | Absyn.AbstractionTerm(Absyn.NestedAbstraction(tsym, body),b,pos) ->
       let (body', fvs') = collectFreeVars body fvs bvs in
       let term' = Absyn.AbstractionTerm(Absyn.NestedAbstraction(tsym, body'), b, pos) in
       (term', fvs')
@@ -514,7 +514,9 @@ and deOrifyUniversalGoal t arg1 uvs uvdefs andgoal wholegoal newclauses hcs =
 **********************************************************************)
 and deOrifyExistentialGoal t arg1 uvs uvdefs andgoal wholegoal newclauses hcs =
   let (body, tsym) = etaFluffQuantifier t arg1 in
-  let DeOrifyGoalResult(goals', fvs', uvdefs', hascut', newclauses', hcs') = deOrifyGoal body uvs uvdefs None wholegoal newclauses hcs in
+  let DeOrifyGoalResult(goals', fvs', uvdefs', hascut', newclauses', hcs') = 
+	deOrifyGoal body uvs uvdefs None wholegoal newclauses hcs 
+  in
   
   if List.mem tsym fvs' then
     let fvs'' = (List.filter ((<>) tsym) fvs') in
@@ -743,8 +745,8 @@ and deOrifyClauses clauses currentclauses uvs newclauses hcs =
 * abstraction structure at the top; resulting body and bound variable
 * are returned.
 **********************************************************************)
-and etaFluffQuantifier term arg =
-  match term with
+and etaFluffQuantifier term arg = 
+  match arg with
     Absyn.AbstractionTerm(_) ->
       (Absyn.getTermAbstractionBody arg, Absyn.getTermAbstractionVar arg)
   | _ ->
@@ -938,7 +940,7 @@ and translateClauses pmod amod =
   (*  Enter the hidden constants into the module  *)
   let amod' = setHiddenConstants amod hcs' in
   let newclauses'' = getNewClauses newclauses' in
-  (amod', clauses', List.concat newclauses'')
+  (amod', List.map Parse.removeNestedAbstractions clauses', List.map Parse.removeNestedAbstractions (List.concat newclauses''))
 
 (**********************************************************************
 *printTranslatedClauses:
