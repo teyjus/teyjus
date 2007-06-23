@@ -14,7 +14,6 @@
 #include "../system/error.h"
 #include "../system/message.h"
 
-
 /***************************######********************************************
  *                          ERROR INFORMATION
  *********************************######**************************************/
@@ -212,23 +211,20 @@ void SINIT_simInit()
     AM_bndFlag = OFF;                //bind flag
     AM_ucreg = 0;                    //uc reg
 
+    //make a dummy first mod point at the beginning of the stack
+    AM_mkDummyImptRec(AM_ireg);
+
     /* perform initialization for the term io system */
     IO_initIO();
 
     /* and set up some built-in code */
     SINIT_initCode();
-}
 
-void SINIT_finishInit()
-{
-    /* set up the base branch register to put the heap back to this
-       point.  This is in a second function because it is called after
-       other initialization functions have used heap space.  */
-    AM_breg  = AM_stackBeg + 1;
+    /* set up the base branch register to put the heap back to this point */
+    AM_breg = AM_stackBeg + AM_DUMMY_IMPT_REC_SIZE;
     *AM_breg = (Mem)AM_hreg;
     AM_fstCP = AM_b0reg = AM_breg;
     AM_tosreg = AM_breg + 1;
 }
-
 
 #endif //SIMINIT_H
