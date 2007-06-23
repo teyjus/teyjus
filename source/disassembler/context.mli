@@ -79,4 +79,4 @@ type modcontext =
 (***************************************************************************)
 (* Displaying module context                                               *)
 (***************************************************************************)
-val displayModContext : modcontext -> unit
+val displayModContext : modcontext -> bool -> bool -> unit

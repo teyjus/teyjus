@@ -328,27 +328,33 @@ let printInstructions instructions =
 (***************************************************************************)
 (* Displaying module context                                               *)
 (***************************************************************************)
-let displayModContext = function
-  ModContext(filename, bcversion, modname, codesize, gkinds, lkinds, tyskels,
-			 gconsts, lconsts, hconsts, strings, impltabs, hashtabs, 
-			 moduletable, renamingacc, renamingimp, instructions) 
+let displayModContext modContext tableOnly instrOnly =
+  match modContext with
+	ModContext(filename, bcversion, modname, codesize, gkinds, lkinds, tyskels,
+			   gconsts, lconsts, hconsts, strings, impltabs, hashtabs, 
+			   moduletable, renamingacc, renamingimp, instructions) 
 	->
 	  printLine ("Disassembling from bytecode file: " ^ filename);
 	  printLine ("Bytecode version: " ^ (string_of_int bcversion));
 	  printLine ("Module name: " ^ modname);
 	  printLine ("Bytes needed for code: " ^ (string_of_int codesize));
-	  printInstructions instructions;
-	  printKinds gkinds "Global kind table:" printGlobalKind;
-	  printKinds lkinds "Local kind table:" printLocalKind;
-	  printTypeSkels tyskels;
-	  printConsts gconsts "Global constant table: " printGlobalConst;
-	  printConsts lconsts "Local constant table: " printLocalConst;
-	  printConsts hconsts "Hidden constant table: " printHiddenConst;
-	  printStrings strings;
-	  printImplTables impltabs;
-	  printHashTables hashtabs;
-	  printModuleTable moduletable;
-	  printRenamingTables renamingacc "Accumulated tables:";
-	  printRenamingTables renamingimp "Imported tables:"
-	  
+	  (if (not tableOnly) then
+		printInstructions instructions
+	  else ());
+	  (if (not instrOnly) then 
+		(printKinds gkinds "Global kind table:" printGlobalKind;
+		 printKinds lkinds "Local kind table:" printLocalKind;
+		 printTypeSkels tyskels;
+		 printConsts gconsts "Global constant table: " printGlobalConst;
+		 printConsts lconsts "Local constant table: " printLocalConst;
+		 printConsts hconsts "Hidden constant table: " printHiddenConst;
+		 printStrings strings;
+		 printImplTables impltabs;
+		 printHashTables hashtabs;
+		 printModuleTable moduletable;
+		 printRenamingTables renamingacc "Accumulated tables:";
+		 printRenamingTables renamingimp "Imported tables:"
+		) 
+	  else ())
+		 
 
