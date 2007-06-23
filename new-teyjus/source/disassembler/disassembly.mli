@@ -1,1 +1,1 @@
-val disassemble : string -> int
+val disassemble : string -> bool -> bool -> int

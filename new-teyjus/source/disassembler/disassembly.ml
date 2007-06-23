@@ -2,6 +2,7 @@
 (* The functions in this module are in charge of disassembling a bytecode  *)
 (* file.                                                                   *)
 (***************************************************************************)
+
 (***************************************************************************)
 (* get a kind/constant from its index and category information             *)
 (***************************************************************************)
@@ -270,7 +271,7 @@ let disassembleInstructions gkinds lkinds gconsts lconsts hconsts codeSize =
 (***************************************************************************)
 (*                        INTERFACE FUNCTION                               *)
 (***************************************************************************)
-let disassemble filename =
+let disassemble filename tableOnly instrOnly =
   Bytecode.openInChannel filename;
   let (modName, codeSize) = disassembleHeaderInfo filename in
   if !Errormsg.anyErrors then 1
@@ -303,7 +304,7 @@ let disassemble filename =
 						   hConsts, strings, impltabs, hashtabs, moduletab,
 						   accRenamings, impRenamings, instructions)
 	  in
-	  (Context.displayModContext context;
+	  (Context.displayModContext context tableOnly instrOnly;
 	   Bytecode.closeInChannel ();
 	   0)
 
