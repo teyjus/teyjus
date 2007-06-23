@@ -3,4 +3,4 @@
 (* module abstract syntax (constant and kind symbol tables) from a      *)
 (* bytecode file upon loading.                                          *)
 (************************************************************************) 
-val loadModuleTable : unit -> unit
+val loadModuleTable : string -> Absyn.amodule

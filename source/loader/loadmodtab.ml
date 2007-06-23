@@ -101,13 +101,15 @@ let loadConstSymTab tySkeletonTab =
 (****************************************************************************)
 (*                       INTERFACE FUNCTION                                 *)
 (****************************************************************************)
-let loadModuleTable () =
+let loadModuleTable modName =
+  Bytecode.openInChannel (Bytecode.makeByteCodeFileName modName);
   let modName = loadHeaderInfo () in 
   let (kindSymTab, globalKinds) = loadKindSymTab () in
   let tySkeletonTab = loadTypeSkeletons globalKinds in
   let constSymTab = loadConstSymTab tySkeletonTab in 
-  Modtab.enterModuleTable 
-	(Absyn.Module(modName, [], [], ref constSymTab, ref kindSymTab, 
-				  Table.empty, [], [], [], [], [], ref [], [], [], 
-				  ref (Absyn.ClauseBlocks []))) 
+  Bytecode.closeInChannel ();
+  Absyn.Module(modName, [], [], ref constSymTab, ref kindSymTab, 
+			   Pervasive.pervasiveTypeAbbrevs, [], [], [], [], [], 
+			   ref [], [], ref [], ref (Absyn.ClauseBlocks []))
+
 
