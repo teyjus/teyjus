@@ -1,8 +1,13 @@
 #ifndef MEMORY_C
 #define MEMORY_C
 
+#include <string.h>
+#include <stdio.h>
 #include "error.h"
 #include "memory.h"
+#include "error.h"
+#include "../tables/pervasives.h"
+#include "../tables/pervinit.h"
 #include "../simulator/mctypes.h" //to be changed
 
 /******************************************************************************/
@@ -19,6 +24,16 @@ void   MEM_memInit(unsigned int size)
 {
     MEM_memBeg = MEM_memTop = (WordPtr)EM_malloc(size * sizeof(Word));
     MEM_memEnd = MEM_memBot = MEM_memBeg + (size - 1);
+}
+
+/* Asking the simulator (system) memory for space of a given size (in word)  */
+WordPtr MEM_memExtend(unsigned int size)
+{
+    WordPtr rtPtr = MEM_memTop;
+    
+    if ((MEM_memTop + size) > MEM_memEnd) EM_error(EM_OUT_OF_MEMORY);
+    else MEM_memTop += size;
+    return rtPtr;
 }
 
 /*****************************************************************************/
@@ -138,5 +153,61 @@ CSpacePtr MEM_branchTabCodePtr(MemPtr tab, int index)  //transfer addr
 /*                          GLOBAL MODULE TABLE                              */
 /*****************************************************************************/
 MEM_Gmt    MEM_modTable;                 //global module table 
+
+MEM_GmtEnt *MEM_findInModTable(char* name)
+{
+    int  i;
+    char *myname;
+    for (i = 0; i <= MEM_MAX_MODULES; i++) {
+        if (myname = MEM_modTable[i].modname) 
+            if (strcmp(myname, name) == 0) return (MEM_modTable + i);
+    }
+    //raise module not found error
+}
+
+MEM_GmtEnt *MEM_findFreeModTableEntry()
+{
+    int i;
+    for (i = 0; i<= MEM_MAX_MODULES; i++) {
+        if (MEM_modTable[i].modname != NULL) return (MEM_modTable + i);
+    }
+    //raise module table full error
+}
+
+void MEM_removeModTableEntry(char* name)
+{
+    MEM_GmtEnt *mod;
+    mod = MEM_findInModTable(name);
+    //check if is not found error (if it is then done), otherwise
+    free(mod -> modname);
+    mod -> modname = NULL;
+}
+
+    
+MEM_GmtEnt MEM_topModule;               //top module
+void MEM_topModuleInit()
+{   
+    WordPtr    memTop = MEM_memTop;
+    MEM_KstPtr kst=(MEM_KstPtr)MEM_memExtend(MEM_KST_ENTRY_SIZE*PERV_KIND_NUM);
+    MEM_TstPtr tst=(MEM_TstPtr)MEM_memExtend(MEM_TST_ENTRY_SIZE*PERV_TY_SKEL_NUM);
+    MEM_CstPtr cst=(MEM_CstPtr)MEM_memExtend(MEM_CST_ENTRY_SIZE*PERV_CONST_NUM);    
+
+    PERVINIT_copyKindDataTab(kst);
+    PERVINIT_copyTySkelTab(tst);
+    PERVINIT_copyConstDataTab(cst);
+
+    MEM_topModule.modname  = "";
+    MEM_topModule.addtable = NULL;
+    MEM_topModule.kstBase  = kst;
+    MEM_topModule.tstBase  = tst;
+    MEM_topModule.cstBase  = cst;
+    MEM_topModule.modSpaceBeg = memTop;
+    MEM_topModule.modSpaceEnd = MEM_memTop;
+    MEM_topModule.codeSpaceBeg = NULL;
+    MEM_topModule.codeSpaceEnd = NULL;    
+}
+
+MEM_GmtEnt *MEM_currentModule; //current module being used 
+
 
 #endif  //MEMORY_C
