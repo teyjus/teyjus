@@ -152,4 +152,4 @@ OCAML_CLIBS += libsim
 OCamlProgram(tjsim, $(SIM_MAIN) $(CMP_SRCS) $(FNT_SRCS))
 
 .PHONY: all
-all: tjcc tjsim tjdis
+all: tjcc$(EXE) tjsim$(EXE) tjdis$(EXE)
