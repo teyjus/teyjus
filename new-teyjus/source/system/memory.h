@@ -29,10 +29,11 @@ extern  WordPtr MEM_memEnd;       //end addr of the system memory
 extern  WordPtr MEM_memTop;       //the first usable word in the system memory
 extern  WordPtr MEM_memBot;       //the last usable word in the system memory
 
-
 /* Asking for the system memory of a given size (in word),                    */
 /* and initialize relevant global variables.                                  */
 void    MEM_memInit(unsigned int size);
+/* Asking the simulator (system) memory for space of a given size (in word)  */
+WordPtr MEM_memExtend(unsigned int size);
 
 /******************************************************************************/
 /*                MODULE SPACE COMPONENTS                                     */
@@ -185,5 +186,16 @@ typedef struct
 typedef MEM_GmtEnt MEM_Gmt[MEM_MAX_MODULES];
 
 extern  MEM_Gmt    MEM_modTable; //global module table
+
+MEM_GmtEnt *MEM_findInModTable(char* name);
+MEM_GmtEnt *MEM_findFreeModTableEntry();
+void MEM_removeModTableEntry(char* name);
+
+
+extern MEM_GmtEnt  MEM_topModule; //top module 
+void MEM_topModuleInit();
+
+extern MEM_GmtEnt *MEM_currentModule; //current module being used
+
 
 #endif  //MEMORY_H
