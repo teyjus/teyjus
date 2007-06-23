@@ -1,6 +1,7 @@
 if $(equal $(OSTYPE), Cygwin)
     YACC = bison -by
     LEX = flex
+    CFLAGS += -mno-cygwin
     export
 
 # Subdirectories
