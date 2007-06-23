@@ -15,7 +15,6 @@
 
 //for debugging: to be removed
 #include <stdio.h>
-#include "print.h"
 /**********************************************************************/
 /*      Register setting upon hnorm initiation or termination         */
 /**********************************************************************/
