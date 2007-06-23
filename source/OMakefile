@@ -9,37 +9,116 @@ CMP = $(dir compiler)
 SYS = $(dir system)
 SIM = $(dir simulator)
 TAB = $(dir tables)
+DIS = $(dir disassembler)
+FNT = $(dir front)
+TBL = $(dir tables)
 
-.SUBDIRS: compiler linker loader simulator system tables tables_gen
+OCAMLINCLUDES += $(CMP) $(DIS) $(SIM)
+
+
+# Compilation files
+
+CMP_SRCS[] =
+    $(CMP)/absyn
+    $(CMP)/annvariables
+    $(CMP)/bytecode
+    $(CMP)/clausegen
+    $(CMP)/clauses
+    $(CMP)/codegen
+    $(CMP)/compile
+    $(CMP)/errormsg
+    $(CMP)/instr
+    $(CMP)/lplex
+    $(CMP)/lpyacc
+    $(CMP)/option
+    $(CMP)/parse
+    $(CMP)/pervasive
+    $(CMP)/pervasiveutils
+    $(CMP)/preabsyn
+    $(CMP)/processclauses
+    $(CMP)/registers
+    $(CMP)/spitcode
+    $(CMP)/symbol
+    $(CMP)/table
+    $(CMP)/translate
+    $(CMP)/typereduction
+    $(CMP)/types
+
+DIS_SRCS[] =
+    $(DIS)/context
+    $(DIS)/disassembly
+    $(DIS)/label
+
+FNT_SRCS[] =
+    $(FNT)/parseargs
+
+SIM_SRCS[] =
+    $(SIM)/abstmachine
+    $(SIM)/dataformats
+    $(SIM)/hnorm
+    $(SIM)/hnormlocal
+    $(SIM)/hopu
+    $(SIM)/io-datastructures
+    $(SIM)/mcstring
+    $(SIM)/printterm
+    $(SIM)/simdispatch
+    $(SIM)/siminit
+    $(SIM)/siminstr
+    $(SIM)/siminstrlocal
+    $(SIM)/simulator
+    $(SIM)/trail
+    $(SIM)/types
+    $(SIM)/builtins/builtins
+    $(SIM)/builtins/compexp
+    $(SIM)/builtins/evalexp
+    $(SIM)/builtins/io
+    $(SIM)/builtins/meta
+    $(SIM)/builtins/readterm
+
+SYS_SRCS[] =
+    $(SYS)/error
+    $(SYS)/memory
+    $(SYS)/message
+    $(SYS)/stream
+
+TBL_SRCS[] =
+    $(TBL)/instructions
+    $(TBL)/pervasives
+    $(TBL)/pervinit
+
+DIS_MAIN = $(FNT)/disassemblerfront
+CMP_MAIN = $(FNT)/compilerfront
+SIM_MAIN = $(FNT)/simulatorfront
+
+# Declare subdirectories
+
+.SUBDIRS: compiler disassembler front linker loader simulator system \
+          tables tables_gen
     if $(file-exists OMakefile)
         include OMakefile
-
-section
-    OCAMLINCLUDES += $(CMP)
-    .SUBDIRS: disassembler
 
 # Generated Files
 
 INSTR_ML_FILES[] =
-    compiler/instr.mli
-    compiler/instr.ml
+    $(CMP)/instr.mli
+    $(CMP)/instr.ml
 
 INSTR_C_FILES[] =
-    tables/instructions.h
-    tables/instructions.c
-    simulator/simdispatch.c
+    $(TBL)/instructions.h
+    $(TBL)/instructions.c
+    $(SIM)/simdispatch.c
 
 INSTR_FILES[] =
     $(INSTR_ML_FILES)
     $(INSTR_C_FILES)
 
 PERV_ML_FILES[] =
-    compiler/pervasive.mli
-    compiler/pervasive.ml
+    $(CMP)/pervasive.mli
+    $(CMP)/pervasive.ml
 
 PERV_C_FILES[] =
-    tables/pervasives.h
-    tables/pervasives.c
+    $(TBL)/pervasives.h
+    $(TBL)/pervasives.c
 
 PERV_FILES[] =
     $(PERV_ML_FILES)
@@ -57,3 +136,20 @@ PERV_GEN = tables_gen/pervasives/perv_gen$(EXE)
 PERV_IN = pervasives.in
 $(PERV_FILES): $(PERV_GEN)
     cd $(dirname $(PERV_GEN)) && ./$(basename $(PERV_GEN)) $(PERV_IN)
+
+.PHONY: gen
+gen: $(INSTR_ML_FILES) $(PERV_ML_FILES) $(INSTR_C_FILES) $(PERV_C_FILES)
+
+# Build Targets
+
+OCamlProgram(tjdis, $(DIS_MAIN) $(CMP_SRCS) $(DIS_SRCS) $(FNT_SRCS))
+OCamlProgram(tjcc, $(CMP_MAIN) $(CMP_SRCS) $(FNT_SRCS))
+
+# For the simulator we need to package all the C code into a library first
+StaticCLibrary(libsim, $(SIM_SRCS) $(SYS_SRCS) $(TBL_SRCS) \
+                       $(FNT)/front_stubs $(FNT)/front $(FNT)/test)
+OCAML_CLIBS += libsim
+OCamlProgram(tjsim, $(SIM_MAIN) $(CMP_SRCS) $(FNT_SRCS))
+
+.PHONY: all
+all: tjcc tjsim tjdis
