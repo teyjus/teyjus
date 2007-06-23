@@ -4,6 +4,7 @@
 #include "../system/error.h"
 #include "../system/memory.h"
 #include "../tables/pervasives.h"
+#include "../tables/pervinit.h"
 #include "loader.h"
 #include "tyskel.h"
 #include "kind.h"
@@ -31,7 +32,7 @@ int LD_TYSKEL_LoadTst(MEM_GmtEnt* ent)
   
   ent->tstBase=(MEM_TstPtr)tst;
   //Copy pervasives
-  PERV_copyTySkelTab((PERV_TySkelData*)tst);
+  PERVINIT_copyTySkelTab((MEM_TstPtr)tst);
   tst+=PERV_TY_SKEL_NUM;
   
   for(i=0;i<tstSize;i++)
