@@ -19,7 +19,6 @@
 
 //to be removed
 #include <stdio.h>
-#include "print.h"
 
 /* Unify types associated with constants.                                 */
 static void HOPU_typesUnify(DF_TypePtr tyEnv1, DF_TypePtr tyEnv2, int n)

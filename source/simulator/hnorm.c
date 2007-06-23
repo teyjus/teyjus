@@ -22,7 +22,6 @@
 
 //for debugging: to be removed
 #include <stdio.h>
-#include "print.h"
 
 /*****************************************************************************/
 /* a global(to file hnorm.c) encoding  of the explicit suspension environment*/
