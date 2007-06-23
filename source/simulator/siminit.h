@@ -7,6 +7,5 @@
 
 void SINIT_preInit();
 void SINIT_simInit();
-void SINIT_finishInit();
 
 #endif //SIMUINIT_H

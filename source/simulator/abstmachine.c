@@ -337,6 +337,14 @@ void AM_mkImptRecWOL(MemPtr ip, int npreds, MemPtr sTab, int sTabSize,
     *((int *)(ip+5))     = sTabSize;                  //PSTS: search table size
 }
 
+//creating a dummy import point 
+void AM_mkDummyImptRec(MemPtr ip)
+{
+    *((int *)ip) = 0;
+    *(ip+1)      = (Mem)AM_IMPTAG_IMPTWOLOCAL;
+}
+
+
 /*initializing the next clause table in an implication/import record.*/
 void AM_mkImpNCLTab(MemPtr ip, MemPtr linkTab, int size)
 {

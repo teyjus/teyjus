@@ -201,8 +201,9 @@ AM_DataTypePtr AM_cpArg(MemPtr cp, int n); //addr of nth arg in a given cp
 /***************************************************************************/
 /*                IMPLICATION/IMPORT RECORD OPERATIONS                     */
 /***************************************************************************/
-#define AM_IMP_FIX_SIZE        6         //size of the fix part of impl/impt rec
-#define AM_NCLT_ENTRY_SIZE     2         //size of each entry in next clause tab
+#define AM_IMP_FIX_SIZE         6         //size of the fix part of impl/impt rec
+#define AM_DUMMY_IMPT_REC_SIZE  2         //size of a dummy impt rec
+#define AM_NCLT_ENTRY_SIZE      2         //size of each entry in next clause tab
 #define AM_BCKV_ENTRY_SIZE      2         //size of ent. in back chained vector
 
 
@@ -218,6 +219,9 @@ void AM_mkImptRecWL(MemPtr ip, int npreds, MemPtr sTab, int sTabSize,
 //creating the fixed part of a new import record without local consts
 void AM_mkImptRecWOL(MemPtr ip, int npreds, MemPtr sTab, int sTabSize, 
                      MEM_FindCodeFnPtr fnPtr);
+//creating a dummy import point 
+void AM_mkDummyImptRec(MemPtr ip);
+
 //initializing the next clause table in an implication/import record.
 void AM_mkImpNCLTab(MemPtr ip, MemPtr linkTab, int size);
 //initializing the backchained vector in an import record
