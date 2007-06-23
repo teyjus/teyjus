@@ -1,6 +1,7 @@
 #include "file.h"
 #include "../system/memory.h"
 #include "../tables/pervasives.h"
+#include "../tables/pervinit.h"
 #include "loader.h"
 #include "kind.h"
 #include <stdio.h>
@@ -20,11 +21,12 @@ int LD_KIND_LoadKst(MEM_GmtEnt* ent)
   //Allocate space for the kind table.
   TwoBytes kstsize=LD_FILE_GET2();
   //printf("Kind table size=%d\n",kstsize);
-  MEM_KstEnt* kst=(MEM_KstEnt*)LD_LOADER_ExtendModSpace(ent,(kstsize+PERV_KIND_NUM)*sizeof(MEM_KstEnt));
+  MEM_KstEnt* kst=
+      (MEM_KstEnt*)LD_LOADER_ExtendModSpace(ent,(kstsize+PERV_KIND_NUM)*sizeof(MEM_KstEnt));
   ent->kstBase=(MEM_KstPtr)kst;
   
   //Copy the pervasive kinds
-  PERV_copyKindDataTab((PERV_KindData*)kst);
+  PERVINIT_copyKindDataTab(kst);
   kst+=PERV_KIND_NUM;
           
   //Get the number of global kinds

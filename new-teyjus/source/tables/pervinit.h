@@ -9,21 +9,45 @@
 
 #include "../simulator/dataformats.h" //to be modified
 #include "../system/memory.h"         //to be modified
+#include "pervasives.h"
+#include "../simulator/mctypes.h"
 
 /***************************************************************************/
-/* Set up pervasive kind symbol table.                                     */
-/* The kind names are supposed to be written in the string area starting   */
-/* from the address given by strLoc. The next available slot in the string */
-/* area after loading these names are returned.                            */ 
+/*                   PERVASIVE KINDS                                       */
 /***************************************************************************/
-DF_StrDataPtr PERVINIT_kindTabInit(MEM_KstPtr tabLoc, DF_StrDataPtr strLoc);
+//the actual pervasive kind table get copied during loading
+extern MEM_KstEnt PERVINIT_kindDataTab[PERV_KIND_NUM];
+
+/* copy the pervasive kind table into given address                        */
+void PERVINIT_copyKindDataTab(MEM_KstPtr dst);
+
 
 /***************************************************************************/
-/* Set up pervasive constant symbol table.                                 */
-/* The constant names are supposed to be written in the string area        */
-/* starting from the address given by strLoc. The next available slot in   */
-/* the string area after loading these names are returned.                 */  
+/*                   PERVASIVE TYPE SKELETONS                              */
 /***************************************************************************/
-DF_StrDataPtr PERVINIT_constTabInit(MEM_CstPtr tabLoc, DF_StrDataPtr strLoc);
+//pervasive type skeleton table
+extern MEM_TstPtr PERVINIT_tySkelTab;
+
+/* copy the pervasive type skeleton table into given address               */
+void PERVINIT_copyTySkelTab(MEM_TstPtr dst);
+
+
+/***************************************************************************/
+/*                   PERVASIVE CONSTANTS                                   */
+/***************************************************************************/
+//the acutual pervasive constant table get copied during loading           
+extern MEM_CstEnt PERVINIT_constDataTab[PERV_CONST_NUM];
+
+/* copy the pervasive constant table into given address                    */
+void PERVINIT_copyConstDataTab(MEM_CstPtr dst);
+
+
+/***************************************************************************/
+/*                PERVASIVE TABLES INITIALIZATION                          */
+/* Fill in the actual pervasive tables; create string data needed for names*/
+/* onto the current top of the system memory; create the type skeletons in */
+/* a malloced space.                                                       */
+/***************************************************************************/
+void PERVINIT_tableInit();
 
 #endif //PERVINIT_H

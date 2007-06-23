@@ -2,7 +2,7 @@
 #include "../system/memory.h"
 #include "loader.h"
 #include "const.h"
-
+#include "../tables/pervinit.h"
 #include "../tables/pervasives.h"
 //PERV_CONST_NUM
 //#define PERV_CONST_NUM 10
@@ -23,7 +23,7 @@ int LD_CONST_LoadCst(MEM_GmtEnt* ent)
   MEM_CstEnt* cst=(MEM_CstEnt*)LD_LOADER_ExtendModSpace(ent,(cstsize+PERV_CONST_NUM)*sizeof(MEM_CstEnt));
   ent->cstBase=(MEM_CstPtr)cst;
   //Copy Pervasive constants.
-  PERV_copyConstDataTab((PERV_ConstData*)cst);
+  PERVINIT_copyConstDataTab(cst);
   cst+=PERV_CONST_NUM;
   
   //Get the number of global constants
