@@ -7,6 +7,7 @@
 (**                       BYTECODE FORMAT                                **)
 (** ******************************************************************** **)
 val byteCodeVersionNumber : int
+val makeByteCodeFileName  : string -> string
 
 (* type skeleton representation *)
 val typeMarkArrow         : int

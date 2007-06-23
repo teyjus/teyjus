@@ -846,7 +846,7 @@ let writeInstruction inst =
 
 let readInstruction getKindFunc getConstantFunc =                             
   Bytecode.setGetKindFn getKindFunc;                                           
-  Bytecode.setGetConstantFn getConstantFunc;  
+  Bytecode.setGetConstantFn getConstantFunc;                                   
   let opcode = readopcode () in
   if opcode = 0 then (Ins_put_variable_t (readRRX ()), inscatRRX_LEN)
   else  if opcode = 1 then (Ins_put_variable_p (readERX ()), inscatERX_LEN)

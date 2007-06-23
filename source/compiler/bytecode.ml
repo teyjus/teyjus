@@ -7,6 +7,9 @@
 (**                       BYTECODE FORMAT                                **)
 (** ******************************************************************** **)
 let byteCodeVersionNumber = 2
+let byteCodeSuffix = ".lp"
+
+let makeByteCodeFileName modName = modName ^ byteCodeSuffix
 
 (* type skeleton representation *)
 let typeMarkArrow       = 0
