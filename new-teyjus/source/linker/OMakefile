@@ -1,18 +1,3 @@
-SYS_SRCS[] =
-    $(SYS)/error
-    $(SYS)/memory
-    $(SYS)/message
-    $(SYS)/stream
-
-SIM_SRCS[] =
-    $(SIM)/mcstring
-    $(SIM)/dataformats
-    $(SIM)/io-datastructures
-
-TAB_SRCS[] =
-    $(TAB)/instructions
-    $(TAB)/pervasives
-
 LK_SRCS[] =
     CallResolution
     bvrtab
@@ -34,14 +19,14 @@ LK_SRCS[] =
 LIB_FILES[] =
     $(SIM_SRCS)
     $(SYS_SRCS)
-    $(TAB_SRCS)
+    $(TBL_SRCS)
     $(LK_SRCS)
 
 # Linker library
 
 LIB = liblink
 
-.DEFAULT: $(StaticCLibrary $(LIB), $(LIB_FILES))
+StaticCLibrary($(LIB), $(LIB_FILES))
 
 # Linker program
 
