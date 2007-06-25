@@ -1,4 +1,4 @@
-if $(equal $(OSTYPE), Cygwin)
+if $(mem $(OSTYPE), Cygwin Win32)
     YACC = bison -by
     LEX = flex
     CFLAGS += -mno-cygwin

@@ -175,8 +175,6 @@ and closeUniversalDefinitions tsym uvdefs =
   
   (********************************************************************
   *close:
-  * Given a term, a list of type symbols, and a list of definitions,
-  * 
   ********************************************************************)
   let close t tysyl defs =
     let makeApply term tsym =
@@ -197,7 +195,7 @@ and closeUniversalDefinitions tsym uvdefs =
           r::result
       | _ -> Errormsg.impossible Errormsg.none "Clauses.closeUniversalDefinitions: invalid term"
     in
-    
+
     let t' = Absyn.ApplicationTerm(
       Absyn.FirstOrderApplication(
         Pervasive.implicationTerm,
@@ -238,6 +236,7 @@ and closeUniversalDefinitions tsym uvdefs =
     else
       uvdefs
   else uvdefs
+
 (********************************************************************
 *collectFreeVars:
 * Accumulates the free variables in a term onto the given fvs list.
@@ -501,7 +500,7 @@ and deOrifyUniversalGoal t arg1 uvs uvdefs andgoal wholegoal newclauses hcs =
   let hcs'' = hc :: hcs' in
   let uvdefs'' = closeUniversalDefinitions tsym uvdefs' in
   
-  if List.mem tsym fvs' then
+  if List.memq tsym fvs' then
     let fvs'' = (List.filter ((<>) tsym) fvs') in
     let goals'' = distributeQuantifierTerms t tsym goals' andgoal in
     DeOrifyGoalResult(goals'', fvs'', uvdefs'', hascut', newclauses', hcs'')
@@ -518,7 +517,7 @@ and deOrifyExistentialGoal t arg1 uvs uvdefs andgoal wholegoal newclauses hcs =
 	deOrifyGoal body uvs uvdefs None wholegoal newclauses hcs 
   in
   
-  if List.mem tsym fvs' then
+  if List.memq tsym fvs' then
     let fvs'' = (List.filter ((<>) tsym) fvs') in
     let goals'' = distributeQuantifierTerms t tsym goals' andgoal in
     DeOrifyGoalResult(goals'', fvs'', uvdefs', hascut', newclauses', hcs')
@@ -528,9 +527,141 @@ and deOrifyExistentialGoal t arg1 uvs uvdefs andgoal wholegoal newclauses hcs =
 
 (**********************************************************************
 *deOrifyImplicationGoal:
+* Transforming an implication goal. Iterated implications at the top-level
+* must be converted into conjunctions in the antecedent. Then the antecedent
+* must be normalized and dedisjunctified as a clause. Next, the consequent
+* must be dedisjunctified as a goal. Finally, the implication must be
+* reconstructed. As an auxiliary effect, the newly constructed implication
+* goal must become the sole implication goal for all the uvs that have
+* definitions in the goal; this value is to be accumulated into the incoming
+* value of uvdefs and returned in the uvdefs part of the return value.
 **********************************************************************)
-and deOrifyImplicationGoal t arg1 uvs uvdefs andgoal wholegoal newclauses =
-  Errormsg.impossible Errormsg.none "Clauses.deOrifyImplicationGoal: not implemented"
+and deOrifyImplicationGoal clause goal uvs uvdefs andgoal wholegoal newclauses hcs =
+  let empty = function
+      [] -> true
+    | _::_ -> false
+  in
+  
+  (********************************************************************
+  *normalizeGoal:
+  *	Given the antecedent and the consequent of an implication goal,
+  *	replaces top-level implications in the consequent with conjunctions
+  *	in the antecedent.
+  ********************************************************************)
+  let rec normalizeGoal clause goal =
+    let rec normalize clause goal =
+      let (t, args) = Absyn.getTermApplicationHeadAndArguments goal in
+      if (Absyn.isTermConstant t) then
+        let c = Absyn.getTermConstant t in
+        if not ((c == Pervasive.implConstant) ||
+          (c == Pervasive.colondashConstant)) then
+          (clause, goal)
+        else if (c == Pervasive.implConstant) then
+          let newcl = List.hd args in
+          let goal' = List.hd (List.tl args) in
+          
+          let clause' = Absyn.ApplicationTerm(
+            Absyn.FirstOrderApplication(
+              Pervasive.andTerm,
+              [newcl; clause],
+              2),
+            false,
+            Errormsg.none) in
+          normalize clause' goal'
+        else if (c == Pervasive.colondashConstant) then
+          let newcl = List.hd (List.tl args) in
+          let goal' = List.hd args in
+          
+          let clause' = Absyn.ApplicationTerm(
+            Absyn.FirstOrderApplication(
+              Pervasive.andTerm,
+              [newcl; clause],
+              2),
+            false,
+            Errormsg.none) in
+          normalize clause' goal'
+        else
+          (Errormsg.impossible Errormsg.none "Clauses.normalize: should be unreachable")
+      else
+        (clause, goal)
+    in
+    (normalize clause goal)
+    
+  (********************************************************************
+  *addUVDefs:
+  * Merge the given list of UV defs.
+  ********************************************************************)
+  and addUVDefs tsyms uvs =
+    match uvs with
+      [] -> tsyms
+    | u::uvs' ->
+        let tsym = getUVDefTypeSymbol u in
+        if not (List.memq tsym tsyms) then
+          addUVDefs (tsym::tsyms) uvs'
+        else
+          addUVDefs tsyms uvs
+
+  (********************************************************************
+  *addNewUVDefs:
+  * Merge the given list of UV defs.
+  ********************************************************************)
+  and addNewUVDefs (tsyms : Absyn.atypesymbol list) goal (uvdefs : universalvardefinition list) =
+    match tsyms with
+      [] -> uvdefs
+    | t::tsyms' ->
+        try
+          let defs = List.assq t uvdefs in
+          (defs := (goal)::(!defs);
+          addNewUVDefs tsyms' goal uvdefs)
+        with
+          Not_found -> Errormsg.impossible Errormsg.none "Clauses.addNewUVDefs: unbound uv."      
+	
+	(********************************************************************
+	*andifyList:
+	* Form a conjunction of a list of terms.
+	********************************************************************)
+	and andifyList glist =
+	  match glist with
+	    [] -> (Errormsg.impossible Errormsg.none "Clauses.andifyList: empty list.")
+	  | g::[] -> g
+	  | g::gs ->
+	      Absyn.ApplicationTerm(
+	        Absyn.FirstOrderApplication(
+	          Pervasive.andTerm,
+	          [g; (andifyList gs)],
+	          2),
+	        false,
+	        Errormsg.none)
+  in
+  
+  let (clause, goal) = normalizeGoal clause goal in
+	let defuvs = ref [] in
+	let clauses = (normalizeClause clause [] uvs defuvs true) in
+	let defuvs = !defuvs in
+	
+  let DeOrifyClauseResult(clauses', fvs', uvdefs', newclauses', hcs') = 
+    deOrifyClauses clauses [] uvs [] [] in
+  let defuvs = addUVDefs defuvs uvdefs' in
+  
+  let DeOrifyGoalResult(goals', fvs, uvdefs', hascut, newclauses'', hcs'') =
+    deOrifyGoal goal uvs [] None false newclauses' hcs' in
+  let defuvs = addUVDefs defuvs uvdefs' in
+  
+  if (not (empty clauses')) && (not (empty goals')) then
+    let cl = andifyList clauses' in
+    let goal = List.hd goals' in
+    let goal' = Absyn.ApplicationTerm(
+      Absyn.FirstOrderApplication(
+        Pervasive.implicationTerm, [cl;goal], 2),
+      false,
+      Errormsg.none) in
+    
+    let goal'' = getGoal goal' andgoal in
+    let uvdefs' = addNewUVDefs defuvs goal'' uvdefs in
+    
+    DeOrifyGoalResult([goal''], fvs, uvdefs', hascut, newclauses'', hcs'')
+  else
+    DeOrifyGoalResult([], [], [], false, newclauses, hcs')
 
 (**********************************************************************
 *deOrifyAtomicGoal:
@@ -559,7 +690,7 @@ and deOrifyAtomicGoal head args andgoal uvs uvdefs newclauses hcs =
   
   match head with
     Absyn.BoundVarTerm(Absyn.NamedBoundVar(tsym),b,pos) ->
-      if (List.mem tsym uvs) then
+      if (List.memq tsym uvs) then
         let c = Absyn.getTypeSymbolHiddenConstant tsym in
         let head' = Absyn.ConstantTerm(c, [], false, pos) in
         (deorify' head' false [] uvdefs)
@@ -760,7 +891,9 @@ and etaFluffQuantifier term arg =
 
 (**********************************************************************
 *normalizeClause:
-*
+* Normalizes the clause clauseterm and adds the result to the list
+* clauses.  Accumulates the name of any universal variable that may be
+* defined by this clause into the list uvdefs.
 **********************************************************************)
 and normalizeClause clauseterm clauses uvs uvdefs embedded =
   (********************************************************************
@@ -848,10 +981,10 @@ and normalizeClause clauseterm clauses uvs uvdefs embedded =
         (rigidAtom t clauses args)
 
   | Absyn.BoundVarTerm(Absyn.NamedBoundVar(tsym), _, pos) ->
-      if List.mem tsym uvs then
+      if List.memq tsym uvs then
         let t' = Absyn.ConstantTerm(Absyn.getTypeSymbolHiddenConstant tsym,
           [], false, Errormsg.none) in
-        if not (List.mem tsym !uvdefs) then
+        if not (List.memq tsym !uvdefs) then
           (uvdefs := tsym :: !uvdefs;
           rigidAtom t' clauses args)
         else

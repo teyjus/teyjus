@@ -461,7 +461,7 @@ val getTermAbstractionVars : aterm -> atypesymbol list
 val getTermAbstractionBody : aterm -> aterm
 val getTermAbstractionNumberOfLambda : aterm -> int
 
-val getTermApplicationHeadAndArguments : aterm -> (aterm * aterm list)
+val getTermApplicationHeadAndArguments : aterm -> (aterm * (aterm list))
 val getTermApplicationHead : aterm -> aterm
 val getTermApplicationArity : aterm -> int
 val getTermApplicationArguments : aterm -> aterm list

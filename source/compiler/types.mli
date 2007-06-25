@@ -41,6 +41,6 @@ val getNewVarsInTypes : Absyn.atype list -> Absyn.atype list -> Absyn.atype list
 (* Like getNewVarsInTypes, except that the type now may have a skeleton and a *)
 (* nontrivial environment and type variables may then have to be collected from *)
 (* the latter *)
-val getNewVarsInTypeMol : typemolecule -> Absyn.atype list -> Absyn.atype list)
+val getNewVarsInTypeMol : typemolecule -> Absyn.atype list -> Absyn.atype list
 
 val unitTests : unit -> unit

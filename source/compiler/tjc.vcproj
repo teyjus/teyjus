@@ -205,6 +205,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\front\compilerfront.ml"
+				>
+			</File>
+			<File
 				RelativePath=".\errormsg.ml"
 				>
 			</File>
@@ -213,24 +217,15 @@
 				>
 			</File>
 			<File
-				RelativePath=".\main.ml"
-				>
-				<FileConfiguration
-					Name="Debug|Win32"
-					>
-					<Tool
-						Name="VCCustomBuildTool"
-						Description=""
-						CommandLine=""
-					/>
-				</FileConfiguration>
-			</File>
-			<File
 				RelativePath=".\option.ml"
 				>
 			</File>
 			<File
 				RelativePath=".\parse.ml"
+				>
+			</File>
+			<File
+				RelativePath="..\front\parseargs.ml"
 				>
 			</File>
 			<File
@@ -286,10 +281,6 @@
 				RelativePath=".\types.ml"
 				>
 			</File>
-			<File
-				RelativePath=".\writeutil.ml"
-				>
-			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -329,15 +320,15 @@
 				>
 			</File>
 			<File
-				RelativePath=".\main.mli"
-				>
-			</File>
-			<File
 				RelativePath=".\option.mli"
 				>
 			</File>
 			<File
 				RelativePath=".\parse.mli"
+				>
+			</File>
+			<File
+				RelativePath="..\front\parseargs.mli"
 				>
 			</File>
 			<File
@@ -382,10 +373,6 @@
 			</File>
 			<File
 				RelativePath=".\types.mli"
-				>
-			</File>
-			<File
-				RelativePath=".\writeutil.mli"
 				>
 			</File>
 		</Filter>

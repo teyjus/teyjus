@@ -120,13 +120,13 @@ let printStack stack =
 
 let contains env v =
   let find tsym =
-    (Absyn.getTypeSymbolSymbol tsym) = v
+    (Absyn.getTypeSymbolSymbol tsym) == v
   in
   (List.exists find env)
 
 let get = fun env v ->
   let find tsym =
-    (Absyn.getTypeSymbolSymbol tsym) = v
+    (Absyn.getTypeSymbolSymbol tsym) == v
   in
   
   try
@@ -289,13 +289,13 @@ and translateTerm = fun term amodule ->
                              ^ (Types.string_of_typemolecule mol')) in
   let term'' = removeOverloads term' in
   let term''' = removeNestedAbstractions (normalizeTerm term'') in
+
   let _ = Errormsg.log (Absyn.getTermPos term''') 
-                       ("parsed, normalized term: " 
-                             ^ (Absyn.string_of_term term''')) in
+    ("parsed, normalized term: " ^ (Absyn.string_of_term term''')) in
+
   let fixedterm = fixTerm term''' in
-  (Errormsg.log (Absyn.getTermPos term'') 
-                ("parsed, normalized, fixed term: " 
-                               ^ (Absyn.string_of_term fixedterm));
+  (Errormsg.log (Absyn.getTermPos term'')
+    ("parsed, normalized, fixed term: " ^ (Absyn.string_of_term fixedterm));
   fixedterm)
 
 (**********************************************************************
@@ -1234,38 +1234,39 @@ and removeOverloads term =
         term
   | Absyn.ErrorTerm -> Absyn.ErrorTerm
 
-(**********************************************************************)
-(* remove nested abstractions:                                        *)
-(**********************************************************************)
+(**********************************************************************
+*removeNestedAbstractions:
+* Removes nested abstractions (of thhe form
+* Absyn.AbstractionTerm(Absyn.NestedAbstraction(...),...)) and replaces
+* them with the correct un-nested form.
+**********************************************************************)
 and removeNestedAbstractions term =
   let rec remove term =
-	match term with
-	  Absyn.AbstractionTerm(abst, b, p) ->
-		let (tsyms, body) = removeAbstraction abst [] in
-		Absyn.AbstractionTerm(Absyn.UNestedAbstraction(
-                                          tsyms,List.length tsyms, body),
-				      b, p)
-	| Absyn.ApplicationTerm(Absyn.CurriedApplication(t1, t2), b, p) ->
-		let t1' = removeNestedAbstractions t1 in
-		let t2' = removeNestedAbstractions t2 in
-		Absyn.ApplicationTerm(Absyn.CurriedApplication(t1', t2'), b, p) 
-	| Absyn.ApplicationTerm(Absyn.FirstOrderApplication(head, args, l), b, p) ->
-		let head' = removeNestedAbstractions head in
-		let args' = List.map removeNestedAbstractions args in
-		Absyn.ApplicationTerm(Absyn.FirstOrderApplication(head', args', l), 
-                                      b, p)
-	| _ -> term
+	  match term with
+	      Absyn.AbstractionTerm(abst, b, p) ->
+		      let (tsyms, body) = removeAbstraction abst [] in
+		      Absyn.AbstractionTerm(Absyn.UNestedAbstraction(
+            tsyms,List.length tsyms, body), b, p)
+	    | Absyn.ApplicationTerm(Absyn.CurriedApplication(t1, t2), b, p) ->
+		      let t1' = removeNestedAbstractions t1 in
+		      let t2' = removeNestedAbstractions t2 in
+		      Absyn.ApplicationTerm(Absyn.CurriedApplication(t1', t2'), b, p) 
+	    | Absyn.ApplicationTerm(Absyn.FirstOrderApplication(head, args, l), b, p) ->
+		      let head' = removeNestedAbstractions head in
+		      let args' = List.map removeNestedAbstractions args in
+		      Absyn.ApplicationTerm(Absyn.FirstOrderApplication(head', args', l), b, p)
+	    | _ -> term
 
   and removeAbstraction abst tsyms =
-	match abst with 
-	  Absyn.NestedAbstraction(tsym, body) ->
-		(match body with
-		  Absyn.AbstractionTerm(abst', b, p) -> 
-                           removeAbstraction abst' (tsym :: tsyms)
-		| _ -> (List.rev (tsym :: tsyms), remove body))
-	| Absyn.UNestedAbstraction(_) ->
-		(Errormsg.impossible Errormsg.none
-           "Parse.removeNestedAbstractions: unexpected unnested abstraction")
+	  match abst with 
+        Absyn.NestedAbstraction(tsym, body) ->
+	        (match body with
+	            Absyn.AbstractionTerm(abst', b, p) -> 
+                removeAbstraction abst' (tsym :: tsyms)
+	          | _ -> (List.rev (tsym :: tsyms), remove body))
+      | Absyn.UNestedAbstraction(_) ->
+	      (Errormsg.impossible Errormsg.none
+               "Parse.removeNestedAbstractions: unexpected unnested abstraction")
   in
   remove term									   
 
@@ -1400,131 +1401,138 @@ and normalizeTerm = fun term ->
   let result = normalize term emptyEnvironment false in
   (getEntryTerm result)
 
-and 
-   (* fixTerm gets a term in curried and named form but with no nested abstractions. 
-      It returns the term converted into de Bruijn representation with applications in 
-      curried form and with closedness annotations and the sets of free term and type
-      variables in the term (indicated by unique Absyn.atypesymbol cells in one case
-      and Absyn.atype cells of the form Absyn.TypeVarType(Absyn.BindableTypeVar(ref NONE))
-      in the other case 
+(**********************************************************************
+* fixTerm:
+* gets a term in curried and named form but with no nested abstractions. 
+* It returns the term converted into de Bruijn representation with applications in 
+* curried form and with closedness annotations and the sets of free term and type
+* variables in the term (indicated by unique Absyn.atypesymbol cells in one case
+* and Absyn.atype cells of the form:
+*   Absyn.TypeVarType(Absyn.BindableTypeVar(ref NONE))
+* in the other case.
+*
+* fixTerm could detect an error if it finds implications in the term being parsed.
+**********************************************************************)
+and fixTerm term =
+  (* checks appearances of :- and => embedded in terms *)
+  let rec checkIllegalConstant c pos =
+    if ((c = Pervasive.implConstant) || (c = Pervasive.colondashConstant)) then
+      Errormsg.error pos ("Symbol " ^ (Absyn.getConstantName c) ^
+        " is not permitted within terms")
+    else () 
 
-      fixTerm could detect an error if it finds implications in the term being parsed. *)
+  (*  a general list function needed to truncated type environments here *)
+  and trunclist l n = 
+    if n = 0 then []
+    else 
+      match l with
+        (h::t) -> (h::(trunclist t (n-1)))
+      | _ -> Errormsg.impossible Errormsg.none "Parse.trunclist: invalid arguments."
 
-    fixTerm term =
-    let 
-        (* checks appearances of :- and => embedded in terms *)
-        checkIllegalConstant c =
-          let csy = (Absyn.getConstantSymbol c) in
-             if ((csy = Pervasive.implConstant) || (csy = Pervasive.colondashConstant))
-             then Errormsg.error pos 
-                                 "Symbol " ^ (Symbol.name csy) 
-                                           ^ " is not permitted within terms"
-             else () 
+  (*  count the binders back to the one binding the given bound variable 
+      occurrence; needed to compute the de Bruijn index *)
+  and findBVinList bv bvs =
+    let rec findBVinList' bv bvs n =
+      match bvs with
+          (hbv::tbvs) ->
+            if (bv == hbv) then
+              n
+            else
+              (findBVinList' bv tbvs (n + 1))
+        | _ -> Errormsg.impossible Errormsg.none
+                "Parse.fixTerm.findBVinList: bound variable not bound in term."
+    in
+    findBVinList' bv bvs 1
 
-    and 
-        (* a general list function needed to truncated type environments here *)
-        trunclist l n = 
-          if n = 0 then []
-          else let (h::t) = l in (h::(trunclist t (n-1)))
+  (*  un-curry applications generating a head, arg list pair to be fixed before
+      being put together using a first-order like application. Wonder why this was
+      not already done in the call to removeNestedAbstractions in translateTerm *)
+  and unCurryTopLevelApps appterm args =
+    match appterm with
+        (Absyn.CurriedApplication (f,a)) -> 
+          (match f with
+              (Absyn.ApplicationTerm (appterm',_,_)) -> 
+                unCurryTopLevelApps appterm' (a::args)
+            | _ -> (f,args))
+      | _ -> Errormsg.impossible Errormsg.none
+          "Parse.fixTerm.unCurryTopLevelApps: found non-Curried form of application"
 
-    and 
-        (* count the binders back to the one binding the given bound variable 
-           occurrence; needed to compute the de Bruijn index *)
-        findBVinList bv bvs =
-          let findBVinList' bv bvs n =
-                 match bvs with
-                   (hbv::tbvs) -> if (bv == hbv) then n else (findBVinList bv tbvs (n+1))
-                 | _ -> Errormsg.impossible Errormsg.none
-                                            "Parse.fixTerm.findBVinList: \
-                                              \  "bound variable not bound in term?"
-          in findBVinList' bv bvs 1
+  (* the main function in fixTerm. Like fixTerm except that it adds the 
+     free variable and the bound variable lists as arguments and returns also
+     the highest de Bruijn index within the term *)
+  and fixTerm' term bvars fvars ftyvars =
+    match term with 
+        Absyn.IntTerm(i,_,p) -> (Absyn.IntTerm(i,true,p),fvars,ftyvars,0)
+      | Absyn.RealTerm(r,_,p) -> (Absyn.RealTerm(r,true,p),fvars,ftyvars,0)
+      | Absyn.StringTerm(s,_,p) -> (Absyn.StringTerm(s,true,p),fvars,ftyvars,0)
+      | Absyn.ConstantTerm(c,tenv,_,p) -> 
+          (* collect type variables in (needed components of) type environment 
+             and check constant is legal here *)
+          let () = checkIllegalConstant c p in
+          let neededtenv = trunclist tenv (Absyn.getConstantTypeEnvSize c) in
+          (Absyn.ConstantTerm(c,neededtenv,true,p),fvars,
+            Types.getNewVarsInTypes neededtenv ftyvars,0)
+      | Absyn.FreeVarTerm(fv,_,p) -> 
+          (match fv with
+            Absyn.NamedFreeVar(tysy) -> 
+              let nfvars = 
+                if (List.memq tysy fvars) then
+                  fvars
+                else
+                  (tysy :: fvars)
+              in
+              (Absyn.FreeVarTerm(fv,true,p),nfvars,ftyvars,0)
+          | _ -> Errormsg.impossible Errormsg.none
+                                     "Parse.fixTerm.FreeVarTerm: non-named var.")
+      | Absyn.BoundVarTerm(bv,_,p) ->
+          (match bv with 
+            Absyn.NamedBoundVar(tysy) ->
+               let ind = (findBVinList tysy bvars) in
+                 (Absyn.BoundVarTerm(Absyn.DBIndex(ind),false,p),fvars,ftyvars,ind)
+          | _ -> Errormsg.impossible Errormsg.none
+                                   "Parse.fixTerm.BoundVarTerm: non-named form.")
+      | Absyn.AbstractionTerm(abs,_,p) ->
+          (* note that the list of abstracted variables is in reverse order
+             after removeNestedAbstractions *)
+          (match abs with
+            (Absyn.UNestedAbstraction(tysyl,i,body)) ->
+                let (nbody,nfvars,nftyvars,ind) =
+                  fixTerm' body ((List.rev tysyl) @ bvars) fvars ftyvars
+                in
+                let ind' = (if (ind > 0) then (ind - 1) else 0) in
+                (Absyn.AbstractionTerm(Absyn.UNestedAbstraction([],i,nbody),
+                  (ind > 1),p),
+                  nfvars,nftyvars,ind')
+          | _ -> Errormsg.impossible Errormsg.none 
+                  "Parse.fixTerm.AbstractionTerm: nested abstractions?")
+      | Absyn.ApplicationTerm(appterm,_,p) ->
+         let (h,args) = unCurryTopLevelApps appterm [] in
+         let (nh,nfvars,nftyvars,ind) = fixTerm' h bvars fvars ftyvars in
+         let (nargs,nfvars',nftyvars',ind') = 
+                   (fixTerms args bvars nfvars nftyvars ind) in
+            (Absyn.ApplicationTerm(Absyn.FirstOrderApplication(nh,nargs,
+                                                               List.length nargs),
+                                   (ind' > 0),p),nfvars',nftyvars',ind')
+      | _ -> Errormsg.impossible Errormsg.none
+                                   "Parse.fixTerm: unexpected case for term"
 
-    and 
-      (* un-curry applications generating a head, arg list pair to be fixed before
-         being put together using a first-order like application. Wonder why this was
-         not already done in the call to removeNestedAbstractions in translateTerm *)
-        unCurryTopLevelApps appterm args =
-           match appterm with
-             (Absyn.CurriedApplication (f,a)) -> 
-                 case f of
-                   (Absyn.ApplicationTerm (appterm',_,_)) -> 
-                             unCurryTopLevelApps appterm' (a::args)
-                 | _ -> (appterm,args)
-           | _ -> Errormsg.impossible Errormsg.none
-                                      "Parse.fixTerm.unCurryTopLevelApps: found \
-                                           \ non Curried form of application"
+  and fixTerms ts bvars fvars ftyvars ind = 
+    match ts with
+        [] -> ([],fvars,ftyvars,ind)
+      | (t::ts') -> 
+          let (nt,fvars',ftyvars',ind') = (fixTerm' t bvars fvars ftyvars) in
+          let ind'' = if (ind' > ind) then ind' else ind in
+          let (nts',fvars'',ftyvars'',ind'') = 
+                      (fixTerms ts' bvars fvars' ftyvars' ind'') in
+             (nt::nts',fvars'',ftyvars'',ind'')
+            
+  in let (t,fvars,ftyvars,_) = fixTerm' term [] [] [] in
+  t
+  (* (t,fvars,ftyvars)  *)
 
-    and
-        (* the main function in fixTerm. Like fixTerm except that it adds the 
-           free variable and the bound variable lists as arguments and returns also
-           the highest de Bruijn index within the term *)
-        fixTerm' term bvars fvars ftyvars =
-          match term with 
-             (Absyn.IntTerm(i,_,p)) -> (Absyn.IntTerm(i,true,p),fvars,ftyvars,0)
-           | (Absyn.RealTerm(r,_,p)) -> (Absyn.RealTerm(r,true,p),fvars,ftyvars,0)
-           | (Absyn.StringTerm(s,_,p)) -> (Absyn.StringTerm(s,true,p),fvars,ftyvars,0)
-           | (Absyn.ConstantTerm(c,tenv,_,p)) -> 
-                (* collect type variables in (needed components of) type environment 
-                   and check constant is legal here *)
-                 ( checkIllegalConstant c p;
-                   let neededtenv = trunclist tenv (Absyn.getConstantTypeEnvSize c) in
-                   (Absyn.ConstantTerm(c,neededenv,true,p),fvars,
-                                Type.getNewVarsInTypes neededenv ftyvars,0)
-           | (Absyn.FreeVarTerm(fv,_,p) as t) -> 
-                match fv with
-                  (Absyn.NamedFreeVar tysy) -> 
-                     let nfvars = 
-                           if (List.memq tysy fvars)
-                           then fvars
-                           else (tysy :: fvars)
-                     in (Absyn.FreeVarTerm(fv,true,p),nfvars,ftyvars,0)
-                | _ -> Errormsg.impossible Errormsg.none
-                                           "Parse.fixTerm.FreeVarTerm: non-named var?"
-          | (Absyn.BoundVarTerm(bv,_,p) as t) ->
-                match bv with 
-                  (Absyn.NamedBoundVar tysy) ->
-                     let ind = (findBVinList bv bvars) in
-                       (Absyn.BoundVarTerm(DBIndex(ind),false,p),fvars,ftyvars,ind)
-                | _ -> Errormsg.impossible Errormsg.none
-                                         "Parse.fixTerm.BoundVarTerm: non-named form?"
-          | (Absyn.AbstractionTerm(abs,_,p) as t) =
-                (* note that the list of abstracted variables is in reverse order
-                   after removeNestedAbstractions *)
-                match abs with
-                  (UNestedAbstraction(tysyl,i,body)) ->
-                      let (nbody,nfvars,nftyvars,ind) =
-                              fixTerm' body ((List.rev tysyl) @ bvars) fvars ftyvars
-                      in (Absyn.AbstractionTerm(Absyn.UNestedAbstraction([],i,nbody),
-                                             (ind > 1),p),
-                          nfvars,nftyvars,(if (ind > 0) then (ind - 1) else 0))
-                | _ -> Errormsg.impossible Errormsg.none 
-                                           "Parse.fixTerm.AbstractionTerm: \
-                                                              \nested abstractions?"
-         | (Absyn.ApplicationTerm(appterm,_,p) as t) ->
-               let (h,args) = unCurryTopLevelApps appterm [] in
-               let (nh,nfvars,nftyvars,ind) = fixTerm' h bvars fvars ftyvars in
-               let (nargs,nfvars',nftyvars',ind') = 
-                         (fixTerms args bvars nfvars nftyvars ind) in
-                  (Absyn.ApplicationTerm(Absyn.FirstOrderApplication(nh,nargs,
-                                                                     List.length nargs),
-                                         (ind' > 0),p),nfvars',nftyvars',ind')
-         | - -> Errormsg.impossible Errormsg.none
-                                     "Parse.fixTerm: unexpected case for term"
-
-    and 
-        fixTerms ts bvars fvars ftyvars ind = 
-           match ts with
-             [] -> ([],fvars,ftyvars,ind)
-           | (t::ts') -> 
-                let (nt,fvars',ftyvars',ind') = (fixTerm t bvars fvars ftyvars) in
-                let ind'' = if (ind' > ind) then ind' else ind in
-                let (nts',fvars'',ftyvars'',ind'') = 
-                            (fixTerms ts' bvars fvars' ftyvars' ind') in
-                   (nt::nts',fvars'',ftyvars'',ind'')
-              
-    in let (t,fvars,ftyvars,_) = fixTerm' term [] [] [] in
-          (t,fvars,ftyvars)
-
+(**********************************************************************
+*illegalConstant:
+**********************************************************************)
 let illegalConstant c pos =
   if c == Pervasive.implConstant || c == Pervasive.colondashConstant then
     (Errormsg.error pos ("symbol " ^ (Absyn.getConstantName c) ^
