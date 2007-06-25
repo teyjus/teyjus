@@ -1,6 +1,5 @@
 %{
 #include <stdio.h>
-#include <stdlib.h>
 #include "instrgen-c.h"
 #include "instrgen-ocaml.h"
 #include "../util/util.h"

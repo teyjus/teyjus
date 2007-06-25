@@ -4,11 +4,12 @@
 #include "../util/util.h"
 #include <string.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <math.h>
 
 static char* addLine(char* str, char* addOn)
 {
-    int length = (str ? strlen(str) : 0) + strlen(addOn) + 2;
+    size_t length = (str ? strlen(str) : 0) + strlen(addOn) + 2;
     char* newStr = UTIL_mallocStr(length);
     
     if (str) {
@@ -21,7 +22,7 @@ static char* addLine(char* str, char* addOn)
 
 static char* addStr(char* str, char* addOn)
 {
-    int length = (str ? strlen(str) : 0) + strlen(addOn);
+    size_t length = (str ? strlen(str) : 0) + strlen(addOn);
     char* newStr = UTIL_mallocStr(length);
     
     if (str) {
@@ -50,7 +51,7 @@ static char* addStr(char* str, char* addOn)
 
 static char* OC_mkVarDec(char* varName, char* varType)
 {
-    int length = strlen(varName) + strlen(varType) + 10;    
+    size_t length = strlen(varName) + strlen(varType) + 10;    
     char* vardec = UTIL_mallocStr(length);
     
     strcpy(vardec, "val ");
@@ -64,7 +65,7 @@ static char* OC_mkVarDec(char* varName, char* varType)
 
 static char* OC_mkVarDef(char* varName, char* defs)
 {
-    int length = strlen(varName) + strlen(defs) + 10;
+    size_t length = strlen(varName) + strlen(defs) + 10;
     char* vardef = UTIL_mallocStr(length);
     
     strcpy(vardef, "let ");
@@ -78,7 +79,7 @@ static char* OC_mkVarDef(char* varName, char* defs)
 
 static char* OC_mkTypeDec(char* typeName, char* defs)
 {
-    int length = strlen(typeName) + strlen(defs) + 10;
+    size_t length = strlen(typeName) + strlen(defs) + 10;
     char* typedec = UTIL_mallocStr(length);
     
     strcpy(typedec, "type ");
@@ -92,7 +93,7 @@ static char* OC_mkTypeDec(char* typeName, char* defs)
 
 static char* OC_mkFunc(char* funcName, char* arg, char* body)
 {
-    int length = strlen(funcName) + strlen(arg) + strlen(body) + 20;
+    size_t length = strlen(funcName) + strlen(arg) + strlen(body) + 20;
     char* func = UTIL_mallocStr(length);
     
     strcpy(func, "let ");
@@ -108,7 +109,7 @@ static char* OC_mkFunc(char* funcName, char* arg, char* body)
 
 static char* OC_mkCrossType(char *lop, char *rop)
 {
-    int length = strlen(lop) + strlen(rop) + 5;
+    size_t length = strlen(lop) + strlen(rop) + 5;
     char* crossType = UTIL_mallocStr(length);
     
     strcpy(crossType, lop);
@@ -120,7 +121,7 @@ static char* OC_mkCrossType(char *lop, char *rop)
 
 static char* OC_mkValueCtr(char* ctrName, char* types)
 {
-    int length = strlen(ctrName) + strlen(types) + 10;
+    size_t length = strlen(ctrName) + strlen(types) + 10;
     char* ctr = UTIL_mallocStr(length);
     
     strcpy(ctr, ctrName);
@@ -131,7 +132,7 @@ static char* OC_mkValueCtr(char* ctrName, char* types)
 
 static char* OC_mkDisjValueCtrs(char* prev, char* next)
 {
-    int length = strlen(prev) + strlen(next) + 10;
+    size_t length = strlen(prev) + strlen(next) + 10;
     char* ctr = UTIL_mallocStr(length);
     
     strcpy(ctr, prev);
@@ -145,7 +146,7 @@ static char* OC_mkDisjValueCtrs(char* prev, char* next)
 
 static char* OC_mkFuncSeq(char* prev, char* new)
 {
-    int length = strlen(prev) + strlen(new) + 20;
+    size_t length = strlen(prev) + strlen(new) + 20;
     char* funcSeq = UTIL_mallocStr(length);
     
     strcpy(funcSeq, prev);
@@ -156,7 +157,7 @@ static char* OC_mkFuncSeq(char* prev, char* new)
 
 static char* OC_mkArgList(char* prev, char* new)
 {
-  int length = strlen(prev) + strlen(new) + 2;
+  size_t length = strlen(prev) + strlen(new) + 2;
   char* args = UTIL_mallocStr(length);
   
   strcpy(args, prev);
@@ -168,7 +169,7 @@ static char* OC_mkArgList(char* prev, char* new)
 
 static char* OC_mkStrConcat(char* prev, char* new)
 {
-    int length = strlen(prev) + strlen(new) + 20;
+    size_t length = strlen(prev) + strlen(new) + 20;
     char* str = UTIL_mallocStr(length);
   
     strcpy(str, "(");
@@ -183,7 +184,7 @@ static char* OC_mkStrConcat(char* prev, char* new)
 
 static char* OC_mkArrow(char* left, char* right)
 {
-    int length = strlen(left) + strlen(right) + 20;
+    size_t length = strlen(left) + strlen(right) + 20;
     char* arrow = UTIL_mallocStr(length);
     
     strcpy(arrow, left);
@@ -195,7 +196,7 @@ static char* OC_mkArrow(char* left, char* right)
 
 static char* OC_mkStructure(char* func, char* arg)
 {
-    int length = strlen(func) + strlen(arg) + 5;
+    size_t length = strlen(func) + strlen(arg) + 5;
     char* app = UTIL_mallocStr(length);
     
     strcpy(app, func);
@@ -208,7 +209,7 @@ static char* OC_mkStructure(char* func, char* arg)
 
 static char* OC_mkCond(char* cond, char* branch) 
 {
-    int length = strlen(cond) + strlen(branch) + 20;
+    size_t length = strlen(cond) + strlen(branch) + 20;
     char* str = UTIL_mallocStr(length);
     
     strcpy(str, INDENT);
@@ -225,7 +226,7 @@ static char* OC_mkCond(char* cond, char* branch)
 
 static char* OC_mkLetIn(char* varName, char* def)
 {
-    int length = strlen(varName) + strlen(def) + 20;
+    size_t length = strlen(varName) + strlen(def) + 20;
     char* str = UTIL_mallocStr(length);
     
     strcpy(str, INDENT);
@@ -627,7 +628,7 @@ static void ocgenDisplayFuncBody(char* pattern, char* insName, char* insLength,
     char *displayargs, *funcBody, *myInsName, *ins, *returnValue, *insText,
         *myDisplayFuncBody;
     
-    myInsName = UTIL_appendStr(insName, OC_mkWS(25 - strlen(insName)));
+    myInsName = UTIL_appendStr(insName, OC_mkWS(25u - strlen(insName)));
     insText   = UTIL_mallocStr(strlen(myInsName) + 5);  
     strcpy(insText, "\"");
     strcat(insText, myInsName);       free(myInsName);
