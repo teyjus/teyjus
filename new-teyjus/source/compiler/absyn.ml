@@ -27,6 +27,8 @@ and atypevar =
 
 (****************************************************************************
 *Type Var Information:
+     Bindable seems to correspond to a type cell whose actual contents is given by a 
+     reference to something else; i.e. it is more like "bound" than "bindable".
 *****************************************************************************)
 and atypevarinfo =
 	BindableTypeVar of atype option ref
@@ -39,7 +41,7 @@ and atypevarinfo =
 and atype = 
     SkeletonVarType of (int ref)
   | TypeVarType of (atypevarinfo ref)
-  |	ArrowType of (atype * atype)
+  | ArrowType of (atype * atype)
   | ApplicationType of (akind * atype list)
   | TypeSetType of (atype * atype list ref * atype option ref)
   | ErrorType
@@ -428,7 +430,8 @@ let rec getArrowTypeArguments ty =
   in  
   match ty with
     ArrowType(_) -> get' ty
-  | t -> Errormsg.impossible Errormsg.none ("getArrowTypeArguments: invalid type: " ^ (string_of_type t))
+  | t -> Errormsg.impossible Errormsg.none 
+                             ("getArrowTypeArguments: invalid type: " ^ (string_of_type t))
 
 let isArrowType = function
   ArrowType(_) -> true
@@ -462,11 +465,13 @@ let makeTypeSetVariable def tl = TypeSetType(def, ref tl, ref None)
 (* application type (including sort type) *)
 let getTypeArguments = function
   ApplicationType(_, args) -> args
-| t -> (Errormsg.impossible Errormsg.none ("getTypeArguments: invalid type: " ^ (string_of_type t)))
+| t -> (Errormsg.impossible Errormsg.none 
+                            ("getTypeArguments: invalid type: " ^ (string_of_type t)))
 
 let getTypeKind = function
   ApplicationType(k,_) -> k
-| t -> (Errormsg.impossible Errormsg.none ("getTypeKind: invalid type: " ^ (string_of_type t)))
+| t -> (Errormsg.impossible Errormsg.none 
+                            ("getTypeKind: invalid type: " ^ (string_of_type t)))
 
 
 let isConstantType = function
@@ -479,7 +484,8 @@ let getTypeVariableReference = function
   TypeVarType(info) ->
     (match !info with
       BindableTypeVar(r) -> r
-    | _ -> (Errormsg.impossible Errormsg.none "getTypeVariableReference: invalid type variable info"))
+    | _ -> (Errormsg.impossible Errormsg.none 
+                                "getTypeVariableReference: invalid type variable info"))
 | _ -> (Errormsg.impossible Errormsg.none "getTypeVariableReference: invalid type")
 
 let isVariableType = function
@@ -487,9 +493,11 @@ let isVariableType = function
     (match !r with
       BindableTypeVar(tr) ->
         (match !tr with
-          Some(t) -> (Errormsg.impossible Errormsg.none "Asyn.isVariableType: bound variable")
+          Some(t) -> (Errormsg.impossible Errormsg.none 
+                                          "Asyn.isVariableType: bound variable")
         | None -> true)
-    | _ -> (Errormsg.impossible Errormsg.none "Absyn.isVariableType: type variable info"))
+    | _ -> (Errormsg.impossible Errormsg.none 
+                                "Absyn.isVariableType: type variable info"))
 | _ -> false
 
 
@@ -500,25 +508,32 @@ let getTypeFreeVariableVariableData = function
       FreeTypeVar(varDataRef, _) -> 
         (match !varDataRef with
            Some(varData) -> varData
-         | None -> (Errormsg.impossible Errormsg.none "getTypeFreeVariableVariableData: varData"))
-     | _ -> (Errormsg.impossible Errormsg.none "getTypeFreeVariableVariableData: bound variable"))
- |_ -> (Errormsg.impossible Errormsg.none "getTypeFreeVariableVariableData: not a type variable")
+         | None -> (Errormsg.impossible Errormsg.none 
+                                        "getTypeFreeVariableVariableData: varData"))
+     | _ -> (Errormsg.impossible Errormsg.none 
+                                 "getTypeFreeVariableVariableData: bound variable"))
+ |_ -> (Errormsg.impossible Errormsg.none 
+                            "getTypeFreeVariableVariableData: not a type variable")
 
 let getTypeFreeVariableFirstRef = function
   TypeVarType(r) ->
 	(match !r with
 	  FreeTypeVar(_, firstRef) -> firstRef
-	|  _ -> (Errormsg.impossible Errormsg.none "getTypeFreeVariableFirstRef: bound variable"))
-  |_ -> (Errormsg.impossible Errormsg.none "getTypeFreeVariableFirstRef: not a type variable")
+	|  _ -> (Errormsg.impossible Errormsg.none 
+                                     "getTypeFreeVariableFirstRef: bound variable"))
+  |_ -> (Errormsg.impossible Errormsg.none 
+                             "getTypeFreeVariableFirstRef: not a type variable")
 
 let getTypeFreeVariableFirst var = 
   let r = !(getTypeFreeVariableFirstRef var) in
   if Option.isSome r then
     Option.get r
   else
-    Errormsg.impossible Errormsg.none "Absyn.getTypeFreeVariableFirst: invalid variable"
+    Errormsg.impossible Errormsg.none 
+                        "Absyn.getTypeFreeVariableFirst: invalid variable"
 
-let setTypeFreeVariableFirst var first = (getTypeFreeVariableFirstRef var) := Some(first)
+let setTypeFreeVariableFirst var first = 
+                     (getTypeFreeVariableFirstRef var) := Some(first)
 
 let isTypeFreeVariable = function
   TypeVarType(r) ->
@@ -551,17 +566,20 @@ let rec makeTypeEnvironment i =
       0 -> []
     | i' ->
         if i' < 0 then
-          Errormsg.impossible Errormsg.none "Absyn.makeTypeEnvironment: invalid environment size"
+          Errormsg.impossible Errormsg.none 
+                              "Absyn.makeTypeEnvironment: invalid environment size"
         else
           (makeTypeVariable ()) :: (makeTypeEnvironment (i - 1))
 
 let getApplicationTypeHead = function
     ApplicationType(k,_) -> k
-  | _ -> Errormsg.impossible Errormsg.none "Absyn.getApplicationTypeHead: invalid type"
+  | _ -> Errormsg.impossible Errormsg.none 
+                             "Absyn.getApplicationTypeHead: invalid type"
 
 let getApplicationTypeArgs = function
     ApplicationType(_,args) -> args
-  | _ -> Errormsg.impossible Errormsg.none "Absyn.getApplicationTypeArgs: invalid type"
+  | _ -> Errormsg.impossible Errormsg.none 
+                             "Absyn.getApplicationTypeArgs: invalid type"
 
 let isApplicationType t =
   match t with
@@ -663,7 +681,8 @@ let getConstantSkeletonValue = function
     if Option.isSome (!s) then
       Option.get (!s)
     else
-      Errormsg.impossible Errormsg.none "Absyn.getConstantSkeletonValue: invalid skeleton"
+      Errormsg.impossible Errormsg.none 
+                          "Absyn.getConstantSkeletonValue: invalid skeleton"
 
 
 let getConstantSkeletonRef = function
@@ -748,7 +767,8 @@ let getConstantNeedednessValue = function
     if Option.isSome (!n) then
       Option.get (!n)
     else
-      Errormsg.impossible Errormsg.none "Absyn.getConstantNeedednessValue: invalid neededness"
+      Errormsg.impossible Errormsg.none 
+                          "Absyn.getConstantNeedednessValue: invalid neededness"
 
 let getConstantNoDefs = function
   Constant(_,_,_,_,_,nd,_,_,_,_,_,_,_,_,_,_,_) ->
@@ -834,7 +854,8 @@ let makeConstantTerm c env pos =
 let getTypeSymbolRawType s =
   let get' = function
       Some(t) -> t
-    | _ -> Errormsg.impossible Errormsg.none "getTypeSymbolRawType: type symbol has no type"
+    | _ -> Errormsg.impossible Errormsg.none 
+                               "getTypeSymbolRawType: type symbol has no type"
   in
   
   match s with
@@ -858,7 +879,9 @@ let getTypeSymbolHiddenConstantRef tsym =
 let getTypeSymbolHiddenConstant tsym =
   let get' = function
       Some(c) -> c
-    | None -> Errormsg.impossible Errormsg.none "getTypeSymbolHiddenConstant: type symbol has no constant"
+    | None -> Errormsg.impossible 
+                   Errormsg.none 
+                   "getTypeSymbolHiddenConstant: type symbol has no constant"
   in  
   get' !(getTypeSymbolHiddenConstantRef tsym)
 
@@ -895,7 +918,8 @@ let getVariableDataLastUse = function
     if Option.isSome (!lu) then
       Option.get (!lu)
     else
-      Errormsg.impossible Errormsg.none "Absyn.getVariableDataLastUse: invalid variable"
+      Errormsg.impossible Errormsg.none 
+                          "Absyn.getVariableDataLastUse: invalid variable"
 
 let setVariableDataLastUse v u =
   match v with
@@ -939,7 +963,8 @@ let getVariableDataOffset v =
   if Option.isSome (r) then
       Option.get (r)
   else
-    Errormsg.impossible Errormsg.none "Absyn.getVariableDataOffset: invalid variable"
+    Errormsg.impossible Errormsg.none 
+                        "Absyn.getVariableDataOffset: invalid variable"
 
 let setVariableDataOffset v o =
   (getVariableDataOffsetRef v) := Some o
@@ -1055,7 +1080,8 @@ let rec string_of_term_ast term =
   | AbstractionTerm(UNestedAbstraction(_),_,_) ->
       let aterm = getTermAbstractionBody term in
       let avars = getTermAbstractionVars term in
-      (String.concat " " (List.map (getTypeSymbolName) avars)) ^ "\\" ^ (string_of_term_ast aterm)
+      (String.concat " " (List.map (getTypeSymbolName) avars)) 
+                                ^ "\\" ^ (string_of_term_ast aterm)
   | ApplicationTerm(FirstOrderApplication(h,args,_),_,_) ->
       let rec getargs = function
           [] -> ""
@@ -1072,7 +1098,9 @@ and string_of_term term =
   let rec string_of_prefixterm = fun op opfix args context fix prec ->
     let opprec = getConstantPrec op in
     let paren = needsParens opfix opprec context fix prec in
-    let result = (getConstantName op) ^ " " ^ (string_of_term' (List.hd args) RightTermContext opfix opprec) in
+    let result = (getConstantName op) 
+                    ^ " " 
+                    ^ (string_of_term' (List.hd args) RightTermContext opfix opprec) in
 
     if paren then
       "(" ^ result ^ ")"
@@ -1083,8 +1111,8 @@ and string_of_term term =
     let opprec = getConstantPrec op in
     let paren = needsParens opfix opprec context fix prec in
     let result = (string_of_term' (List.hd args) LeftTermContext opfix opprec) ^ 
-      " " ^ (string_of_term' (List.hd (List.tl args)) RightTermContext opfix opprec) ^ " " ^
-      (getConstantName op) in
+      " " ^ (string_of_term' (List.hd (List.tl args)) RightTermContext opfix opprec) 
+          ^ " " ^ (getConstantName op) in
     
     if paren then
       "(" ^ result ^ ")"
@@ -1094,7 +1122,8 @@ and string_of_term term =
   and string_of_postfixterm = fun op opfix args context fix prec ->
     let opprec = getConstantPrec op in
     let paren = needsParens opfix opprec context fix prec in
-    let result = (string_of_term' (List.hd args) LeftTermContext opfix opprec) ^ " " ^ (getConstantName op) in
+    let result = (string_of_term' (List.hd args) LeftTermContext opfix opprec) 
+                      ^ " " ^ (getConstantName op) in
     
     if paren then
       "(" ^ result ^ ")"
@@ -1106,7 +1135,8 @@ and string_of_term term =
       match args with
           [] -> ""
         | a::[] -> (string_of_term' a WholeTermContext appFixity appPrec)
-        | a::aa -> (string_of_term' a WholeTermContext appFixity appPrec) ^ " " ^ (string_of_args aa)
+        | a::aa -> (string_of_term' a WholeTermContext appFixity appPrec) 
+                             ^ " " ^ (string_of_args aa)
     in
     
     match term with
@@ -1120,49 +1150,56 @@ and string_of_term term =
                       (string_of_prefixterm c Prefix args context fix prec,
                       [])
                     else
-                      (string_of_prefixterm c Prefix args LeftTermContext appFixity appPrec,
+                      (string_of_prefixterm c Prefix args 
+                                            LeftTermContext appFixity appPrec,
                       List.tl args)
                 | Prefixr ->
                     if numargs = 1 then
                       (string_of_prefixterm c Prefix args context fix prec,
                       [])
                     else
-                      (string_of_prefixterm c Prefix args LeftTermContext appFixity appPrec,
+                      (string_of_prefixterm c Prefix 
+                                            args LeftTermContext appFixity appPrec,
                       List.tl args)
                 | Infix ->
                     if numargs = 2 then
                       (string_of_infixterm c Infix args context fix prec,
                       [])
                     else
-                      (string_of_infixterm c Infix args LeftTermContext appFixity appPrec,
+                      (string_of_infixterm c Infix 
+                                           args LeftTermContext appFixity appPrec,
                       List.tl (List.tl args))
                 | Infixr ->
                     if numargs = 2 then
                       (string_of_infixterm c Infixr args context fix prec,
                       [])
                     else
-                      (string_of_infixterm c Infixr args LeftTermContext appFixity appPrec,
+                      (string_of_infixterm c Infixr 
+                                             args LeftTermContext appFixity appPrec,
                       List.tl (List.tl args))
                 | Infixl ->
                     if numargs = 2 then
                       (string_of_infixterm c Infixl args context fix prec,
                       [])
                     else
-                      (string_of_infixterm c Infixl args LeftTermContext appFixity appPrec,
+                      (string_of_infixterm c Infixl 
+                                           args LeftTermContext appFixity appPrec,
                       List.tl (List.tl args))
                 | Postfix ->
                     if numargs = 1 then
                       (string_of_postfixterm c Postfix args context fix prec,
                       [])
                     else
-                      (string_of_postfixterm c Postfix args LeftTermContext appFixity appPrec,
+                      (string_of_postfixterm c Postfix 
+                                             args LeftTermContext appFixity appPrec,
                       List.tl args)
                 | Postfixl ->
                     if numargs = 1 then
                       (string_of_postfixterm c Postfixl args context fix prec,
                       [])
                     else
-                      (string_of_postfixterm c Postfixl args LeftTermContext appFixity appPrec,
+                      (string_of_postfixterm c Postfixl 
+                                             args LeftTermContext appFixity appPrec,
                       List.tl args)
                 | NoFixity ->
                     (string_of_term' f LeftTermContext appFixity appPrec,
@@ -1183,7 +1220,9 @@ and string_of_term term =
           head
     | ApplicationTerm(CurriedApplication(l, r),_,_) ->
         let paren = needsParens appFixity appPrec context fix prec in
-        let result = (string_of_term' l LeftTermContext appFixity appPrec) ^ " " ^ (string_of_term' r RightTermContext appFixity appPrec) in
+        let result = (string_of_term' l LeftTermContext appFixity appPrec) 
+                             ^ " " 
+                             ^ (string_of_term' r RightTermContext appFixity appPrec) in
         if paren then
           "(" ^ result ^ ")"
         else
@@ -1194,7 +1233,9 @@ and string_of_term term =
     let paren = needsParens lamFixity lamPrec context fix prec in
     let aterm = getTermAbstractionBody term in
     let avar = getTermAbstractionVar term in
-    let result = (getTypeSymbolName avar) ^ "\\ " ^ (string_of_term' aterm RightTermContext lamFixity lamPrec) in
+    let result = (getTypeSymbolName avar) 
+                       ^ "\\ " 
+                       ^ (string_of_term' aterm RightTermContext lamFixity lamPrec) in
     if paren then
       "(" ^ result  ^ ")"
     else
@@ -1212,7 +1253,8 @@ and string_of_term term =
     | ApplicationTerm(_) -> string_of_app term context fix prec
     | AbstractionTerm(_) -> string_of_abstraction term context fix prec
     | ErrorTerm -> "#error#"
-    | _ -> Errormsg.impossible (getTermPos term) "string_of_term': unimplemented for this term"
+    | _ -> Errormsg.impossible (getTermPos term) 
+                               "string_of_term': unimplemented for this term"
   in
   
   (string_of_term' term WholeTermContext NoFixity 0)
@@ -1276,11 +1318,15 @@ let makeBoundVarTerm tsym pos =
 (* constant *)
 let getTermConstant = function
   ConstantTerm(c,_,_,_) -> c
-| t -> Errormsg.impossible Errormsg.none ("Absyn.getTermConstant: invalid term: " ^ (string_of_term t))
+| t -> Errormsg.impossible Errormsg.none 
+                           ("Absyn.getTermConstant: invalid term: " 
+                                  ^ (string_of_term t))
 
 let getTermMoleculeEnv = function
   ConstantTerm(_,te,_,_) -> te
-| t -> Errormsg.impossible Errormsg.none ("Absyn.getTermMoleculeEnv: invalid term" ^ (string_of_term t))
+| t -> Errormsg.impossible Errormsg.none 
+                           ("Absyn.getTermMoleculeEnv: invalid term" 
+                                  ^ (string_of_term t))
 
 let getTermConstantTypeEnv = function
   ConstantTerm(_,te,_,_) -> te
@@ -1354,7 +1400,8 @@ let getStringInfoString = function
 let rec string_of_goal g =
   match g with
     AtomicGoal(c,_,_,tl,_) -> (string_of_constant c)
-  | AndGoal(g1, g2) -> "(" ^ (string_of_goal g1) ^ " & " ^ (string_of_goal g2) ^ ")"
+  | AndGoal(g1, g2) -> "(" ^ (string_of_goal g1) ^ " & " 
+                           ^ (string_of_goal g2) ^ ")"
   | ImpGoal(defs, vis, tvis, g) -> (string_of_goal g)
   | AllGoal(vars, g) -> (string_of_goal g)
   | SomeGoal(var, g) -> (string_of_goal g)
@@ -1552,66 +1599,91 @@ let getModuleName = function
 
 let getModuleGlobalKindsList = function
   Module(_,_,_,_,_,_,_,gkinds,_,_,_,_,_,_,_) -> gkinds
-| Signature(_) -> Errormsg.impossible Errormsg.none "getModuleGlobalKindList: not a module"
-| ErrorModule -> Errormsg.impossible Errormsg.none "getModuleGlobalKindList: invalid module"
+| Signature(_) -> Errormsg.impossible Errormsg.none 
+                                      "getModuleGlobalKindList: not a module"
+| ErrorModule -> Errormsg.impossible Errormsg.none 
+                                     "getModuleGlobalKindList: invalid module"
 
 let getModuleGlobalConstantsList = function
   Module(_,_,_,_,_,_,_,_,_,gconsts,_,_,_,_,_) -> gconsts
-| Signature(_) -> Errormsg.impossible Errormsg.none "getModuleGlobalConstList: not a module"
-| ErrorModule -> Errormsg.impossible Errormsg.none "getModuleGlobalConstList: invalid module"
+| Signature(_) -> Errormsg.impossible Errormsg.none 
+                                      "getModuleGlobalConstList: not a module"
+| ErrorModule -> Errormsg.impossible Errormsg.none 
+                                     "getModuleGlobalConstList: invalid module"
 
 let getModuleHiddenConstantsRef = function
   Module(_,_,_,_,_,_,_,_,_,_,_,hcs,_,_,_) -> hcs
-| Signature(_) -> Errormsg.impossible Errormsg.none "getModuleHiddenConstantsRef: not a module"
-| ErrorModule -> Errormsg.impossible Errormsg.none "getModuleHiddenConstantsRef: invalid module"
+| Signature(_) -> Errormsg.impossible Errormsg.none 
+                                      "getModuleHiddenConstantsRef: not a module"
+| ErrorModule -> Errormsg.impossible Errormsg.none 
+                                     "getModuleHiddenConstantsRef: invalid module"
 
 let getModuleHiddenConstantSkeletonsRef = function
   Module(_,_,_,_,_,_,_,_,_,_,_,_,_,hs,_) -> hs
-| Signature(_) -> Errormsg.impossible Errormsg.none "getModuleHiddenConstantSkeletonsRef: not a module"
-| ErrorModule -> Errormsg.impossible Errormsg.none "getModuleHiddenConstantSkeletonsRef: invalid module"
+| Signature(_) -> Errormsg.impossible Errormsg.none 
+                                      "getModuleHiddenConstantSkeletonsRef: not a module"
+| ErrorModule -> Errormsg.impossible Errormsg.none 
+                                     "getModuleHiddenConstantSkeletonsRef: invalid module"
 
 let getModuleHiddenConstantSkeletons = function
   Module(_,_,_,_,_,_,_,_,_,_,_,_,_,hs,_) -> !hs
-| Signature(_) -> Errormsg.impossible Errormsg.none "getModuleHiddenConstantSkeletons: not a module"
-| ErrorModule -> Errormsg.impossible Errormsg.none "getModuleHiddenConstantSkeletons: invalid module"
+| Signature(_) -> Errormsg.impossible Errormsg.none 
+                                      "getModuleHiddenConstantSkeletons: not a module"
+| ErrorModule -> Errormsg.impossible Errormsg.none 
+                                     "getModuleHiddenConstantSkeletons: invalid module"
 
 let getModuleConstantTable = function
   Module(_,_,_,ctable,_,_,_,_,_,_,_,_,_,_,_) -> !ctable
-| Signature(_) -> Errormsg.impossible Errormsg.none "getModuleConstantTable: not a module"
-| ErrorModule -> Errormsg.impossible Errormsg.none "getModuleConstantTable: invalid module"
+| Signature(_) -> Errormsg.impossible Errormsg.none 
+                                      "getModuleConstantTable: not a module"
+| ErrorModule -> Errormsg.impossible Errormsg.none 
+                                     "getModuleConstantTable: invalid module"
 
 let getModuleKindTable = function
   Module(_,_,_,_,ktable,_,_,_,_,_,_,_,_,_,_) -> !ktable
-| Signature(_) -> Errormsg.impossible Errormsg.none "getModuleKindTable: not a module"
-| ErrorModule -> Errormsg.impossible Errormsg.none "getModuleKindTable: invalid module"
+| Signature(_) -> Errormsg.impossible Errormsg.none 
+                                      "getModuleKindTable: not a module"
+| ErrorModule -> Errormsg.impossible Errormsg.none 
+                                     "getModuleKindTable: invalid module"
 
 let getModuleTypeAbbrevTable = function
   Module(_,_,_,_,_,atable,_,_,_,_,_,_,_,_,_) -> atable
-| Signature(_) -> Errormsg.impossible Errormsg.none "getModuleTypeAbbrevTable: not a module"
-| ErrorModule -> Errormsg.impossible Errormsg.none "getModuleTypeAbbrevTable: invalid module"
+| Signature(_) -> Errormsg.impossible Errormsg.none 
+                                      "getModuleTypeAbbrevTable: not a module"
+| ErrorModule -> Errormsg.impossible Errormsg.none 
+                                     "getModuleTypeAbbrevTable: invalid module"
 
 let getModuleClausesRef = function
   Module(_,_,_,_,_,_,_,_,_,_,_,_,_,_,c) -> c
-| Signature(_) -> Errormsg.impossible Errormsg.none "getModuleClausesRef: argument is a signature"
-| ErrorModule -> Errormsg.impossible Errormsg.none "getModuleClausesRef: argument is invalid"
+| Signature(_) -> Errormsg.impossible Errormsg.none 
+                                      "getModuleClausesRef: argument is a signature"
+| ErrorModule -> Errormsg.impossible Errormsg.none 
+                                     "getModuleClausesRef: argument is invalid"
 
 let getModuleClauses amod = !(getModuleClausesRef amod)
 let setModuleClauses amod cls = (getModuleClausesRef amod) := cls
 
 let getSignatureGlobalKindsList = function
   Signature(_,kl,_) -> kl
-| Module(_) -> Errormsg.impossible Errormsg.none "getSignatureGlobalKindsList: argument is a module"
-| ErrorModule -> Errormsg.impossible Errormsg.none "getSignatureGlobalKindsList: argument invalid"
+| Module(_) -> Errormsg.impossible Errormsg.none 
+                                   "getSignatureGlobalKindsList: argument is a module"
+| ErrorModule -> Errormsg.impossible Errormsg.none 
+                                     "getSignatureGlobalKindsList: argument invalid"
   
   
 let getSignatureGlobalConstantsList = function
   Signature(_,_,cl) -> cl
-| Module(_) -> Errormsg.impossible Errormsg.none "getSignatureGlobalConstantsList: argument is a module"
-| ErrorModule -> Errormsg.impossible Errormsg.none "getSignatureGlobalConstantsList: argument invalid"
+| Module(_) -> Errormsg.impossible 
+                          Errormsg.none 
+                          "getSignatureGlobalConstantsList: argument is a module"
+| ErrorModule -> Errormsg.impossible 
+                          Errormsg.none 
+                          "getSignatureGlobalConstantsList: argument invalid"
 
 let getSignatureName = function
   Signature(n,_,_) -> n
-| Module(_) -> Errormsg.impossible Errormsg.none "getSignatureName: argument is a module"
+| Module(_) -> Errormsg.impossible Errormsg.none 
+                                   "getSignatureName: argument is a module"
 | ErrorModule -> Errormsg.impossible Errormsg.none "getSignatureName: argument invalid"  
 
 (*************************************************************************)

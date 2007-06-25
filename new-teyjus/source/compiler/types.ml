@@ -702,6 +702,42 @@ let equalMappedTypeSkels skel1 skel2 =
     with
       EqualMappedTypeSkelsFailure -> false
 
+
+(*************************************************************************
+ * getNewVarsInTypes: accumulates the new type variables occurring in a given
+ * list of types into a growing list. Entries in the list of type variables are
+ * unique as addresses not as structures *
+**************************************************************************)
+let getNewVarsInTypes tyl ftyvars =
+      match tyl with 
+        (ty::tyl') ->
+           let ftyvars' = getNewVarsInType (Absyn.dereferenceType ty) in
+             getNewVarInTypes tyl' ftyvars'
+     | [] -> ftyvars
+
+and
+   (* this function actually works also in the case that skeleton variables appear 
+      in the type *)
+   getNewVarsInType ty ftyvars =
+     match ty with
+       (Absyn.SkeletonVarType _) -> ftyvars
+     | ((Absyn.TypeVarType _) as t) -> 
+                    if (List.memq t ftyvars) then ftyvars else (t::ftyvars)
+     | (Absyn.ArrowType (t1,t2)) -> (getNewVarsInTypes [t1; t2] ftyvars) 
+     | (Absyn.ApplicationType(_,tyl)) -> (getNewVarsInTypes tyl ftyvars)
+     | _ -> Errormsg.impossible Errormsg.none
+                                "Types.getNewVarsInTypes: unexpected form \
+                                            \ encountered in type"
+
+(*************************************************************************************
+ * getNewVarsInTypeMol: like getNewVarsInType, except that there is a need to carry  
+ * out a two step process in this case, one for the (possible) skeleton and one for  
+ * any environment types
+ ************************************************************************************)
+let getNewVarsInTypeMol (Molecule(ty,tyenv)) ftyvars =
+       let ftyvars' = getNewVarsInType ty ftyvars in
+         getNewVarsInTypes tyenv ftyvars'
+
 let unitTests () =
   let test tmol1 tmol2 =
     let _ = Errormsg.log Errormsg.none ("Unifying " ^ (string_of_typemolecule tmol1) ^ " ; " ^ (string_of_typemolecule tmol2)) in
