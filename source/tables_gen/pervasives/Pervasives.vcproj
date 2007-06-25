@@ -28,8 +28,8 @@
 			<Tool
 				Name="VCCustomBuildTool"
 				Description="Copying..."
-				CommandLine="xcopy &quot;$(TargetPath)&quot; &quot;$(SolutionDir)&quot; /Y"
-				Outputs="$(SolutionDir)$(TargetFilename)"
+				CommandLine="xcopy &quot;$(TargetPath)&quot; &quot;$(SolutionDir)../bin&quot; /Y&#x0D;&#x0A;"
+				Outputs="$(SolutionDir)../bin/$(TargetFilename)"
 			/>
 			<Tool
 				Name="VCXMLDataGeneratorTool"
@@ -43,7 +43,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="..\util"
+				AdditionalIncludeDirectories="../util"
 				PreprocessorDefinitions="WIN32;_DEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS;_CRT_NONSTDC_NO_DEPRECATE;__STDC__=0"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -64,6 +64,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
+				OutputFile="$(OutDir)\$(ProjectName).exe"
 				LinkIncremental="2"
 				GenerateDebugInformation="true"
 				SubSystem="1"
@@ -262,9 +263,9 @@
 					>
 					<Tool
 						Name="VCCustomBuildTool"
-						Description="Building lexer..."
+						Description="Generating lexer..."
 						CommandLine="flex pervasives.l&#x0D;&#x0A;"
-						Outputs="lex.yy.x"
+						Outputs="lex.yy.c"
 					/>
 				</FileConfiguration>
 			</File>
@@ -276,10 +277,10 @@
 					>
 					<Tool
 						Name="VCCustomBuildTool"
-						Description="Building parser..."
+						Description="Generating parser..."
 						CommandLine="bison -y -d pervasives.y&#x0D;&#x0A;"
 						AdditionalDependencies="lex.yy.c"
-						Outputs="y.tab.c"
+						Outputs="y.tab.c;y.tab.h"
 					/>
 				</FileConfiguration>
 			</File>

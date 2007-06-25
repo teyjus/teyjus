@@ -1,6 +1,7 @@
 %{
 #include "y.tab.h"
 #include <string.h>
+#include <stdlib.h>
 
 static int commentLev = 0;
 %}
