@@ -1,10 +1,4 @@
 # TODO - we only support Cygwin on Win32
-if $(equal $(OSTYPE), Win32)
-    OSTYPE = Cygwin
-    GCC_FOUND = true
-    GXX_FOUND = true
-    export
-
 open build/C
 open build/OCaml
 

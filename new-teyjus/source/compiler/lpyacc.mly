@@ -122,8 +122,9 @@ let makeSymbol = fun pos t ->
 %token  <float> REALLIT
   
 %type <Preabsyn.pmodule> parseModule parseSignature
+%type <Preabsyn.pterm> parseModClause
 %type <unit> modheader sigheader
-%type <unit> modend parseModClause sigend modpreamble modbody
+%type <unit> modend sigend modpreamble modbody
 %type <unit> modsigndecl signdecls signdecl
 %type <Preabsyn.psymbol list> idlist cvidlist
 %type <int> kind
@@ -317,8 +318,11 @@ fixity
   ;
 
 parseModClause
-  : term PERIOD   {(clauseList := Preabsyn.Clause(Preabsyn.SeqTerm(List.rev $1, (getPos 1))) :: (!clauseList))}
-  | error PERIOD  {Errormsg.error Errormsg.none "parsing parseModClause"}
+  : term PERIOD   {let pt = Preabsyn.SeqTerm(List.rev $1, (getPos 1)) in
+                  let () = (clauseList := Preabsyn.Clause(pt) :: (!clauseList)) in
+                  pt}
+  | error PERIOD  {let () = Errormsg.error Errormsg.none "parsing parseModClause" in
+                  Preabsyn.ErrorTerm}
   ;
 
 term

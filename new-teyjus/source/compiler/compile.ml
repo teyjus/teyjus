@@ -25,10 +25,10 @@ let openFile = fun fname f ->
 *closeFile:
 * Closes a file given a closing function.
 ******************************************************************)
-let closeFile = fun fname f ->
+let closeFile fname f =
   f fname
 
-let compile = fun parse fname ->
+let compile parse fname =
   let inchannel = openFile fname open_in in
   let lexbuf = Lexing.from_channel inchannel in
   let _ = Lplex.set_file_name lexbuf fname in
@@ -36,8 +36,13 @@ let compile = fun parse fname ->
   let _ = closeFile inchannel close_in in
     result
       
-let compileModule = fun basename ->
+let compileModule basename =
   compile Lpyacc.parseModule (basename ^ ".mod")
 
-let compileSignature = fun basename ->
+let compileSignature basename =
   compile Lpyacc.parseSignature (basename ^ ".sig")
+
+let compileString s =
+  let lexbuf = Lexing.from_string s in
+  let _ = Lplex.set_file_name lexbuf "" in
+  parseModClause Lplex.initial lexbuf

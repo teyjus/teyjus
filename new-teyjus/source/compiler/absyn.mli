@@ -367,7 +367,7 @@ val getConstantType : aconstant -> aconstanttype
 val getConstantTypeRef : aconstant -> aconstanttype ref
 val getConstantCodeInfo : aconstant -> acodeinfo option ref
 val setConstantCodeInfo : aconstant -> acodeinfo option -> unit
-val getConstantTypeEnvSize : aconstant -> int
+val getConstantTypeEnvSize : bool -> aconstant -> int
 val getConstantTypeEnvSizeRef : aconstant -> int ref
 val getConstantNoDefs : aconstant -> bool
 val getConstantNoDefsRef : aconstant -> bool ref

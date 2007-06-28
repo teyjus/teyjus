@@ -738,10 +738,42 @@ let constantHasCode = function
      Some(_) -> true
    | None -> false
 
-let getConstantTypeEnvSize = function
-  Constant(_,_,_,_,_,_,_,_,_,_,s,_,_,_,_,_,_) ->
+let getConstantTypeEnvSize search constant =
+  (*  For keeping track of the maximum skeleton index.  *)
+  let max = ref (-1) in
+  let set i =
+    if i > !max then
+      (max := i)
+    else
+      ()
+  in
+  
+  (*  Iterate over a type, find max skeleton index. *)
+  let rec findMaxIndex skeleton =
+    let ty' = dereferenceType skeleton in
+    match ty' with
+      SkeletonVarType(i) -> set !i
+    | TypeVarType(_) -> ()
+    | ArrowType(l,r) -> (findMaxIndex l; findMaxIndex r)
+    | ApplicationType(_,tl) -> (List.iter findMaxIndex tl)
+    | TypeSetType(_) -> ()  (*  Type sets should never have skeleton indices. *)
+    | ErrorType -> ()
+  in
+  if search then
+    let skel = (getConstantSkeleton constant) in
+    if (Option.isSome skel) then
+      let skel = Option.get skel in
+      let () = findMaxIndex (getSkeletonType skel) in
+      (!max + 1)
+    else
+      (Errormsg.impossible Errormsg.none
+        "Absyn.getConstantTypeEnvSize: constant has no skeleton.")
+  else
+    let Constant(_,_,_,_,_,_,_,_,_,_,s,_,_,_,_,_,_) = constant in
     !s
-
+    
+  
+    
 let getConstantTypeEnvSizeRef = function
   Constant(_,_,_,_,_,_,_,_,_,_,s,_,_,_,_,_,_) ->
     s
@@ -841,7 +873,7 @@ let makeHiddenConstant skel envsize =
     ref None, ref HiddenConstant, ref 0, Errormsg.none)
 
 let makeConstantTerm c env pos =
-  let esize = getConstantTypeEnvSize c in
+  let esize = getConstantTypeEnvSize false c in
   if esize = (List.length env) then
     ConstantTerm(c, env, false, pos)
   else

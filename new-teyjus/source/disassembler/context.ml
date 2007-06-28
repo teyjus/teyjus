@@ -141,7 +141,7 @@ let printTypeSkels tyskels =
 (***************************************************************)
 let printGlobalConst c = 
   ((Absyn.getConstantName c) ^ " (" ^ 
-   (Absyn.string_of_fixity (Absyn.getConstantFixity c)) ^ 
+   (Absyn.string_of_fixity (Absyn.getConstantFixity true c)) ^ 
    ", precedence " ^ (string_of_int (Absyn.getConstantPrec c)) ^
    ")\n    Env Size: " ^ (string_of_int (Absyn.getConstantTypeEnvSize c)) ^
    ", Type Skeleton: #" ^ 
