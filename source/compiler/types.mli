@@ -20,7 +20,7 @@ val checkApply : typemolecule -> typemolecule -> Absyn.aterm -> typemolecule
 val unify : typemolecule -> typemolecule -> unifyresult
 val string_of_typemolecule  : typemolecule -> string
 
-val makeConstantMolecule : Absyn.aconstant -> typemolecule
+val makeConstantMolecule : bool -> Absyn.aconstant -> typemolecule
 val makeKindMolecule : Absyn.akind -> typemolecule
 
 val skeletonizeType : Absyn.atype -> typemolecule

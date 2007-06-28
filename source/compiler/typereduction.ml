@@ -194,7 +194,7 @@ let reduceSkeletons amod =
 	in
 
     let skel = Absyn.getConstantSkeleton constant in
-    let envsize = Absyn.getConstantTypeEnvSize constant in
+    let envsize = Absyn.getConstantTypeEnvSize false constant in
 
     if Option.isSome skel then
       (*  Don't reduce the skeleton if there is no environment to reduce. *)
@@ -296,7 +296,7 @@ let reducePredicates amod =
   let makeConstantNeededness sym constant =
     let neededness = Absyn.getConstantNeedednessRef constant in
     if Option.isNone (!neededness) then
-      let neededness' = Array.make (Absyn.getConstantTypeEnvSize constant) false in
+      let neededness' = Array.make (Absyn.getConstantTypeEnvSize false constant) false in
       neededness := Some(neededness')
     else
       ()

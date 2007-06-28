@@ -120,7 +120,7 @@ let writeConstInfo gconsts lconsts hconsts =
 	(if prec < 0 then Bytecode.writeint1 0
 	 else Bytecode.writeint1 prec);
     (* Bytecode.writeint1 (Absyn.getConstantPrec const); *)
-    Bytecode.writeint1 (Absyn.getConstantTypeEnvSize const);
+    Bytecode.writeint1 (Absyn.getConstantTypeEnvSize false const);
     (if (global) then Bytecode.writeString (Absyn.getConstantName const)
      else ());
     Bytecode.writeint2 (Absyn.getSkeletonIndex 

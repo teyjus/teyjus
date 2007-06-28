@@ -25,7 +25,7 @@ exception EqualMappedTypeSkelsFailure
 * Constructs the type of the given constant, building an appropriate
 * environment.
 **********************************************************************)
-let makeConstantMolecule = fun constant ->
+let makeConstantMolecule parsingtoplevel constant =
   let env = ref [] in
   let bindings = ref [] in
   let rec instance ty =
@@ -49,7 +49,7 @@ let makeConstantMolecule = fun constant ->
   in
   
   
-  let envsize = Absyn.getConstantTypeEnvSize constant in
+  let envsize = Absyn.getConstantTypeEnvSize parsingtoplevel constant in
   let skel = Absyn.getConstantSkeleton constant in
   
   if Option.isSome skel then
@@ -806,7 +806,7 @@ let unitTests () =
   let _ = test tmol5 tmol6 in
   
   (*  Check Apply Tests *)
-  let plus = makeConstantMolecule Pervasive.overloadPlusConstant in
+  let plus = makeConstantMolecule false Pervasive.overloadPlusConstant in
   let arg = Molecule(Absyn.ApplicationType(Pervasive.kint, []), []) in
   let _ = Errormsg.log Errormsg.none ("Testing checkApply (" ^ (string_of_typemolecule plus) ^ ") (" ^ (string_of_typemolecule arg) ^ ")") in
   let result = checkApply plus arg Absyn.errorTerm in

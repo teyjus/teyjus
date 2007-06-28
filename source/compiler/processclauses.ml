@@ -428,7 +428,7 @@ and processClauseHead args tyargs =
 (***************************************************************************)
 and processFact pred tyargs tmargs ntmargs =
   let (predArgs, predTyArgs) = processClauseHead tmargs tyargs in
-  (Fact(pred, predArgs, predTyArgs, ntmargs+Absyn.getConstantTypeEnvSize(pred),
+  (Fact(pred, predArgs, predTyArgs, ntmargs + (Absyn.getConstantTypeEnvSize false pred),
 		ntmargs), !tVars, !tyVars)
 
 (***************************************************************************)
@@ -450,7 +450,7 @@ and processRule clauseHead clauseBody =
   in
   let (predArgs, predTyArgs) = processClauseHead args tyenv in
   let goal = processGoal clauseBody in
-  (Rule(pred, predArgs, predTyArgs, Absyn.getConstantTypeEnvSize pred + arity,
+  (Rule(pred, predArgs, predTyArgs, (Absyn.getConstantTypeEnvSize false pred) + arity,
 		arity, goal), !tVars, !tyVars)
 
 (*****************************************************************************)
@@ -493,7 +493,7 @@ and processAtomicGoal gltm head args arity =
 	Absyn.FreeVarTerm(Absyn.NamedFreeVar(_), _, _) -> (* free var head *)
 	  Absyn.AtomicGoal(Pervasive.solveConstant, 1, 1, [(transTerm [] gltm)],[])
   | Absyn.ConstantTerm(pred, tyenv, _, _) ->
-	  Absyn.AtomicGoal(pred, arity + Absyn.getConstantTypeEnvSize(pred), arity,
+	  Absyn.AtomicGoal(pred, arity + (Absyn.getConstantTypeEnvSize false pred), arity,
 					   List.map (transTerm []) args, List.map transType tyenv)
   | _ -> Errormsg.impossible Errormsg.none "processAtomicGoal: invalid pred"
 
