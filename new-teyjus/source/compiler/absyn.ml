@@ -867,7 +867,7 @@ let makeAnonymousConstant i =
     ref None, ref AnonymousConstant, ref 0, Errormsg.none)
 
 let makeHiddenConstant skel envsize =
-  Constant(Symbol.symbol "", ref NoFixity, ref (-1), ref true, ref false,
+  Constant(Symbol.symbol "", ref NoFixity, ref (-1), ref false, ref false,
     ref false, ref true, ref false, ref false, ref (Some skel), ref 0,
     ref (Some(Array.make envsize true)), ref (Some(Array.make envsize true)),
     ref None, ref HiddenConstant, ref 0, Errormsg.none)
@@ -1102,9 +1102,16 @@ let rec string_of_term_ast term =
   | RealTerm(r,_,_) -> string_of_float r
   | StringTerm(StringLiteral(s),_,_) -> "\"" ^ (s) ^ "\""
   | StringTerm(StringData(s,_,_),_,_) -> "\"" ^ (s) ^ "\""
-  | ConstantTerm(c,_,_,_) -> getConstantName c
-  | FreeVarTerm(NamedFreeVar(s),_,_) -> Symbol.name (getTypeSymbolSymbol s)
-  | BoundVarTerm(NamedBoundVar(s),_,_) -> Symbol.name (getTypeSymbolSymbol s)
+  | ConstantTerm(c,_,_,_) -> 
+	  if (getConstantType c = HiddenConstant) then
+		"hc: " ^ getConstantName c
+	  else getConstantName c
+  | FreeVarTerm(NamedFreeVar(s),_,_) -> 
+	  "fv: " ^ 
+	  (Symbol.name (getTypeSymbolSymbol s))
+  | BoundVarTerm(NamedBoundVar(s),_,_) ->
+	  "bv: " ^
+	  (Symbol.name (getTypeSymbolSymbol s))
   | AbstractionTerm(NestedAbstraction(_),_,_) ->
       let aterm = getTermAbstractionBody term in
       let avar = getTermAbstractionVar term in

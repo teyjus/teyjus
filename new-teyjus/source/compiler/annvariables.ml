@@ -579,7 +579,7 @@ let assignPermVars goalEnvAssoc notrim =
 (*****************************************************************************)
 (*                         PROCESS A CLAUSE                                  *)
 (*****************************************************************************)
-let rec processClause clause =
+let rec processClause clause perm =
   (* collect explicitly head quantified variables into hqVars and expQVars *)
   (* The order of this variables in the global lists does not matter.      *)
   let collectHQVars varList =
@@ -603,10 +603,10 @@ let rec processClause clause =
 			   goalEnvAssoc, cutVarRef, hasenv, impmods) ->
 	  collectHQVars expHQVars;
 	  processClauseHead args tyargs; (* annotate clause (type) args *)
-	  let perm = not (impmods = []) in   (* process goal                *)
-	  let (myhasenv, notrim) = processGoal goal perm true cutVarRef in
-	  hasenv := myhasenv || notrim || perm; (* decide whether has environment*)
-	  assignPermVars goalEnvAssoc (notrim || perm) (* decide perm var offset *)
+	  let perm' = (not (impmods = []) && perm) in   (* process goal                *)
+	  let (myhasenv, notrim) = processGoal goal perm' true cutVarRef in
+	  hasenv := myhasenv || notrim || perm'; (* decide whether has environment*)
+	  assignPermVars goalEnvAssoc (notrim || perm') (* decide perm var offset *)
 
 (*****************************************************************************)
 (*                         PROCESS A GOAL                                    *)
@@ -706,7 +706,8 @@ and processAllGoal hcVarAssoc body last cutvar =
 	| ((varData, _)::rest) -> 
 		(initVarData varData None true false false None;
 		 addQVars varData;
-		 addExpQVars varData)
+		 addExpQVars varData;
+		 collectUnivVars rest)
   in  
   
   collectUnivVars hcVarAssoc; 
@@ -722,35 +723,55 @@ and processAllGoal hcVarAssoc body last cutvar =
 (*     initialize those are not.                                        *)
 (************************************************************************)
 and processImpGoal clDefs body last cutVarRef =
-  let rec processImpDefs clDefs goalNumber =
+  let rec processImpDefs clDefs fvs tyfvs =
 	match clDefs with
-	  [] -> ()
+	  [] -> (fvs, tyfvs)
 	| ((_, (cls, _, _, _)) :: rest) ->
-		let rec processEmbeddedClauses cls =
+		let rec processEmbeddedClauses cls fvs tyfvs =
 		  match cls with 
-			[] -> ()
+			[] -> (fvs, tyfvs)
 		  | (cl :: rest) ->
-			  processEmbeddedClause cl goalNumber; 
-			  processEmbeddedClauses rest 
+			  let (fvs', tyfvs') = processEmbeddedClause cl fvs tyfvs in
+			  processEmbeddedClauses rest fvs' tyfvs' 
 		in
-		processEmbeddedClauses (!cls);
-		processImpDefs rest goalNumber	  
+		let (fvs', tyfvs') = processEmbeddedClauses (!cls) fvs tyfvs in
+		processImpDefs rest fvs' tyfvs'	  
   in
 
+  let updateLastGoal fvs tyfvs newLastGoalNum =
+	let rec updateLastGoalFvs fvs =
+	  match fvs with
+		[] -> ()
+	  | (varData :: rest) -> 
+		  Absyn.setVariableDataLastGoal varData newLastGoalNum;
+		  updateLastGoalFvs rest
+	in
+	let rec updateLastGoalTyFvs tyfvs =
+	  match tyfvs with
+		[] -> ()
+	  | (varData :: rest) ->
+		  Absyn.setTypeVariableDataLastGoal varData newLastGoalNum;
+		  updateLastGoalTyFvs rest
+	in
+	updateLastGoalFvs fvs;
+	updateLastGoalTyFvs tyfvs
+  in
+  
   (* function body of processImpGoal *)
   let myisPervGoal = isPervGoal () in
-  let myGoalNum    = getGoalNum () in
   (* process embedded definitions (and their variable mapping) *)
-  processImpDefs clDefs (if last then myGoalNum - 1 else myGoalNum);
+  let (fvs, tyfvs) = processImpDefs clDefs [] [] in
   (* process implication body *)
   setPervGoal myisPervGoal;
   let (hasenv, _) = processGoal body true last cutVarRef in
+  let myGoalNum   = getGoalNum () in
+  updateLastGoal fvs tyfvs (if last then myGoalNum - 1 else myGoalNum);
   hasenv
 	
 (***********************************************************************)
 (* process an embedded clause and its term/type variable mapping       *)
 (***********************************************************************)  
-and processEmbeddedClause clause goalNumber =
+and processEmbeddedClause clause fvs tyfvs =
 
   (* process the embedded clause *)
   let (lqVars, lhqVars, lexpqVars, lclVars, lembedded, lgoalNum) =
@@ -758,38 +779,37 @@ and processEmbeddedClause clause goalNumber =
 	 isEmbedded (), getGoalNum ())
   in  
   setQVars []; setHQVars []; setClVars []; setEmbedded true; setGoalNum 1;
-  processClause clause;
+  processClause clause false;
   (* process (type) variable mapping lists *) 
   setQVars lqVars; setHQVars lhqVars; setClVars lclVars; 
   setEmbedded lembedded; setGoalNum lgoalNum;
   processVarMaps (Absyn.getClauseTermVarMaps clause) 
-	(Absyn.getClauseTypeVarMaps clause) goalNumber
+	(Absyn.getClauseTypeVarMaps clause) fvs tyfvs
 
 (**********************************************************************)
 (* set from variable data in term/type variable mappings              *)
 (**********************************************************************)
-and processVarMaps tmVarMaps tyVarMaps newLastGoalNum =
+and processVarMaps tmVarMaps tyVarMaps fvs tyfvs =
   
-  let rec processTmVarMaps tmVars =
+  let rec processTmVarMaps tmVars fvs =
 	match tmVars with
-	  [] -> ()
+	  [] -> fvs
 	| ((fromVarData, _) :: rest) ->
 		if firstEncounteredVar fromVarData then (* first encountered *)
 		  initVarData fromVarData None true false false None
 		else Absyn.setVariableDataPerm fromVarData true;
-		Absyn.setVariableDataLastGoal fromVarData newLastGoalNum;
-		processTmVarMaps rest
+		processTmVarMaps rest (fromVarData :: fvs)
   in
   
-  let rec processTyVarMaps tyVars =
+  let rec processTyVarMaps tyVars tyfvs =
 	match tyVars with
-	  [] -> ()
+	  [] -> tyfvs
 	| ((fromVarData, toVarData) :: rest) ->
 		(* treat fromVarData *)
 		(if firstEncounteredTypeVar fromVarData then (* first encountered *)
 		  initTypeVarData fromVarData true false false None
 		else Absyn.setTypeVariableDataPerm fromVarData true);
-		Absyn.setTypeVariableDataLastGoal fromVarData newLastGoalNum;
+		
         (* treat toVarData *)
 		Absyn.setTypeVariableDataSafety toVarData true;
 		Absyn.setTypeVariableDataHeapVar toVarData true;
@@ -798,13 +818,14 @@ and processVarMaps tmVarMaps tyVarMaps newLastGoalNum =
 		  Absyn.setTypeFreeVariableFirst (Option.get firstuse) false
 		else ());
 		(* process others *)
-		processTyVarMaps rest
+		processTyVarMaps rest (fromVarData :: tyfvs)
   in
   
   let (Absyn.TermVarMap(tmVars)) = tmVarMaps in
   let (Absyn.TypeVarMap(tyVars)) = tyVarMaps in
-  processTmVarMaps tmVars;
-  processTyVarMaps tyVars
+  let fvs' = processTmVarMaps tmVars fvs in
+  let tyfvs' = processTyVarMaps tyVars tyfvs in
+  (fvs', tyfvs')
 
 (*****************************************************************************)
 (*                   PROCESS TOP LEVEL DEFINITIONS                           *)
@@ -820,7 +841,7 @@ let rec processTopLevelDefs clDefs =
 		| (cl :: restCls) -> 
 			setQVars []; setHQVars []; setExpQVars []; setClVars []; 
 			setEmbedded false; setGoalNum 1; setPervGoal false;
-			processClause cl;
+			processClause cl true;
 			processDef restCls
 	  in
 	  processDef (Absyn.getClauseBlockClauses clausesBlock);

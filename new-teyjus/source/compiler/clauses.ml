@@ -148,6 +148,7 @@ and getGoal head andgoal =
 * shorn of such an entry.
 ********************************************************************)
 and closeUniversalDefinitions tsym uvdefs =
+
   let cutfail t =
     let cft = Pervasiveutils.cutFailTerm in
     let app = Absyn.FirstOrderApplication(Pervasive.implicationTerm, [cft; t], 2) in
@@ -208,7 +209,7 @@ and closeUniversalDefinitions tsym uvdefs =
 
     let defs' = List.fold_left (makeTerm t'') [] !defs in
     (defs := defs';
-    uvdefs)
+     uvdefs)
   in
   
   let get tsym defs =
@@ -229,14 +230,14 @@ and closeUniversalDefinitions tsym uvdefs =
         let args = Absyn.getArrowTypeArguments ty in
         let (args', tysyl) = List.split (List.map makeBound args) in
         let t' = Absyn.ApplicationTerm(Absyn.FirstOrderApplication(t,args', List.length args'),
-          false, Errormsg.none) in
+									   false, Errormsg.none) in
         (close (cutfail t') tysyl defs)
       else
         (close (cutfail t) [] defs)
     else
       uvdefs
   else uvdefs
-
+	   
 (********************************************************************
 *collectFreeVars:
 * Accumulates the free variables in a term onto the given fvs list.
@@ -441,38 +442,38 @@ and distributeImplication goal cls result =
 * The returned value brings back a list of disjunctions forming goal if
 * wholegoal is true and a disjunction free form otherwise.
 **********************************************************************)
-and deOrifyGoal goal uvs uvdefs andgoal wholegoal newclauses =
+and deOrifyGoal goal uvs uvdefs andgoal wholegoal newclauses hcs =
   let (t, args) = Absyn.getTermApplicationHeadAndArguments goal in
   
   match t with
     Absyn.ConstantTerm(c,_,_,pos) ->
       if c = Pervasive.allConstant then
         let arg1 = List.hd args in
-        (deOrifyUniversalGoal t arg1 uvs uvdefs andgoal wholegoal newclauses)
+        (deOrifyUniversalGoal t arg1 uvs uvdefs andgoal wholegoal newclauses hcs)
       else if c = Pervasive.someConstant then
         let arg1 = List.hd args in
-        (deOrifyExistentialGoal t arg1 uvs uvdefs andgoal wholegoal newclauses)
+        (deOrifyExistentialGoal t arg1 uvs uvdefs andgoal wholegoal newclauses hcs)
       else if c = Pervasive.orConstant then
         let arg1 = List.hd args in
         let arg2 = List.hd (List.tl args) in
-        (deOrifyOrGoal arg1 arg2 uvs uvdefs andgoal wholegoal newclauses)
+        (deOrifyOrGoal arg1 arg2 uvs uvdefs andgoal wholegoal newclauses hcs)
       else if c = Pervasive.andConstant then
         let arg1 = List.hd args in
         let arg2 = List.hd (List.tl args) in
-        (deOrifyAndGoal arg1 arg2 uvs uvdefs andgoal wholegoal newclauses)
+        (deOrifyAndGoal arg1 arg2 uvs uvdefs andgoal wholegoal newclauses hcs)
       else if c = Pervasive.implConstant then
         let arg1 = List.hd args in
         let arg2 = List.hd (List.tl args) in
-        (deOrifyImplicationGoal arg1 arg2 uvs uvdefs andgoal false newclauses)
+        (deOrifyImplicationGoal arg1 arg2 uvs uvdefs andgoal false newclauses hcs)
       else if c = Pervasive.colondashConstant then
         let arg1 = List.hd args in
         let arg2 = List.hd (List.tl args) in
-        (deOrifyImplicationGoal arg2 arg1 uvs uvdefs andgoal false newclauses)
+        (deOrifyImplicationGoal arg2 arg1 uvs uvdefs andgoal false newclauses hcs)
       else if c = Pervasive.cutConstant then
-        (deOrifyCutGoal goal andgoal uvdefs newclauses)
+        (deOrifyCutGoal goal andgoal uvdefs newclauses hcs)
       else
-        (deOrifyAtomicGoal t args andgoal uvs uvdefs newclauses)
-  | _ -> (deOrifyAtomicGoal t args andgoal uvs uvdefs newclauses)
+        (deOrifyAtomicGoal t args andgoal uvs uvdefs newclauses hcs)
+  | _ -> (deOrifyAtomicGoal t args andgoal uvs uvdefs newclauses hcs)
 
 (**********************************************************************
 *deOrifyCutGoal:
@@ -495,17 +496,20 @@ and deOrifyUniversalGoal t arg1 uvs uvdefs andgoal wholegoal newclauses hcs =
   let (body, tsym) = etaFluffQuantifier t arg1 in
   let hc = makeHiddenConstant tsym in
   let uvs' = tsym :: uvs in
-  
-  let DeOrifyGoalResult(goals', fvs', uvdefs', hascut', newclauses', hcs') = deOrifyGoal body uvs' uvdefs None wholegoal newclauses hcs in
+  let DeOrifyGoalResult(goals', fvs', uvdefs', hascut', newclauses', hcs') = 
+	deOrifyGoal body uvs' uvdefs None wholegoal newclauses hcs in
   let hcs'' = hc :: hcs' in
-  let uvdefs'' = closeUniversalDefinitions tsym uvdefs' in
-  
+  let uvdefs'' = closeUniversalDefinitions tsym uvdefs' in 
+  (* let (uvdefs'', newgoals) = closeUniversalDefinitions tsym uvdefs' goals' in *)
+
   if List.memq tsym fvs' then
     let fvs'' = (List.filter ((<>) tsym) fvs') in
-    let goals'' = distributeQuantifierTerms t tsym goals' andgoal in
+	let goals'' = distributeQuantifierTerms t tsym goals' andgoal in 
+    (* let goals'' = distributeQuantifierTerms t tsym newgoals andgoal in *)
     DeOrifyGoalResult(goals'', fvs'', uvdefs'', hascut', newclauses', hcs'')
   else
-    let goals'' = distributeAndGoal goals' [] andgoal in
+	let goals'' = distributeAndGoal goals' [] andgoal in 
+    (* let goals'' = distributeAndGoal newgoals [] andgoal in *)
     DeOrifyGoalResult(goals'', fvs', uvdefs'', hascut', newclauses', hcs'')
 
 (**********************************************************************
@@ -599,7 +603,8 @@ and deOrifyImplicationGoal clause goal uvs uvdefs andgoal wholegoal newclauses h
         if not (List.memq tsym tsyms) then
           addUVDefs (tsym::tsyms) uvs'
         else
-          addUVDefs tsyms uvs
+          (* addUVDefs tsyms uvs *)
+		  addUVDefs tsyms uvs'
 
   (********************************************************************
   *addNewUVDefs:
@@ -614,7 +619,12 @@ and deOrifyImplicationGoal clause goal uvs uvdefs andgoal wholegoal newclauses h
           (defs := (goal)::(!defs);
           addNewUVDefs tsyms' goal uvdefs)
         with
-          Not_found -> Errormsg.impossible Errormsg.none "Clauses.addNewUVDefs: unbound uv."      
+		  Not_found ->
+			addNewUVDefs tsyms' goal ((t, ref [goal])::uvdefs)
+
+          (*Not_found -> 
+            print_endline ("tysy name: " ^ Absyn.getTypeSymbolName t); 
+            Errormsg.impossible Errormsg.none "Clauses.addNewUVDefs: unbound uv." *)
 	
 	(********************************************************************
 	*andifyList:
@@ -640,10 +650,10 @@ and deOrifyImplicationGoal clause goal uvs uvdefs andgoal wholegoal newclauses h
 	let defuvs = !defuvs in
 	
   let DeOrifyClauseResult(clauses', fvs', uvdefs', newclauses', hcs') = 
-    deOrifyClauses clauses [] uvs [] [] in
-  let defuvs = addUVDefs defuvs uvdefs' in
+    deOrifyClauses clauses [] uvs [] hcs in
+  let defuvs = addUVDefs defuvs uvdefs' in 
   
-  let DeOrifyGoalResult(goals', fvs, uvdefs', hascut, newclauses'', hcs'') =
+  let DeOrifyGoalResult(goals', fvs, uvdefs', hascut, newclauses'', hcs'') = 
     deOrifyGoal goal uvs [] None false newclauses' hcs' in
   let defuvs = addUVDefs defuvs uvdefs' in
   
@@ -837,11 +847,11 @@ and deOrifyClause term currentclauses fvs uvs uvdefs newclauses hcs =
               deOrifyClause arg [] fvs uvs uvdefs newclauses hcs in
             let clauses'' = distributeUniversal f tsym clauses' in
             let fvs'' = List.filter ((==) tsym) fvs' in
-            DeOrifyClauseResult(clauses'' @ currentclauses, fvs'', uvdefs, newclauses', hcs')
+            DeOrifyClauseResult(clauses'' @ currentclauses, fvs'', uvdefs', newclauses', hcs')
             
           else if c = Pervasive.implConstant then
             let DeOrifyGoalResult(goals, fvs', uvdefs', hascut', newclauses', hcs') =
-              deOrifyGoal arg uvs uvdefs None false newclauses hcs in
+              deOrifyGoal arg uvs uvdefs None false newclauses hcs in		   
             let DeOrifyClauseResult(clauses', fvs'', uvdefs'', newclauses'', hcs'') =
               deOrifyClause (List.hd args) [] (union fvs fvs') uvs uvdefs' newclauses' hcs' in
             let t = List.hd clauses' in
@@ -1086,7 +1096,7 @@ let printTranslatedClauses clauses newclauses out =
   let output_line s = (output (s ^ "\n")) in
   
   let printClause t =
-    (output_line (Absyn.string_of_term t))
+    (output_line (Absyn.string_of_term_ast t))
   in
   
   (output_line "Clauses:";
