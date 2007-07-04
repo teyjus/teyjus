@@ -120,13 +120,13 @@ let printStack stack =
 
 let contains env v =
   let find tsym =
-    (Absyn.getTypeSymbolSymbol tsym) == v
+    (Absyn.getTypeSymbolSymbol tsym) = v
   in
   (List.exists find env)
 
 let get = fun env v ->
   let find tsym =
-    (Absyn.getTypeSymbolSymbol tsym) == v
+    (Absyn.getTypeSymbolSymbol tsym) = v
   in
   
   try
@@ -489,7 +489,8 @@ and translateId parsingtoplevel term fvs bvs amodule =
         else
           (*  At this point the constant is assumed to be unknown.
               Simply raise an error.  *)
-          (Errormsg.error pos ("undeclared constant " ^ (Symbol.name sym));
+          (print_string "parse.ml";
+		   Errormsg.error pos ("undeclared constant " ^ (Symbol.name sym));
           (StackError, fvs, bvs))
   | _ -> (Errormsg.impossible (Preabsyn.getTermPos term) 
                               "Parse.translateId: invalid term")

@@ -672,7 +672,7 @@ and genSTermCode regNum term chunk lowval last hasenv normalize =
   (* constant without type associations *)
   let genSTermCodeMConst c regNum =
 	if (Pervasive.isnilConstant c) then
-	  ([Instr.Ins_put_list(regNum)], Instr.getSize_put_list, false)
+	  ([Instr.Ins_put_nil(regNum)], Instr.getSize_put_nil, false)
 	else
 	  ([Instr.Ins_put_m_const(regNum, c)], Instr.getSize_put_m_const, false)
   in
@@ -1374,25 +1374,27 @@ let genClauseHeadCode cl chunk insts startLoc isFact =
     (* generate code for each type variable mapping *)
     let genOneTyVarCode (fromVar, toVar) =
       let fromOffset = Absyn.getTypeVariableDataOffset fromVar in
-      let toOffset   = Absyn.getTypeVariableDataOffset toVar   in
       if (Absyn.getTypeVariableDataPerm toVar) then 
-		(Instr.Ins_init_type_variable_p(toOffset, fromOffset),
+		(Instr.Ins_init_type_variable_p(Absyn.getTypeVariableDataOffset toVar,
+										fromOffset),
 		 Instr.getSize_init_type_variable_p)
       else
 		let _ = Registers.assignTyReg toVar true chunk numArgs in
-		(Instr.Ins_init_type_variable_t(toOffset, fromOffset),
+		(Instr.Ins_init_type_variable_t(Absyn.getTypeVariableDataOffset toVar, 
+										fromOffset),
 		 Instr.getSize_init_type_variable_t)
     in
     (* generate code for each term variable mapping *)
     let genOneTmVarCode (fromVar, toVar) =
       let fromOffset = Absyn.getVariableDataOffset fromVar in
-      let toOffset   = Absyn.getVariableDataOffset toVar   in
-      if (Absyn.getVariableDataPerm toVar) then 
-		(Instr.Ins_init_variable_p(toOffset, fromOffset),
+	  if (Absyn.getVariableDataPerm toVar) then
+		(Instr.Ins_init_variable_p(Absyn.getVariableDataOffset toVar, 
+								   fromOffset),
 		 Instr.getSize_init_variable_p)
-      else 
+	  else
 		let _ = Registers.assignTmReg toVar chunk numArgs in
-		(Instr.Ins_init_variable_t(toOffset, fromOffset),
+		(Instr.Ins_init_variable_t(Absyn.getVariableDataOffset toVar, 
+								   fromOffset),
 		 Instr.getSize_init_variable_t)
     in
     (* for fold mapping result *)
@@ -1823,13 +1825,14 @@ and genSomeGoal goal cl goalNum last chunk chunks insts startLoc =
   let (newChunk, newChunks) = getChunk chunk chunks in
   (* instruction for tagging existential quantified variable *)
   let qvarData = Absyn.getSomeGoalQuantVar goal in
-  let offset = Absyn.getVariableDataOffset qvarData in
   let (tagCode, tagCodeSize) =
 	if (Absyn.getVariableDataPerm qvarData) then
-	  (Instr.Ins_tag_exists_p(offset), Instr.getSize_tag_exists_p)
+	  (Instr.Ins_tag_exists_p(Absyn.getVariableDataOffset qvarData), 
+	   Instr.getSize_tag_exists_p)
 	else
 	  let _ = Registers.assignTmReg qvarData newChunk 0 in
-	  (Instr.Ins_tag_exists_t(offset), Instr.getSize_tag_exists_t)
+	  (Instr.Ins_tag_exists_t(Absyn.getVariableDataOffset qvarData), 
+	   Instr.getSize_tag_exists_t)
   in
   genGoal (Absyn.getSomeGoalBody goal) cl goalNum last newChunk newChunks
 	(insts @ [tagCode]) (startLoc + tagCodeSize)
@@ -1841,8 +1844,8 @@ and genSomeGoal goal cl goalNum last chunk chunks insts startLoc =
 and genImpGoal goal cl goalNum last chunk chunks insts startLoc =
   (* tag init variables *)
   let genVarInit varData =
-	(Instr.Ins_tag_variable(Absyn.getVariableDataOffset varData), 
-	 Instr.getSize_tag_variable)
+	 Instr.Ins_tag_variable(Absyn.getVariableDataOffset varData), 
+	 Instr.getSize_tag_variable
   in
   (* create init type variable *)
   let genTyVarInit varData =
@@ -1861,6 +1864,7 @@ and genImpGoal goal cl goalNum last chunk chunks insts startLoc =
   let (varInitCode, varInitCodeSize) =
 	List.fold_left collectMapCode ([], 0) (List.map genVarInit varList)
   in
+ 
   (* instructions for creating type variable init *)
   let Absyn.TypeVarInits(tyVarList) = Absyn.getImpGoalTypeVarInits goal in
   let (tyvarInitCode, tyvarInitCodeSize) =
@@ -1998,7 +2002,6 @@ let genClauseCode cl insts startLoc =
 	if isFact then (insts, startLoc)
 	else genClauseBodyCode cl chunks insts startLoc
   in
-
   let (instsHead, instsHeadNext) = genClauseHead insts startLoc          in
   let (instsCut,  instsCutNext)  = genClauseCut  instsHead instsHeadNext in
   let (instsBody, instsBodyNext) = genClauseBody instsCut instsCutNext   in
