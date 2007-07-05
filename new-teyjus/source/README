@@ -1,0 +1,20 @@
+1. compiler (tjcc)
+
+   compile: 
+   use command "omake tjcc" under the source directory.
+
+   run:
+   use command "tjcc <module name>" or "tjcc <module name> -o <bytecode name>".
+  
+
+2. disassembler (tjdis)
+  
+   compile:
+   use command "omake tjdis" under the source directory.
+
+   run:
+   use command "tjdis <bytecode name>"
+
+
+3. simulator (tjsim) -- to be finished.
+ 
