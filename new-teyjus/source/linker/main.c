@@ -11,8 +11,16 @@ int main(int argc, char* argv[])
     exit(0);
   }
   
-  InitAll();
-  LoadTopModule(argv[1]);
-  WriteAll(argv[1]);
+  EM_TRY
+  {
+    InitAll();
+    LoadTopModule(argv[1]);
+    WriteAll(argv[1]);
+  }
+  EM_CATCH
+  {
+    printf("An exception occured.\n");
+    return 0;
+  }
   return 0;
 }

@@ -1,3 +1,5 @@
+CFLAGS += -g -O0
+
 LK_SRCS[] =
     CallResolution
     bvrtab
@@ -36,5 +38,6 @@ MAIN_FILES[] =
     main
 
 LIBS = $(LIB)
+
 
 CProgram($(MAIN), $(MAIN_FILES))
