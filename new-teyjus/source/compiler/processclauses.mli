@@ -14,4 +14,4 @@
 (* 5. String arguments are collected.                                        *)
 (*****************************************************************************)
 val processClauses: Absyn.amodule -> Absyn.aterm list -> Absyn.aterm list 
-	-> Absyn.amodule
+	-> (Absyn.aconstant * Absyn.aterm) list -> Absyn.amodule

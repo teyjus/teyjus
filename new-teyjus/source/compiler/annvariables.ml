@@ -486,7 +486,7 @@ and analyseApplicationTerm applInfo =
 and analyseFreeVarTerm var heapvar = 
   let varData = Absyn.getTermFreeVariableVariableData var in
   if (firstEncounteredVar varData) then
-	let first = not (isEmbedded ()) in
+	let first = (isHQVar varData) || not (isEmbedded ()) in
 	initVarData varData (Some first) false true heapvar (Some var);
 	Absyn.setTermFreeVariableFirst var first
   else
@@ -603,7 +603,7 @@ let rec processClause clause perm =
 			   goalEnvAssoc, cutVarRef, hasenv, impmods) ->
 	  collectHQVars expHQVars;
 	  processClauseHead args tyargs; (* annotate clause (type) args *)
-	  let perm' = (not (impmods = []) && perm) in   (* process goal                *)
+	  let perm' = (not (impmods = []) && perm) in   (* process goal           *)
 	  let (myhasenv, notrim) = processGoal goal perm' true cutVarRef in
 	  hasenv := myhasenv || notrim || perm'; (* decide whether has environment*)
 	  assignPermVars goalEnvAssoc (notrim || perm') (* decide perm var offset *)

@@ -94,6 +94,23 @@ let gListsSet ntVars ntyVars nqVars nhqVars =
   (tVars := ntVars; tyVars := ntyVars; qVars := nqVars; hqVars := nhqVars)
 
 
+(*********************************************************************)
+(* closed definition list : used in insert embedded clauses          *)
+(*********************************************************************)
+let closedDefs : ((Absyn.aconstant * Absyn.aterm) list) ref = ref []
+let setClosedDefs defs = closedDefs := defs	  
+
+let inClosedDefs const impterm =
+  let rec inClosedDefsAux defs =
+	match defs with
+	  [] -> false
+	| (hc, def) :: rest ->
+		if (const == hc) && (Absyn.sameTermStructure impterm def) then true
+		else inClosedDefsAux rest 
+  in
+  inClosedDefsAux (!closedDefs)
+
+
 (** ********************************************************************** **)
 (**                        PROCESS TYPES                                   **)
 (** ********************************************************************** **)
@@ -397,7 +414,7 @@ let rec processClause clauseTerm =
       if (Pervasive.isallConstant head) then
 		let arg = List.hd args in 
 		gListAdd (List.hd (Absyn.getTermAbstractionVars arg)) 
-		  (ref None) hqVars; 
+		  (ref None) hqVars;
 		processClause (Absyn.getTermAbstractionBody arg)
       else
 		let (preClause, freeVars, freeTyVars) =
@@ -473,9 +490,9 @@ and processGoal gltm =
 			else if Pervasive.issomeConstant pred then         (*some goal*)
 			  processSomeGoal (List.hd args) 
 			else if Pervasive.isallConstant pred then          (*all goal *)
-			  processAllGoal (List.hd args)
+			   processAllGoal (List.hd args)
 			else if Pervasive.isimplConstant pred then         (*imp goal *)
-			  processImpGoal (List.hd args) (List.hd (List.tl args))
+			  processImpGoal (List.hd args) (List.hd (List.tl args)) gltm
 			else                                     (* rigid atomic goal *)
 			  processAtomicGoal gltm head 
 				(Absyn.getTermApplicationArguments gltm)
@@ -568,7 +585,7 @@ and processAllGoal goalBody =
 (*     having their scopes outside of the implication goal, but having      *)
 (*     their first appearence inside the ancester of the goal.              *)
 (****************************************************************************)
-and processImpGoal clauseTerm goalTerm =
+and processImpGoal clauseTerm goalTerm impGoal =
   (* recurse over the conjunctive structures *)
   let rec processImpClauses clauseTerm clauseDefs varInits tyVarInits =
 	match clauseTerm with 
@@ -582,8 +599,8 @@ and processImpGoal clauseTerm goalTerm =
 		  processImpClauses (List.hd (List.tl args)) newClDefs newVarInits
 			newTyVarInits
 		else
-		  processImpClause clauseTerm clauseDefs varInits tyVarInits
-	| _ -> processImpClause clauseTerm clauseDefs varInits tyVarInits 
+		  processImpClause clauseTerm clauseDefs varInits tyVarInits impGoal
+	| _ -> processImpClause clauseTerm clauseDefs varInits tyVarInits impGoal
   in
 
   let (clauseDefs, varInits, tyVarInits) = 
@@ -611,7 +628,7 @@ and processImpGoal clauseTerm goalTerm =
 (*    are assumed to have their scopes at the head of the embedded  *)
 (*    clause.                                                       *)  
 (********************************************************************)
-and processImpClause clauseTerm clauseDefs varInits tyVarInits =
+and processImpClause clauseTerm clauseDefs varInits tyVarInits impGoal =
   (* process the embedded clause *)
   let (ltVars, ltyVars, lqVars, lhqVars, lembedded) =    (* bookkeeping *)
 	(!tVars, !tyVars, !qVars, !hqVars, isEmbedded ()) 
@@ -643,8 +660,9 @@ and processImpClause clauseTerm clauseDefs varInits tyVarInits =
 					expHQVars, ref None, goal, ref (Absyn.GoalEnvAssoc []), 
 					ref None, ref false, []))
   in
+  let closed = inClosedDefs pred impGoal in
   (* insert the new clause into the definition list of the impl goal *)
-  (insertClause pred clause clauseDefs true false, newVarInits, newTyVarInits)
+  (insertClause pred clause clauseDefs true closed, newVarInits, newTyVarInits)
 
 
 (********************************************************************)
@@ -813,26 +831,21 @@ let rec processTopLevelClauses clauseTerms impmods clauseDefs anonymous =
 (** ********************************************************************** **)
 (**                       INTERFACE FUNCTION                               **)
 (** ********************************************************************** **)
-let processClauses amod clTerms newClTerms = 
+let processClauses amod clTerms newClTerms closeddefs = 
   match amod with
 	Absyn.Module(modname, modimps, modaccs, ctable, ktable, atable, _,
 				 gkinds, lkinds, gconsts, lconsts, hconsts, skels, hskels, _)
 	->
-	  (*
+	  setClosedDefs closeddefs;
 	  (* process clauses *)
-	  let clDefs = processTopLevelClauses clTerms modimps [] false in
+      let clDefs = 
+         processTopLevelClauses (List.rev newClTerms) [] [] true 
+	  in
 	  (* process anonymous clauses (those introduced for deorification), and*)
       (* increment them into the module definition list.                    *)
       (* Note: 1) the import module field of anonymous clauses should be    *)
       (*          empty;                                                    *)
       (*       2) the definitions of anonymous clauses are always closed    *)
-	  let newClDefs = 
-		processTopLevelClauses (List.rev newClTerms) [] clDefs true 
-	  in
-		 *)
-      let clDefs = 
-         processTopLevelClauses (List.rev newClTerms) [] [] true 
-	  in
       let newClDefs = processTopLevelClauses clTerms modimps clDefs false in
       (* Insert the clauses definitions and the string list into the module *)
       (* abstract syntax.                                                   *)

@@ -466,6 +466,7 @@ val getTermApplicationHead : aterm -> aterm
 val getTermApplicationArity : aterm -> int
 val getTermApplicationArguments : aterm -> aterm list
 
+val sameTermStructure : aterm -> aterm -> bool
 (*************************************************************************)
 (*  astringinfo:                                                         *)
 (*************************************************************************)
