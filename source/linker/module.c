@@ -13,8 +13,9 @@
 #include "importtab.h"
 #include "file.h"
 #include "rename.h"
+#include "../system/error.h"
 
-#define BC_VER 3
+#define BC_VER 2
 #define LINKCODE_VER 1
 
 static void LoadAccModule(char* modname);

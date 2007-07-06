@@ -5,6 +5,9 @@
 #include <unistd.h>
 #include <stdio.h>
 #include <string.h>
+#include <endian.h>
+#include <byteswap.h>
+#include <bits/wordsize.h>
 #include "file.h"
 #include "../system/error.h"
 
@@ -55,21 +58,37 @@ Word LK_FILE_GETWord(int fd)
 {
   Word tmp;
   read(fd,&tmp,sizeof(tmp));
+#if BYTE_ORDER == LITTLE_ENDIAN
+# if __WORDSIZE == 32
+  return (Word)bswap_32((unsigned int)tmp);
+# elif __WORDSIZE == 64
+  return bswap_64(tmp);
+# endif
+#elif BYTE_ORDER == BIG_ENDIAN
   return tmp;
+#endif
 }
 
 INT4 LK_FILE_GET4(int fd)
 {
   INT4 tmp;
   read(fd,&tmp,sizeof(tmp));
+#if BYTE_ORDER == LITTLE_ENDIAN
+  return bswap_32(tmp);
+#elif BYTE_ORDER == BIG_ENDIAN
   return tmp;
+#endif
 }
 
 TwoBytes LK_FILE_GET2(int fd)
 {
   TwoBytes tmp;
   read(fd,&tmp,sizeof(tmp));
+#if BYTE_ORDER == LITTLE_ENDIAN
+  return bswap_16(tmp);
+#elif BYTE_ORDER == BIG_ENDIAN
   return tmp;
+#endif
 }
 
 Byte LK_FILE_GET1(int fd)
