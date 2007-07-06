@@ -17,7 +17,7 @@ let compile basename outfile =
 	  else
 
 		(*  Get the list of clauses and new clauses.  *)
-		let (absyn, clauses, newclauses) = 
+		let (absyn, clauses, newclauses, closeddefs) = 
 		  Clauses.translateClauses modresult absyn 
 		in
 		if !Errormsg.anyErrors then 1
@@ -31,7 +31,7 @@ let compile basename outfile =
   
 			(*  Process the clauses.  *)
 			let absyn = 
-			  Processclauses.processClauses absyn clauses newclauses 
+			  Processclauses.processClauses absyn clauses newclauses closeddefs 
 			in
 			(*print_string "passed: processClauses\n"; *)
 			if !Errormsg.anyErrors then 1

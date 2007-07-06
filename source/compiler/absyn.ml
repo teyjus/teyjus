@@ -995,7 +995,7 @@ let getVariableDataOffset v =
   if Option.isSome (r) then
       Option.get (r)
   else
-    Errormsg.impossible Errormsg.none 
+	 Errormsg.impossible Errormsg.none 
                         "Absyn.getVariableDataOffset: invalid variable"
 
 let setVariableDataOffset v o =
@@ -1432,6 +1432,63 @@ let setStringInfoIndex stringInfo index =
 let getStringInfoString = function
   StringData(str,_,_) -> str
 | StringLiteral(str)  -> str
+
+let rec sameTermStructure t1 t2 =
+  let rec collectUnNestedAbst t tsyms =
+	match t with
+	  AbstractionTerm(NestedAbstraction(tsym, body),_,_) ->
+	    collectUnNestedAbst body (tsym :: tsyms)
+	| AbstractionTerm(UNestedAbstraction(tsyms', _, body),_,_) ->
+		(body, (List.rev tsyms) @ tsyms')
+	| _ -> (t, List.rev tsyms)
+  in
+
+  let rec sameTSyms tsyms1 tsyms2 =
+	match (tsyms1, tsyms2) with
+	  ([], []) -> true
+	| (tsym1 :: rest1, tsym2 :: rest2) ->
+		if (tsym1 == tsym2) then sameTSyms rest1 rest2
+		else false
+	| _ -> false
+  in
+
+  match (t1, t2) with
+	(IntTerm(i, _, _), IntTerm(j, _, _)) -> if (i = j) then true else false
+  | (RealTerm(r, _, _), RealTerm(r', _, _)) -> if (r = r') then true else false
+  | (StringTerm(s,_,_), StringTerm(s',_,_)) ->
+	  if (getStringInfoString s = getStringInfoString s') then true else false
+  | (ConstantTerm(c,_,_,_), ConstantTerm(c',_,_,_)) ->
+	  if (c == c') then true else false
+  | (FreeVarTerm(NamedFreeVar(tsym),_,_), FreeVarTerm(NamedFreeVar(tsym'),_,_)) ->
+	  if (tsym == tsym') then true else false
+  | (BoundVarTerm(NamedBoundVar(tsym),_,_), BoundVarTerm(NamedBoundVar(tsym'),_,_)) ->
+	  if (tsym == tsym') then true else false
+  | (AbstractionTerm(UNestedAbstraction(tsyms, nabs, body),_,_), 
+	 AbstractionTerm(UNestedAbstraction(tsyms', nabs', body'),_,_)) ->
+	   ((nabs = nabs') && (sameTSyms tsyms tsyms') && (sameTermStructure body body'))
+  | (AbstractionTerm(UNestedAbstraction(tsyms, nabs, body),_,_),
+	 AbstractionTerm(NestedAbstraction(tsym, body'),_,_)) ->
+	   let (body'', tsyms'') = collectUnNestedAbst t2 [] in
+	   ((sameTSyms tsyms tsyms'') && (sameTermStructure body body'))
+  | (AbstractionTerm(NestedAbstraction(tsym, body'),_,_),
+	 AbstractionTerm(UNestedAbstraction(tsyms, nabs, body),_,_)) ->
+	   let (body'', tsyms'') = collectUnNestedAbst t1 [] in
+	   ((sameTSyms tsyms tsyms'') && (sameTermStructure body body'))
+  | (ApplicationTerm(FirstOrderApplication(h, args, arity),_,_), 
+	 ApplicationTerm(FirstOrderApplication(h', args', arity'),_,_)) ->
+	   (arity = arity') && (sameTermStructure h h') && (sameTermStructureList args args')
+  | _ -> 
+	  (print_endline ("term1: " ^ string_of_term_ast t1);
+	   print_endline ("term2: " ^ string_of_term_ast t2);
+	   false)
+
+and sameTermStructureList ts ts' =
+  match (ts, ts') with
+	([], []) -> true
+  | (t::rest, t'::rest') ->
+	  (sameTermStructure t t') && (sameTermStructureList rest rest')
+  | _ -> false
+
 
 (*************************************************************************)
 (*  agoal:                                                               *)
