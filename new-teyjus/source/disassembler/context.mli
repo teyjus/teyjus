@@ -45,6 +45,19 @@ type moduletable =
 	   int * Absyn.aconstant list)
 
 (***************************************************************************)
+(* import table: (needed for linked code)                                  *)
+(* (number of code segs, next clause table, local constant table,          *)
+(*  find code fn, search table)                                            *)
+(***************************************************************************)
+type importtable =
+	(int * Absyn.aconstant list * Absyn.aconstant list * int * 
+	   Absyn.aconstant list)
+
+type moduletables =
+	ModuleTable  of moduletable
+  | ImportTables of (importtable list)
+
+(***************************************************************************)
 (* renaming tables: (import/accumulate)                                    *)
 (***************************************************************************)
 type renamingtables = 
@@ -73,7 +86,7 @@ type renamingtables =
 type modcontext =
 	ModContext of (string * int * string * int * kinds * kinds * typeskels *
 				  constants * constants * constants * strings * impltables *
-				  hashtables * moduletable * renamingtables * renamingtables *
+				  hashtables * moduletables * renamingtables * renamingtables *
 				  Instr.instruction list)
 
 (***************************************************************************)

@@ -87,15 +87,26 @@ let disassembleHashTable gconsts lconsts hconsts =
 (***************************************************************************)
 (*                          HEADER INFORMATION                             *)
 (***************************************************************************)
-let disassembleHeaderInfo filename =
+let disassembleHeaderInfo filename linkedCode =
   (* check bytecode version number *)
-  if Bytecode.readWord () = Bytecode.byteCodeVersionNumber then
+  let versionNumber = Bytecode.readWord() in
+  if (linkedCode) then
+	if (versionNumber = Bytecode.linkedByteCodeVersionNumber) then 
+	  let modName  = Bytecode.readString () in
+	  let codeSize = Bytecode.readWord () in
+	  (modName, codeSize)
+	else
+	  (Errormsg.error Errormsg.none 
+		 "Disassembler: inconsistent linked bytecode version";
+	   ("", 0))
+  else
+	if (versionNumber = Bytecode.byteCodeVersionNumber) then
 	  let modName = Bytecode.readString () in
 	  let codeSize = Bytecode.readWord () in
 	  (modName, codeSize)
-  else
-	(Errormsg.error Errormsg.none "Disassembler: inconsistent bytecode version";
-	 ("", 0))
+	else
+	  (Errormsg.error Errormsg.none "Disassembler: inconsistent bytecode version";
+	   ("", 0))
 
 (***************************************************************************)
 (*                     GLOBAL/LOCAL KIND INFORMATION                       *)
@@ -206,7 +217,28 @@ let disassembleModuleTable gconsts lconsts hconsts =
   let localpredTab  = disassembleClauseTable gconsts lconsts hconsts in
   let findCodefn    = Bytecode.readFindCodeFn () in
   let searchTab     = disassembleSearchTable gconsts lconsts hconsts in
-  (nextClauseTab, exportdefTab, localpredTab, findCodefn, searchTab)
+  Context.ModuleTable(nextClauseTab, exportdefTab, localpredTab, findCodefn, searchTab)
+
+(***************************************************************************)
+(*                      IMPORT TABLES                                      *)
+(***************************************************************************)
+let disassembleImportTables gconsts lconsts hconsts =
+  let numberImportTabs = Bytecode.readOneByte () in
+  
+  let rec disassembleImportTablesAux index importTabs =
+	if (index = numberImportTabs) then List.rev importTabs
+	else
+	  let segNum        = Bytecode.readOneByte () in
+	  let nextClauseTab = disassembleClauseTable gconsts lconsts hconsts in
+	  let localConsts   = disassembleClauseTable gconsts lconsts hconsts in
+	  let findCodefn    = Bytecode.readFindCodeFn () in
+	  let searchTab     = disassembleSearchTable gconsts lconsts hconsts in
+	  disassembleImportTablesAux (index + 1) 
+		((segNum, nextClauseTab, localConsts, findCodefn, searchTab) :: importTabs)
+  in
+
+  let importTabs = disassembleImportTablesAux 0 [] in
+  Context.ImportTables(importTabs)
 
 (***************************************************************************)
 (*                      RENAMING TABLES                                    *)
@@ -271,16 +303,22 @@ let disassembleInstructions gkinds lkinds gconsts lconsts hconsts codeSize =
 (***************************************************************************)
 (*                        INTERFACE FUNCTION                               *)
 (***************************************************************************)
-let disassemble filename tableOnly instrOnly =
+let disassemble filename tableOnly instrOnly linkedCode =
   Bytecode.openInChannel filename;
-  let (modName, codeSize) = disassembleHeaderInfo filename in
+  let (modName, codeSize) = disassembleHeaderInfo filename linkedCode in
   if !Errormsg.anyErrors then 1
   else
+	((if linkedCode then
+	  let _ = Bytecode.readTwoBytes () in ()
+	else ());
 	let gKinds = disassembleKinds Bytecode.readGlobalKind     in
 	let lKinds = disassembleKinds Bytecode.readLocalKind      in
 	let tySkels = disassembleTypeSkeletons gKinds lKinds      in
 	if !Errormsg.anyErrors then 1
 	else
+	  ((if linkedCode then 
+		let _ = Bytecode.readTwoBytes () in ()
+	  else ());		
 	  let gConsts = disassembleConstants Bytecode.readGlobalConstant in
 	  let lConsts = disassembleConstants Bytecode.readLocalConstant  in
 	  let hConsts = disassembleConstants Bytecode.readHiddenConstant in
@@ -288,12 +326,17 @@ let disassemble filename tableOnly instrOnly =
 	  let impltabs = disassembleImplTabs gConsts lConsts hConsts in
 	  let hashtabs = disassembleHashTabs gConsts lConsts hConsts in
 	  let _ = Bytecode.readTwoBytes () in (* skip bv table *)
-	  let moduletab = disassembleModuleTable gConsts lConsts hConsts in
-	  let accRenamings = 
-		disassembleRenamingTables gKinds lKinds gConsts lConsts hConsts 
+	  let moduletab = 
+		if linkedCode then disassembleImportTables gConsts lConsts hConsts 
+		else disassembleModuleTable gConsts lConsts hConsts 
 	  in
-	  let impRenamings = 
-		disassembleRenamingTables gKinds lKinds gConsts lConsts hConsts 
+	  let accRenamings = 
+		if linkedCode then []
+		else disassembleRenamingTables gKinds lKinds gConsts lConsts hConsts 
+	  in
+	  let impRenamings =
+		if linkedCode then []
+		else disassembleRenamingTables gKinds lKinds gConsts lConsts hConsts 
 	  in
 	  let instructions =
 		disassembleInstructions gKinds lKinds gConsts lConsts hConsts codeSize
@@ -306,5 +349,5 @@ let disassemble filename tableOnly instrOnly =
 	  in
 	  (Context.displayModContext context tableOnly instrOnly;
 	   Bytecode.closeInChannel ();
-	   0)
+	   0)))
 
