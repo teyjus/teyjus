@@ -149,7 +149,8 @@ parseModule
   : modheader modpreamble modbody modend  {
       reverseResults ();
       let m = Preabsyn.Module(currentModuleName (), !globalConstants, !localConstants,
-                      !closedConstants, !useOnlyList, !fixityList, !globalKinds, !localKinds, 
+                      !closedConstants, !useOnlyList, !fixityList, 
+                      !globalKinds, !localKinds, 
                       !globalTypeAbbrevs, !clauseList, !accumulatedModList, 
                       !accumulatedSigList, !useSigList, !importedModList) in
       (clearResults ();
@@ -157,7 +158,8 @@ parseModule
   | error modpreamble modbody modend      {
       reverseResults ();
       let m = Preabsyn.Module(currentModuleName (), !globalConstants, !localConstants,
-                      !closedConstants, !useOnlyList, !fixityList, !globalKinds, !localKinds,
+                      !closedConstants, !useOnlyList, !fixityList, 
+                      !globalKinds, !localKinds,
                       !globalTypeAbbrevs, !clauseList,
                       !accumulatedModList, !accumulatedSigList,
                       !useSigList, !importedModList) in
@@ -191,7 +193,9 @@ tok
 
 modheader
   :   MODULE tok PERIOD {if ((getIDName $2) <> currentModuleName ()) then
-                            Errormsg.error (getPos 1) ("Expected module name '" ^ currentModuleName () ^ "'.")
+                            Errormsg.error (getPos 1) 
+                                           ("Expected module name '" ^ 
+                                                      currentModuleName () ^ "'.")
                           else
                             ()}
   ;
@@ -199,7 +203,9 @@ modheader
 
 sigheader
   : SIG tok PERIOD  {if ((getIDName $2) <> currentModuleName ()) then
-                      Errormsg.error (getPos 1) ("Expected signature name '" ^ currentModuleName () ^ "'.")
+                        Errormsg.error (getPos 1) 
+                                       ("Expected signature name '" ^ 
+                                                     currentModuleName () ^ "'.")
                     else
                       ()}
   ;
@@ -234,17 +240,25 @@ sigpreamble
   ;
 
 cvidlist
-  : tok                   {Preabsyn.Symbol(Symbol.symbol(getIDName $1), (getIDKind $1), getPos 1) :: []}
-  | cvidlist COMMA ID     {Preabsyn.Symbol(Symbol.symbol(getIDName $3), (getIDKind $3), getPos 1) :: $1}
-  | cvidlist COMMA UPCID  {Preabsyn.Symbol(Symbol.symbol(getIDName $3), (getIDKind $3), getPos 1) :: $1}
-  | cvidlist COMMA SYID   {Preabsyn.Symbol(Symbol.symbol(getIDName $3), (getIDKind $3), getPos 1) :: $1}
+  : tok                   {Preabsyn.Symbol(Symbol.symbol(getIDName $1), 
+                                           (getIDKind $1), getPos 1) :: []}
+  | cvidlist COMMA ID     {Preabsyn.Symbol(Symbol.symbol(getIDName $3), 
+                                           (getIDKind $3), getPos 1) :: $1}
+  | cvidlist COMMA UPCID  {Preabsyn.Symbol(Symbol.symbol(getIDName $3), 
+                                           (getIDKind $3), getPos 1) :: $1}
+  | cvidlist COMMA SYID   {Preabsyn.Symbol(Symbol.symbol(getIDName $3), 
+                                           (getIDKind $3), getPos 1) :: $1}
   ;
 
 idlist
-  : ID                {Preabsyn.Symbol(Symbol.symbol(getIDName $1), (getIDKind $1), getPos 1) :: []}
-  | SYID              {Preabsyn.Symbol(Symbol.symbol(getIDName $1), (getIDKind $1), getPos 1) :: []}
-  | idlist COMMA ID   {Preabsyn.Symbol(Symbol.symbol(getIDName $3), (getIDKind $3), getPos 1) :: $1}
-  | idlist COMMA SYID {Preabsyn.Symbol(Symbol.symbol(getIDName $3), (getIDKind $3), getPos 1) :: $1}
+  : ID                {Preabsyn.Symbol(Symbol.symbol(getIDName $1), 
+                                       (getIDKind $1), getPos 1) :: []}
+  | SYID              {Preabsyn.Symbol(Symbol.symbol(getIDName $1), 
+                                       (getIDKind $1), getPos 1) :: []}
+  | idlist COMMA ID   {Preabsyn.Symbol(Symbol.symbol(getIDName $3), 
+                                       (getIDKind $3), getPos 1) :: $1}
+  | idlist COMMA SYID {Preabsyn.Symbol(Symbol.symbol(getIDName $3), 
+                                       (getIDKind $3), getPos 1) :: $1}
   ;
 
 modbody
@@ -259,32 +273,54 @@ signdecls
   ;
 
 signdecl
-  : KIND idlist kind PERIOD       {globalKinds := Preabsyn.Kind($2, Some ($3 - 1), getPos 1) :: !globalKinds}
-  | TYPE idlist type PERIOD       {globalConstants := Preabsyn.Constant($2, Some $3, getPos 1) :: !globalConstants}
+  : KIND idlist kind PERIOD       {globalKinds := 
+                                      Preabsyn.Kind($2, Some ($3 - 1), 
+                                                    getPos 1) :: !globalKinds}
+  | TYPE idlist type PERIOD       {globalConstants := 
+                                      Preabsyn.Constant($2, Some $3, getPos 1) 
+                                        :: !globalConstants}
   
-  | TYPEABBREV LPAREN tok arglist RPAREN type PERIOD  {globalTypeAbbrevs :=
-      Preabsyn.TypeAbbrev(makeSymbol (getPos 1) $3, (List.map (makeSymbol (getPos 1)) $4), $6, getPos 1) :: !globalTypeAbbrevs}
-  | TYPEABBREV tok type PERIOD  {globalTypeAbbrevs := 
-      Preabsyn.TypeAbbrev(makeSymbol (getPos 1) $2, [], $3, getPos 1) :: !globalTypeAbbrevs}
+  | TYPEABBREV LPAREN tok arglist RPAREN type PERIOD  
+         {globalTypeAbbrevs := Preabsyn.TypeAbbrev(makeSymbol (getPos 1) $3, 
+                                                   (List.map (makeSymbol (getPos 1)) $4), 
+                                                   $6, getPos 1) 
+                                 :: !globalTypeAbbrevs}
+  | TYPEABBREV tok type PERIOD  
+         {globalTypeAbbrevs := 
+               Preabsyn.TypeAbbrev(makeSymbol (getPos 1) $2, [], $3, getPos 1) 
+                  :: !globalTypeAbbrevs}
   
-  | fixity idlist INTLIT PERIOD   {if ($3 < 0 || $3 > maxPrecedence) then
-                                    Errormsg.error (getPos 1) ("Precedence must be between 0 and " ^ (string_of_int $3) ^ ".")
-                                  else
-                                    fixityList :=  Preabsyn.Fixity($2, $1, $3, Preabsyn.getFixityPos $1) :: !fixityList}
-  | EXPORTDEF idlist PERIOD       {exportList := Preabsyn.Constant($2, None, getPos 1) :: !exportList}
-  | EXPORTDEF idlist type PERIOD  {exportList := Preabsyn.Constant($2, Some $3, getPos 1) :: !exportList}
-  | USEONLY idlist PERIOD         {useOnlyList := Preabsyn.Constant($2, None, getPos 1) :: !useOnlyList}
-  | USEONLY idlist type PERIOD    {useOnlyList := Preabsyn.Constant($2, Some $3, getPos 1) :: !useOnlyList}
-;
+  | fixity idlist INTLIT PERIOD   
+         {if ($3 < 0 || $3 > maxPrecedence) 
+          then Errormsg.error (getPos 1) 
+                              ("Precedence must be between 0 and " ^ 
+                                               (string_of_int $3) ^ ".")
+          else fixityList :=  Preabsyn.Fixity($2, $1, $3, 
+                                              Preabsyn.getFixityPos $1) :: !fixityList}
+  | EXPORTDEF idlist PERIOD       
+         {exportList := Preabsyn.Constant($2, None, getPos 1) :: !exportList}
+  | EXPORTDEF idlist type PERIOD  
+         {exportList := Preabsyn.Constant($2, Some $3, getPos 1) :: !exportList}
+  | USEONLY idlist PERIOD         
+         {useOnlyList := Preabsyn.Constant($2, None, getPos 1) :: !useOnlyList}
+  | USEONLY idlist type PERIOD    
+         {useOnlyList := Preabsyn.Constant($2, Some $3, getPos 1) :: !useOnlyList}
+  ;
 
 modsigndecl
   : signdecl                      {}
-  | LOCAL idlist PERIOD           {localConstants := Preabsyn.Constant($2, None, getPos 1) :: !localConstants}
-  | LOCAL idlist type PERIOD      {localConstants := Preabsyn.Constant($2, Some $3, getPos 1) :: !localConstants}
-  | LOCALKIND idlist PERIOD       {localKinds := Preabsyn.Kind($2, None, getPos 1) :: !localKinds}
-  | LOCALKIND idlist kind PERIOD  {localKinds := Preabsyn.Kind($2, Some ($3 - 1), getPos 1) :: !localKinds}
-  | CLOSED idlist PERIOD          {closedConstants := Preabsyn.Constant($2, None, getPos 1) :: !closedConstants}
-  | CLOSED idlist type PERIOD     {closedConstants := Preabsyn.Constant($2, Some $3, getPos 1) :: !closedConstants}
+  | LOCAL idlist PERIOD           
+       {localConstants := Preabsyn.Constant($2, None, getPos 1) :: !localConstants}
+  | LOCAL idlist type PERIOD      
+       {localConstants := Preabsyn.Constant($2, Some $3, getPos 1) :: !localConstants}
+  | LOCALKIND idlist PERIOD       
+       {localKinds := Preabsyn.Kind($2, None, getPos 1) :: !localKinds}
+  | LOCALKIND idlist kind PERIOD  
+       {localKinds := Preabsyn.Kind($2, Some ($3 - 1), getPos 1) :: !localKinds}
+  | CLOSED idlist PERIOD          
+       {closedConstants := Preabsyn.Constant($2, None, getPos 1) :: !closedConstants}
+  | CLOSED idlist type PERIOD     
+       {closedConstants := Preabsyn.Constant($2, Some $3, getPos 1) :: !closedConstants}
   ;
 
 kind
@@ -303,7 +339,8 @@ ctype
   ;
 
 prtype
-  : tok                         {Preabsyn.Atom(Symbol.symbol (getIDName $1), (getIDKind $1), getPos 1)}
+  : tok                         
+      {Preabsyn.Atom(Symbol.symbol (getIDName $1), (getIDKind $1), getPos 1)}
   | LPAREN type RPAREN          {$2}
   ;
 
@@ -347,20 +384,32 @@ arglist
 atomterm
   : constvar                      {$1}
   | LPAREN term RPAREN            {Preabsyn.SeqTerm(List.rev $2, getPos 2)}
-  | LPAREN error RPAREN           {Errormsg.error Errormsg.none "parsing atomterm"; Preabsyn.ErrorTerm}
-  | LPAREN error                  {Errormsg.error Errormsg.none "parsing atomterm"; Preabsyn.ErrorTerm}
-  | LBRACK error RBRACK           {Errormsg.error Errormsg.none "parsing atomterm"; Preabsyn.ErrorTerm}
-  | LBRACK error                  {Errormsg.error Errormsg.none "parsing atomterm"; Preabsyn.ErrorTerm}
-  | LBRACK RBRACK                 {Preabsyn.IdTerm((Symbol.symbol "nil"), None, Preabsyn.ConstID, getPos 1)}
+  | LPAREN error RPAREN           
+        {Errormsg.error Errormsg.none "parsing atomterm"; Preabsyn.ErrorTerm}
+  | LPAREN error                  
+        {Errormsg.error Errormsg.none "parsing atomterm"; Preabsyn.ErrorTerm}
+  | LBRACK error RBRACK           
+        {Errormsg.error Errormsg.none "parsing atomterm"; Preabsyn.ErrorTerm}
+  | LBRACK error                  
+        {Errormsg.error Errormsg.none "parsing atomterm"; Preabsyn.ErrorTerm}
+  | LBRACK RBRACK                 
+        {Preabsyn.IdTerm((Symbol.symbol "nil"), None, Preabsyn.ConstID, getPos 1)}
   | LBRACK term RBRACK            {Preabsyn.ListTerm($2, getPos 1)}
-  | LBRACK term VBAR term RBRACK  {Preabsyn.ConsTerm($2, Preabsyn.SeqTerm(List.rev $4, getPos 1), getPos 1)}
+  | LBRACK term VBAR term RBRACK  
+        {Preabsyn.ConsTerm($2, Preabsyn.SeqTerm(List.rev $4, getPos 1), getPos 1)}
   ;
 
 constvar      
-  : typedid     {Preabsyn.IdTerm(getTypedIDSym $1, getTypedIDType $1, getTypedIDKind $1, getTypedIDPos $1)}
-  | VID         {Preabsyn.IdTerm(Symbol.symbol (getIDName $1), None, (getIDKind $1), getPos 1)}
-  | VID COLON type  {Preabsyn.IdTerm(Symbol.symbol (getIDName $1), (Some $3), (getIDKind $1), getPos 1)}
-  | CUT         {Preabsyn.IdTerm(Symbol.symbol("!"), None, Preabsyn.ConstID, getPos 1)}
+  : typedid     
+        {Preabsyn.IdTerm(getTypedIDSym $1, getTypedIDType $1, 
+                         getTypedIDKind $1, getTypedIDPos $1)}
+  | VID         
+        {Preabsyn.IdTerm(Symbol.symbol (getIDName $1), None, (getIDKind $1), getPos 1)}
+  | VID COLON type  
+        {Preabsyn.IdTerm(Symbol.symbol (getIDName $1), 
+                         (Some $3), (getIDKind $1), getPos 1)}
+  | CUT         
+        {Preabsyn.IdTerm(Symbol.symbol("!"), None, Preabsyn.ConstID, getPos 1)}
 
   | piid        {$1}
   | sigmaid     {$1}
@@ -389,33 +438,43 @@ constvar
   ;
 
 piid
-  : PI                  {Preabsyn.IdTerm(Symbol.symbol("pi"), None, Preabsyn.ConstID, getPos 1)}
-  | PI COLON type       {Preabsyn.IdTerm(Symbol.symbol("pi"), Some $3, Preabsyn.ConstID, getPos 1)}
+  : PI                  
+       {Preabsyn.IdTerm(Symbol.symbol("pi"), None, Preabsyn.ConstID, getPos 1)}
+  | PI COLON type       
+       {Preabsyn.IdTerm(Symbol.symbol("pi"), Some $3, Preabsyn.ConstID, getPos 1)}
   | LPAREN piid RPAREN  {$2}
   ;
 
 sigmaid
-  : SIGMA                 {Preabsyn.IdTerm(Symbol.symbol("sigma"), None, Preabsyn.ConstID, getPos 1)}
-  | SIGMA COLON type      {Preabsyn.IdTerm(Symbol.symbol("sigma"), Some $3, Preabsyn.ConstID, getPos 1)}
+  : SIGMA                 
+       {Preabsyn.IdTerm(Symbol.symbol("sigma"), None, Preabsyn.ConstID, getPos 1)}
+  | SIGMA COLON type      
+       {Preabsyn.IdTerm(Symbol.symbol("sigma"), Some $3, Preabsyn.ConstID, getPos 1)}
   | LPAREN sigmaid RPAREN {$2}
   ;
 
 
 nilid
-  : NILLIST             {Preabsyn.IdTerm(Symbol.symbol("nil"), None, Preabsyn.ConstID, getPos 1)}
-  | NILLIST COLON type  {Preabsyn.IdTerm(Symbol.symbol("nil"), Some $3, Preabsyn.ConstID, getPos 1)}
+  : NILLIST             
+       {Preabsyn.IdTerm(Symbol.symbol("nil"), None, Preabsyn.ConstID, getPos 1)}
+  | NILLIST COLON type  
+       {Preabsyn.IdTerm(Symbol.symbol("nil"), Some $3, Preabsyn.ConstID, getPos 1)}
   | LPAREN nilid RPAREN {$2}
   ;
 
 consid
-  : LISTCONS              {Preabsyn.IdTerm(Symbol.symbol("::"), None, Preabsyn.ConstID, getPos 1)}
-  | LISTCONS COLON type   {Preabsyn.IdTerm(Symbol.symbol("::"), Some $3, Preabsyn.ConstID, getPos 1)}
+  : LISTCONS              
+       {Preabsyn.IdTerm(Symbol.symbol("::"), None, Preabsyn.ConstID, getPos 1)}
+  | LISTCONS COLON type   
+       {Preabsyn.IdTerm(Symbol.symbol("::"), Some $3, Preabsyn.ConstID, getPos 1)}
   | LPAREN consid RPAREN  {$2}
   ;
 
 equalid
-  : EQUAL                 {Preabsyn.IdTerm(Symbol.symbol("="), None, Preabsyn.ConstID, getPos 1)}
-  | EQUAL COLON type      {Preabsyn.IdTerm(Symbol.symbol("="), Some $3, Preabsyn.ConstID, getPos 1)}
+  : EQUAL                 
+       {Preabsyn.IdTerm(Symbol.symbol("="), None, Preabsyn.ConstID, getPos 1)}
+  | EQUAL COLON type      
+       {Preabsyn.IdTerm(Symbol.symbol("="), Some $3, Preabsyn.ConstID, getPos 1)}
   | LPAREN equalid RPAREN {$2}
   ;
 
