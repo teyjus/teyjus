@@ -242,7 +242,7 @@ let popStack = function
 * preabsyn terms, generates a list of absyn clauses.
 **********************************************************************)
 let rec translateClause term amodule newconstant newkind =
-  let (tv, _, _, _) = parseTerm false term [] [] amodule newStack in
+  let (tv, _, _) = parseTerm false term [] [] amodule newStack in
   let tv' = (getTermAndVariablesTerm tv) in
   let term' = getTermTerm tv' in
   let type' = getTermMolecule tv' in
@@ -279,7 +279,7 @@ and translateTerm term amodule =
   let _ = Errormsg.log (Preabsyn.getTermPos term) 
                        ("unparsed preabsyn: " ^ 
                                  (Preabsyn.string_of_term term)) in
-  let (tv,_,_,_) = parseTerm true term [] [] amodule newStack in
+  let (tv,_,_) = parseTerm true term [] [] amodule newStack in
   let term' = getTermTerm (getTermAndVariablesTerm tv) in
   let mol' = getTermMolecule (getTermAndVariablesTerm tv) in
   let _ = Errormsg.log 
@@ -312,14 +312,16 @@ and parseTerm parsingtoplevel term fvs bvs amodule stack =
     Preabsyn.SeqTerm([term], pos) ->
       (parseTerm parsingtoplevel term fvs bvs amodule stack)
   | Preabsyn.SeqTerm(terms, pos) -> 
-      (parseTerms parsingtoplevel terms fvs bvs amodule (reduceToTerm parsingtoplevel false) newStack)
+      (parseTerms parsingtoplevel terms fvs bvs amodule 
+                  (reduceToTerm parsingtoplevel false) newStack)
   | Preabsyn.ListTerm(terms, pos) ->
       let terms' = terms @ 
                      [Preabsyn.IdTerm(Symbol.symbol "::", None, 
                                       Preabsyn.ConstID, Errormsg.none); 
                       Preabsyn.IdTerm(Symbol.symbol "nil", None, 
                                       Preabsyn.ConstID, Errormsg.none)] in
-      (parseTerms parsingtoplevel terms' fvs bvs amodule (reduceToTerm parsingtoplevel true) newStack)
+      (parseTerms parsingtoplevel terms' fvs bvs amodule 
+                  (reduceToTerm parsingtoplevel true) newStack)
   
   (*  | Preabsyn.ListTerm(terms, pos) -> 
            (parseTerms terms fvs bvs amodule 
@@ -336,38 +338,40 @@ and parseTerm parsingtoplevel term fvs bvs amodule stack =
       (parseTerms headterms fvs' bvs' amodule (reduceToListTerm (Some term')) newStack)
       *)
       let terms' = headterms @ [Preabsyn.IdTerm(Symbol.symbol "::", None, 
-        Preabsyn.ConstID, Errormsg.none); tailterm] in
-      (parseTerms parsingtoplevel terms' fvs bvs amodule (reduceToTerm parsingtoplevel true) newStack)
+                                Preabsyn.ConstID, Errormsg.none); tailterm] 
+      in (parseTerms parsingtoplevel terms' fvs bvs amodule 
+                     (reduceToTerm parsingtoplevel true) newStack)
 
   | Preabsyn.LambdaTerm(b, t, pos) ->
       let bbvs = parseTypeSymbols b amodule in
-      let (tv', fvs', bvs', stack') = 
-        parseTerms parsingtoplevel t fvs (bbvs @ bvs) amodule (reduceToTerm parsingtoplevel false) newStack in
+      let (tv', fvs', stack') = 
+        parseTerms parsingtoplevel t fvs (bbvs @ bvs) amodule 
+                   (reduceToTerm parsingtoplevel false) newStack in
       let term' = getTermAndVariablesTerm tv' in
-      (TermAndVariables(makeAbstraction term' bbvs pos, fvs'), fvs', bvs', stack)
+      (TermAndVariables(makeAbstraction term' bbvs pos, fvs'), fvs', stack)
   | Preabsyn.IntTerm(i, pos) -> 
            (TermAndVariables((makeType (Absyn.IntTerm(i, false, pos)) 
                                        "int" 
                                        (Absyn.getModuleKindTable amodule) pos), fvs), 
-            fvs, bvs, stack)
+            fvs, stack)
   | Preabsyn.RealTerm(r, pos) -> 
            (TermAndVariables((makeType (Absyn.RealTerm(r, false, pos)) 
                                        "real" 
                                         (Absyn.getModuleKindTable amodule) pos), fvs), 
-            fvs, bvs, stack)
+            fvs, stack)
   | Preabsyn.StringTerm(s, pos) -> 
            (TermAndVariables((makeType (Absyn.StringTerm(Absyn.StringLiteral(s), 
                                                          false, pos)) 
                              "string" (Absyn.getModuleKindTable amodule) pos), fvs), 
-            fvs, bvs, stack)
+            fvs, stack)
   | Preabsyn.IdTerm(sym, ty, idkind, pos) ->
-      let (op', fvs', bvs') = (translateId parsingtoplevel term fvs bvs amodule) in
+      let (op', fvs') = (translateId parsingtoplevel term fvs bvs amodule) in
       (match op' with
         StackOp(_) -> 
           (Errormsg.error pos ("operator used without necessary arguments");
-          (makeError fvs, fvs', bvs', errorStack))
-      | StackTerm(t) -> (TermAndVariables(t, fvs'), fvs', bvs', stack)
-      | StackError -> (errorTermAndVariables, [], [], errorStack))
+          (makeError fvs, fvs', errorStack))
+      | StackTerm(t) -> (TermAndVariables(t, fvs'), fvs', stack)
+      | StackError -> (errorTermAndVariables, [], errorStack))
   | Preabsyn.ErrorTerm -> (Errormsg.impossible 
                                        Errormsg.none 
                                        "Parse.parseTerm: error term encountered.")
@@ -388,13 +392,13 @@ and parseTerms parsingtoplevel terms fvs bvs amodule oper stack =
     * Translate the current term as usual and attempt to stack it.
     ******************************************************************)
     let simple () =
-      let (term', fvs', bvs', stack') =
+      let (term', fvs', stack') =
         (parseTerm parsingtoplevel t fvs bvs amodule stack) in
       try
         ((stackTerm parsingtoplevel (getTermAndVariablesTerm term') false amodule stack),
-          fvs', bvs')
+          fvs')
       with
-        TermException -> (errorStack, bvs, fvs)
+        TermException -> (errorStack,fvs)
     in
     
     (match t with
@@ -405,18 +409,18 @@ and parseTerms parsingtoplevel terms fvs bvs amodule oper stack =
     | Preabsyn.RealTerm(_) -> simple ()
     | Preabsyn.StringTerm(_) -> simple ()
     | Preabsyn.IdTerm(_) ->
-        let (ot, fvs', bvs') = (translateId parsingtoplevel t fvs bvs amodule) in
+        let (ot, fvs') = (translateId parsingtoplevel t fvs bvs amodule) in
         (try
           (match ot with
             StackOp(_) ->
-              ((stackOperation parsingtoplevel ot false amodule stack), fvs', bvs')
+              ((stackOperation parsingtoplevel ot false amodule stack), fvs')
           | StackTerm(t) ->
-              ((stackTerm parsingtoplevel t false amodule stack),fvs', bvs')
-          | StackError -> (errorStack, fvs', bvs'))
+              ((stackTerm parsingtoplevel t false amodule stack),fvs')
+          | StackError -> (errorStack, fvs'))
         with
-          TermException -> (errorStack, fvs', bvs'))
+          TermException -> (errorStack, fvs'))
     | Preabsyn.LambdaTerm(_) -> simple ()
-    | Preabsyn.ErrorTerm -> (errorStack, fvs, bvs))
+    | Preabsyn.ErrorTerm -> (errorStack, fvs))
   in
 
   (*  Translate each term in turn.  Once the end of the list has been
@@ -424,8 +428,8 @@ and parseTerms parsingtoplevel terms fvs bvs amodule oper stack =
   let _ = printStack stack in
   match terms with
     (t::ts) ->
-      let (stack', fvs', bvs') = translate' t in
-      (parseTerms parsingtoplevel ts fvs' bvs' amodule oper stack')
+      let (stack', fvs') = translate' t in
+      (parseTerms parsingtoplevel ts fvs' bvs amodule oper stack')
   | [] -> (oper fvs bvs amodule stack)
 
 (**********************************************************************
@@ -491,7 +495,7 @@ and translateId parsingtoplevel term fvs bvs amodule =
               Simply raise an error.  *)
           (print_string "parse.ml";
 		   Errormsg.error pos ("undeclared constant " ^ (Symbol.name sym));
-          (StackError, fvs, bvs))
+          (StackError, fvs))
   | _ -> (Errormsg.impossible (Preabsyn.getTermPos term) 
                               "Parse.translateId: invalid term")
 
@@ -502,9 +506,9 @@ and constantToOpTerm parsingtoplevel term constant fvs bvs amodule =
       (StackTerm(Term(Absyn.ConstantTerm(constant, 
                                          (Types.getMoleculeEnvironment tmol), 
                                          false, pos), tmol)), 
-       fvs, bvs)
+       fvs)
     else
-      (StackOp(constant, (Types.getMoleculeEnvironment tmol), pos), fvs, bvs)
+      (StackOp(constant, (Types.getMoleculeEnvironment tmol), pos), fvs)
   in
   match term with
     Preabsyn.IdTerm(sym, Some(ty), k, pos) ->
@@ -516,7 +520,7 @@ and constantToOpTerm parsingtoplevel term constant fvs bvs amodule =
         (make' tm1 pos)
       else
         (constantTypeError tm1 result pos;
-        (StackError, fvs, bvs))
+        (StackError, fvs))
   | Preabsyn.IdTerm(sym, ty, k, pos) ->
       let tm1 = Types.makeConstantMolecule parsingtoplevel constant in
       (make' tm1 pos)
@@ -537,13 +541,13 @@ and makeVarToOpTerm = fun term fvs bvs amodule makeSymFunc ->
       let tmol = Types.Molecule(skel, []) in
       let typesym = makeSymFunc None sym skel in
       let fvs' = (add fvs sym typesym) in
-      (StackTerm(Term(Absyn.makeFreeVarTerm typesym pos, tmol)), fvs', bvs)
+      (StackTerm(Term(Absyn.makeFreeVarTerm typesym pos, tmol)), fvs')
   | Preabsyn.IdTerm(sym, None, k, pos) ->
       let skel = Absyn.makeTypeVariable () in
       let tmol = Types.Molecule(skel, []) in
       let typesym = makeSymFunc None sym skel in
       let fvs' = (add fvs sym typesym) in
-      (StackTerm(Term(Absyn.makeFreeVarTerm typesym pos, tmol)), fvs', bvs)
+      (StackTerm(Term(Absyn.makeFreeVarTerm typesym pos, tmol)), fvs')
   | _ -> Errormsg.impossible Errormsg.none "Parse.makeVarToOpTerm: invalid id term"
 
 and varToOpTerm = fun term typesym fvs bvs amodule makeVarFunc ->
@@ -555,16 +559,15 @@ and varToOpTerm = fun term typesym fvs bvs amodule makeVarFunc ->
       let tm2 = Types.Molecule((Translate.translateType ty amodule), []) in
       let result = (Types.unify tm1 tm2) in
       if result = Types.Success then
-        (StackTerm(Term(makeVarFunc typesym pos, tm2)), fvs, bvs)
+        (StackTerm(Term(makeVarFunc typesym pos, tm2)), fvs)
       else
-        (idTypeError tm1 result pos;
-        (StackError, fvs, bvs))
+        (idTypeError tm1 result pos;(StackError, fvs))
 
   | Preabsyn.IdTerm(sym, None, k, pos) ->
      (*  If the term has no given type, simply create a new type variable and
          bind it.  *)
      let tm1 = Types.Molecule(Absyn.getTypeSymbolRawType typesym, []) in
-     (StackTerm(Term(makeVarFunc typesym pos, tm1)), fvs, bvs)
+     (StackTerm(Term(makeVarFunc typesym pos, tm1)), fvs)
   | _ -> Errormsg.impossible (Preabsyn.getTermPos term) 
                              "Parse.varToOpTerm: invalid term"
 
@@ -582,15 +585,15 @@ and reduceToTerm parsingtoplevel list fvs bvs amodule stack =
       match (getStackState stack) with
         TermState ->
           let term = (getStackTermTerm (stackTop stack)) in
-          (TermAndVariables(term, fvs), fvs, bvs, newStack)
+          (TermAndVariables(term, fvs), fvs, newStack)
       | ErrorState ->
-          ((makeError fvs), fvs, bvs, errorStack)
+          ((makeError fvs), fvs, errorStack)
       | _ ->
           try
             let stack' = reduceOperation parsingtoplevel list amodule stack in
             (reduce' stack')
           with 
-            TermException -> ((makeError fvs), fvs, bvs, errorStack)
+            TermException -> ((makeError fvs), fvs, errorStack)
   in
   
   (*  Called when the top of the stack indicates an error.  *)
@@ -601,7 +604,7 @@ and reduceToTerm parsingtoplevel list fvs bvs amodule stack =
                                              (getStackOpConstant (stackTop stack)))) in
     
     (Errormsg.error pos ("missing right argument for " ^ fixity ^ " operator");
-    (makeError fvs, fvs, bvs, errorStack))
+    (makeError fvs, fvs, errorStack))
   in
 
   match (getStackState stack) with
@@ -972,9 +975,11 @@ and stackOperation parsingtoplevel o list amodule stack =
     * Handles the case where state is PostfixState.
     ******************************************************************)
     let post = fun stack ->
-      let pre = fun () ->
-        let stack' = stackOperation parsingtoplevel (makeApplyOp pos) list amodule stack in
-        pushOperation o stack'
+      let pre = 
+            fun () ->
+               let stack' = stackOperation parsingtoplevel 
+                                           (makeApplyOp pos) list amodule stack in
+                  pushOperation o stack'
       in
       
       let infOrPost = fun () ->
