@@ -82,6 +82,7 @@ let tjccUsageMsg =
 (****************************************************************************)
 let tablesOnly = ref false
 let instrOnly  = ref false
+let linkedFile = ref false
 
 (* options *)
 let tjdisSpecList = 
@@ -89,6 +90,8 @@ let tjdisSpecList =
    ("--t", Arg.Set(tablesOnly), "\n    Only print tables.") ::
    ("-i", Arg.Set(instrOnly), "\n    Only print instructions.") ::
    ("--instr", Arg.Set(instrOnly), "\n    Only print instructions.") ::
+   ("-l", Arg.Set(linkedFile), "\n    Disassemble linked file.") ::
+   ("--link", Arg.Set(linkedFile), "\n    Disassemble linked file.") ::
    speclist)
   
 (* anonymous function *)

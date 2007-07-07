@@ -44,6 +44,19 @@ type moduletable =
 	   int * Absyn.aconstant list)
 
 (***************************************************************************)
+(* import table: (needed for linked code)                                  *)
+(* (number of code segs, next clause table, local constant table,          *)
+(*  find code fn, search table)                                            *)
+(***************************************************************************)
+type importtable =
+	(int * Absyn.aconstant list * Absyn.aconstant list * int * 
+	   Absyn.aconstant list)
+
+type moduletables =
+	ModuleTable  of moduletable
+  | ImportTables of (importtable list)
+
+(***************************************************************************)
 (* renaming tables: (import/accumulate)                                    *)
 (***************************************************************************)
 type renamingtables = 
@@ -71,7 +84,7 @@ type renamingtables =
 type modcontext =
 	ModContext of (string * int * string * int * kinds * kinds * typeskels *
 				  constants * constants * constants * strings * impltables *
-				  hashtables * moduletable * renamingtables * renamingtables *
+				  hashtables * moduletables * renamingtables * renamingtables *
 				  Instr.instruction list)
 
 (***************************************************************************)
@@ -254,18 +267,35 @@ let printHashTables hashTabs =
 (***************************************************************)
 (*               MODULE TABLE  		                           *)
 (***************************************************************)
-let printModuleTable = function
-  (nextClauses, exportDefs, localPreds, findCodefn, searchTab) ->
-	print_newline ();
-	printLine "Module table:";
-	printPredicateTable nextClauses 
-	  "  Predicate definitions possibly extending previous ones: ";
-	printPredicateTable exportDefs "  Exportdef predicates: ";
-	printPredicateTable localPreds "  Local predicates: ";
-	printLine ("  Find function type: " ^ 
-			   (Bytecode.displayFindCodeFn findCodefn));
-	printPredicateTable searchTab "  In-core table size: "
+let rec printModuleTable table =
+  match table with
+	ModuleTable(nextClauses, exportDefs, localPreds, findCodefn, searchTab) ->
+	  print_newline ();
+	  printLine "Module table:";
+	  printPredicateTable nextClauses 
+		"  Predicate definitions possibly extending previous ones: ";
+	  printPredicateTable exportDefs "  Exportdef predicates: ";
+	  printPredicateTable localPreds "  Local predicates: ";
+	  printLine ("  Find function type: " ^ 
+				 (Bytecode.displayFindCodeFn findCodefn));
+	  printPredicateTable searchTab "  In-core table size: "
 	  
+  | ImportTables(importTabs) ->
+	  print_newline ();
+	  printLine "Import tables:";
+	  List.iter printImportTable importTabs 
+
+and printImportTable = function 
+	(segNum, nextClauses, localConsts, findCodefn, searchTab) ->
+	  print_newline ();
+	  printLine "  Import table:";
+	  printLine ("    number of code segments: " ^ string_of_int segNum); 
+	  printPredicateTable nextClauses "    Next clause table: ";
+	  printPredicateTable localConsts "    Local constant table: ";
+	  printLine ("    Find function type: " ^ 
+				 (Bytecode.displayFindCodeFn findCodefn));
+	  printPredicateTable searchTab "    Search table: "
+
 (***************************************************************)
 (*               RENAMING TABLES  		                       *)
 (***************************************************************)

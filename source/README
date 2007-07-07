@@ -13,8 +13,8 @@
    use command "omake tjdis" under the source directory.
 
    run:
-   use command "tjdis <bytecode name>"
-
+     object code: use command "tjdis <bytecode name>" 
+     linked code: use command "tjdis -l <bytecode name>"
 
 3. simulator (tjsim) -- to be finished.
  
