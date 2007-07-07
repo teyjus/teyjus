@@ -7,9 +7,13 @@
 (**                       BYTECODE FORMAT                                **)
 (** ******************************************************************** **)
 let byteCodeVersionNumber = 2
-let byteCodeSuffix = ".lp"
+let byteCodeSuffix = ".lpo"
 
-let makeByteCodeFileName modName = modName ^ byteCodeSuffix
+let linkedByteCodeVersionNumber = 3
+let linkedByteCodeSuffix = ".lp"
+
+let makeByteCodeFileName modName   = modName ^ byteCodeSuffix
+let makeLinkedByteCodeName modName = modName ^ linkedByteCodeSuffix
 
 (* type skeleton representation *)
 let typeMarkArrow       = 0
