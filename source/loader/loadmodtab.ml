@@ -3,7 +3,7 @@
 (***************************************************************************)
 let loadHeaderInfo () =
   (* check bytecode version number *)
-  (if (Bytecode.readWord () = Bytecode.byteCodeVersionNumber) then ()
+  (if (Bytecode.readWord () = Bytecode.linkedByteCodeVersionNumber) then ()
    else Errormsg.error Errormsg.none "Loader: inconsistent bytecode version");
   let modName = Bytecode.readString () in
   Bytecode.skipNWords 1;
@@ -102,7 +102,7 @@ let loadConstSymTab tySkeletonTab =
 (*                       INTERFACE FUNCTION                                 *)
 (****************************************************************************)
 let loadModuleTable modName =
-  Bytecode.openInChannel (Bytecode.makeByteCodeFileName modName);
+  Bytecode.openInChannel (Bytecode.makeLinkedByteCodeFileName modName);
   let modName = loadHeaderInfo () in 
   let (kindSymTab, globalKinds) = loadKindSymTab () in
   let tySkeletonTab = loadTypeSkeletons globalKinds in

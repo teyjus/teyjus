@@ -9,6 +9,9 @@
 val byteCodeVersionNumber : int
 val makeByteCodeFileName  : string -> string
 
+val linkedByteCodeVersionNumber : int
+val makeLinkedByteCodeName : string -> string
+
 (* type skeleton representation *)
 val typeMarkArrow         : int
 val typeMarkKind          : int
