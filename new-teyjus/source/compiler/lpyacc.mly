@@ -313,7 +313,7 @@ ctype:
 
 prtype:
   | tok                   { Atom(Symbol.symbol (getIDName $1),
-                                 (getIDKind $1), getPos 1) }
+                                 getIDKind $1, getPos 1) }
   | LPAREN type RPAREN    { $2 }
 
 fixity:
@@ -344,7 +344,7 @@ abstterm:
       { LambdaTerm(
           [TypeSymbol(getTypedIDSym $1, getTypedIDType $1,
                       getTypedIDKind $1, getTypedIDPos $1)],
-          (List.rev $3), getPos 1) }
+          List.rev $3, getPos 1) }
 
   | atomterm
       { $1 }
@@ -373,7 +373,7 @@ atomterm:
       { Errormsg.error Errormsg.none "parsing atomterm"; ErrorTerm }
 
   | LBRACK RBRACK
-      { IdTerm((Symbol.symbol "nil"), None, ConstID, getPos 1) }
+      { IdTerm(Symbol.symbol "nil", None, ConstID, getPos 1) }
 
   | LBRACK term RBRACK
       { ListTerm($2, getPos 1) }
@@ -392,9 +392,6 @@ constvar:
   | VID COLON type
       { IdTerm(Symbol.symbol (getIDName $1), Some $3, getIDKind $1, getPos 1) }
 
-  | CUT
-      { IdTerm(Symbol.symbol("!"), None, ConstID, getPos 1) }
-
   | piid        { $1 }
   | sigmaid     { $1 }
   | nilid       { $1 }
@@ -402,40 +399,41 @@ constvar:
   | consid      { $1 }
   | equalid     { $1 }
 
-  | SEMICOLON   { IdTerm(Symbol.symbol(";"), None, ConstID, getPos 1) }
-  | AMPAND      { IdTerm(Symbol.symbol("&"), None, ConstID, getPos 1) }
-  | RDIVIDE     { IdTerm(Symbol.symbol("/"), None, ConstID, getPos 1) }
-  | COMMA       { IdTerm(Symbol.symbol(","), None, ConstID, getPos 1) }
-  | PLUS        { IdTerm(Symbol.symbol("+"), None, ConstID, getPos 1) }
-  | MINUS       { IdTerm(Symbol.symbol("-"), None, ConstID, getPos 1) }
-  | TIMES       { IdTerm(Symbol.symbol("*"), None, ConstID, getPos 1) }
-  | LESS        { IdTerm(Symbol.symbol("<"), None, ConstID, getPos 1) }
-  | LEQ         { IdTerm(Symbol.symbol("<="), None, ConstID, getPos 1) }
-  | GTR         { IdTerm(Symbol.symbol(">"), None, ConstID, getPos 1) }
-  | GEQ         { IdTerm(Symbol.symbol(">="), None, ConstID,  getPos 1) }
-  | UMINUS      { IdTerm(Symbol.symbol("-"), None, ConstID, getPos 1) }
+  | CUT         { IdTerm(Symbol.symbol "!", None, ConstID, getPos 1) }
+  | SEMICOLON   { IdTerm(Symbol.symbol ";", None, ConstID, getPos 1) }
+  | AMPAND      { IdTerm(Symbol.symbol "&", None, ConstID, getPos 1) }
+  | RDIVIDE     { IdTerm(Symbol.symbol "/", None, ConstID, getPos 1) }
+  | COMMA       { IdTerm(Symbol.symbol ",", None, ConstID, getPos 1) }
+  | PLUS        { IdTerm(Symbol.symbol "+", None, ConstID, getPos 1) }
+  | MINUS       { IdTerm(Symbol.symbol "-", None, ConstID, getPos 1) }
+  | TIMES       { IdTerm(Symbol.symbol "*", None, ConstID, getPos 1) }
+  | LESS        { IdTerm(Symbol.symbol "<", None, ConstID, getPos 1) }
+  | LEQ         { IdTerm(Symbol.symbol "<=", None, ConstID, getPos 1) }
+  | GTR         { IdTerm(Symbol.symbol ">", None, ConstID, getPos 1) }
+  | GEQ         { IdTerm(Symbol.symbol ">=", None, ConstID,  getPos 1) }
+  | UMINUS      { IdTerm(Symbol.symbol "-", None, ConstID, getPos 1) }
   | REALLIT     { RealTerm($1, getPos 1) }
   | INTLIT      { IntTerm($1, getPos 1) }
   | STRLIT      { StringTerm($1, getPos 1) }
-  | COLONDASH   { IdTerm(Symbol.symbol(":-"), None, ConstID, getPos 1) }
-  | IMPLIES     { IdTerm(Symbol.symbol("=>"), None, ConstID, getPos 1) }
+  | COLONDASH   { IdTerm(Symbol.symbol ":-", None, ConstID, getPos 1) }
+  | IMPLIES     { IdTerm(Symbol.symbol "=>", None, ConstID, getPos 1) }
 
 piid:
   | PI
-      { IdTerm(Symbol.symbol("pi"), None, ConstID, getPos 1) }
+      { IdTerm(Symbol.symbol "pi", None, ConstID, getPos 1) }
 
   | PI COLON type
-      { IdTerm(Symbol.symbol("pi"), Some $3, ConstID, getPos 1) }
+      { IdTerm(Symbol.symbol "pi", Some $3, ConstID, getPos 1) }
 
   | LPAREN piid RPAREN
       { $2 }
 
 sigmaid:
   | SIGMA
-      { IdTerm(Symbol.symbol("sigma"), None, ConstID, getPos 1) }
+      { IdTerm(Symbol.symbol "sigma", None, ConstID, getPos 1) }
 
   | SIGMA COLON type
-      { IdTerm(Symbol.symbol("sigma"), Some $3, ConstID, getPos 1) }
+      { IdTerm(Symbol.symbol "sigma", Some $3, ConstID, getPos 1) }
 
   | LPAREN sigmaid RPAREN
       { $2 }
@@ -443,30 +441,30 @@ sigmaid:
 
 nilid:
   | NILLIST
-      { IdTerm(Symbol.symbol("nil"), None, ConstID, getPos 1) }
+      { IdTerm(Symbol.symbol "nil", None, ConstID, getPos 1) }
 
   | NILLIST COLON type
-      { IdTerm(Symbol.symbol("nil"), Some $3, ConstID, getPos 1) }
+      { IdTerm(Symbol.symbol "nil", Some $3, ConstID, getPos 1) }
 
   | LPAREN nilid RPAREN
       { $2 }
 
 consid:
   | LISTCONS
-      { IdTerm(Symbol.symbol("::"), None, ConstID, getPos 1) }
+      { IdTerm(Symbol.symbol "::", None, ConstID, getPos 1) }
 
   | LISTCONS COLON type
-      { IdTerm(Symbol.symbol("::"), Some $3, ConstID, getPos 1) }
+      { IdTerm(Symbol.symbol "::", Some $3, ConstID, getPos 1) }
 
   | LPAREN consid RPAREN
       { $2 }
 
 equalid:
   | EQUAL
-      { IdTerm(Symbol.symbol("="), None, ConstID, getPos 1) }
+      { IdTerm(Symbol.symbol "=", None, ConstID, getPos 1) }
 
   | EQUAL COLON type
-      { IdTerm(Symbol.symbol("="), Some $3, ConstID, getPos 1) }
+      { IdTerm(Symbol.symbol "=", Some $3, ConstID, getPos 1) }
 
   | LPAREN equalid RPAREN
       { $2 }
