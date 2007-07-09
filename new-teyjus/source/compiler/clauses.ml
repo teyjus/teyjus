@@ -232,6 +232,7 @@ and collectFreeVars term fvs bvs =
         false,
         pos) in
       (term', fvs'')
+  | Absyn.ErrorTerm -> (term, fvs)
   | _ -> Errormsg.impossible Errormsg.none "Clauses.collectFreeVars: Invalid term type."
 
 (**********************************************************************

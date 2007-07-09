@@ -341,6 +341,20 @@ let bindVariable = fun var mol bindings ->
 * Unifies two type molecules.
 **********************************************************************)
 let rec unify (tm1 : typemolecule) (tm2 : typemolecule) =
+  let bindSkeletons skel1 t1 skel2 t2 bindings =
+    (*  If both are variables, bind one to the other. *)
+    if (Absyn.isVariableType skel2) then
+      (*  Only bind if the variables are not equal. *)
+      if (skel1 == skel2) then
+        bindings
+      else
+        ((Absyn.getTypeVariableReference skel1) := (Some(skel2));
+        skel1::bindings) 
+    else
+      (*  Otherwise just bind.  *)
+      (bindVariable skel1 t2 bindings)
+  in
+  
   let isGround ty = match ty with
     Absyn.ApplicationType(_) -> true
   | _ -> false
@@ -392,22 +406,9 @@ let rec unify (tm1 : typemolecule) (tm2 : typemolecule) =
     
     (*  Check for type variables and bind.  *)
     if (Absyn.isVariableType skel1) then
-      (*  If both are variables, bind one to the other. *)
-      if (Absyn.isVariableType skel2) then
-        (*  Only bind if the variables are not equal. *)
-       (* if (skel1 <> skel2) then
-          ((Absyn.getTypeVariableReference skel1) := (Some(skel2));
-          skel1::bindings)
-        else
-          bindings *)
-		if (skel1 == skel2) then bindings
-		else
-		  ((Absyn.getTypeVariableReference skel1) := (Some(skel2));
-           skel1::bindings) 
-      
-      (*  Otherwise just bind.  *)
-      else
-        (bindVariable skel1 t2 bindings)
+      bindSkeletons skel1 t1 skel2 t2 bindings
+    else if Absyn.isVariableType skel2 then
+      bindSkeletons skel2 t2 skel1 t1 bindings
     else
     
     (*  Check for type-set hackery to handle overloaded operators.  *)
@@ -443,13 +444,10 @@ let rec unify (tm1 : typemolecule) (tm2 : typemolecule) =
     else
     
     match skel2 with
-      (*  Type variable: just bind. *)
-      Absyn.TypeVarType(_) -> (bindVariable skel2 t1 bindings)
-      
       (*  Type set: check if skel1 is in the type set; if so,
           set the type set to only have skel1 in it.  Otherwise,
           clash error.  *)
-    | Absyn.TypeSetType(default, set2, r2) ->
+      Absyn.TypeSetType(default, set2, r2) ->
         if (isGround skel1) && (in_set skel1 (!set2)) then
           (set2 := [skel1];
           bindings)
@@ -490,6 +488,7 @@ let rec unify (tm1 : typemolecule) (tm2 : typemolecule) =
             (Errormsg.log Errormsg.none ("Types.unify: error checking application: invalid type: " ^ (Absyn.string_of_type skel1));
             unbindVariables bindings;
             raise (UnifyException ClashFailure)))
+      
       (*  Arrow type: first make sure both types are arrow types.
           Then match the left and right sides of the arrow. *)
     | Absyn.ArrowType(l, r) ->
