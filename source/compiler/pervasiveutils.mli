@@ -2,6 +2,7 @@ val isOverloaded : Absyn.aconstant -> bool
 val getOverload : Absyn.akind -> Absyn.aconstant -> Absyn.aconstant
 val maxSkeletonIndex : int
 
+val listSeparatorConstant : Absyn.aconstant
 val cutFailTerm : Absyn.aterm 
 
 (**************************************************************************)
