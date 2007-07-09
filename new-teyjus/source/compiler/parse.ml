@@ -328,7 +328,7 @@ and parseTerm parsingtoplevel inlist term fvs bvs amodule stack =
           correctly.  *)
       let terms' = terms @ [listSeparatorIdTerm; nilIdTerm] in
       (parseTerms parsingtoplevel true terms' fvs bvs amodule
-        (reduceToTerm parsingtoplevel) newStack) 
+                  (reduceToTerm parsingtoplevel) newStack) 
   
   | Preabsyn.ConsTerm(headterms, tailterm, pos) ->
       (*  Translate the tail term first, then translate the head with respect to
@@ -336,7 +336,8 @@ and parseTerm parsingtoplevel inlist term fvs bvs amodule stack =
           treated as list separators. *)
       let terms' = headterms @ [listSeparatorIdTerm; tailterm] in
       (parseTerms parsingtoplevel true terms' fvs bvs amodule
-        (reduceToTerm parsingtoplevel) newStack)
+                  (reduceToTerm parsingtoplevel) newStack)
+
   | Preabsyn.LambdaTerm(b, t, pos) ->
       let bbvs = parseTypeSymbols b amodule in
       let (tv', fvs', stack') = 
@@ -348,17 +349,20 @@ and parseTerm parsingtoplevel inlist term fvs bvs amodule stack =
   | Preabsyn.IntTerm(i, pos) -> 
            (TermAndVariables((makeType (Absyn.IntTerm(i, false, pos)) 
                                        "int" 
-                                       (Absyn.getModuleKindTable amodule) pos), fvs), 
+                                       (Absyn.getModuleKindTable amodule) pos), 
+                             fvs), 
             fvs, stack)
   | Preabsyn.RealTerm(r, pos) -> 
            (TermAndVariables((makeType (Absyn.RealTerm(r, false, pos)) 
                                        "real" 
-                                        (Absyn.getModuleKindTable amodule) pos), fvs), 
+                                        (Absyn.getModuleKindTable amodule) pos), 
+                             fvs), 
             fvs, stack)
   | Preabsyn.StringTerm(s, pos) -> 
            (TermAndVariables((makeType (Absyn.StringTerm(Absyn.StringLiteral(s), 
                                                          false, pos)) 
-                             "string" (Absyn.getModuleKindTable amodule) pos), fvs), 
+                                        "string" (Absyn.getModuleKindTable amodule) pos), 
+                             fvs), 
             fvs, stack)
 
   | Preabsyn.IdTerm(sym, ty, idkind, pos) ->
@@ -579,7 +583,7 @@ and varToOpTerm term typesym fvs bvs amodule makeVarFunc =
 (**********************************************************************
 *reduceToTerm:
 * Reduces the given stack to a term.  Commas encountered in this mode
-* are interpereted as conjunctions.
+* are interpreted as conjunctions.
 **********************************************************************)
 and reduceToTerm parsingtoplevel inlist fvs bvs amodule stack =
   (********************************************************************
