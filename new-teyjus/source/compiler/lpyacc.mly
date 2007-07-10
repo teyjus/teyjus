@@ -90,6 +90,9 @@ let getPos i =
 let getIDName (name, _) = name
 let getIDKind (_, kind) = kind
 
+let genericError str =
+  Errormsg.error (getPos 1) ("Unexpected input while parsing " ^ str)
+
 let makeSymbol (name, kind) =
   Symbol(Symbol.symbol name, kind, getPos 1)
 
@@ -150,21 +153,26 @@ let makeSignature () =
 %type <(Symbol.symbol * Preabsyn.ptype option * Preabsyn.pidkind * pos)>
       typedid
 
+/* Lower precedence */
+
 %nonassoc  INFIXLAMBDA LAMBDA FORALL FORSOME
 %nonassoc  COLONDASH IMPLIES CUT PI SIGMA COMMA SEMICOLON AMPAND RDIVIDE
            NILLIST LISTCONS EQUAL PLUS MINUS TIMES LESS LEQ GTR GEQ UMINUS
            LPAREN LBRACK ID SYID VID UPCID STRLIT INTLIT REALLIT
+
+/* Higher precedence */
 
 %start parseModule parseSignature parseModClause
 
 %%
 parseModule:
   | modheader modpreamble modbody modend        { makeModule () }
-  | error modpreamble modbody modend            { makeModule () }
-
+  | error                                       { genericError "module" ;
+                                                  makeModule () }
 parseSignature:
   | sigheader sigpreamble signdecls sigend      { makeSignature () }
-  | error signdecls sigend                      { makeSignature () }
+  | error                                       { genericError "signature" ;
+                                                  makeSignature () }
 
 tok:
   | ID                        { $1 }
@@ -175,14 +183,18 @@ tok:
 modheader:
   | MODULE tok PERIOD
       { if getIDName $2 <> basename () then
-          Errormsg.error (getPos 1)
+          Errormsg.error (getPos 2)
             ("Expected module name '" ^ basename () ^ "'.") }
+
+  | error PERIOD              { genericError "header" }
 
 sigheader:
   | SIG tok PERIOD
       { if getIDName $2 <> basename () then
-          Errormsg.error (getPos 1)
+          Errormsg.error (getPos 2)
             ("Expected signature name '" ^ basename () ^ "'.") }
+
+  | error PERIOD              { genericError "header" }
 
 modend:
   |                           {  }
@@ -208,11 +220,15 @@ modpreamble:
   | modpreamble USESIG cvidlist PERIOD
       { useSigList := $3 @ !useSigList }
 
+  | error PERIOD              { genericError "preamble" }
+
 sigpreamble:
   |                           {  }
 
   | sigpreamble ACCUMSIG cvidlist PERIOD
       { accumulatedSigList := $3 @ !accumulatedSigList }
+
+  | error PERIOD              { genericError "preamble" }
 
 cvidlist:
   | tok                       { (makeSymbol $1) :: [] }
@@ -322,8 +338,7 @@ parseModClause:
   | term PERIOD              { let pt = SeqTerm(List.rev $1, (getPos 1)) in
                                  clauseList := Clause(pt) :: !clauseList ;
                                  pt }
-  | error PERIOD             { Errormsg.error Errormsg.none
-                                 "parsing parseModClause" ; ErrorTerm }
+  | error PERIOD             { genericError "clause" ; ErrorTerm }
 
 term:
   | abstterm                 { $1 :: [] }
@@ -349,14 +364,12 @@ atomterm:
   | LBRACK term VBAR term RBRACK
       { ConsTerm($2, SeqTerm(List.rev $4, getPos 4), getPos 1) }
 
-  | LPAREN error RPAREN      { Errormsg.error Errormsg.none
-                                 "parsing atomterm"; ErrorTerm }
-  | LPAREN error             { Errormsg.error Errormsg.none
-                                 "parsing atomterm"; ErrorTerm }
-  | LBRACK error RBRACK      { Errormsg.error Errormsg.none
-                                 "parsing atomterm"; ErrorTerm }
-  | LBRACK error             { Errormsg.error Errormsg.none
-                                 "parsing atomterm"; ErrorTerm }
+  | LPAREN error RPAREN      { Errormsg.error (getPos 1)
+                                 "Unmatched parenthesis starting here" ;
+                               ErrorTerm }
+  | LBRACK error RBRACK      { Errormsg.error (getPos 1)
+                                 "Unmatched bracket starting here" ;
+                               ErrorTerm }
 
 constvar:
   | typedid                  { IdTerm $1 }
