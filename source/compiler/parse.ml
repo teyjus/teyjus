@@ -302,10 +302,13 @@ and translateTerm term amodule =
   let _ = Errormsg.log (Absyn.getTermPos term''') 
     ("parsed, normalized term: " ^ (Absyn.string_of_term term''')) in
 
-  let fixedterm = fixTerm true term''' in
-  (Errormsg.log (Absyn.getTermPos term'')
-    ("parsed, normalized, fixed term: " ^ (Absyn.string_of_term fixedterm));
-  fixedterm)
+  let (fixedterm, fvars, ftyvars) = fixTerm term''' in
+  let _ = Errormsg.log (Absyn.getTermPos term'')
+      ("parsed, normalized, fixed term: " ^ (Absyn.string_of_term_ast fixedterm))
+  in 
+  let newftyvars = Types.getNewVarsInTypeMol mol' ftyvars in
+  (fixedterm, mol', fvars, newftyvars)
+
 
 (**********************************************************************
 *parseTerm:
@@ -329,6 +332,7 @@ and parseTerm parsingtoplevel inlist term fvs bvs amodule stack =
       let terms' = terms @ [listSeparatorIdTerm; nilIdTerm] in
       (parseTerms parsingtoplevel true terms' fvs bvs amodule
                   (reduceToTerm parsingtoplevel) newStack) 
+
   
   | Preabsyn.ConsTerm(headterms, tailterm, pos) ->
       (*  Translate the tail term first, then translate the head with respect to
@@ -1175,7 +1179,7 @@ and removeOverloads term =
                 Absyn.getTypeKind (List.hd !l)
               else
                 Absyn.getTypeKind default) in
-            Absyn.ConstantTerm(Pervasiveutils.getOverload k c, [], b, p)
+              Absyn.ConstantTerm(Pervasiveutils.getOverload k c, [], b, p)
         | _ -> Absyn.ErrorTerm)
       else
         term
@@ -1360,7 +1364,7 @@ and normalizeTerm = fun term ->
 *
 * fixTerm could detect an error if it finds implications in the term being parsed.
 **********************************************************************)
-and fixTerm parsingtoplevel term =
+and fixTerm term =
   (* checks appearances of :- and => embedded in terms *)
   let rec checkIllegalConstant c pos =
     if ((c = Pervasive.implConstant) || (c = Pervasive.colondashConstant)) then
@@ -1416,7 +1420,7 @@ and fixTerm parsingtoplevel term =
           (* collect type variables in (needed components of) type environment 
              and check constant is legal here *)
           let () = checkIllegalConstant c p in
-          let neededtenv = trunclist tenv (Absyn.getConstantTypeEnvSize parsingtoplevel c) in
+          let neededtenv = trunclist tenv (Absyn.getConstantTypeEnvSize true c) in
           (Absyn.ConstantTerm(c,neededtenv,true,p),fvars,
             Types.getNewVarsInTypes neededtenv ftyvars,0)
       | Absyn.FreeVarTerm(fv,_,p) -> 
@@ -1474,8 +1478,7 @@ and fixTerm parsingtoplevel term =
              (nt::nts',fvars'',ftyvars'',ind'')
             
   in let (t,fvars,ftyvars,_) = fixTerm' term [] [] [] in
-  t
-  (* (t,fvars,ftyvars)  *)
+  (t,fvars,ftyvars)  
 
 (**********************************************************************
 *illegalConstant:
@@ -1495,7 +1498,7 @@ let unitTests () =
   in
 
   let test t =
-    let t' = translateTerm t absyn in
+    let (t',_,_,_) = translateTerm t absyn in
     let _ = Errormsg.log Errormsg.none 
       ("Preabsyn Term: " ^ (Preabsyn.string_of_term t)) in
     let _ = Errormsg.log Errormsg.none 
