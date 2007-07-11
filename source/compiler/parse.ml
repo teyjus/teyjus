@@ -303,7 +303,7 @@ and translateTerm term amodule =
     ("parsed, normalized term: " ^ (Absyn.string_of_term term''')) in
 
   let (fixedterm, fvars, ftyvars) = fixTerm term''' in
-  let _ = Errormsg.log (Absyn.getTermPos term'')
+  let _ = Errormsg.log (Absyn.getTermPos term''')
       ("parsed, normalized, fixed term: " ^ (Absyn.string_of_term_ast fixedterm))
   in 
   let newftyvars = Types.getNewVarsInTypeMol mol' ftyvars in
@@ -484,6 +484,7 @@ and translateId parsingtoplevel inlist term fvs bvs amodule =
           (makeVarToOpTerm term fvs bvs amodule makeAnonymousTypeSymbol)
       else
 
+      (*  Bound variable. *)
       if (contains bvs sym) then
         (varToOpTerm term (get bvs sym) fvs bvs amodule (Absyn.makeBoundVarTerm))
       else
@@ -727,7 +728,7 @@ and reduceOperation parsingtoplevel amodule stack =
       
       Next, check for a comma.  If the list argument indicates that the parser
       is parsing a list (in bracket notation) the comma will be interpereted as
-      a cons (::), otherwise it will be interpreted as a conjunction (&).      
+      a cons (::), otherwise it will be interpreted as a conjunction (,).      
   *)
   
   let ot = List.hd (List.tl (getStackStack stack)) in
@@ -736,7 +737,7 @@ and reduceOperation parsingtoplevel amodule stack =
       let csym = (Absyn.getConstantSymbol c) in
       if csym = (Absyn.getConstantSymbol Pervasive.genericApplyConstant) then
         (reduceApply stack)
-      else if csym = (Absyn.getConstantSymbol Pervasiveutils.listSeparatorConstant) then
+      else if csym == (Absyn.getConstantSymbol Pervasiveutils.listSeparatorConstant) then
         (reduceComma stack)
       else
         reduce' ()
@@ -1141,8 +1142,24 @@ and makeBinaryApply = fun f (arg1 : ptterm) (arg2 : ptterm) ->
 
 (**********************************************************************
 *removeOverloads:
+*
 **********************************************************************)
 and removeOverloads term =
+  let replaceTypeSet t =
+    let t' = Absyn.dereferenceType t in
+    match t' with
+        Absyn.TypeSetType(_) ->
+          let set = !(Absyn.getTypeSetSet t') in
+            (match set with
+              [] ->
+                Errormsg.impossible Errormsg.none
+                  ("Parse.removeOverloads: invalid type set in " ^
+                  "constant environment.")
+            | [t''] -> Absyn.dereferenceType t''
+            | _ -> Absyn.getTypeSetDefault t')
+      | _ -> t'
+  in
+  
   match term with
     Absyn.IntTerm(_) -> term
   | Absyn.RealTerm(_) -> term
@@ -1182,7 +1199,7 @@ and removeOverloads term =
               Absyn.ConstantTerm(Pervasiveutils.getOverload k c, [], b, p)
         | _ -> Absyn.ErrorTerm)
       else
-        term
+        Absyn.ConstantTerm(c, List.map replaceTypeSet tl, b, p)
   | Absyn.ErrorTerm -> Absyn.ErrorTerm
 
 (**********************************************************************

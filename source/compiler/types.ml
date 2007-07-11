@@ -360,9 +360,9 @@ let rec unify (tm1 : typemolecule) (tm2 : typemolecule) =
   | _ -> false
   in
   
-  let rec in_set = fun s set ->
+  let rec inSet = fun s set ->
     match set with
-      s'::set' -> if s = s' then true else in_set s set'
+      s'::set' -> if s = s' then true else inSet s set'
     | [] -> false
   in
   
@@ -434,7 +434,7 @@ let rec unify (tm1 : typemolecule) (tm2 : typemolecule) =
       (*  Check if the other type is in the list.  If it is, then
           just remove all but that item from the list.  If it isn't,
           then clash error. *)
-        if (isGround skel2) && (in_set skel2 (!set1)) then
+        if (isGround skel2) && (inSet skel2 (!set1)) then
           (set1 := [skel2];
           bindings)
         else
@@ -448,7 +448,7 @@ let rec unify (tm1 : typemolecule) (tm2 : typemolecule) =
           set the type set to only have skel1 in it.  Otherwise,
           clash error.  *)
       Absyn.TypeSetType(default, set2, r2) ->
-        if (isGround skel1) && (in_set skel1 (!set2)) then
+        if (isGround skel1) && (inSet skel1 (!set2)) then
           (set2 := [skel1];
           bindings)
         else
