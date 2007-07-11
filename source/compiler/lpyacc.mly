@@ -131,6 +131,7 @@ let makeSignature () =
 %token PLUS MINUS TIMES LESS LEQ GTR GEQ UMINUS PERIOD
 %token LPAREN RPAREN LBRACK RBRACK COLON VBAR
 %token SIGSTART MODSTART TERMSTART
+%token EOF
 
 %token <(string * Preabsyn.pidkind)> ID SYID VID UPCID
 %token <string> STRLIT
@@ -199,11 +200,12 @@ sigheader:
 modend:
   |                           {  }
   | END                       {  }
-
+  | EOF                       {  }
 
 sigend:
   |                           {  }
   | END                       {  }
+  | EOF                       {  }
 
 modpreamble:
   |                           {  }
@@ -339,6 +341,15 @@ parseModClause:
                                  clauseList := Clause(pt) :: !clauseList ;
                                  pt }
   | error PERIOD             { genericError "clause" ; ErrorTerm }
+      
+  | term EOF                 { Errormsg.error (getPos 1)
+                                 "Clause never terminated" ;
+                               ErrorTerm }
+
+  | error EOF                { genericError "clause" ;
+                               Errormsg.error (getPos 1)
+                                 "Clause never terminated" ;
+                               ErrorTerm }
 
 term:
   | abstterm                 { $1 :: [] }
@@ -364,10 +375,10 @@ atomterm:
   | LBRACK term VBAR term RBRACK
       { ConsTerm($2, SeqTerm(List.rev $4, getPos 4), getPos 1) }
 
-  | LPAREN error RPAREN      { Errormsg.error (getPos 1)
+  | LPAREN error             { Errormsg.error (getPos 1)
                                  "Unmatched parenthesis starting here" ;
                                ErrorTerm }
-  | LBRACK error RBRACK      { Errormsg.error (getPos 1)
+  | LBRACK error             { Errormsg.error (getPos 1)
                                  "Unmatched bracket starting here" ;
                                ErrorTerm }
 
