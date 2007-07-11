@@ -77,6 +77,8 @@ let getOverload k c =
 
 let maxSkeletonIndex = 256
 
+(*  This constant is used in Parse.ml to temporarily represent the list
+    separator comma.  *)
 let listSeparatorConstant =
   let tyskel = Absyn.Skeleton(
     Absyn.ArrowType(
@@ -88,7 +90,7 @@ let listSeparatorConstant =
     ref false)
   in
       
-  Absyn.Constant((Symbol.symbol ","), (ref Absyn.Infixr), (ref 0), (ref false),
+  Absyn.Constant((Symbol.symbol ","), (ref Absyn.Infixr), (ref min_int), (ref false),
     (ref false), (ref false), (ref false), (ref true), (ref false), (ref (Some tyskel)),
     (ref 1), (ref (Some (Array.make 1 true))),
     (ref (Some (Array.init 1 (fun x -> if x >= 0 then false else true)))),
