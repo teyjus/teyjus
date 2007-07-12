@@ -198,6 +198,14 @@ and transTermStr s =
 (* by type reduction.                                                     *)
 (**************************************************************************)
 and transTermConst c tyenv = 
+  (*  a general list function needed to truncated type environments here *)
+  let rec trunclist l n = 
+	if n = 0 then []
+    else 
+      match l with
+        (h::t) -> (h::(trunclist t (n-1)))
+      | _ -> Errormsg.impossible Errormsg.none "Parse.trunclist: invalid arguments."
+  in
   let skeletonNeededness = 
 	Option.get (Absyn.getConstantSkeletonNeededness c) 
   in
@@ -210,7 +218,11 @@ and transTermConst c tyenv =
 		else
 		  trimTypeEnvironment rest (index + 1) newtyenv
   in
-  Absyn.ConstantTerm(c, trimTypeEnvironment tyenv 0 [], false, Errormsg.none)
+  if (Absyn.isPervasiveConstant c) then
+	Absyn.ConstantTerm(c, trunclist tyenv (Absyn.getConstantTypeEnvSize false c),
+					   false, Errormsg.none)
+  else
+	Absyn.ConstantTerm(c, trimTypeEnvironment tyenv 0 [], false, Errormsg.none)
 
 (**************************************************************************)
 (* transform variables:                                                   *)

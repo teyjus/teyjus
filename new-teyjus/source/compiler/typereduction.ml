@@ -193,20 +193,22 @@ let reduceSkeletons amod =
 	  else size
 	in
 
-    let skel = Absyn.getConstantSkeleton constant in
-    let envsize = Absyn.getConstantTypeEnvSize false constant in
+	if (Absyn.isPervasiveConstant constant) then ()
+	else
+      let skel = Absyn.getConstantSkeleton constant in
+      let envsize = Absyn.getConstantTypeEnvSize false constant in
 
-    if Option.isSome skel then
-      (*  Don't reduce the skeleton if there is no environment to reduce. *)
-      if envsize > 0 then
-        let neededness = (reduceSkeleton (Option.get skel) envsize) in
-		let newEnvSize = Array.fold_left calculateEnvSize 0 neededness in
-		(Absyn.getConstantTypeEnvSizeRef constant) := newEnvSize;
-		(Absyn.getConstantSkeletonNeedednessRef constant) := (Some(neededness))
+      if Option.isSome skel then
+		(*  Don't reduce the skeleton if there is no environment to reduce. *)
+		if envsize > 0 then
+          let neededness = (reduceSkeleton (Option.get skel) envsize) in
+		  let newEnvSize = Array.fold_left calculateEnvSize 0 neededness in
+		  (Absyn.getConstantTypeEnvSizeRef constant) := newEnvSize;
+		  (Absyn.getConstantSkeletonNeedednessRef constant) := (Some(neededness))
+		else
+          ()
       else
-        ()
-    else
-      (Errormsg.impossible Errormsg.none "Typereduction.reduceConstant: invalid skeleton")
+		(Errormsg.impossible Errormsg.none "Typereduction.reduceConstant: invalid skeleton")
   in
   
   (*  Iterate over the constant table, destructively reducing each

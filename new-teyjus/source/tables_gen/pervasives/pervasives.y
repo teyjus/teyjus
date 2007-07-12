@@ -167,7 +167,7 @@ const_decl          : NUM const_name const_ind_name tesize tesize neededness
                         cgenConstData($1.ival, $2, $4.sval, $9, $10, tySkelInd,
                                       $5.sval, NULL);
                         ocamlGenConst($1.sval, $2, $3, $10, $9, $7, $8, 
-                                      $5.ival, tySkelInd, $6.ival, $11,
+                                      $4.ival, tySkelInd, $6.ival, $11,
                                       $1.sval);
                       }
                     | comments NUM const_name const_ind_name tesize tesize
@@ -176,7 +176,7 @@ const_decl          : NUM const_name const_ind_name tesize tesize neededness
                         cgenConstData($2.ival, $3, $5.sval, $10, $11, 
                                       tySkelInd, $7.sval, $1);
                         ocamlGenConst($2.sval, $3, $4, $11, $10, $8, $9, 
-                                      $6.ival, tySkelInd, $7.ival, $12, 
+                                      $5.ival, tySkelInd, $7.ival, $12, 
                                       $2.sval);
                       }
                     ;

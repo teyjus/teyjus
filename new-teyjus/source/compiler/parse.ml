@@ -298,16 +298,19 @@ and translateTerm term amodule =
                              ^ (Types.string_of_typemolecule mol')) in
   let term'' = removeOverloads term' in
   let term''' = removeNestedAbstractions (normalizeTerm term'') in
-
   let _ = Errormsg.log (Absyn.getTermPos term''') 
-    ("parsed, normalized term: " ^ (Absyn.string_of_term term''')) in
+    ("parsed, normalized term: " ^ (Absyn.string_of_term_ast term''')) in
 
   let (fixedterm, fvars, ftyvars) = fixTerm term''' in
   let _ = Errormsg.log (Absyn.getTermPos term''')
       ("parsed, normalized, fixed term: " ^ (Absyn.string_of_term_ast fixedterm))
   in 
-  let newftyvars = Types.getNewVarsInTypeMol mol' ftyvars in
-  (fixedterm, mol', fvars, newftyvars)
+
+  let Types.Molecule(ty, tys) = mol' in
+  let mol'' = Types.Molecule(ty, List.map Types.replaceTypeSetType tys) in
+
+  let newftyvars = Types.getNewVarsInTypeMol mol'' ftyvars in
+  (fixedterm, mol'', fvars, newftyvars)
 
 
 (**********************************************************************
@@ -507,9 +510,8 @@ and translateId parsingtoplevel inlist term fvs bvs amodule =
         else
           (*  At this point the constant is assumed to be unknown.
               Simply raise an error.  *)
-          (print_string "parse.ml";
 		   Errormsg.error pos ("undeclared constant " ^ (Symbol.name sym));
-          (StackError, fvs))
+          (StackError, fvs)
   | _ -> (Errormsg.impossible (Preabsyn.getTermPos term) 
                               "Parse.translateId: invalid term")
 
@@ -1145,21 +1147,6 @@ and makeBinaryApply = fun f (arg1 : ptterm) (arg2 : ptterm) ->
 *
 **********************************************************************)
 and removeOverloads term =
-  let replaceTypeSet t =
-    let t' = Absyn.dereferenceType t in
-    match t' with
-        Absyn.TypeSetType(_) ->
-          let set = !(Absyn.getTypeSetSet t') in
-            (match set with
-              [] ->
-                Errormsg.impossible Errormsg.none
-                  ("Parse.removeOverloads: invalid type set in " ^
-                  "constant environment.")
-            | [t''] -> Absyn.dereferenceType t''
-            | _ -> Absyn.getTypeSetDefault t')
-      | _ -> t'
-  in
-  
   match term with
     Absyn.IntTerm(_) -> term
   | Absyn.RealTerm(_) -> term
@@ -1199,7 +1186,7 @@ and removeOverloads term =
               Absyn.ConstantTerm(Pervasiveutils.getOverload k c, [], b, p)
         | _ -> Absyn.ErrorTerm)
       else
-        Absyn.ConstantTerm(c, List.map replaceTypeSet tl, b, p)
+        Absyn.ConstantTerm(c, List.map Types.replaceTypeSetType tl, b, p)
   | Absyn.ErrorTerm -> Absyn.ErrorTerm
 
 (**********************************************************************
@@ -1421,7 +1408,7 @@ and fixTerm term =
           (match f with
               (Absyn.ApplicationTerm (appterm',_,_)) -> 
                 unCurryTopLevelApps appterm' (a::args)
-            | _ -> (f,args))
+            | _ -> (f, a :: args))
       | _ -> Errormsg.impossible Errormsg.none
           "Parse.fixTerm.unCurryTopLevelApps: found non-Curried form of application"
 
@@ -1437,7 +1424,7 @@ and fixTerm term =
           (* collect type variables in (needed components of) type environment 
              and check constant is legal here *)
           let () = checkIllegalConstant c p in
-          let neededtenv = trunclist tenv (Absyn.getConstantTypeEnvSize true c) in
+          let neededtenv = trunclist tenv (Absyn.getConstantTypeEnvSize false c) in
           (Absyn.ConstantTerm(c,neededtenv,true,p),fvars,
             Types.getNewVarsInTypes neededtenv ftyvars,0)
       | Absyn.FreeVarTerm(fv,_,p) -> 
