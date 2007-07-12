@@ -510,8 +510,8 @@ and translateId parsingtoplevel inlist term fvs bvs amodule =
         else
           (*  At this point the constant is assumed to be unknown.
               Simply raise an error.  *)
-		   Errormsg.error pos ("undeclared constant " ^ (Symbol.name sym));
-          (StackError, fvs)
+		   (Errormsg.error pos ("undeclared constant " ^ (Symbol.name sym));
+			(StackError, fvs))
   | _ -> (Errormsg.impossible (Preabsyn.getTermPos term) 
                               "Parse.translateId: invalid term")
 
