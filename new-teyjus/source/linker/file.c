@@ -98,20 +98,6 @@ Byte LK_FILE_GET1(int fd)
   return tmp;
 }
 
-// Name* LK_FILE_GetName(int fd, Name* name)
-// {
-// /*  if(name==NULL)
-//   return NULL;*/
-//   char* tmp;
-//   Byte size=name->size=LK_FILE_GET1(fd);
-//   //printf("Name:%d ",size);//DEBUG
-//   tmp=name->string=EM_malloc(size+1);
-//   read(fd,tmp,size);
-//   tmp[size]='\0';
-//   //printf("\"%s\"\n",tmp);//DEBUG
-//   return name;
-// }
-
 char* LK_FILE_GetString(int fd)
 {
   char* tmp;
@@ -131,11 +117,19 @@ void LK_FILE_PUT1(int fd, Byte x)
 
 void LK_FILE_PUT2(int fd, TwoBytes x)
 {
+#if BYTE_ORDER == LITTLE_ENDIAN
+    x=bswap_16(x);
+#elif BYTE_ORDER == BIG_ENDIAN
+#endif
   write(fd,&x,sizeof(x));
 }
 
 void LK_FILE_PUT4(int fd, INT4 x)
 {
+#if BYTE_ORDER == LITTLE_ENDIAN
+  x=bswap_32(x);
+#elif BYTE_ORDER == BIG_ENDIAN
+#endif
   write(fd,&x,sizeof(x));
 }
 
@@ -146,16 +140,16 @@ void LK_FILE_PUTN(int fd, void* data,int n)
 
 void LK_FILE_PUTWord(int fd, Word x)
 {
+#if BYTE_ORDER == LITTLE_ENDIAN
+# if __WORDSIZE == 32
+  x=(Word)bswap_32((unsigned int)x);
+# elif __WORDSIZE == 64
+  x=bswap_64(x);
+# endif
+#elif BYTE_ORDER == BIG_ENDIAN
+#endif
   write(fd,&x,sizeof(x));
 }
-
-// void LK_FILE_PutName(int fd, Name name)
-// {
-//   Byte size=name.size;
-//   //printf("Putting name %d : \"%s\"\n",size,name.string);
-//   LK_FILE_PUT1(fd,size);
-//   write(fd,name.string,size);
-// }
 
 void LK_FILE_PutString(int fd, char* str)
 {
