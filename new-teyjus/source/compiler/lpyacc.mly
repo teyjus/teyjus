@@ -4,6 +4,19 @@
 * This file contains the Teyjus ocamlyacc specification.  The semantic
 * actions are more or less correct...
 ****************************************************************************)
+
+(****************************************************************************
+* Shift/Reduce Conflicts
+*   This grammar has 6 shift/reduce conflicts, which can be examined by
+*   running ocamlyacc with the -v flag. These conflicts comes from two
+*   sources: error handling and typing. The conflicts due to error handling
+*   are benign. The conflicts from typing stem from trying to parse the
+*   string "A : B C". This string can be interpreted as a term A with type
+*   B C or as a term A with type B where A is applied to term C. In order to
+*   agree with the previous Teyjus grammar, we choose the first
+*   interpretation. In terms of shift/reduce conflicts, this coincides with
+*   the grammar's choice to shift rather than reduce after reading "A : B".
+****************************************************************************)
 open Lexing
 open Preabsyn
 
