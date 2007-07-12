@@ -9,6 +9,7 @@
 #include "code.h"
 #include "CallResolution.h"
 #include "VectorRW.h"
+#include "message.h"
 
 //////////////////////////////////////////////////////
 //ImportTab Load and Write Code
@@ -58,15 +59,19 @@ ImportTabInd NewImportTab()
 
 void AddLocalConstants(struct Vector* LConstInds, struct Module_st* CMData)
 {
-  int i;
-  ConstInd con;
-  con.gl_flag=LOCAL;
-  con.index=CMData->LConstAdj.offset;
-  ConstInd* tmp = LK_VECTOR_GetPtr(LConstInds,LK_VECTOR_Grow(LConstInds,CMData->LConstAdj.count));
-  for(i=0;i<CMData->LConstAdj.count;i++)
+  mutter("Filling in local constants\n");
+  if(0<CMData->LConstAdj.count)
   {
-    tmp[i]=con;
-    (con.index)++;
+    int i;
+    ConstInd con;
+    con.gl_flag=LOCAL;
+    con.index=CMData->LConstAdj.offset;
+    ConstInd* tmp = LK_VECTOR_GetPtr(LConstInds,LK_VECTOR_Grow(LConstInds,CMData->LConstAdj.count));
+    for(i=0;i<CMData->LConstAdj.count;i++)
+    {
+      tmp[i]=con;
+      (con.index)++;
+    }
   }
 }
 
@@ -78,8 +83,7 @@ void WriteLocalConstant(int fd, void* entry)
 //Load the Import tab of the top level module.
 void TopImportTab(int fd, struct Module_st* CMData)
 {
-  
-  printf("Loading Top Level Import Tab.\n");//DEBUG
+  mutter("Loading Top Level Import Tab.\n");
   int i;
   
   CMData->SegmentID=CT->numSegs=1;
@@ -119,7 +123,7 @@ void TopImportTab(int fd, struct Module_st* CMData)
 //Load the Import tab of an accumulated module.
 void AccImportTab(int fd, struct Module_st* CMData)
 {
-  printf("Loading Accumulated Import Tab.\n");//DEBUG
+  mutter("Loading Accumulated Import Tab.\n");
   int i;
   CMData->SegmentID=(CT->numSegs)++;
   AddLocalConstants(&(CT->LConstInds),CMData);
@@ -204,16 +208,18 @@ void ImpImportTab(int fd, struct Module_st* CMData)
 //and current table ID to thier previous values.
 void RestoreImportTab()
 {
-  printf("Restoring Import Tab\n");//DEBUG
+  mutter("Restoring Import Tab\n");
   //Resolve predicate collisions
   int i;
   int size=LK_VECTOR_Size(&(CT->findCodeTabs));
   HashTab_t* tmp=(HashTab_t*)LK_VECTOR_GetPtr(&(CT->findCodeTabs),0);
+  mutter("After get\n");
   for(i=1;i<size;i++)
   {
     MergeFindCodeTabs(tmp,tmp+i);
   }
   
+  mutter("Resolving predicate calls\n",i);
   ResolvePredCalls(CT->newPred,tmp);
   
   //Restore CTID and CT

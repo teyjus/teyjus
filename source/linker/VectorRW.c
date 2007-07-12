@@ -7,6 +7,11 @@ void LK_VECTOR_Read(int fd, struct Vector* vec, struct Module_st* CMData, Adjust
 {
   int i;
   int count=adj->count=LK_FILE_GET2(fd);
+  if(count==0)
+  {
+    adj->offset=0;
+    return;
+  }
   int offset=adj->offset=LK_VECTOR_Grow(vec,count);
   void* base=LK_VECTOR_GetPtr(vec,offset);
   int objSize=vec->objSize;
@@ -21,6 +26,7 @@ void LK_VECTOR_Write(int fd, struct Vector* vec,void (*write_fn)(int fd, void* e
   int i;
   int size=LK_VECTOR_Size(vec);
   LK_FILE_PUT2(fd,size);
+  if(size==0) return;
   void* base = LK_VECTOR_GetPtr(vec,0);
   int objSize= vec->objSize;
   for(i=0;i<size;i++)

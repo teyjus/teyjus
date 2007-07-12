@@ -63,6 +63,11 @@ void ResolvePredCall(PredInfo* PInfo,HashTab_t* PredSearchTab)
 {
   int i;
   int size=LK_VECTOR_Size(&(PInfo->predCalls));
+  if(size==0)
+  {
+    LK_VECTOR_Free(&(PInfo->predCalls));
+    return;
+  }
   PCallEnt* tmp=LK_VECTOR_GetPtr(&(PInfo->predCalls),0);
   CodeInd addr;
   if(PInfo->dynamic_flag>0)

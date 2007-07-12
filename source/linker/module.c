@@ -14,6 +14,7 @@
 #include "file.h"
 #include "rename.h"
 #include "../system/error.h"
+#include "message.h"
 
 #define BC_VER 2
 #define LINKCODE_VER 1
@@ -28,7 +29,7 @@ static int NumSegs=0;
 void CheckBytecodeVersion(int fd)
 {
   int x=LK_FILE_GET4(fd);
-  printf("Bytecode version %d.\n",x);
+  mutter("Bytecode version is %d.\n",x);
   if(x!=BC_VER)
   {
     perror("Incorrect Bytecode Version");
@@ -75,6 +76,7 @@ void InitAll()
 
 void LoadTopModule(char* modname)
 {
+  mutter("Loading %s as top level module\n",modname);
   NewImportTab();
   struct Module_st* CMData=NewModule();
   int fd = LK_FILE_OpenInput(modname, LK_FILE_ByteCodeExt);
@@ -181,7 +183,7 @@ void LoadImpModules(int fd, struct Module_st* CMData)
 {
   int count=CMData->ImportCount=LK_FILE_GET1(fd);
   int i;
-  printf("Importing %d modules\n",count);//DEBUG
+  mutter("Importing %d modules\n",count);
   
   if(!count)
   {
@@ -206,7 +208,7 @@ void LoadImpModules(int fd, struct Module_st* CMData)
 void LoadAccModules(int fd, struct Module_st* CMData)
 {
   int count=LK_FILE_GET1(fd);
-  printf("Accumulating %d modules\n",count);//DEBUG
+  mutter("Accumulating %d modules\n",count);
   int i;
   for(i=0;i<count;i++)
   {

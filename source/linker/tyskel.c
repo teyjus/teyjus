@@ -1,6 +1,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <obstack.h>
+#include <endian.h>
+#include <byteswap.h>
 #include "module.h"
 #include "tyskel.h"
 #include "kind.h"
@@ -53,8 +55,16 @@ void LoadTySkel(int fd, struct Module_st* CMData)
     case KIND:
       KTMP=GetKindInd(fd,CMData);
       obstack_1grow(&TySkelStack,KTMP.gl_flag);
+#if BYTE_ORDER == LITTLE_ENDIAN
+      KTMP.index = bswap_16(KTMP.index);
+#elif 
+#else
+#assert BYTE_ORDER == BIG_ENDIAN
+#endif
       obstack_grow(&TySkelStack,&(KTMP.index),sizeof(TwoBytes));
-      arity=CheckKindArity(KTMP);
+      obstack_grow(&TySkelStack,&(KTMP.index),sizeof(TwoBytes));
+      arity=LK_FILE_GET1(fd);
+      obstack_1grow(&TySkelStack,arity);
       for(j=0;j<arity;j++)
         LoadTySkel(fd,CMData);
       break;

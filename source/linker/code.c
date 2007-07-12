@@ -9,6 +9,7 @@
 #include "file.h"
 #include "hashtab.h"
 #include "bvrtab.h"
+#include "message.h"
 
 #define ASSERT(x,err) if(!(x)){printf("%s\n",err); exit(0);}
 #define INSTR_LLen sizeof(int)
@@ -151,7 +152,7 @@ void LoadCode(int fd, struct Module_st* CMData)
   int i,j;
   int offset=CMData->CodeOffset;
   int size=CMData->CodeSize;
-  printf("Loading %d bytes of code to offset %d.\n",size,offset);//DEBUG
+  mutter("Loading %d bytes of code to offset %d.\n",size,offset);
   Byte* code=(Byte*)LK_VECTOR_GetPtr(&Code,offset);
   ConstInd tmpIndex;
   

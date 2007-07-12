@@ -3,6 +3,7 @@
 #include "vector.h"
 #include "datatypes.h"
 #include "../system/error.h"
+#include "message.h"
 
 // #define obstack_chunk_alloc EM_malloc
 // #define obstack_chunk_free free
@@ -78,6 +79,11 @@ void* LK_VECTOR_GetPtr(struct Vector* vec, int index)
 {
   if(index<0||index>=LK_VECTOR_Size(vec))
   {
+    if(LK_VECTOR_Size(vec)==0 && index==0)
+    {
+      mutter("Getting start of empty vector\n");
+      return NULL;
+    }
     EM_THROW(LK_LinkError);
   }
   
