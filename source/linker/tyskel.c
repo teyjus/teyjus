@@ -62,7 +62,6 @@ void LoadTySkel(int fd, struct Module_st* CMData)
 #assert BYTE_ORDER == BIG_ENDIAN
 #endif
       obstack_grow(&TySkelStack,&(KTMP.index),sizeof(TwoBytes));
-      obstack_grow(&TySkelStack,&(KTMP.index),sizeof(TwoBytes));
       arity=LK_FILE_GET1(fd);
       obstack_1grow(&TySkelStack,arity);
       for(j=0;j<arity;j++)

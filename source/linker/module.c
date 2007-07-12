@@ -17,7 +17,7 @@
 #include "message.h"
 
 #define BC_VER 2
-#define LINKCODE_VER 1
+#define LINKCODE_VER 3
 
 static void LoadAccModule(char* modname);
 static void LoadAccModules();
