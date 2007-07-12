@@ -48,8 +48,12 @@ let makeConstantMolecule parsingtoplevel constant =
     | Absyn.ErrorType -> ty'
   in
   
-  
-  let envsize = Absyn.getConstantTypeEnvSize parsingtoplevel constant in
+  let envsize = 
+	if (Absyn.isPervasiveConstant constant) then 
+	  Absyn.getConstantTypeEnvSize true constant 
+	else
+	  Absyn.getConstantTypeEnvSize parsingtoplevel constant 
+  in
   let skel = Absyn.getConstantSkeleton constant in
   
   if Option.isSome skel then
@@ -739,6 +743,28 @@ and getNewVarsInType ty ftyvars =
 let getNewVarsInTypeMol (Molecule(ty,tyenv)) ftyvars =
        let ftyvars' = getNewVarsInType ty ftyvars in
          getNewVarsInTypes tyenv ftyvars'
+
+(**********************************************************************************)
+(* resolve type set type                                                          *)
+(**********************************************************************************)
+let replaceTypeSetType t =
+  let t' = Absyn.dereferenceType t in
+  match t' with
+    Absyn.TypeSetType(_) ->
+      let set = !(Absyn.getTypeSetSet t') in
+      (match set with
+        [] ->
+          Errormsg.impossible Errormsg.none
+            ("Types.replaceTypeSetType: invalid type set in " ^
+             "constant environment.")
+      | [t''] -> Absyn.dereferenceType t''
+      | _ -> Absyn.getTypeSetDefault t')
+  | _ -> t'
+		
+
+(**********************************************************************************)
+(* for testing                                                                    *)
+(**********************************************************************************)  
 
 let unitTests () =
   let test tmol1 tmol2 =

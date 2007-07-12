@@ -703,6 +703,11 @@ let getConstantTypeRef = function
 let isGlobalConstant c = 
   (getConstantType c) = GlobalConstant
 
+let isPervasiveConstant c =
+  match (getConstantType c) with
+	PervasiveConstant(_) -> true
+  | _ -> false
+
 let getConstantCodeInfo = function
   Constant(_,_,_,_,_,_,_,_,_,_,_,_,_,ci,_,_,_) ->
     ci
@@ -873,12 +878,12 @@ let makeHiddenConstant skel envsize =
     ref None, ref HiddenConstant, ref 0, Errormsg.none)
 
 let makeConstantTerm c env pos =
-  let esize = getConstantTypeEnvSize false c in
-  if esize = (List.length env) then
+  (*let esize = getConstantTypeEnvSize false c in
+  if esize = (List.length env) then *)
     ConstantTerm(c, env, false, pos)
-  else
+  (* else
     Errormsg.impossible (getConstantPos c)
-      "makeConstantTerm: constant environment size and given environment don't match"
+      "makeConstantTerm: constant environment size and given environment don't match" *)
 
 (*************************************************************************)
 (*  atypesymbol:                                                         *)
@@ -1112,6 +1117,7 @@ let rec string_of_term_ast term =
   | BoundVarTerm(NamedBoundVar(s),_,_) ->
 	  "bv: " ^
 	  (Symbol.name (getTypeSymbolSymbol s))
+  | BoundVarTerm(DBIndex(i),_,_) -> "#" ^ string_of_int i
   | AbstractionTerm(NestedAbstraction(_),_,_) ->
       let aterm = getTermAbstractionBody term in
       let avar = getTermAbstractionVar term in
@@ -1478,9 +1484,7 @@ let rec sameTermStructure t1 t2 =
 	 ApplicationTerm(FirstOrderApplication(h', args', arity'),_,_)) ->
 	   (arity = arity') && (sameTermStructure h h') && (sameTermStructureList args args')
   | _ -> 
-	  (print_endline ("term1: " ^ string_of_term_ast t1);
-	   print_endline ("term2: " ^ string_of_term_ast t2);
-	   false)
+	  false
 
 and sameTermStructureList ts ts' =
   match (ts, ts') with
