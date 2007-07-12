@@ -43,4 +43,10 @@ val getNewVarsInTypes : Absyn.atype list -> Absyn.atype list -> Absyn.atype list
 (* the latter *)
 val getNewVarsInTypeMol : typemolecule -> Absyn.atype list -> Absyn.atype list
 
+
+(**********************************************************************************)
+(* resolve type set type                                                          *)
+(**********************************************************************************)
+val replaceTypeSetType : Absyn.atype -> Absyn.atype
+
 val unitTests : unit -> unit
