@@ -1,8 +1,8 @@
 
 type intref    = int ref
 type aconstant = Absyn.aconstant
-type akind     = Absyn.akind	
-
+type akind     = Absyn.akind
+	
 val wordSize : int
 
 

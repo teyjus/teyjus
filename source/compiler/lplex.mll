@@ -180,7 +180,7 @@ rule initial = parse
 
 | "/*"            {commentLev := 1; comment2 lexbuf}
 | _ as c          {raise (Failure("Invalid token: " ^ string_of_char c));}
-| eof             {END}
+| eof             {EOF}
 
 (**********************************************************************
 *stringstate:
