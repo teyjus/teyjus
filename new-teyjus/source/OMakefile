@@ -91,14 +91,9 @@ DIS_MAIN = $(FNT)/disassemblerfront
 CMP_MAIN = $(FNT)/compilerfront
 SIM_MAIN = $(FNT)/simulatorfront
 
-# Declare subdirectories
-
-.SUBDIRS: compiler disassembler front linker loader simulator system \
-          tables tables_gen
-    if $(file-exists OMakefile)
-        include OMakefile
-
 # Generated Files
+
+.SUBDIRS: tables_gen
 
 INSTR_ML_FILES[] =
     $(CMP)/instr.mli
@@ -140,6 +135,12 @@ $(PERV_FILES): $(PERV_GEN)
 
 .PHONY: gen
 gen: $(INSTR_ML_FILES) $(PERV_ML_FILES) $(INSTR_C_FILES) $(PERV_C_FILES)
+
+# Declare subdirectories
+
+.SUBDIRS: compiler disassembler front linker loader simulator system tables
+    if $(file-exists OMakefile)
+        include OMakefile
 
 # Build Targets
 
