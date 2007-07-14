@@ -3,8 +3,12 @@
 
 extern int verbosity;
 
-#define mutter(args...) if(verbosity) fprintf(stderr,args)
+#define debug(args...) if(verbosity>2) fprintf(stderr,args)
 
-#define error(args...) fprintf(stderr,args)
+#define detail(args...) if(verbosity>1) fprintf(stderr,args)
+
+#define mutter(args...) if(verbosity>0) fprintf(stderr,args)
+
+#define bad(args...) fprintf(stderr,args)
 
 #endif

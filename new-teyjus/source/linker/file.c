@@ -10,6 +10,7 @@
 #include <bits/wordsize.h>
 #include "file.h"
 #include "../system/error.h"
+#include "message.h"
 
 #define DEBUG(x) printf("%s\n",x)
 #define SWAPENDIAN
@@ -25,6 +26,7 @@ int LK_FILE_OpenInput(char* modname, char* extension)
   int fd=open(buf,O_RDONLY,0000);
   if(fd==-1)
   {
+    bad("Couldn't open file %s for reading.\n",buf); 
     EM_THROW(LK_LinkError);
   }
   return fd;
@@ -38,6 +40,7 @@ int LK_FILE_OpenOutput(char* modname, char* extension)
   int fd=open(buf,O_WRONLY|O_CREAT|O_TRUNC,0666);
   if(fd==-1)
   {
+    bad("Couldn't open file %s for writing.\n",buf); 
     EM_THROW(LK_LinkError);
   }
   return fd;
@@ -46,7 +49,10 @@ int LK_FILE_OpenOutput(char* modname, char* extension)
 void LK_FILE_xPipe(int fd[2])
 {
   if(pipe(fd))
+  {
+    bad("Couldn't open pipe.\n"); 
     EM_THROW(LK_LinkError);
+  }
 }
 
 void LK_FILE_Close(int fd)

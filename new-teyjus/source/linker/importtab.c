@@ -233,7 +233,7 @@ void WriteImportTab(int fd, void* entry)
 {
   int i;
   TImportTab_t* ImportTab=(TImportTab_t*)entry;
-  
+  debug("Writing an import table.\n");
   LK_FILE_PUT1(fd,ImportTab->numSegs);
   
   LK_FILE_PUT2(fd,ImportTab->NctSize);
@@ -252,5 +252,6 @@ void WriteImportTab(int fd, void* entry)
 //Write out all import tables to file.
 void WriteImportTabs(int fd)
 {
+  detail("Writing out import tables.\n");
   LK_VECTOR_Write(fd,&ImportTabs,WriteImportTab);
 }

@@ -34,10 +34,10 @@ static error_t parse_opt (int key, char *arg, struct argp_state *state)
   switch (key)
   {
     case 'q': case 's':
-      verbosity = 0;
+      verbosity--;
       break;
     case 'v':
-      verbosity = 1;
+      verbosity++;
       break;
     case 'i':
       LK_FILE_ByteCodeExt = arg;
@@ -77,7 +77,7 @@ int main(int argc, char* argv[])
   }
   EM_CATCH
   {
-    printf("An exception occured.\n");
+    bad("Linking aborted due to an exception.\n");
     return EXIT_FAILURE;
   }
   return EXIT_SUCCESS;

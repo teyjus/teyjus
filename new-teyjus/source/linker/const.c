@@ -7,6 +7,7 @@
 #include "tyskel.h"
 #include "const.h"
 #include "VectorRW.h"
+#include "message.h"
 
 /*/////////////////////////////////////////////////////////////////////////////////////
 //This file defines the code for using GConsts and LConsts/////
@@ -59,12 +60,14 @@ void LoadTopGConst(int fd, struct Module_st* CMData, int i)
   GConstTab[i].ty_env_size=LK_FILE_GET1(fd);
   GConstTab[i].name=LK_FILE_GetString(fd);
   GConstTab[i].ty_skel_index=GetTySkelInd(fd,CMData);
+  debug("GConst[%d]:%s\n",i,GConstTab[i].name);
 }
 
 void LoadTopGConsts(int fd, struct Module_st* CMData)
 {
   int i;
   int count=GConstTabSize=CMData->GConstcount=LK_FILE_GET2(fd);
+  detail("Loading %d top level global constants.\n",count);
   GConstTab=(Const_t*)EM_malloc(count*sizeof(Const_t));
   CMData->GConst=(ConstInd*)EM_malloc(count*sizeof(ConstInd));
   for(i=0;i<count;i++)

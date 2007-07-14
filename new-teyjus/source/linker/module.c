@@ -28,7 +28,7 @@ static int NumSegs=0;
 
 void CheckBytecodeVersion(int fd)
 {
-  int x=LK_FILE_GET4(fd);
+  int x=(int)LK_FILE_GETWord(fd);
   mutter("Bytecode version is %d.\n",x);
   if(x!=BC_VER)
   {
@@ -77,6 +77,7 @@ void InitAll()
 void LoadTopModule(char* modname)
 {
   mutter("Loading %s as top level module\n",modname);
+  EM_TRY{
   NewImportTab();
   struct Module_st* CMData=NewModule();
   int fd = LK_FILE_OpenInput(modname, LK_FILE_ByteCodeExt);
@@ -109,6 +110,10 @@ void LoadTopModule(char* modname)
   LK_FILE_Close(fd);
   free(CMData);
   RestoreImportTab();
+  }EM_CATCH{
+    bad("Error while reading top level module %s\n",modname);
+    EM_RETHROW();
+  }
 }
 
 void LoadAccModule(char* modname)
