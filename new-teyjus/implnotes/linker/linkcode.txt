@@ -32,16 +32,17 @@
 {
   [Type Skeleton]
   {
-    <Arrow = 1> --- 1 byte
+    <Arrow = 0> --- 1 byte
     <Left argument> --- [Type Skeleton]
     <Right argument> --- [Type Skeleton]
   } or {
-    <Kind = 2> --- 1 byte
+    <Kind = 1> --- 1 byte
     <mark local/global/pervasive> --- 1 byte
     <index into kind table> --- 2 bytes
+    <arity> --- 1 byte
     <arguments> --- kind arity [Type Skeleton]s
   } or {
-    <Var = 3> --- 1 byte
+    <Var = 2> --- 1 byte
     <offset> --- 1 byte
   }
 }
