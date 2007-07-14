@@ -5,8 +5,8 @@
 #include "file.h"
 #include "hashtab.h"
 #include "code.h"
-
 #include "VectorRW.h"
+#include "message.h"
 //////////////////////////////////////////////////////
 //HashTab Load and Write Code
 //////////////////////////////////////////////////////
@@ -29,6 +29,7 @@ void LoadHashTabEnt(int fd, struct Module_st* CMData,void* entry)
   HashTabEnt* tmp = (HashTabEnt*)entry;
   tmp->index=GetConstInd(fd,CMData);
   tmp->addr=GetCodeInd(fd,CMData);
+  debug("HashTabEnt[%d,%d]=%x\n",tmp->index.gl_flag,tmp->index.index,tmp->addr);
 }
 
 void LoadHashTab(int fd, struct Module_st* CMData,void* entry)
@@ -48,10 +49,12 @@ void WriteHashTabEnt(int fd,void* entry)
   HashTabEnt* tmp = (HashTabEnt*)entry;
   PutConstInd(fd,tmp->index);
   PutCodeInd(fd,tmp->addr);
+  debug("Writing HashTabEnt[%d,%d]=%x\n",tmp->index.gl_flag,tmp->index.index,tmp->addr);
 }
 
 void WriteHashTab(int fd, void* entry)
 {
+  debug("Writing HashTab\n");
   LK_VECTOR_Write(fd,(struct Vector*)entry,&WriteHashTabEnt);
   if(LK_VECTOR_Size((struct Vector*)entry)!=0)
     LK_VECTOR_Free((struct Vector*)entry);

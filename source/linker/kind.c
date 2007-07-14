@@ -7,6 +7,7 @@
 #include "rename.h"
 #include "file.h"
 #include "VectorRW.h"
+#include "message.h"
 /*/////////////////////////////////////////////////////////////////////////////////////
 //This file defines the code for using GKinds and LKinds/////
 ////////////////////////////////////////////////////////////////////////////////////*/
@@ -67,7 +68,7 @@ void LoadTopGKinds(int fd, struct Module_st* CMData)
 {
   int i;
   TwoBytes count=GKindTabSize=CMData->GKindcount=LK_FILE_GET2(fd);
-  
+  detail("Loading %d top level global kinds.\n",count);
   GKindTab=EM_malloc(GKindTabSize*sizeof(Kind_t));
   
   CMData->GKind=EM_malloc(count*sizeof(MarkInd));
