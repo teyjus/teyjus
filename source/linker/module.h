@@ -12,40 +12,42 @@ typedef struct{
   int offset;
 }Adjust_t;
 
-#define LK_ADJUST(x,adj,typestr) if(x>=adj.count){printf("Invalid %s(%d)\n",typestr,x);EM_THROW(LK_LinkError);} x+=adj.offset
+#define LK_ADJUST(x,adj,typestr) if(x>=adj.count){\
+fprintf(stderr,"Invalid %s[%d of %d]\n",typestr,x,adj.count);\
+EM_THROW(LK_LinkError);}x+=adj.offset
 
 struct Module_st{
-	struct Module_st* parent;
+  struct Module_st* parent;
 
-	int GKindcount;
-	KindInd* GKind;
+  int GKindcount;
+  KindInd* GKind;
 	
-    Adjust_t LKindAdj;
+  Adjust_t LKindAdj;
 	
-    Adjust_t TySkelAdj;
+  Adjust_t TySkelAdj;
 	
-	int GConstcount;
-	ConstInd* GConst;
+  int GConstcount;
+  ConstInd* GConst;
 	
-    Adjust_t LConstAdj;
-    Adjust_t HConstAdj;
+  Adjust_t LConstAdj;
+  Adjust_t HConstAdj;
 	
-	Adjust_t ImplGoalAdj;
+  Adjust_t ImplGoalAdj;
 	
-	Adjust_t HashTabAdj;
+  Adjust_t HashTabAdj;
 	
-    Adjust_t BvrTabAdj;
+  Adjust_t BvrTabAdj;
 	
-    Adjust_t StringsAdj;
+  Adjust_t StringsAdj;
 
-	int CodeOffset;
-	int CodeSize;
+  int CodeOffset;
+  int CodeSize;
 	
-	int ImportCount;
-	ImportTabInd* Import;
-	int SegmentID;
+  int ImportCount;
+  ImportTabInd* Import;
+  int SegmentID;
     
-    PredInfoTab* Pit;
+  PredInfoTab* Pit;
 };
 
 struct Module_st* CM; 		//The module currently being loaded
