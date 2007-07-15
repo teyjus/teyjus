@@ -351,20 +351,20 @@ ImportTabInd GetImportTabInd(int fd, struct Module_st* CMData)
 
 ImplGoalInd GetImplGoalInd(int fd, struct Module_st* CMData){
   TwoBytes tmp=LK_FILE_GET2(fd);
-  LK_ADJUST(tmp,CMData->ImplGoalAdj,"Type Skeleton");
+  LK_ADJUST(tmp,CMData->ImplGoalAdj,"Implication Goal");
   return tmp;
 }
 
 HashTabInd GetHashTabInd(int fd, struct Module_st* CMData){
   TwoBytes tmp=LK_FILE_GET2(fd);
-  LK_ADJUST(tmp,CMData->HashTabAdj,"Type Skeleton");
+  LK_ADJUST(tmp,CMData->HashTabAdj,"Hash Table");
   return tmp;
 }
 
 BvrTabInd GetBvrTabInd(int fd, struct Module_st* CMData)
 {
   TwoBytes tmp=LK_FILE_GET2(fd);
-  LK_ADJUST(tmp,CMData->HashTabAdj,"Type Skeleton");
+  LK_ADJUST(tmp,CMData->HashTabAdj,"Bound Variable Table");
   return tmp;
 }
 
