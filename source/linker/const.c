@@ -73,7 +73,7 @@ void LoadTopGConsts(int fd, struct Module_st* CMData)
   for(i=0;i<count;i++)
   {
     CMData->GConst[i].gl_flag=GLOBAL;
-    CMData->GConst[i].gl_flag=i;
+    CMData->GConst[i].index=i;
     LoadTopGConst(fd,CMData,i);
   }
 }
@@ -177,6 +177,7 @@ void WriteHConsts(int fd)
 //////////////////////////////////////////////////////////////
 void WriteConsts(int fd)
 {
+  debug("Writing Constant Tables at %x\n",lseek(fd,0,SEEK_CUR));
   LK_FILE_PUT2(fd,LK_VECTOR_Size(&LConsts)+GConstTabSize+LK_VECTOR_Size(&HConsts));
   WriteGConsts(fd);
   WriteLConsts(fd);

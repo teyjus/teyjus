@@ -9,6 +9,7 @@
 #include "vector.h"
 #include "file.h"
 #include "VectorRW.h"
+#include "message.h"
 
 #define obstack_chunk_alloc EM_malloc
 #define obstack_chunk_free free
@@ -100,6 +101,7 @@ void WriteTySkel(int fd, void* entry)
 
 void WriteTySkels(int fd)
 {
+  debug("Writing Type Skels at %x\n",lseek(fd,0,SEEK_CUR));
   LK_VECTOR_Write(fd,&TySkels,WriteTySkel);
   LK_VECTOR_Free(&TySkels);
   obstack_free(&TySkelStack,StackBot);

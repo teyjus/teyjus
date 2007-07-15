@@ -281,6 +281,7 @@ void FreeCode()
 
 void WriteCodeSize(int fd)
 {
+  debug("Writing code size %x at %x.\n",LK_VECTOR_Size(&Code),lseek(fd,0,SEEK_CUR));
   LK_FILE_PUTWord(fd,(Word)LK_VECTOR_Size(&Code));
 }
 

@@ -281,6 +281,7 @@ ConstInd GetConstInd(int fd, struct Module_st* CMData){
   ConstInd tmp;
   tmp.gl_flag=LK_FILE_GET1(fd);
   tmp.index=LK_FILE_GET2(fd);
+  debug("ConstInd[%d,%d]\n",tmp.gl_flag,tmp.index);
   switch(tmp.gl_flag)
   {
     case LOCAL:

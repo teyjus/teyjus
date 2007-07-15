@@ -136,6 +136,7 @@ void WriteLKinds(int fd)
 ////////////////////////////////////////////////
 void WriteKinds(int fd)
 {
+  debug("Writing Kind Tables at %x\n",lseek(fd,0,SEEK_CUR));
   LK_FILE_PUT2(fd,LK_VECTOR_Size(&LKinds)+GKindTabSize);
   WriteGKinds(fd);
   WriteLKinds(fd);
