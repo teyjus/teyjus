@@ -3,6 +3,7 @@
 #include "vector.h"
 #include "file.h"
 #include "VectorRW.h"
+#include "message.h"
 
 typedef struct{
   char* str;
@@ -36,6 +37,7 @@ void WriteString(int fd, void* entry)
 
 void LK_STRINGS_Write(int fd)
 {
+  debug("Writing String Tables at %x\n",lseek(fd,0,SEEK_CUR));
   LK_VECTOR_Write(fd,&Strings,WriteString);
   LK_VECTOR_Free(&Strings);
 }

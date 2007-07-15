@@ -34,6 +34,7 @@ void LoadHashTabEnt(int fd, struct Module_st* CMData,void* entry)
 
 void LoadHashTab(int fd, struct Module_st* CMData,void* entry)
 {
+  debug("Loading HashTab at %x\n",lseek(fd,0,SEEK_CUR));
   Adjust_t ignore_me;
   LK_VECTOR_Init((struct Vector*)entry,0,sizeof(HashTabEnt));
   LK_VECTOR_Read(fd,(struct Vector*)entry,CMData,&ignore_me,LoadHashTabEnt);
@@ -54,7 +55,7 @@ void WriteHashTabEnt(int fd,void* entry)
 
 void WriteHashTab(int fd, void* entry)
 {
-  debug("Writing HashTab\n");
+  debug("Writing HashTab at %x\n",lseek(fd,0,SEEK_CUR));
   LK_VECTOR_Write(fd,(struct Vector*)entry,&WriteHashTabEnt);
   if(LK_VECTOR_Size((struct Vector*)entry)!=0)
     LK_VECTOR_Free((struct Vector*)entry);

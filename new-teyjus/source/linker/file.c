@@ -15,8 +15,8 @@
 #define DEBUG(x) printf("%s\n",x)
 #define SWAPENDIAN
 
-char* LK_FILE_LinkCodeExt=".lpo";
-char* LK_FILE_ByteCodeExt=".lpa";
+char* LK_FILE_LinkCodeExt=".lp";
+char* LK_FILE_ByteCodeExt=".lpo";
 
 int LK_FILE_OpenInput(char* modname, char* extension)
 {
