@@ -8,8 +8,8 @@
 #include "tyskel.h"
 #include "const.h"
 
-#define LINKCODE_EXT ".bc"
-#define BYTECODE_EXT ".lp"
+#define LINKCODE_EXT ".lp"
+#define BYTECODE_EXT ".lpo"
 
 void LD_LOADER_LoadLinkcodeVer();
 

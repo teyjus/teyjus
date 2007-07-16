@@ -1,5 +1,7 @@
 #include <stdio.h>
+#include <unistd.h>
 #include "../system/error.h"
+#include "../tables/pervasives.h"
 #include "module.h"
 #include "vector.h"
 #include "rename.h"
@@ -52,6 +54,43 @@ void LoadGConsts(int fd, struct Module_st* CMData)
 
 Const_t* GConstTab=NULL;
 int GConstTabSize=-1;
+struct Vector LConsts;
+
+TwoBytes PackConstInd(ConstInd ind){
+  switch(ind.gl_flag){
+    case PERVASIVE:
+      return ind.index;
+    case GLOBAL:
+      return ind.index+PERV_CONST_NUM;
+    case LOCAL:
+      return ind.index+PERV_CONST_NUM+GConstTabSize;
+    case HIDDEN:
+      return -(ind.index+1);
+  }
+  EM_THROW(LK_LinkError);
+}
+
+ConstInd UnPackConstInd(TwoBytes ind){
+  ConstInd tmp;
+  if(0<=ind && ind<PERV_CONST_NUM){
+    tmp.gl_flag=PERVASIVE;
+    tmp.index=ind;
+  } else if(PERV_CONST_NUM<=ind && ind<PERV_CONST_NUM+GConstTabSize){
+    tmp.gl_flag=GLOBAL;
+    tmp.index=ind-PERV_CONST_NUM;
+  } else if(PERV_CONST_NUM+GConstTabSize<=ind &&\
+            ind<PERV_CONST_NUM+GConstTabSize+LK_VECTOR_Size(&LConsts)){
+    tmp.gl_flag=LOCAL;
+    tmp.index=ind-(PERV_CONST_NUM+GConstTabSize);
+  } else if(((TwoBytes)-LK_VECTOR_Size(&LConsts))<=ind){
+    tmp.gl_flag=HIDDEN;
+    tmp.index=-ind-1;
+  } else {
+    bad("ConstInd unpack failed");
+    EM_THROW(LK_LinkError);
+  }
+  return tmp;
+}
 
 void LoadTopGConst(int fd, struct Module_st* CMData, int i)
 {
@@ -104,7 +143,6 @@ void WriteGConsts(int fd)
 //////////////////////////////////////////////////////
 //LConst Load and Write Code
 //////////////////////////////////////////////////////
-struct Vector LConsts;
 
 void InitTLConsts()
 {

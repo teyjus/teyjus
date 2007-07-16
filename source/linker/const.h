@@ -23,4 +23,7 @@ extern void LoadHConsts(int fd, struct Module_st* CMData);
 
 extern void WriteConsts(int fd);
 
+extern TwoBytes PackConstInd(ConstInd ind);
+extern ConstInd UnPackConstInd(TwoBytes ind);
+
 #endif

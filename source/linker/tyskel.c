@@ -3,6 +3,7 @@
 #include <obstack.h>
 #include <endian.h>
 #include <byteswap.h>
+#include <unistd.h>
 #include "module.h"
 #include "tyskel.h"
 #include "kind.h"
