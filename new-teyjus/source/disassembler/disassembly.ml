@@ -79,10 +79,13 @@ let disassembleHashTable gconsts lconsts hconsts =
 		Option.get
 		  (Bytecode.readConstantIndex (getConstant gconsts lconsts hconsts))
 	  in
+	  
 	  let label = Label.label(Bytecode.readWord ()) in
 	  disassembleHashTableAux ((pred, label)::hashTab) (index + 1)
   in
-  disassembleHashTableAux [] 0
+
+  let tab = disassembleHashTableAux [] 0 in
+  tab
 		
 (***************************************************************************)
 (*                          HEADER INFORMATION                             *)
@@ -143,6 +146,7 @@ let disassembleTypeSkeletons gkinds lkinds  =
 (*         GLOBAL/LOCAL/HIDDEN CONSTANT INFORMATION                        *)
 (***************************************************************************)
 let disassembleConstants makeConstFn =
+
   let length = (Bytecode.readTwoBytes ()) in
   let consts = Array.make length None in
   
@@ -223,7 +227,7 @@ let disassembleModuleTable gconsts lconsts hconsts =
 (*                      IMPORT TABLES                                      *)
 (***************************************************************************)
 let disassembleImportTables gconsts lconsts hconsts =
-  let numberImportTabs = Bytecode.readOneByte () in
+  let numberImportTabs = Bytecode.readTwoBytes () in
   
   let rec disassembleImportTablesAux index importTabs =
 	if (index = numberImportTabs) then List.rev importTabs
