@@ -438,13 +438,13 @@ void MakeCallName(CodeInd from, int arity, ConstInd to)
   if(-1==arity)
   {
     tmp[0]=execute_name;
-    *(ConstInd*)(tmp+callOffsets[EXECUTE][NAME][LABEL])=to;
+    *(TwoBytes*)(tmp+callOffsets[EXECUTE][NAME][LABEL])=PackConstInd(to);
   }
   else
   {
     tmp[0]=call_name;
     tmp[callOffsets[CALL][NAME][ARITY]]=arity;
-    *(ConstInd*)(tmp+callOffsets[CALL][NAME][LABEL])=to;
+    *(TwoBytes*)(tmp+callOffsets[CALL][NAME][LABEL])=PackConstInd(to);
   }
 }
   
