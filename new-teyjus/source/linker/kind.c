@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <unistd.h>
 #include "../system/error.h"
 #include "datatypes.h"
 #include "module.h"
@@ -8,6 +9,7 @@
 #include "file.h"
 #include "VectorRW.h"
 #include "message.h"
+#include "../tables/pervasives.h"
 /*/////////////////////////////////////////////////////////////////////////////////////
 //This file defines the code for using GKinds and LKinds/////
 ////////////////////////////////////////////////////////////////////////////////////*/
@@ -51,6 +53,38 @@ void LoadGKinds(int fd, struct Module_st* CMData)
 
 Kind_t* GKindTab=NULL;
 int GKindTabSize=-1;
+struct Vector LKinds;
+
+TwoBytes PackKindInd(KindInd ind){
+  switch(ind.gl_flag){
+    case PERVASIVE:
+      return ind.index;
+    case GLOBAL:
+      return ind.index+PERV_CONST_NUM;
+    case LOCAL:
+      return ind.index+PERV_CONST_NUM+GKindTabSize;
+  }
+  EM_THROW(LK_LinkError);
+}
+
+KindInd UnPackKindInd(TwoBytes ind){
+  KindInd tmp;
+  if(ind<PERV_KIND_NUM){
+    tmp.gl_flag=PERVASIVE;
+    tmp.index=ind;
+  } else if(PERV_KIND_NUM<=ind && ind<PERV_KIND_NUM+GKindTabSize){
+    tmp.gl_flag=GLOBAL;
+    tmp.index=ind-PERV_KIND_NUM;
+  } else if(PERV_KIND_NUM+GKindTabSize<=ind && \
+            ind<PERV_KIND_NUM+GKindTabSize+LK_VECTOR_Size(&LKinds)){
+    tmp.gl_flag=LOCAL;
+    tmp.index=ind-(PERV_KIND_NUM+GKindTabSize);
+  }else {
+    bad("ConstInd unpack failed");
+    EM_THROW(LK_LinkError);
+  }
+  return tmp;
+}
 
 KindInd LoadTopGKind(int fd,int i)
 {
@@ -104,7 +138,6 @@ void WriteGKinds(int fd)
 //////////////////////////////////////////////////////
 //LKind Load and Write Code
 //////////////////////////////////////////////////////
-struct Vector LKinds;
 
 void InitTLKinds()
 {

@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include "../tables/instructions.h"
 #include "code.h"
 #include "module.h"
@@ -10,6 +11,9 @@
 #include "hashtab.h"
 #include "bvrtab.h"
 #include "message.h"
+#include "const.h"
+#include "kind.h"
+#include "../system/error.h"
 
 #define ASSERT(x,err) if(!(x)){printf("%s\n",err); exit(0);}
 #define INSTR_LLen sizeof(int)
@@ -50,6 +54,10 @@ void InitOffsets()
         j++;
         break;
           
+      case INSTR_WP:
+        j+=sizeof(Word);
+        break;
+          
       case INSTR_I1:
         callOffsets[CALL][ADDR][ARITY]=j++;
         break;
@@ -58,6 +66,9 @@ void InitOffsets()
         callOffsets[CALL][ADDR][LABEL]=j;
         j+=sizeof(CodeInd);
         break;
+      default:
+        bad("Internal Error: in code.c InitOffsets():A\n");
+        EM_THROW(LK_LinkError);
     }
     argid++;
   }while(opType[argid]!=INSTR_X);
@@ -73,10 +84,17 @@ void InitOffsets()
         j++;
         break;
           
+      case INSTR_WP:
+        j+=sizeof(Word);
+        break;
+          
       case INSTR_L:
         callOffsets[EXECUTE][ADDR][LABEL]=j;
         j+=sizeof(CodeInd);
         break;
+      default:
+        bad("Internal Error: in code.c InitOffsets():B\n");
+        EM_THROW(LK_LinkError);
     }
     argid++;
   }while(opType[argid]!=INSTR_X);
@@ -92,6 +110,10 @@ void InitOffsets()
         j++;
         break;
           
+      case INSTR_WP:
+        j+=sizeof(Word);
+        break;
+          
       case INSTR_I1:
         callOffsets[CALL][NAME][ARITY]=j++;
         break;
@@ -100,6 +122,9 @@ void InitOffsets()
         callOffsets[CALL][NAME][LABEL]=j;
         j+=sizeof(ConstInd);
         break;
+      default:
+        bad("Internal Error: in code.c InitOffsets():C %x\n",opType[argid]);
+        EM_THROW(LK_LinkError);
     }
     argid++;
   }while(opType[argid]!=INSTR_X);
@@ -115,10 +140,17 @@ void InitOffsets()
         j++;
         break;
           
+      case INSTR_WP:
+        j+=sizeof(Word);
+        break;
+          
       case INSTR_C:
         callOffsets[EXECUTE][NAME][LABEL]=j;
         j+=sizeof(ConstInd);
         break;
+      default:
+        bad("Internal Error: in code.c InitOffsets():D\n");
+        EM_THROW(LK_LinkError);
     }
     argid++;
   }while(opType[argid]!=INSTR_X);
@@ -172,7 +204,6 @@ void LoadCode(int fd, struct Module_st* CMData)
       code[j]=LK_FILE_GET1(fd);
       tmpIndex=GetConstInd(fd,CMData);
       PushCall(CMData->Pit,tmpIndex,offset+i,code[j]);
-      //i+=(INSTR_instrSize(opcode)*sizeof(Word));
       i += INSTR_instrSize(opcode);
       
       continue;
@@ -181,7 +212,6 @@ void LoadCode(int fd, struct Module_st* CMData)
     {
       tmpIndex=GetConstInd(fd,CMData);
       PushCall(CMData->Pit,tmpIndex,offset+i,-1);
-      //i+=(INSTR_instrSize(opcode)*sizeof(Word));
       i += INSTR_instrSize(opcode);
       continue;
     }
@@ -194,6 +224,10 @@ void LoadCode(int fd, struct Module_st* CMData)
       {
         case INSTR_P:
           j++;
+          break;
+          
+        case INSTR_WP:
+          j+=sizeof(Word);
           break;
           
         case INSTR_R:
@@ -211,13 +245,13 @@ void LoadCode(int fd, struct Module_st* CMData)
 //           break;
           
         case INSTR_C:
-          *(ConstInd*)(code+j)=GetConstInd(fd,CMData);
-          j+=sizeof(ConstInd);
+          *(TwoBytes*)(code+j)=PackConstInd(GetConstInd(fd,CMData));
+          j+=sizeof(TwoBytes);
           break;
           
         case INSTR_K:
-          *(KindInd*)(code+j)=GetKindInd(fd,CMData);
-          j+=sizeof(KindInd);
+          *(TwoBytes*)(code+j)=PackKindInd(GetKindInd(fd,CMData));
+          j+=sizeof(TwoBytes);
           break;
           
         case INSTR_MT:
@@ -267,16 +301,16 @@ void LoadCode(int fd, struct Module_st* CMData)
       argid++;
     }
     while(opType[argid]!=INSTR_X);
-    //i+=INSTR_instrSize(opcode);
     i += INSTR_instrSize(opcode);
   }
+  debug("NOWD -> %d[%d,%d]\n",166,(*(ConstInd*)(code+166)).gl_flag,(*(ConstInd*)(code+166)).index);
+          
 }
 
 void LoadCodeSize(int fd, struct Module_st* CMData)
 {
   int size=CMData->CodeSize=(int)LK_FILE_GETWord(fd);
   CMData->CodeOffset=LK_VECTOR_Grow(&Code,size);
-  //printf("Loaded Codesize = %d, got offset %d.\n",size,CMData->CodeOffset);
 }
 
 void FreeCode()
@@ -319,6 +353,10 @@ void WriteCode(int fd)
           j++;
           break;
           
+        case INSTR_WP:
+          j+=sizeof(Word);
+          break;
+          
         case INSTR_R:
         case INSTR_E:
         case INSTR_N:
@@ -334,13 +372,13 @@ void WriteCode(int fd)
 //           break;
           
         case INSTR_C:
-          PutConstInd(fd,*(ConstInd*)(code+j));
-          j+=sizeof(ConstInd);
+          PutConstInd(fd,UnPackConstInd(*(TwoBytes*)(code+j)));
+          j+=sizeof(TwoBytes);
           break;
           
         case INSTR_K:
-          PutKindInd(fd,*(KindInd*)(code+j));
-          j+=sizeof(KindInd);
+          PutKindInd(fd,UnPackKindInd(*(TwoBytes*)(code+j)));
+          j+=sizeof(TwoBytes);
           break;
           
         case INSTR_MT:
@@ -585,7 +623,7 @@ CodeInd MergeSequence(CodeInd younger, CodeInd older, Byte n)
 {
   CodeInd c;
   Byte* code=LK_VECTOR_GetPtr(&Code,0);
-  int tmesize=INSTR_instrSize(try_me_else)*INSTR_LLen;
+  int tmesize=INSTR_instrSize(try_me_else);
   
   //Check if the younger definition is singular or plural.
   if(code[younger]==try_me_else)

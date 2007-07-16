@@ -255,7 +255,7 @@ KindInd GetKindInd(int fd, struct Module_st* CMData){
     case GLOBAL:
       if(tmp.index>=CMData->GKindcount)
       {
-        printf("Invalid Global Kind %d\n",tmp.index);
+        bad("Invalid Global Kind %d\n",tmp.index);
         EM_THROW(LK_LinkError);
       }
       tmp=CMData->GKind[tmp.index];
@@ -264,7 +264,7 @@ KindInd GetKindInd(int fd, struct Module_st* CMData){
       break;
       
     default:
-      printf("Invalid Kind Type %d\n",tmp.gl_flag);
+      bad("Invalid Kind Type %d\n",tmp.gl_flag);
       EM_THROW(LK_LinkError);
       break;
   }
@@ -279,9 +279,10 @@ void PutKindInd(int fd, KindInd x)
 
 ConstInd GetConstInd(int fd, struct Module_st* CMData){
   ConstInd tmp;
+  debug("%x:",lseek(fd,0,SEEK_CUR));
   tmp.gl_flag=LK_FILE_GET1(fd);
   tmp.index=LK_FILE_GET2(fd);
-  debug("ConstInd[%d,%d]\n",tmp.gl_flag,tmp.index);
+  debug("ConstInd[%d,%d]->",tmp.gl_flag,tmp.index);
   switch(tmp.gl_flag)
   {
     case LOCAL:
@@ -295,7 +296,7 @@ ConstInd GetConstInd(int fd, struct Module_st* CMData){
     case GLOBAL:
       if(tmp.index>=CMData->GConstcount)
       {
-        printf("Invalid Global Constant %d\n",tmp.index);
+        bad("Invalid Global Constant %d\n",tmp.index);
         EM_THROW(LK_LinkError);
       }
       tmp=CMData->GConst[tmp.index];
@@ -305,16 +306,17 @@ ConstInd GetConstInd(int fd, struct Module_st* CMData){
       break;
       
     default:
-      printf("Invalid Constant Flag %d\n",tmp.gl_flag);
+      bad("Invalid Constant Flag %d\n",tmp.gl_flag);
       EM_THROW(LK_LinkError);
       break;
   }
-  //printf("(%d,%d)\n",tmp.gl_flag,tmp.index);//DEBUG
+  debug("[%d,%d]\n",tmp.gl_flag,tmp.index);
   return tmp;
 }
 
 void PutConstInd(int fd, ConstInd x)
 {
+  debug("Writing ConstInd[%d,%d] at %x\n",x.gl_flag,x.index,lseek(fd,0,SEEK_CUR));
   LK_FILE_PUT1(fd,x.gl_flag);
   LK_FILE_PUT2(fd,x.index);
 }
@@ -330,8 +332,8 @@ CodeInd GetCodeInd(int fd, struct Module_st* CMData){
   //printf("CodeInd:%d->",tmp);//DEBUG
   if(tmp>=CMData->CodeSize)
   {
-    printf("Invalid Code Address %d\n",(int)tmp);
-    exit(0);
+    bad("Invalid Code Address %d\n",(int)tmp);
+    EM_THROW(LK_LinkError);
   }
   tmp+=CMData->CodeOffset;
   //printf("%d\n",tmp);//DEBUG
@@ -343,8 +345,8 @@ ImportTabInd GetImportTabInd(int fd, struct Module_st* CMData)
   TwoBytes x=LK_FILE_GET2(fd);
   if(x>=CMData->ImportCount)
   {
-    printf("Invalid Import Table %d\n",x);
-    exit(0);
+    bad("Invalid Import Table %d\n",x);
+    EM_THROW(LK_LinkError);
   }
   return CMData->Import[x];
 }

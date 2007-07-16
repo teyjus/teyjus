@@ -30,7 +30,9 @@ extern void WriteKinds();
 extern void WriteGKinds(int fd);
 extern void WriteLKinds(int fd);
 
-
 extern int CheckKindArity(KindInd i);
+
+extern TwoBytes PackKindInd(KindInd ind);
+extern KindInd UnPackKindInd(TwoBytes ind);
 
 #endif //_KIND_H_
