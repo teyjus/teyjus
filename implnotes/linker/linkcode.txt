@@ -114,7 +114,7 @@
 }
 
 [Bound Variable Tables]
-<number of bound variable tables>
+<number of bound variable tables> -- 2 bytes
 {
   [Bound Variable Table]
   <number of entries> --- 2 bytes
@@ -125,7 +125,7 @@
 }
 
 [Import Tables]//Table 0 is for top level module
-<number of import tables> --- 1 byte
+<number of import tables> --- 2 byte
 {
   [Import Table]
   <number of code segments> --- 1 byte

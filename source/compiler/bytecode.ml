@@ -37,8 +37,8 @@ let hidden = 2
 let pervasive = 3
 
 (* find code function: hash or sequence search *)
-let findCodeFuncMarkHash = 0
-let findCodeFuncMarkSeq  = 1
+let findCodeFuncMarkHash = 1
+let findCodeFuncMarkSeq  = 0
 
 (** ******************************************************************** **)
 (**                       IO FACILITIES                                  **)
@@ -231,7 +231,9 @@ let readKindIndex getKindFn =
 (* read constant index *)
 let readConstantIndex getConstFn =
   let constCat = readOneByte  () in
+  print_endline ("***const cat: " ^ string_of_int constCat);
   let constInd = readTwoBytes () in
+  print_endline ("***const ind: " ^ string_of_int constInd);
   getConstFn constCat constInd
 
 (* read a global kind *)

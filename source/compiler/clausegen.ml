@@ -1876,7 +1876,7 @@ and genImpGoal goal cl goalNum last chunk chunks insts startLoc =
   let (bodyCode, bodyCodeNext, newChunk', newChunks', newGoalNum) =
     genGoal (Absyn.getImpGoalBody goal) cl goalNum false newChunk newChunks
 	  (insts @ (List.rev 
-				  (Instr.Ins_push_impl_point(envSize, getNumImpPoints ()) ::
+				  (Instr.Ins_push_impl_point(envSize, (getNumImpPoints ()) -1) ::
 				   (tyvarInitCode @ varInitCode))))
 	  (startLoc + varInitCodeSize + tyvarInitCodeSize + 
 		 Instr.getSize_push_impl_point)

@@ -172,14 +172,17 @@ void LoadCode(int fd, struct Module_st* CMData)
       code[j]=LK_FILE_GET1(fd);
       tmpIndex=GetConstInd(fd,CMData);
       PushCall(CMData->Pit,tmpIndex,offset+i,code[j]);
-      i+=(INSTR_instrSize(opcode)*sizeof(Word));
+      //i+=(INSTR_instrSize(opcode)*sizeof(Word));
+      i += INSTR_instrSize(opcode);
+      
       continue;
     }
     else if(opcode==execute)
     {
       tmpIndex=GetConstInd(fd,CMData);
       PushCall(CMData->Pit,tmpIndex,offset+i,-1);
-      i+=(INSTR_instrSize(opcode)*sizeof(Word));
+      //i+=(INSTR_instrSize(opcode)*sizeof(Word));
+      i += INSTR_instrSize(opcode);
       continue;
     }
     
@@ -264,7 +267,8 @@ void LoadCode(int fd, struct Module_st* CMData)
       argid++;
     }
     while(opType[argid]!=INSTR_X);
-    i+=INSTR_instrSize(opcode);
+    //i+=INSTR_instrSize(opcode);
+    i += INSTR_instrSize(opcode);
   }
 }
 
