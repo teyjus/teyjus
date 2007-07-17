@@ -120,16 +120,10 @@ let contains env v =
   in
   (List.exists find env)
 
-let get = fun env v ->
-  let find tsym =
-    (Absyn.getTypeSymbolSymbol tsym) = v
-  in
-  
-  try
-    List.find find env
-  with 
-    Not_found ->
-      Errormsg.impossible Errormsg.none "Parse.get: entry not found"
+let findVar = fun env v ->
+  let find tsym = (Absyn.getTypeSymbolSymbol tsym) = v  in
+     try Some (List.find find env)
+     with Not_found -> None
 
 let add = fun env sym tsym ->
   if (contains env sym) then
@@ -216,12 +210,10 @@ let makeConstantTerm parsingtoplevel c pos =
 
 
 let listSeparatorIdTerm = 
-  Preabsyn.IdTerm(Symbol.symbol ",", None,
-    Preabsyn.ConstID, Errormsg.none)
+  Preabsyn.IdTerm(Symbol.symbol ",", None, Preabsyn.ConstID, Errormsg.none)
 
 let nilIdTerm =
-  Preabsyn.IdTerm(Symbol.symbol "nil", None,
-    Preabsyn.ConstID, Errormsg.none)
+  Preabsyn.IdTerm(Symbol.symbol "nil", None, Preabsyn.ConstID, Errormsg.none)
 
 (**********************************************************************
 *stackTop:
@@ -247,7 +239,7 @@ let popStack = function
 * preabsyn terms, generates a list of absyn clauses.
 **********************************************************************)
 let rec translateClause term amodule newconstant newkind =
-  let (tty, _, _) = parseTerm false false term [] [] amodule newStack in
+  let (tty, _) = parseTerm false false term [] [] amodule in
   let term' = getTermTerm tty in
   let type' = getTermMolecule tty in
   
@@ -283,7 +275,7 @@ and translateTerm term amodule =
   let _ = Errormsg.log (Preabsyn.getTermPos term) 
                        ("unparsed preabsyn: " ^ 
                                  (Preabsyn.string_of_term term)) in
-  let (tty,_,_) = parseTerm true false term [] [] amodule newStack in
+  let (tty,_) = parseTerm true false term [] [] amodule in
   let term' = getTermTerm tty in
   let mol' = getTermMolecule tty in
   let _ = Errormsg.log 
@@ -316,58 +308,58 @@ and translateTerm term amodule =
 * the pervasives.  These are given in an absyn representation of a
 * module.
 **********************************************************************)
-and parseTerm parsingtoplevel inlist term fvs bvs amodule stack =
-  let _ = printStack stack in
+and parseTerm parsingtoplevel inlist term fvs bvs amodule =
   match term with
     Preabsyn.SeqTerm(terms, pos) ->
-      (*  Set the inlist parameter to false, as SeqTerms resets it.  *)
+      (*  Corresponds to a parenthetized expression. Parsing into actual
+          abstract syntax should proceed assuming a non-list context. *)
       (parseTerms parsingtoplevel false terms fvs bvs amodule 
-        (reduceToTerm parsingtoplevel) newStack)
+                  (reduceToTerm parsingtoplevel) newStack)
 
   | Preabsyn.ListTerm(terms, pos) ->
-      (*  Set the inlist param to true so that commas are interpreted
-          correctly.  *)
+      (*  Corresponds to an expression of the form [e1,...,en]. Parsing context
+          becomes that of a list. A cons and nil to be inserted at end *)
       let terms' = terms @ [listSeparatorIdTerm; nilIdTerm] in
       (parseTerms parsingtoplevel true terms' fvs bvs amodule
                   (reduceToTerm parsingtoplevel) newStack) 
 
   
   | Preabsyn.ConsTerm(headterms, tailterm, pos) ->
-      (*  Translate the tail term first, then translate the head with respect to
-          the new set of free variables.  Set inlist so that commas are
-          treated as list separators. *)
-      let terms' = headterms @ [listSeparatorIdTerm; tailterm] in
-      (parseTerms parsingtoplevel true terms' fvs bvs amodule
-                  (reduceToTerm parsingtoplevel) newStack)
+      (*  Corresponds to [e1,...,en | e0]. Parsing of the first part proceeds
+          as if in list context. Insert a cons before e0 to form final term *)
+      let (tl,fvs') = parseTerm parsingtoplevel false tailterm fvs bvs amodule 
+      in (parseTerms parsingtoplevel true headterms fvs' bvs amodule
+                     (reduceToListTerm parsingtoplevel tl) newStack)
 
   | Preabsyn.LambdaTerm(b, t, pos) ->
       let bbvs = parseTypeSymbols b amodule in
-      let (tty, fvs', stack') = 
-        parseTerms parsingtoplevel inlist t fvs (bbvs @ bvs) amodule 
-          (reduceToTerm parsingtoplevel) newStack in
-         (makeAbstraction tty bbvs pos, fvs', stack)
+      let (tty, fvs') = 
+                 parseTerms parsingtoplevel inlist t fvs (bbvs @ bvs)
+                            amodule (reduceToTerm parsingtoplevel) newStack 
+      in (makeAbstraction tty bbvs pos, fvs')
   
   | Preabsyn.IntTerm(i, pos) -> 
            (makeType (Absyn.IntTerm(i, false, pos)) 
                      "int" (Absyn.getModuleKindTable amodule) pos, 
-            fvs, stack)
+            fvs)
   | Preabsyn.RealTerm(r, pos) -> 
            (makeType (Absyn.RealTerm(r, false, pos)) 
                       "real" (Absyn.getModuleKindTable amodule) pos,
-            fvs, stack)
+            fvs)
   | Preabsyn.StringTerm(s, pos) -> 
            (makeType (Absyn.StringTerm(Absyn.StringLiteral(s), false, pos))
                      "string" (Absyn.getModuleKindTable amodule) pos,
-            fvs, stack)
+            fvs)
 
   | Preabsyn.IdTerm(sym, ty, idkind, pos) ->
-      let (op', fvs') = (translateId parsingtoplevel inlist term fvs bvs amodule) in
+      let (op', fvs') = (translateId parsingtoplevel inlist term fvs bvs amodule)
+      in
       (match op' with
         StackOp(_) -> 
           (Errormsg.error pos ("operator used without necessary arguments");
-          (errorTerm, fvs', errorStack))
-      | StackTerm(t) -> (t, fvs', stack)
-      | StackError -> (errorTerm, [], errorStack))
+          (errorTerm, fvs'))
+      | StackTerm(t) -> (t, fvs')
+      | StackError -> (errorTerm, []))
 
   | Preabsyn.ErrorTerm -> (Errormsg.impossible 
                                        Errormsg.none 
@@ -389,8 +381,8 @@ and parseTerms parsingtoplevel inlist terms fvs bvs amodule oper stack =
     * Translate the current term as usual and attempt to stack it.
     ******************************************************************)
     let simple () =
-      let (term', fvs', stack') =
-        (parseTerm parsingtoplevel inlist t fvs bvs amodule stack) in
+      let (term', fvs') =
+        (parseTerm parsingtoplevel inlist t fvs bvs amodule) in
       try
         let st = stackTerm parsingtoplevel term' amodule stack in
         (st, fvs')
@@ -406,7 +398,8 @@ and parseTerms parsingtoplevel inlist terms fvs bvs amodule oper stack =
     | Preabsyn.RealTerm(_) -> simple ()
     | Preabsyn.StringTerm(_) -> simple ()
     | Preabsyn.IdTerm(_) ->
-        let (ot, fvs') = (translateId parsingtoplevel inlist t fvs bvs amodule) in
+        let (ot, fvs') = (translateId parsingtoplevel inlist t fvs bvs amodule) 
+        in
         (try
           (match ot with
             StackOp(_) ->
@@ -427,7 +420,7 @@ and parseTerms parsingtoplevel inlist terms fvs bvs amodule oper stack =
     (t::ts) ->
       let (stack', fvs') = translate' t in
       (parseTerms parsingtoplevel inlist ts fvs' bvs amodule oper stack')
-  | [] -> (oper inlist fvs bvs amodule stack)
+  | [] -> (oper fvs amodule stack)
 
 (**********************************************************************
 *parseTypeSymbols:
@@ -461,48 +454,51 @@ and parseTypeSymbols tsymlist amodule =
 and translateId parsingtoplevel inlist term fvs bvs amodule =
   match term with
     Preabsyn.IdTerm(sym, ty, k, pos) ->
-      (*  Anonymous Variable  *) 
-      if k = Preabsyn.AVID then
-        (makeVarToOpTerm term fvs bvs amodule makeAnonymousTypeSymbol)
-      else
+     (match k with
+        Preabsyn.AVID ->       (*  _, i.e. an anonymous variable  *) 
+           (makeVarToOpTerm term fvs bvs amodule makeAnonymousTypeSymbol)
 
-      (*  Variable  *)
-      if k = Preabsyn.VarID then
-        if (contains fvs sym) then
-          (varToOpTerm term (get fvs sym) fvs bvs amodule (Absyn.makeFreeVarTerm))
-        else
-          (makeVarToOpTerm term fvs bvs amodule makeAnonymousTypeSymbol)
-      else
+      | Preabsyn.VarID ->      (* _ followed by name, i.e. a free variable *)
+          (let var = (findVar fvs sym) in
+             match var with
+               Some var' -> 
+                 (varToOpTerm term var' fvs bvs amodule (Absyn.makeFreeVarTerm))
+             | None -> (makeVarToOpTerm term fvs bvs amodule 
+                                        makeAnonymousTypeSymbol))
 
-      (*  Bound variable. *)
-      if (contains bvs sym) then
-        (varToOpTerm term (get bvs sym) fvs bvs amodule (Absyn.makeBoundVarTerm))
-      else
+      | _ ->  (* begins with a letter; check for bound variable, defined 
+                 constant and free variable in that order *)
+         let bvar = (findVar bvs sym) in
+            match bvar with
+              Some bvar' ->     (* here we have a bound variable *)
+                (varToOpTerm term bvar' fvs bvs amodule (Absyn.makeBoundVarTerm))
 
-      (*  Lookup constant.  Note the special case for list separators.  *)
-      let o = (Table.find sym (Absyn.getModuleConstantTable amodule)) in
-      if Option.isSome o then
-        let c = Option.get o in
-        if c == Pervasive.andConstant && inlist then
-          (constantToOpTerm parsingtoplevel term
-            Pervasiveutils.listSeparatorConstant fvs bvs amodule)
-        else
-          (constantToOpTerm parsingtoplevel term c fvs bvs amodule)
-      else
-        if k = Preabsyn.CVID then
-          if (contains fvs sym) then
-            (varToOpTerm term (get fvs sym) fvs bvs amodule Absyn.makeFreeVarTerm)
-          else
-            (makeVarToOpTerm term fvs bvs amodule makeImplicitTypeSymbol)
-        else
-          (*  At this point the constant is assumed to be unknown.
-              Simply raise an error.  *)
-		   (Errormsg.error pos ("undeclared constant " ^ (Symbol.name sym));
-			(StackError, fvs))
+            | None ->          (* Check next if declared constant *)
+                let o = (Table.find sym (Absyn.getModuleConstantTable amodule)) in
+                  match o with
+                    Some c ->  (* Is a constant; commas may be list separators *)
+                      if c == Pervasive.andConstant && inlist then
+                        (constantToOpTerm parsingtoplevel term
+                                          Pervasiveutils.listSeparatorConstant 
+                                          fvs amodule)
+                      else (constantToOpTerm parsingtoplevel term c fvs amodule)
+                  | None -> (* Not a constant; is an fv if it starts right *)
+                      if k = Preabsyn.CVID then
+                        let var = (findVar fvs sym) in
+                           match var with 
+                             Some var' -> (varToOpTerm term var' fvs bvs amodule 
+                                                       Absyn.makeFreeVarTerm)
+                           | None -> (makeVarToOpTerm term fvs bvs amodule
+                                                      makeImplicitTypeSymbol)
+                      else (* only remaining case is that of an unknown const *)
+		        (Errormsg.error pos ("undeclared constant " ^ 
+                                                        (Symbol.name sym));
+		         (StackError, fvs)))
+
   | _ -> (Errormsg.impossible (Preabsyn.getTermPos term) 
                               "Parse.translateId: invalid term")
 
-and constantToOpTerm parsingtoplevel term constant fvs bvs amodule =
+and constantToOpTerm parsingtoplevel term constant fvs amodule =
   let make' tmol pos =
     let fixity = Absyn.getConstantFixity constant in
     if fixity = Absyn.NoFixity then
@@ -551,7 +547,8 @@ and makeVarToOpTerm = fun term fvs bvs amodule makeSymFunc ->
       let typesym = makeSymFunc None sym skel in
       let fvs' = (add fvs sym typesym) in
       (StackTerm(Term(Absyn.makeFreeVarTerm typesym pos, tmol)), fvs')
-  | _ -> Errormsg.impossible Errormsg.none "Parse.makeVarToOpTerm: invalid id term"
+  | _ -> Errormsg.impossible Errormsg.none 
+                             "Parse.makeVarToOpTerm: invalid id term"
 
 and varToOpTerm term typesym fvs bvs amodule makeVarFunc =
   match term with
@@ -576,10 +573,9 @@ and varToOpTerm term typesym fvs bvs amodule makeVarFunc =
 
 (**********************************************************************
 *reduceToTerm:
-* Reduces the given stack to a term.  Commas encountered in this mode
-* are interpreted as conjunctions.
+* Reduces the given stack to a term.  
 **********************************************************************)
-and reduceToTerm parsingtoplevel inlist fvs bvs amodule stack =
+and reduceToTerm parsingtoplevel fvs amodule stack =
   (********************************************************************
   *reduce':
   * Reduces the term.
@@ -587,27 +583,28 @@ and reduceToTerm parsingtoplevel inlist fvs bvs amodule stack =
   let rec reduce' stack =
       match (getStackState stack) with
         TermState ->
-          let term = (getStackTermTerm (stackTop stack)) in
-          (term, fvs, newStack)
-      | ErrorState ->
-          (errorTerm, fvs, errorStack)
+          let term = (getStackTermTerm (stackTop stack)) in (term, fvs)
+
+      | ErrorState -> (errorTerm, fvs)
+
       | _ ->
           try
             let stack' = reduceOperation parsingtoplevel amodule stack in
             (reduce' stack')
           with 
-            TermException -> (errorTerm, fvs, errorStack)
+            TermException -> (errorTerm, fvs)
   in
   
   (*  Called when the top of the stack indicates an error.  *)
   let err () =
     let term = (getTermTerm (getStackTermTerm (stackTop stack))) in
     let pos = Absyn.getTermPos term in
-    let fixity = (Absyn.string_of_fixity (Absyn.getConstantFixity 
-                                             (getStackOpConstant (stackTop stack)))) in
+    let fixity = 
+         (Absyn.string_of_fixity (Absyn.getConstantFixity 
+                                       (getStackOpConstant (stackTop stack)))) in
     
     (Errormsg.error pos ("missing right argument for " ^ fixity ^ " operator");
-    (errorTerm, fvs, errorStack))
+    (errorTerm, fvs))
   in
 
   match (getStackState stack) with
@@ -618,9 +615,36 @@ and reduceToTerm parsingtoplevel inlist fvs bvs amodule stack =
   | _ -> (reduce' stack)
 
 (**********************************************************************
+*reduceToListTerm:
+* Like reduceToTerm except that it is used in parsing a list expression
+* of the form [e1,...,en | e0]. Here e0 is parsed ahead of time in non-list
+* mode and then given to the function that parses e1 through en to eventually
+* become the tail of the expression
+**********************************************************************)
+and reduceToListTerm parsingtoplevel tl fvs amodule stack =
+      let (sepop,_) = constantToOpTerm parsingtoplevel listSeparatorIdTerm
+                                       Pervasiveutils.listSeparatorConstant 
+                                       fvs amodule in
+      let stack' = stackOperation parsingtoplevel sepop amodule stack in
+      let stack'' = stackTerm parsingtoplevel tl amodule stack' in
+         reduceToTerm parsingtoplevel fvs amodule stack''
+
+(**********************************************************************
 *reduceOperation:
-* Reduces an operation at the top of the stack.  There is a specical
-* case for the list separator: it is changed to a cons operator.
+*
+*  Reduces an operation at the top of the stack.  There is a special
+*  case for the list separator: it is changed to a cons operator.
+*
+*  The main complexity in this function is that of dealing with special cases
+*  for the stack operator. There are two, both pertaining to infix operators.
+* 
+*  First, it could be a "pseudo-application".  In this case, the two terms 
+*  "around" it are applied to each other and the app disappears.
+*
+*  Then there is the case of a comma or list separator. This needs to be 
+*  transformed into a cons; the list separator operator was put into the 
+*  stack instead of the cons during the earlier phase because this has 
+*  lower precedence. 
 **********************************************************************)
 and reduceOperation parsingtoplevel amodule stack =
   (********************************************************************
@@ -636,8 +660,8 @@ and reduceOperation parsingtoplevel amodule stack =
     let rest = List.tl (List.tl (getStackStack stack)) in
 
     let reducePrefix = fun () ->
-      let c = (makeConstantTerm
-        parsingtoplevel (getStackOpConstant prev) (getStackItemPos prev)) in
+      let c = (makeConstantTerm parsingtoplevel (getStackOpConstant prev) 
+                                (getStackItemPos prev)) in
       let newTop = StackTerm(makeApply c (getStackTermTerm top)) in
       let stack' = Stack(newTop::rest, state, prec, fix) in
       newParseState stack'
@@ -647,18 +671,18 @@ and reduceOperation parsingtoplevel amodule stack =
       let r = List.hd rest in
       let rest' = List.tl rest in
       
-      let c = (makeConstantTerm
-        parsingtoplevel (getStackOpConstant prev) (getStackItemPos prev)) in
-      let newTop = StackTerm(makeBinaryApply c 
-        (getStackTermTerm r) (getStackTermTerm top)) in
+      let c = (makeConstantTerm parsingtoplevel (getStackOpConstant prev) 
+                                (getStackItemPos prev)) in
+      let newTop = StackTerm(makeBinaryApply c (getStackTermTerm r) 
+                                             (getStackTermTerm top)) in
       let stack' = Stack(newTop::rest', state, prec, fix) in
       newParseState stack'
     in
     
     match state with
       PostfixState ->
-        let c = (makeConstantTerm
-          parsingtoplevel (getStackOpConstant top) (getStackItemPos top)) in
+        let c = (makeConstantTerm parsingtoplevel (getStackOpConstant top) 
+                                  (getStackItemPos top)) in
         let newTop = StackTerm(makeApply c (getStackTermTerm prev)) in
         let stack' = Stack(newTop::rest, state, prec, fix) in
         newParseState stack'
@@ -666,15 +690,16 @@ and reduceOperation parsingtoplevel amodule stack =
     | PrefixrWithArgState -> reducePrefix ()
     | InfixWithArgState -> reduceInfix ()
     | InfixrWithArgState -> reduceInfix ()
-    | _ -> (Errormsg.impossible Errormsg.none "reduceOperation: invalid stack state")
+    | _ -> (Errormsg.impossible Errormsg.none 
+                                "reduceOperation: invalid stack state")
   in
   
   (********************************************************************
   *reduceApply:
   * Reduces an "apply operator" on the stack.  An "apply operator" is
   * the dummy inserted between adjacent terms.  The apply operator is
-  * removed from the stack, and the top two terms (not includeing the
-  * dummy) are put into an applicaiton.
+  * removed from the stack, and the top two terms (sitting around the 
+  * dummy apply operator) are used to form an application.
   ********************************************************************)
   let reduceApply stack =
     let top = List.hd (getStackStack stack) in
@@ -683,17 +708,14 @@ and reduceOperation parsingtoplevel amodule stack =
 
     let apply = makeApply (getStackTermTerm pp) (getStackTermTerm top) in
     let stack' = Stack((StackTerm(apply))::rest, 
-                        (getStackState stack), 
-                        (getStackPrec stack), (getStackFixity stack)) in
+                       (getStackState stack), 
+                       (getStackPrec stack), (getStackFixity stack)) in
     newParseState stack'
   in
   
   (********************************************************************
   *reduceComma:
-  * Reduces a comma operator, where the operator could be either a list
-  * separator or conjunction.  If the list argument contains a term,
-  * then the operator should be parsed as a list separator; otherwise,
-  * it is a conjunction.
+  * A comma operator in the stack must translate to a cons 
   ********************************************************************)
   let reduceComma stack =
     let top = List.hd (getStackStack stack) in
@@ -704,21 +726,14 @@ and reduceOperation parsingtoplevel amodule stack =
     let pos = (getStackItemPos comma) in
     let cons = makeConstantTerm parsingtoplevel Pervasive.consConstant pos in
     let newTop = makeBinaryApply cons 
-      (getStackTermTerm pp) (getStackTermTerm top) in
+                                 (getStackTermTerm pp) (getStackTermTerm top) in
     let stack' = Stack((StackTerm(newTop))::rest, 
       getStackState stack, getStackPrec stack, 
       getStackFixity stack) in
     newParseState stack'
   in
   
-  (*  First, check for the special case of a "pseudo-application".  In this case
-      the reduction is slightly different than regular: the two arguments of the
-      application are applied to eachother.
-      
-      Next, check for a comma.  If the list argument indicates that the parser
-      is parsing a list (in bracket notation) the comma will be interpereted as
-      a cons (::), otherwise it will be interpreted as a conjunction (,).      
-  *)
+  (*  The actual code for reduceOperation *)
   
   let ot = List.hd (List.tl (getStackStack stack)) in
   match ot with
@@ -726,10 +741,10 @@ and reduceOperation parsingtoplevel amodule stack =
       let csym = (Absyn.getConstantSymbol c) in
       if csym = (Absyn.getConstantSymbol Pervasive.genericApplyConstant) then
         (reduceApply stack)
-      else if csym == (Absyn.getConstantSymbol Pervasiveutils.listSeparatorConstant) then
-        (reduceComma stack)
-      else
-        reduce' ()
+      else if csym == 
+               (Absyn.getConstantSymbol Pervasiveutils.listSeparatorConstant) 
+           then (reduceComma stack)
+           else reduce' ()
   | _ -> (reduce' ())
 
 

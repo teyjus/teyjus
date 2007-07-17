@@ -383,10 +383,10 @@ atomterm:
   | LPAREN term RPAREN       { SeqTerm(List.rev $2, getPos 2) }
 
   | LBRACK RBRACK            { makeConst "nil" }
-  | LBRACK term RBRACK       { ListTerm($2, getPos 1) }
+  | LBRACK term RBRACK       { ListTerm(List.rev $2, getPos 1) }
       
   | LBRACK term VBAR term RBRACK
-      { ConsTerm($2, SeqTerm(List.rev $4, getPos 4), getPos 1) }
+      { ConsTerm(List.rev $2, SeqTerm(List.rev $4, getPos 4), getPos 1) }
 
   | LPAREN error             { Errormsg.error (getPos 1)
                                  "Unmatched parenthesis starting here" ;
