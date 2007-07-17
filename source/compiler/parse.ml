@@ -302,40 +302,48 @@ and translateTerm term amodule =
 
 (**********************************************************************
 *parseTerm:
-* Translate a single term from preabsyn to absyn.  Requires a constant
-* table containing, at least, the pervasives; a kind table also containing
-* at least the prevasives; and an abbreviation table containing at least
-* the pervasives.  These are given in an absyn representation of a
-* module.
+* Translate a preabstract syntax structure that is known to correspond to
+* an abstract syntax term in its entirety. The parameters are as follows:
+*
+*   parsingtoplevel : Zach, can you fill this?
+*   inlist : indicator of how to read commas, i.e. a flag signalling 
+             whether or not in list ctxt
+*   term : the preabstract syntax term to be transformed
+*   fvs : the set of free variables in the term seen so far (a list)
+*   bvs : a list of variables with binders in enclosing context
+*   amodule : a (partial) module structure in abstract syntax form that 
+*             provides the kind and type signatures for parsing
+*
+* The returned value is a pair consisting of a term-type pair and a list of 
+* free variables appearing in the term
 **********************************************************************)
 and parseTerm parsingtoplevel inlist term fvs bvs amodule =
   match term with
     Preabsyn.SeqTerm(terms, pos) ->
       (*  Corresponds to a parenthetized expression. Parsing into actual
           abstract syntax should proceed assuming a non-list context. *)
-      (parseTerms parsingtoplevel false terms fvs bvs amodule 
-                  (reduceToTerm parsingtoplevel) newStack)
+      (parseTerms parsingtoplevel false terms fvs bvs amodule newStack)
 
   | Preabsyn.ListTerm(terms, pos) ->
       (*  Corresponds to an expression of the form [e1,...,en]. Parsing context
           becomes that of a list. A cons and nil to be inserted at end *)
       let terms' = terms @ [listSeparatorIdTerm; nilIdTerm] in
-      (parseTerms parsingtoplevel true terms' fvs bvs amodule
-                  (reduceToTerm parsingtoplevel) newStack) 
+      (parseTerms parsingtoplevel true terms' fvs bvs amodule newStack) 
 
-  
   | Preabsyn.ConsTerm(headterms, tailterm, pos) ->
-      (*  Corresponds to [e1,...,en | e0]. Parsing of the first part proceeds
-          as if in list context. Insert a cons before e0 to form final term *)
-      let (tl,fvs') = parseTerm parsingtoplevel false tailterm fvs bvs amodule 
-      in (parseTerms parsingtoplevel true headterms fvs' bvs amodule
-                     (reduceToListTerm parsingtoplevel tl) newStack)
+      (*  Corresponds to [e1,...,en | e0]. A comma at the top level in e0 
+          should be treated as an and instead of a list sep, but this will
+          happen because in that case e0 will be a SeqTerm that switches 
+          context *)
+      let terms' = headterms @ [listSeparatorIdTerm; tailterm] in
+      (parseTerms parsingtoplevel true terms' fvs bvs amodule newStack)
 
   | Preabsyn.LambdaTerm(b, t, pos) ->
+      (* Corresponds to X\ t. Mode should switch to non-list in parsing t *)
       let bbvs = parseTypeSymbols b amodule in
       let (tty, fvs') = 
-                 parseTerms parsingtoplevel inlist t fvs (bbvs @ bvs)
-                            amodule (reduceToTerm parsingtoplevel) newStack 
+                 parseTerms parsingtoplevel false t fvs (bbvs @ bvs)
+                            amodule newStack 
       in (makeAbstraction tty bbvs pos, fvs')
   
   | Preabsyn.IntTerm(i, pos) -> 
@@ -370,7 +378,7 @@ and parseTerm parsingtoplevel inlist term fvs bvs amodule =
 * Translate a list of preabsyn terms into abstract syntax.  Executes
 * the given operation upon successful translation of the list.
 **********************************************************************)
-and parseTerms parsingtoplevel inlist terms fvs bvs amodule oper stack =
+and parseTerms parsingtoplevel inlist terms fvs bvs amodule stack =
   (********************************************************************
   *translate':
   * Translate an individual term in the list.
@@ -419,8 +427,8 @@ and parseTerms parsingtoplevel inlist terms fvs bvs amodule oper stack =
   match terms with
     (t::ts) ->
       let (stack', fvs') = translate' t in
-      (parseTerms parsingtoplevel inlist ts fvs' bvs amodule oper stack')
-  | [] -> (oper fvs amodule stack)
+      (parseTerms parsingtoplevel inlist ts fvs' bvs amodule stack')
+  | [] -> (reduceToTerm parsingtoplevel fvs amodule stack)
 
 (**********************************************************************
 *parseTypeSymbols:
@@ -613,21 +621,6 @@ and reduceToTerm parsingtoplevel fvs amodule stack =
   | InfixState -> (err ())
   | InfixrState -> (err ())
   | _ -> (reduce' stack)
-
-(**********************************************************************
-*reduceToListTerm:
-* Like reduceToTerm except that it is used in parsing a list expression
-* of the form [e1,...,en | e0]. Here e0 is parsed ahead of time in non-list
-* mode and then given to the function that parses e1 through en to eventually
-* become the tail of the expression
-**********************************************************************)
-and reduceToListTerm parsingtoplevel tl fvs amodule stack =
-      let (sepop,_) = constantToOpTerm parsingtoplevel listSeparatorIdTerm
-                                       Pervasiveutils.listSeparatorConstant 
-                                       fvs amodule in
-      let stack' = stackOperation parsingtoplevel sepop amodule stack in
-      let stack'' = stackTerm parsingtoplevel tl amodule stack' in
-         reduceToTerm parsingtoplevel fvs amodule stack''
 
 (**********************************************************************
 *reduceOperation:
