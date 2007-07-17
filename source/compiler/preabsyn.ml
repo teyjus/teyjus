@@ -1,325 +1,250 @@
 (**********************************************************************
-*Preabsyn Module:
-* The prebstract syntax for Teyjus.  This is more or less a direct
-* translation from the original C source.  I am sure there are numerous
-* places where it could be made better.
-**********************************************************************)
+ * Preabsyn Module:
+ *  The prebstract syntax for Teyjus.
+ **********************************************************************)
+
 type symbol = Symbol.symbol
 type pos = Errormsg.pos
 
-(*  Kinds of Identifiers  *)
+(* Kinds of Identifiers *)
 type pidkind =
-    CVID
+  | CVID
   | ConstID
   | AVID
   | VarID
 
 type pfixitykind =
-    Infix of pos
+  | Infix of pos
   | Infixl of pos
   | Infixr of pos
   | Prefix of pos
   | Prefixr of pos
   | Postfix of pos
   | Postfixl of pos
-
     
-(*  Symbols *)
-type psymbol = Symbol of (symbol * pidkind * pos)
+(* Symbols *)
+type psymbol = Symbol of symbol * pidkind * pos
 
-(*  Type Symbols  *)
+(* Type Symbols *)
 and ptypesymbol = TypeSymbol of (symbol * ptype option * pidkind * pos)
 
-(*  Types *)
+(* Types *)
 and ptype =
-    Atom of (symbol * pidkind * pos)
-  | App of (ptype * ptype * pos)
-  | Arrow of (ptype * ptype * pos)
+  | Atom of symbol * pidkind * pos
+  | App of ptype * ptype * pos
+  | Arrow of ptype * ptype * pos
   | ErrorType
 
-and ptypeabbrev = TypeAbbrev of (psymbol * psymbol list * ptype * pos)
+and ptypeabbrev = TypeAbbrev of psymbol * psymbol list * ptype * pos
 
-and pboundterm = BoundTerm of (ptypesymbol list * pterm list)
+and pboundterm = BoundTerm of ptypesymbol list * pterm list
 
-(*  Terms *)
+(* Terms *)
 and pterm =
-    SeqTerm of (pterm list * pos)
-  | ListTerm of (pterm list * pos)
-  | ConsTerm of (pterm list * pterm * pos)
-  | LambdaTerm of (ptypesymbol list * pterm list * pos)
+  | SeqTerm of pterm list * pos
+  | ListTerm of pterm list * pos
+  | ConsTerm of pterm list * pterm * pos
+  | LambdaTerm of ptypesymbol list * pterm list * pos
   | IdTerm of (symbol * ptype option * pidkind * pos)
-  | RealTerm of (float * pos)
-  | IntTerm of (int * pos)
-  | StringTerm of (string * pos)
+  | RealTerm of float * pos
+  | IntTerm of int * pos
+  | StringTerm of string * pos
   | ErrorTerm
   
-and pclause = Clause of (pterm)
+and pclause = Clause of pterm
 
-(*  Constants *)
-and pconstant = Constant of (psymbol list * ptype option * pos)
+(* Constants *)
+and pconstant = Constant of psymbol list * ptype option * pos
 
-(*  Kinds *)
-and pkind = Kind of (psymbol list * int option * pos)
+(* Kinds *)
+and pkind = Kind of psymbol list * int option * pos
 
-(*  Fixity  *)
-and pfixity = Fixity of (psymbol list * pfixitykind * int * pos)
+(* Fixity *)
+and pfixity = Fixity of psymbol list * pfixitykind * int * pos
 
 (********************************************************************
-*Module:
-* This type stores information about a preabsyn module.
-* See interface for details.
-********************************************************************)
+ * Module:
+ *  This type stores information about a preabsyn module.
+ *  See interface for details.
+ ********************************************************************)
 type pmodule =
-    Module of (string * pconstant list * pconstant list * 
+  | Module of string * pconstant list * pconstant list * 
       pconstant list * pconstant list * pfixity list * pkind list *
       pkind list * ptypeabbrev list * pclause list * psymbol list *
-      psymbol list * psymbol list * psymbol list)
-  | Signature of (string * pconstant list * pkind list *
-      ptypeabbrev list * pfixity list * psymbol list)
+      psymbol list * psymbol list * psymbol list
+  | Signature of string * pconstant list * pkind list *
+      ptypeabbrev list * pfixity list * psymbol list
 
-let getClauseTerm = function
-  Clause(t) -> t
+let string_of_pos pos = Errormsg.string_of_pos pos
 
-(********************************************************************
-*string_of_termlist:
-********************************************************************)
-let rec string_of_termlist = function
-    [] -> ""
-  | t::[] -> string_of_term t
-  | t::ts -> (string_of_term t) ^ ", " ^ (string_of_termlist ts)
+let map_with_commas f list = String.concat ", " (List.map f list)
+  
+let rec string_of_termlist list =
+  map_with_commas string_of_term list
 
-and string_of_typesymbollist = function
-    [] -> ""
-  | t::[] -> string_of_typesymbol t
-  | t::ts -> (string_of_typesymbol t) ^ ", " ^ (string_of_typesymbollist ts)
+and string_of_typesymbollist list =
+  map_with_commas string_of_typesymbol list
 
 and string_of_typesymbol = function
-    TypeSymbol(tsym, Some t, idk, pos) ->
-      ("TypeSymbol(" ^ (Symbol.name tsym) ^ ", " ^
-      (string_of_type t) ^ ", " ^ (string_of_idkind idk) ^ ", " ^ (Errormsg.string_of_pos pos))
+  | TypeSymbol(tsym, Some t, idk, pos) ->
+      "TypeSymbol(" ^ (Symbol.name tsym) ^ ", " ^
+        (string_of_type t) ^ ", " ^ (string_of_idkind idk) ^ ", " ^
+        (string_of_pos pos)
   | TypeSymbol(tsym, None, idk, pos) ->
-      ("TypeSymbol(" ^ (Symbol.name tsym) ^ ", " ^
-      (string_of_idkind idk) ^ ", " ^ (Errormsg.string_of_pos pos))
+      "TypeSymbol(" ^ (Symbol.name tsym) ^ ", " ^
+        (string_of_idkind idk) ^ ", " ^ (string_of_pos pos)
 
-(********************************************************************
-*string_of_term:
-********************************************************************)
-and string_of_term = fun term ->
-  match term with
-    SeqTerm(tlist, pos) ->
-      ("SeqTerm([" ^ (string_of_termlist tlist) ^ "], " ^ (Errormsg.string_of_pos pos) ^ ")")
+and string_of_term = function
+  | SeqTerm(tlist, pos) ->
+      "SeqTerm([" ^ (string_of_termlist tlist) ^ "], " ^
+        (string_of_pos pos) ^ ")"
   | ListTerm(tlist, pos) ->
-      ("ListTerm([" ^ (string_of_termlist tlist) ^ "], " ^ (Errormsg.string_of_pos pos) ^ ")")
+      "ListTerm([" ^ (string_of_termlist tlist) ^ "], " ^
+        (string_of_pos pos) ^ ")"
   | ConsTerm(tlist, t, pos) ->
-      ("ConsTerm([" ^ (string_of_termlist tlist) ^ "], " ^ (string_of_term t) ^ ", " ^ (Errormsg.string_of_pos pos) ^ ")")
+      "ConsTerm([" ^ (string_of_termlist tlist) ^ "], " ^
+        (string_of_term t) ^ ", " ^ (string_of_pos pos) ^ ")"
   | IdTerm(sym, None, k, pos) ->
-      ("IdTerm(" ^ (Symbol.name sym) ^ ", " ^ (string_of_idkind k) ^ ", " ^
-        (Errormsg.string_of_pos pos) ^ ")")
+      "IdTerm(" ^ (Symbol.name sym) ^ ", " ^ (string_of_idkind k) ^ ", " ^
+        (string_of_pos pos) ^ ")"
   | IdTerm(sym, Some t, k, pos) ->
-      ("IdTerm(" ^ (Symbol.name sym) ^ ", " ^ (string_of_type t) ^ ", " ^
-        (string_of_idkind k) ^ ", " ^ (Errormsg.string_of_pos pos) ^ ")")
+      "IdTerm(" ^ (Symbol.name sym) ^ ", " ^ (string_of_type t) ^ ", " ^
+        (string_of_idkind k) ^ ", " ^ (string_of_pos pos) ^ ")"
   | RealTerm(r, pos) ->
-      ("RealTerm(" ^ (string_of_float r) ^ ", " ^ (Errormsg.string_of_pos pos) ^ ")")
+      "RealTerm(" ^ (string_of_float r) ^ ", " ^
+        (string_of_pos pos) ^ ")"
   | IntTerm(i, pos) ->
-      ("IntTerm(" ^ (string_of_int i) ^ ", " ^ (Errormsg.string_of_pos pos) ^ ")")
+      "IntTerm(" ^ (string_of_int i) ^ ", " ^
+        (string_of_pos pos) ^ ")"
   | StringTerm(s, pos) ->
-      ("StringTerm(" ^ s ^ ", " ^ (Errormsg.string_of_pos pos) ^ ")")
+      "StringTerm(" ^ s ^ ", " ^ (string_of_pos pos) ^ ")"
   | LambdaTerm(lt, t, pos) ->
-      ("LambdaTerm(" ^ (string_of_typesymbollist lt) ^ ", " ^ (string_of_termlist t) ^ ", " ^ (Errormsg.string_of_pos pos) ^ ")")
+      "LambdaTerm(" ^ (string_of_typesymbollist lt) ^ ", " ^
+        (string_of_termlist t) ^ ", " ^ (string_of_pos pos) ^ ")"
   | ErrorTerm ->
-      ("Error")     
+      "Error"
+        
+and string_of_boundterm = function
+  | BoundTerm(tysy, tl) ->
+      "BoundTerm([" ^ (string_of_typesymbollist tysy) ^
+        "], [" ^ (string_of_termlist tl) ^ "])"
 
-(********************************************************************
-*string_of_boundterm:
-********************************************************************)
-and string_of_boundterm = function BoundTerm(tysy, tl) ->
-  ("BoundTerm([" ^ (string_of_typesymbollist tysy) ^
-  "], [" ^ (string_of_termlist tl) ^ "])")
-
-(********************************************************************
-*string_of_idkind:
-********************************************************************)
 and string_of_idkind = function
-    CVID -> "CVID"
+  | CVID -> "CVID"
   | ConstID -> "ConstID"
   | AVID -> "AVID"
   | VarID -> "VarID"
 
 and string_of_type = function
-    Atom(sym, k, pos) ->
-      ("Atom(" ^ (Symbol.name sym) ^ ", " ^ (string_of_idkind k) ^ ", " ^ (Errormsg.string_of_pos pos) ^ ")")
+  | Atom(sym, k, pos) ->
+      "Atom(" ^ (Symbol.name sym) ^ ", " ^ (string_of_idkind k) ^ ", " ^
+        (string_of_pos pos) ^ ")"
   | App(t1, t2, pos) ->
-      ("App(" ^ (string_of_type t1) ^ ", " ^ (string_of_type t2) ^ ", " ^ (Errormsg.string_of_pos pos) ^ ")")
+      "App(" ^ (string_of_type t1) ^ ", " ^ (string_of_type t2) ^ ", " ^
+        (string_of_pos pos) ^ ")"
   | Arrow(t1, t2, pos) ->
-      ("Arrow(" ^ (string_of_type t1) ^ ", " ^ (string_of_type t2) ^ ", " ^ (Errormsg.string_of_pos pos) ^ ")")
+      "Arrow(" ^ (string_of_type t1) ^ ", " ^ (string_of_type t2) ^ ", " ^
+         (string_of_pos pos) ^ ")"
   | ErrorType ->
-      ("Error")
+      "Error"
+        
+let string_of_symbol = function
+  | Symbol(sym, k, pos) ->
+      "Symbol(" ^ (Symbol.name sym) ^ ", " ^ (string_of_idkind k) ^ ", " ^
+        (string_of_pos pos) ^ ")"
+
+let string_of_symbollist list =
+  map_with_commas string_of_symbol list
+
+let string_of_constant = function
+  | Constant(symlist, Some t, pos) ->
+      "Constant(" ^ (string_of_symbollist symlist) ^
+        ", " ^ (string_of_type t) ^ ", " ^ (string_of_pos pos) ^ ")"
+  | Constant(symlist, None, pos) ->
+      "Constant(" ^ (string_of_symbollist symlist) ^
+        ", " ^ (string_of_pos pos) ^ ")"
+        
+let string_of_typeabbrev = function
+  | TypeAbbrev(name, arglist, ty, pos) ->
+      "TypeAbbrev(" ^ (string_of_symbol name) ^
+        (string_of_symbollist arglist) ^ ", " ^
+        (string_of_type ty) ^ ", " ^ (string_of_pos pos) ^ ")"
+
+let string_of_fixitykind = function
+  | Infix(pos) -> "Infix(" ^ (string_of_pos pos) ^ ") "
+  | Infixl(pos) -> "Infixl(" ^ (string_of_pos pos) ^ ") "
+  | Infixr(pos) -> "Infixr(" ^ (string_of_pos pos) ^ ") "
+  | Prefix(pos) -> "Prefix(" ^ (string_of_pos pos) ^ ") "
+  | Prefixr(pos) -> "Prefixr(" ^ (string_of_pos pos) ^ ") "
+  | Postfix(pos) -> "Postfix(" ^ (string_of_pos pos) ^ ") "
+  | Postfixl(pos) -> "Postfixl(" ^ (string_of_pos pos) ^ ") "
+
+let string_of_fixity = function
+  | Fixity(names, k, prec, pos) ->
+      "Fixity(" ^ (string_of_symbollist names) ^
+        ", " ^ (string_of_fixitykind k) ^ ", " ^ (string_of_int prec) ^ ", " ^
+        (string_of_pos pos) ^ ")"
+          
+let string_of_kind = function
+  | Kind(symlist, Some i, pos) ->
+      "Kind(" ^ (string_of_symbollist symlist) ^
+        ", " ^ (string_of_int i) ^ ", " ^ (string_of_pos pos) ^ ")"
+  | Kind(symlist, None, pos) ->
+      "Kind(" ^ (string_of_symbollist symlist) ^
+        ", " ^ (string_of_pos pos) ^ ")"
+
+let string_of_clause = function
+  | Clause(ts) -> "Clause(" ^ (string_of_term ts) ^ ")"
 
 (********************************************************************
-*printPreAbsyn:
-* Prints all information about a preabsyn module.
-********************************************************************)
-let printPreAbsyn = fun m out ->
-  (*  Text output functions *)
-  let output = function s -> (output_string out s) in
-  let output_line = function s -> (output_string out (s ^ "\n")) in
-  
-  let rec printWithCommas : ('a -> unit) -> 'a list -> unit = 
-    fun f ls ->
-      match ls with
-        (l::[]) -> (f l)
-      | (l::ls) ->
-          ((f l);
-          output ", ";
-          printWithCommas f ls)
-      | ([]) -> ()
-
-  (*  Print constant to output channel  *)
-  and printConstant = function
-      Constant(symlist, Some t, pos) ->
-        (output "Constant(";
-        printWithCommas printSymbol symlist;
-        output ", ";
-        output (string_of_type t);
-        output ", ";
-        printPos pos;
-        output_line ")";)
-    | Constant(symlist, None, pos) ->
-        (ignore (List.map printSymbol symlist);
-        printPos pos)
-
-  and printSymbol = function
-      Symbol(sym, k, pos) ->
-        (output "Symbol(";
-        output (Symbol.name sym);
-        output ", ";
-        output (string_of_idkind k);
-        output ", ";
-        printPos pos;
-        output ")")
-
-    and printPos = function
-      p ->
-        (output "Pos(";
-        output (Errormsg.string_of_pos p);
-        output ")")
-    
-    and printTypeAbbrev = function
-      TypeAbbrev(name, arglist, ty, pos) ->
-        (output "TypeAbbrev(";
-        printSymbol name;
-        printWithCommas printSymbol arglist;
-        output ", ";
-        output (string_of_type ty);
-        output ", ";
-        printPos pos;
-        output_line ")";)
-
-    and printFixity = function
-        Fixity(names, k, prec, pos) ->
-          (output "Fixity(";
-          printWithCommas printSymbol names;
-          output ", ";
-          printFixityKind k;
-          output ", ";
-          output (string_of_int prec);
-          output ", ";
-          printPos pos;
-          output_line ")")
-          
-    and printFixityKind = function
-        Infix(pos) ->
-          (output "Infix(";
-          printPos pos;
-          output ")")
-      | Infixl(pos) ->
-          (output "Infixl(";
-          printPos pos;
-          output ")")
-      | Infixr(pos) ->
-          (output "Infixr(";
-          printPos pos;
-          output ")")
-      | Prefix(pos) ->
-            (output "Prefix(";
-            printPos pos;
-            output ")")
-      | Prefixr(pos) ->
-          (output "Prefixr(";
-          printPos pos;
-          output ")")
-      | Postfix(pos) ->
-          (output "Postfix(";
-          printPos pos;
-          output ")")
-      | Postfixl(pos) ->
-          (output "Postfixl(";
-          printPos pos;
-          output ")")
-
-    and printKind = function
-        Kind(symlist, Some i, pos) ->
-          (output "Kind(";
-          printWithCommas printSymbol symlist;
-          output ",";
-          output (string_of_int i);
-          output_line ")")
-      | Kind(symlist, None, pos) ->
-          (output "Kind(";
-          printWithCommas printSymbol symlist;
-          output_line ")")
-
-    (*  Print a Preabstract Syntax Term *)
-    and printTerm = fun t -> output_line (string_of_term t)
-    
-    and printClause = function
-        Clause(ts) ->
-          (output "Clause(";
-          printTerm ts;
-          output_line ")")
-
-    and printPreAbsyn' = function
-        Module(name, gconstants, lconstants, cconstants, uconstants, fixities, gkinds, lkinds, tabbrevs, clauses, accummod, accumsig, usesig, impmods) ->
-          (output_line ("Module:" ^ name);
-          output_line "Constants:";
-          List.iter printConstant gconstants;
-          List.iter printConstant lconstants;
-          List.iter printConstant cconstants;
-          output_line "";
-          output_line "Kinds:";
-          List.iter printKind gkinds;
-          output_line "";
-          List.iter printKind lkinds;
-          output_line "Type Abbrevs:";
-          List.iter printTypeAbbrev tabbrevs;
-          output_line "Clauses:";
-          List.iter printClause clauses;
-          output_line "Fixities:";
-          List.iter printFixity fixities;
-          ())
+ * printPreAbsyn:
+ *  Prints all information about a preabsyn module.
+ ********************************************************************)
+let printPreAbsyn m out =
+  (* Text output functions *)
+  let output_line s = output_string out (s ^ "\n") in
+  let output_list f list = List.iter (fun t -> output_line (f t)) list in
+    match m with
+      | Module(name, gconstants, lconstants, cconstants, uconstants,
+               fixities, gkinds, lkinds, tabbrevs, clauses, accummod,
+               accumsig, usesig, impmods) ->
+          output_line ("Module: " ^ name) ;
+          output_line "Constants:" ;
+          output_list string_of_constant gconstants ;
+          output_list string_of_constant lconstants ;
+          output_list string_of_constant cconstants ;
+          output_line "" ;
+          output_line "Kinds:" ;
+          output_list string_of_kind gkinds ;
+          output_line "" ;
+          output_list string_of_kind lkinds ;
+          output_line "Type Abbrevs:" ;
+          output_list string_of_typeabbrev tabbrevs ;
+          output_line "Clauses:" ;
+          output_list string_of_clause clauses ;
+          output_line "Fixities:" ;
+          output_list string_of_fixity fixities
+            
       | Signature(name, gconstants, gkinds, tabbrevs, fixities, accumsig) ->
-          (output_line ("Signature: " ^ name);
-          output_line "Constants:";
-          List.iter printConstant gconstants;
-          output_line "Kinds:";
-          List.iter printKind gkinds;
-          output_line "Type Abbrevs:";
-          List.iter printTypeAbbrev tabbrevs;
-          ())
-  in
-    printPreAbsyn' m
+          output_line ("Signature: " ^ name) ;
+          output_line "Constants:" ;
+          output_list string_of_constant gconstants ;
+          output_line "Kinds:" ;
+          output_list string_of_kind gkinds ;
+          output_line "Type Abbrevs:" ;
+          output_list string_of_typeabbrev tabbrevs
 
 let getFixityPos = function
-    Infix(i) -> i
-  | Infixl(i) -> i
-  | Infixr(i) -> i
-  | Prefix(i) -> i
-  | Prefixr(i) -> i
-  | Postfix(i) -> i
-  | Postfixl(i) -> i
+  | Infix(pos) -> pos
+  | Infixl(pos) -> pos
+  | Infixr(pos) -> pos
+  | Prefix(pos) -> pos
+  | Prefixr(pos) -> pos
+  | Postfix(pos) -> pos
+  | Postfixl(pos) -> pos
 
 let getTermPos = function
-    SeqTerm(_, pos) -> pos
+  | SeqTerm(_, pos) -> pos
   | ListTerm(_, pos) -> pos
   | ConsTerm(_, _, pos) -> pos
   | IdTerm(_, _, _, pos) -> pos
@@ -327,10 +252,16 @@ let getTermPos = function
   | IntTerm(_, pos) -> pos
   | StringTerm(_, pos) -> pos
   | LambdaTerm(_,_,pos) -> pos
-  | ErrorTerm -> (Errormsg.impossible Errormsg.none "Preabsyn.getTermPos: invalid term")
+  | ErrorTerm ->
+      Errormsg.impossible Errormsg.none "Preabsyn.getTermPos: invalid term"
+
+let getClauseTerm = function
+  Clause(t) -> t
 
 let getModuleClauses = function
-    Module(name, gconsts, lconsts, cconsts, uconsts, fixities,
+  | Module(name, gconsts, lconsts, cconsts, uconsts, fixities,
       gkinds, lkinds, tabbrevs, clauses, accummods,
       accumsigs, usesigs, impmods) -> clauses
-  | _ -> Errormsg.impossible Errormsg.none "Preabsyn.getModuleClauses: invalid module"
+  | _ ->
+      Errormsg.impossible Errormsg.none
+        "Preabsyn.getModuleClauses: invalid module"
