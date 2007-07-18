@@ -1,0 +1,16 @@
+To build the loader, compile all of the *.c files in the loader with (the main.c file is only used for testing).
+
+gcc -c bvrtab.c  const.c  hashtab.c   importtab.c  loader.c  searchtab.c  tyskel.c \
+code.c    file.c   implgoal.c  kind.c strings.c
+
+
+You will also need compiled versions of 
+../simulator/mcstring.c ../simulator/dataformats.c      ../simulator/io-datastructures.c
+../system/error.c  ../system/memory.c  ../system/message.c  ../system/stream.c
+../tables/instructions.c  ../tables/pervasives.c
+
+Either as .o files or in libraries.
+
+Before LD_LOADER_load (in loader.h) can be called, you must call MEM_memInit (in system/memory.h) once.
+
+See main.c for an example of how to use the loader.

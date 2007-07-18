@@ -1,0 +1,5 @@
+# TODO - we only support Cygwin on Win32
+open build/C
+open build/OCaml
+
+.SUBDIRS: .

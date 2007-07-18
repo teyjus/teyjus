@@ -1,0 +1,23 @@
+LD_SRCS[] =
+    loader
+    strings
+    file
+    kind
+    const
+    hashtab
+    code
+    bvrtab
+    implgoal
+    searchtab
+    importtab
+    tyskel
+
+LIB_FILES[] =
+    $(SIM_SRCS)
+    $(SYS_SRCS)
+    $(TBL_SRCS)
+    $(LD_SRCS)
+
+LIB = libloader
+
+StaticCLibrary($(LIB), $(LIB_FILES))

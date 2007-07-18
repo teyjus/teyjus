@@ -1,0 +1,43 @@
+CFLAGS += -g -O0 -Wall
+
+LK_SRCS[] =
+    CallResolution
+    bvrtab
+    const
+    hashtab
+    importtab
+    rename
+    tyskel
+    code
+    file
+    implgoal
+    kind
+    module
+    stringspace
+    tree
+    vector
+    VectorRW
+
+LIB_FILES[] =
+    $(SIM_SRCS)
+    $(SYS_SRCS)
+    $(TBL_SRCS)
+    $(LK_SRCS)
+
+# Linker library
+
+LIB = liblink
+
+StaticCLibrary($(LIB), $(LIB_FILES))
+
+# Linker program
+
+MAIN = linker
+
+MAIN_FILES[] =
+    main
+
+LIBS = $(LIB)
+
+
+CProgram($(MAIN), $(MAIN_FILES))

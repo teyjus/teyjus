@@ -1,0 +1,64 @@
+--Recompilation scheme
+
+As the linker runs, it maintains a list of all of the module bytecode files it uses to construct a linked program.  This list is output in the linked the bytecode (see linkcode.txt) and the loader can compare the modification timestamps of these files to that of the linked bytecode to determine if the linked code is up to date.  The linker does not check if a linked bytecode file exists when it is called.  Version checking is left to the loader.
+
+--Data structure overview.
+
+The data structures in the linker can be catagorized by the lifetime of the data they contain.  I will refer to these lifetimes as program, import point, module, and temporary lifetimes respectively.
+
+The structures that have program lifetimes contain data that needs to be written out to the link code files.  These structures grow as new files are loaded, and the data in them may be altered to allow the code for modules to be defined, but thier size is never reduced.
+
+A vector listing the loaded bytecode files.
+A global kind vector.		(GKinds)
+A local kind vector.		(LKinds)
+A type skeleton vector.		(TySkels)
+A global constant vector.	(GConsts)
+A local contant vector.		(LConsts)
+A hidden constants vector.	(HConsts)
+A strings vector.			(StringSpaces)
+A hash table vector.		(HashTabs)
+A bound variable table vector.	(BvrTabs)
+An implication goal vector. (ImplGoals)
+A code vector.				(Code)
+and a import table vector.	(ImportTabs)
+
+The structures that have import lifetime are references to entries in the program lifetime structures which cannot be properly resolved at the time they are read from file.  These are corrected after the entire import point has been loaded.
+
+A predicate info table, with predicate call lists in the entries.
+A find code table vector.
+
+The structures that have module lifetimes hold information necessary to resolve content being read from the current module.  These are collected into a 'Module' structure.  A stack of these structures is maintained and is globally accessable.  The top of the stack is the entry currently relevant, and is pointed to by the CM variable.
+
+A global kind map.
+A local kind size and offset.
+A type skeleton size and offset.
+A global constant map.
+A local constant size and offset.
+A hidden constant size and offset.
+A string size and offset.
+A hash table size and offset.
+A bound variable table size and offset.
+An implication goal size and offset.
+A code size and offset.
+An import table map.
+
+The temporary data structures hold information which will be used in loading something in the current module, but can be discarded once we begin loading another module.  These structures are:
+
+A constant renaming table.
+A kind renaming table.
+
+--Flow of execution
+
+First we initialize all of our global data structures in InitAll().  Then we begin loading the top level module.
+
+We use three functions to load modules, which call slightly different procedures to load certain tables.
+LoadTopModule() is used the top level module,
+LoadAccModule() is used to load accumulated modules,
+LoadImpModule() is used to load imported modules.
+
+Each function pushes a new module on the module stack, opening the proper file, then calls the appropriate loading function for each table in the bytecode file.  LoadTopModule also creates it's own import table.
+
+When we load a list of child modules, we load it's name, reset the renaming functions, and call a Load...Module() function as appropriate.  If we are importing a module, we create a new import table before calling LoadImpModule and restore it after it returns.
+
+---Other
+The scheme for maintianing the namespace is described in nameresolution.txt, the scheme for combining accumulated definitions is described in definitionresolution.txt and the scheme for resolving predicate calls is described in predicatecallresolution.txt.
