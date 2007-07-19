@@ -4,7 +4,10 @@ if $(mem $(OSTYPE), Cygwin Win32)
     CFLAGS += -mno-cygwin
     export
 
-# Subdirectories
+
+############################################################
+# Define subdirectories
+#
 
 CMP = $(dir compiler)
 SYS = $(dir system)
@@ -13,13 +16,17 @@ TAB = $(dir tables)
 DIS = $(dir disassembler)
 FNT = $(dir front)
 TBL = $(dir tables)
+LOD = $(dir loader)
+LNK = $(dir linker)
 
-OCAMLINCLUDES += $(CMP) $(DIS) $(SIM)
+OCAMLINCLUDES += $(CMP) $(DIS) $(SIM) $(LOD)
 
 
+############################################################
 # Compilation files
+#
 
-CMP_SRCS[] =
+CMP_ML[] =
     $(CMP)/absyn
     $(CMP)/annvariables
     $(CMP)/bytecode
@@ -45,15 +52,25 @@ CMP_SRCS[] =
     $(CMP)/typereduction
     $(CMP)/types
 
-DIS_SRCS[] =
+DIS_ML[] =
     $(DIS)/context
     $(DIS)/disassembly
     $(DIS)/label
 
-FNT_SRCS[] =
+FNT_ML[] =
     $(FNT)/parseargs
+    $(FNT)/module
+    $(FNT)/query
+    $(FNT)/front
+    $(FNT)/readterm
+    $(FNT)/simerrors
 
-SIM_SRCS[] =
+FNT_C[] =
+    $(FNT)/ccode_stubs
+    $(FNT)/front_c
+    $(FNT)/query_c
+
+SIM_C[] =
     $(SIM)/abstmachine
     $(SIM)/dataformats
     $(SIM)/hnorm
@@ -76,22 +93,28 @@ SIM_SRCS[] =
     $(SIM)/builtins/meta
     $(SIM)/builtins/readterm
 
-SYS_SRCS[] =
+SYS_C[] =
     $(SYS)/error
     $(SYS)/memory
     $(SYS)/message
     $(SYS)/stream
 
-TBL_SRCS[] =
+TBL_C[] =
     $(TBL)/instructions
     $(TBL)/pervasives
     $(TBL)/pervinit
+
+LOD_ML[] =
+    $(LOD)/loadmodtab
 
 DIS_MAIN = $(FNT)/disassemblerfront
 CMP_MAIN = $(FNT)/compilerfront
 SIM_MAIN = $(FNT)/simulatorfront
 
+
+############################################################
 # Generated Files
+#
 
 .SUBDIRS: tables_gen
 
@@ -136,22 +159,29 @@ $(PERV_FILES): $(PERV_GEN)
 .PHONY: gen
 gen: $(INSTR_ML_FILES) $(PERV_ML_FILES) $(INSTR_C_FILES) $(PERV_C_FILES)
 
-# Declare subdirectories
+
+############################################################
+# Include subdirectories
+#
 
 .SUBDIRS: compiler disassembler front linker loader simulator system tables
     if $(file-exists OMakefile)
         include OMakefile
 
-# Build Targets
 
-OCamlProgram(tjdis, $(DIS_MAIN) $(CMP_SRCS) $(DIS_SRCS) $(FNT_SRCS))
-OCamlProgram(tjcc, $(CMP_MAIN) $(CMP_SRCS) $(FNT_SRCS))
+############################################################
+# Build Targets
+#
+
+OCamlProgram(tjcc, $(CMP_MAIN) $(CMP_ML) $(FNT_ML))
+
+OCAML_CLIBS += $(LOD)/libloader $(LNK)/liblinker
+OCamlProgram(tjdis, $(DIS_MAIN) $(CMP_ML) $(LOD_ML) $(DIS_ML) $(FNT_ML))
 
 # For the simulator we need to package all the C code into a library first
-StaticCLibrary(libsim, $(SIM_SRCS) $(SYS_SRCS) $(TBL_SRCS) \
-                       $(FNT)/front_stubs $(FNT)/front $(FNT)/test)
+StaticCLibrary(libsim, $(SIM_C) $(SYS_C) $(TBL_C) $(FNT_C))
 OCAML_CLIBS += libsim
-OCamlProgram(tjsim, $(SIM_MAIN) $(CMP_SRCS) $(FNT_SRCS))
+OCamlProgram(tjsim, $(SIM_MAIN) $(LOD_ML) $(CMP_ML) $(FNT_ML))
 
 .PHONY: all
 all: tjcc$(EXE) tjsim$(EXE) tjdis$(EXE)
