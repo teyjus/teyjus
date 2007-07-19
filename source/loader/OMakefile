@@ -1,4 +1,4 @@
-LD_SRCS[] =
+LD_C[] =
     loader
     strings
     file
@@ -13,10 +13,10 @@ LD_SRCS[] =
     tyskel
 
 LIB_FILES[] =
-    $(SIM_SRCS)
-    $(SYS_SRCS)
-    $(TBL_SRCS)
-    $(LD_SRCS)
+    $(SIM_C)
+    $(SYS_C)
+    $(TBL_C)
+    $(LD_C)
 
 LIB = libloader
 
