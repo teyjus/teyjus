@@ -846,7 +846,7 @@ char* C_mkConstTab(char* body)
 
 //PERV_isPredSymb
 #define C_ISPREDSYMB_DEF \
-"Boolean PERV_isPredSymb(int index)                                            \n{                                                                              \n    return ((index >= PERV_PREDSTART) && (index <= PERV_PREDSTART));           \n}\n\n"
+"Boolean PERV_isPredSymb(int index)                                            \n{                                                                              \n    return ((index >= PERV_PREDSTART) && (index <= PERV_PREDEND));           \n}\n\n"
 
 //PERV_logicSymb
 #define C_LOGICSYMB_DEF \
