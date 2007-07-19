@@ -17,7 +17,7 @@
 #include "../../tables/instructions.h" // to be modified
 #include "../../system/error.h"      //to be modified
 
-
+#include "../print.h" //temp
 /****************************************************************************/
 /* Auxiliary functions for BIMETA_solve();                                  */
 /* The decomposition of the top-level term being processed is assumed to    */
@@ -92,10 +92,11 @@ static void BIMETA_solveAll()
 
 static void BIMETA_setRegs(int pred)
 {
-    int i, j;
-    for (i = 1; i < AM_numArgs; i++)
+    int i, j;    
+    for (i = 1; i <= AM_numArgs; i++)
         DF_mkRef((MemPtr)(AM_reg(i)), (AM_argVec+i-1));
-    j = AM_cstNeeded(pred);
+
+    j = AM_cstTyEnvSize(pred);
     if (j > 0) {
         DF_TypePtr tyPtr = DF_constType(AM_head);
         do {
@@ -111,12 +112,12 @@ static void BIMETA_setRegs(int pred)
 /*             BIMETA_solve()                               */
 /************************************************************/
 void BIMETA_solve()
-{
+{   
     DF_TermPtr tmPtr = (DF_TermPtr)AM_reg(1);
     HN_hnorm(tmPtr);
+
     if (AM_rigFlag) { //rigid term (must be const head); assured by type (o) 
         int pred = DF_constTabIndex(AM_head);
-        
         if (PERV_isLogicSymb(pred)) {
             switch (PERV_logicSymb(pred)) {
             case PERV_AND: case PERV_AMPAND: { BIMETA_solveAnd();     break; }
@@ -135,7 +136,7 @@ void BIMETA_solve()
                 AM_preg = AM_builtinCode;
                 *((INSTR_OneByteInt*)(AM_preg + INSTR_I1X_I1)) =
                     PERV_predBuiltin(pred);
-            } else { //head is a constant symbol
+            } else { //head is a constant symbol                
                 MemPtr    ip;
                 CSpacePtr cl;
                 AM_findCode(pred, &cl, &ip);
