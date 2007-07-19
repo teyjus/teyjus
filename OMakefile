@@ -1,6 +1,6 @@
+.PHONY: clean all test
 .SUBDIRS: source
 
-.PHONY: clean
 clean:
     rm $(filter-proper-targets $(ls R, .))
 
