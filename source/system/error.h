@@ -116,7 +116,8 @@ char *EM_strdup(char *);
 /* general errors */
 #define EM_NO_ERROR              0
 #define EM_FIRST_ERR_INDEX       1
-#define LOADER_FIRST_ERR_INDEX   50
+#define LINKER_FIRST_ERR_INDEX   50
+#define LOADER_FIRST_ERR_INDEX   100
 #define STREAM_FIRST_ERR_INDEX   150
 #define SIM_FIRST_ERR_INDEX      200
 #define BI_FIRST_ERR_INDEX       300

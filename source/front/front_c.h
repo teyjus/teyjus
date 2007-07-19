@@ -1,21 +1,26 @@
+#include "../simulator/mctypes.h"
+
 /***************************************************************************/
 /*                       system initialization                             */
 /***************************************************************************/
-void FRONT_systemInit(int memSize);
+int FRONT_systemInit(int memSize);
 
 /***************************************************************************/
 /*                       link and load                                     */
 /***************************************************************************/
-
+int FRONT_link(char* modName);
+int FRONT_load(char* modName, int index);
 
 /***************************************************************************/
 /*                simulator memory partition                               */
 /***************************************************************************/
-void FRONT_simulatorInit();
+int FRONT_simulatorInit();
+int FRONT_simulatorReInit(Boolean inDoInitializeImports);
 
 /***************************************************************************/
 /*                   install and open module                               */
 /***************************************************************************/
-void FRONT_topModuleInstall();
-void FRONT_moduleInstall(int ind);
+int FRONT_topModuleInstall();
+int FRONT_moduleInstall(int ind);
+int FRONT_initModuleContext();
 

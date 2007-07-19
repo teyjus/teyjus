@@ -13,13 +13,15 @@
 #include "../system/error.h" //to be modified
 #include "../tables/instructions.h" //to be modified
 
+#include <stdio.h> //temp
+
 void SIM_simulate()
 {
   restart_loop:
-    EM_TRY {
+    EM_TRY {       
         while(1) SDP_dispatchTable[*((INSTR_OpCode *)AM_preg)]();
         /* it's expected that this statement not be reached: the only
-           way out of this while loop is by an exception */
+           way out of this while loop is by an exception */        
     } EM_CATCH {
         if (EM_CurrentExnType == EM_FAIL) {
             if (AM_botCP()) EM_RETHROW(); //temp 
@@ -30,7 +32,7 @@ void SIM_simulate()
                 AM_preg = AM_cpNCL();
                 goto restart_loop;
             }
-        } else EM_RETHROW();
+        } else  EM_RETHROW();
     }
 }
 

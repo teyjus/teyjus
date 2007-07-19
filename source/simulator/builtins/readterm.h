@@ -8,17 +8,23 @@ void R_ReadTermAndType(DF_TermPtr tmLoc, DF_TypePtr tyLoc);
 /**************************************************************************/
 /* Term/type creation functions invoked from OCaml Readterm module        */
 /**************************************************************************/
+/* set the type starting location */
+void RT_setTypeStart(MemPtr loc);
+/* set the term starting location */
+void RT_setTermStart(MemPtr loc);
+DF_TermPtr RT_getTermStart();
+DF_TypePtr RT_getTypeStart();
+
 /* initialize local free variable address table, free type variable address
    table, term address table and type address table */
-void RT_initLocalTabs(int numFvs,int numTyFvs,int numTermArgs,int numTypeArgs);
+int RT_initLocalTabs(int numFvs,int numTyFvs,int numTermArgs,int numTypeArgs);
 /* reclaim local tables */
 void RT_cleanLocalTabs();
 
 /* create free variable */
-void RT_buildFreeVar(char* name, int index);
-
+int RT_buildFreeVar(char* name, int index);
 /* create free type variable */
-void RT_buildFreeTypeVar(int index);
+int RT_buildFreeTypeVar(int index);
 
 /***************************************************************************/
 /* Creating term on the heap:                                              */
@@ -39,17 +45,17 @@ void RT_buildFreeTypeVar(int index);
 /*    made at the location dequeued from the term queue; the addresses of  */
 /*    its type environments are enqueued into the type queue.              */
 /***************************************************************************/
-void RT_buildIntTerm(int i);
-void RT_buildRealTerm(double f);
-void RT_buildStringTerm(char* str);
-void RT_buildNilTerm();
-void RT_buildMConstantTerm(int index);
-void RT_buildPConstantTerm(int index, int tyEnvSize);
-void RT_buildFreeVarTerm(int index);
-void RT_buildDBTerm(int index);
-void RT_buildAbstractionTerm(int numAbs);
-void RT_buildConsTerm();
-void RT_buildApplicationTerm(int arity);
+int RT_buildIntTerm(int i);
+int RT_buildRealTerm(double f);
+int RT_buildStringTerm(char* str);
+int RT_buildNilTerm();
+int RT_buildMConstantTerm(int index);
+int RT_buildPConstantTerm(int index, int tyEnvSize);
+int RT_buildFreeVarTerm(int index);
+int RT_buildDBTerm(int index);
+int RT_buildAbstractionTerm(int numAbs);
+int RT_buildConsTerm();
+int RT_buildApplicationTerm(int arity);
 
 
 /***************************************************************************/
@@ -64,9 +70,9 @@ void RT_buildApplicationTerm(int arity);
 /*    the argument vector on the current heap top; the addresses of        */
 /*    arguments are enqueued.                                              */
 /***************************************************************************/
-void RT_buildArrowType();
-void RT_buildSortType(int index);
-void RT_buildStrType(int index, int arity);
-void RT_buildFreeVarType(int index);
+int RT_buildArrowType();
+int RT_buildSortType(int index);
+int RT_buildStrType(int index, int arity);
+int RT_buildFreeVarType(int index);
 
 #endif /* READ_TERM_H */

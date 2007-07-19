@@ -19,6 +19,7 @@
  *                                                                          *
  ****************************************************************************/
 #include <stdlib.h>
+#include <string.h>
 #include "printterm.h"
 #include "mctypes.h"
 #include "mcstring.h"
@@ -31,6 +32,10 @@
 #include "../system/error.h"
 #include "../system/operators.h"
 #include "../tables/pervasives.h"
+
+//temp
+#include <stdio.h>
+//#include "print.h"
 
 /* This variable records the number of query variables */
 int PRINT_numQueryVars;
@@ -110,11 +115,22 @@ static void PRINT_writeInfixLam(WordPtr outStream)
 { STREAM_printf(outStream, "\\ ");                           }
 
 static void PRINT_writeLam(WordPtr outStream, int numabs) 
-{ STREAM_printf(outStream, "lam(%d,", numabs);               }
+{ STREAM_printf(outStream, "lam(%d, ", numabs);               }
 
 static void PRINT_writeSpace(WordPtr outStream, int i)
 { while (i--) STREAM_printf(outStream, " ");                 }    
 
+static void PRINT_writeEquals(WordPtr outStream) 
+{ STREAM_printf(outStream, " = ");                           }
+
+static void PRINT_writeComma(WordPtr outStream)
+{ STREAM_printf(outStream, ",");                             }
+
+static void PRINT_writeDPairStart(WordPtr outStream)
+{ STREAM_printf(outStream, "<");                             }
+    
+static void PRINT_writeDPairEnd(WordPtr outStream)
+{ STREAM_printf(outStream, ">");                             }
 
 /***************************************************************************
  * Writing out terms corresponding to the builtin constants.               *
@@ -270,6 +286,7 @@ static void PRINT_writeFVar(WordPtr outStream, DF_TermPtr tmPtr)
     int           fvind = 0;
     DF_StrDataPtr fvname;
 
+		//PRINT_names = TRUE;
     if (PRINT_names) {
         IO_freeVarTab[IO_freeVarTabTop].rigdes = tmPtr;
         
@@ -342,18 +359,18 @@ static void PRINT_writeCons(WordPtr outStream, DF_TermPtr tmPtr,
  ****************************************************************************/
 static void PRINT_writeAbst(WordPtr outStream, DF_TermPtr tmPtr, 
                             OP_FixityType fx, int prec, OP_TermContext tc)
-{
+{    
     int     numabs = 0;
     Boolean pparen = PRINT_parenNeeded(OP_LAM_FIXITY,OP_LAM_PREC,tc,fx,prec);
     
     if (pparen) PRINT_writeLParen(outStream);
     while (DF_isLam(tmPtr)){
         numabs += DF_lamNumAbs(tmPtr);
-        tmPtr = DF_termDeref(tmPtr);
+        tmPtr = DF_termDeref(DF_lamBody(tmPtr));
     }
     PRINT_writeLam(outStream, numabs);
-    PRINT_writeRParen(outStream);
     PRINT_writeTerm(outStream, tmPtr, OP_LAM_FIXITY,OP_LAM_PREC,OP_RIGHT_TERM);
+    PRINT_writeRParen(outStream);
     if (pparen) PRINT_writeRParen(outStream);
 }      
 
@@ -438,7 +455,7 @@ static void PRINT_writePostfixTerm(WordPtr outStream, DF_TermPtr head,
 /* Main routine for writing out an application term */
 static void PRINT_writeApp(WordPtr outStream, DF_TermPtr tmPtr, 
                            OP_FixityType infx, int inprec, OP_TermContext tc)
-{
+{   
     DF_TermPtr head   = DF_termDeref(DF_appFunc(tmPtr));
     DF_TermPtr args   = DF_appArgs(tmPtr);
     int        arity  = DF_appArity(tmPtr);
@@ -542,6 +559,75 @@ void PRINT_printTerm(DF_TermPtr tmPtr)
     STREAM_printf(STREAM_stdout, "\n");
 }
 
+/* printing an answer substitution pair */
+static void PRINT_printSubsPair(WordPtr outStream, int ind)
+{
+    DF_TermPtr tmPtr;
+    char *varName = 
+        MCSTR_toCString(DF_strDataValue(IO_freeVarTab[ind].varName));    
+
+    /* print the variable name if it is not an anonymous variable */
+    if (strcmp(varName, "_") != 0) {        
+        STREAM_printf(outStream, varName);
+        
+        /* Print the equals sign */
+        PRINT_writeEquals(outStream);
+        
+        /* Print the binding of the variable */
+        tmPtr = IO_freeVarTab[ind].rigdes;
+        HN_lnorm(tmPtr);
+        PRINT_writeTerm(outStream, tmPtr, OP_NONE, 0, OP_WHOLE_TERM);
+    }    
+}
+
+void PRINT_showAnswerSubs()
+{
+    int i;
+    
+    PRINT_names = TRUE;
+    
+    for (i = 0; i < PRINT_numQueryVars; i++) {
+        PRINT_printSubsPair(STREAM_stdout, i);
+        STREAM_printf(STREAM_stdout, "\n");
+    }
+}
+
+/* Printing a disagreement pair to a specified output stream */
+static void PRINT_printDPair(WordPtr outStream, DF_DisPairPtr dpair)
+{
+    DF_TermPtr tmPtr;
+    
+    PRINT_writeDPairStart(outStream);
+    
+    tmPtr = DF_disPairFirstTerm(dpair);
+    HN_hnorm(tmPtr);
+    PRINT_writeTerm(outStream, tmPtr, OP_NONE, 0, OP_WHOLE_TERM);
+    
+    PRINT_writeComma(outStream);
+    
+    tmPtr = DF_disPairSecondTerm(dpair);
+    HN_hnorm(tmPtr);
+    PRINT_writeTerm(outStream, tmPtr, OP_NONE, 0, OP_WHOLE_TERM);
+
+    PRINT_writeDPairEnd(outStream);
+}
+
+void PRINT_showDisAgreeList()
+{
+    DF_DisPairPtr liveList = AM_llreg;
+    
+    while (DF_isNEmpDisSet(liveList)) {
+        PRINT_printDPair(STREAM_stdout, liveList);
+        liveList = DF_disPairNext(liveList);
+        STREAM_printf(STREAM_stdout, "\n");
+    }    
+}
+
+void PRINT_setQueryFreeVariables()
+{
+    PRINT_numQueryVars = IO_freeVarTabTop;
+}
+
 void PRINT_resetPrintState()
 {
     /* release space for term variables created during printing */
@@ -555,4 +641,17 @@ void PRINT_resetPrintState()
 
     /* free space for information created for local consts and reset counter */
     PRINT_cleanCList();    
+}
+
+Boolean PRINT_queryHasVars()
+{
+    int i = PRINT_numQueryVars - 1;
+    while (!(i < 0) && 
+           (strcmp(MCSTR_toCString(DF_strDataValue(IO_freeVarTab[i].varName)),
+                   "_") == 0)) 
+        i--;
+    
+    if (i < 0) return FALSE;
+    else return TRUE;
+    
 }

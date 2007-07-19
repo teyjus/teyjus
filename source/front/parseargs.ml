@@ -104,12 +104,25 @@ let tjdisUsageMsg =
 (****************************************************************************)
 (* options for tjsim                                                        *)
 (****************************************************************************)
-let queryString = ref ""
 let minSolutions = ref 0
-let maxSolutions = ref 0
+let maxSolutions = ref max_int
 let quiet = ref false
 let batch = ref false
 let heapSize = ref 0 
+
+let queryStrings = ref []
+
+let addQuery str =
+  queryStrings := (!queryStrings) @ [str]
+
+let popQuery () =
+  let queries = !queryStrings in
+  if (queries = []) then ""
+  else
+	let query = List.hd queries in
+	queryStrings := List.tl queries;
+	query
+
 
 (* options *)
 let tjsimSpecList = 
@@ -117,9 +130,9 @@ let tjsimSpecList =
 	"\n    Add PATH to the search path for modules. Several paths may be specified.") ::
    ("--path", Arg.String(setPath),
 	"\n    Add PATH to the search path for modules. Several paths may be specified.") ::
-   ("-s", Arg.Set_string(queryString), 
+   ("-s", Arg.String(addQuery), 
 	"\n    Solve the given query on startup.  Several queries may be specified with separate --solve tags.") ::
-   ("--solve", Arg.Set_string(queryString), 
+   ("--solve", Arg.String(addQuery), 
 	"\n    Solve the given query on startup.  Several queries may be specified with separate --solve tags.") ::
    ("-e", Arg.Set_int(minSolutions),
 	"\n    Expect at least this many solutions from each query; error if fewer.\n     Valid only in batch mode.") :: 
