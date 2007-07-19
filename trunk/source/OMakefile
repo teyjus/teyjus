@@ -9,6 +9,7 @@ if $(mem $(OSTYPE), Cygwin Win32)
 # Define subdirectories
 #
 
+SRC = $(dir .)
 CMP = $(dir compiler)
 SYS = $(dir system)
 SIM = $(dir simulator)
@@ -18,6 +19,7 @@ FNT = $(dir front)
 TBL = $(dir tables)
 LOD = $(dir loader)
 LNK = $(dir linker)
+TST = $(dir test)
 
 OCAMLINCLUDES += $(CMP) $(DIS) $(SIM) $(LOD)
 
@@ -184,5 +186,15 @@ StaticCLibrary(libsim, $(SIM_C) $(SYS_C) $(TBL_C) $(FNT_C))
 OCAML_CLIBS += libsim
 OCamlProgram(tjsim, $(SIM_MAIN) $(LOD_ML) $(CMP_ML) $(FNT_ML) $(FNT_ML_TO_C))
 
-.PHONY: all
-all: tjcc$(EXE) tjsim$(EXE) tjdis$(EXE)
+TJCC = $(SRC)/tjcc$(EXE)
+TJSIM = $(SRC)/tjsim$(EXE)
+TJDIS = $(SRC)/tjdis$(EXE)
+
+all: $(TJCC) $(TJSIM) $(TJDIS)
+
+
+############################################################
+# Testing Targets
+#
+
+.SUBDIRS: $(TST)
