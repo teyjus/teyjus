@@ -1,0 +1,13 @@
+SUBDIRS = $(glob D, *)
+
+.SUBDIRS: $(SUBDIRS)
+    FILES = $(rootname $(glob *.mod))
+    test: clean $(TJCC) $(TJDIS) $(glob *.mod *.sig *.ins)
+        foreach(file, $(FILES))
+            $(TJCC) $(file) >/dev/null
+            $(TJDIS) $(file).lpo > $(file).ins-tmp
+            diff -q $(file).ins $(file).ins-tmp || \
+              echo "TEST FAILURE: $(fullname $(CWD))"
+
+    clean:
+        rm -f *.lpo *.ins-tmp
