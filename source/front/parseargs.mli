@@ -4,17 +4,36 @@ type tjcommand =
   | Tjdis
   | Teyjus
 
+(* parse command function *)
+val parseArgs : tjcommand -> bool
+
+
+
 val outputFileName : string ref
 val inputName : string ref
 
-(* needed for tjdis *)
+(** ******************************************************************* **)
+(**                            tjdis                                    **)
+(** ******************************************************************* **)
 val tablesOnly : bool ref
 val instrOnly  : bool ref
 val linkedFile : bool ref
 
-(* needed for tjsim *)
+(** ******************************************************************* **)
+(**                            tjsim                                    **)
+(** ******************************************************************* **)
+(* heap size *)
 val heapSize : int ref
+(* maximum number of solutions *)
+val maxSolutions : int ref
+(* minimum number of solutions *)
+val minSolutions : int ref 
+(* batch *)
+val batch : bool ref
+(* quiet *)
+val quiet : bool ref
+
+(* queries *)
+val popQuery : unit -> string
 
 
-(* parse command function *)
-val parseArgs : tjcommand -> bool

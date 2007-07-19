@@ -14,6 +14,7 @@
 #include "../system/error.h"
 #include "../system/message.h"
 
+#include <stdio.h>
 /***************************######********************************************
  *                          ERROR INFORMATION
  *********************************######**************************************/
@@ -223,8 +224,31 @@ void SINIT_simInit()
     /* set up the base branch register to put the heap back to this point */
     AM_breg = AM_stackBeg + AM_DUMMY_IMPT_REC_SIZE;
     *AM_breg = (Mem)AM_hreg;
+    
     AM_fstCP = AM_b0reg = AM_breg;
     AM_tosreg = AM_breg + 1;
 }
+
+void SINIT_reInitSimState(Boolean inDoInitializeImports)
+{   
+    AM_initPDL();                 //pdl
+    AM_ereg  = AM_stackBeg;       //stack
+    AM_trreg = AM_trailBeg;       //trail
+    AM_llreg = DF_EMPTY_DIS_SET;  //live list
+    AM_ucreg = 0;                 //uc reg
+    AM_bndFlag = OFF;             //bind flag
+    AM_breg = AM_fstCP;
+    AM_hreg = AM_cpH();
+    AM_hreg = *((MemPtr *)AM_breg);
+    
+    /* initialize ireg if necessary */
+    if (inDoInitializeImports) {
+        AM_ireg = AM_stackBeg;
+        AM_tosreg = AM_breg + 1;
+    }
+
+    IO_initIO();
+}
+
 
 #endif //SIMINIT_H

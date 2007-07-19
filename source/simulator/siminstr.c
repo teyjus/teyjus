@@ -1278,8 +1278,8 @@ void SINSTR_create_type_variable()      //create_type_variable Yi -- E_X
 /*****************************************************************************/
 void SINSTR_pattern_unify_t()           //pattern_unify Xi,Aj -- R_R_X
 {
-    INSACC_RRX(regX, regA);
-    HOPU_patternUnifyPair((DF_TermPtr)regX, (DF_TermPtr)regA);
+    INSACC_RRX(regX, regA);    
+    HOPU_patternUnifyPair((DF_TermPtr)regX, (DF_TermPtr)regA);    
 }
 
 void SINSTR_pattern_unify_p()           //pattern_unify Yi,Aj -- E_R_X

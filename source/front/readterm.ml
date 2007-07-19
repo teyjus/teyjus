@@ -2,15 +2,21 @@
 (* create a free variable on simulator heap                         *)
 (********************************************************************)
 let buildFreeVariable tysy index =
-  Readtermutil.buildFreeVariable 
-	(Absyn.getTypeSymbolName tysy) index
+  let _ = 
+	Simerrors.handleSimExceptions 
+	  (Ccode_stubs.buildFreeVariable (Absyn.getTypeSymbolName tysy) index)
+  in
+  ()
   
 (********************************************************************)
 (* create a free type variable on simulator heap                    *)
 (********************************************************************)
 let buildFreeTypeVariable freeTypeVar index =
-  Readtermutil.buildFreeTypeVariable index
- 
+  let _ = 
+	Simerrors.handleSimExceptions (Ccode_stubs.buildFreeTypeVariable index)
+  in
+  ()
+
 (********************************************************************)
 (* layout free term/type variables on simulator heap; associate     *)
 (* each with an index                                               *)
@@ -25,6 +31,7 @@ let layOutVariables vars buildFunc =
   in
   layOutVariablesAux vars 0 []
 
+
 (*********************************************************************)
 (* find out the index of a type/term free variable                   *)
 (*********************************************************************)
@@ -36,6 +43,7 @@ let rec indexOf var varIndexList =
 	  if (var == var') then index
 	  else indexOf var rest
 
+
 (*********************************************************************)
 (*                        type creation                              *)
 (*********************************************************************)
@@ -44,27 +52,40 @@ let buildType tyfvIndex tyExps =
 	match tyExps with
 	  [] -> ()
 	| (tyExp :: rest) ->
+		let tyExp' = Absyn.dereferenceType tyExp in
 		let restTypes =
-		  match tyExp with
+		  match tyExp' with
 			Absyn.ArrowType(arg, target)      -> 
-			  Readtermutil.buildArrowType ();
+			  let _ = 
+				Simerrors.handleSimExceptions (Ccode_stubs.buildArrowType ())
+			  in
 			  (rest @ [arg; target])
 		  | Absyn.ApplicationType(kind, [])   -> 
-			  Readtermutil.buildSortType (Absyn.getKindIndex kind);
+			  let _ =
+				Simerrors.handleSimExceptions 
+				  (Ccode_stubs.buildSortType (Absyn.getKindIndex kind))
+			  in
 			  rest
 		  | Absyn.ApplicationType(kind, args) ->
-			  Readtermutil.buildStrType (Absyn.getKindIndex kind) 
-				(List.length args);
+			  let _ =
+				Simerrors.handleSimExceptions 
+				  (Ccode_stubs.buildStrType (Absyn.getKindIndex kind) 
+					 (List.length args))
+			  in
 			  (rest @ args) 
-		  | _ -> (* type variable *)
-			  Readtermutil.buildFreeVarType (indexOf tyExp tyfvIndex);
+		  | Absyn.TypeVarType(_) -> (* type variable *)
+			  let _ =
+				Simerrors.handleSimExceptions 
+				  (Ccode_stubs.buildFreeVarType (indexOf tyExp' tyfvIndex))
+			  in
 			  rest
+		  | _ -> Errormsg.impossible Errormsg.none 
+				 "buildType: invalid type structure"
 		in
 		buildTypeAux restTypes
   in
   buildTypeAux tyExps
   
-
 (*********************************************************************)
 (*                         term creation                             *)
 (*********************************************************************)
@@ -76,44 +97,74 @@ let buildTerm fvIndex tyfvIndex terms =
 	  let (restTerms, restTypes) =
 		match term with
 		  Absyn.IntTerm(i, _, _)             -> 
-			Readtermutil.buildIntTerm i;
+			let _ =
+			  Simerrors.handleSimExceptions (Ccode_stubs.buildIntTerm i) 
+			in
 			(rest, types)
 		| Absyn.RealTerm(f, _, _)            -> 
-			Readtermutil.buildRealTerm f;
+			let _ =
+			  Simerrors.handleSimExceptions (Ccode_stubs.buildRealTerm f)
+			in
 			(rest, types)
 		| Absyn.StringTerm(s, _, _)          -> 
-			Readtermutil.buildStringTerm (Absyn.getStringInfoString s);
+			let _ =
+			  Simerrors.handleSimExceptions 
+				(Ccode_stubs.buildStringTerm (Absyn.getStringInfoString s))
+			in
 			(rest, types)
 		| Absyn.ConstantTerm(c, [], _, _)    -> 
-			(if (Pervasive.isnilConstant c) then Readtermutil.buildNilTerm ()
-			else Readtermutil.buildMConstantTerm (Absyn.getConstantIndex c));
+			let _ = 
+			  if (Pervasive.isnilConstant c) then
+				Simerrors.handleSimExceptions (Ccode_stubs.buildNilTerm ())
+			  else 
+				Simerrors.handleSimExceptions 
+				  (Ccode_stubs.buildMConstantTerm (Absyn.getConstantIndex c))
+			in
 			(rest, types)
 		| Absyn.ConstantTerm(c, tyenv, _, _) -> 
-			Readtermutil.buildPConstantTerm (Absyn.getConstantIndex c) 
-			  (List.length tyenv);
+			let _ =
+			  Simerrors.handleSimExceptions 
+				(Ccode_stubs.buildPConstantTerm (Absyn.getConstantIndex c)
+				(List.length tyenv))
+			in
 			(rest, types @ tyenv)
 		| Absyn.FreeVarTerm(_)               ->
-			Readtermutil.buildFreeVarTerm 
-			  (indexOf (Absyn.getTermFreeVariableTypeSymbol term) fvIndex);
+			let _ =
+			  Simerrors.handleSimExceptions 
+				(Ccode_stubs.buildFreeVarTerm 
+				   (indexOf (Absyn.getTermFreeVariableTypeSymbol term) fvIndex))
+			in
 			(rest, types)
 		| Absyn.BoundVarTerm(_)              ->
-			Readtermutil.buildDBTerm (Absyn.getTermBoundVariableDBIndex term);
+			let _ =
+			  Simerrors.handleSimExceptions 
+				(Ccode_stubs.buildDBTerm 
+				   (Absyn.getTermBoundVariableDBIndex term))
+			in
 			(rest, types)
 		| Absyn.AbstractionTerm(_)           ->
-			Readtermutil.buildAbstractionTerm 
-			  (Absyn.getTermAbstractionNumberOfLambda term);
+			let _ =
+			  Simerrors.handleSimExceptions 
+				(Ccode_stubs.buildAbstractionTerm 
+				   (Absyn.getTermAbstractionNumberOfLambda term))
+			in
 			(rest @ [Absyn.getTermAbstractionBody term], types)
 		| _ -> (* application *)
 			let func = Absyn.getTermApplicationHead term in
 			let args = Absyn.getTermApplicationArguments term in
 			if (Absyn.isTermConstant func) && 
 			   (Pervasive.isconsConstant (Absyn.getTermConstant func)) then
-			  (Readtermutil.buildConsTerm ();
-			   (rest @ args, types))
-			else 
-			  (Readtermutil.buildApplicationTerm 
-				 (Absyn.getTermApplicationArity term);
-			   (rest @ (func :: args), types))
+			  let _ = 
+				Simerrors.handleSimExceptions (Ccode_stubs.buildConsTerm ())
+			  in
+			  (rest @ args, types)
+			else
+			  let _ =
+				Simerrors.handleSimExceptions 
+				  (Ccode_stubs.buildApplicationTerm 
+					 (Absyn.getTermApplicationArity term))
+			  in
+			  (rest @ (func :: args), types)
 	  in
 	  buildTermAux restTerms restTypes
   in
@@ -129,14 +180,15 @@ let termAndTypeSize tm ty =
 	match tys with
 	  []           -> numNodes
 	| (ty :: rest) ->
-		match ty with
-		  Absyn.ApplicationType(kind, [])   -> typeNodes rest numNodes
-		| Absyn.ApplicationType(kind, args) ->
+		match Absyn.dereferenceType ty with
+		  Absyn.ApplicationType(kind, args) ->
 			typeNodes (rest @ args) (numNodes + (List.length args))
 		| Absyn.ArrowType(arg, target)      ->
 			typeNodes (rest @ [arg ; target]) (numNodes + 2)
-		| _ -> (* free type variable *)
+		| Absyn.TypeVarType(_) -> (* free type variable *)
 			typeNodes rest numNodes
+		| _ -> Errormsg.impossible Errormsg.none 
+			   "getTermAndTypeSize: invalid type structure"
   in
   
   let rec termNodes tms numTmNodes numTyNodes =
@@ -144,9 +196,7 @@ let termAndTypeSize tm ty =
 	  [] -> (numTmNodes, numTyNodes)
 	| (tm :: rest) ->
 		match tm with
-		  Absyn.ConstantTerm(c, [], _, _)        -> 
-			termNodes rest numTmNodes numTyNodes
-		| Absyn.ConstantTerm(c, tyenv, _, _)     ->
+		  Absyn.ConstantTerm(c, tyenv, _, _)     ->
 			termNodes rest numTmNodes 
 			  ((typeNodes tyenv (List.length tyenv)) + numTyNodes)
 		| Absyn.AbstractionTerm(_)               ->
@@ -167,18 +217,38 @@ let termAndTypeSize tm ty =
   termNodes [tm] 1 (typeNodes [ty] 1)
 
 (********************************************************************)
-(*                       interface function  (to be changed)        *)
+(*                       interface function                         *)
 (********************************************************************)
-let myReadTermAndType tm ty fvs tyfvs =
+let readTermAndType tm tymol fvars tyfvars =
+  let getTypeMoleculeType tymol =
+	let rec getTypeMoleculeTypeAux tyenv tyskel =
+	  match (Absyn.dereferenceType tyskel) with
+		Absyn.SkeletonVarType(ind) -> List.nth tyenv (!ind)
+	  | Absyn.ArrowType(l, r)   ->
+		  Absyn.ArrowType(getTypeMoleculeTypeAux tyenv l, 
+						  getTypeMoleculeTypeAux tyenv r)
+	  | Absyn.ApplicationType(k, args) ->
+		  Absyn.ApplicationType(k, 
+								List.map (getTypeMoleculeTypeAux tyenv) args)
+	  | _ -> Errormsg.impossible Errormsg.none 
+			 "getTypeMoleculeType: invalid type skeleton"
+	in
+
+	let tyskel = Types.getMoleculeType tymol in
+	let tyenv  = Types.getMoleculeEnvironment tymol in
+	getTypeMoleculeTypeAux tyenv tyskel
+  in
+
+  let ty = getTypeMoleculeType tymol in
   let (numTmNodes, numTyNodes) = termAndTypeSize tm ty in
-  Readtermutil.initLocalTabs (List.length fvs) (List.length tyfvs)  
-	numTmNodes numTyNodes;
-  let fvIndexes = layOutVariables fvs buildFreeVariable in
-  let tyfvIndexes = layOutVariables tyfvs buildFreeTypeVariable in
+  let _ = 
+	Simerrors.handleSimExceptions 
+	  (Ccode_stubs.initLocalTabs (List.length fvars) (List.length tyfvars)  
+		 numTmNodes numTyNodes)
+  in
+  let fvIndexes = layOutVariables fvars buildFreeVariable in
+  let tyfvIndexes = layOutVariables tyfvars buildFreeTypeVariable in
   buildType tyfvIndexes [ty];
   buildTerm fvIndexes tyfvIndexes [tm];
-  Readtermutil.cleanLocalTabs () 
-
-
-
-	
+  Ccode_stubs.setQueryFreeVariables ();
+  Ccode_stubs.cleanLocalTabs () 
