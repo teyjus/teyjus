@@ -59,16 +59,18 @@ DIS_ML[] =
 
 FNT_ML[] =
     $(FNT)/parseargs
-    $(FNT)/module
-    $(FNT)/query
-    $(FNT)/front
-    $(FNT)/readterm
-    $(FNT)/simerrors
 
 FNT_C[] =
     $(FNT)/ccode_stubs
     $(FNT)/front_c
     $(FNT)/query_c
+
+FNT_ML_TO_C[] =
+    $(FNT)/module
+    $(FNT)/query
+    $(FNT)/front
+    $(FNT)/readterm
+    $(FNT)/simerrors
 
 SIM_C[] =
     $(SIM)/abstmachine
@@ -173,15 +175,14 @@ gen: $(INSTR_ML_FILES) $(PERV_ML_FILES) $(INSTR_C_FILES) $(PERV_C_FILES)
 # Build Targets
 #
 
-OCamlProgram(tjcc, $(CMP_MAIN) $(CMP_ML) $(FNT_ML))
+OCamlProgram(tjcc, $(CMP_MAIN) $(CMP_ML) $(LOD_ML) $(FNT_ML))
 
-OCAML_CLIBS += $(LOD)/libloader $(LNK)/liblinker
 OCamlProgram(tjdis, $(DIS_MAIN) $(CMP_ML) $(LOD_ML) $(DIS_ML) $(FNT_ML))
 
 # For the simulator we need to package all the C code into a library first
 StaticCLibrary(libsim, $(SIM_C) $(SYS_C) $(TBL_C) $(FNT_C))
 OCAML_CLIBS += libsim
-OCamlProgram(tjsim, $(SIM_MAIN) $(LOD_ML) $(CMP_ML) $(FNT_ML))
+OCamlProgram(tjsim, $(SIM_MAIN) $(LOD_ML) $(CMP_ML) $(FNT_ML) $(FNT_ML_TO_C))
 
 .PHONY: all
 all: tjcc$(EXE) tjsim$(EXE) tjdis$(EXE)
