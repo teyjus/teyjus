@@ -19,6 +19,7 @@
 
 //to be removed
 #include <stdio.h>
+#include "print.h"
 
 /* Unify types associated with constants.                                 */
 static void HOPU_typesUnify(DF_TypePtr tyEnv1, DF_TypePtr tyEnv2, int n)
@@ -279,7 +280,7 @@ Boolean HOPU_copyFlagGlb = FALSE;
 /* arguments. Note the index is the position from the right and the        */
 /* embedding level is taken into account.                                  */
 static int HOPU_bvIndex(int dbInd, DF_TermPtr args, int nargs, int lev)
-{
+{   
     int ind;
     dbInd -= lev;
     for (ind = nargs; ind > 0; ind--){
@@ -1133,9 +1134,9 @@ static DF_TermPtr HOPU_getHead(DF_TermPtr rPtr, DF_TermPtr args, int nargs,
     }
     case DF_TM_TAG_BVAR:   {
         int dbInd = DF_bvIndex(rPtr);
-        if (dbInd > emblev){
+        if (dbInd > emblev){            
             int ind = HOPU_bvIndex(dbInd, args, nargs, emblev);
-            if (ind == 0) EM_THROW(EM_FAIL);        //occurs-check
+            if (ind == 0) EM_THROW(EM_FAIL);        //occurs-check            
             AM_embedError(ind);
             if (ind == dbInd) rtPtr = rPtr;  //use the old db term
             else {                           //create a db on the heap top
@@ -1195,6 +1196,7 @@ static DF_TermPtr HOPU_rigNestedSubst(DF_TermPtr fargs, int fnargs,
                                       DF_TermPtr rargs, int rnargs, int emblev)
 {
     rhPtr = HOPU_getHead(rhPtr, fargs, fnargs, emblev); //head of the binding
+    
     if (rnargs == 0) return rhPtr;       //the rigid term is atomic
     else {                               //the rigid term is cons or app
         Boolean myCopyFlagHead = HOPU_copyFlagGlb, myCopyFlagArgs = FALSE;
@@ -1316,6 +1318,7 @@ static void HOPU_rigMkSubst(DF_TermPtr fPtr, DF_TermPtr fhPtr, int fnargs,
     if (HOPU_isLLambda(uc, fnargs, fargs)){//Llambda pattern
         DF_TermPtr bndBody;                //abs body of bnd of the fv
         int nabs;
+        
         AM_vbbreg = fhPtr; AM_adjreg = uc; //set regs for occurs check
         HOPU_copyFlagGlb = FALSE;
         bndBody   = HOPU_rigNestedSubst(fargs, fnargs, rhPtr, rPtr,
@@ -1327,7 +1330,7 @@ static void HOPU_rigMkSubst(DF_TermPtr fPtr, DF_TermPtr fhPtr, int fnargs,
             AM_embedError(nabs);
             DF_mkLam((MemPtr)fhPtr, nabs, bndBody);
         }
-    } else {                              //non-Llambda pattern
+    } else {                              //non-Llambda pattern        
         if (emblev == 0) AM_addDisPair(fPtr, rPtr);
         else {
             MemPtr nhtop = AM_hreg + DF_TM_LAM_SIZE;
@@ -1620,9 +1623,9 @@ void HOPU_patternUnifyPair(DF_TermPtr tPtr1, DF_TermPtr tPtr2)
                     //now rigBody must locate on heap
                     HOPU_rigMkSubst(flexBody, h1Ptr, nargs1, args1, rigBody,
                                     h2Ptr, nargs2+nabs1, args2, 0);
-                } else  //(nabs1 >= nabs2)
+                } else  //(nabs2 >= nabs1)                    
                     HOPU_rigMkSubst(flexBody, h1Ptr, nargs1, args1, rigBody,
-                                    h2Ptr, nargs2, args2, nabs1-nabs2);
+                                    h2Ptr, nargs2, args2, nabs2-nabs1);
             }      //!(nabs1 == nabs2 == 0)
         } else { //flex-flex
             if (nabs1 == 0) //nabs2 >= nabs1

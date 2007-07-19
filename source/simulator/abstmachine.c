@@ -264,11 +264,11 @@ void AM_restoreRegsWoCI(int n)
 }
 
 //access functions
-MemPtr    AM_cpH()   { *((MemPtr *)(AM_breg));        }
-CSpacePtr AM_cpNCL() { *((CSpacePtr *)(AM_breg - 1)); }
-MemPtr    AM_cpTR()  { *((MemPtr *)(AM_breg - 2));    } 
-MemPtr    AM_cpB()   { *((MemPtr *)(AM_breg - 5));    }
-MemPtr    AM_cpCI()  { *((MemPtr *)(AM_breg - 6));    }
+MemPtr    AM_cpH()   { return *((MemPtr *)(AM_breg));        }
+CSpacePtr AM_cpNCL() { return *((CSpacePtr *)(AM_breg - 1)); }
+MemPtr    AM_cpTR()  { return *((MemPtr *)(AM_breg - 2));    } 
+MemPtr    AM_cpB()   { return *((MemPtr *)(AM_breg - 5));    }
+MemPtr    AM_cpCI()  { return *((MemPtr *)(AM_breg - 6));    }
 
 AM_DataTypePtr AM_cpArg(MemPtr cp, int n) //addr of nth arg in a given cp
 {
