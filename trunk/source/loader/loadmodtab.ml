@@ -36,6 +36,8 @@ let skipLocalKinds () =
   Bytecode.skipNBytes numLocalKinds
 
 let loadKindSymTab () =
+  (* skip total number of kinds *)
+  let _ = Bytecode.readTwoBytes () in
   (* load global kinds *)
   let numberGlobalKinds = Bytecode.readTwoBytes () in
   let (kindSymbolTab, globalKinds) =
@@ -94,6 +96,7 @@ let rec loadGlobalConsts constSymTab index numConsts tySkelTab =
 	  tySkelTab
 
 let loadConstSymTab tySkeletonTab = 
+  let _ = Bytecode.readTwoBytes () in 
   let numberGConsts = Bytecode.readTwoBytes () in
   loadGlobalConsts (Pervasive.pervasiveConstants)
 	(Pervasive.numberPervasiveConstants) numberGConsts tySkeletonTab 
