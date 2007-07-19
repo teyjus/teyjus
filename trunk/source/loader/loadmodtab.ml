@@ -102,7 +102,7 @@ let loadConstSymTab tySkeletonTab =
 (*                       INTERFACE FUNCTION                                 *)
 (****************************************************************************)
 let loadModuleTable modName =
-  Bytecode.openInChannel (Bytecode.makeLinkedByteCodeFileName modName);
+  Bytecode.openInChannel (Bytecode.makeLinkedByteCodeName modName);
   let modName = loadHeaderInfo () in 
   let (kindSymTab, globalKinds) = loadKindSymTab () in
   let tySkeletonTab = loadTypeSkeletons globalKinds in

@@ -1,9 +1,13 @@
+#include "front_c.h"
+
 #include "../system/memory.h"
+#include "../system/error.h"
 #include "../tables/pervinit.h"
-#include "../simulator/mctypes.h"
 #include "../simulator/abstmachine.h"
 #include "../simulator/siminit.h"
 #include "../simulator/builtins/builtins.h"
+//#include "../linker/module.h"
+//#include "../loader/loader.h"
 
 #include <stdio.h>
 
@@ -28,45 +32,86 @@ static FRONT_setMemorySizes(int memSize)
     FRONT_pdlSize   = memSize / 16 * 1;
 }
 
-void FRONT_systemInit(int inSize) 
+int FRONT_systemInit(int inSize) 
 {
     int memSize = inSize ? (inSize*1024 / WORD_SIZE) : FRONT_DEFAULT_SYS_SIZE;
-    
-    FRONT_setMemorySizes(memSize);
-    /* initialize system memory */
-    MEM_memInit(memSize);
-    /* initialize pervasive tables */
-    PERVINIT_tableInit();
-    /* initialize top module */
-    MEM_topModuleInit();
+ 
+    EM_TRY { 
+        FRONT_setMemorySizes(memSize);
+        /* initialize system memory */
+        MEM_memInit(memSize);
+        /* initialize pervasive tables */
+        PERVINIT_tableInit();
+        /* initialize top module */
+        MEM_topModuleInit();
+        return EM_NO_EXN;
+    } EM_CATCH {
+        return EM_CurrentExnType;
+    }
 }
-
-
-/*****************************************************************************/
-/*                       link and load                                       */
-/*****************************************************************************/
-
 
 /*****************************************************************************/
 /*                simulator memory partition                                 */
 /*****************************************************************************/
-void FRONT_simulatorInit()
+int FRONT_simulatorInit()
 {
-    //finalize simulator memory components
-    AM_heapBeg  = (MemPtr)MEM_memTop;
-    AM_heapEnd  = AM_stackBeg = ((MemPtr)MEM_memBeg) + FRONT_heapSize;
-    AM_stackEnd = AM_trailBeg = AM_stackBeg + FRONT_stackSize;
-    AM_trailEnd = AM_pdlBeg   = AM_trailBeg + FRONT_trailSize;
-    AM_pdlEnd   = AM_pdlBeg + (FRONT_pdlSize - 1);
+    EM_TRY { 
+        //initialize simulator error messages
+        SINIT_preInit();
+        
+        //finalize simulator memory components
+        AM_heapBeg  = (MemPtr)MEM_memTop;
+        AM_heapEnd  = AM_stackBeg = 
+            ((MemPtr)MEM_memBeg) + (FRONT_heapSize -(MEM_memBot - MEM_memEnd));
+        AM_stackEnd = AM_trailBeg = AM_stackBeg + FRONT_stackSize;
+        AM_trailEnd = AM_pdlBeg   = AM_trailBeg + FRONT_trailSize;
+        AM_pdlEnd   = AM_pdlBeg + (FRONT_pdlSize - 1);
+        
+        //initialize simulator heap and registers
+        SINIT_simInit();
+        
+        //initialize built-in error messages
+        BI_init();
 
-    //initialize simulator error messages
-    SINIT_preInit();
+        return EM_NO_EXN;   
+    } EM_CATCH {
+        return EM_CurrentExnType;
+    }
+}
 
-    //initialize simulator heap and registers
-    SINIT_simInit();
-    
-    //initialize built-in error messages
-    BI_init();
+int FRONT_simulatorReInit(Boolean inDoInitializeImports)
+{
+    EM_TRY {
+        SINIT_reInitSimState(inDoInitializeImports);
+        return EM_NO_EXN;
+    } EM_CATCH {
+        return EM_CurrentExnType;
+    } 
+}
+
+/*****************************************************************************/
+/*                       link and load                                       */
+/*****************************************************************************/
+int FRONT_link(char* modName)
+{
+/*    EM_TRY { 
+        InitAll();
+        LoadTopModule(modName);
+        WriteAll(modName);
+    } EM_CATCH {
+        if (EM_CurrentExnType == LK_LinkError) {
+            printf("linking failed\n");
+            EM_THROW(EM_ABORT);
+        }
+    } 
+*/
+    return 0;
+}
+
+int FRONT_load(char* modName, int index)
+{
+    //to be filled in
+    return 0;
 }
 
 
@@ -91,18 +136,21 @@ static void FRONT_initSymbolTableBases()
     AM_cstBase = MEM_currentModule -> cstBase;
 }
 
-
-/* install top module   */
-void FRONT_topModuleInstall()
+/* install top module */
+int FRONT_topModuleInstall ()
 {
-    //register the top module as the current one being used
-    MEM_currentModule = &MEM_topModule;
-    //save the registers to be restored later; needed?
-    FRONT_saveRegs();
-    //register symbol table bases
-    FRONT_initSymbolTableBases();
+    EM_TRY { 
+        //register the top module as the current one being used
+        MEM_currentModule = &MEM_topModule;
+        //save the registers to be restored later; needed?
+        FRONT_saveRegs();
+        //register symbol table bases
+        FRONT_initSymbolTableBases();
+        return EM_NO_EXN;   
+    } EM_CATCH {
+        return EM_CurrentExnType;
+    }
 }
-
 
 static void FRONT_addModuleImportPoint()
 {
@@ -149,29 +197,37 @@ static void FRONT_installModule(int ind)
     FRONT_saveRegs();
 }
 
+/* install the ith module in the global module table and open its context */
+int FRONT_moduleInstall(int ind)
+{
+    EM_TRY { 
+        FRONT_installModule(ind);
+        //register symbol table bases
+        FRONT_initSymbolTableBases();
+        return EM_NO_EXN;   
+    } EM_CATCH {
+        return EM_CurrentExnType;
+    }
+}   
+
+
 /* initialize module context */
-static void FRONT_initModuleContext()
+int FRONT_initModuleContext()
 {
     int i;
     MemPtr addtable = (MemPtr)(MEM_currentModule -> addtable);
-    /* (re)initialize the backchained vector for the module */
-    i = MEM_impNCSEG(addtable);
-    if (i > 0) 
-        AM_initBCKVector(AM_ireg,AM_BCKV_ENTRY_SIZE * MEM_impLTS(addtable),i);
-    
-    /* increment univ counter if there are hidden constants */
-    i = MEM_impNLC(addtable);
-    if (i > 0) AM_ucreg++;
+    EM_TRY {
+        /* (re)initialize the backchained vector for the module */
+        i = MEM_impNCSEG(addtable);
+        if (i > 0) 
+            AM_initBCKVector(AM_ireg,AM_BCKV_ENTRY_SIZE * MEM_impLTS(addtable),
+                             i);
+        
+        /* increment univ counter if there are hidden constants */
+        i = MEM_impNLC(addtable);
+        if (i > 0) AM_ucreg++;
+        return EM_NO_EXN;
+    } EM_CATCH {
+        return EM_CurrentExnType;
+    }
 }
-
-
-/* install the ith module in the global module table and open its context */
-void FRONT_moduleInstall(int ind)
-{
-    FRONT_installModule(ind);
-    FRONT_initModuleContext();
-    //register symbol table bases
-    FRONT_initSymbolTableBases();
-}
-
-

@@ -1,22 +1,15 @@
-(************************************************************************)
-(*                     global module table                              *)
-(************************************************************************)
-type moduletableentry = ModuleTableEntry of (string * Absyn.amodule)
-
-(* top-level module *)
-val topModule : moduletableentry
+(***************************************************************************)
+(*            link and load a module                                       *)
+(***************************************************************************)
+val moduleLoad : string -> unit
 
 (***************************************************************************)
-(*                       current module                                    *)
+(*       install and open a module context                                 *)
+(* 1. search the ocaml module table to find the module and its index;      *)
+(* 2. register the module as current module;                               *)
+(* 3. invoke C functions to install the module and open its context for the*)
+(*    simulator.                                                           *)
 (***************************************************************************)
-
-
-(*(* load a module *)
-val loadModule : string -> unit
-
-(* unload a module *)
-val unloadModule : string -> unit
-
-(* open a module context *)
-(* val openModule : string -> unit *)
-*)
+val moduleInstall     : string -> unit
+val initModuleContext : unit   -> unit
+val getCurrentModule  : unit   -> Absyn.amodule

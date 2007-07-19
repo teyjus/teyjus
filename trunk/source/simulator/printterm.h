@@ -30,8 +30,12 @@
 extern Boolean PRINT_names;
 
 void PRINT_fPrintTerm(WordPtr outStream, DF_TermPtr tmPtr);
+void PRINT_showAnswerSubs();
+void PRINT_showDisAgreeList();
 
+void PRINT_setQueryFreeVariables();
 void PRINT_resetPrintState();
+Boolean PRINT_queryHasVars();
 
 //for debugging (display on stdout )
 void PRINT_printTerm(DF_TermPtr tmPtr);

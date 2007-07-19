@@ -2,8 +2,9 @@
 (*                     global module table                              *)
 (************************************************************************)
 
-(**               module table entry                                   **)
-
+(** **************************************************************** **)
+(**               module table entry                                 **)
+(** **************************************************************** **)
 (* entry structure  *)
 type moduletableentry = ModuleTableEntry of (string * Absyn.amodule) 
 
@@ -14,11 +15,16 @@ let makeModuleTableEntry amod =
   let name = Absyn.getModuleName amod in
   ModuleTableEntry(name, amod)
 
-(* special modules  *)
+(** **************************************************************** **)
+(**                     special modules                              **)
+(** **************************************************************** **)
+let topModuleName = ""
+
 (* top module  *)
 let topModule = 
-  ModuleTableEntry("", 
-				   Absyn.Module("", [], [], ref Pervasive.pervasiveConstants,
+  ModuleTableEntry(topModuleName, 
+				   Absyn.Module(topModuleName, [], [],
+								ref Pervasive.pervasiveConstants,
 								ref Pervasive.pervasiveKinds, 
 								Pervasive.pervasiveTypeAbbrevs,
 								[], [], [], [], [], ref [], [], ref [], 
@@ -27,7 +33,9 @@ let topModule =
 let errorModule = ModuleTableEntry("%empty", Absyn.ErrorModule)
 
 
-(**               system module table                                  **)
+(** **************************************************************** **)
+(**               system module table                                **)
+(** **************************************************************** **)
 (* the size of the module table                                        *)
 let numberofModules = 256 (* agree with that in system/memory.h *)
 
@@ -35,38 +43,33 @@ let numberofModules = 256 (* agree with that in system/memory.h *)
 let moduleTables = Array.make numberofModules errorModule 
 
 (* try to find the smallest index of a free entry in the module table; *)
-(* numberofModules is returned if the module table is full.            *)
-let firstFreeEntry () =
+(* error index -1 is returned if the module table is full.             *)
+let getFirstFreeEntry () =
   let rec firstFreeEntryAux ind =
-	if (ind = numberofModules) then ind
+	if (ind = numberofModules) then -1 
 	else
 	  if (Array.get moduleTables ind) = errorModule then ind
 	  else firstFreeEntryAux (ind + 1)
   in
   firstFreeEntryAux 0
   
-
-(* enter a given module into the module table and return its index;    *)
-(* -1 is returned if the module table is full.                         *)
-let enterModuleTable amod =
-  let index = firstFreeEntry () in
-  if (index = numberofModules) then -1 
-  else
-	(Array.set moduleTables index (makeModuleTableEntry amod);
-	 index)
+(* enter a module into the ith entry of the global module table *)
+let enterModuleTable amod index =
+  Array.set moduleTables index (makeModuleTableEntry amod)
 
 (* look for a module of given name in the current module table and     *)
 (* return its abstract syntax if founded; otherwise Absyn.ErrorModule  *)
 (* is returned.                                                        *)
 let findModule modName =
   let rec findModuleAux ind =
-	if (ind = numberofModules) then Absyn.ErrorModule
+	if (ind = numberofModules) then (-1, Absyn.ErrorModule)
 	else
 	  let ModuleTableEntry(name, amod) = Array.get moduleTables ind in
-	  if name = modName then amod
+	  if name = modName then (ind, amod)
 	  else findModuleAux (ind + 1)
   in
   findModuleAux 0
+
 
 (* remove a module of given name from the module table                 *)
 let removeModule modName =
@@ -78,8 +81,18 @@ let removeModule modName =
 	  else
 		removeModuleAux (ind + 1)
   in
-  removeModuleAux 0
-  
+  removeModuleAux 0  
+
+(* asking for a slot in the global module table:                       *)
+(* if a module of the same name is in the table, the index of this     *)
+(* module will be returned; otherwise, the index of the first free     *)
+(* entry will be returned; otherwise the module table is full and an   *)
+(* error index -1 will be returned.                                    *)
+let getModuleTableIndex modName =
+  let (index, _) = findModule modName in
+  if (index = -1) then getFirstFreeEntry ()
+  else index 
+
 
 (***************************************************************************)
 (*                       current module                                    *)
@@ -93,40 +106,76 @@ let initCurrentModule () = setCurrentModule Absyn.ErrorModule
 
 (***************************************************************************)
 (*                       load a module                                     *)
+(* 1. find an index for the module in the global module tables (OCaml and  *)
+(*    C);                                                                  *)
+(* 2. invoke the C function to link and load the module into the simulator *)
+(*    memory;                                                              *)
+(* 3. load the ocaml module.                                               *)
 (***************************************************************************)
-let loadModule modName =
-  if modName = "" then true
-  else 
+(* top module: nothing needs to be loaded *)
+let loadTopModule ()   = ()
+
+(* specified module *) 
+let loadModule modName = 
+  (* asking for a slot from the global module table *)
+  let index = getModuleTableIndex modName in
+  if (index = -1) then
+	(print_endline "Error: module table is full.\n";
+	 raise Simerrors.Exit)
+  else
+	(* linking  *)	 
+	let _ = Simerrors.handleSimExceptions (Ccode_stubs.link modName) in
+	(* loading  *)
+    let _ = Simerrors.handleSimExceptions (Ccode_stubs.load modName index) in
+	(* load ocaml (compiler) symbol tables *)
 	let amod = Loadmodtab.loadModuleTable modName in
-    (* first remove the old copy of this module if it is in module table *)
-	let amod' = findModule modName in
-	(if (amod' = Absyn.ErrorModule) then removeModule modName 
-	else ());
-	let index = enterModuleTable amod in
-	if (index = -1) then 
-	  (print_endline ("Error: module table full.\n");
-	   false)
-	else true
-
+	if (amod = Absyn.ErrorModule) then raise Simerrors.Exit
+	else
+	  enterModuleTable amod index
+		 
+		 
+(* load module *)
+let moduleLoad modName =
+  if modName = topModuleName then loadTopModule ()
+  else loadModule modName	
 
 (***************************************************************************)
-(*                       open a module context                             *)
+(*                 install and open a module context                       *)
+(* 1. search the ocaml module table to find the module and its index;      *)
+(* 2. register the module as current module;                               *)
+(* 3. invoke C functions to install the module and open its context for the*)
+(*    simulator.                                                           *)
 (***************************************************************************)
+(* top module       *)
 let openTopModule () =
-  setCurrentModule (getModuleTableModule topModule) 
+  setCurrentModule (getModuleTableModule topModule);
+  let _ = Simerrors.handleSimExceptions (Ccode_stubs.topModuleInstall ()) in
+  ()
 
+(* specified module *)
 let openModule modName =
-  let amod = findModule modName in
-  if amod = Absyn.ErrorModule then 
+  let (index, amod) = findModule modName in
+  if (amod = Absyn.ErrorModule) then
 	(print_endline ("Error: module " ^ modName ^ " is not loaded.");
-	 false)
+	 raise Simerrors.Exit)
   else
 	(setCurrentModule amod;
-	 true)
+	 let _ = Simerrors.handleSimExceptions (Ccode_stubs.moduleInstall(index)) 
+	 in
+	 ())
 
+(* install module *)
+let moduleInstall modName =
+  if modName = topModuleName then openTopModule ()
+  else openModule modName
+	
 
-(* load a module:                                                       *)
-(* 1. invoke the C load function to set up module run-time on simulator *)
-(*    memory;                                                           *)
-(* 2. invoke the OCaml load function to set up compiler symbol table    *)
-
+(* init module context *)
+let initModuleContext () =
+  let amod = getCurrentModule () in
+  if (Absyn.getModuleName amod) = topModuleName then ()
+  else 
+	let _ = Simerrors.handleSimExceptions (Ccode_stubs.initModuleContext()) in
+	()
+	
+  
