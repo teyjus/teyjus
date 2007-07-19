@@ -1467,7 +1467,9 @@ let genClauseHeadCode cl chunk insts startLoc isFact =
 let setUpGoalArgs goal chunk last hasenv =
   (* eagerly deal with register assignment for unneeded type variables *)
   let assignRegUnNeeded var =
+	print_endline "assignRegUnNeeded";
 	let varData = Absyn.getTypeFreeVariableVariableData var in
+	print_endline "end: assign";
 	let lastUse = (Absyn.getTypeVariableDataLastUse varData) == var in
 	if (Absyn.getTypeVariableDataPerm varData) then () (*nothing to do w perm*)
 	else 
@@ -1495,7 +1497,8 @@ let setUpGoalArgs goal chunk last hasenv =
 		 genRegTypePairsAux (regNum + 1) (List.tl tyargs) (index + 1)
 		   (myInst :: insts) (size + mySize) ((regNum, ty) :: regTyPairs)
 	   else
-		 (assignRegUnNeeded ty;
+		 ((if (Absyn.isVariableType ty) then assignRegUnNeeded ty
+		   else ());
 		  genRegTypePairsAux (regNum + 1) (List.tl tyargs) (index + 1)
 			(myInst :: insts) (size + mySize) regTyPairs)
    in
