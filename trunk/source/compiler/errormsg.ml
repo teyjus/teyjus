@@ -45,7 +45,7 @@ let string_of_pos = function pos ->
 *	Prints position information.
 ********************************************************************)
 let rec printPosition = fun p ->
-	print_string (string_of_pos p)
+	prerr_string (string_of_pos p)
 
 (********************************************************************
 *reset:
@@ -75,9 +75,9 @@ let error = fun pos (msg:string) ->
   if !errorsEnabled then
 		(anyErrors := true;
 		printPosition pos;
-		print_string " : Error : ";
-		print_string msg;
-        print_newline ())
+		prerr_string " : Error : ";
+		prerr_string msg;
+        prerr_newline ())
   else
     ()
 (********************************************************************
@@ -91,9 +91,9 @@ let warning = fun pos (msg:string) ->
 	  else
 	    ();
 	  printPosition pos;
-	  print_string " : Warning : ";
-	  print_string msg;
-      print_newline ())
+	  prerr_string " : Warning : ";
+	  prerr_string msg;
+      prerr_newline ())
   else
     ()		
 (********************************************************************
@@ -103,9 +103,9 @@ let warning = fun pos (msg:string) ->
 let log = fun pos msg ->
   if !loggingEnabled && !warningsEnabled && !errorsEnabled then
 	  (printPosition pos;
-	  print_string " : Log : ";
-	  print_string msg;
-      print_newline ())
+	  prerr_string " : Log : ";
+	  prerr_string msg;
+      prerr_newline ())
   else
     ()
 (********************************************************************
@@ -116,7 +116,7 @@ let log = fun pos msg ->
 let impossible = fun pos msg ->
 		(anyErrors := true;
 		printPosition pos;
-		print_string " : Internal Error : ";
-		print_string msg; 
-		print_newline ();
+		prerr_string " : Internal Error : ";
+		prerr_string msg; 
+		prerr_newline ();
 		raise InternalError)
