@@ -1,0 +1,182 @@
+***const cat: 0
+***const ind: 0
+***const cat: 0
+***const ind: 0
+***const cat: 0
+***const ind: 3
+***const cat: 0
+***const ind: 2
+***const cat: 0
+***const ind: 1
+***const cat: 0
+***const ind: 0
+***const cat: 0
+***const ind: 0
+***const cat: 0
+***const ind: 1
+***const cat: 0
+***const ind: 1
+***const cat: 0
+***const ind: 2
+***const cat: 0
+***const ind: 2
+***const cat: 0
+***const ind: 0
+***const cat: 0
+***const ind: 0
+***const cat: 0
+***const ind: 3
+***const cat: 0
+***const ind: 3
+***const cat: 2
+***const ind: 0
+***const cat: 0
+***const ind: 0
+***const cat: 0
+***const ind: 3
+***const cat: 0
+***const ind: 3
+***const cat: 2
+***const ind: 1
+***const cat: 0
+***const ind: 0
+Disassembling from bytecode file: copy.lpo
+Bytecode version: 2
+Module name: copy
+Bytes needed for code: 800
+
+LABEL               INSTRUCTION              OPERANDS
+
+L8                  fail                     
+copy                switch_on_reg            #1, L3, L4
+L3                  try_me_else              #2, L5
+L4                  switch_on_term           L6, L7, L8, L6
+L6                  try_me_else              #2, L9
+L2                  get_m_constant           A1, a
+                    get_m_constant           A2, a
+                    finish_unify             
+                    proceed                  
+L9                  retry_me_else            #2, L10
+L1                  allocate                 #3
+                    get_m_structure          A1, app, #2
+                    unify_variable_t         A1
+                    unify_variable_p         Y1
+                    get_m_structure          A2, app, #2
+                    unify_variable_t         A2
+                    unify_variable_p         Y2
+                    finish_unify             
+                    call_name                #2, copy
+                    put_value_p              Y1, A1
+                    put_value_p              Y2, A2
+                    deallocate               
+                    execute_name             copy
+L10                 retry_me_else            #2, L11
+L12                 allocate                 #2
+                    get_m_structure          A1, lam, #1
+                    unify_variable_t         A3
+                    get_m_structure          A2, lam, #1
+                    unify_variable_t         A4
+                    finish_unify             
+                    incr_universe            
+                    set_univ_tag             Y1, <hidden const #0>
+                    push_impl_point          #1, <impl #0>
+                    put_app                  A1, A3, #1
+                    globalize_pt             Y1, A255
+                    set_value_t              A255
+                    head_normalize_t         A1
+                    put_app                  A2, A4, #1
+                    set_value_p              Y1
+                    head_normalize_t         A2
+                    call_name                #1, copy
+                    pop_impl_point           
+                    decr_universe            
+                    deallocate               
+                    proceed                  
+L11                 trust_me                 #2
+L13                 allocate                 #2
+                    get_m_structure          A1, lam, #1
+                    unify_variable_t         A3
+                    get_m_structure          A2, lam, #1
+                    unify_variable_t         A4
+                    finish_unify             
+                    incr_universe            
+                    set_univ_tag             Y1, <hidden const #1>
+                    put_app                  A1, A3, #1
+                    globalize_pt             Y1, A255
+                    set_value_t              A255
+                    head_normalize_t         A1
+                    put_app                  A2, A4, #1
+                    set_value_p              Y1
+                    head_normalize_t         A2
+                    call_name                #1, copy
+                    decr_universe            
+                    deallocate               
+                    proceed                  
+L0                  try                      #2, L12
+                    trust                    #2, L13
+L7                  switch_on_constant       #3, <hash #0>
+L5                  trust_ext                #2, #1
+copy                switch_on_reg            #1, L14, L15
+L14                 try_me_else              #2, L16
+L15                 init_variable_t          A3, Y1
+                    pattern_unify_t          A3, A1
+                    pattern_unify_t          A3, A2
+                    finish_unify             
+                    proceed                  
+L16                 trust_ext                #2, #1
+
+Global kind table:
+0: i/0
+
+Local kind table:
+
+Type skeleton table:
+0: (i -> (i -> o))
+1: i
+2: (i -> (i -> i))
+3: ((i -> i) -> i)
+
+Global constant table: 
+0: copy (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #0
+1: a (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #1
+2: app (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #2
+3: lam (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #3
+
+Local constant table: 
+
+Hidden constant table: 
+0:  Type Skeleton: #1
+1:  Type Skeleton: #1
+
+String table:
+
+Implication Tables:
+0:
+  Predicate definitions possibly extending previous ones: 1
+   copy
+  Find function type: hash
+  In-core table size: 1
+   copy
+
+Hash tables:
+0:
+    Table size: 3
+    Constants:
+    lam -> L0
+    app -> L1
+    a -> L2
+
+Module table:
+  Predicate definitions possibly extending previous ones: 1
+   copy
+  Find function type: hash
+  In-core table size: 1
+   copy
+
+Accumulated tables:
+
+Imported tables:
