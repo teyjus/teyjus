@@ -1,6 +1,6 @@
 CFLAGS += -g -O0 -Wall
 
-LK_SRCS[] =
+LK_C[] =
     CallResolution
     bvrtab
     const
@@ -19,14 +19,14 @@ LK_SRCS[] =
     VectorRW
 
 LIB_FILES[] =
-    $(SIM_SRCS)
-    $(SYS_SRCS)
-    $(TBL_SRCS)
-    $(LK_SRCS)
+    $(SIM_C)
+    $(SYS_C)
+    $(TBL_C)
+    $(LK_C)
 
 # Linker library
 
-LIB = liblink
+LIB = liblinker
 
 StaticCLibrary($(LIB), $(LIB_FILES))
 
