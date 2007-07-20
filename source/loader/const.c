@@ -4,6 +4,7 @@
 #include "const.h"
 #include "../tables/pervinit.h"
 #include "../tables/pervasives.h"
+#include "ld_message.h"
 //PERV_CONST_NUM
 //#define PERV_CONST_NUM 10
 
@@ -20,6 +21,7 @@ int LD_CONST_LoadCst(MEM_GmtEnt* ent)
   int i;
   
   TwoBytes cstsize=LD_FILE_GET2();
+  LD_detail("Loading %d consts\n",cstsize);
   MEM_CstEnt* cst=(MEM_CstEnt*)LD_LOADER_ExtendModSpace(ent,(cstsize+PERV_CONST_NUM)*sizeof(MEM_CstEnt));
   ent->cstBase=(MEM_CstPtr)cst;
   //Copy Pervasive constants.
@@ -99,6 +101,7 @@ TwoBytes LD_CONST_GetConstInd()
       return ind;
       break;
     default:
+      LD_bad("Invalid Const type %d\n",gl);
       EM_THROW(LD_LoadError);
       break;
   }

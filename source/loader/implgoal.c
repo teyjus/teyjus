@@ -5,6 +5,7 @@
 #include "const.h"
 #include "../system/memory.h"
 #include "searchtab.h"
+#include "ld_message.h"
 
 TwoBytes LD_IMPLGOAL_numImplGoals;
 WordPtr* LD_IMPLGOAL_ImplGoals;
@@ -15,6 +16,7 @@ void LD_IMPLGOAL_LoadImplGoals(MEM_GmtEnt* ent)
 {
   int i;
   TwoBytes count=LD_IMPLGOAL_numImplGoals=LD_FILE_GET2();
+  LD_detail("Loading %d implication goals\n",count);
   LD_IMPLGOAL_ImplGoals=(WordPtr*)EM_malloc(count*sizeof(WordPtr));
   
   for(i=0;i<count;i++)

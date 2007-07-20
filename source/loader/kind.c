@@ -4,11 +4,12 @@
 #include "../tables/pervinit.h"
 #include "loader.h"
 #include "kind.h"
+#include "ld_message.h"
 #include <stdio.h>
 
 #define GLOBAL 0
 #define LOCAL 1
-#define PERVASIVE 2
+#define PERVASIVE 3
 
 TwoBytes LD_KIND_numGKinds=-1;
 
@@ -20,7 +21,7 @@ int LD_KIND_LoadKst(MEM_GmtEnt* ent)
   
   //Allocate space for the kind table.
   TwoBytes kstsize=LD_FILE_GET2();
-  //printf("Kind table size=%d\n",kstsize);
+  LD_detail("Loading %d kinds\n",kstsize);
   MEM_KstEnt* kst=
       (MEM_KstEnt*)LD_LOADER_ExtendModSpace(ent,(kstsize+PERV_KIND_NUM)*sizeof(MEM_KstEnt));
   ent->kstBase=(MEM_KstPtr)kst;
@@ -71,6 +72,7 @@ TwoBytes LD_KIND_GetKindInd()
     case PERVASIVE:
       return ind;
     default:
+      LD_bad("Invalid Kind type %d\n",gl);
       EM_THROW(LD_LoadError);
   }
 }
