@@ -21,3 +21,14 @@ LIB_FILES[] =
 LIB = libloader
 
 StaticCLibrary($(LIB), $(LIB_FILES))
+
+MAIN = loadit
+
+MAIN_FILES[] =
+    main
+
+LIBS = $(LIB)
+
+CFLAGS += -lm
+
+CProgram($(MAIN), $(MAIN_FILES))

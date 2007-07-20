@@ -3,6 +3,7 @@
 #include "file.h"
 #include "../system/memory.h"
 #include "../simulator/mcstring.h"
+#include "ld_message.h"
 
 TwoBytes LD_STRING_numStrings;
 DF_StrDataPtr* LD_STRING_Strings;
@@ -11,6 +12,7 @@ void LD_STRING_LoadStrings(MEM_GmtEnt* ent)
 {
   int i;
   TwoBytes count=LD_STRING_numStrings=LD_FILE_GET2();
+  LD_detail("Loading %d strings\n",count);
   LD_STRING_Strings=(DF_StrDataPtr*)EM_malloc(count*sizeof(char*));
   
   for(i=0;i<count;i++)

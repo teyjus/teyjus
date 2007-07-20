@@ -17,6 +17,4 @@ extern void* LD_LOADER_ExtendModSpace(MEM_GmtEnt* ent, int size);
 extern MEM_GmtEnt* LD_LOADER_GetNewGMTEnt();
 extern void LD_LOADER_DropGMTEnt(MEM_GmtEnt* ent);
 
-#define DEBUG(x) printf(x);
-
 #endif //_LOADER_H_

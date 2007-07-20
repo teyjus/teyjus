@@ -2,6 +2,7 @@
 #include "../system/memory.h"
 #include "loader.h"
 #include "code.h"
+#include "ld_message.h"
 
 TwoBytes LD_BVRTAB_numBvrTabs;
 WordPtr* LD_BVRTAB_BvrTabs;
@@ -12,6 +13,7 @@ void LD_BVRTAB_LoadBvrTabs(MEM_GmtEnt* ent)
 {
   int i;
   TwoBytes count=LD_BVRTAB_numBvrTabs=LD_FILE_GET2();
+  LD_detail("Loading %d bound variable tables\n",count);
   LD_BVRTAB_BvrTabs=(WordPtr*)EM_malloc(count*sizeof(WordPtr));
   
   for(i=0;i<count;i++)
