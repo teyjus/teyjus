@@ -81,24 +81,21 @@ let main () =
     else
       !Parseargs.outputFileName
   in
-  
-  if (Parseargs.parseArgs Parseargs.Tjcc) then
-	let modName = !(Parseargs.inputName) in
-	if (modName = "") then 
-	  if (!Parseargs.outputFileName = "") then 1
-	  else
-		(print_endline "Error: No input file specified.";
-		 0)
-	else
-	  let outfile = getOutFile modName in
-	  let result = compile modName outfile in
-	  if !Errormsg.anyErrors then 
-		(print_endline "Compilation failed.";
-		 result)
-	  else
-		(print_endline "Compilation succeeded.";
-		 result)
-  else 1
+    if Parseargs.parseArgs Parseargs.Tjcc then
+	  let modName = !Parseargs.inputName in
+	    if modName = "" then 
+		  (print_endline "Error: No input file specified." ;
+           exit 1)
+	    else
+	      let outfile = getOutFile modName in
+	      let result = compile modName outfile in
+	        if !Errormsg.anyErrors then 
+		      (print_endline "Compilation failed." ;
+               exit result)
+	        else
+		      print_endline "Compilation succeeded."
+    else
+      exit 1
 		
 (*  Execute main  *)
 let _ = main ()	  
