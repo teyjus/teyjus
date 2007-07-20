@@ -1,1 +1,21 @@
+############################################################
+# Rules for compiling and linking Lambda Prolog code
+#
+
+%.lpo: %.mod %.sig $(TJCC)
+    $(TJCC) $< >/dev/null
+
+LPProgram(program, files) =
+    file_names = $(addsuffix .lpo, $(files))
+    prog_name = $(addsuffix .lp, $(program))
+
+    $(prog_name): $(file_names) $(TJLINK)
+        $(TJLINK) $(program)
+
+    value $(prog_name)
+
+############################################################
+# Subdirectories
+#
+
 .SUBDIRS: compiler
