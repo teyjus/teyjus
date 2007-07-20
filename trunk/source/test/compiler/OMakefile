@@ -1,13 +1,43 @@
 SUBDIRS = $(glob D, *)
 
 .SUBDIRS: $(SUBDIRS)
+    # The default root file is the name of the test directory
+    ROOT = $(basename $(absname $(CWD)))
+
+    # The default root file can be overriden if the test directory contains
+    # a file named root.om with a line "ROOT = xxxx"
+    if $(file-exists root.om)
+        include root.om
+        export
+
     FILES = $(rootname $(glob *.mod))
-    test: clean $(TJCC) $(TJDIS) $(glob *.mod *.sig *.ins)
+    LPProgram($(ROOT), $(FILES))
+
+    actual: $(TJDIS) $(ROOT).lp
+        $(TJDIS) --link $(ROOT).lp > actual
+
+    test: actual expected
+        diff expected actual
+
+    # This target updates the tests so they pass
+    .PHONY: update-test
+    update-test: actual
+        cp actual expected
+
+    # Tests for just the compiler - no linking step
+    %.dis-actual: %.lpo $(TJDIS)
+        $(TJDIS) $< >$@
+
+    .PHONY: compiler-test
+    compiler-test: $(TJDIS) $(addsuffix .dis-actual, $(FILES))
         foreach(file, $(FILES))
-            $(TJCC) $(file) >/dev/null
-            $(TJDIS) $(file).lpo > $(file).ins-tmp
-            diff -q $(file).ins $(file).ins-tmp || \
-              echo "TEST FAILURE: $(fullname $(CWD))"
+            diff $(file).dis $(file).dis-actual
+
+    # This target updates the compiler-tests so they pass
+    .PHONY: update-compiler-test
+    update-compiler-test: $(addsuffix .dis-actual, $(FILES))
+        foreach(file, $(FILES))
+            cp $(file).dis-actual $(file).dis
 
     clean:
-        rm -f *.lpo *.ins-tmp
+        rm -f *.lp *.lpo *.dis-actual actual
