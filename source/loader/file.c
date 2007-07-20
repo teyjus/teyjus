@@ -5,6 +5,10 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <endian.h>
+#include <byteswap.h>
+#include <bits/wordsize.h>
+#include "ld_message.h"
 #include "file.h"
 #include "loader.h"
 
@@ -12,8 +16,8 @@ int fd;
 
 void LD_FILE_GetString(char* buffer,int length)
 {
-	read(fd,buffer,length);
-    buffer[length]='\0';
+  read(fd,buffer,length);
+  buffer[length]='\0';
 }
 
 void LD_FILE_Open(char* modname, char* extension)
@@ -81,8 +85,15 @@ Word LD_FILE_GETWORD()
   int tmp;
   if(sizeof(tmp)!=read(fd,&tmp,sizeof(tmp)))
     EM_THROW(LD_FILE_ReadError);
-  return (Word)tmp;
-  //return (Word)LD_FILE_GET4();
+#if BYTE_ORDER == LITTLE_ENDIAN
+# if __WORDSIZE == 32
+  return (Word)bswap_32((unsigned int)tmp);
+# elif __WORDSIZE == 64
+  return bswap_64(tmp);
+# endif
+#elif BYTE_ORDER == BIG_ENDIAN
+  return tmp;
+#endif
 }
 
 /*
@@ -98,8 +109,11 @@ TwoBytes LD_FILE_GET2()
   TwoBytes tmp;
   if(sizeof(tmp)!=read(fd,&tmp,sizeof(tmp)))
     EM_THROW(LD_FILE_ReadError);
+#if BYTE_ORDER == LITTLE_ENDIAN
+  return bswap_16(tmp);
+#elif BYTE_ORDER == BIG_ENDIAN
   return tmp;
-  //return ntohs(tmp);
+#endif
 }
 
 Byte LD_FILE_GET1()

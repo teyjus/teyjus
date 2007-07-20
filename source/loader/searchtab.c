@@ -4,6 +4,7 @@
 #include "code.h"
 #include "searchtab.h"
 #include "../system/memory.h"
+#include "ld_message.h"
 
 struct HashTabEnt;
 
@@ -23,6 +24,7 @@ int Hash(int ci,int size)
 WordPtr LD_SEARCHTAB_LoadHashTab(MEM_GmtEnt* ent, int* size)
 {
   int numEntries=*size=LD_FILE_GET2();
+  LD_debug("Hash table has %d entries\n",numEntries);
   int i;
   
   struct HashTabEnt *tab=(struct HashTabEnt*)LD_LOADER_ExtendModSpace(ent,sizeof(struct HashTabEnt)*numEntries);
