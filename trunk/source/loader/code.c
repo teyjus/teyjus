@@ -125,4 +125,8 @@ void LD_CODE_LoadCodeSize(MEM_GmtEnt* ent)
 {
   Word codesize=LD_FILE_GETWORD();
   ent->codeSpaceBeg=ent->codeSpaceEnd-(int)codesize;
+  if(ent->modSpaceEnd>ent->codeSpaceBeg){
+    LD_bad("Out of module space.\n");
+    EM_THROW(LD_LoadError);
+  }
 }
