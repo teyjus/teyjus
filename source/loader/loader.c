@@ -81,16 +81,10 @@ int LD_LOADER_LoadModuleName(char* modname)
 MEM_GmtEnt* LD_LOADER_GetNewGMTEnt()
 {
   int i;
-  for(i=0;i<MEM_MAX_MODULES;i++)
-  {
-    if(MEM_modTable[i].modname==NULL)
-    {
-      MEM_modTable[i].modSpaceEnd=MEM_modTable[i].modSpaceBeg=MEM_memTop;
-      MEM_modTable[i].codeSpaceEnd=MEM_modTable[i].codeSpaceBeg=(CSpacePtr)MEM_memBot;
-      return MEM_modTable+i;
-    }
-  }
-  return NULL;
+  MEM_GmtEnt* ent = MEM_findFreeModTableEntry();
+  ent->modSpaceEnd=ent->modSpaceBeg=MEM_memTop;
+  ent->codeSpaceEnd=ent->codeSpaceBeg=MEM_memBot;
+  return ent;
 }
 
 void LD_LOADER_DropGMTEnt(MEM_GmtEnt* ent)
@@ -106,8 +100,12 @@ void LD_LOADER_AddGMTEnt(MEM_GmtEnt* ent)
 
 void* LD_LOADER_ExtendModSpace(MEM_GmtEnt* ent, int size)
 {
-  void* tmp=(void*)ent->modSpaceEnd;
+  void* tmp = (void*) ent->modSpaceEnd;
   ent->modSpaceEnd+=size;
+  if(ent->modSpaceEnd>ent->codeSpaceBeg){
+    LD_bad("Out of module space.\n");
+    EM_THROW(LD_LoadError);
+  }
   return tmp;
 }
 
