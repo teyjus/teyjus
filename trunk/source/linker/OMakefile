@@ -32,12 +32,11 @@ StaticCLibrary($(LIB), $(LIB_FILES))
 
 # Linker program
 
-MAIN = linker
+MAIN = tjlink
 
 MAIN_FILES[] =
     main
 
 LIBS = $(LIB)
-
 
 CProgram($(MAIN), $(MAIN_FILES))
