@@ -11,13 +11,6 @@ let queryStrings = ref []
 let addQuery str =
   queryStrings := !queryStrings @ [str]
 
-let popQuery () =
-  match !queryStrings with
-    | [] -> ""
-    | query::rest ->
-        queryStrings := rest ;
-        query
-          
 let setPath path =
   print_string "not implemented\n"
 
@@ -82,29 +75,21 @@ let solveQueries () =
   in
 		  
   (* solve one query *)
-  let rec solveQuery () =
-	(* get one query from the query "buffer" *)
-	let query = popQuery () in 
-	if query = "" then 0 (* no more query is left *)
-	else begin
-	  (* parse query and create relevant structures on simulator heap *)
-	  if Query.buildQueryTerm query (Module.getCurrentModule ()) then
-		if !batch then
-          solveQueryBatch ()
-		else
-          Query.interactSolveQuery ()
+  let rec solveQuery query =
+	if Query.buildQueryTerm query (Module.getCurrentModule ()) then
+	  if !batch then
+        solveQueryBatch ()
 	  else
-        raise Simerrors.Exit (* if any problem in build query, exit *) ;
-
-	  Front.simulatorReInit false ;
-	  Module.initModuleContext () ;
-	  solveQuery () (* solve the next query *)
-        
-    end
+        Query.interactSolveQuery ()
+	else
+      raise Simerrors.Exit ;
+	Front.simulatorReInit false ;
+	Module.initModuleContext ()
+      
   in
-    solveQuery ()
+    List.iter solveQuery !queryStrings
 
-
+      
 let _ =
   Arg.parse (Arg.align specList) anonFunc usageMsg ;
 
@@ -116,8 +101,8 @@ let _ =
 	Module.initModuleContext () ;
 	solveQueries()
   with
-	| Simerrors.Query    -> 0  (* query is done *)
-	| Simerrors.TopLevel -> 0  (* stop *)
+	| Simerrors.Query    -> () (* query is done *)
+	| Simerrors.TopLevel -> () (* stop *)
 	| Simerrors.Exit     ->    (* halt *)
         exit 1
 	| _                  ->    (* other exceptions *)
