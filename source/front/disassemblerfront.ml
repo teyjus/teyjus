@@ -1,18 +1,34 @@
-let main () =
-  if (Parseargs.parseArgs Parseargs.Tjdis) then
-	let tablesOnly = !Parseargs.tablesOnly in
-	let instrOnly  = !Parseargs.instrOnly  in
-	let linkedFile = !Parseargs.linkedFile in
-	if (tablesOnly && instrOnly) then
-	  (print_endline "Error: tables only (-t/--table) and instrunctions only (-i/--instr) can not be simultaneously selected.";
-	   1)
-	else
-	  (Bytecode.setWordSize ();
-	   Pervasiveutils.pervasiveKindIndexMappingInit ();
-	   Pervasiveutils.pervasiveConstantIndexMappingInit ();
-	   Disassembly.disassemble (!Parseargs.inputName) tablesOnly instrOnly 
-		 linkedFile)
-  else 1 
+open Parseargs
 
-(* execute main *)
-let _ = main ()
+let tablesOnly = ref false
+let instrOnly  = ref false
+let linkedFile = ref false
+let inputName = ref ""
+  
+let specList = dualArgs
+  [("-t", "--table", Arg.Set tablesOnly, " Only print tables") ;
+   ("-i", "--instr", Arg.Set instrOnly, " Only print instructions") ;
+   ("-l", "--link", Arg.Set linkedFile, " Disassemble linked file") ;
+   versionspec]
+
+let anonFunc name =
+  inputName := name
+
+let usageMsg =
+  "Using: tjdis <options> <object-file>\n" ^
+    "options are:"
+
+let _ =
+  Arg.parse (Arg.align specList) anonFunc usageMsg ;
+
+  if !inputName = "" then
+    error "No input file specified." ;
+  
+  if (!tablesOnly && !instrOnly) then
+    error ("tables only (-t/--table) and instrunctions only " ^
+             "(-i/--instr) can not be simultaneously selected.") ;
+  
+  Bytecode.setWordSize () ;
+  Pervasiveutils.pervasiveKindIndexMappingInit () ;
+  Pervasiveutils.pervasiveConstantIndexMappingInit () ;
+  Disassembly.disassemble !inputName !tablesOnly !instrOnly !linkedFile
