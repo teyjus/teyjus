@@ -3,7 +3,7 @@
 #
 
 %.lpo: %.mod %.sig $(TJCC)
-    $(TJCC) $< >/dev/null
+    $(TJCC) $<
 
 LPProgram(program, files) =
     file_names = $(addsuffix .lpo, $(files))

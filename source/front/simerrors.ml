@@ -10,7 +10,7 @@ exception FatalError
 (* translate the simulator exceptions (c) into system exceptions (ocaml) *)
 (* the expNumbers have to agree with those defined in system/error.h     *)
 let handleSimExceptions expNumber =
-  if expNumber = 0 then 0 (* no error *)
+  if expNumber = 0 then () (* no error *)
   else if expNumber = 1 then raise Abort
   else if expNumber = 2 then raise Exit
   else if expNumber = 3 then raise TopLevel

@@ -15,26 +15,21 @@ let systemInitOCaml () =
 (****************************************************************************)
 (* invocation of the initialization code for the C part of the system       *)
 (****************************************************************************)
-let systemInitC () =
-  let _ = Simerrors.handleSimExceptions 
-	  (Ccode_stubs.systemInit (!Parseargs.heapSize)) 
-  in
-  ()
+let systemInitC heapSize =
+  Simerrors.handleSimExceptions (Ccode_stubs.systemInit heapSize)
 
 (***************************************************************************)
 (* interface function                                                      *)
 (***************************************************************************)
-let systemInit () =
-  systemInitOCaml ();
-  systemInitC ()
+let systemInit heapSize =
+  systemInitOCaml () ;
+  systemInitC heapSize
 
 (** ********************************************************************** **)
 (**            simulator initialization                                    **)
 (** ********************************************************************** **)
 let simulatorInit () =
-  let _ = Simerrors.handleSimExceptions (Ccode_stubs.simulatorInit ()) in
-  ()
+  Simerrors.handleSimExceptions (Ccode_stubs.simulatorInit ())
   
 let simulatorReInit imp =
-  let _ = Simerrors.handleSimExceptions (Ccode_stubs.simulatorReInit imp) in
-  ()
+  Simerrors.handleSimExceptions (Ccode_stubs.simulatorReInit imp)
