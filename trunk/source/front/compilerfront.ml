@@ -1,101 +1,88 @@
-(***************************************************************************)
-(* compile                                                                 *)
-(***************************************************************************)
+open Parseargs
+
+let abort_on_error () =
+  if !Errormsg.anyErrors then
+    exit 1
+
 let compile basename outfile =
-  (*  Parse the input module and signature and generate preabsyn. *)
+  (* Parse the input module and signature and generate preabsyn. *)
   let modresult = Compile.compileModule basename in
-  if !Errormsg.anyErrors then 1
-  else 
-	let sigresult = Compile.compileSignature basename in
-	if !Errormsg.anyErrors then 1
-	else 
+  let _ = abort_on_error () in
+    
+  let sigresult = Compile.compileSignature basename in
+  let _ = abort_on_error () in
+      
+  (* Construct an absyn module.  At this point only the module's *)
+  (* constant, kind, and type abbrev information is valid.       *)
+  let (absyn, sigabsyn) = Translate.translate modresult sigresult in
+  let _ = abort_on_error () in
 
-	  (*  Construct an absyn module.  At this point only the module's *)
-	  (*  constant, kind, and type abbrev information is valid.       *)
-	  let (absyn, sigabsyn) = (Translate.translate modresult sigresult) in
-	  if !Errormsg.anyErrors then 1
-	  else
+  (* Get the list of clauses and new clauses. *)
+  let (absyn, clauses, newclauses, closeddefs) = 
+	Clauses.translateClauses modresult absyn in
+  let _ = abort_on_error () in
 
-		(*  Get the list of clauses and new clauses.  *)
-		let (absyn, clauses, newclauses, closeddefs) = 
-		  Clauses.translateClauses modresult absyn 
-		in
-		if !Errormsg.anyErrors then 1
-		else
-
-		  (* reduce skeleton *)
-		  let absyn = Typereduction.reduceSkeletons absyn in
-		  (*print_string "passed: reduce skeletons\n"; *)
-		  if !Errormsg.anyErrors then 1
-		  else 
+  (* Reduce skeleton *)
+  let absyn = Typereduction.reduceSkeletons absyn in
+  let _ = abort_on_error () in
   
-			(*  Process the clauses.  *)
-			let absyn = 
-			  Processclauses.processClauses absyn clauses newclauses closeddefs 
-			in
-			(*print_string "passed: processClauses\n"; *)
-			if !Errormsg.anyErrors then 1
-			else
+  (* Process the clauses. *)
+  let absyn = 
+	Processclauses.processClauses absyn clauses newclauses closeddefs in
+  let _ = abort_on_error () in
  
-			  (* reduce predicate types *)
-			  (*let absyn = Typereduction.reducePredicates absyn in
-			  (*print_string "passed: reduce predicates\n";*)			  
-			  if !Errormsg.anyErrors then 1
-			  else *)
+  (* Reduce predicate types *)
+  (* let absyn = Typereduction.reducePredicates absyn in *)
+  (* let _ = abort_on_error () in *)
 				
-			    (*  Process the clauses.  *)
-				let _ = Annvariables.processClauses absyn in
-				print_string "passed: annvariable\n";
-				if !Errormsg.anyErrors then 1
-				else
+  (* Process the clauses. *)
+  let _ = Annvariables.processClauses absyn in
+  let _ = abort_on_error () in
 				  
-				  (*  Construct a codegen module. *)
-				  let cg = Codegen.generateModuleCode absyn in
-				  print_string "passed: codegen\n";
-				  if !Errormsg.anyErrors then 1
-				  else
+  (* Construct a codegen module. *)
+  let cg = Codegen.generateModuleCode absyn in
+  let _ = abort_on_error () in
 					
-					(*  Open the correct output file. *)
-					let _ = Bytecode.openOutChannel outfile in
-					if !Errormsg.anyErrors then	1
-					else
-					    (Bytecode.setWordSize ();
-						 (*  Write the code to the output file.  *)
-						 let _ = Spitcode.writeByteCode cg in
-						 if !Errormsg.anyErrors then 1
-						 else 0)
-					  
-			  
-			  
+  (* Open the correct output file. *)
+  let _ = Bytecode.openOutChannel outfile in
+  let _ = abort_on_error () in
+    
+	Bytecode.setWordSize () ;
+	Spitcode.writeByteCode cg ;
+    abort_on_error ()
 
 
-let main () =
-  (******************************************************************)
-  (*getOutfile:                                                     *)
-  (* Gets the outfile filename.  Defaults to the input filename with*)
-  (* ".lp" appended.                                                *)
-  (******************************************************************)
-  let getOutFile modname =
-    if !Parseargs.outputFileName = "" then
-      Bytecode.makeByteCodeFileName modname
-    else
-      !Parseargs.outputFileName
-  in
-    if Parseargs.parseArgs Parseargs.Tjcc then
-	  let modName = !Parseargs.inputName in
-	    if modName = "" then 
-		  (print_endline "Error: No input file specified." ;
-           exit 1)
-	    else
-	      let outfile = getOutFile modName in
-	      let result = compile modName outfile in
-	        if !Errormsg.anyErrors then 
-		      (print_endline "Compilation failed." ;
-               exit result)
-	        else
-		      print_endline "Compilation succeeded."
-    else
-      exit 1
-		
-(*  Execute main  *)
-let _ = main ()	  
+
+let inputName = ref ""
+let outputName = ref ""
+
+let setPath path =
+  print_string "not implemented\n"
+  
+let specList = dualArgs
+  [("-o", "--output", Arg.Set_string outputName,
+    " Specifies the name of the output bytecode file") ;
+   ("-p", "--path", Arg.String setPath,
+    " Add PATH to the search path. Several paths may be specified.") ;
+   versionspec]
+
+let anonFunc name = 
+  inputName := getModName name
+
+let usageMsg = 
+  "Usage: tjcc <options> <files>\n" ^
+  "options are:"
+
+let _ =
+    Arg.parse (Arg.align specList) anonFunc usageMsg ;
+
+    if !inputName = "" then
+      error "No input file specified." ;
+
+    if !outputName = "" then
+      outputName := Bytecode.makeByteCodeFileName !inputName ;
+    
+    compile !inputName !outputName
+
+
+

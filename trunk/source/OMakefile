@@ -189,6 +189,7 @@ TJCC = $(CWD)/tjcc$(EXE)
 TJSIM = $(CWD)/tjsim$(EXE)
 TJDIS = $(CWD)/tjdis$(EXE)
 
+.PHONY: all
 all: $(TJCC) $(TJSIM) $(TJDIS)
 
 ############################################################

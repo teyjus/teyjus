@@ -7,4 +7,4 @@ exception Fail          (* fail to simulator level *)
 exception FatalError   
 
 
-val handleSimExceptions : int -> int
+val handleSimExceptions : int -> unit
