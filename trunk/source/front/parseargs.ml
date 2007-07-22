@@ -12,9 +12,9 @@ let versionspec =
 
 let getModName name =
   try
-    String.sub name 0 (String.rindex name '.')
+    Filename.chop_extension name
   with
-    | Not_found -> name
+    | Invalid_argument _ -> name
 
 let error str =
   prerr_endline ("Error: " ^ str) ;
