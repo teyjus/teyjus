@@ -100,12 +100,12 @@ let printPredicateTable preds header =
   let collectPreds preds pred = preds ^ "   " ^ pred ^ "\n" in
 
   let numPreds = List.length preds in
+  printLine (header ^ (string_of_int numPreds));
   if (numPreds = 0) then ()
   else
-	(printLine (header ^ (string_of_int numPreds));
-	 print_string 
-	   (List.fold_left collectPreds "" 
-		  (List.map Bytecode.displayC preds)))
+	print_string 
+	  (List.fold_left collectPreds "" 
+		 (List.map Bytecode.displayC preds))
 
 (**************************************************************)
 (*  GLOBAL/LOCAL KINDS                                        *)

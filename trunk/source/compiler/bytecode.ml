@@ -231,9 +231,7 @@ let readKindIndex getKindFn =
 (* read constant index *)
 let readConstantIndex getConstFn =
   let constCat = readOneByte  () in
-  print_endline ("***const cat: " ^ string_of_int constCat);
   let constInd = readTwoBytes () in
-  print_endline ("***const ind: " ^ string_of_int constInd);
   getConstFn constCat constInd
 
 (* read a global kind *)
