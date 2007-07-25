@@ -34,8 +34,9 @@ WordPtr LD_IMPLGOAL_LoadImplGoal(MEM_GmtEnt* ent)
   //Load Next Clause Table
   int nctSize=(int)LD_FILE_GET2();
   ///\todo Check on the space requirements of the implgoal table.
-  WordPtr tab=LD_LOADER_ExtendModSpace(ent,(3+nctSize)*sizeof(Word));
-  
+  //WordPtr tab=LD_LOADER_ExtendModSpace(ent,(3+nctSize)*sizeof(Word)); --XQ
+  WordPtr tab = LD_LOADER_ExtendModSpace(ent, MEM_IMPL_FIX_SIZE + nctSize);
+
   int cst;
   MEM_implPutLTS(tab,nctSize);
   for(i=0;i<nctSize;i++)

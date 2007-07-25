@@ -43,7 +43,8 @@ WordPtr LD_IMPORTTAB_LoadImportTab(MEM_GmtEnt* ent)
 {
   LD_debug("Loading import table\n");
   ///\todo Check on the space requirements of the import table.
-  WordPtr tab=LD_LOADER_ExtendModSpace(ent,(3)*sizeof(Word));
+
+  WordPtr tab=LD_LOADER_ExtendModSpace(ent,MEM_IMP_FIX_SIZE);
   int cst;
   int i;
   int numSegs = LD_FILE_GET1();//Get number of segments.
@@ -52,9 +53,13 @@ WordPtr LD_IMPORTTAB_LoadImportTab(MEM_GmtEnt* ent)
   //Load Next Clause Table
   int nctSize=(int)LD_FILE_GET2();
   LD_debug(" Next clause table has %d entries\n",nctSize);
+  
   MEM_impPutLTS(tab,nctSize);
+
+  // added by XQ
+  LD_LOADER_ExtendModSpace(ent, nctSize);
   for(i=0;i<nctSize;i++)
-  {
+  {      
     cst=(int)LD_CONST_GetConstInd();
     MEM_impPutLT(tab,i,cst);
   }
@@ -62,12 +67,18 @@ WordPtr LD_IMPORTTAB_LoadImportTab(MEM_GmtEnt* ent)
   //Local Constant table
   int lctSize=(int)LD_FILE_GET2();
   LD_debug(" Local constant table has %d entries\n",lctSize);
+  
   MEM_impPutNLC(tab, lctSize);
-  MemPtr lcTab=MEM_impLCT(tab,nctSize);///\todo Reorder Link table and local constant table
-  for(i=0;i<nctSize;i++)
+  MemPtr lcTab=MEM_impLCT(tab,nctSize);
+  ///\todo Reorder Link table and local constant table
+  // added by XQ
+  LD_LOADER_ExtendModSpace(ent, lctSize);
+  
+  //for(i=0;i<nctSize;i++) -- XQ
+  for (i = 0; i < lctSize; i++)
   {
     cst=(int)LD_CONST_GetConstInd();
-    MEM_impPutLCT(tab,i,cst);
+    MEM_impPutLCT(lcTab, i, cst);
   }
   
   //Load FindCodeFunc
@@ -83,6 +94,7 @@ WordPtr LD_IMPORTTAB_LoadImportTab(MEM_GmtEnt* ent)
   }
   else if(fcf==SEARCHTAB_FCF_HASHSEARCH)
   {
+      
     LD_debug(" Loading hash table\n");
     MEM_impPutFC(tab,(MEM_FindCodeFnPtr)&LD_SEARCHTAB_HashSrch);
     LD_SEARCHTAB_LoadHashTab(ent,&psts);

@@ -47,7 +47,7 @@ typedef long CodeInd;
 typedef int ImportTabInd;
 
 typedef enum {
-  LK_LinkError=LOADER_FIRST_ERR_INDEX
+  LK_LinkError=LINKER_FIRST_ERR_INDEX
 }LK_ExnType;
 
 #endif //_DATATYPES_H_

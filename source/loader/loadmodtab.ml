@@ -63,7 +63,7 @@ let loadTypeSkeletons globalKinds =
   in
 
   let numberTypeSkels = Bytecode.readTwoBytes () in
-  let typeSkeletonTab = Array.make (numberTypeSkels - 1) Absyn.ErrorType in
+  let typeSkeletonTab = Array.make numberTypeSkels Absyn.ErrorType in
 
   let rec loadTypeSkeletonsAux index =
 	if (index = numberTypeSkels) then ()
@@ -106,7 +106,7 @@ let loadConstSymTab tySkeletonTab =
 (****************************************************************************)
 let loadModuleTable modName =
   Bytecode.openInChannel (Bytecode.makeLinkedByteCodeName modName);
-  let modName = loadHeaderInfo () in 
+  let modName = loadHeaderInfo () in
   let (kindSymTab, globalKinds) = loadKindSymTab () in
   let tySkeletonTab = loadTypeSkeletons globalKinds in
   let constSymTab = loadConstSymTab tySkeletonTab in 

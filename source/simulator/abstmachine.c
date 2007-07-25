@@ -292,13 +292,12 @@ void AM_findCode(int constInd, CSpacePtr *clPtr, MemPtr *iptr)
 {
     CSpacePtr myclPtr = NULL;
     MemPtr    myiptr  = AM_ireg;
-    int       size;
-    
+    int       size;    
     while (!AM_botIP(myiptr)) {
         if ((size = AM_impPSTS(myiptr)) && 
             (myclPtr = (*(AM_impFC(myiptr)))(constInd,size,AM_impPST(myiptr))))
             break;
-        else myiptr = AM_impPIP(myiptr);
+        else myiptr = AM_impPIP(myiptr); 
     }
     *clPtr = myclPtr;
     *iptr  = myiptr;

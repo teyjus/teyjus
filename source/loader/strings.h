@@ -2,6 +2,7 @@
 #define _STRINGS_H_
 
 #include "../system/memory.h"
+#include "../simulator/dataformats.h"
 
 /**
 * \brief Load the string table of a module.

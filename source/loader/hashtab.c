@@ -16,7 +16,7 @@ void LD_HASHTAB_LoadHashTabs(MEM_GmtEnt* ent)
   
   int ignore;///\note We do not check if the size given for a hash table matches the size used in code.
   for(i=0;i<count;i++)
-  {
+  {   
     LD_HASHTAB_HashTabs[i]=LD_SEARCHTAB_LoadHashTab(ent,&ignore);
   }
   return;

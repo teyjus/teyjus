@@ -12,7 +12,7 @@ int main(int argc, char* argv[])
     MEM_memInit(1024*8);
     PERVINIT_tableInit();
     printf("Memory Initialized\n");
-    LD_LOADER_Load(argv[1]);
+    LD_LOADER_Load(argv[1], 0);
     printf("Module Loaded\n");
   }EM_CATCH{
     printf("Caught an exception\n");

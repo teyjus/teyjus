@@ -2,6 +2,7 @@
 #include "../system/memory.h"
 #include "loader.h"
 #include "const.h"
+#include "strings.h"
 #include "../tables/pervinit.h"
 #include "../tables/pervasives.h"
 #include "ld_message.h"
@@ -22,7 +23,11 @@ int LD_CONST_LoadCst(MEM_GmtEnt* ent)
   
   TwoBytes cstsize=LD_FILE_GET2();
   LD_detail("Loading %d consts\n",cstsize);
-  MEM_CstEnt* cst=(MEM_CstEnt*)LD_LOADER_ExtendModSpace(ent,(cstsize+PERV_CONST_NUM)*sizeof(MEM_CstEnt));
+  
+  /* MEM_CstEnt* cst=(MEM_CstEnt*)LD_LOADER_ExtendModSpace(ent,(cstsize+PERV_CONST_NUM)*sizeof(MEM_CstEnt)); -- XQ*/
+  MEM_CstEnt* cst=(MEM_CstEnt*)LD_LOADER_ExtendModSpace(ent,
+                                                        (cstsize+PERV_CONST_NUM) * 
+                                                        MEM_CST_ENTRY_SIZE);
   ent->cstBase=(MEM_CstPtr)cst;
   //Copy Pervasive constants.
   PERVINIT_copyConstDataTab(cst);

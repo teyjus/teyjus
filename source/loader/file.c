@@ -82,7 +82,7 @@ int LD_FILE_ModTime(char* modname, char* extension)
 
 Word LD_FILE_GETWORD()
 {
-  int tmp;
+  Word tmp;
   if(sizeof(tmp)!=read(fd,&tmp,sizeof(tmp)))
     EM_THROW(LD_FILE_ReadError);
 #if BYTE_ORDER == LITTLE_ENDIAN

@@ -8,10 +8,10 @@
 #include "error.h"
 #include "../tables/pervasives.h"
 #include "../tables/pervinit.h"
-#include "../simulator/mctypes.h" //to be changed
+#include "../simulator/mctypes.h"
 
 /******************************************************************************/
-/*                SYSTEM MEMORY MANAGEMENT  (TEMP)                            */
+/*                SYSTEM MEMORY MANAGEMENT                                    */
 /******************************************************************************/
 WordPtr MEM_memBeg;       //starting addr of the system memory
 WordPtr MEM_memEnd;       //end addr of the system memory
@@ -31,7 +31,7 @@ WordPtr MEM_memExtend(unsigned int size)
 {
     WordPtr rtPtr = MEM_memTop;
     
-    if ((MEM_memTop + size) > MEM_memEnd) EM_error(EM_OUT_OF_MEMORY);
+    if ((MEM_memTop + size) > MEM_memBot) EM_error(EM_OUT_OF_MEMORY);
     else MEM_memTop += size;
     return rtPtr;
 }
