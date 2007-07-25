@@ -1,22 +1,8 @@
-LD_C[] =
-    loader
-    strings
-    file
-    kind
-    const
-    hashtab
-    code
-    bvrtab
-    implgoal
-    searchtab
-    importtab
-    tyskel
-
 LIB_FILES[] =
     $(SIM_C)
     $(SYS_C)
     $(TBL_C)
-    $(LD_C)
+    $(LOD_C)
 
 LIB = libloader
 

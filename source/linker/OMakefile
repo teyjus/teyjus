@@ -1,28 +1,10 @@
 CFLAGS += -g -O0 -Wall
 
-LK_C[] =
-    CallResolution
-    bvrtab
-    const
-    hashtab
-    importtab
-    rename
-    tyskel
-    code
-    file
-    implgoal
-    kind
-    module
-    stringspace
-    tree
-    vector
-    VectorRW
-
 LIB_FILES[] =
     $(SIM_C)
     $(SYS_C)
     $(TBL_C)
-    $(LK_C)
+    $(LNK_C)
 
 # Linker library
 
