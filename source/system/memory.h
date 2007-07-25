@@ -106,6 +106,7 @@ typedef MEM_CstEnt *MEM_CstPtr;
 /*****************************************************************************/
 /*               ACCESSING THE IMPLICATION GOAL TABLE                        */
 /*****************************************************************************/
+#define MEM_IMPL_FIX_SIZE    3
 /* functions for filling in the fields of an impl table                      */
 /* Q: the data stored in each field in byte code: are they word or in their  */
 /*    specific types?                                                        */
@@ -129,6 +130,7 @@ int MEM_implIthLT(MemPtr ltab, int index);   /* value in ith entry of link tab
 /*****************************************************************************
  *                  ACCESSING THE IMPORTED MODULE TABLE                      *
  *****************************************************************************/
+#define MEM_IMP_FIX_SIZE    5
 /* functions for filling in the fields of an import table                   */
 /* Q: the data stored in each field in byte code: are they word or in their  */
 /*    specific types?                                                        */
@@ -177,8 +179,8 @@ typedef struct
     MEM_CstPtr  cstBase;         //starting addr of constant table
     WordPtr     modSpaceBeg;     //starting addr of module space
     WordPtr     modSpaceEnd;     //ending addr of module space
-	WordPtr		codeSpaceBeg;    //starting addr of module space
-	WordPtr		codeSpaceEnd;    //ending addr of module space
+	WordPtr     codeSpaceBeg;    //starting addr of module space
+	WordPtr     codeSpaceEnd;    //ending addr of module space
 } MEM_GmtEnt;
 
 #define MEM_MAX_MODULES    255   //max number of modules (temp)

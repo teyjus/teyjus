@@ -29,5 +29,6 @@ typedef Word           *WordPtr;
 typedef Word           Mem;                       /* generic memory type */
 typedef Mem            *MemPtr;                   /* pointer to memory   */
 typedef Byte           *CSpacePtr;                /* code space pointer  */
+typedef Byte           *BytePtr;                  
 
 #endif //MCTYPES_H

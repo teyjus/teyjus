@@ -29,8 +29,15 @@ int LD_TYSKEL_LoadTst(MEM_GmtEnt* ent)
   int i;
   TwoBytes tstSize=LD_FILE_GET2();
   LD_detail("Loading %d type skeletons\n",tstSize);
-  MemPtr* tst=
-      (MemPtr*)LD_LOADER_ExtendModSpace(ent,(tstSize+PERV_TY_SKEL_NUM)*sizeof(MemPtr));
+  
+  /* MemPtr* tst=
+     (MemPtr*)LD_LOADER_ExtendModSpace(ent,(tstSize+PERV_TY_SKEL_NUM)*sizeof(MemPtr)); 
+     -- XQ
+  */
+  MemPtr* tst =
+      (MemPtr*)LD_LOADER_ExtendModSpace(ent,
+                                        (tstSize+PERV_TY_SKEL_NUM) *
+                                        MEM_TST_ENTRY_SIZE);
   
   ent->tstBase=(MEM_TstPtr)tst;
   //Copy pervasives

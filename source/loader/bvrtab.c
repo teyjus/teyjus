@@ -29,10 +29,11 @@ WordPtr LD_BVRTAB_LoadBvrTab(MEM_GmtEnt* ent)
   int i;
   
   ///\todo Make this actually a hash table.
-  Word* tab=LD_LOADER_ExtendModSpace(ent,2*sizeof(Word)*numEntries);
+  //Word* tab=LD_LOADER_ExtendModSpace(ent,2*sizeof(Word)*numEntries); --XQ
+  Word* tab=LD_LOADER_ExtendModSpace(ent,2*numEntries);
   for(i=0;i<numEntries;i++)
   {
-    tab[2*i]=(Word)LD_FILE_GET1();
+    tab[2*i]  =(Word)LD_FILE_GET1();
     tab[2*i+1]=(Word)LD_CODE_GetCodeInd();
   }
   

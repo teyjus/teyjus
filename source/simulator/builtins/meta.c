@@ -139,7 +139,7 @@ void BIMETA_solve()
             } else { //head is a constant symbol                
                 MemPtr    ip;
                 CSpacePtr cl;
-                AM_findCode(pred, &cl, &ip);
+                AM_findCode(pred, &cl, &ip);                
                 if (cl) {
                     BIMETA_setRegs(pred); //set up term and type registers
                     AM_b0reg = AM_breg;

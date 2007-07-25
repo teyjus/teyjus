@@ -16,8 +16,11 @@ void LD_LOADER_LoadLinkcodeVer();
 
 int LD_LOADER_LoadModuleName(char* modname);
 MEM_GmtEnt* LD_LOADER_GetNewGMTEnt();
-void* LD_LOADER_ExtendModSpace(MEM_GmtEnt* ent, int size);
+WordPtr LD_LOADER_ExtendModSpace(MEM_GmtEnt* ent, int size);
 int LD_LOADER_SetName(MEM_GmtEnt* ent,char* modname);
+void LD_LOADER_AddGMTEnt(MEM_GmtEnt* ent);
+void LD_LOADER_DropGMTEnt(MEM_GmtEnt* ent);
+
 
 int LD_verbosity = 0;
 
@@ -25,7 +28,7 @@ int LD_verbosity = 0;
 
 //Loads the module into returns it's index in the global module table
 //Returns -1 on failure.
-int LD_LOADER_Load(char* modname)
+int LD_LOADER_Load(char* modname, int index)
 {
   EM_TRY{
     LD_FILE_Open(modname,LINKCODE_EXT);
@@ -34,7 +37,7 @@ int LD_LOADER_Load(char* modname)
   }EM_CATCH{
     EM_THROW(LD_LoadError);
   }
-  MEM_GmtEnt* gmtEnt=LD_LOADER_GetNewGMTEnt();
+  MEM_GmtEnt* gmtEnt=LD_LOADER_GetNewGMTEnt(index);
   EM_TRY{
     LD_LOADER_SetName(gmtEnt,modname);
     LD_CODE_LoadCodeSize(gmtEnt);
@@ -47,6 +50,7 @@ int LD_LOADER_Load(char* modname)
     LD_BVRTAB_LoadBvrTabs(gmtEnt);
     LD_IMPORTTAB_LoadImportTabs(gmtEnt);
     LD_CODE_LoadCode(gmtEnt);
+    LD_LOADER_AddGMTEnt(gmtEnt);
   }EM_CATCH{
     ///\todo Clean up after failed load.
     LD_LOADER_DropGMTEnt(gmtEnt);
@@ -59,7 +63,7 @@ int LD_LOADER_Load(char* modname)
 #define LINKCODE_VER 3
 void LD_LOADER_LoadLinkcodeVer()
 {
-  int tmp=(int)LD_FILE_GETWORD();
+  long tmp=(long)LD_FILE_GETWORD();
   if(tmp!=LINKCODE_VER){
     LD_bad("Incompatible linkcode version %d.\n",tmp);
     EM_THROW(LD_LoadError);
@@ -78,10 +82,14 @@ int LD_LOADER_LoadModuleName(char* modname)
   }
 }
 
-MEM_GmtEnt* LD_LOADER_GetNewGMTEnt()
+/* get a module table entry of given index from the global module tables   */
+/* the index is assumed to be calculated by the system front and passed in */
+/* as an argument upon invoking the loader -- XQ                           */
+MEM_GmtEnt* LD_LOADER_GetNewGMTEnt(int index)
 {
   int i;
-  MEM_GmtEnt* ent = MEM_findFreeModTableEntry();
+  MEM_GmtEnt* ent;
+  ent = &(MEM_modTable[index]);
   ent->modSpaceEnd=ent->modSpaceBeg=MEM_memTop;
   ent->codeSpaceEnd=ent->codeSpaceBeg=MEM_memBot;
   return ent;
@@ -92,26 +100,42 @@ void LD_LOADER_DropGMTEnt(MEM_GmtEnt* ent)
   ent->modname=NULL;
 }
 
+/* finalize system memory after loading modules -- XQ */
 void LD_LOADER_AddGMTEnt(MEM_GmtEnt* ent)
 {
   MEM_memTop=ent->modSpaceEnd;
   MEM_memBot=(MemPtr)ent->codeSpaceBeg;
 }
 
-void* LD_LOADER_ExtendModSpace(MEM_GmtEnt* ent, int size)
+/* Asking space of given number of WORDS from the system memory -- XQ */
+WordPtr LD_LOADER_ExtendModSpace(MEM_GmtEnt* ent, int size)
 {
-  void* tmp = (void*) ent->modSpaceEnd;
-  ent->modSpaceEnd+=size;
-  if(ent->modSpaceEnd>ent->codeSpaceBeg){
-    LD_bad("Out of module space.\n");
-    EM_THROW(LD_LoadError);
-  }
-  return tmp;
+    WordPtr tmp = ent -> modSpaceEnd;
+    ent -> modSpaceEnd += size;
+    if(ent->modSpaceEnd > ent->codeSpaceBeg){
+        LD_bad("Out of module space.\n");
+        EM_THROW(LD_LoadError);
+    }
+    return tmp;
 }
+
+/* Asking space of given number of BYTES from the system memory -- XQ */
+BytePtr LD_LOADER_ExtendModSpaceInByte(MEM_GmtEnt* ent, int size)
+{
+    BytePtr tmp = (BytePtr) (ent -> modSpaceEnd);
+    ent -> modSpaceEnd = (WordPtr)(((BytePtr)ent->modSpaceEnd) + size);
+    if (ent -> modSpaceEnd >  ent->codeSpaceBeg){
+        LD_bad("Out of module space.\n");
+        EM_THROW(LD_LoadError);
+    }
+    return tmp;
+}
+
 
 int LD_LOADER_SetName(MEM_GmtEnt* ent,char* modname)
 {
-  char* namebuf=(char*)LD_LOADER_ExtendModSpace(ent,strlen(modname)+1);
+  //char* namebuf=(char*)LD_LOADER_ExtendModSpace(ent,strlen(modname)+1);--XQ 
+  char* namebuf=(char*)LD_LOADER_ExtendModSpaceInByte(ent,strlen(modname)+1);
   strcpy(namebuf,modname);
   ent->modname=namebuf;
   return 0;

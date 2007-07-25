@@ -28,7 +28,10 @@ DF_StrDataPtr LD_STRING_LoadString(MEM_GmtEnt* ent)
   char* string=(char*)EM_malloc((str_length+1)*sizeof(char));
   LD_FILE_GetString(string,str_length);
   
-  DF_StrDataPtr loc=(DF_StrDataPtr)LD_LOADER_ExtendModSpace(ent,MCSTR_numWords(str_length)+DF_STRDATA_HEAD_SIZE);
+  DF_StrDataPtr loc=
+      (DF_StrDataPtr)LD_LOADER_ExtendModSpace(ent,
+                                              MCSTR_numWords(str_length) + 
+                                              DF_STRDATA_HEAD_SIZE);
   
   DF_mkStrDataHead((MemPtr)loc);
   MCSTR_toString((MCSTR_Str)(loc+DF_STRDATA_HEAD_SIZE), string, str_length);

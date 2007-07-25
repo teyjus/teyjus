@@ -19,12 +19,16 @@ void SIM_simulate()
 {
   restart_loop:
     EM_TRY {       
-        while(1) SDP_dispatchTable[*((INSTR_OpCode *)AM_preg)]();
+        while(1) {
+            /*fprintf(stderr, "AM_preg %u opcode: %d\n", AM_preg, 
+             *((INSTR_OpCode *)AM_preg)); */
+            SDP_dispatchTable[*((INSTR_OpCode *)AM_preg)]();
+        }
         /* it's expected that this statement not be reached: the only
            way out of this while loop is by an exception */        
     } EM_CATCH {
         if (EM_CurrentExnType == EM_FAIL) {
-            if (AM_botCP()) EM_RETHROW(); //temp 
+            if (AM_botCP()) EM_RETHROW();
             else {
                 TR_unwindTrail(AM_cpTR());
                 AM_initPDL();
