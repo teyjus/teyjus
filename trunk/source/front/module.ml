@@ -120,8 +120,7 @@ let loadModule modName =
   (* asking for a slot from the global module table *)
   let index = getModuleTableIndex modName in
   if (index = -1) then
-	(print_endline "Error: module table is full.\n";
-	 raise Simerrors.Exit)
+	 raise Simerrors.Abort
   else
 	(* linking  *)	 
 	let _ = Simerrors.handleSimExceptions (Ccode_stubs.link modName) in
@@ -129,9 +128,10 @@ let loadModule modName =
     let _ = Simerrors.handleSimExceptions (Ccode_stubs.load modName index) in
 	(* load ocaml (compiler) symbol tables *)
 	let amod = Loadmodtab.loadModuleTable modName in
-	if (amod = Absyn.ErrorModule) then raise Simerrors.Exit
+	if (amod = Absyn.ErrorModule) then 
+	  raise Simerrors.Abort
 	else
-	  enterModuleTable amod index
+	   enterModuleTable amod index
 		 
 		 
 (* load module *)

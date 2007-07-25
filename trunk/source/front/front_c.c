@@ -6,8 +6,9 @@
 #include "../simulator/abstmachine.h"
 #include "../simulator/siminit.h"
 #include "../simulator/builtins/builtins.h"
-//#include "../linker/module.h"
-//#include "../loader/loader.h"
+#include "../linker/module.h"
+#include "../loader/loader.h"
+#include "../loader/ld_message.h"
 
 #include <stdio.h>
 
@@ -36,7 +37,7 @@ int FRONT_systemInit(int inSize)
 {
     int memSize = inSize ? (inSize*1024 / WORD_SIZE) : FRONT_DEFAULT_SYS_SIZE;
  
-    EM_TRY { 
+    EM_TRY {
         FRONT_setMemorySizes(memSize);
         /* initialize system memory */
         MEM_memInit(memSize);
@@ -58,7 +59,6 @@ int FRONT_simulatorInit()
     EM_TRY { 
         //initialize simulator error messages
         SINIT_preInit();
-        
         //finalize simulator memory components
         AM_heapBeg  = (MemPtr)MEM_memTop;
         AM_heapEnd  = AM_stackBeg = 
@@ -69,10 +69,8 @@ int FRONT_simulatorInit()
         
         //initialize simulator heap and registers
         SINIT_simInit();
-        
         //initialize built-in error messages
         BI_init();
-
         return EM_NO_EXN;   
     } EM_CATCH {
         return EM_CurrentExnType;
@@ -92,26 +90,36 @@ int FRONT_simulatorReInit(Boolean inDoInitializeImports)
 /*****************************************************************************/
 /*                       link and load                                       */
 /*****************************************************************************/
+int verbosity = 0;
+
 int FRONT_link(char* modName)
 {
-/*    EM_TRY { 
+    EM_TRY { 
         InitAll();
         LoadTopModule(modName);
         WriteAll(modName);
     } EM_CATCH {
         if (EM_CurrentExnType == LK_LinkError) {
             printf("linking failed\n");
-            EM_THROW(EM_ABORT);
+            return EM_ABORT;
         }
-    } 
-*/
-    return 0;
+        return EM_CurrentExnType;
+    }
+    return EM_NO_EXN;
 }
 
 int FRONT_load(char* modName, int index)
 {
-    //to be filled in
-    return 0;
+    LD_verbosity = 2;
+    EM_TRY{LD_LOADER_Load(modName, index);
+    }EM_CATCH{
+        if (EM_CurrentExnType == LD_LoadError) {
+            printf("loading failed\n");
+            return EM_ABORT;
+        }
+        return EM_CurrentExnType;
+    }
+    return EM_NO_EXN;
 }
 
 
@@ -160,13 +168,14 @@ static void FRONT_addModuleImportPoint()
     
     n = MEM_impNCSEG(addtab);  // n = # code segs (# bc fields)
     m = MEM_impLTS(addtab);    // m = link tab size
-    l = AM_NCLT_ENTRY_SIZE * m;  // l = space for next clause table 
-    
+    l = AM_NCLT_ENTRY_SIZE * m;  // l = space for next clause table
+
     ip = AM_tosreg + (AM_BCKV_ENTRY_SIZE * n) + l;
     AM_tosreg = ip + AM_IMP_FIX_SIZE;
     AM_stackError(AM_tosreg);
     
     n = MEM_impNLC(addtab);        // reuse n as the number of local consts
+    
     if (n > 0) {
         AM_mkImptRecWL(ip, m, MEM_impPST(addtab, m, n), MEM_impPSTS(addtab),
                        MEM_impFC(addtab));
@@ -178,7 +187,7 @@ static void FRONT_addModuleImportPoint()
     } else AM_mkImptRecWOL(ip, m, MEM_impPST(addtab, m, n),MEM_impPSTS(addtab),
                            MEM_impFC(addtab));
     if (m > 0) AM_mkImpNCLTab(ip, MEM_impLT(addtab), m);
-
+    
     AM_ireg = ip;    
 }
 

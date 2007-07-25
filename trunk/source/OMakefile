@@ -95,6 +95,7 @@ SIM_C[] =
     $(SIM)/builtins/io
     $(SIM)/builtins/meta
     $(SIM)/builtins/readterm
+#    $(SIM)/print
 
 SYS_C[] =
     $(SYS)/error
@@ -109,6 +110,40 @@ TBL_C[] =
 
 LOD_ML[] =
     $(LOD)/loadmodtab
+
+LOD_C[] =
+    $(LOD)/bvrtab
+    $(LOD)/code
+    $(LOD)/const
+    $(LOD)/file
+    $(LOD)/hashtab
+    $(LOD)/implgoal
+    $(LOD)/importtab
+    $(LOD)/kind
+    $(LOD)/loader
+    $(LOD)/loadmodtab
+    $(LOD)/searchtab
+    $(LOD)/strings
+    $(LOD)/tyskel
+
+LNK_C[] =
+    $(LNK)/bvrtab
+    $(LNK)/CallResolution
+    $(LNK)/code
+    $(LNK)/const
+    $(LNK)/file
+    $(LNK)/hashtab
+    $(LNK)/implgoal
+    $(LNK)/importtab
+    $(LNK)/kind
+    $(LNK)/module
+    $(LNK)/rename
+    $(LNK)/stringspace
+    $(LNK)/tree
+    $(LNK)/tyskel
+    $(LNK)/vector
+    $(LNK)/VectorRW
+    
 
 DIS_MAIN = $(FNT)/disassemblerfront
 CMP_MAIN = $(FNT)/compilerfront
@@ -181,7 +216,7 @@ OCamlProgram(tjcc, $(CMP_MAIN) $(CMP_ML) $(LOD_ML) $(FNT_ML))
 OCamlProgram(tjdis, $(DIS_MAIN) $(CMP_ML) $(LOD_ML) $(DIS_ML) $(FNT_ML))
 
 # For the simulator we need to package all the C code into a library first
-StaticCLibrary(libsim, $(SIM_C) $(SYS_C) $(TBL_C) $(FNT_C))
+StaticCLibrary(libsim, $(SIM_C) $(SYS_C) $(TBL_C) $(FNT_C) $(LOD_C) $(LNK_C))
 OCAML_CLIBS += libsim
 OCamlProgram(tjsim, $(SIM_MAIN) $(LOD_ML) $(CMP_ML) $(FNT_ML) $(FNT_ML_TO_C))
 
