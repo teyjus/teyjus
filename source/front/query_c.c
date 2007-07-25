@@ -53,6 +53,7 @@ int QUERY_solveQuery()
         }
         //invoke simulator 
         SIM_simulate();
+        
     } EM_CATCH {
         if (EM_CurrentExnType == EM_QUERY) {
             PRINT_resetPrintState();
