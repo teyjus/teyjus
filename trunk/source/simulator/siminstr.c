@@ -18,7 +18,9 @@
 #include "../system/error.h" //to be modified
 #include "../tables/pervasives.h"//to be modifed
 #include "../tables/instructions.h"//to be modifed
+#include "../loader/searchtab.h"
 
+//#include "print.h"
 #include <stdio.h>  //to be removed
 
 static AM_DataTypePtr regX, regA;
@@ -412,7 +414,7 @@ void SINSTR_init_variable_p()           //init_variable Yn,Ym -- E_CE_X
 }
 
 void SINSTR_get_m_constant()            //get_m_constant Xi,c -- R_C_X
-{
+{    
     INSACC_RCX(regX, constInd);
     tmPtr = DF_termDeref((DF_TermPtr)regX);
     SINSTRL_unifyConst(tmPtr, constInd);
@@ -1484,7 +1486,7 @@ void SINSTR_execute_name()              //execute_name c -- C_WP_X
 }
 
 void SINSTR_proceed()                   //proceed -- X
-{
+{   
    /* We use a nonlocal procedure exit to get back to the toplevel
       when a query has a result.  We do this so that we don't have to
       return values from instruction functions, and we don't have to
@@ -1567,8 +1569,9 @@ void SINSTR_trust()                     //trust n,label -- I1_L_WP_X
 void SINSTR_trust_ext()                 //trust_ext n,m -- I1_N_X
 {
     INSACC_I1NX(n, m);
-    nextcl = AM_impNCL(AM_cpCI(), m);
+    nextcl = AM_impNCL(AM_cpCI(), m);    
     AM_preg = AM_impNCLCode(nextcl);
+    
     if (AM_isFailInstr(AM_preg)) {
         AM_breg = AM_cpB();
         AM_settosreg();
@@ -1612,7 +1615,7 @@ void SINSTR_branch()                    //branch lab -- L_X
 /*   INDEXING INSTRUCTIONS                                                   */
 /*****************************************************************************/
 void SINSTR_switch_on_term()          //switch_on_term lv,lc,ll,lbv --L_L_L_L_X
-{
+{   
     regA = AM_reg(1);
     tmPtr = DF_termDeref((DF_TermPtr)regA);
     numAbs = 0;
@@ -1678,6 +1681,7 @@ void SINSTR_switch_on_term()          //switch_on_term lv,lc,ll,lbv --L_L_L_L_X
 void SINSTR_switch_on_constant()        //switch_on_constant n,tab -- I1_HT_X
 {
     INSACC_I1HTX(n, table);
+    cl = LD_SEARCHTAB_HashSrch(tablInd, n, table);
     //cl = SEARCHFNS_findfnHash(tablInd, n, table);
     if (cl) {
         AM_preg = cl;
@@ -1694,13 +1698,14 @@ void SINSTR_switch_on_bvar()            //switch_on_bvar n,tab -- I1_BVT_X
     else EM_THROW(EM_FAIL);
 }
 
-void SINSTR_switch_on_reg()             //switch_on_reg n,l1,l2 -- N_L_L_X
+void SINSTR_switch_on_reg()             //switch_on_reg n,SL1,FL2 -- N_L_L_X
 {
     INSACC_NLLX_N(n);
     nextcl = AM_impNCL(AM_cireg, n);
     if (AM_isFailInstr(AM_impNCLCode(nextcl)))
         AM_preg = *((INSTR_CodeLabel *)(AM_preg + INSTR_NLLX_L2));
-    else AM_preg = *((INSTR_CodeLabel *)(AM_preg + INSTR_NLLX_L1));
+    else 
+        AM_preg = *((INSTR_CodeLabel *)(AM_preg + INSTR_NLLX_L1));
 }
 
 /*****************************************************************************/

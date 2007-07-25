@@ -4,6 +4,7 @@
 #include "../tables/pervinit.h"
 #include "loader.h"
 #include "kind.h"
+#include "strings.h"
 #include "ld_message.h"
 #include <stdio.h>
 
@@ -22,9 +23,13 @@ int LD_KIND_LoadKst(MEM_GmtEnt* ent)
   //Allocate space for the kind table.
   TwoBytes kstsize=LD_FILE_GET2();
   LD_detail("Loading %d kinds\n",kstsize);
-  MEM_KstEnt* kst=
-      (MEM_KstEnt*)LD_LOADER_ExtendModSpace(ent,(kstsize+PERV_KIND_NUM)*sizeof(MEM_KstEnt));
-  ent->kstBase=(MEM_KstPtr)kst;
+  /*  Use MEM_KST_ENTRY_SIZE instead which is the number of *WORDS* for each KST entry
+      -- XQ
+  */
+  MEM_KstPtr kst=
+      (MEM_KstPtr)LD_LOADER_ExtendModSpace(ent,(kstsize+PERV_KIND_NUM)*MEM_KST_ENTRY_SIZE);
+ 
+  ent->kstBase = kst;
   
   //Copy the pervasive kinds
   PERVINIT_copyKindDataTab(kst);
@@ -39,8 +44,8 @@ int LD_KIND_LoadKst(MEM_GmtEnt* ent)
   //Load the global kinds
   for(i=0;i<num_glob;i++)
   {
-    kst[i].arity=LD_FILE_GET1();
-    kst[i].name=LD_STRING_LoadString(ent);
+    kst[i].arity = LD_FILE_GET1();
+    kst[i].name  = LD_STRING_LoadString(ent);
   }
   
   //Load the local kinds
