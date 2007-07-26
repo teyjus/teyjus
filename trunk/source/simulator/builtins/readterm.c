@@ -4,11 +4,33 @@
 #include "../mcstring.h"
 #include "../mctypes.h"
 #include "../../system/error.h"
+#include "../../system/message.h"
 #include "../abstmachine.h"
 
 //temp
 #include <stdio.h>
 //#include "../print.h"
+
+/*************************************************************************/
+/*                   ERROR INFORMATION                                   */
+/*************************************************************************/
+#define RT_NUM_ERROR_MESSAGES 1
+
+enum
+{
+    RT_ERROR_FULL_VAR = RT_FIRST_ERR_INDEX
+};
+
+
+static MSG_Msg RT_errorMessages[RT_NUM_ERROR_MESSAGES] =
+{
+    { RT_ERROR_FULL_VAR,
+      EM_ERROR_COLON,
+      "Not enough space for new free variables introduced interactively.",
+      EM_NEWLINE, EM_FAIL, 0
+    }
+};
+
 
 /*************************************************************************/
 /* local tables assistanting term/type creation                          */
@@ -95,7 +117,7 @@ int RT_initLocalTabs(int numFvs,int numTyFvs,int numTermArgs,int numTypeArgs)
     EM_TRY{
         tables = (WordPtr)EM_malloc(sizeof(DF_TermPtr) * size);
 
-        if (IO_freeVarTabFull(numFvs)) EM_THROW(EM_ABORT);
+        if (IO_freeVarTabFull(numFvs)) EM_error(RT_ERROR_FULL_VAR);
         RT_freeVarTab  = (DF_TermPtr*)tables;
         RT_freeTypeVarTab = (DF_TypePtr*)(tables + numFvs);
         RT_termQueueInit((DF_TermPtr*)(RT_freeTypeVarTab + numTyFvs));
@@ -104,7 +126,7 @@ int RT_initLocalTabs(int numFvs,int numTyFvs,int numTermArgs,int numTypeArgs)
         RT_termQueueEnqueue(termStartLoc);
         RT_typeQueueEnqueue(typeStartLoc);
 
-        return EM_NO_EXN;
+        return EM_NO_ERR;
     } EM_CATCH {
         return EM_CurrentExnType;
     }
@@ -143,7 +165,7 @@ int RT_buildFreeVar(char* name, int index)
         
         //enter the name and address of the free var into the IO free var table
         IO_enterFreeVarTab((DF_StrDataPtr)strDataHead, (DF_TermPtr)fvTerm);
-        return EM_NO_EXN;
+        return EM_NO_ERR;
     } EM_CATCH {
         return EM_CurrentExnType;
     }
@@ -161,7 +183,7 @@ int RT_buildFreeTypeVar(int index)
         DF_mkFreeVarType(AM_hreg);   //create type variable
         RT_freeTypeVarTab[index] = (DF_TypePtr)AM_hreg; //enter local tyvar tab
         AM_hreg = nhreg;
-        return EM_NO_EXN;
+        return EM_NO_ERR;
     } EM_CATCH {
         return EM_CurrentExnType;
     }
@@ -190,7 +212,7 @@ int RT_buildIntTerm(int i)
 {
     EM_TRY {
         DF_mkInt((MemPtr)(RT_termQueueDequeue()), i);
-        return EM_NO_EXN;
+        return EM_NO_ERR;
     } EM_CATCH {
         return EM_CurrentExnType;
     }
@@ -200,7 +222,7 @@ int RT_buildRealTerm(double f)
 {
     EM_TRY { 
         DF_mkFloat((MemPtr)(RT_termQueueDequeue()), f);
-        return EM_NO_EXN;
+        return EM_NO_ERR;
     } EM_CATCH {
         return EM_CurrentExnType;
     }
@@ -219,7 +241,7 @@ int RT_buildStringTerm(char* str)
         MCSTR_toString((MCSTR_Str)strData, str, length);
         AM_hreg = nhreg;  
         DF_mkStr((MemPtr)(RT_termQueueDequeue()), (DF_StrDataPtr)strDataHead);
-        return EM_NO_EXN;
+        return EM_NO_ERR;
     } EM_CATCH {
         return EM_CurrentExnType;
     }
@@ -229,7 +251,7 @@ int RT_buildNilTerm()
 {
     EM_TRY { 
         DF_mkNil((MemPtr)(RT_termQueueDequeue()));
-        return EM_NO_EXN;
+        return EM_NO_ERR;
     } EM_CATCH {
         return EM_CurrentExnType;
     }
@@ -240,7 +262,7 @@ int RT_buildMConstantTerm(int index)
     EM_TRY { 
         DF_mkConst((MemPtr)(RT_termQueueDequeue()), 
                    AM_cstUnivCount(index), index);
-        return EM_NO_EXN;
+        return EM_NO_ERR;
     } EM_CATCH {
         return EM_CurrentExnType;
     }
@@ -263,7 +285,7 @@ int RT_buildPConstantTerm(int index, int typeEnvSize)
             typeEnv += DF_TY_ATOMIC_SIZE;
             typeEnvSize--;
         }
-        return EM_NO_EXN;
+        return EM_NO_ERR;
     } EM_CATCH {
         return EM_CurrentExnType;
     }
@@ -273,7 +295,7 @@ int RT_buildFreeVarTerm(int index)
 {
     EM_TRY { 
         DF_mkRef((MemPtr)(RT_termQueueDequeue()), RT_freeVarTab[index]);
-        return EM_NO_EXN;
+        return EM_NO_ERR;
     } EM_CATCH {
         return EM_CurrentExnType;
     }
@@ -283,7 +305,7 @@ int RT_buildDBTerm(int index)
 {
     EM_TRY {
         DF_mkBV((MemPtr)(RT_termQueueDequeue()), index);
-        return EM_NO_EXN;
+        return EM_NO_ERR;
     } EM_CATCH {
         return EM_CurrentExnType;
     }
@@ -297,7 +319,7 @@ int RT_buildAbstractionTerm(int numAbs)
         DF_mkLam((MemPtr)(RT_termQueueDequeue()), numAbs, (DF_TermPtr)AM_hreg);
         RT_termQueueEnqueue((DF_TermPtr)AM_hreg);
         AM_hreg = nhreg;
-        return EM_NO_EXN;
+        return EM_NO_ERR;
     } EM_CATCH {
         return EM_CurrentExnType;
     }
@@ -313,7 +335,7 @@ int RT_buildConsTerm()
         RT_termQueueEnqueue((DF_TermPtr)AM_hreg);
         RT_termQueueEnqueue((DF_TermPtr)(AM_hreg + DF_TM_ATOMIC_SIZE));
         AM_hreg = nhreg;
-        return EM_NO_EXN;
+        return EM_NO_ERR;
     } EM_CATCH {
         return EM_CurrentExnType;
     }
@@ -337,7 +359,7 @@ int RT_buildApplicationTerm(int arity)
             argsLoc += DF_TM_ATOMIC_SIZE;
             arity--;
         }
-        return EM_NO_EXN;
+        return EM_NO_ERR;
     } EM_CATCH {
         return EM_CurrentExnType;
     }
@@ -365,7 +387,7 @@ int RT_buildArrowType()
         RT_typeQueueEnqueue((DF_TypePtr)AM_hreg);
         RT_typeQueueEnqueue((DF_TypePtr)(AM_hreg + DF_TY_ATOMIC_SIZE));
         AM_hreg = nhreg;
-        return EM_NO_EXN;
+        return EM_NO_ERR;
     } EM_CATCH {
         return EM_CurrentExnType;
     }
@@ -375,7 +397,7 @@ int RT_buildSortType(int index)
 {
     EM_TRY { 
         DF_mkSortType((MemPtr)(RT_typeQueueDequeue()), index);
-        return EM_NO_EXN;
+        return EM_NO_ERR;
     } EM_CATCH {
         return EM_CurrentExnType;
     }
@@ -397,7 +419,7 @@ int RT_buildStrType(int index, int arity)
             argsLoc += DF_TY_ATOMIC_SIZE;
             arity--;
         }
-        return EM_NO_EXN;
+        return EM_NO_ERR;
     } EM_CATCH {
         return EM_CurrentExnType;
     }
@@ -408,7 +430,7 @@ int RT_buildFreeVarType(int index)
     EM_TRY {
         DF_mkRefType((MemPtr)(RT_typeQueueDequeue()),
                      RT_freeTypeVarTab[index]);
-        return EM_NO_EXN;
+        return EM_NO_ERR;
     } EM_CATCH {
         return EM_CurrentExnType;
     }
