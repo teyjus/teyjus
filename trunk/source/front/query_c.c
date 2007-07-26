@@ -79,7 +79,7 @@ int QUERY_showAnswers()
         }
         
         PRINT_resetPrintState();  /* reset printer state after display */
-        return EM_NO_EXN;
+        return EM_NO_ERR;
     } EM_CATCH {
         return EM_CurrentExnType;
     }

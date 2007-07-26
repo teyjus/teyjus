@@ -2,6 +2,7 @@
 
 #include "../system/memory.h"
 #include "../system/error.h"
+#include "../system/message.h"
 #include "../tables/pervinit.h"
 #include "../simulator/abstmachine.h"
 #include "../simulator/siminit.h"
@@ -11,6 +12,31 @@
 #include "../loader/ld_message.h"
 
 #include <stdio.h>
+
+/***************************************************************************/
+/*                     ERROR INFORMATION                                   */
+/***************************************************************************/
+#define FRONT_NUM_ERROR_MESSAGES 4
+enum 
+{
+    FRONT_ERROR_HEAP_TOO_BIG = FRONT_FIRST_ERR_INDEX,
+    FRONT_ERROR_HEAP_TOO_SMALL,
+    FRONT_ERROR_MODULE_TABLE_FULL,
+    FRONT_ERROR_MODULE_NOT_FOUND
+};
+
+static MSG_Msg FRONT_ErrorMessages[FRONT_NUM_ERROR_MESSAGES] =
+{
+    { FRONT_ERROR_HEAP_TOO_BIG,
+      EM_ERROR_COLON,
+      "Specified heap size (%uK) is larger than maximum of 256Gb.",
+      EM_NEWLINE, EM_ABORT, 1 },
+    { FRONT_ERROR_HEAP_TOO_SMALL,
+      EM_ERROR_COLON,
+      "Specified heap size (%uK) is smaller than minimum of 10K.",
+      EM_NEWLINE, EM_ABORT, 1 },
+};
+
 
 /***************************************************************************/
 /*                       system initialization                             */
@@ -35,9 +61,17 @@ static FRONT_setMemorySizes(int memSize)
 
 int FRONT_systemInit(int inSize) 
 {
-    int memSize = inSize ? (inSize*1024 / WORD_SIZE) : FRONT_DEFAULT_SYS_SIZE;
- 
+    int memSize;
     EM_TRY {
+        if (inSize == 0) memSize = FRONT_DEFAULT_SYS_SIZE;
+        else{
+            /* make sure the heap is in range */
+            if (inSize > 265 * 1024) 
+                EM_error(FRONT_ERROR_HEAP_TOO_BIG, inSize);
+            else if (inSize <= 10)
+                EM_error(FRONT_ERROR_HEAP_TOO_SMALL, inSize);
+            memSize = inSize * 1024;
+        }
         FRONT_setMemorySizes(memSize);
         /* initialize system memory */
         MEM_memInit(memSize);
@@ -45,7 +79,7 @@ int FRONT_systemInit(int inSize)
         PERVINIT_tableInit();
         /* initialize top module */
         MEM_topModuleInit();
-        return EM_NO_EXN;
+        return EM_NO_ERR;
     } EM_CATCH {
         return EM_CurrentExnType;
     }
@@ -71,7 +105,7 @@ int FRONT_simulatorInit()
         SINIT_simInit();
         //initialize built-in error messages
         BI_init();
-        return EM_NO_EXN;   
+        return EM_NO_ERR;   
     } EM_CATCH {
         return EM_CurrentExnType;
     }
@@ -81,7 +115,7 @@ int FRONT_simulatorReInit(Boolean inDoInitializeImports)
 {
     EM_TRY {
         SINIT_reInitSimState(inDoInitializeImports);
-        return EM_NO_EXN;
+        return EM_NO_ERR;
     } EM_CATCH {
         return EM_CurrentExnType;
     } 
@@ -105,7 +139,7 @@ int FRONT_link(char* modName)
         }
         return EM_CurrentExnType;
     }
-    return EM_NO_EXN;
+    return EM_NO_ERR;
 }
 
 int FRONT_load(char* modName, int index)
@@ -119,7 +153,7 @@ int FRONT_load(char* modName, int index)
         }
         return EM_CurrentExnType;
     }
-    return EM_NO_EXN;
+    return EM_NO_ERR;
 }
 
 
@@ -154,7 +188,7 @@ int FRONT_topModuleInstall ()
         FRONT_saveRegs();
         //register symbol table bases
         FRONT_initSymbolTableBases();
-        return EM_NO_EXN;   
+        return EM_NO_ERR;   
     } EM_CATCH {
         return EM_CurrentExnType;
     }
@@ -213,7 +247,7 @@ int FRONT_moduleInstall(int ind)
         FRONT_installModule(ind);
         //register symbol table bases
         FRONT_initSymbolTableBases();
-        return EM_NO_EXN;   
+        return EM_NO_ERR;   
     } EM_CATCH {
         return EM_CurrentExnType;
     }
@@ -235,7 +269,7 @@ int FRONT_initModuleContext()
         /* increment univ counter if there are hidden constants */
         i = MEM_impNLC(addtable);
         if (i > 0) AM_ucreg++;
-        return EM_NO_EXN;
+        return EM_NO_ERR;
     } EM_CATCH {
         return EM_CurrentExnType;
     }

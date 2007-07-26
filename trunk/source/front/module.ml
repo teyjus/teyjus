@@ -120,18 +120,18 @@ let loadModule modName =
   (* asking for a slot from the global module table *)
   let index = getModuleTableIndex modName in
   if (index = -1) then
-	 raise Simerrors.Abort
+	(print_endline "Module table has no space for more modules.";
+	 raise Simerrors.TopLevel)
   else
 	(* linking  *)	 
 	let _ = Simerrors.handleSimExceptions (Ccode_stubs.link modName) in
 	(* loading  *)
     let _ = Simerrors.handleSimExceptions (Ccode_stubs.load modName index) in
-	(* load ocaml (compiler) symbol tables *)
+	(* load ocaml (compiler) symbol tables.                              *)
+    (* impossible to fail: any failure should be caught by the c loader  *)
+    (* already                                                           *)
 	let amod = Loadmodtab.loadModuleTable modName in
-	if (amod = Absyn.ErrorModule) then 
-	  raise Simerrors.Abort
-	else
-	   enterModuleTable amod index
+	enterModuleTable amod index
 		 
 		 
 (* load module *)
@@ -156,8 +156,8 @@ let openTopModule () =
 let openModule modName =
   let (index, amod) = findModule modName in
   if (amod = Absyn.ErrorModule) then
-	(print_endline ("Error: module " ^ modName ^ " is not loaded.");
-	 raise Simerrors.Exit)
+	(print_endline ("Module " ^ modName ^ " is not currently loaded.");
+	 raise Simerrors.TopLevel)
   else
 	(setCurrentModule amod;
 	 let _ = Simerrors.handleSimExceptions (Ccode_stubs.moduleInstall(index)) 
