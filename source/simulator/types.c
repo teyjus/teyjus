@@ -11,7 +11,7 @@
 #include "dataformats.h"
 #include "abstmachine.h"
 #include "trail.h"
-#include "../system/error.h" //to be changed
+#include "../system/error.h" 
 
 /* Push n types onto PDL                                           */
 static void TY_pushTypesToPDL(MemPtr tyPtr, int n)
