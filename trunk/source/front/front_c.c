@@ -144,8 +144,9 @@ int FRONT_link(char* modName)
 
 int FRONT_load(char* modName, int index)
 {
-    LD_verbosity = 2;
-    EM_TRY{LD_LOADER_Load(modName, index);
+    LD_verbosity = 0;
+    EM_TRY{
+        LD_LOADER_Load(modName, index);
     }EM_CATCH{
         if (EM_CurrentExnType == LD_LoadError) {
             printf("loading failed\n");
