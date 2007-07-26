@@ -1,6 +1,6 @@
 /****************************************************************************
  *                                                                          *
- * system/stream.h{c} implements stream support for all parts of the LP     *
+ * system/stream.h{c} implements stream support for the C parts of the LP   *
  * system.                                                                  *
  ****************************************************************************/
 #include <stdlib.h>

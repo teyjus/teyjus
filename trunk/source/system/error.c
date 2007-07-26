@@ -1,7 +1,6 @@
 /****************************************************************************
  *                                                                          *
- *   File error.h -- error-handling functions for all Teyjus builds.        *
- *   (TEMP)                                                                 *
+ *   File error.h -- error-handling functions                               *
  *                                                                          *
  ****************************************************************************/
 #ifndef ERROR_C
