@@ -119,7 +119,8 @@ char *EM_strdup(char *);
 #define STREAM_FIRST_ERR_INDEX   150
 #define SIM_FIRST_ERR_INDEX      200
 #define BI_FIRST_ERR_INDEX       300
-#define FRONT_FIRST_ERR_INDEX    400
+#define RT_FIRST_ERR_INDEX       400
+#define FRONT_FIRST_ERR_INDEX    500
 
 /****************************************************************************
  * General-use error messages                                               *
