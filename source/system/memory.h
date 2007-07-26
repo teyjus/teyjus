@@ -1,8 +1,8 @@
 /****************************************************************************/
 /*                                                                          */
-/*                                                                          */
-/*   File  memory.h. This header file defines the structures that are used  */
-/*   by the simulator, the loader and the top-level interation system.      */
+/*   Files memory.h{c}. These files define the system memory structures and */
+/*   their access functions, including the system memory, run-time symbol   */
+/*   tables, implication and import tables and the system module table.     */
 /*                                                                          */
 /****************************************************************************/
 
@@ -16,13 +16,13 @@
 //#include "../config.h"
 
 /******************************************************************************/
-/*                FIND CODE FUNCTION  (to be filled in)                       */
+/*                FIND CODE FUNCTION                                          */
 /******************************************************************************/
 //arguments: constInd, search table size, search table addr
 typedef CSpacePtr (*MEM_FindCodeFnPtr)(int, int, MemPtr);
 
 /******************************************************************************/
-/*                SYSTEM MEMORY MANAGEMENT  (TEMP)                            */
+/*                SYSTEM MEMORY MANAGEMENT                                    */
 /******************************************************************************/
 extern  WordPtr MEM_memBeg;       //starting addr of the system memory
 extern  WordPtr MEM_memEnd;       //end addr of the system memory
@@ -168,7 +168,7 @@ int       MEM_branchTabIndexVal(MemPtr tab, int index); //the nth index value
 CSpacePtr MEM_branchTabCodePtr(MemPtr tab, int index);  //transfer addr 
 
 /*****************************************************************************/
-/*                          GLOBAL MODULE TABLE                              */
+/*                          SYSTEM MODULE TABLE                              */
 /*****************************************************************************/
 typedef struct
 {

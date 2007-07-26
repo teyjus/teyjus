@@ -1,7 +1,6 @@
 /****************************************************************************
  *                                                                          *
- *   File error.h -- error-handling functions for all Teyjus builds.        *
- *   (TEMP)                                                                 *
+ *   File error.h -- error-handling functions                               *
  *                                                                          *
  ****************************************************************************/
 
@@ -19,15 +18,14 @@
  ****************************************************************************/
 
 typedef enum EM_ExnType{
-    EM_NO_EXN = 0,     // used for warnings ?? 
+    EM_NO_ERR = 0,     // no errors
+    EM_NO_EXN,         // used for warnings ?? 
     EM_ABORT,          // exit the executable immediately
     EM_EXIT,           // traverse the exception stack and exit
     EM_TOP_LEVEL,      // return to the toplevel 
     EM_QUERY,          // abort solving the query
     EM_QUERY_RESULT,   // query is solved; print answer
-    EM_FAIL,           // fail to simulator level 
-    EM_TY_UNI_FAIL,    // fail from type unification; needed?
-    EM_HOPU_FAIL       // fail from pattern unification; needed?
+    EM_FAIL,           // fail to simulator level
 } EM_ExnType;
 
 //function call environment stack
@@ -121,6 +119,7 @@ char *EM_strdup(char *);
 #define STREAM_FIRST_ERR_INDEX   150
 #define SIM_FIRST_ERR_INDEX      200
 #define BI_FIRST_ERR_INDEX       300
+#define FRONT_FIRST_ERR_INDEX    400
 
 /****************************************************************************
  * General-use error messages                                               *
