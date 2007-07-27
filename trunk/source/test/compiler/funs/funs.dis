@@ -1,7 +1,6 @@
-Disassembling from bytecode file: funs.mod.lp
+Disassembling from bytecode file: funs.lpo
 Bytecode version: 2
 Module name: funs
-Bytes needed for code: 880
 
 LABEL               INSTRUCTION              OPERANDS
 
@@ -147,6 +146,8 @@ Module table:
    mapfun
    foldr
    foldl
+  Exportdef predicates: 0
+  Local predicates: 0
   Find function type: hash
   In-core table size: 3
    mapfun
