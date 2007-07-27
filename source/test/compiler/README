@@ -8,11 +8,11 @@ compiler (and linker) tests:
     under the subdirectory of source/test/compiler/<test_case>.
 
    .If the test is to be performed over all the existing test cases
-    under the source/test/compiler direcory, use the command
+    under the source/test/compiler directory, use the command
        "omake compiler-test"
     under source/test/compiler.
 
-   The actual testing is perfomed in the following steps:
+   The actual testing is performed in the following steps:
     a. the compiler is re-compiled if necessary;
     b. the .lpo files for the modules in a test case directory are generated
        by using "tjcc <modname>";
@@ -32,11 +32,11 @@ compiler (and linker) tests:
     under the subdirectory of source/test/compiler/<test_case>.
 
    .If the test is to be performed over all the existing test cases
-    under the source/test/compiler direcory, use the command
+    under the source/test/compiler directory, use the command
        "omake test"
     under source/test/compiler.
 
-    The actual testing is perfomed in the following steps:
+    The actual testing is performed in the following steps:
     a. the compiler and the linker is re-compiled if necessary;   
     b. the .lpo files for the modules in a test case directory are generated
        by using "tjcc <modname>" if necessary;
