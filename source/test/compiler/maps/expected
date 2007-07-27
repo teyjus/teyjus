@@ -1,7 +1,6 @@
-Disassembling from bytecode file: maps.mod.lp
-Bytecode version: 2
+Disassembling from bytecode file: maps.lp
+Bytecode version: 3
 Module name: maps
-Bytes needed for code: 2248
 
 LABEL               INSTRUCTION              OPERANDS
 
@@ -282,17 +281,14 @@ Hash tables:
     Constants:
     nil -> L7
 
-Module table:
-  Predicate definitions possibly extending previous ones: 7
-   father
-   mapfun
-   mappred
-   reduce_pred
-   reduce
-   reduce_eval
-   for_each
-  Find function type: hash
-  In-core table size: 7
+Import tables:
+
+  Import table:
+    number of code segments: 1
+    Next clause table: 0
+    Local constant table: 0
+    Find function type: hash
+    Search table: 7
    father
    mapfun
    mappred

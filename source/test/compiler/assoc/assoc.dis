@@ -1,7 +1,6 @@
-Disassembling from bytecode file: assoc.mod.lp
+Disassembling from bytecode file: assoc.lpo
 Bytecode version: 2
 Module name: assoc
-Bytes needed for code: 256
 
 LABEL               INSTRUCTION              OPERANDS
 
@@ -68,6 +67,8 @@ Hash tables:
 Module table:
   Predicate definitions possibly extending previous ones: 1
    assoc
+  Exportdef predicates: 0
+  Local predicates: 0
   Find function type: hash
   In-core table size: 1
    assoc
