@@ -58,19 +58,16 @@ let solveQueries () =
 	if Query.queryHasVars () then
 	  let numResults = solveQueryBatchAux 0 in
 	    if numResults < !minSolutions then
-		  (print_endline "fewer answers than expected";
-		   raise Simerrors.Exit)
+		  Parseargs.error "fewer answers than expected"
         else ()
 	else (* query does not have free variables *)
 	  if Query.solveQuery () then 
 		if !minSolutions > 1 then 
-		  (print_endline "fewer answers than expected";
-		   raise Simerrors.Exit)
+		  Parseargs.error "fewer answers than expected"
 		else ()
 	  else 
 		if !minSolutions > 0 then
-		  (print_endline "fewer answers than expected";
-		   raise Simerrors.Exit)
+		  Parseargs.error "fewer answers than expected"
 		else ()
   in
 		  
@@ -82,7 +79,7 @@ let solveQueries () =
 	  else
         Query.interactSolveQuery ()
 	else
-      raise Simerrors.Exit ;
+	  Parseargs.error "" ;
 	Front.simulatorReInit false ;
 	Module.initModuleContext ()
       
@@ -105,6 +102,7 @@ let _ =
 	| Simerrors.TopLevel -> () (* stop *)
 	| Simerrors.Exit     ->    (* halt *)
         exit 1
-	| _                  ->    (* other exceptions *)
+	| exp                  ->    (* other exceptions *)
 		print_endline "Uncaught internal exception" ;
-        exit 2
+		(*	raise exp *)
+        exit 2 
