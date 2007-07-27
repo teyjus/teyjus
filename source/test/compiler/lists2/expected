@@ -1,0 +1,111 @@
+Disassembling from bytecode file: lists2.lp
+Bytecode version: 3
+Module name: lists2
+
+LABEL               INSTRUCTION              OPERANDS
+
+L9                  fail                     
+append              switch_on_reg            #1, L4, L5
+L4                  try_me_else              #4, L6
+L5                  switch_on_term           L7, L8, L9, L7
+L7                  try_me_else              #4, L10
+L1                  get_m_constant           A1, null
+                    pattern_unify_t          A2, A3
+                    finish_unify             
+                    proceed                  
+L10                 trust_me                 #4
+L0                  get_m_structure          A1, cons, #2
+                    unify_variable_t         A5
+                    unify_variable_t         A1
+                    get_m_structure          A3, cons, #2
+                    unify_value_t            A5
+                    unify_variable_t         A3
+                    finish_unify             
+                    execute_name             append
+L8                  switch_on_constant       #2, <hash #0>
+L6                  trust_ext                #4, #1
+reverse             switch_on_reg            #2, L11, L12
+L11                 try_me_else              #3, L13
+L12                 switch_on_term           L14, L15, L9, L14
+L14                 try_me_else              #3, L16
+L3                  get_m_constant           A1, null
+                    get_m_constant           A2, null
+                    finish_unify             
+                    proceed                  
+L16                 trust_me                 #3
+L2                  allocate                 #5
+                    get_type_variable_p      Y1, A3
+                    get_variable_p           Y2, A2
+                    get_m_structure          A1, cons, #2
+                    unify_variable_p         Y3
+                    unify_variable_t         A1
+                    finish_unify             
+                    put_type_value_p         Y1, A3
+                    put_variable_p           Y4, A2
+                    call_name                #4, reverse
+                    put_type_value_p         Y1, A4
+                    put_unsafe_value         Y4, A1
+                    put_m_const              A255, cons
+                    put_app                  A2, A255, #2
+                    set_value_p              Y3
+                    set_m_const              null
+                    put_value_p              Y2, A3
+                    deallocate               
+                    execute_name             append
+L15                 switch_on_constant       #2, <hash #1>
+L13                 trust_ext                #3, #2
+
+Global kind table:
+
+Local kind table:
+
+Type skeleton table:
+0: ((list SkeletonVarType(0)) -> ((list SkeletonVarType(0)) -> ((list SkeletonVarType(0)) -> o)))
+1: ((list SkeletonVarType(0)) -> ((list SkeletonVarType(0)) -> o))
+2: (SkeletonVarType(0) -> ((list SkeletonVarType(0)) -> (list SkeletonVarType(0))))
+3: (list SkeletonVarType(0))
+
+Global constant table: 
+0: append (No Fixity, precedence 0)
+    Env Size: 1, Type Skeleton: #0
+1: reverse (No Fixity, precedence 0)
+    Env Size: 1, Type Skeleton: #1
+2: cons (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #2
+3: null (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #3
+
+Local constant table: 
+
+Hidden constant table: 
+
+String table:
+
+Implication Tables:
+
+Hash tables:
+0:
+    Table size: 2
+    Constants:
+    cons -> L0
+    null -> L1
+1:
+    Table size: 2
+    Constants:
+    cons -> L2
+    null -> L3
+
+Import tables:
+
+  Import table:
+    number of code segments: 1
+    Next clause table: 0
+    Local constant table: 0
+    Find function type: hash
+    Search table: 2
+   append
+   reverse
+
+Accumulated tables:
+
+Imported tables:
