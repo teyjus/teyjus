@@ -309,6 +309,11 @@ let disassembleInstructions gkinds lkinds gconsts lconsts hconsts codeSize =
 (***************************************************************************)
 let disassemble filename tableOnly instrOnly linkedCode =
   Bytecode.openInChannel filename;
+  let byteCodeVersionNumber = 
+	if linkedCode then Bytecode.linkedByteCodeVersionNumber
+	else Bytecode.byteCodeVersionNumber
+  in
+	  
   let (modName, codeSize) = disassembleHeaderInfo filename linkedCode in
   if !Errormsg.anyErrors then 1
   else
@@ -346,7 +351,7 @@ let disassemble filename tableOnly instrOnly linkedCode =
 		disassembleInstructions gKinds lKinds gConsts lConsts hConsts codeSize
 	  in
 	  let context =
-		Context.ModContext(filename, Bytecode.byteCodeVersionNumber, modName,
+		Context.ModContext(filename, byteCodeVersionNumber, modName,
 						   codeSize, gKinds, lKinds, tySkels, gConsts, lConsts,
 						   hConsts, strings, impltabs, hashtabs, moduletab,
 						   accRenamings, impRenamings, instructions)
