@@ -20,7 +20,7 @@ typedef unsigned char  Boolean;                    /* 8 bits: FALSE/TRUE  */
 #define FALSE          0
 
 
-typedef void           *Word;      
+typedef unsigned long  Word;      
 typedef Word           *WordPtr;
 
 #define WORD_SIZE      sizeof(Word)               /* 4: 32-bits machine  */   

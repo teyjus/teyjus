@@ -360,7 +360,7 @@ void AM_mkImpNCLTab(MemPtr ip, MemPtr linkTab, int size)
             *((MemPtr *)(nextCl+1))= iptr;
         } else {         //not found
             *((CSpacePtr *)nextCl) = AM_failCode;
-            *(nextCl+1)            = NULL;
+            *((MemPtr *)(nextCl+1))= NULL;
         }
         nextCl += AM_NCLT_ENTRY_SIZE;
     } //for loop

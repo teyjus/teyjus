@@ -195,8 +195,8 @@ void LoadImpModules(int fd, struct Module_st* CMData)
     CMData->SegmentID=-1;
     return;
   }
+  LK_IMPORT_AssignSegmentId(CMData);
   CMData->Import=EM_malloc(sizeof(ImportTabInd)*count);
-  CMData->SegmentID=NumSegs++;
   
   for(i=0;i<count;i++)
   {
