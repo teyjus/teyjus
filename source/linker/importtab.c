@@ -90,7 +90,7 @@ void TopImportTab(int fd, struct Module_st* CMData)
   AddLocalConstants(&(CT->LConstInds),CMData);
   
   //Use next clause table for top level predicate names.
-  TwoBytes count=LK_FILE_GET2(fd);
+  TwoBytes count=CT->NctSize=LK_FILE_GET2(fd);
   ConstInd* nct=CT->NextClauseTable=EM_malloc(count*sizeof(ConstInd));
   for(i=0;i<count;i++)
   {
@@ -170,7 +170,7 @@ void ImpImportTab(int fd, struct Module_st* CMData)
   PredInfoTab* CMInfoTab=CT->newPred;
   PredInfoTab* ParInfoTab=((TImportTab_t*)LK_VECTOR_GetPtr(&ImportTabs,CT->parent))->newPred;
   //Set next clause table and mark contents dynamic
-  TwoBytes count=LK_FILE_GET2(fd);
+  TwoBytes count=CT->NctSize=LK_FILE_GET2(fd);
   ConstInd* nct=CT->NextClauseTable=EM_malloc(count*sizeof(ConstInd));
   for(i=0;i<count;i++)
   {
