@@ -231,6 +231,7 @@ void LoadCode(int fd, struct Module_st* CMData)
           break;
           
         case INSTR_SEG:
+          LK_FILE_GET1(fd);//Consume dummy argument
           *(Byte*)(code+j)=CMData->SegmentID;
           j+=sizeof(Byte);
           break;
