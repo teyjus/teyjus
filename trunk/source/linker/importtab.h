@@ -14,5 +14,6 @@ extern void AccImportTab(int fd, struct Module_st* CMData);
 extern void ImpImportTab(int fd, struct Module_st* CMData);
 extern void WriteImportTabs(int fd);
 extern void WriteAddCodeTable(int fd);
+extern void LK_IMPORT_AssignSegmentId(struct Module_st* CMData);
 
 #endif //_IMPORTTAB_H_

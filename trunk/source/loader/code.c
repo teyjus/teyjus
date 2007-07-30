@@ -38,7 +38,8 @@ int LD_CODE_LoadCode(MEM_GmtEnt* ent)
           case INSTR_P:
               j++;
               break;
-        
+              
+          case INSTR_SEG:
           case INSTR_R:
           case INSTR_E:
           case INSTR_N:
@@ -104,8 +105,11 @@ int LD_CODE_LoadCode(MEM_GmtEnt* ent)
               j+=sizeof(Word);///\todo Check length of float encoding across arch types
               break;
               
-          default:
           case INSTR_X:
+              break;
+          default:
+              LD_bad("Unknown Operand Type %d\n",opType[argid]);
+              EM_THROW(LD_LoadError);
               break;
           }
           argid++;

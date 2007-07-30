@@ -50,6 +50,7 @@ ImportTabInd NewImportTab()
   CTID=LK_VECTOR_Grow(&ImportTabs,1);
   CT=LK_VECTOR_GetPtr(&ImportTabs,CTID);
   CT->parent=tmp;
+  CT->numSegs=0;
   LK_VECTOR_Init(&(CT->LConstInds),32,sizeof(ConstInd));
   LK_VECTOR_Init(&(CT->findCodeTabs),2,sizeof(HashTab_t));
   CT->newPred=EM_malloc(sizeof(PredInfoTab));
@@ -86,7 +87,6 @@ void TopImportTab(int fd, struct Module_st* CMData)
   mutter("Loading Top Level Import Tab.\n");
   int i;
   
-  CMData->SegmentID=CT->numSegs=1;
   AddLocalConstants(&(CT->LConstInds),CMData);
   
   //Use next clause table for top level predicate names.
@@ -125,7 +125,6 @@ void AccImportTab(int fd, struct Module_st* CMData)
 {
   mutter("Loading Accumulated Import Tab.\n");
   int i;
-  CMData->SegmentID=(CT->numSegs)++;
   AddLocalConstants(&(CT->LConstInds),CMData);
   
   //Ignore next clause table
@@ -165,7 +164,6 @@ void ImpImportTab(int fd, struct Module_st* CMData)
 {
   int i;
   struct Vector* vec;
-  CMData->SegmentID=CT->numSegs=1;
   AddLocalConstants(&(CT->LConstInds),CMData);
   PredInfoTab* CMInfoTab=CT->newPred;
   PredInfoTab* ParInfoTab=((TImportTab_t*)LK_VECTOR_GetPtr(&ImportTabs,CT->parent))->newPred;
@@ -202,6 +200,11 @@ void ImpImportTab(int fd, struct Module_st* CMData)
   //Load find code table
   vec=&(CT->findCodeTabs);
   LoadHashTab(fd,CMData,(HashTab_t*)LK_VECTOR_GetPtr(vec,LK_VECTOR_Grow(vec,1)));
+}
+
+void LK_IMPORT_AssignSegmentId(struct Module_st* CMData)
+{
+  CMData->SegmentID=++(CT->numSegs);
 }
 
 //Resolve the current import table and restore the current table pointer
