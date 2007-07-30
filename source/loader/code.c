@@ -29,7 +29,7 @@ int LD_CODE_LoadCode(MEM_GmtEnt* ent)
       j=i;
       opcode=code[j++]=LD_FILE_GET1();
       //fprintf(stderr, "opcode: %d, opcode address: %u\n", opcode, &(code[i]));
-      
+      LD_debug("%x:%s - ",j-1,INSTR_instrName(opcode));
       instrCat=INSTR_instrType(opcode);
       opType=INSTR_operandTypes(instrCat);
       argid=0;
@@ -39,6 +39,10 @@ int LD_CODE_LoadCode(MEM_GmtEnt* ent)
               j++;
               break;
               
+          case INSTR_WP:
+              j+=sizeof(Word);
+              break;
+          
           case INSTR_SEG:
           case INSTR_R:
           case INSTR_E:
@@ -46,6 +50,7 @@ int LD_CODE_LoadCode(MEM_GmtEnt* ent)
           case INSTR_I1:
           case INSTR_CE:
               *(Byte*)(code+j)=LD_FILE_GET1();
+              LD_debug("#%d ",*(Byte*)(code+j));
               j+=sizeof(Byte);
               break;
         
@@ -91,6 +96,7 @@ int LD_CODE_LoadCode(MEM_GmtEnt* ent)
               
           case INSTR_L:
               *(CSpacePtr*)(code+j)=LD_CODE_GetCodeInd();
+              LD_debug("L%x ",*(CSpacePtr*)(code+j)-codeSpaceBeg);
               j+=sizeof(WordPtr);
               break;
               
@@ -116,6 +122,7 @@ int LD_CODE_LoadCode(MEM_GmtEnt* ent)
       }
       while(opType[argid]!=INSTR_X);
       //i+=INSTR_instrSize(opcode)*sizeof(Word);
+      LD_debug("\n");
       i += INSTR_instrSize(opcode);
   }
   return 0;
