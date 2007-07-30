@@ -6,7 +6,7 @@
 
 int main(int argc, char* argv[])
 {
-  LD_verbosity = 2;
+  LD_verbosity = 3;
   EM_TRY{
     printf("Beginning test...");
     MEM_memInit(1024*8);
