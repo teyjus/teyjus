@@ -72,7 +72,7 @@ TwoBytes PackConstInd(ConstInd ind){
 
 ConstInd UnPackConstInd(TwoBytes ind){
   ConstInd tmp;
-  if(0<=ind && ind<PERV_CONST_NUM){
+  if(ind<PERV_CONST_NUM){
     tmp.gl_flag=PERVASIVE;
     tmp.index=ind;
   } else if(PERV_CONST_NUM<=ind && ind<PERV_CONST_NUM+GConstTabSize){

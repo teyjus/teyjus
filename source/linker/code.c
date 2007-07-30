@@ -230,6 +230,11 @@ void LoadCode(int fd, struct Module_st* CMData)
           j+=sizeof(Word);
           break;
           
+        case INSTR_SEG:
+          *(Byte*)(code+j)=CMData->SegmentID;
+          j+=sizeof(Byte);
+          break;
+        
         case INSTR_R:
         case INSTR_E:
         case INSTR_N:
@@ -294,9 +299,12 @@ void LoadCode(int fd, struct Module_st* CMData)
           j+=sizeof(INT4);
           break;
           
-        default:
         case INSTR_X:
-          ;      /* null instruction */
+          break;
+        default:
+          bad("Unknown Operand Type %d\n",opType[argid]);
+          EM_THROW(LK_LinkError);
+          break;
       }
       argid++;
     }

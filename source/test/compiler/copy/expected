@@ -1,6 +1,7 @@
 Disassembling from bytecode file: copy.lp
 Bytecode version: 3
 Module name: copy
+Bytes needed for code: 308
 
 LABEL               INSTRUCTION              OPERANDS
 
@@ -107,8 +108,9 @@ Hash tables:
 Import tables:
 
   Import table:
-    number of code segments: 1
-    Next clause table: 0
+    number of code segments: 0
+    Next clause table: 1
+   copy
     Local constant table: 0
     Find function type: hash
     Search table: 1

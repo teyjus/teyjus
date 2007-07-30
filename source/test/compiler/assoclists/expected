@@ -1,6 +1,7 @@
 Disassembling from bytecode file: assoclists.lp
 Bytecode version: 3
 Module name: assoclists
+Bytes needed for code: 376
 
 LABEL               INSTRUCTION              OPERANDS
 
@@ -108,8 +109,11 @@ Hash tables:
 Import tables:
 
   Import table:
-    number of code segments: 1
-    Next clause table: 0
+    number of code segments: 0
+    Next clause table: 3
+   memb
+   append
+   reverse
     Local constant table: 0
     Find function type: hash
     Search table: 3
