@@ -86,7 +86,7 @@ ConstInd UnPackConstInd(TwoBytes ind){
     tmp.gl_flag=HIDDEN;
     tmp.index=-ind-1;
   } else {
-    bad("ConstInd unpack failed");
+    bad("ConstInd unpack failed\n");
     EM_THROW(LK_LinkError);
   }
   return tmp;
