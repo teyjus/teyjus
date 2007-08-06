@@ -69,13 +69,16 @@ CSpacePtr LD_SEARCHTAB_HashSrch(int constInd, int STabSize, MemPtr STabAddr)
   struct HashTabEnt *tmp;
   tmp = tabEnt;
 
-  do
+  //  do
+  while(tabEnt != NULL)
   {
       if(tabEnt->constInd==constInd){
+	//fprintf(stderr, "found: %u\n", tabEnt -> codeAddr);
           return tabEnt->codeAddr;
       }
       tabEnt=tabEnt->next;
-  }while(tabEnt->next!=NULL);
+  }
+  //while(tabEnt->next!=NULL);
   //constInd not found
   return NULL;
 }
