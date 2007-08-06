@@ -56,15 +56,22 @@ int GKindTabSize=-1;
 struct Vector LKinds;
 
 TwoBytes PackKindInd(KindInd ind){
+  TwoBytes tmp;
   switch(ind.gl_flag){
     case PERVASIVE:
-      return ind.index;
+      tmp=ind.index;
+      break;
     case GLOBAL:
-      return ind.index+PERV_CONST_NUM;
+      tmp=ind.index+PERV_KIND_NUM;
+      break;
     case LOCAL:
-      return ind.index+PERV_CONST_NUM+GKindTabSize;
+      tmp=ind.index+PERV_KIND_NUM+GKindTabSize;
+      break;
+    default:
+      EM_THROW(LK_LinkError);
+      break;
   }
-  EM_THROW(LK_LinkError);
+  return tmp;
 }
 
 KindInd UnPackKindInd(TwoBytes ind){
@@ -80,7 +87,8 @@ KindInd UnPackKindInd(TwoBytes ind){
     tmp.gl_flag=LOCAL;
     tmp.index=ind-(PERV_KIND_NUM+GKindTabSize);
   }else {
-    bad("ConstInd unpack failed");
+    bad("KindInd unpack of %d failed: [%d:%d:%d]\n",\
+        ind,PERV_KIND_NUM,GKindTabSize,LK_VECTOR_Size(&LKinds));
     EM_THROW(LK_LinkError);
   }
   return tmp;

@@ -365,7 +365,9 @@ void WriteCode(int fd)
         case INSTR_WP:
           j+=sizeof(Word);
           break;
-          
+        
+        case INSTR_SEG:
+          debug("Putting segment %d\n",*(Byte*)(code+j));
         case INSTR_R:
         case INSTR_E:
         case INSTR_N:
@@ -430,9 +432,12 @@ void WriteCode(int fd)
           j+=sizeof(INT4);
           break;
           
-        default:
         case INSTR_X:
-          ;      /* null instruction */
+          break;
+        default:
+          bad("Unknown Operand Type %d\n",opType[argid]);
+          EM_THROW(LK_LinkError);
+          break;     /* null instruction */
       }
     }
     while(opType[argid]!=INSTR_X);

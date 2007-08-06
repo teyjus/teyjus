@@ -204,7 +204,7 @@ void ImpImportTab(int fd, struct Module_st* CMData)
 
 void LK_IMPORT_AssignSegmentId(struct Module_st* CMData)
 {
-  CMData->SegmentID=++(CT->numSegs);
+  CMData->SegmentID=(CT->numSegs)++;
 }
 
 //Resolve the current import table and restore the current table pointer
