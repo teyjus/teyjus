@@ -118,7 +118,7 @@ void SINSTR_copy_value()                  //copy_value Yn,Ai -- E_R_X
     INSACC_ERX(envY, regA);
     tmPtr = DF_termDeref((DF_TermPtr)envY);
     if (AM_stackAddr((MemPtr)tmPtr)) {//needed? in fact, what if a fv?
-        printf("copy_value -- stack addr\n");
+      printf("copy_value -- stack addr\n");
         *regA = *((AM_DataTypePtr)tmPtr); 
     } else DF_mkRef((MemPtr)regA, tmPtr);
 }
@@ -175,7 +175,7 @@ void SINSTR_put_index()                   //put_index Ai,n -- R_I1_X
 
 void SINSTR_put_app()                     //put_app Ai,Xj,n -- R_R_I1_X
 {
-    INSACC_RRI1X(regA, regX, n);    
+    INSACC_RRI1X(regA, regX, n);   
     nhreg = (MemPtr)(((DF_TermPtr)(AM_hreg + DF_TM_APP_SIZE)) + n);
     if (DF_isRef((DF_TermPtr)regX)) {
         AM_heapError(nhreg);
@@ -261,7 +261,7 @@ void SINSTR_set_value_p()                 //set_value Yi -- E_X
     INSACC_EX(envY);
     tmPtr = DF_termDeref((DF_TermPtr)envY);
     if (AM_stackAddr((MemPtr)tmPtr)) { //needed?; in fact, what if a fv?
-        printf("set_value_p -- stack addr\n");
+      //printf("set_value_p -- stack addr\n");
         DF_copyAtomic(tmPtr, (MemPtr)AM_sreg);
     } else DF_mkRef((MemPtr)AM_sreg, tmPtr);
     AM_sreg++;
@@ -1280,7 +1280,7 @@ void SINSTR_create_type_variable()      //create_type_variable Yi -- E_X
 /*****************************************************************************/
 void SINSTR_pattern_unify_t()           //pattern_unify Xi,Aj -- R_R_X
 {
-    INSACC_RRX(regX, regA);    
+    INSACC_RRX(regX, regA);
     HOPU_patternUnifyPair((DF_TermPtr)regX, (DF_TermPtr)regA);    
 }
 
@@ -1459,7 +1459,7 @@ void SINSTR_call_name()                 //call_name n,c -- I1_C_WP_X
     INSACC_I1CWPX_C(constInd);
     AM_findCode(constInd, &cl, &ip);
     if (cl) {
-        AM_cpreg = AM_preg;
+        AM_cpreg = (AM_preg + INSTR_I1CWPX_LEN); // next instr
         AM_b0reg = AM_breg;
         AM_preg  = cl;
         AM_cireg = ip;
@@ -1682,7 +1682,6 @@ void SINSTR_switch_on_constant()        //switch_on_constant n,tab -- I1_HT_X
 {
     INSACC_I1HTX(n, table);
     cl = LD_SEARCHTAB_HashSrch(tablInd, n, table);
-    //cl = SEARCHFNS_findfnHash(tablInd, n, table);
     if (cl) {
         AM_preg = cl;
         return;
@@ -1702,10 +1701,11 @@ void SINSTR_switch_on_reg()             //switch_on_reg n,SL1,FL2 -- N_L_L_X
 {
     INSACC_NLLX_N(n);
     nextcl = AM_impNCL(AM_cireg, n);
-    if (AM_isFailInstr(AM_impNCLCode(nextcl)))
-        AM_preg = *((INSTR_CodeLabel *)(AM_preg + INSTR_NLLX_L2));
-    else 
-        AM_preg = *((INSTR_CodeLabel *)(AM_preg + INSTR_NLLX_L1));
+    if (AM_isFailInstr(AM_impNCLCode(nextcl))){
+      AM_preg = *((INSTR_CodeLabel *)(AM_preg + INSTR_NLLX_L2));}
+    else {
+      AM_preg = *((INSTR_CodeLabel *)(AM_preg + INSTR_NLLX_L1));
+    }
 }
 
 /*****************************************************************************/
