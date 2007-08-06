@@ -104,7 +104,7 @@ CSpacePtr  AM_notCode2;
 CSpacePtr  AM_proceedCode;
 
 
-Boolean    AM_isFailInstr(CSpacePtr cptr)    { cptr == AM_failCode; }
+Boolean    AM_isFailInstr(CSpacePtr cptr)    { return (cptr == AM_failCode); }
 /****************************************************************************/
 /*               VITUAL MACHINE MEMORY OPERATIONS                           */
 /****************************************************************************/
@@ -509,10 +509,15 @@ DF_TypePtr AM_tstSkel(int n)   //type skeleton in a given entry
 /* Constant symbol table                                                    */
 char* AM_cstName(int n)        //name of a constant in a given entry
 {
-    return MCSTR_toCString(
-        DF_strDataValue(((MEM_CstPtr)(((MemPtr)AM_cstBase) +
-                                      n*MEM_CST_ENTRY_SIZE)) -> name));
+  DF_StrDataPtr nameData = ((MEM_CstPtr)(((MemPtr)AM_cstBase) +
+					 n * MEM_CST_ENTRY_SIZE)) -> name;
+  if (nameData) return MCSTR_toCString(DF_strDataValue(nameData));
+  else return NULL;
+  //return MCSTR_toCString(
+  //    DF_strDataValue(((MEM_CstPtr)(((MemPtr)AM_cstBase) +
+  //                                    n*MEM_CST_ENTRY_SIZE)) -> name));
 }
+
 int   AM_cstTyEnvSize(int n)   //type environment size 
 {
     return ((MEM_CstPtr)(((MemPtr)AM_cstBase)+n*MEM_CST_ENTRY_SIZE))->
