@@ -18,17 +18,16 @@
 //GKind Load and Write Code
 //////////////////////////////////////////////////////
 typedef struct{
-  int arity;
+  Byte arity;
   char* name;
 }Kind_t;
 
 KindInd LoadGKind(int fd)
 {
-  int arity=LK_FILE_GET1(fd);
-  int oldarity;
+  Byte arity=LK_FILE_GET1(fd);
   char* name=LK_FILE_GetString(fd);
   KindInd index=LK_RENAME_RenameKind(name);
-  oldarity=CheckKindArity(index);
+  Byte oldarity=CheckKindArity(index);
   if(arity!=oldarity)
   {
     printf("Kind Arity Mismatch: Kind %s should have arity %d, has arity %d.\n",name,oldarity,arity);
@@ -41,7 +40,7 @@ KindInd LoadGKind(int fd)
 
 void LoadGKinds(int fd, struct Module_st* CMData)
 {
-  int i;
+  size_t i;
   
   TwoBytes count=CMData->GKindcount=LK_FILE_GET2(fd);
   CMData->GKind=EM_malloc(count*sizeof(KindInd));
@@ -52,7 +51,7 @@ void LoadGKinds(int fd, struct Module_st* CMData)
 }
 
 Kind_t* GKindTab=NULL;
-int GKindTabSize=-1;
+size_t GKindTabSize=-1;
 struct Vector LKinds;
 
 TwoBytes PackKindInd(KindInd ind){
@@ -87,14 +86,14 @@ KindInd UnPackKindInd(TwoBytes ind){
     tmp.gl_flag=LOCAL;
     tmp.index=ind-(PERV_KIND_NUM+GKindTabSize);
   }else {
-    bad("KindInd unpack of %d failed: [%d:%d:%d]\n",\
+    bad("KindInd unpack of %d failed: [%d:%d:%ld]\n",\
         ind,PERV_KIND_NUM,GKindTabSize,LK_VECTOR_Size(&LKinds));
     EM_THROW(LK_LinkError);
   }
   return tmp;
 }
 
-KindInd LoadTopGKind(int fd,int i)
+KindInd LoadTopGKind(int fd,size_t i)
 {
   KindInd tmp={GLOBAL,i};
   tmp.index=i;
@@ -108,7 +107,7 @@ KindInd LoadTopGKind(int fd,int i)
 
 void LoadTopGKinds(int fd, struct Module_st* CMData)
 {
-  int i;
+  size_t i;
   TwoBytes count=GKindTabSize=CMData->GKindcount=LK_FILE_GET2(fd);
   detail("Loading %d top level global kinds.\n",count);
   GKindTab=EM_malloc(GKindTabSize*sizeof(Kind_t));
@@ -121,7 +120,7 @@ void LoadTopGKinds(int fd, struct Module_st* CMData)
   }
 }
 
-void WriteGKind(int fd, int i)
+void WriteGKind(int fd, size_t i)
 {
   //printf("GK(%d,%s)\n",GKindTab[i].arity,GKindTab[i].name);fflush(stdout);
   LK_FILE_PUT1(fd,GKindTab[i].arity);
@@ -131,7 +130,7 @@ void WriteGKind(int fd, int i)
 
 void WriteGKinds(int fd)
 {
-  int i;
+  size_t i;
   TwoBytes tmp=GKindTabSize;
   LK_FILE_PUT2(fd,tmp);
   for(i=0;i<tmp;i++)
@@ -177,7 +176,7 @@ void WriteLKinds(int fd)
 ////////////////////////////////////////////////
 void WriteKinds(int fd)
 {
-  debug("Writing Kind Tables at %x\n",lseek(fd,0,SEEK_CUR));
+  debug("Writing Kind Tables at %lx\n",lseek(fd,0,SEEK_CUR));
   LK_FILE_PUT2(fd,LK_VECTOR_Size(&LKinds)+GKindTabSize);
   WriteGKinds(fd);
   WriteLKinds(fd);
@@ -186,7 +185,7 @@ void WriteKinds(int fd)
 /////////////////////////////////////////////////////////////
 //Utility Functions
 ////////////////////////////////////////////////////////////
-int CheckKindArity(KindInd i)
+Byte CheckKindArity(KindInd i)
 {
   if(i.gl_flag==LOCAL)
   {

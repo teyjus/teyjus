@@ -222,7 +222,7 @@ void RestoreImportTab()
     MergeFindCodeTabs(tmp,tmp+i);
   }
   
-  mutter("Resolving predicate calls\n",i);
+  mutter("Resolving predicate calls\n");
   ResolvePredCalls(CT->newPred,tmp);
   
   //Restore CTID and CT

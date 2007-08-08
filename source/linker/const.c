@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <unistd.h>
+#include <sys/types.h>
 #include "../system/error.h"
 #include "../tables/pervasives.h"
 #include "module.h"
@@ -215,7 +216,7 @@ void WriteHConsts(int fd)
 //////////////////////////////////////////////////////////////
 void WriteConsts(int fd)
 {
-  debug("Writing Constant Tables at %x\n",lseek(fd,0,SEEK_CUR));
+  debug("Writing Constant Tables at %lx\n",lseek(fd,0,SEEK_CUR));
   LK_FILE_PUT2(fd,LK_VECTOR_Size(&LConsts)+GConstTabSize+LK_VECTOR_Size(&HConsts));
   WriteGConsts(fd);
   WriteLConsts(fd);
