@@ -39,8 +39,6 @@ int LD_CONST_LoadCst(MEM_GmtEnt* ent)
       return -1;
   
   //Load the globals
-  int str_length;
-  char* string;
   for(i=0;i<num_glob;i++)
   {
     cst[i].fixity=LD_FILE_GET1();

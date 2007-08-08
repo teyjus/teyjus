@@ -8,13 +8,20 @@
 #include "kind.h"
 #include "tyskel.h"
 #include "const.h"
+#include "code.h"
+#include "strings.h"
+#include "hashtab.h"
+#include "bvrtab.h"
+#include "implgoal.h"
+#include "importtab.h"
+
 
 #define LINKCODE_EXT ".lp"
 #define BYTECODE_EXT ".lpo"
 
 void LD_LOADER_LoadLinkcodeVer();
 
-int LD_LOADER_LoadModuleName(char* modname);
+void LD_LOADER_LoadModuleName(char* modname);
 MEM_GmtEnt* LD_LOADER_GetNewGMTEnt();
 WordPtr LD_LOADER_ExtendModSpace(MEM_GmtEnt* ent, int size);
 int LD_LOADER_SetName(MEM_GmtEnt* ent,char* modname);
@@ -63,15 +70,15 @@ int LD_LOADER_Load(char* modname, int index)
 #define LINKCODE_VER 3
 void LD_LOADER_LoadLinkcodeVer()
 {
-  long tmp=(long)LD_FILE_GETWORD();
+  Word tmp=LD_FILE_GETWORD();
   if(tmp!=LINKCODE_VER){
-    LD_bad("Incompatible linkcode version %d.\n",tmp);
+    LD_bad("Incompatible linkcode version %ld.\n",tmp);
     EM_THROW(LD_LoadError);
   }
 }
 
 ///\note Check Purpose of module name in file
-int LD_LOADER_LoadModuleName(char* modname)
+void LD_LOADER_LoadModuleName(char* modname)
 {
   char buf[1024];
   int len=LD_FILE_GET1();
@@ -87,7 +94,6 @@ int LD_LOADER_LoadModuleName(char* modname)
 /* as an argument upon invoking the loader -- XQ                           */
 MEM_GmtEnt* LD_LOADER_GetNewGMTEnt(int index)
 {
-  int i;
   MEM_GmtEnt* ent;
   ent = &(MEM_modTable[index]);
   ent->modSpaceEnd=ent->modSpaceBeg=MEM_memTop;

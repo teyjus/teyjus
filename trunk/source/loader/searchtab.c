@@ -64,7 +64,6 @@ WordPtr LD_SEARCHTAB_LoadHashTab(MEM_GmtEnt* ent, int* size)
 
 CSpacePtr LD_SEARCHTAB_HashSrch(int constInd, int STabSize, MemPtr STabAddr)
 {
-  int i;  
   struct HashTabEnt *tabEnt=&(((struct HashTabEnt*)(STabAddr))[Hash(constInd,STabSize)]);
   struct HashTabEnt *tmp;
   tmp = tabEnt;

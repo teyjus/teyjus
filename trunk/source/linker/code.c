@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/types.h>
 #include <unistd.h>
 #include "../tables/instructions.h"
 #include "code.h"
@@ -181,11 +182,11 @@ void PutFloat(int fd, INT4 i)
 
 void LoadCode(int fd, struct Module_st* CMData)
 {
-  int i,j;
-  int offset=CMData->CodeOffset;
-  int size=CMData->CodeSize;
+  Word i,j;
+  Word offset=CMData->CodeOffset;
+  Word size=CMData->CodeSize;
   
-  debug("Loading 0x%x bytes of code at %x to offset 0x%x.\n",size,lseek(fd,0,SEEK_CUR),offset);
+  debug("Loading 0x%lx bytes of code at %lx to offset 0x%lx.\n",size,lseek(fd,0,SEEK_CUR),offset);
   Byte* code=(Byte*)LK_VECTOR_GetPtr(&Code,offset);
   ConstInd tmpIndex;
   
@@ -198,7 +199,7 @@ void LoadCode(int fd, struct Module_st* CMData)
   {
     j=i;
     opcode=code[j++]=LK_FILE_GET1(fd);
-    debug("\t%x:%x:[%x]%s\n",lseek(fd,0,SEEK_CUR)-1,i,opcode,INSTR_instrName(opcode));
+    debug("\t%lx:%lx:[%x]%s\n",lseek(fd,0,SEEK_CUR)-1,i,opcode,INSTR_instrName(opcode));
     if(opcode==call)
     {
       code[j]=LK_FILE_GET1(fd);
@@ -329,20 +330,20 @@ void FreeCode()
 
 void WriteCodeSize(int fd)
 {
-  debug("Writing code size 0x%x at %x.\n",LK_VECTOR_Size(&Code),lseek(fd,0,SEEK_CUR));
+  debug("Writing code size 0x%lx at %lx.\n",LK_VECTOR_Size(&Code),lseek(fd,0,SEEK_CUR));
   LK_FILE_PUTWord(fd,(Word)LK_VECTOR_Size(&Code));
 }
 
 void WriteCode(int fd)
 {
-  int i,j;
-  int size=LK_VECTOR_Size(&Code);
+  Word i,j;
+  Word size=LK_VECTOR_Size(&Code);
   char* code=LK_VECTOR_GetPtr(&Code,0);
   
   Byte opcode=-1;
   INSTR_InstrCategory instrCat=INSTR_CAT_X;
   INSTR_OperandType* opType=NULL;
-  debug("Writing 0x%x bytes of instructions at %x.\n",size,lseek(fd,0,SEEK_CUR));
+  debug("Writing 0x%lx bytes of instructions at %lx.\n",size,lseek(fd,0,SEEK_CUR));
   int argid=0;
   for(i=0;i<size;)
   {
@@ -353,7 +354,7 @@ void WriteCode(int fd)
     opType=INSTR_operandTypes(instrCat);
     argid=-1;
     LK_FILE_PUT1(fd,opcode);
-    debug("\t%x:%x:[%x]%s\n",lseek(fd,0,SEEK_CUR)-1,i,opcode,INSTR_instrName(opcode));
+    debug("\t%lx:%lx:[%x]%s\n",lseek(fd,0,SEEK_CUR)-1,i,opcode,INSTR_instrName(opcode));
     do{
       argid++;
       switch(opType[argid])
