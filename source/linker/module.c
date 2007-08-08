@@ -1,5 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
+#include <sys/types.h>
+#include <unistd.h>
 #include <string.h>
 #include "module.h"
 #include "kind.h"
@@ -24,12 +26,10 @@ static void LoadAccModules();
 static void LoadImpModule(char* modname);
 static void LoadImpModules();
 
-static int NumSegs=0;
-
 void CheckBytecodeVersion(int fd)
 {
-  int x=(int)LK_FILE_GETWord(fd);
-  mutter("Bytecode version is %d.\n",x);
+  Word x=LK_FILE_GETWord(fd);
+  mutter("Bytecode version is %ld.\n",x);
   if(x!=BC_VER)
   {
     perror("Incorrect Bytecode Version");
@@ -279,7 +279,7 @@ void PutKindInd(int fd, KindInd x)
 
 ConstInd GetConstInd(int fd, struct Module_st* CMData){
   ConstInd tmp;
-  debug("%x:",lseek(fd,0,SEEK_CUR));
+  debug("%lx:",lseek(fd,0,SEEK_CUR));
   tmp.gl_flag=LK_FILE_GET1(fd);
   tmp.index=LK_FILE_GET2(fd);
   debug("ConstInd[%d,%d]->",tmp.gl_flag,tmp.index);
@@ -316,7 +316,7 @@ ConstInd GetConstInd(int fd, struct Module_st* CMData){
 
 void PutConstInd(int fd, ConstInd x)
 {
-  debug("Writing ConstInd[%d,%d] at %x\n",x.gl_flag,x.index,lseek(fd,0,SEEK_CUR));
+  debug("Writing ConstInd[%d,%d] at %lx\n",x.gl_flag,x.index,lseek(fd,0,SEEK_CUR));
   LK_FILE_PUT1(fd,x.gl_flag);
   LK_FILE_PUT2(fd,x.index);
 }

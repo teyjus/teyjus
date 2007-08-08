@@ -17,8 +17,6 @@ TwoBytes LD_KIND_numGKinds=-1;
 int LD_KIND_LoadKst(MEM_GmtEnt* ent)
 {
   int i;
-  char str_length;
-  char* string=NULL;
   
   //Allocate space for the kind table.
   TwoBytes kstsize=LD_FILE_GET2();

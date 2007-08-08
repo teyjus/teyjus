@@ -2,6 +2,7 @@
 #include "../system/memory.h"
 #include "loader.h"
 #include "const.h"
+#include "kind.h"
 #include "hashtab.h"
 #include "bvrtab.h"
 #include "implgoal.h"

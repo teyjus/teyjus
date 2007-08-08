@@ -1,4 +1,6 @@
 #include <stdio.h>
+#include <sys/types.h>
+#include <unistd.h>
 #include "vector.h"
 #include "datatypes.h"
 #include "module.h"
@@ -29,12 +31,12 @@ void LoadHashTabEnt(int fd, struct Module_st* CMData,void* entry)
   HashTabEnt* tmp = (HashTabEnt*)entry;
   tmp->index=GetConstInd(fd,CMData);
   tmp->addr=GetCodeInd(fd,CMData);
-  debug("HashTabEnt[%d,%d]=%x\n",tmp->index.gl_flag,tmp->index.index,tmp->addr);
+  debug("HashTabEnt[%d,%d]=%lx\n",tmp->index.gl_flag,tmp->index.index,tmp->addr);
 }
 
 void LoadHashTab(int fd, struct Module_st* CMData,void* entry)
 {
-  debug("Loading HashTab at %x\n",lseek(fd,0,SEEK_CUR));
+  debug("Loading HashTab at %lx\n",lseek(fd,0,SEEK_CUR));
   Adjust_t ignore_me;
   LK_VECTOR_Init((struct Vector*)entry,0,sizeof(HashTabEnt));
   LK_VECTOR_Read(fd,(struct Vector*)entry,CMData,&ignore_me,LoadHashTabEnt);
@@ -50,12 +52,12 @@ void WriteHashTabEnt(int fd,void* entry)
   HashTabEnt* tmp = (HashTabEnt*)entry;
   PutConstInd(fd,tmp->index);
   PutCodeInd(fd,tmp->addr);
-  debug("Writing HashTabEnt[%d,%d]=%x\n",tmp->index.gl_flag,tmp->index.index,tmp->addr);
+  debug("Writing HashTabEnt[%d,%d]=%lx\n",tmp->index.gl_flag,tmp->index.index,tmp->addr);
 }
 
 void WriteHashTab(int fd, void* entry)
 {
-  debug("Writing HashTab at %x\n",lseek(fd,0,SEEK_CUR));
+  debug("Writing HashTab at %lx\n",lseek(fd,0,SEEK_CUR));
   LK_VECTOR_Write(fd,(struct Vector*)entry,&WriteHashTabEnt);
   if(LK_VECTOR_Size((struct Vector*)entry)!=0)
     LK_VECTOR_Free((struct Vector*)entry);
