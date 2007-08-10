@@ -367,7 +367,7 @@ let displayModContext modContext tableOnly instrOnly =
 	  printLine ("Disassembling from bytecode file: " ^ filename);
 	  printLine ("Bytecode version: " ^ (string_of_int bcversion));
 	  printLine ("Module name: " ^ modname);
-	  printLine ("Bytes needed for code: " ^ (string_of_int codesize));
+	  (*printLine ("Bytes needed for code: " ^ (string_of_int codesize));*)
 	  (if (not tableOnly) then
 		printInstructions instructions
 	  else ());
