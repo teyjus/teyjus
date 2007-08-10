@@ -573,7 +573,7 @@ let assignPermVars goalEnvAssoc notrim =
 	   assignSlots 1 (goalnumber - 1))
     else []
   in
-  goalEnvAssoc := Absyn.GoalEnvAssoc(gespList)
+  goalEnvAssoc := Absyn.GoalEnvAssoc(List.rev gespList)
 
 
 (*****************************************************************************)
