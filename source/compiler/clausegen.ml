@@ -776,7 +776,7 @@ and genSTermCode regNum term chunk lowval last hasenv normalize =
 		 Instr.getSize_put_lambda)
 	in
 	discardRegister bodyReg discardReg freeReg;
-	(inst, size, varHead)
+	(bodyCode @ inst, bodySize + size, varHead)
   in
 
   (* function body of genSTermCode *)
@@ -1467,9 +1467,7 @@ let genClauseHeadCode cl chunk insts startLoc isFact =
 let setUpGoalArgs goal chunk last hasenv =
   (* eagerly deal with register assignment for unneeded type variables *)
   let assignRegUnNeeded var =
-	print_endline "assignRegUnNeeded";
 	let varData = Absyn.getTypeFreeVariableVariableData var in
-	print_endline "end: assign";
 	let lastUse = (Absyn.getTypeVariableDataLastUse varData) == var in
 	if (Absyn.getTypeVariableDataPerm varData) then () (*nothing to do w perm*)
 	else 
