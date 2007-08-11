@@ -53,6 +53,7 @@ void LoadGKinds(int fd, struct Module_st* CMData)
 Kind_t* GKindTab=NULL;
 size_t GKindTabSize=-1;
 struct Vector LKinds;
+size_t TotalLKinds=-1;
 
 TwoBytes PackKindInd(KindInd ind){
   TwoBytes tmp;
@@ -78,11 +79,10 @@ KindInd UnPackKindInd(TwoBytes ind){
   if(ind<PERV_KIND_NUM){
     tmp.gl_flag=PERVASIVE;
     tmp.index=ind;
-  } else if(PERV_KIND_NUM<=ind && ind<PERV_KIND_NUM+GKindTabSize){
+  } else if(ind<PERV_KIND_NUM+GKindTabSize){
     tmp.gl_flag=GLOBAL;
     tmp.index=ind-PERV_KIND_NUM;
-  } else if(PERV_KIND_NUM+GKindTabSize<=ind && \
-            ind<PERV_KIND_NUM+GKindTabSize+LK_VECTOR_Size(&LKinds)){
+  } else if(ind<PERV_KIND_NUM+GKindTabSize+TotalLKinds){
     tmp.gl_flag=LOCAL;
     tmp.index=ind-(PERV_KIND_NUM+GKindTabSize);
   }else {
@@ -169,6 +169,7 @@ void WriteLKind(int fd, void* ent)
 
 void WriteLKinds(int fd)
 {
+  TotalLKinds=LK_VECTOR_Size(&LKinds);
   LK_VECTOR_Write(fd, &LKinds,&WriteLKind);
   LK_VECTOR_Free(&LKinds);
 }
