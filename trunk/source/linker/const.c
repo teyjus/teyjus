@@ -54,42 +54,57 @@ void LoadGConsts(int fd, struct Module_st* CMData)
 }
 
 Const_t* GConstTab=NULL;
-int GConstTabSize=-1;
+size_t GConstTabSize=-1;
 struct Vector LConsts;
+size_t TotalLConsts=-1;
+size_t TotalHConsts=-1;
 
 TwoBytes PackConstInd(ConstInd ind){
+  TwoBytes tmp;
+  debug("Packing const [%d %d] to ",ind.gl_flag,ind.index);
   switch(ind.gl_flag){
     case PERVASIVE:
-      return ind.index;
+      tmp= ind.index;
+      break;
     case GLOBAL:
-      return ind.index+PERV_CONST_NUM;
+      tmp= ind.index+PERV_CONST_NUM;
+      break;
     case LOCAL:
-      return ind.index+PERV_CONST_NUM+GConstTabSize;
+      tmp= ind.index+PERV_CONST_NUM+GConstTabSize;
+      break;
     case HIDDEN:
-      return -(ind.index+1);
+      tmp= -(ind.index+1);
+      break;
+    default:
+      EM_THROW(LK_LinkError);
+      break;
   }
-  EM_THROW(LK_LinkError);
+  debug("%d\n",tmp);
+  return tmp;
 }
 
 ConstInd UnPackConstInd(TwoBytes ind){
+  debug("[%d %d %d]\n",(int)PERV_CONST_NUM,(int)GConstTabSize,TotalLConsts);
+  debug("UnPacking const %d to ",ind);
   ConstInd tmp;
   if(ind<PERV_CONST_NUM){
     tmp.gl_flag=PERVASIVE;
     tmp.index=ind;
-  } else if(PERV_CONST_NUM<=ind && ind<PERV_CONST_NUM+GConstTabSize){
+  } else if(ind<PERV_CONST_NUM+GConstTabSize){
     tmp.gl_flag=GLOBAL;
     tmp.index=ind-PERV_CONST_NUM;
-  } else if(PERV_CONST_NUM+GConstTabSize<=ind &&\
-            ind<PERV_CONST_NUM+GConstTabSize+LK_VECTOR_Size(&LConsts)){
+  } else if(ind<PERV_CONST_NUM+GConstTabSize+TotalLConsts){
     tmp.gl_flag=LOCAL;
     tmp.index=ind-(PERV_CONST_NUM+GConstTabSize);
-  } else if(((TwoBytes)-LK_VECTOR_Size(&LConsts))<=ind){
+  } else {
     tmp.gl_flag=HIDDEN;
     tmp.index=-ind-1;
-  } else {
-    bad("ConstInd unpack failed\n");
-    EM_THROW(LK_LinkError);
+    if(tmp.index>=TotalHConsts){
+      bad("ConstInd unpack failed\n");
+      EM_THROW(LK_LinkError);
+    }
   }
+  debug("[%d %d]\n",tmp.gl_flag,tmp.index);
   return tmp;
 }
 
@@ -175,6 +190,7 @@ void WriteLConst(int fd, void* entry)
 
 void WriteLConsts(int fd)
 {
+  TotalLConsts=LK_VECTOR_Size(&LConsts);
   LK_VECTOR_Write(fd, &LConsts,&WriteLConst);
   LK_VECTOR_Free(&LConsts);
 }
@@ -209,6 +225,7 @@ void WriteHConst(int fd, void* entry)
 
 void WriteHConsts(int fd)
 {
+  TotalHConsts=LK_VECTOR_Size(&HConsts);
   LK_VECTOR_Write(fd, &HConsts,&WriteHConst);
   LK_VECTOR_Free(&HConsts);
 }
