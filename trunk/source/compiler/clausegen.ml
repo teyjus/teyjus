@@ -505,7 +505,7 @@ let getRegTermReg regOrTerm =
 (* genPuttingVarCode:                                                   *)
 (* auxiliary function for putting a variable in sythesizing terms       *)
 (************************************************************************)
-let genPuttingVarCode var regNum chunk lowval last (* normalize *) =
+let genPuttingVarCode var regNum chunk lowval last normalize =
 
   (* first occurrence of a temporary variable *)
   let genPuttingFirstTempVar varData regNum lastUse =
@@ -530,10 +530,10 @@ let genPuttingVarCode var regNum chunk lowval last (* normalize *) =
 			(Instr.Ins_put_unsafe_value(offset, regNum),
 			 Instr.getSize_put_unsafe_value))
 	in
-	(* if (normalize) then 
-		([inst ; Instr.Ins_head_normalize_t(regNum)],
-		 size + Instr.getSize_head_normalize_t)
-	else *)
+	if (normalize) then 
+	  ([inst ; Instr.Ins_head_normalize_t(regNum)],
+	   size + Instr.getSize_head_normalize_t)
+	else 
 	([inst], size)
   in
 
@@ -545,10 +545,10 @@ let genPuttingVarCode var regNum chunk lowval last (* normalize *) =
 	in
 	(if (lastUse) then Registers.mkRegFree offset
 	else ());
-	(*if (normalize) then
+	if (normalize) then
 	  (inst @ [Instr.Ins_head_normalize_t(regNum)],
 	   size + Instr.getSize_head_normalize_t)
-	else*)
+	else
 	(inst, size)
   in
 
@@ -582,7 +582,7 @@ let genGlobalize var chunk lowval =
   (* first occurrence *)
   let genGlobalizeFirstOcc perm =
 	let regNum = Registers.getHighFreeReg () in
-	let (inst, size) = genPuttingVarCode var regNum chunk lowval false (*false*) in
+	let (inst, size) = genPuttingVarCode var regNum chunk lowval false false in
 	let (newInst, newSize) =
 	  if (perm) then 
 		(inst@[Instr.Ins_globalize_t(regNum)],size+Instr.getSize_globalize_t)
@@ -797,7 +797,7 @@ and genSTermCode regNum term chunk lowval last hasenv normalize =
 	  genSTermCodePConst c tyenv regNum
   | Absyn.FreeVarTerm(_)               ->
 	  let (inst, size) =
-		genPuttingVarCode term regNum chunk lowval last (*normalize*)
+		genPuttingVarCode term regNum chunk lowval last normalize
 	  in
 	  (inst, size, false) 
   | Absyn.ApplicationTerm(_)           ->  genSTermCodeApp term regNum 
@@ -1619,8 +1619,8 @@ and genAtomicGoal goal cl goalNum last chunk chunks insts startLoc =
 	let (inst, size) =
 	  if (last) then
 		if (Absyn.getClauseHasEnv cl) then 
-		  ([cutInst ; Instr.Ins_deallocate], 
-		   cutInstSize + Instr.getSize_deallocate)
+		  ([cutInst ; Instr.Ins_deallocate ; Instr.Ins_proceed], 
+		   cutInstSize + Instr.getSize_deallocate + Instr.getSize_proceed)
 		else
 		  ([cutInst ; Instr.Ins_proceed],cutInstSize + Instr.getSize_proceed)
 	  else ([cutInst], cutInstSize)
