@@ -200,7 +200,7 @@ static void FRONT_addModuleImportPoint()
     int n, m, l;
     MemPtr addtab = (MemPtr)(MEM_currentModule -> addtable);
     MemPtr ip;
-    
+
     n = MEM_impNCSEG(addtab);  // n = # code segs (# bc fields)
     m = MEM_impLTS(addtab);    // m = link tab size
     l = AM_NCLT_ENTRY_SIZE * m;  // l = space for next clause table
@@ -221,20 +221,15 @@ static void FRONT_addModuleImportPoint()
         
     } else AM_mkImptRecWOL(ip, m, MEM_impPST(addtab, m, n),MEM_impPSTS(addtab),
                            MEM_impFC(addtab));
+
     if (m > 0) AM_mkImpNCLTab(ip, MEM_impLT(addtab), m);
     
     AM_ireg = ip;    
 }
 
 /* install the ith module from the global module table */
-static void FRONT_installModule(int ind)
+static void FRONT_installModule()
 {
-    MEM_GmtEnt *module;
-    
-    //retrieve the module from the global module table and register it
-    //as the current one being used
-    module = &(MEM_modTable[ind]);
-    MEM_currentModule = module;
     //add the code for this module to the program context
     FRONT_addModuleImportPoint();
     //save the new registers to restore later 
@@ -245,12 +240,15 @@ static void FRONT_installModule(int ind)
 int FRONT_moduleInstall(int ind)
 {
     EM_TRY { 
-        FRONT_installModule(ind);
-        //register symbol table bases
-        FRONT_initSymbolTableBases();
-        return EM_NO_ERR;   
+      //retrieve the module from the global module table and register it
+      //as the current one being used
+      MEM_currentModule = &(MEM_modTable[ind]);
+      //register symbol table bases
+      FRONT_initSymbolTableBases();
+      FRONT_installModule(ind);
+      return EM_NO_ERR;   
     } EM_CATCH {
-        return EM_CurrentExnType;
+      return EM_CurrentExnType;
     }
 }   
 
