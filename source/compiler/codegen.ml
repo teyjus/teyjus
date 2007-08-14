@@ -324,7 +324,6 @@ let assignSkelIndex skels hskels =
 (* assign indexes to strings in this module                                 *)
 (****************************************************************************)
 let assignStringIndex strs =
-
   let rec assignStringIndexAux strs assigned index =
     match strs with
       [] -> (List.rev assigned, index)
@@ -341,7 +340,7 @@ let assignStringIndex strs =
 		  | (str' :: rest') ->
 			  if (str' == str) then (assigned, index)
 			  else
-				if (Absyn.getStringInfoString str) == 
+				if (Absyn.getStringInfoString str) =
 				  (Absyn.getStringInfoString str') then
 				  (Absyn.setStringInfoNew str false;
 				   Absyn.setStringInfoIndex str (Absyn.getStringInfoIndex str');

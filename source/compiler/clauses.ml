@@ -59,8 +59,19 @@ let getUniversalDefinitionTypeSymbol = function
 *union:
 * Returns the union of two lists of free variables.
 ********************************************************************)
-let rec union fvs1 fvs2 =
+(*let rec union fvs1 fvs2 =
   fvs1 @ fvs2
+*)
+let union fvs1 fvs2 =
+  let rec union_aux fvs2 result =
+    match fvs2 with 
+      [] -> List.rev result
+    | (fv :: rest) ->
+	if (List.memq fv fvs1) then union_aux rest result
+	else union_aux rest (fv::result)
+  in
+  fvs1 @ (union_aux fvs2 [])
+
 
 (********************************************************************
 *makeHiddenConstant:
