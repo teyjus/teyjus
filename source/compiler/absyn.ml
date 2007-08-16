@@ -250,7 +250,13 @@ and aclauseinfo =
 (*************************************************************************)
 (*  akind:                                                               *)
 (*************************************************************************)
-let string_of_kind (Kind(n,_,_,_,_)) = (Symbol.name n) 
+let string_of_kind  (Kind(n,_,_,cat,_))=
+  (Symbol.name n)
+(*  match cat with
+    GlobalKind -> "GK:" ^ (Symbol.name n) 
+  | LocalKind -> "LK:" ^ (Symbol.name n) 
+  | PervasiveKind -> "PK:" ^ (Symbol.name n) 
+*)
 
 (* makeKindType                          *)
 let makeKindType kind =
@@ -702,6 +708,10 @@ let getConstantTypeRef = function
 
 let isGlobalConstant c = 
   (getConstantType c) = GlobalConstant
+
+let isLocalConstant c = 
+  (getConstantType c) = LocalConstant
+
 
 let isPervasiveConstant c =
   match (getConstantType c) with
