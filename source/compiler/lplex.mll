@@ -190,7 +190,7 @@ and stringstate = parse
 | [^ '"' '\\' '\n']+ as text  {addString text; stringstate lexbuf}
 | '"'                         {STRLIT(extractCurrentString lexbuf.lex_curr_p)}
       
-| '\n'          {Errormsg.error lexbuf.lex_curr_p "Error: String literal ended with newline";
+| '\n'          {Errormsg.error lexbuf.lex_curr_p "String literal ended with newline";
                  incrline lexbuf; STRLIT(extractCurrentString lexbuf.lex_curr_p)}
 | "\\b"         {addChar '\b'; stringstate lexbuf}
 | "\\t"         {addChar '\t'; stringstate lexbuf}
@@ -206,24 +206,34 @@ and stringstate = parse
 | "\\x" HEX as text                 {addHex text; stringstate lexbuf}
 | "\\x" (HEX HEX) as text           {addHex text; stringstate lexbuf}
 
-| "\\x" _         {Errormsg.error lexbuf.lex_curr_p "Error: Illegal hex character specification";
+| "\\x" _         {Errormsg.error lexbuf.lex_curr_p "Illegal hex character specification";
                    stringstate lexbuf}
 | "\\" FCHAR      {strflush1 lexbuf}
 | "\\\n"          {incrline lexbuf; strflush1 lexbuf}
 | "\\c"           {strflush2 lexbuf}
-| "\\" _          {Errormsg.error lexbuf.lex_curr_p "Error: Illegal escape character in string";
+| "\\" _          {Errormsg.error lexbuf.lex_curr_p "Illegal escape character in string";
                    stringstate lexbuf}
+| eof             {Errormsg.error lexbuf.lex_curr_p
+                     "String not closed at end-of-file";
+                   initial lexbuf}
+
 
 and strflush1 = parse
 | FCHAR+    {strflush1 lexbuf}
 | "\\"      {strflush1 lexbuf}
-| _ as text {Errormsg.error lexbuf.lex_curr_p "Error: Unterminated string escape sequence";
+| _ as text {Errormsg.error lexbuf.lex_curr_p "Unterminated string escape sequence";
              addChar text;
              stringstate lexbuf}
+| eof             {Errormsg.error lexbuf.lex_curr_p
+                     "String not closed at end-of-file";
+                   initial lexbuf}
 
 and strflush2 = parse
 | FCHAR+    {strflush2 lexbuf}
 | _ as text {addChar text; stringstate lexbuf}
+| eof             {Errormsg.error lexbuf.lex_curr_p
+                     "String not closed at end-of-file";
+                   initial lexbuf}
 
 and comment1 = parse
 | [^ '\n']+       {comment1 lexbuf}
