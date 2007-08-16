@@ -228,17 +228,25 @@ and strflush2 = parse
 and comment1 = parse
 | [^ '\n']+       {comment1 lexbuf}
 | "\n"            {incrline lexbuf; initial lexbuf}
-| _ as text       {Errormsg.error lexbuf.lex_curr_p ("Illegal character " ^ (string_of_char text) ^ " in input");
+| eof             {initial lexbuf}
+| _ as text       {Errormsg.error lexbuf.lex_curr_p
+                     ("Illegal character " ^ (string_of_char text) ^
+                        " in input");
                    comment1 lexbuf}
 
 and comment2 = parse
-| [^ '*' '/' '\n']+   {comment2 lexbuf}
+| [^ '*' '/']+   {comment2 lexbuf}
 | "/*"        {commentLev := !commentLev + 1; comment2 lexbuf}
 | "*/"        {commentLev := !commentLev - 1;
                if !commentLev = 0 then
                  initial lexbuf
                else
                  comment2 lexbuf}
-| "/*"        {comment2 lexbuf}
-| _ as text   {Errormsg.error lexbuf.lex_curr_p ("Illegal character " ^ (string_of_char text) ^ " in input");
+| "*"         {comment2 lexbuf}
+| "/"         {comment2 lexbuf}
+| eof         {Errormsg.warning lexbuf.lex_curr_p
+                 "Comment not closed at end-of-file";
+               initial lexbuf}
+| _ as text   {Errormsg.error lexbuf.lex_curr_p
+                 ("Illegal character " ^ (string_of_char text) ^ " in input");
                comment2 lexbuf}
