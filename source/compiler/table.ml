@@ -38,3 +38,11 @@ let fold = fun f v table ->
   (SymbolTable.fold f v table)
   
 let empty = SymbolTable.empty
+
+
+let printTable toStringFunc table =
+  let printFunc s ent =
+    print_endline (toStringFunc ent)
+  in
+  SymbolTable.iter printFunc table
+
