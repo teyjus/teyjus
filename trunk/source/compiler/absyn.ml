@@ -250,13 +250,15 @@ and aclauseinfo =
 (*************************************************************************)
 (*  akind:                                                               *)
 (*************************************************************************)
-let string_of_kind  (Kind(n,_,_,cat,_))=
+let string_of_kind  (Kind(n,_,_,_,_))=
   (Symbol.name n)
-(*  match cat with
+
+let string_of_kind' (Kind(n,_,_,cat,_))=
+  match cat with
     GlobalKind -> "GK:" ^ (Symbol.name n) 
   | LocalKind -> "LK:" ^ (Symbol.name n) 
   | PervasiveKind -> "PK:" ^ (Symbol.name n) 
-*)
+
 
 (* makeKindType                          *)
 let makeKindType kind =
@@ -619,6 +621,8 @@ let setSkeletonNew skeleton isNew =
   let Skeleton(_,_,n) = skeleton in
   n := isNew
 
+let string_of_skeleton (Skeleton(ty,_,_)) =
+  string_of_type ty
 
 (*************************************************************************)
 (*  afixity:                                                             *)
