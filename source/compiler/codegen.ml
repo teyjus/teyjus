@@ -363,9 +363,9 @@ let collectRenamingInfo amod =
     match toCheck with
       [] -> (List.rev checked, number)
     | (elem :: rest) ->
-	if (isGlobalFunc elem) then
+	(*if (isGlobalFunc elem) then
 	  collectLocals rest checked number isGlobalFunc
-	else collectLocals rest (elem :: checked) (number + 1) isGlobalFunc
+	else*) collectLocals rest (elem :: checked) (number + 1) isGlobalFunc
   in 
 
   (* function body of collectRenamingInfo *)

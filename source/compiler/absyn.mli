@@ -261,6 +261,7 @@ val setKindIndex : akind -> int -> unit
 val isGlobalKind : akind -> bool
 val isLocalKind : akind -> bool
 val string_of_kind : akind -> string
+val string_of_kind' : akind -> string
 
 val makeGlobalKind : symbol -> int -> int -> akind
 val makeLocalKind : symbol -> int -> int -> akind
@@ -336,6 +337,7 @@ val setSkeletonIndex : askeleton -> int -> unit
 val getSkeletonNew : askeleton -> bool
 val setSkeletonNew : askeleton -> bool -> unit
 
+val string_of_skeleton : askeleton -> string
 (*************************************************************************)
 (*  afixity:                                                             *)
 (*************************************************************************)

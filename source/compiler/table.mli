@@ -12,3 +12,5 @@ val remove : SymbolTable.key -> 'a SymbolTable.t -> 'a SymbolTable.t
 val iter : (SymbolTable.key -> 'a -> unit) -> 'a SymbolTable.t -> unit
 val fold : (SymbolTable.key -> 'a -> 'b -> 'b) -> 'a SymbolTable.t -> 'b -> 'b
 val empty : 'a symboltable
+
+val printTable : ('a -> string) -> 'a SymbolTable.t -> unit 
