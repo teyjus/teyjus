@@ -1,0 +1,72 @@
+Term structures:
+===============
+
+  (1) abstractions            -- test1
+      a. abstractions as head argument
+      b. abstractions as goal or application argument
+      c. nested abstractions in the above two cases
+
+  (2) flexible applications   -- test2
+      a. flexible application as head argument
+      b. flexible application as goal or application argument
+
+  (3) constants with types    -- test3
+      a. constants with types as head argument
+      b. constants with types as goal argument
+      c. constants with types as application argument
+      d. constants with types as application head
+
+
+Clause structures:
+==================
+
+  (1) atomic clauses, chain rules and clauses with environments
+ 
+  (2) generic goals 
+
+  (3) augmented goals
+
+  (4) flexible goals
+
+  (5) goals with predicate name as universal quantified variables
+
+  (6) disjunction goals
+
+  (7) indexing:
+      a. predicate with one clause definition
+      b. predicate with two clause definitions
+      c. predicate with more than two clauses 
+      d. predicate with clauses with constant as first argument
+      e. predicate with clauses with list as first argument
+      f. predicate with multiple clauses with same constant as first argument  
+
+  (8) cut goals 
+      a. neck cut
+      b. deep cut
+
+
+Variables in clauses:
+=====================
+
+  (1) permanent and temporary variables
+
+  (2) universal quantified variables in goals
+
+  (3) universal quantified variables in the antecedent of implication goals
+  
+  (4) existential quantified variables in goals
+
+  (5) existential quantified variables in the antecedent of implication goals
+
+
+Accumulates/imports
+====================
+
+  (1) renaming:
+      a. global - local renaming
+      b. global - global renaming
+
+  (2) combine definitions
+
+
+
