@@ -21,18 +21,20 @@ Clause structures:
 ==================
 
   (1) atomic clauses, chain rules and clauses with environments
+                             --  test4 
  
-  (2) generic goals 
+  (2) generic goals          --  test5
+      a. universal quantified term variables
+      b. universal quantified predicate name
 
-  (3) augmented goals
+  (3) augmented goals        --  test6
+     
 
   (4) flexible goals
 
-  (5) goals with predicate name as universal quantified variables
+  (5) disjunction goals
 
-  (6) disjunction goals
-
-  (7) indexing:
+  (6) indexing:
       a. predicate with one clause definition
       b. predicate with two clause definitions
       c. predicate with more than two clauses 
@@ -40,7 +42,7 @@ Clause structures:
       e. predicate with clauses with list as first argument
       f. predicate with multiple clauses with same constant as first argument  
 
-  (8) cut goals 
+  (7) cut goals 
       a. neck cut
       b. deep cut
 
