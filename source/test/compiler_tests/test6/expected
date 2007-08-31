@@ -1,0 +1,272 @@
+Disassembling from bytecode file: augmentedgoal.lp
+Bytecode version: 3
+Module name: augmentedgoal
+
+LABEL               INSTRUCTION              OPERANDS
+
+                    fail                     
+foo                 switch_on_reg            #1, L0, L1
+L0                  try_me_else              #2, L2
+L1                  try_me_else              #2, L3
+                    allocate                 #3
+                    get_variable_p           Y1, A2
+                    tag_variable             Y2
+                    push_impl_point          #2, <impl #0>
+                    head_normalize_t         A1
+                    put_value_p              Y2, A2
+                    head_normalize_t         A2
+                    call_name                #2, foo
+                    pop_impl_point           
+                    deallocate               
+                    proceed                  
+L3                  retry_me_else            #2, L4
+                    allocate                 #3
+                    get_variable_p           Y1, A2
+                    tag_variable             Y2
+                    push_impl_point          #2, <impl #1>
+                    head_normalize_t         A1
+                    put_value_p              Y2, A2
+                    head_normalize_t         A2
+                    call_name                #2, foo
+                    pop_impl_point           
+                    deallocate               
+                    proceed                  
+L4                  retry_me_else            #2, L5
+                    allocate                 #4
+                    get_variable_p           Y1, A1
+                    get_variable_p           Y2, A2
+                    tag_variable             Y3
+                    push_impl_point          #3, <impl #2>
+                    put_value_p              Y3, A1
+                    head_normalize_t         A1
+                    put_value_p              Y2, A2
+                    head_normalize_t         A2
+                    call_name                #3, foo
+                    pop_impl_point           
+                    deallocate               
+                    proceed                  
+L5                  retry_me_else            #2, L6
+                    allocate                 #3
+                    get_variable_p           Y1, A2
+                    incr_universe            
+                    set_univ_tag             Y2, <hidden const #0>
+                    push_impl_point          #2, <impl #3>
+                    head_normalize_t         A1
+                    put_value_p              Y2, A2
+                    head_normalize_t         A2
+                    call_name                #2, foo
+                    pop_impl_point           
+                    decr_universe            
+                    deallocate               
+                    proceed                  
+L6                  retry_me_else            #2, L7
+                    allocate                 #3
+                    get_variable_p           Y1, A2
+                    incr_universe            
+                    set_univ_tag             Y2, <hidden const #1>
+                    push_impl_point          #2, <impl #4>
+                    head_normalize_t         A1
+                    put_value_p              Y2, A2
+                    head_normalize_t         A2
+                    call_name                #2, foo
+                    pop_impl_point           
+                    decr_universe            
+                    deallocate               
+                    proceed                  
+L7                  trust_me                 #2
+                    allocate                 #4
+                    get_variable_p           Y1, A1
+                    get_variable_p           Y2, A2
+                    tag_variable             Y3
+                    push_impl_point          #3, <impl #5>
+                    put_value_p              Y1, A1
+                    head_normalize_t         A1
+                    put_value_p              Y2, A2
+                    head_normalize_t         A2
+                    call_name                #3, <hidden const #2>
+                    pop_impl_point           
+                    deallocate               
+                    proceed                  
+L2                  trust_ext                #2, #1
+<hidden const #2>   try_me_else              #2, L8
+                    init_variable_t          A3, Y1
+                    init_variable_t          A4, Y2
+                    init_variable_t          A5, Y3
+                    pattern_unify_t          A3, A1
+                    pattern_unify_t          A4, A2
+                    finish_unify             
+                    put_value_t              A3, A1
+                    head_normalize_t         A1
+                    put_value_t              A5, A2
+                    head_normalize_t         A2
+                    execute_name             foo
+L8                  trust_me                 #2
+                    init_variable_t          A3, Y1
+                    init_variable_t          A4, Y3
+                    pattern_unify_t          A3, A1
+                    pattern_unify_t          A4, A2
+                    finish_unify             
+                    put_value_t              A3, A1
+                    head_normalize_t         A1
+                    put_value_t              A4, A2
+                    head_normalize_t         A2
+                    execute_name             foo
+foo                 switch_on_reg            #1, L9, L10
+L9                  try_me_else              #2, L11
+L10                 try_me_else              #2, L12
+                    init_variable_t          A3, Y2
+                    init_variable_t          A4, Y1
+                    pattern_unify_t          A3, A1
+                    pattern_unify_t          A4, A2
+                    finish_unify             
+                    put_value_t              A3, A1
+                    head_normalize_t         A1
+                    put_value_t              A4, A2
+                    head_normalize_t         A2
+                    execute_name             foo
+L12                 trust_me                 #2
+                    init_variable_t          A3, Y2
+                    init_variable_t          A4, Y1
+                    pattern_unify_t          A3, A1
+                    pattern_unify_t          A4, A2
+                    finish_unify             
+                    put_value_t              A3, A1
+                    head_normalize_t         A1
+                    put_value_t              A4, A2
+                    head_normalize_t         A2
+                    execute_name             foo
+L11                 trust_ext                #2, #1
+foo                 switch_on_reg            #1, L13, L14
+L13                 try_me_else              #2, L15
+L14                 init_variable_t          A3, Y2
+                    init_variable_t          A4, Y1
+                    pattern_unify_t          A3, A1
+                    pattern_unify_t          A4, A2
+                    finish_unify             
+                    proceed                  
+L15                 trust_ext                #2, #1
+foo                 switch_on_reg            #1, L16, L17
+L16                 try_me_else              #2, L18
+L17                 init_variable_t          A3, Y1
+                    init_variable_t          A4, Y3
+                    init_variable_t          A5, Y2
+                    pattern_unify_t          A3, A1
+                    pattern_unify_t          A4, A2
+                    finish_unify             
+                    put_value_t              A4, A1
+                    head_normalize_t         A1
+                    put_value_t              A5, A2
+                    head_normalize_t         A2
+                    execute_name             foo
+L18                 trust_ext                #2, #1
+foo                 switch_on_reg            #1, L19, L20
+L19                 try_me_else              #2, L21
+L20                 try_me_else              #2, L22
+                    init_variable_t          A3, Y2
+                    init_variable_t          A4, Y1
+                    pattern_unify_t          A3, A1
+                    pattern_unify_t          A4, A2
+                    finish_unify             
+                    put_value_t              A3, A1
+                    head_normalize_t         A1
+                    put_value_t              A4, A2
+                    head_normalize_t         A2
+                    execute_name             foo
+L22                 trust_me                 #2
+                    init_variable_t          A3, Y2
+                    init_variable_t          A4, Y1
+                    pattern_unify_t          A3, A1
+                    pattern_unify_t          A4, A2
+                    finish_unify             
+                    put_value_t              A3, A1
+                    head_normalize_t         A1
+                    put_value_t              A4, A2
+                    head_normalize_t         A2
+                    execute_name             foo
+L21                 trust_ext                #2, #1
+foo                 switch_on_reg            #1, L23, L24
+L23                 try_me_else              #2, L25
+L24                 init_variable_t          A3, Y2
+                    init_variable_t          A4, Y1
+                    pattern_unify_t          A3, A1
+                    pattern_unify_t          A4, A2
+                    finish_unify             
+                    proceed                  
+L25                 trust_ext                #2, #1
+
+Global kind table:
+0: i/0
+
+Local kind table:
+
+Type skeleton table:
+0: (i -> (i -> o))
+1: SkeletonVarType(0)
+2: i
+
+Global constant table: 
+0: foo (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #0
+
+Local constant table: 
+
+Hidden constant table: 
+0:  Type Skeleton: #2
+1:  Type Skeleton: #2
+2:  Type Skeleton: #1
+
+String table:
+
+Implication Tables:
+0:
+  Predicate definitions possibly extending previous ones: 1
+   foo
+  Find function type: hash
+  In-core table size: 1
+   foo
+1:
+  Predicate definitions possibly extending previous ones: 1
+   foo
+  Find function type: hash
+  In-core table size: 1
+   foo
+2:
+  Predicate definitions possibly extending previous ones: 1
+   foo
+  Find function type: hash
+  In-core table size: 1
+   foo
+3:
+  Predicate definitions possibly extending previous ones: 1
+   foo
+  Find function type: hash
+  In-core table size: 1
+   foo
+4:
+  Predicate definitions possibly extending previous ones: 1
+   foo
+  Find function type: hash
+  In-core table size: 1
+   foo
+5:
+  Predicate definitions possibly extending previous ones: 0
+  Find function type: hash
+  In-core table size: 1
+   <hidden const #2>
+
+Hash tables:
+
+Import tables:
+
+  Import table:
+    number of code segments: 0
+    Next clause table: 1
+   foo
+    Local constant table: 0
+    Find function type: hash
+    Search table: 1
+   foo
+
+Accumulated tables:
+
+Imported tables:
