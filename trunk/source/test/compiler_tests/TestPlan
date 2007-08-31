@@ -27,14 +27,13 @@ Clause structures:
       a. universal quantified term variables
       b. universal quantified predicate name
 
-  (3) augmented goals        --  test6
-     
+  (3) augmented goals        --  test6     
 
-  (4) flexible goals
+  (4) flexible goals         --  test7
 
-  (5) disjunction goals
+  (5) disjunction goals      --  test8
 
-  (6) indexing:
+  (6) indexing and sequencing:   --  test9
       a. predicate with one clause definition
       b. predicate with two clause definitions
       c. predicate with more than two clauses 
@@ -42,7 +41,7 @@ Clause structures:
       e. predicate with clauses with list as first argument
       f. predicate with multiple clauses with same constant as first argument  
 
-  (7) cut goals 
+  (7) cut goals              -- test10
       a. neck cut
       b. deep cut
 
