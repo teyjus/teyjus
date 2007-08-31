@@ -733,11 +733,11 @@ and deOrifyOrGoal goal1 goal2 uvs uvdefs andgoal wholegoal newclauses hcs =
       fvs'
       newclauses'' in
 
-    if Option.isSome andgoal' then
+    if Option.isSome andgoal then
       let goal' = Absyn.ApplicationTerm(
         Absyn.FirstOrderApplication(
           Pervasive.andTerm,
-          [pred; Option.get andgoal'],
+          [pred; Option.get andgoal],
           2),
         false,
         Errormsg.none) in
