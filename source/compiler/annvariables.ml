@@ -379,7 +379,7 @@ and synthesizeApplicationTerm appInfo =
 and synthesizeFreeVarTerm var perm heapvar =
   let varData = Absyn.getTermFreeVariableVariableData var in
   if (firstEncounteredVar varData) then
-	let (myfirst, myperm, mysafety) =
+	(let (myfirst, myperm, mysafety) =
 	  if (isHQVar varData || not (isEmbedded ())) then
 		(true, perm && (not heapvar), heapvar)
 	  else (* embedded && not a hq var && not a qvar: quantified at*)
@@ -387,22 +387,21 @@ and synthesizeFreeVarTerm var perm heapvar =
 		if (isExpQVar varData) then (*explicitly quant*)
 		  (false, perm && (not heapvar), true)
 		else (*implicitly quant at the head of top-level clause*)
-		  (false,(isCrossGoal (Absyn.getVariableDataFirstGoal varData))|| perm,
-		   true)
+		  (false, perm, true)
 	in
 	initVarData varData (Some myfirst) myperm mysafety heapvar (Some var);
-	Absyn.setTermFreeVariableFirst var myfirst
+	Absyn.setTermFreeVariableFirst var myfirst)
 	
   else (* subsequent occurrence *)
-	let oldPerm = Absyn.getVariableDataPerm varData in
-	let newPerm = 
-	  if (isQVar varData) then (*explicitly body quant*)
-		(oldPerm || (isCrossGoal (Absyn.getVariableDataFirstGoal varData)) ||
-		 perm)
-	  else (oldPerm || (isCrossGoal (Absyn.getVariableDataFirstGoal varData)))
-	in
-	updateVarData varData newPerm (Some var);
-	Absyn.setTermFreeVariableFirst var false
+    (let oldPerm = Absyn.getVariableDataPerm varData in
+    let newPerm = 
+      if (isQVar varData) then (*explicitly body quant*)
+	(oldPerm || (isCrossGoal (Absyn.getVariableDataFirstGoal varData)) ||
+	perm)
+      else (oldPerm || (isCrossGoal (Absyn.getVariableDataFirstGoal varData)))
+    in
+    updateVarData varData newPerm (Some var);
+    Absyn.setTermFreeVariableFirst var false)
   
 		
 (** **************************************************************** **)
@@ -772,7 +771,6 @@ and processImpGoal clDefs body last cutVarRef =
 (* process an embedded clause and its term/type variable mapping       *)
 (***********************************************************************)  
 and processEmbeddedClause clause fvs tyfvs =
-
   (* process the embedded clause *)
   let (lqVars, lhqVars, lexpqVars, lclVars, lembedded, lgoalNum) =
 	(getQVars (), getHQVars (), getExpQVars (), getClVars (), 
@@ -794,7 +792,8 @@ and processVarMaps tmVarMaps tyVarMaps fvs tyfvs =
   let rec processTmVarMaps tmVars fvs =
 	match tmVars with
 	  [] -> fvs
-	| ((fromVarData, _) :: rest) ->
+	| (* ((fromVarData, _) :: rest) -> *)
+	  ((fromVarData, toVarData) :: rest) ->
 		if firstEncounteredVar fromVarData then (* first encountered *)
 		  initVarData fromVarData None true false false None
 		else Absyn.setVariableDataPerm fromVarData true;
