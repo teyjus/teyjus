@@ -4,10 +4,11 @@ The loader expects that if a predicate definition is given such that no choice p
 
 Similarly, if the instruction pointed to by the variable term of a switch_on_term instruction is not a try_me_else instruction, that there is space for such an instruction preceding that one.
 
-Also, uses of the call instruction in the bytecode file will refer to the index of called predicate in the constant table, not code offsets.
+Also, uses of the "call" and "execute" instruction in the bytecode file will refer to the index of called predicate in the constant table, not code offsets.
 
 The following assumptions are made about the length of instructions.
 try_me_else, retry_me_else, and trust_me all have the same length.
 try and retry have the same length.
 try_else, retry_else, and trust have the same length.
 call and call_name have the same length.
+execute and execute_name have the same length.
