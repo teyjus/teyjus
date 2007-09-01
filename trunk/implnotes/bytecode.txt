@@ -238,15 +238,15 @@ first in the file.
   [Kind Renaming Function]
   <size of kind renaming function> -- 2 bytes
   {
-    <kind name> --- [String]
-    <kind index> --- [Kind index]
+    <name of global kind in accumulated module> --- [String]
+    <index into kind tables of this module> --- [Kind index]
   }
   
   [Constant Renaming Function]
   <size of constant renaming function> --- 2 bytes
-  { 
-    <constant name> ---[String]
-    <constant index> --- [Constant index]
+  {
+    <name of global constant in accumulated module> --- [String]
+    <index into constant tables of this module> --- [Kind index]
   }
 }
 
@@ -260,15 +260,15 @@ first in the file.
   [Kind Renaming Function]
   <size of kind renaming function> -- 2 bytes
   {
-    <kind name> --- [String]
-    <kind index> --- [Kind index]
+    <name of global kind in imported module> --- [String]
+    <index into kind table of this module> --- [Kind index]
   }
   
   [Constant Renaming Function]
   <size of constant renaming function> --- 2 bytes
-  { 
-    <constant name> ---[String]
-    <constant index> --- [Constant index]
+  {
+    <name of global constant in imported module> --- [String]
+    <index into constant tables of this module> --- [Kind index]
   }
 }
 
@@ -282,17 +282,20 @@ simulator code directory. This file also decribes a code for
 each kind of operand. The presentation of operand info in the
 bytecode is as follows:
    P (padding)               ---  null field
+   WP (Word padding)         ---  null field
+   SEG(Module Segment ID)    ---  1 byte number (dummy value in .lpo)
    R (register no)           ---  1 byte number
    E (env variable)          ---  1 byte number
    N (next clause in i.p.)   ---  1 byte number
    I1 (small integer)        ---  1 byte number
-   I2 (larger integer)       ---  2 byte number
    CE (closure env var)      ---  1 byte number
    C  (constant index)       ---  [Constant index]
    K  (kind index)           ---  [Kind index]
    MT (module table address) ---  2 byte index
    IT (impl. table address)  ---  2 byte index
-   HT (hash table address)   ---  2 byte index   
+   HT (hash table address)   ---  2 byte index
+   BVT (bound variable table address) --- 2 byte index
+   S  (string start address) ---  2 byte index
    L  (code location)        ---  4 byte relative address: offset in
         	bytes from start of
         	instruction
@@ -300,5 +303,4 @@ bytecode is as follows:
         	integer
    F (floating point number) ---  8 bytes: first 4 bytes are mantissa,
         	second 4 bytes are exponent.
-   S  (string start address) ---  2 byte index
 }
