@@ -7,7 +7,14 @@ LABEL               INSTRUCTION              OPERANDS
                     fail                     
 foo                 switch_on_reg            #1, L0, L1
 L0                  try_me_else              #2, L2
-L1                  allocate                 #5
+L1                  try_me_else              #2, L3
+                    put_value_t              A2, A3
+                    head_normalize_t         A1
+                    put_variable_t           A255, A2
+                    head_normalize_t         A3
+                    execute                  L4
+L3                  retry_me_else            #2, L5
+                    allocate                 #5
                     get_variable_p           Y1, A1
                     get_variable_p           Y2, A2
                     put_variable_p           Y3, A1
@@ -22,9 +29,29 @@ L1                  allocate                 #5
                     put_value_p              Y2, A4
                     head_normalize_t         A4
                     deallocate               
-                    execute                  L3
+                    execute                  L6
+L5                  trust_me                 #2
+                    allocate                 #7
+                    get_variable_p           Y1, A1
+                    get_variable_p           Y2, A2
+                    put_variable_p           Y5, A1
+                    put_variable_p           Y6, A2
+                    call_name                #6, foo
+                    put_variable_p           Y3, A1
+                    put_value_p              Y1, A2
+                    head_normalize_t         A2
+                    put_variable_p           Y4, A3
+                    put_value_p              Y2, A4
+                    head_normalize_t         A4
+                    call                     #4, L7
+                    put_unsafe_value         Y3, A1
+                    head_normalize_t         A1
+                    put_unsafe_value         Y4, A2
+                    head_normalize_t         A2
+                    deallocate               
+                    execute_name             foo
 L2                  trust_ext                #2, #1
-L3                  try_me_else              #4, L4
+L7                  try_me_else              #4, L8
                     put_value_t              A1, A3
                     put_value_t              A2, A4
                     put_value_t              A4, A1
@@ -32,10 +59,33 @@ L3                  try_me_else              #4, L4
                     put_value_t              A3, A2
                     head_normalize_t         A2
                     execute_name             foo
-L4                  trust_me                 #4
+L8                  trust_me                 #4
                     put_value_t              A4, A1
                     head_normalize_t         A1
                     put_value_t              A3, A2
+                    head_normalize_t         A2
+                    execute_name             foo
+L6                  try_me_else              #4, L9
+                    put_value_t              A1, A3
+                    put_value_t              A2, A4
+                    put_value_t              A4, A1
+                    head_normalize_t         A1
+                    put_value_t              A3, A2
+                    head_normalize_t         A2
+                    execute_name             foo
+L9                  trust_me                 #4
+                    put_value_t              A4, A1
+                    head_normalize_t         A1
+                    put_value_t              A3, A2
+                    head_normalize_t         A2
+                    execute_name             foo
+L4                  try_me_else              #3, L10
+                    head_normalize_t         A1
+                    head_normalize_t         A2
+                    execute_name             foo
+L10                 trust_me                 #3
+                    put_value_t              A3, A1
+                    head_normalize_t         A1
                     head_normalize_t         A2
                     execute_name             foo
 
