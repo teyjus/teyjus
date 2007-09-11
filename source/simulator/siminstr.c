@@ -1774,4 +1774,19 @@ void SINSTR_fail()                      //fail -- X
     EM_THROW(EM_FAIL);
 }
 
+
+/**************************************************************************/
+/*       linker only                                                      */
+/**************************************************************************/
+void SINSTR_execute_link_only()
+{
+  EM_THROW(EM_ABORT);
+}
+
+void SINSTR_call_link_only()
+{
+  EM_THROW(EM_ABORT);
+}
+
+
 #endif //SIMINSTR_C

@@ -716,6 +716,8 @@ let isGlobalConstant c =
 let isLocalConstant c = 
   (getConstantType c) = LocalConstant
 
+let isAnonymousConstant c =
+  (getConstantType c) = AnonymousConstant
 
 let isPervasiveConstant c =
   match (getConstantType c) with
@@ -887,7 +889,7 @@ let makeAnonymousConstant i =
 
 let makeHiddenConstant skel envsize =
   Constant(Symbol.symbol "", ref NoFixity, ref (-1), ref false, ref false,
-    ref false, ref true, ref false, ref false, ref (Some skel), ref 0,
+    ref false, ref false, ref false, ref false, ref (Some skel), ref 0,
     ref (Some(Array.make envsize true)), ref (Some(Array.make envsize true)),
     ref None, ref HiddenConstant, ref 0, Errormsg.none)
 
