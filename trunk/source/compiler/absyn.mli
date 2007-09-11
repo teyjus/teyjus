@@ -389,6 +389,7 @@ val constantHasCode  : aconstant -> bool
 val isGlobalConstant : aconstant -> bool
 val isLocalConstant : aconstant -> bool
 val isPervasiveConstant : aconstant -> bool
+val isAnonymousConstant : aconstant -> bool
 
 val makeGlobalConstant : symbol -> afixity -> int -> bool -> bool -> int 
   -> askeleton -> int -> aconstant

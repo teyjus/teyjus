@@ -1387,15 +1387,15 @@ let genClauseHeadCode cl chunk insts startLoc isFact =
     (* generate code for each term variable mapping *)
     let genOneTmVarCode (fromVar, toVar) =
       let fromOffset = Absyn.getVariableDataOffset fromVar in
-	  if (Absyn.getVariableDataPerm toVar) then
-		(Instr.Ins_init_variable_p(Absyn.getVariableDataOffset toVar, 
-								   fromOffset),
-		 Instr.getSize_init_variable_p)
-	  else
-		let _ = Registers.assignTmReg toVar chunk numArgs in
-		(Instr.Ins_init_variable_t(Absyn.getVariableDataOffset toVar, 
-								   fromOffset),
-		 Instr.getSize_init_variable_t)
+      if (Absyn.getVariableDataPerm toVar) then
+	(Instr.Ins_init_variable_p(Absyn.getVariableDataOffset toVar, 
+				   fromOffset),
+	 Instr.getSize_init_variable_p)
+      else
+	let _ = Registers.assignTmReg toVar chunk numArgs in
+	(Instr.Ins_init_variable_t(Absyn.getVariableDataOffset toVar, 
+				   fromOffset),
+	 Instr.getSize_init_variable_t)
     in
     (* for fold mapping result *)
 	let collectMapCode (insts, totalSize) (inst, size) =
@@ -1693,20 +1693,24 @@ and genAtomicGoal goal cl goalNum last chunk chunks insts startLoc =
   let genExecute pred = 
 	if (Absyn.getConstantClosed pred) then
 	  let expdef = (Absyn.getConstantExportDef pred) in
-	  if (Absyn.constantHasCode pred) && 
-		((not (Absyn.isGlobalConstant pred)) || expdef) then
-		let (instr, size) = 
-		  (Instr.Ins_execute(ref 0), Instr.getSize_execute)
-		in
-		addBackPatchExecute pred instr;
-		([instr], size, goalNum)
+	  if (Absyn.constantHasCode pred) &&
+	    ((not (Absyn.isGlobalConstant pred)) || expdef) then
+	    if (Absyn.isAnonymousConstant pred) then
+	      let (instr, size) =
+		(Instr.Ins_execute(ref 0), Instr.getSize_execute)
+	      in
+	      addBackPatchExecute pred instr;
+	      ([instr], size, goalNum)
+	    else
+	      ([Instr.Ins_execute_link_only(pred)], Instr.getSize_execute_link_only,
+	       goalNum)
 	  else (* do not have code *)
 		if (expdef) then ([Instr.Ins_fail], Instr.getSize_fail, goalNum)
 		else 
 		  ([Instr.Ins_execute_name(pred)], Instr.getSize_execute_name, 
 		   goalNum)
 	else (* not closed *)
-	  ([Instr.Ins_execute_name(pred)], Instr.getSize_execute_name,
+	   ([Instr.Ins_execute_name(pred)], Instr.getSize_execute_name,
 	   goalNum) 
   in
 
@@ -1716,12 +1720,16 @@ and genAtomicGoal goal cl goalNum last chunk chunks insts startLoc =
 	if (Absyn.getConstantClosed pred) then
 	  let expdef = (Absyn.getConstantExportDef pred) in
 	  if (Absyn.constantHasCode pred) && 
-		((not (Absyn.isGlobalConstant pred)) || expdef) then
+	    ((not (Absyn.isGlobalConstant pred)) || expdef) then
+	    if (Absyn.isAnonymousConstant pred) then
 		let (instr, size) = 
 		  (Instr.Ins_call(envsize, ref 0), Instr.getSize_call)
 		in
 		addBackPatchCall pred instr;
 		([instr], size, myGoalNum)
+	    else
+	      ([Instr.Ins_call_link_only(envsize, pred)], Instr.getSize_call_link_only,
+	       goalNum)
 	  else (* do not have code *)
 		if (expdef) then ([Instr.Ins_fail], Instr.getSize_fail, myGoalNum)
 		else 
