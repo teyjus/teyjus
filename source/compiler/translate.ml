@@ -435,7 +435,7 @@ and translateKind = fun kind buildkind klist ->
 **********************************************************************)
 and buildGlobalConstant = fun sym ty tyskel esize pos ->
   Absyn.Constant(sym, ref Absyn.NoFixity, ref (-1), ref false, ref false,
-    ref false, ref false, ref false, ref false, tyskel,
+    ref false, ref true, ref false, ref false, tyskel,
     ref esize, ref (Some(Array.make esize true)), ref (Some(Array.make esize true)),
     ref None, ref Absyn.GlobalConstant, ref 0, pos)
 
@@ -447,7 +447,7 @@ and translateGlobalConstants clist kindtable typeabbrevtable =
 **********************************************************************)
 and buildLocalConstant = fun sym ty tyskel esize pos ->
   Absyn.Constant(sym, ref Absyn.NoFixity, ref (-1), ref false, ref false,
-    ref false, ref false, ref false, ref false, tyskel,
+    ref false, ref true, ref false, ref false, tyskel,
     ref esize, ref (Some(Array.make esize true)), ref (Some(Array.make esize true)),
     ref None, ref Absyn.LocalConstant, ref 0, pos)
 
@@ -460,7 +460,7 @@ and translateLocalConstants clist kindtable typeabbrevtable =
 and translateUseOnlyConstants = fun clist kindtable typeabbrevtable ->
   let buildConstant = fun sym ty tyskel esize pos ->
     Absyn.Constant(sym, ref Absyn.NoFixity, ref (-1), ref false, ref true,
-      ref false, ref false, ref false, ref false, tyskel,
+      ref false, ref true, ref false, ref false, tyskel,
       ref esize, ref (Some(Array.make esize true)), ref (Some(Array.make esize true)),
       ref None, ref Absyn.GlobalConstant, ref 0, pos)
   in
