@@ -218,4 +218,11 @@ void SINSTR_builtin();
 void SINSTR_stop();
 void SINSTR_halt();
 void SINSTR_fail();
+
+/**************************************************************************/
+/*       linker only                                                      */
+/**************************************************************************/
+void SINSTR_execute_link_only();
+void SINSTR_call_link_only();
+
 #endif //SIMINSTR_H

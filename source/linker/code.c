@@ -62,7 +62,7 @@ void InitOffsets()
       case INSTR_I1:
         callOffsets[CALL][ADDR][ARITY]=j++;
         break;
-        
+
       case INSTR_L:
         callOffsets[CALL][ADDR][LABEL]=j;
         j+=sizeof(CodeInd);
@@ -88,7 +88,7 @@ void InitOffsets()
       case INSTR_WP:
         j+=sizeof(Word);
         break;
-          
+ 
       case INSTR_L:
         callOffsets[EXECUTE][ADDR][LABEL]=j;
         j+=sizeof(CodeInd);
@@ -200,7 +200,7 @@ void LoadCode(int fd, struct Module_st* CMData)
     j=i;
     opcode=code[j++]=LK_FILE_GET1(fd);
     debug("\t%lx:%lx:[%x]%s\n",lseek(fd,0,SEEK_CUR)-1,i,opcode,INSTR_instrName(opcode));
-    if(opcode==call)
+    if(opcode==call_link_only)
     {
       code[j]=LK_FILE_GET1(fd);
       tmpIndex=GetConstInd(fd,CMData);
@@ -209,7 +209,7 @@ void LoadCode(int fd, struct Module_st* CMData)
       
       continue;
     }
-    else if(opcode==execute)
+    else if(opcode==execute_link_only)
     {
       tmpIndex=GetConstInd(fd,CMData);
       PushCall(CMData->Pit,tmpIndex,offset+i,-1);
