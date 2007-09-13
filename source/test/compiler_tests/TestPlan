@@ -49,15 +49,17 @@ Clause structures:
 Variables in clauses:
 =====================
 
-  (1) permanent and temporary variables
+  (1) permanent and temporary variables         -- test11
 
-  (2) universal quantified variables in goals
+  (2) universal quantified variables in goals   -- test12
 
   (3) universal quantified variables in the antecedent of implication goals
+                                                -- test13
   
-  (4) existential quantified variables in goals
+  (4) existential quantified variables in goals -- test14
 
   (5) existential quantified variables in the antecedent of implication goals
+                                                -- test15
 
 
 Accumulates/imports
