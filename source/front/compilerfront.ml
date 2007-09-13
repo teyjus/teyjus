@@ -22,6 +22,12 @@ let compile basename outfile =
 	Clauses.translateClauses modresult absyn in
   let _ = abort_on_error () in
 
+  (*
+  let outchannel = Compile.openFile (basename ^ ".clauses.txt") open_out in
+   Clauses.printTranslatedClauses clauses newclauses outchannel;
+   Compile.closeFile outchannel close_out;
+  *)
+
   (* Reduce skeleton *)
   let absyn = Typereduction.reduceSkeletons absyn in
   let _ = abort_on_error () in
