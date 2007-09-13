@@ -467,11 +467,11 @@ and deOrifyUniversalGoal t arg1 uvs uvdefs andgoal wholegoal newclauses hcs =
 
   if List.memq tsym fvs' then
     let fvs'' = (List.filter ((<>) tsym) fvs') in
-	let goals'' = distributeQuantifierTerms t tsym goals' andgoal in 
+    let goals'' = distributeQuantifierTerms t tsym goals' andgoal in 
     (* let goals'' = distributeQuantifierTerms t tsym newgoals andgoal in *)
     DeOrifyGoalResult(goals'', fvs'', uvdefs'', hascut', newclauses', hcs'')
   else
-	let goals'' = distributeAndGoal goals' [] andgoal in 
+    let goals'' = distributeAndGoal goals' [] andgoal in
     (* let goals'' = distributeAndGoal newgoals [] andgoal in *)
     DeOrifyGoalResult(goals'', fvs', uvdefs'', hascut', newclauses', hcs'')
 
@@ -633,7 +633,7 @@ and deOrifyImplicationGoal clause goal uvs uvdefs andgoal wholegoal newclauses h
     let goal'' = getGoal goal' andgoal in
     let uvdefs' = addNewUVDefs defuvs goal'' uvdefs in
     
-    DeOrifyGoalResult([goal''], fvs, uvdefs', hascut, newclauses'', hcs'')
+    DeOrifyGoalResult([goal''], union fvs' fvs, uvdefs', hascut, newclauses'', hcs'')
   else
     DeOrifyGoalResult([], [], [], false, newclauses, hcs')
 
