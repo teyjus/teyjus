@@ -20,10 +20,14 @@ type unifyresult =
 
 exception UnifyException of unifyresult
 exception EqualMappedTypeSkelsFailure
+
 (**********************************************************************
 *constantType:
 * Constructs the type of the given constant, building an appropriate
 * environment.
+*
+* Arguments:
+*   parsingtoplevel
 **********************************************************************)
 let makeConstantMolecule parsingtoplevel constant =
   let env = ref [] in
@@ -527,8 +531,7 @@ let clashError = fun fargty argty term ->
   Errormsg.error (Absyn.getTermPos term) ("clash in operator and operand types" ^
     (Errormsg.info ("Expected operand type: " ^ expected)) ^
     (Errormsg.info ("Actual operand type: " ^ actual)) ^
-    (Errormsg.info ("in expression: " ^ (Absyn.string_of_term term))) ^
-    (Errormsg.info ("ast: " ^ (Absyn.string_of_term_ast term))))
+    (Errormsg.info ("in expression: " ^ (Absyn.string_of_term term))))
 
 (**********************************************************************
 *occursCheckError:
@@ -735,18 +738,23 @@ and getNewVarsInType ty ftyvars =
         Errormsg.impossible Errormsg.none
           "Types.getNewVarsInTypes: unexpected form encountered in type"
 
-(*************************************************************************************
- * getNewVarsInTypeMol: like getNewVarsInType, except that there is a need to carry  
- * out a two step process in this case, one for the (possible) skeleton and one for  
- * any environment types
- ************************************************************************************)
+(**********************************************************************
+*getNewVarsInTypeMol:
+* Like getNewVarsInType, except that there is a need to carry out a
+* two step process in this case, one for the (possible) skeleton and one
+* for any environment types
+**********************************************************************)
 let getNewVarsInTypeMol (Molecule(ty,tyenv)) ftyvars =
        let ftyvars' = getNewVarsInType ty ftyvars in
          getNewVarsInTypes tyenv ftyvars'
 
-(**********************************************************************************)
-(* resolve type set type                                                          *)
-(**********************************************************************************)
+(**********************************************************************
+*replaceTypeSetType:
+* Replaces a type set type with a regular type.  If the type set contains
+* more than one type, it returns the type set default.  If the type
+* set contains only one type, that type is returned.  Any other case
+* is an error.
+**********************************************************************)
 let replaceTypeSetType t =
   let t' = Absyn.dereferenceType t in
   match t' with
@@ -762,10 +770,11 @@ let replaceTypeSetType t =
   | _ -> t'
 		
 
-(**********************************************************************************)
-(* for testing                                                                    *)
-(**********************************************************************************)  
-
+(**********************************************************************
+*unitTests:
+* Simple "tests" to check if various functions provide reasonable
+* output; the output has to be checked "by hand".
+**********************************************************************)
 let unitTests () =
   let test tmol1 tmol2 =
     let _ = Errormsg.log Errormsg.none ("Unifying " ^ (string_of_typemolecule tmol1) ^ " ; " ^ (string_of_typemolecule tmol2)) in

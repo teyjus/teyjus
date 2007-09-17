@@ -759,6 +759,17 @@ let constantHasCode = function
      Some(_) -> true
    | None -> false
 
+(**********************************************************************
+*getConstantTypeEnvSize:
+* Gets the size of the type environment.
+*
+* Arguments:
+*   search: indicates whether to or not to search the constant's type
+*     for the maximum skeleton index (and therefore size) or to simply
+*     look at the constant's environment size entry.
+*   constant: the constant in question.
+*
+**********************************************************************)
 let getConstantTypeEnvSize search constant =
   (*  For keeping track of the maximum skeleton index.  *)
   let max = ref (-1) in
@@ -794,7 +805,6 @@ let getConstantTypeEnvSize search constant =
     !s
     
   
-    
 let getConstantTypeEnvSizeRef = function
   Constant(_,_,_,_,_,_,_,_,_,_,s,_,_,_,_,_,_) ->
     s
@@ -820,8 +830,9 @@ let getConstantNeedednessValue = function
     if Option.isSome (!n) then
       Option.get (!n)
     else
-      Errormsg.impossible Errormsg.none 
-                          "Absyn.getConstantNeedednessValue: invalid neededness"
+      Errormsg.impossible
+        Errormsg.none 
+        "Absyn.getConstantNeedednessValue: invalid neededness"
 
 let getConstantNoDefs = function
   Constant(_,_,_,_,_,nd,_,_,_,_,_,_,_,_,_,_,_) ->
@@ -934,7 +945,7 @@ let getTypeSymbolHiddenConstant tsym =
       Some(c) -> c
     | None -> Errormsg.impossible 
                    Errormsg.none 
-                   "getTypeSymbolHiddenConstant: type symbol has no constant"
+                   "Absyn.getTypeSymbolHiddenConstant: type symbol has no constant"
   in  
   get' !(getTypeSymbolHiddenConstantRef tsym)
 
@@ -944,7 +955,7 @@ let getTypeSymbolType ty =
     if Option.isSome t then
       Option.get t
     else
-      Errormsg.impossible Errormsg.none "getTypeSymbolType: invalid type"
+      Errormsg.impossible Errormsg.none "Absyn.getTypeSymbolType: invalid type"
   in
   match ty with
     ImplicitVar(_,_,_,t) -> get' !t
@@ -1084,7 +1095,7 @@ let rec needsParens = fun opfix opprec context fix prec ->
       
       | Infixl -> checkLeft ()
       | Postfixl -> checkLeft ()
-      | _ -> (Errormsg.impossible Errormsg.none "needsParens: invalid fixity"))
+      | _ -> (Errormsg.impossible Errormsg.none "Absyn.needsParens: invalid fixity"))
 
   | RightTermContext ->
       (match fix with
@@ -1114,7 +1125,35 @@ let getTermAbstractionBody = function
 let getTermAbstractionNumberOfLambda = function
   AbstractionTerm(UNestedAbstraction(_,n,_),_,_) -> n
 | _ -> Errormsg.impossible Errormsg.none 
-         "getTermAbstractionNumberOfLambda: invalid term"
+         "Absyn.getTermAbstractionNumberOfLambda: invalid term"
+
+(* application term *)
+(********************************************************************
+*getTermApplicationHeadAndArguments:
+* Gets the clause head and arguments, flattening an applications at
+* the head.
+********************************************************************)
+let rec getTermApplicationHeadAndArguments term =  
+  match term with
+    ApplicationTerm(FirstOrderApplication(t', args, _), _, pos) ->
+      let (head, args') = getTermApplicationHeadAndArguments t' in
+      (head, args' @ args)
+  | ApplicationTerm(CurriedApplication(l,r),_,pos) ->
+      let (head, args') = getTermApplicationHeadAndArguments l in
+      (head, args' @ [r])
+  | _ -> (term, [])
+
+let rec getTermApplicationHead t =
+  let (f,_) = getTermApplicationHeadAndArguments t in
+  f
+
+let rec getTermApplicationArguments t =
+  let (_,args) = getTermApplicationHeadAndArguments t in
+  args
+ 
+let getTermApplicationArity t = 
+  let (_,args) = getTermApplicationHeadAndArguments t in
+  List.length args
 
 (* Converts an absyn term to a string representation. *)
 let rec string_of_term_ast term =
@@ -1171,9 +1210,11 @@ and string_of_term term =
   and string_of_infixterm = fun op opfix args context fix prec ->
     let opprec = getConstantPrec op in
     let paren = needsParens opfix opprec context fix prec in
-    let result = (string_of_term' (List.hd args) LeftTermContext opfix opprec) ^ 
-      " " ^ (string_of_term' (List.hd (List.tl args)) RightTermContext opfix opprec) 
-          ^ " " ^ (getConstantName op) in
+    let result =
+      (string_of_term' (List.hd args) LeftTermContext opfix opprec) ^ 
+        " " ^ (getConstantName op) ^ " " ^
+        (string_of_term' (List.hd (List.tl args)) RightTermContext opfix opprec)
+    in
     
     if paren then
       "(" ^ result ^ ")"
@@ -1191,7 +1232,7 @@ and string_of_term term =
     else
       result
   
-  and string_of_app = fun term context fix prec ->
+  and string_of_app term context fix prec =
     let rec string_of_args args =
       match args with
           [] -> ""
@@ -1279,15 +1320,11 @@ and string_of_term term =
           (head ^ " " ^ (string_of_args args'))
         else
           head
-    | ApplicationTerm(CurriedApplication(l, r),_,_) ->
-        let paren = needsParens appFixity appPrec context fix prec in
-        let result = (string_of_term' l LeftTermContext appFixity appPrec) 
-                             ^ " " 
-                             ^ (string_of_term' r RightTermContext appFixity appPrec) in
-        if paren then
-          "(" ^ result ^ ")"
-        else
-          result
+    | ApplicationTerm(CurriedApplication(h, r),b,p) ->
+        let (head,args) = getTermApplicationHeadAndArguments term in
+        let term' = 
+          ApplicationTerm(FirstOrderApplication(head, args, List.length args), b,p) in
+        string_of_app term' context fix prec
     | _ -> Errormsg.impossible (getTermPos term) "string_of_app: term not an application"
 
   and string_of_abstraction = fun term context fix prec ->
@@ -1397,34 +1434,6 @@ let getTermConstantTypeEnv = function
 let isTermConstant = function
   ConstantTerm(_) -> true
 | _ -> false
-
-(* application term *)
-(********************************************************************
-*getTermApplicationHeadAndArguments:
-* Gets the clause head and arguments, flattening an applications at
-* the head.
-********************************************************************)
-let rec getTermApplicationHeadAndArguments term =  
-  match term with
-    ApplicationTerm(FirstOrderApplication(t', args, _), _, pos) ->
-      let (head, args') = getTermApplicationHeadAndArguments t' in
-      (head, args' @ args)
-  | ApplicationTerm(CurriedApplication(l,r),_,pos) ->
-      let (head, args') = getTermApplicationHeadAndArguments l in
-      (head, args' @ [r])
-  | _ -> (term, [])
-
-let rec getTermApplicationHead t =
-  let (f,_) = getTermApplicationHeadAndArguments t in
-  f
-
-let rec getTermApplicationArguments t =
-  let (_,args) = getTermApplicationHeadAndArguments t in
-  args
- 
-let getTermApplicationArity t = 
-  let (_,args) = getTermApplicationHeadAndArguments t in
-  List.length args
 
 (*************************************************************************)
 (*  astringinfo:                                                         *)
