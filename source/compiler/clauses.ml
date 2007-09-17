@@ -3,9 +3,9 @@ type pos = Errormsg.pos
 
 (* used for record hidden constant and implication goal pairs which *)
 (* indicate the position where its definition should be closed.     *)
-type closeddefinition = (Absyn.aconstant * Absyn.aterm) list
+type closeddefinition = (Absyn.aconstant * Absyn.aterm)
 
-let closedDefs : closeddefinition ref = ref []
+let closedDefs = ref []
 let initClosedDefs () = closedDefs := []
 let getClosedDefs ()  = !closedDefs
 let addClosedDef  defPair = closedDefs := (defPair :: !closedDefs)
@@ -55,13 +55,26 @@ type deorifyclauseresult =
 let getUniversalDefinitionTypeSymbol = function
   (tsym,_) -> tsym
 
+(**********************************************************************
+*illegalConstant:
+* Determines whether the given constant is illegal in the arguments
+* to a predicate; this is the case if the constant represents an
+* implication ("=>" or ":-").  If this is the case, an error message
+* is printed using the given position information.
+**********************************************************************)
+let illegalConstant c pos =
+  if c == Pervasive.implConstant || c == Pervasive.colondashConstant then
+    (Errormsg.error pos ("symbol " ^ (Absyn.getConstantName c) ^
+      " cannot be embedded in predicate arguments");
+    true)
+  else
+    false
+
 (********************************************************************
 *union:
-* Returns the union of two lists of free variables.
+* Returns the union of two lists of free variables.  Takes care
+* to ensure that no duplicates are introduced.
 ********************************************************************)
-(*let rec union fvs1 fvs2 =
-  fvs1 @ fvs2
-*)
 let union fvs1 fvs2 =
   let rec union_aux fvs2 result =
     match fvs2 with 
@@ -71,7 +84,6 @@ let union fvs1 fvs2 =
 	else union_aux rest (fv::result)
   in
   fvs1 @ (union_aux fvs2 [])
-
 
 (********************************************************************
 *makeHiddenConstant:
@@ -222,7 +234,7 @@ and collectFreeVars term fvs bvs =
       else
         (term, fvs)
   | Absyn.ConstantTerm(c,_,_,pos) ->
-      if Parse.illegalConstant c pos then
+      if illegalConstant c pos then
         (Absyn.errorTerm, [])
       else
         (term, fvs)
@@ -975,28 +987,6 @@ and normalizeClause clauseterm clauses uvs uvdefs embedded =
 	| _ ->
 		(Errormsg.impossible (Absyn.getTermPos t) ("Clauses.normalizeClause: Invalid term type: " ^
 				  (Absyn.string_of_term_ast t) ^ "; " ^ (Absyn.string_of_term_ast clauseterm)))
-		  
-(**********************************************************************
-*newKind:
-* Callback used when the term parser encounters an undefined kind.
-* Any undefined kind is flagged as an error.
-**********************************************************************)
-and newKind sym arity pos ktable=
-  let k = Absyn.Kind(sym, Some arity, ref 0, Absyn.LocalKind, pos) in
-  let ktable' = Table.add sym k ktable in
-  (if arity > 0 then
-    Errormsg.error pos ("undefined type constructor " ^
-      (Symbol.name sym) ^ " of arity " ^ (string_of_int arity))
-  else
-    Errormsg.error pos ("undefined sort " ^ (Symbol.name sym));
-  ktable')
-
-(**********************************************************************
-*newConstant:
-* Callback used whn the term parser encounters an undefined constant.
-*************=********************************************************)
-and newConstant sym ctable =
-  ctable
 
 (**********************************************************************
 *translateClauses:
@@ -1027,7 +1017,7 @@ and translateClauses pmod amod =
   let translateClause preclause amod clauses newclauses hcs =
     let preterm = Preabsyn.getClauseTerm preclause in
     let clause =
-      Parse.translateClause preterm amod newConstant newKind in
+      Parse.translateClause preterm amod in
     
     let uvdefs = ref [] in
     let clauses' = normalizeClause clause [] [] uvdefs false in

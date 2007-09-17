@@ -9,8 +9,10 @@ let hashtable = Hashtbl.create 1
 
 let nextsym = ref 0
 
+let equal (s,_) (s',_) = s == s'
+
 let name (s,n) = s
-let symbol = fun(s: string) ->
+let symbol s =
   try
     (s, (Hashtbl.find hashtable s))
   with

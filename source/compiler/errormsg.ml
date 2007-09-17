@@ -1,11 +1,5 @@
 (**********************************************************************
-*ErrorMsg Module:
-*	In the short run this is used simply to output meaningful error
-*	messages with respect to character and line position.  In the long
-*	run this will eventually allow for such things as specifying warnings
-*	to ignore and the like.
-*
-*	This has not yet been tested almost at all.
+*ErrorMsg
 **********************************************************************)
 exception InternalError
 open Lexing
@@ -51,7 +45,7 @@ let rec printPosition = fun p ->
 *reset:
 * Just resets the error message module.
 ********************************************************************)
-let reset = fun () -> anyErrors:=false
+let reset = fun () -> anyErrors := false
 
 (********************************************************************
 *info:
