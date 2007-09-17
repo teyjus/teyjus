@@ -238,7 +238,7 @@ let popStack = function
 * Given an abstract syntax representation of a module and a list of
 * preabsyn terms, generates a list of absyn clauses.
 **********************************************************************)
-let rec translateClause term amodule newconstant newkind =
+let rec translateClause term amodule =
   let (tty, _) = parseTerm false false term [] [] amodule in
   let term' = getTermTerm tty in
   let type' = getTermMolecule tty in
@@ -305,17 +305,18 @@ and translateTerm term amodule =
 * Translate a preabstract syntax structure that is known to correspond to
 * an abstract syntax term in its entirety. The parameters are as follows:
 *
-*   parsingtoplevel : Zach, can you fill this?
+*   parsingtoplevel : boolean indicating whether this term was read at the
+*     top level.
 *   inlist : indicator of how to read commas, i.e. a flag signalling 
-             whether or not in list ctxt
+*            whether or not in list ctxt
 *   term : the preabstract syntax term to be transformed
 *   fvs : the set of free variables in the term seen so far (a list)
 *   bvs : a list of variables with binders in enclosing context
 *   amodule : a (partial) module structure in abstract syntax form that 
 *             provides the kind and type signatures for parsing
 *
-* The returned value is a pair consisting of a term-type pair and a list of 
-* free variables appearing in the term
+* The returned value is a pair consisting of a term-type pair and a list
+* of free variables appearing in the term.
 **********************************************************************)
 and parseTerm parsingtoplevel inlist term fvs bvs amodule =
   match term with
@@ -375,13 +376,33 @@ and parseTerm parsingtoplevel inlist term fvs bvs amodule =
 
 (**********************************************************************
 *parseTerms:
-* Translate a list of preabsyn terms into abstract syntax.  Executes
-* the given operation upon successful translation of the list.
+* Translates a list of preabsyn terms into abstract syntax.  It does so
+* by parsing each individual term in the list using parseTerm.
+*
+* Arguments:
+*   parsingtoplevel: a boolean flag indicating whether the function is
+*     parsing a term at the toplevel (in "interactive" mode) or a
+*     clause in a file (see translateTerm, translateClause).
+*   inlist: a boolean flag indicating whether the function is parsing
+*     within a list.  This is used to decided whether to parse a comma
+*     as a list separator or a conjunction operator.
+*   terms: the list of terms in preabstract syntax to parse.
+*   fvs: the set of free variables in the term so far.
+*   bvs: the set of variables with binders in the enclosing context.
+*   amodule: the abstract syntax module against whose definitions this
+*     term list is being parsed.
+*   stack: the current parse stack.
+* Returns:
+*   The updated stack.
+*   The given free variable set updated with any new free variables.
 **********************************************************************)
 and parseTerms parsingtoplevel inlist terms fvs bvs amodule stack =
   (********************************************************************
   *translate':
-  * Translate an individual term in the list.
+  * Translate an individual term in the list.  The general case is one
+  * in which the term is parsed using parseTerm, the returned term is
+  * stacked as a term (not an operation), and the returned free variables
+  * are themselves returned.
   ********************************************************************)
   let translate' t =
     (******************************************************************
@@ -399,12 +420,20 @@ and parseTerms parsingtoplevel inlist terms fvs bvs amodule stack =
     in
     
     (match t with
-      Preabsyn.SeqTerm(_) -> simple ()
-    | Preabsyn.ListTerm(_) -> simple ()
-    | Preabsyn.ConsTerm(_) -> simple ()
-    | Preabsyn.IntTerm(_) -> simple ()
-    | Preabsyn.RealTerm(_) -> simple ()
-    | Preabsyn.StringTerm(_) -> simple ()
+      Preabsyn.SeqTerm(_)
+    | Preabsyn.ListTerm(_)
+    | Preabsyn.ConsTerm(_)
+    | Preabsyn.IntTerm(_)
+    | Preabsyn.RealTerm(_)
+    | Preabsyn.StringTerm(_)
+    | Preabsyn.LambdaTerm(_) ->
+        let (term', fvs') =
+          (parseTerm parsingtoplevel inlist t fvs bvs amodule) in
+        (try
+          let st = stackTerm parsingtoplevel term' amodule stack in
+          (st, fvs')
+        with
+          TermException -> (errorStack,fvs))
     | Preabsyn.IdTerm(_) ->
         let (ot, fvs') = (translateId parsingtoplevel inlist t fvs bvs amodule) 
         in
@@ -417,7 +446,6 @@ and parseTerms parsingtoplevel inlist terms fvs bvs amodule stack =
           | StackError -> (errorStack, fvs'))
         with
           TermException -> (errorStack, fvs'))
-    | Preabsyn.LambdaTerm(_) -> simple ()
     | Preabsyn.ErrorTerm -> (errorStack, fvs))
   in
 
@@ -456,8 +484,22 @@ and parseTypeSymbols tsymlist amodule =
 
 (**********************************************************************
 *translateId:
-* Converts a preabsyn ID to an absyn representation.  How it does so
-* depends on what sort of ID it is.  A better description is in order.
+* Converts a preabsyn id to an absyn representation.  How it does so
+* depends on what sort of id it is:
+*   Anonymous variables ("_"): a fresh variable is created.
+*   Named variables ("_foo", "_bar"): the variable name is looked up in
+*     the list of free variables.  If it exists the already existing
+*     variable is returned, otherwise a new variable is generated and
+*     added to the list of free varaibles.
+*   Ids: the name is looked up first in the bound variable list.  If it
+*     exists the associated variable is returned.  If it doesn't, the
+*     name is looked up the absyn module's constant table.  If it exists
+*     a constant term is created, with special care being taken to ensure
+*     that a list separator is returned when a comma is encountered while
+*     parsing within a list term ("[foo, bar, baz]").  If it doesn't
+*     exist and the name begins with a capital letter it is treated
+*     exactly like a named variable (see above); if the name doesn't begin
+*     with a capital it is treated as an unknown constant.
 **********************************************************************)
 and translateId parsingtoplevel inlist term fvs bvs amodule =
   match term with
@@ -581,7 +623,15 @@ and varToOpTerm term typesym fvs bvs amodule makeVarFunc =
 
 (**********************************************************************
 *reduceToTerm:
-* Reduces the given stack to a term.  
+* Reduces the given stack to a term.
+*   Arguments:
+*     parsingtoplevel: boolean indicating that we are parsing a term from
+*       the top-level interface and not a source file.
+*     fvs: free variables
+*     amodule: the associated absyn module
+*     stack: the current parse stack.
+*   Returns:
+*
 **********************************************************************)
 and reduceToTerm parsingtoplevel fvs amodule stack =
   (********************************************************************
@@ -594,7 +644,6 @@ and reduceToTerm parsingtoplevel fvs amodule stack =
           let term = (getStackTermTerm (stackTop stack)) in (term, fvs)
 
       | ErrorState -> (errorTerm, fvs)
-
       | _ ->
           try
             let stack' = reduceOperation parsingtoplevel amodule stack in
@@ -616,28 +665,43 @@ and reduceToTerm parsingtoplevel fvs amodule stack =
   in
 
   match (getStackState stack) with
-    PrefixState -> (err ())
-  | PrefixrState -> (err ())
-  | InfixState -> (err ())
-  | InfixrState -> (err ())
+    PrefixState
+  | PrefixrState
+  | InfixState
+  | InfixrState ->
+      let term = (getTermTerm (getStackTermTerm (stackTop stack))) in
+      let pos = Absyn.getTermPos term in
+      let fixity = 
+        (Absyn.string_of_fixity
+          (Absyn.getConstantFixity 
+          (getStackOpConstant (stackTop stack)))) in
+
+      (Errormsg.error pos ("missing right argument for " ^ fixity ^ " operator");
+      (errorTerm, fvs))
   | _ -> (reduce' stack)
 
 (**********************************************************************
 *reduceOperation:
+* Reduces an operation at the top of the stack.  There is a special
+* case for the list separator: it is changed to a cons operator.
 *
-*  Reduces an operation at the top of the stack.  There is a special
-*  case for the list separator: it is changed to a cons operator.
-*
-*  The main complexity in this function is that of dealing with special cases
-*  for the stack operator. There are two, both pertaining to infix operators.
+* The main complexity in this function is that of dealing with special cases
+* for the stack operator. There are two, both pertaining to infix operators.
 * 
-*  First, it could be a "pseudo-application".  In this case, the two terms 
-*  "around" it are applied to each other and the app disappears.
+* First, it could be a "pseudo-application".  In this case, the two terms 
+* "around" it are applied to each other and the app disappears.
 *
-*  Then there is the case of a comma or list separator. This needs to be 
-*  transformed into a cons; the list separator operator was put into the 
-*  stack instead of the cons during the earlier phase because this has 
-*  lower precedence. 
+* Then there is the case of a comma or list separator. This needs to be 
+* transformed into a cons; the list separator operator was put into the 
+* stack instead of the cons during the earlier phase because this has 
+* lower precedence.
+*
+* Arguments:
+*   parsingtoplevel:  boolean indicating that we are parsing a term from
+*       the top-level interface and not a source file.
+*   amodule: the absyn module
+*   stack: the current parse stack
+* Returns:
 **********************************************************************)
 and reduceOperation parsingtoplevel amodule stack =
   (********************************************************************
@@ -727,7 +791,6 @@ and reduceOperation parsingtoplevel amodule stack =
   in
   
   (*  The actual code for reduceOperation *)
-  
   let ot = List.hd (List.tl (getStackStack stack)) in
   match ot with
     StackOp(c,_,_) -> 
@@ -770,6 +833,7 @@ and stackTerm parsingtoplevel term amodule stack =
   | InfixrWithArgState
   | PostfixState
   | TermState -> stackApply ()
+  | ErrorState -> stack
   | _ -> Errormsg.impossible (Absyn.getTermPos (getTermTerm term)) 
                              ("Parse.stackTerm: invalid stack state " 
                                       ^ (string_of_parserstate state))
@@ -1184,15 +1248,16 @@ and removeOverloads term =
 
 (**********************************************************************
 *removeNestedAbstractions:
-*  Converts a term in which every abstraction is over a single variable into a
-*  term in which abstractions are over lists of variables AND there are no 
-*  abstractions nested immediately within other abstractions. The former kind of
-*  abstraction has the form Absyn.AbstractionTerm(Absyn.NestedAbstraction(...),...))
-*  and the latter has the form 
-*  Absyn.AbstractionTerm(Absyn.UNestedAbstraction(...),...)). Notice that in the 
-*  latter representation the deepest abstracted variable appears earliest in the 
-*  list, i.e. (lam x lam y t) will have the list of abstracted variables as
-*  [y,x] and NOT as [x,y].
+* Converts a term in which every abstraction is over a single variable into a
+* term in which abstractions are over lists of variables AND there are no 
+* abstractions nested immediately within other abstractions. The former kind of
+* abstraction has the form:
+*   Absyn.AbstractionTerm(Absyn.NestedAbstraction(...),...))
+* and the latter has the form:
+*   Absyn.AbstractionTerm(Absyn.UNestedAbstraction(...),...)).
+* Notice that in the latter representation the deepest abstracted variable
+* appears earliest in the  list, i.e. (lam x lam y t) will have the list
+* of abstracted variables as [y,x] and NOT as [x,y].
 **********************************************************************)
 and removeNestedAbstractions term =
   let rec remove term =
@@ -1482,17 +1547,6 @@ and fixTerm term =
             
   in let (t,fvars,ftyvars,_) = fixTerm' term [] [] [] in
   (t,fvars,ftyvars)  
-
-(**********************************************************************
-*illegalConstant:
-**********************************************************************)
-let illegalConstant c pos =
-  if c == Pervasive.implConstant || c == Pervasive.colondashConstant then
-    (Errormsg.error pos ("symbol " ^ (Absyn.getConstantName c) ^
-      " cannot be embedded in predicate arguments");
-    true)
-  else
-    false
 
 let unitTests () =
   let absyn = Absyn.Module("UnitTests", [], [],
