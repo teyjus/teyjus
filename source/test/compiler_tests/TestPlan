@@ -65,11 +65,13 @@ Variables in clauses:
 Accumulates/imports
 ====================
 
-  (1) renaming:
+  (1) renaming:                                 -- test16
       a. global - local renaming
       b. global - global renaming
 
-  (2) combine definitions
+  (2) call_link_only, execute_link_only         -- test17
+
+  (2) combine definitions                       -- test18
 
 
 
