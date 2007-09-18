@@ -404,21 +404,7 @@ and parseTerms parsingtoplevel inlist terms fvs bvs amodule stack =
   * stacked as a term (not an operation), and the returned free variables
   * are themselves returned.
   ********************************************************************)
-  let translate' t =
-    (******************************************************************
-    *simple:
-    * Translate the current term as usual and attempt to stack it.
-    ******************************************************************)
-    let simple () =
-      let (term', fvs') =
-        (parseTerm parsingtoplevel inlist t fvs bvs amodule) in
-      try
-        let st = stackTerm parsingtoplevel term' amodule stack in
-        (st, fvs')
-      with
-        TermException -> (errorStack,fvs)
-    in
-    
+  let translate' t =    
     (match t with
       Preabsyn.SeqTerm(_)
     | Preabsyn.ListTerm(_)
@@ -653,17 +639,6 @@ and reduceToTerm parsingtoplevel fvs amodule stack =
   in
   
   (*  Called when the top of the stack indicates an error.  *)
-  let err () =
-    let term = (getTermTerm (getStackTermTerm (stackTop stack))) in
-    let pos = Absyn.getTermPos term in
-    let fixity = 
-         (Absyn.string_of_fixity (Absyn.getConstantFixity 
-                                       (getStackOpConstant (stackTop stack)))) in
-    
-    (Errormsg.error pos ("missing right argument for " ^ fixity ^ " operator");
-    (errorTerm, fvs))
-  in
-
   match (getStackState stack) with
     PrefixState
   | PrefixrState
@@ -834,9 +809,6 @@ and stackTerm parsingtoplevel term amodule stack =
   | PostfixState
   | TermState -> stackApply ()
   | ErrorState -> stack
-  | _ -> Errormsg.impossible (Absyn.getTermPos (getTermTerm term)) 
-                             ("Parse.stackTerm: invalid stack state " 
-                                      ^ (string_of_parserstate state))
 
 (**********************************************************************
 *stackOperation:
