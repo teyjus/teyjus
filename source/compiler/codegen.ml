@@ -570,13 +570,21 @@ let breakClauses cls =
 (************************************************************************)
 (* generating an indexed sequence of code for a list of variable clauses*)
 (************************************************************************)
-let genVarClausesCode cls isbeginning isend insts startLoc =
+let genVarClausesCode cls isbeginning isend insts startLoc needTryMeElse =
   let numArgs = Absyn.getClauseNumberOfArgs (List.hd cls) in 
  
   (* generate instruction for a single clause clauses list*)
   let genSingleVarClause cl insts startLoc =
 	match isbeginning, isend with 
-	  true,  true  -> Clausegen.genClauseCode cl insts startLoc
+	  true,  true  ->
+	    if needTryMeElse then
+	      (* place holder: try_me_else 0, fail *)
+	      let try_me_else = Instr.Ins_try_me_else(0, ref failInstrLoc)
+	      in
+	      Clausegen.genClauseCode cl (insts @ [try_me_else]) 
+		(startLoc + Instr.getSize_try_me_else)
+	    else
+	       Clausegen.genClauseCode cl insts startLoc
 	| true,  false ->
 		(*   try_me_else numArgs L *)
 		let nextCodeLocRef = ref 0 in
@@ -806,7 +814,7 @@ let genSwConstCode partition insts startLoc =
 (* heads for the first argument followed by a list of 'variable head'      *)
 (* clauses.                                                                *)
 (***************************************************************************)
-let genPartitionCode partition isbeginning isend insts startLoc =
+let genPartitionCode partition isbeginning isend insts startLoc needTryMeElse =
   
   let genSwitchOnTerm allcls conscls partition insts startLoc =
 	(*    switch_on_term V C L V *)
@@ -817,9 +825,9 @@ let genPartitionCode partition isbeginning isend insts startLoc =
 	  Instr.Ins_switch_on_term(ref varCodeLoc, constCodeLocRef, consCodeLocRef,
 							   ref varCodeLoc)
 	in
-	(* V: variable code          *) 
+	(* V: variable code          *)
 	let (varCode, varCodeNextLoc) =
-	  genVarClausesCode allcls true true (insts @ [switch_on_term]) varCodeLoc 
+	  genVarClausesCode allcls true true (insts @ [switch_on_term]) varCodeLoc true 
 	in
 	(* C: const code             *)
 	let (constCode, constCodeNextLoc, constCodeLoc) = 
@@ -842,8 +850,8 @@ let genPartitionCode partition isbeginning isend insts startLoc =
 		let myisend = isend && emptyTrailCls in
 		(* assume allclauses contains at least one clause *)
 		match allclauses with
-		  [cl] -> 
-			genVarClausesCode allclauses isbeginning myisend insts startLoc
+		  [cl] -> (* only one clause *)
+			genVarClausesCode allclauses isbeginning myisend insts startLoc needTryMeElse
 		| _    -> 
 			let numArgs  = Absyn.getClauseNumberOfArgs (List.hd allclauses) in
 			match isbeginning, myisend with
@@ -886,20 +894,21 @@ let genPartitionCode partition isbeginning isend insts startLoc =
 				(switchIns, nextCodeLoc)
 	  in
 	  if emptyTrailCls then (newInsts, newStartLoc)
-	  else genVarClausesCode trailclauses false isend newInsts newStartLoc 
+	  else 
+	    genVarClausesCode trailclauses false isend newInsts newStartLoc false 
 			  
 (*****************************************************************)
 (* generating switch (indexing) code for first the leading       *)
 (* clauses and then for the partitions.                          *)
 (*****************************************************************)	
-let genSwitchCode predIndexInfo insts startLoc = 
+let genSwitchCode predIndexInfo insts startLoc needTryMeElse= 
 
   let rec genSwitchCodePartitions partitions isbeginning insts startLoc  =
 	match partitions with
 	  [] -> (insts, startLoc)
 	| (partition :: rest) ->
 		let (newInsts, newStartLoc) =
-		  genPartitionCode partition isbeginning (rest = []) insts startLoc
+		  genPartitionCode partition isbeginning (rest = []) insts startLoc false
 		in
 		genSwitchCodePartitions rest false newInsts newStartLoc
   in
@@ -907,12 +916,15 @@ let genSwitchCode predIndexInfo insts startLoc =
   match predIndexInfo with
 	PredIndex([], [])                     -> (insts, startLoc) (* possible? *)
   | PredIndex([], partitions)             ->
-	  genSwitchCodePartitions partitions true insts startLoc
+      if (List.length partitions = 1) then 
+	genPartitionCode (List.hd partitions) true true insts startLoc needTryMeElse
+      else
+	genSwitchCodePartitions partitions true insts startLoc 
   | PredIndex(leadingClauses, [])         ->
-	  genVarClausesCode leadingClauses true true insts startLoc
+	   genVarClausesCode leadingClauses true true insts startLoc needTryMeElse
   | PredIndex(leadingClauses, partitions) ->
 	  let (leadingCode, leadingCodeNext) =
-		genVarClausesCode leadingClauses true false insts startLoc 
+		genVarClausesCode leadingClauses true false insts startLoc false
 	  in
 	  genSwitchCodePartitions partitions false leadingCode leadingCodeNext
 
@@ -926,7 +938,7 @@ let processDef clauseBlock insts startLoc =
   (* generate instructions *)
   let clauses = Absyn.getClauseBlockClauses clauseBlock in
   if (Absyn.getClauseBlockClose clauseBlock) then (* closed definition *)
-	genSwitchCode (calculateIndexing clauses) insts startLoc
+	 genSwitchCode (calculateIndexing clauses) insts startLoc true
   else
 	(*     switch_on_reg nextClause L1 L2 *)
 	let numArgs    = Absyn.getClauseNumberOfArgs (List.hd clauses) in
@@ -940,15 +952,21 @@ let processDef clauseBlock insts startLoc =
 	let trustCodeLocRef = ref 0 in
 	let try_me_else = Instr.Ins_try_me_else(numArgs, trustCodeLocRef)  in
 	(* L2: switch code *)
-	let (newInsts, trustCodeLoc) = 
+	let (newInsts, trustCodeLoc) =
+	(* let (newInsts, tryCodeLoc') = *)
 	  genSwitchCode (calculateIndexing clauses) 
-		(insts @ [switch_on_reg ; try_me_else]) swCodeLoc 
+		(insts @ [switch_on_reg ; try_me_else]) swCodeLoc false 
 	in
+	(*     try numArgs L2 *)
+	(*let tryIns = Instr.Ins_try(numArgs, ref swCodeLoc) in *)
 	(* L3: trust_ext numArgs nextClause *)
 	let trust_ext = (trustCodeLocRef := trustCodeLoc;
-					 Instr.Ins_trust_ext(numArgs, nextClause)) 
+	                 (*trustCodeLocRef := tryCodeLoc' + Instr.getSize_try;*)
+			 Instr.Ins_trust_ext(numArgs, nextClause)) 
 	in
-	(newInsts @ [trust_ext], trustCodeLoc + Instr.getSize_trust_ext)
+	(newInsts @ [trust_ext],
+	 (* tryCodeLoc' + Instr.getSize_try + Instr.getSize_trust_ext)*)
+	 trustCodeLoc + Instr.getSize_trust_ext)
 
 (****************************************************************)
 (* generating instructions for top-level definitions            *)
@@ -1049,6 +1067,40 @@ let rec genImpPointCode impPoints insts startLoc impGoals numImpPoints =
 	  genImpPointCode (Clausegen.getImpPointList ()) newInsts newStartLoc
 		(impGoals @ newImpGoals) (numImpPoints +(Clausegen.getNumImpPoints ()))
 
+(****************************************************************************)
+(*  Collect local constants appearing in acc modules for instruction        *)
+(*  generation.                                                             *)
+(****************************************************************************)
+let collectLocalConstsInAccs accs =
+  let rec collectLocalConsts accConsts consts =
+    match accConsts with
+      [] -> consts
+    | (c::rest) ->
+	if (Absyn.isLocalConstant c) && not(List.memq c consts) then
+	  collectLocalConsts rest (c::consts)
+	else 
+	  collectLocalConsts rest consts
+  in	  
+
+  let rec collectLocalConstsInAccsAux accs consts =
+    match accs with
+      [] -> List.rev consts
+    | (Absyn.AccumulatedModule(_, asig) :: rest) ->
+	let consts' = 
+	  collectLocalConsts (Absyn.getSignatureGlobalConstantsList asig) consts
+	in
+	collectLocalConstsInAccsAux rest consts'
+  in
+
+  Clausegen.initAccConsts ();
+  let consts = collectLocalConstsInAccsAux accs [] in
+  Clausegen.setAccConsts consts
+
+  
+
+
+  
+
 
 (*****************************************************************************)
 (*                CODE GENERATION FOR A MODULE                               *)
@@ -1058,6 +1110,9 @@ let generateModuleCode amod =
   match amod with
 	Absyn.Module(modname, modimps, modaccs, _, _, _, modstr, gkinds, lkinds, 
 				 gconsts, lconsts, hconsts, skels, hskels, clauses) ->
+      (* collect local constants appearing in acc modules for the use   *)
+      (* generating instructions.                                       *)
+	 collectLocalConstsInAccs modaccs;
       (* assign indexes to global and local kinds *)				   
 	  let (cgGKinds, cgLKinds) = assignKindIndex gkinds lkinds in
 	  (* 1) assign indexes to global, local and hidden constants;   *)
