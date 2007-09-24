@@ -1,0 +1,3 @@
+module acc.
+
+bar X.
