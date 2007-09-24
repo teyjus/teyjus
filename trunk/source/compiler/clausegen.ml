@@ -17,7 +17,6 @@ let addImpPointList impPoint =
   (impPointList := impPoint :: (!impPointList); 
    numImpPoints := !numImpPoints + 1)
 
-
 (***************************************************************************)
 (*     REPRESENTATION AND MANIPULATION OF BACK PATCHING DATA               *)
 (*                                                                         *)
@@ -85,6 +84,14 @@ let backPatch () =
   in
   backPatchAux (getExecutePatch ()) patchExecute;
   backPatchAux (getCallPatch ()) patchCall
+
+(****************************************************************************)
+(*                LOCAL CONSTANTS APPEARING IN ACC MODULES                  *)
+(****************************************************************************)
+let accConsts: (Absyn.aconstant list) ref = ref []
+let setAccConsts consts = accConsts := consts
+let initAccConsts ()    = setAccConsts []
+let getAccConsts ()     = !accConsts
 
 (****************************************************************************)
 (*                  GENERATING CODE FOR TYPES                               *)
@@ -1705,10 +1712,14 @@ and genAtomicGoal goal cl goalNum last chunk chunks insts startLoc =
 	      ([Instr.Ins_execute_link_only(pred)], Instr.getSize_execute_link_only,
 	       goalNum)
 	  else (* do not have code *)
-		if (expdef) then ([Instr.Ins_fail], Instr.getSize_fail, goalNum)
-		else 
-		  ([Instr.Ins_execute_name(pred)], Instr.getSize_execute_name, 
-		   goalNum)
+	    if (List.memq pred (getAccConsts ())) then
+	      ([Instr.Ins_execute_link_only(pred)], Instr.getSize_execute_link_only,
+	       goalNum)
+	    else
+	      if (expdef) then ([Instr.Ins_fail], Instr.getSize_fail, goalNum)
+	      else 
+		([Instr.Ins_execute_name(pred)], Instr.getSize_execute_name, 
+		 goalNum)
 	else (* not closed *)
 	   ([Instr.Ins_execute_name(pred)], Instr.getSize_execute_name,
 	   goalNum) 
@@ -1731,13 +1742,19 @@ and genAtomicGoal goal cl goalNum last chunk chunks insts startLoc =
 	      ([Instr.Ins_call_link_only(envsize, pred)], Instr.getSize_call_link_only,
 	       goalNum)
 	  else (* do not have code *)
+	    if (List.memq pred (getAccConsts ())) then 
+	      ([Instr.Ins_call_link_only(envsize, pred)], Instr.getSize_call_link_only,
+	       goalNum)
+	    else
+	      ( (*print_endline "no code, closed";*)
 		if (expdef) then ([Instr.Ins_fail], Instr.getSize_fail, myGoalNum)
 		else 
 		  ([Instr.Ins_call_name(envsize, pred)], Instr.getSize_call_name, 
-		   myGoalNum)
+		   myGoalNum))
 	else (* not closed *)
+         ( (*print_endline "open";*)
 	  ([Instr.Ins_call_name(envsize, pred)], Instr.getSize_call_name,
-	   myGoalNum)
+	   myGoalNum))
   in
 	  
   (* generate code for non pervasive predicates *)
