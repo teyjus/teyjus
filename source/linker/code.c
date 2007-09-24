@@ -354,7 +354,7 @@ void WriteCode(int fd)
     opType=INSTR_operandTypes(instrCat);
     argid=-1;
     LK_FILE_PUT1(fd,opcode);
-    debug("\t%lx:%lx:[%x]%s\n",lseek(fd,0,SEEK_CUR)-1,i,opcode,INSTR_instrName(opcode));
+    debug("\t%lx:%lx:[%x]%s ",lseek(fd,0,SEEK_CUR)-1,i,opcode,INSTR_instrName(opcode));
     do{
       argid++;
       switch(opType[argid])
@@ -368,7 +368,7 @@ void WriteCode(int fd)
           break;
         
         case INSTR_SEG:
-          debug("Putting segment %d\n",*(Byte*)(code+j));
+          debug("SEG %d ",*(Byte*)(code+j));
         case INSTR_R:
         case INSTR_E:
         case INSTR_N:
@@ -419,6 +419,7 @@ void WriteCode(int fd)
           break;
         
         case INSTR_L:
+          debug("L(%x) ",*(CodeInd*)(code+j));
           PutCodeInd(fd,*(CodeInd*)(code+j));
           j+=sizeof(CodeInd);
           break;
@@ -436,13 +437,13 @@ void WriteCode(int fd)
         case INSTR_X:
           break;
         default:
-          bad("Unknown Operand Type %d\n",opType[argid]);
+          bad("\nUnknown Operand Type %d\n",opType[argid]);
           EM_THROW(LK_LinkError);
           break;     /* null instruction */
       }
     }
     while(opType[argid]!=INSTR_X);
-    
+    debug("\n");
     i+=INSTR_instrSize(opcode);
   }
 }

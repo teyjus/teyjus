@@ -78,38 +78,38 @@ void LoadTopModule(char* modname)
 {
   mutter("Loading %s as top level module\n",modname);
   EM_TRY{
-  NewImportTab();
-  struct Module_st* CMData=NewModule();
-  int fd = LK_FILE_OpenInput(modname, LK_FILE_ByteCodeExt);
-  CheckBytecodeVersion(fd);
-  CheckModuleName(fd,modname);
-  
-  LoadCodeSize(fd,CMData);
-  
-  LoadTopGKinds(fd,CMData);
-  LoadLKinds(fd,CMData);
-  
-  LoadTySkels(fd,CMData);
-  
-  LoadTopGConsts(fd,CMData);
-  LoadLConsts(fd,CMData);
-  LoadHConsts(fd,CMData);
-  
-  LK_STRINGS_Load(fd,CMData);
-  LoadImplGoals(fd,CMData);
-  
-  LoadHashTabs(fd,CMData);
-  LoadBvrTabs(fd,CMData);
-  
-  TopImportTab(fd,CMData);
-  LoadAccModules(fd,CMData);
-  LoadImpModules(fd,CMData);
-  
-  LoadCode(fd,CMData);
-  
-  LK_FILE_Close(fd);
-  free(CMData);
-  RestoreImportTab();
+    NewImportTab();
+    struct Module_st* CMData=NewModule();
+    int fd = LK_FILE_OpenInput(modname, LK_FILE_ByteCodeExt);
+    CheckBytecodeVersion(fd);
+    CheckModuleName(fd,modname);
+    
+    LoadCodeSize(fd,CMData);
+    
+    LoadTopGKinds(fd,CMData);
+    LoadLKinds(fd,CMData);
+    
+    LoadTySkels(fd,CMData);
+    
+    LoadTopGConsts(fd,CMData);
+    LoadLConsts(fd,CMData);
+    LoadHConsts(fd,CMData);
+    
+    LK_STRINGS_Load(fd,CMData);
+    LoadImplGoals(fd,CMData);
+    
+    LoadHashTabs(fd,CMData);
+    LoadBvrTabs(fd,CMData);
+    
+    TopImportTab(fd,CMData);
+    LoadAccModules(fd,CMData);
+    LoadImpModules(fd,CMData);
+    
+    LoadCode(fd,CMData);
+    
+    LK_FILE_Close(fd);
+    free(CMData);
+    RestoreImportTab();
   }EM_CATCH{
     bad("Error while reading top level module %s\n",modname);
     EM_RETHROW();
@@ -118,70 +118,82 @@ void LoadTopModule(char* modname)
 
 void LoadAccModule(char* modname)
 {
-  struct Module_st* CMData=NewModule();
-  int fd = LK_FILE_OpenInput(modname, LK_FILE_ByteCodeExt);
-  CheckBytecodeVersion(fd);
-  CheckModuleName(fd,modname);
-  
-  LoadCodeSize(fd,CMData);
-  
-  LoadGKinds(fd,CMData);
-  LoadLKinds(fd,CMData);
-  
-  LoadTySkels(fd,CMData);
-  
-  LoadGConsts(fd,CMData);
-  LoadLConsts(fd,CMData);
-  LoadHConsts(fd,CMData);
-  
-  LK_STRINGS_Load(fd,CMData);
-  LoadImplGoals(fd,CMData);
-  
-  LoadHashTabs(fd,CMData);
-  LoadBvrTabs(fd,CMData);
-  
-  AccImportTab(fd,CMData);
-  LoadAccModules(fd,CMData);
-  LoadImpModules(fd,CMData);
-  
-  LoadCode(fd,CMData);
-  
-  LK_FILE_Close(fd);
-  free(CMData);
+  mutter("Accumulating module %s\n",modname);
+  EM_TRY{
+    struct Module_st* CMData=NewModule();
+    int fd = LK_FILE_OpenInput(modname, LK_FILE_ByteCodeExt);
+    CheckBytecodeVersion(fd);
+    CheckModuleName(fd,modname);
+    
+    LoadCodeSize(fd,CMData);
+    
+    LoadGKinds(fd,CMData);
+    LoadLKinds(fd,CMData);
+    
+    LoadTySkels(fd,CMData);
+    
+    LoadGConsts(fd,CMData);
+    LoadLConsts(fd,CMData);
+    LoadHConsts(fd,CMData);
+    
+    LK_STRINGS_Load(fd,CMData);
+    LoadImplGoals(fd,CMData);
+    
+    LoadHashTabs(fd,CMData);
+    LoadBvrTabs(fd,CMData);
+    
+    AccImportTab(fd,CMData);
+    LoadAccModules(fd,CMData);
+    LoadImpModules(fd,CMData);
+    
+    LoadCode(fd,CMData);
+    
+    LK_FILE_Close(fd);
+    free(CMData);
+  }EM_CATCH{
+    bad("Error while reading top level module %s\n",modname);
+    EM_RETHROW();
+  }
 }
 
 void LoadImpModule(char* modname)
 {
-  struct Module_st* CMData=NewModule();
-  int fd = LK_FILE_OpenInput(modname, LK_FILE_ByteCodeExt);
-  CheckBytecodeVersion(fd);
-  CheckModuleName(fd,modname);
-  
-  LoadCodeSize(fd,CMData);
-  
-  LoadGKinds(fd,CMData);
-  LoadLKinds(fd,CMData);
-  
-  LoadTySkels(fd,CMData);
-  
-  LoadGConsts(fd,CMData);
-  LoadLConsts(fd,CMData);
-  LoadHConsts(fd,CMData);
-  
-  LK_STRINGS_Load(fd,CMData);
-  LoadImplGoals(fd,CMData);
-  
-  LoadHashTabs(fd,CMData);
-  LoadBvrTabs(fd,CMData);
-  
-  ImpImportTab(fd,CMData);
-  LoadAccModules(fd,CMData);
-  LoadImpModules(fd,CMData);
-  
-  LoadCode(fd,CMData);
-  
-  LK_FILE_Close(fd);
-  free(CMData);
+  mutter("Accumulating module %s\n",modname);
+  EM_TRY{
+    struct Module_st* CMData=NewModule();
+    int fd = LK_FILE_OpenInput(modname, LK_FILE_ByteCodeExt);
+    CheckBytecodeVersion(fd);
+    CheckModuleName(fd,modname);
+    
+    LoadCodeSize(fd,CMData);
+    
+    LoadGKinds(fd,CMData);
+    LoadLKinds(fd,CMData);
+    
+    LoadTySkels(fd,CMData);
+    
+    LoadGConsts(fd,CMData);
+    LoadLConsts(fd,CMData);
+    LoadHConsts(fd,CMData);
+    
+    LK_STRINGS_Load(fd,CMData);
+    LoadImplGoals(fd,CMData);
+    
+    LoadHashTabs(fd,CMData);
+    LoadBvrTabs(fd,CMData);
+    
+    ImpImportTab(fd,CMData);
+    LoadAccModules(fd,CMData);
+    LoadImpModules(fd,CMData);
+    
+    LoadCode(fd,CMData);
+    
+    LK_FILE_Close(fd);
+    free(CMData);
+  }EM_CATCH{
+    bad("Error while reading top level module %s\n",modname);
+    EM_RETHROW();
+  }
 }
 
 void LoadImpModules(int fd, struct Module_st* CMData)

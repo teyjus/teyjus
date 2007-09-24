@@ -48,9 +48,16 @@ void LoadGConsts(int fd, struct Module_st* CMData)
 {
   int i;
   int count=CMData->GConstcount=LK_FILE_GET2(fd);
-  CMData->GConst=(ConstInd*)EM_malloc(count*sizeof(ConstInd));
-  for(i=0;i<count;i++)
-    CMData->GConst[i]=LoadGConst(fd,CMData);
+  mutter("Loading %d global constants\n",count);
+  EM_TRY{
+    CMData->GConst=(ConstInd*)EM_malloc(count*sizeof(ConstInd));
+    for(i=0;i<count;i++)
+      CMData->GConst[i]=LoadGConst(fd,CMData);
+  }
+  EM_CATCH{
+    bad("Error while loading global constants\n");
+    EM_RETHROW();
+  }
 }
 
 Const_t* GConstTab=NULL;
