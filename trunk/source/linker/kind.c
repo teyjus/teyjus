@@ -43,10 +43,17 @@ void LoadGKinds(int fd, struct Module_st* CMData)
   size_t i;
   
   TwoBytes count=CMData->GKindcount=LK_FILE_GET2(fd);
-  CMData->GKind=EM_malloc(count*sizeof(KindInd));
-  for(i=0;i<count;i++)
-  {
-    CMData->GKind[i]=LoadGKind(fd);
+  mutter("Loading %d global kinds\n",count);
+  EM_TRY{
+    CMData->GKind=EM_malloc(count*sizeof(KindInd));
+    for(i=0;i<count;i++)
+    {
+      CMData->GKind[i]=LoadGKind(fd);
+    }
+  }
+  EM_CATCH{
+    bad("Error while loading global kinds\n");
+    EM_RETHROW();
   }
 }
 
