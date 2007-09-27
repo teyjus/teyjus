@@ -570,20 +570,13 @@ let breakClauses cls =
 (************************************************************************)
 (* generating an indexed sequence of code for a list of variable clauses*)
 (************************************************************************)
-let genVarClausesCode cls isbeginning isend insts startLoc needTryMeElse =
+let genVarClausesCode cls isbeginning isend insts startLoc =
   let numArgs = Absyn.getClauseNumberOfArgs (List.hd cls) in 
  
   (* generate instruction for a single clause clauses list*)
   let genSingleVarClause cl insts startLoc =
 	match isbeginning, isend with 
 	  true,  true  ->
-	    if needTryMeElse then
-	      (* place holder: try_me_else 0, fail *)
-	      let try_me_else = Instr.Ins_try_me_else(0, ref failInstrLoc)
-	      in
-	      Clausegen.genClauseCode cl (insts @ [try_me_else]) 
-		(startLoc + Instr.getSize_try_me_else)
-	    else
 	       Clausegen.genClauseCode cl insts startLoc
 	| true,  false ->
 		(*   try_me_else numArgs L *)
@@ -814,7 +807,7 @@ let genSwConstCode partition insts startLoc =
 (* heads for the first argument followed by a list of 'variable head'      *)
 (* clauses.                                                                *)
 (***************************************************************************)
-let genPartitionCode partition isbeginning isend insts startLoc needTryMeElse =
+let genPartitionCode partition isbeginning isend insts startLoc =
   
   let genSwitchOnTerm allcls conscls partition insts startLoc =
 	(*    switch_on_term V C L V *)
@@ -827,7 +820,7 @@ let genPartitionCode partition isbeginning isend insts startLoc needTryMeElse =
 	in
 	(* V: variable code          *)
 	let (varCode, varCodeNextLoc) =
-	  genVarClausesCode allcls true true (insts @ [switch_on_term]) varCodeLoc true 
+	  genVarClausesCode allcls true true (insts @ [switch_on_term]) varCodeLoc
 	in
 	(* C: const code             *)
 	let (constCode, constCodeNextLoc, constCodeLoc) = 
@@ -851,7 +844,7 @@ let genPartitionCode partition isbeginning isend insts startLoc needTryMeElse =
 		(* assume allclauses contains at least one clause *)
 		match allclauses with
 		  [cl] -> (* only one clause *)
-			genVarClausesCode allclauses isbeginning myisend insts startLoc needTryMeElse
+			genVarClausesCode allclauses isbeginning myisend insts startLoc 
 		| _    -> 
 			let numArgs  = Absyn.getClauseNumberOfArgs (List.hd allclauses) in
 			match isbeginning, myisend with
@@ -895,78 +888,91 @@ let genPartitionCode partition isbeginning isend insts startLoc needTryMeElse =
 	  in
 	  if emptyTrailCls then (newInsts, newStartLoc)
 	  else 
-	    genVarClausesCode trailclauses false isend newInsts newStartLoc false 
+	    genVarClausesCode trailclauses false isend newInsts newStartLoc
 			  
 (*****************************************************************)
 (* generating switch (indexing) code for first the leading       *)
 (* clauses and then for the partitions.                          *)
 (*****************************************************************)	
-let genSwitchCode predIndexInfo insts startLoc needTryMeElse= 
+let genSwitchCode predIndexInfo insts startLoc = 
 
   let rec genSwitchCodePartitions partitions isbeginning insts startLoc  =
 	match partitions with
 	  [] -> (insts, startLoc)
 	| (partition :: rest) ->
 		let (newInsts, newStartLoc) =
-		  genPartitionCode partition isbeginning (rest = []) insts startLoc false
+		  genPartitionCode partition isbeginning (rest = []) insts startLoc
 		in
 		genSwitchCodePartitions rest false newInsts newStartLoc
   in
   
   match predIndexInfo with
-	PredIndex([], [])                     -> (insts, startLoc) (* possible? *)
+    PredIndex([], [])                     -> (insts, startLoc) (* possible? *)
   | PredIndex([], partitions)             ->
-      if (List.length partitions = 1) then 
-	genPartitionCode (List.hd partitions) true true insts startLoc needTryMeElse
-      else
-	genSwitchCodePartitions partitions true insts startLoc 
+      genSwitchCodePartitions partitions true insts startLoc 
   | PredIndex(leadingClauses, [])         ->
-	   genVarClausesCode leadingClauses true true insts startLoc needTryMeElse
+      genVarClausesCode leadingClauses true true insts startLoc 
   | PredIndex(leadingClauses, partitions) ->
-	  let (leadingCode, leadingCodeNext) =
-		genVarClausesCode leadingClauses true false insts startLoc false
-	  in
-	  genSwitchCodePartitions partitions false leadingCode leadingCodeNext
+      let (leadingCode, leadingCodeNext) =
+	genVarClausesCode leadingClauses true false insts startLoc 
+      in
+      genSwitchCodePartitions partitions false leadingCode leadingCodeNext
 
+(********************************************************************)
+(* generate dummy try_me_else instruction (for linking if necessary)*)
+(********************************************************************)
+let genDummyTryMeElse cls partitions =
+  if (List.length cls) = 1 then (* single clause    *)
+    ([Instr.Ins_try_me_else(0, ref failInstrLoc)], Instr.getSize_try_me_else)
+  else                          (* multiple clauses *)
+    match partitions with
+      PredIndex([], [SwitchInfo(_, trailclauses, _, _, _, _, _, _)]) -> 
+	if (trailclauses = []) then
+	  ([Instr.Ins_try_me_else(0, ref failInstrLoc)], Instr.getSize_try_me_else)
+	else  ([], 0)
+    | _ -> ([], 0)
 
 (****************************************************************)
 (* generating instructions for one definition                   *)
 (****************************************************************)
 let processDef clauseBlock insts startLoc =
-  (* set def offset *)
-  Absyn.setClauseBlockOffset clauseBlock startLoc; 
   (* generate instructions *)
-  let clauses = Absyn.getClauseBlockClauses clauseBlock in
+  let clauses       = Absyn.getClauseBlockClauses clauseBlock in
+  let partitions    = calculateIndexing clauses               in
+  let (dummyTryMeElse, dummyTryMeElseSize) 
+      = genDummyTryMeElse clauses partitions 
+  in
+
   if (Absyn.getClauseBlockClose clauseBlock) then (* closed definition *)
-	 genSwitchCode (calculateIndexing clauses) insts startLoc true
+    (Absyn.setClauseBlockOffset clauseBlock (startLoc + dummyTryMeElseSize);
+     genSwitchCode partitions (insts @ dummyTryMeElse) (startLoc + dummyTryMeElseSize))
   else
-	(*     switch_on_reg nextClause L1 L2 *)
-	let numArgs    = Absyn.getClauseNumberOfArgs (List.hd clauses) in
-	let nextClause = Absyn.getClauseBlockNextClause clauseBlock in
-	let tryCodeLoc = startLoc + Instr.getSize_switch_on_reg in
-	let swCodeLoc  = tryCodeLoc + Instr.getSize_try_me_else in
-	let switch_on_reg =
-	  Instr.Ins_switch_on_reg(nextClause, ref tryCodeLoc, ref swCodeLoc)
-	in
-	(* L1: try_me_else numArgs L3 *)
-	let trustCodeLocRef = ref 0 in
-	let try_me_else = Instr.Ins_try_me_else(numArgs, trustCodeLocRef)  in
-	(* L2: switch code *)
-	let (newInsts, trustCodeLoc) =
-	(* let (newInsts, tryCodeLoc') = *)
-	  genSwitchCode (calculateIndexing clauses) 
-		(insts @ [switch_on_reg ; try_me_else]) swCodeLoc false 
-	in
-	(*     try numArgs L2 *)
-	(*let tryIns = Instr.Ins_try(numArgs, ref swCodeLoc) in *)
-	(* L3: trust_ext numArgs nextClause *)
-	let trust_ext = (trustCodeLocRef := trustCodeLoc;
-	                 (*trustCodeLocRef := tryCodeLoc' + Instr.getSize_try;*)
-			 Instr.Ins_trust_ext(numArgs, nextClause)) 
-	in
-	(newInsts @ [trust_ext],
-	 (* tryCodeLoc' + Instr.getSize_try + Instr.getSize_trust_ext)*)
-	 trustCodeLoc + Instr.getSize_trust_ext)
+    (Absyn.setClauseBlockOffset clauseBlock startLoc; 
+     
+     let numArgs       = Absyn.getClauseNumberOfArgs (List.hd clauses) in
+     let nextClause    = Absyn.getClauseBlockNextClause clauseBlock in
+ 
+     let tryCodeLoc    = startLoc + Instr.getSize_switch_on_reg in
+     let trustCodeLoc  = tryCodeLoc + Instr.getSize_try         in
+     let swCodeLoc     = 
+       trustCodeLoc + Instr.getSize_trust_ext + dummyTryMeElseSize 
+     in
+
+     (*      switch_on_reg nextClause L1 L2 *)
+     let switch_on_reg =
+       Instr.Ins_switch_on_reg(nextClause, ref tryCodeLoc, ref swCodeLoc)
+     in
+     (*  L1: try numArgs L2 *)
+     let tryCode = Instr.Ins_try(numArgs, ref swCodeLoc) in
+     (*      trust_ext numArgs nextClause *)
+     let trust_ext = Instr.Ins_trust_ext(numArgs, nextClause) in
+     (*  L2: switch code    *)
+     let (newInsts, newStartLoc) =
+       genSwitchCode partitions 
+	 (insts @ [switch_on_reg; tryCode; trust_ext] @ dummyTryMeElse) swCodeLoc
+     in
+     (newInsts, newStartLoc))
+
 
 (****************************************************************)
 (* generating instructions for top-level definitions            *)
