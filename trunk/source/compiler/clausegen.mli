@@ -24,6 +24,12 @@ val addImpPointList  : Absyn.adefinitions -> unit
 val initBackPatchLists : unit -> unit
 val backPatch : unit -> unit
 
+(****************************************************************************)
+(*                LOCAL CONSTANTS APPEARING IN ACC MODULES                  *)
+(****************************************************************************)
+val initAccConsts : unit -> unit
+val setAccConsts : Absyn.aconstant list -> unit 
+
 (***************************************************************************)
 (*          GENERATING INSTRUCTIONS FOR ONE CLAUSE                         *)
 (*                                                                         *)
