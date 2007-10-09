@@ -85,6 +85,9 @@ and pfixity = Fixity of psymbol list * pfixitykind * int * pos
  *  Signature:
  *   Name: string
  *   Global Constants: pconstant list
+ *   Useonly Constants: pconstant list
+ *   Exportdef Constants: pconstant list
+ *
  *   Global Kinds: pkind list
  *
  *   Type Abbreviations: ptypeabbrevlist
@@ -96,7 +99,8 @@ type pmodule =
       pconstant list * pconstant list * pfixity list * pkind list *
       pkind list * ptypeabbrev list * pclause list * psymbol list *
       psymbol list * psymbol list * psymbol list
-  | Signature of string * pconstant list * pkind list *
+  | Signature of string * pconstant list * pconstant list *
+      pconstant list * pkind list *
       ptypeabbrev list * pfixity list * psymbol list
 
 val printPreAbsyn : pmodule -> out_channel -> unit

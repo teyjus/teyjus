@@ -127,8 +127,8 @@ let makeModule () =
 
 let makeSignature () =
   reverseResults ();
-  let s = Signature(basename (), !globalConstants, !globalKinds,
-                    !globalTypeAbbrevs, !fixityList, !accumulatedSigList) in
+  let s = Signature(basename (), !globalConstants, !useOnlyList, !exportList,
+                    !globalKinds, !globalTypeAbbrevs, !fixityList, !accumulatedSigList) in
     clearResults ();
     s
 
