@@ -718,9 +718,11 @@ and reduceOperation parsingtoplevel amodule stack =
         let newTop = StackTerm(makeApply c (getStackTermTerm prev)) in
         let stack' = Stack(newTop::rest, state, prec, fix) in
         newParseState stack'
-    | PrefixWithArgState -> reducePrefix ()
+
+    | PrefixWithArgState
     | PrefixrWithArgState -> reducePrefix ()
-    | InfixWithArgState -> reduceInfix ()
+
+    | InfixWithArgState
     | InfixrWithArgState -> reduceInfix ()
     | _ -> (Errormsg.impossible Errormsg.none 
                                 "reduceOperation: invalid stack state")
@@ -816,23 +818,41 @@ and stackTerm parsingtoplevel term amodule stack =
 * main decisions of shifting/reducing get made.  Note that an apply
 * "pseudo" operator may have to be inserted between two adjacent terms
 * in the input to ensure the appropriate reduction at a later stage.
+*
+* The function operates by recursively calling stackOperation' until there
+* are no operations left to stack.
 **********************************************************************)
 and stackOperation parsingtoplevel o amodule stack =
+  (********************************************************************
+  *stackOperation':
+  ********************************************************************)
   let rec stackOperation' stack =
     let state = (getStackState stack) in
+    let name = (Absyn.getConstantName (getStackOpConstant o)) in
     let fixity = (getStackOpFixity o) in
     let prec = (getStackOpPrec o) in
     let pos = (getStackItemPos o) in
     
     (******************************************************************
+    *precedenceConflict:
+    * Prints an error related to a conflict of precedences.
+    ******************************************************************)
+    let precedenceConflict () =
+      Errormsg.error pos
+        ("'" ^ name ^ "': conflict in operator precedences:" ^
+        (Errormsg.info "precedence: " ^ (string_of_int prec)) ^ "." ^
+        (Errormsg.info "fixity: " ^ (Absyn.string_of_fixity fixity)) ^ ".")
+    in
+
+    (******************************************************************
     *preOrInf:
     * Handles the case where stack state is Prefix or Infix.
     ******************************************************************)
-    let preOrInf = fun stack ->
+    let preOrInf stack =
       if (Absyn.isFixityPrefix fixity) && (prec > (getStackPrec stack)) then
         (pushOperation o stack)
       else if (Absyn.isFixityPrefix fixity) then
-        (Errormsg.error pos "conflict in operator precedences.";
+        (precedenceConflict ();
         raise TermException)
       else
         (Errormsg.error pos 
@@ -850,7 +870,7 @@ and stackOperation parsingtoplevel o amodule stack =
       if (Absyn.isFixityPrefix fixity) && (prec >= (getStackPrec stack)) then
         pushOperation o stack
       else if (Absyn.isFixityPrefix fixity) then
-        (Errormsg.error pos "conflict in operator precedences.";
+        (precedenceConflict ();
         raise TermException)
       else
         (Errormsg.error pos 
@@ -866,42 +886,32 @@ and stackOperation parsingtoplevel o amodule stack =
     * InfixWithArgState.
     ******************************************************************)
     let preOrInfWithArg stack =
-      let pre () =
-        let stack' =
-          stackOperation parsingtoplevel (makeApplyOp pos) amodule stack in
-        (pushOperation o stack')
-      in
-      
-      let infOrPost () =
-        if prec > (getStackPrec stack) then
-          pushOperation o stack
-        else if prec < (getStackPrec stack) then
-          let stack' = (reduceOperation parsingtoplevel amodule stack) in
-          stackOperation' stack'
-       else
-          (Errormsg.error pos "conflict in operator precedences(3)";
-          raise TermException)
-      in
-      
-      let inflOrPostl () =
-        if prec > (getStackPrec stack) then
-          pushOperation o stack
-        else
-          let stack' = reduceOperation parsingtoplevel amodule stack in
-          stackOperation' stack'
-      in
-      
       match fixity with
         Absyn.Prefix
-      | Absyn.Prefixr -> pre ()
-      
+      | Absyn.Prefixr ->
+          let stack' =
+            stackOperation parsingtoplevel (makeApplyOp pos) amodule stack in
+          (pushOperation o stack')
+
       | Absyn.Infix
       | Absyn.Infixr
-      | Absyn.Postfix -> infOrPost ()
-      
+      | Absyn.Postfix ->
+          if prec > (getStackPrec stack) then
+            pushOperation o stack
+          else if prec < (getStackPrec stack) then
+            let stack' = (reduceOperation parsingtoplevel amodule stack) in
+            stackOperation' stack'
+          else
+            (precedenceConflict ();
+            raise TermException)
+
       | Absyn.Infixl
-      | Absyn.Postfixl -> inflOrPostl ()
-      
+      | Absyn.Postfixl ->
+          if prec > (getStackPrec stack) then
+            pushOperation o stack
+          else
+            let stack' = reduceOperation parsingtoplevel amodule stack in
+            stackOperation' stack'
       | Absyn.NoFixity -> stackOperation' stack
     in
     
@@ -910,41 +920,33 @@ and stackOperation parsingtoplevel o amodule stack =
     * Handles case where state is PrefixrWithArgState or
     * InfixrWithArgState.
     ******************************************************************)
-    let preOrInfrWithArg = fun stack ->
-      let pre () =
-        let stack' =
-          stackOperation parsingtoplevel (makeApplyOp pos) amodule stack in
-        (pushOperation o stack')
-      in
-      
-      let infOrPost () =
-        if prec >= (getStackPrec stack) then
-          (pushOperation o stack)
-        else
-          let stack' = reduceOperation parsingtoplevel amodule stack in
-          stackOperation' stack'
-      in
-      
-      let inflOrPostl () =
-        if prec > (getStackPrec stack) then
-          pushOperation o stack
-        else if prec < (getStackPrec stack) then
-          let stack' = reduceOperation parsingtoplevel amodule stack in
-          stackOperation' stack'
-        else
-          let _ = printStack stack in
-          (Errormsg.error pos "conflict in operator precedences(4)";
-          raise TermException)
-      in
-      
+    let preOrInfrWithArg = fun stack ->            
       match fixity with
         Absyn.Prefix
-      | Absyn.Prefixr -> pre ()
+      | Absyn.Prefixr ->
+          let stack' =
+            stackOperation parsingtoplevel (makeApplyOp pos) amodule stack in
+          (pushOperation o stack')
+
       | Absyn.Infix
       | Absyn.Infixr
-      | Absyn.Postfix -> infOrPost ()
+      | Absyn.Postfix ->
+          if prec >= (getStackPrec stack) then
+            (pushOperation o stack)
+          else
+            let stack' = reduceOperation parsingtoplevel amodule stack in
+            stackOperation' stack'
+
       | Absyn.Infixl
-      | Absyn.Postfixl -> inflOrPostl ()
+      | Absyn.Postfixl ->
+          if prec > (getStackPrec stack) then
+            pushOperation o stack
+          else if prec < (getStackPrec stack) then
+            let stack' = reduceOperation parsingtoplevel amodule stack in
+            stackOperation' stack'
+          else
+            (precedenceConflict ();
+            raise TermException)
       | Absyn.NoFixity -> stackOperation' stack
     in
     
@@ -953,38 +955,31 @@ and stackOperation parsingtoplevel o amodule stack =
     * Handles the case where state is PostfixState.
     ******************************************************************)
     let post stack =
-      let pre () =
-        let stack' = stackOperation parsingtoplevel (makeApplyOp pos)
-          amodule stack in
-        pushOperation o stack'
-      in
-      
-      let infOrPost () =
-        if prec < (getStackPrec stack) then
-          let stack' = reduceOperation parsingtoplevel amodule stack in
-          stackOperation' stack'
-        else
-          (Errormsg.error Errormsg.none "conflict in operator precedences";
-          raise TermException)
-      in
-      
-      let inflOrPostl () =
-        if prec <= (getStackPrec stack) then
-          let stack' = reduceOperation parsingtoplevel amodule stack in
-          stackOperation' stack'
-        else
-          (Errormsg.error Errormsg.none "conflict in operator precedences";
-          raise TermException)
-      in
-
       match fixity with
         Absyn.Prefix
-      | Absyn.Prefixr -> pre ()
+      | Absyn.Prefixr ->
+          let stack' = stackOperation parsingtoplevel (makeApplyOp pos)
+            amodule stack in
+          pushOperation o stack'
+
       | Absyn.Infix
       | Absyn.Infixr
-      | Absyn.Postfix -> infOrPost ()
+      | Absyn.Postfix ->
+          if prec < (getStackPrec stack) then
+            let stack' = reduceOperation parsingtoplevel amodule stack in
+            stackOperation' stack'
+          else
+            (precedenceConflict ();
+            raise TermException)
+
       | Absyn.Infixl
-      | Absyn.Postfixl -> inflOrPostl ()
+      | Absyn.Postfixl ->
+          if prec <= (getStackPrec stack) then
+            let stack' = reduceOperation parsingtoplevel amodule stack in
+            stackOperation' stack'
+          else
+            (precedenceConflict ();
+            raise TermException)
       | Absyn.NoFixity -> stackOperation' stack
     in
     
@@ -993,18 +988,16 @@ and stackOperation parsingtoplevel o amodule stack =
     * Handles the case where state is TermState.
     ******************************************************************)
     let termState stack =
-      let pre () =
-        let stack' =
-          stackOperation parsingtoplevel (makeApplyOp pos) amodule stack in
-        pushOperation o stack'
-      in
-      
       match fixity with
-        Absyn.Prefix -> pre ()
-      | Absyn.Prefixr -> pre ()
+        Absyn.Prefix
+      | Absyn.Prefixr ->
+          let stack' =
+            stackOperation parsingtoplevel (makeApplyOp pos) amodule stack in
+          pushOperation o stack'
       | _ -> pushOperation o stack
     in
     
+    (*  Body of stackOperation' *)
     match state with
       NoneState ->
         if (Absyn.isFixityPrefix fixity) then
@@ -1030,6 +1023,7 @@ and stackOperation parsingtoplevel o amodule stack =
                                          ^ (string_of_parserstate state))
   in
   (stackOperation' stack)
+
 (**********************************************************************
 *pushTerm:
 * Pushes a term onto the stack.  Returns the new stack.
@@ -1058,7 +1052,7 @@ and pushOperation o stack =
   | Absyn.Infix
   | Absyn.Infixl -> Stack(stackdata, InfixState, prec, fix)
   | Absyn.Infixr -> Stack(stackdata, InfixrState, prec, fix)
-  | Absyn.Postfix -> Stack(stackdata, PostfixState, prec, fix)
+  | Absyn.Postfix
   | Absyn.Postfixl -> Stack(stackdata, PostfixState, prec, fix)
   | Absyn.NoFixity ->
       Errormsg.impossible pos "Parse.pushOperation: invalid fixity."
