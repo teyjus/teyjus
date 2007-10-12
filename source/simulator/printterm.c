@@ -258,8 +258,8 @@ static DF_StrDataPtr PRINT_makeFVarName()
     }
     PRINT_fvcounter++;
 
-    fvname = (DF_StrDataPtr)EM_malloc(sizeof(Word)*MCSTR_numWords(length) +
-                                      DF_STRDATA_HEAD_SIZE);
+    fvname = (DF_StrDataPtr)EM_malloc(sizeof(Word)*(MCSTR_numWords(length) +
+						    DF_STRDATA_HEAD_SIZE));
     DF_mkStrDataHead((MemPtr)fvname);
     MCSTR_toString((MemPtr)((MemPtr)fvname + DF_STRDATA_HEAD_SIZE),
                    cname, length);
@@ -314,10 +314,62 @@ static void PRINT_writeFVar(WordPtr outStream, DF_TermPtr tmPtr)
 }
 
 /****************************************************************************
- * Writing out a bound variable in its de Bruijn index.                     *
+ * Routines for writing out bound variables (in lambda abstraction and      *
+ * bound variable occurrence)                                               *
+ ****************************************************************************/
+/* prefix for bound variables */
+static char* PRINT_bvname = "W";
+
+/* a counter for determining the suffix part of bound variables */
+static int PRINT_bvcounter = 1;
+
+/* A structure for maintaining information about bound variable names */
+typedef struct PRINT_BVList_ *PRINT_BVList;
+
+struct PRINT_BVList_ {
+  DF_StrDataPtr name;
+  PRINT_BVList  next; };
+
+/* the initial list of bound variable names; initialized in SIM_InitIo */
+static  PRINT_BVList  PRINT_bvs = NULL;
+
+static void PRINT_cleanBV(PRINT_BVList bv)
+{
+  free(bv->name);
+  free(bv);
+}
+
+/* releasing the space for bound variables; needed only in case of error
+   exit */  
+static void PRINT_cleanBVList()
+{
+  PRINT_BVList tbvl;
+
+  PRINT_bvcounter = 1;
+  while (PRINT_bvs) {
+    tbvl = PRINT_bvs; PRINT_bvs = PRINT_bvs->next; 
+    PRINT_cleanBV(tbvl);
+  }
+}
+
+/****************************************************************************
+ * Writing out a bound variable                                             *
  ****************************************************************************/
 static void PRINT_writeBVar(WordPtr outStream, DF_TermPtr tmPtr)
-{  STREAM_printf(outStream, "#%d", DF_bvIndex(tmPtr));   }
+{
+  int i;
+  int bvind = DF_bvIndex(tmPtr);
+  PRINT_BVList lbvs = PRINT_bvs;
+
+  for (i = bvind; ((i != 1) && lbvs) ; i--) 
+    lbvs = lbvs->next;
+
+  // Is this checking and the else branch really necessary? 
+  // Printing should start from top-level closed terms?
+  if (lbvs) STREAM_printf(outStream, "%s", 
+			  MCSTR_toCString(DF_strDataValue(lbvs->name)));
+  else STREAM_printf(outStream, "#%d", i); 
+}
 
 /****************************************************************************
  * Writing out an empty list                                                *
@@ -357,21 +409,89 @@ static void PRINT_writeCons(WordPtr outStream, DF_TermPtr tmPtr,
 /****************************************************************************
  * Writing out an abstraction.                                              *
  ****************************************************************************/
+/* creating a bound variable name with bound variable prefix followed by the*/
+/* current bound variable counter value.                                    */
+static DF_StrDataPtr PRINT_makeBVarName()
+{
+  int            digits = 0;
+  int            i = PRINT_bvcounter;
+  int            length;
+  char*          cname;
+  DF_StrDataPtr  bvname;
+
+  while(i) { digits++; i = i/10; }
+
+  length = digits + 2;
+  cname = (char*)EM_malloc(sizeof(char)*length);
+  strcpy(cname, PRINT_bvname);
+  cname[length-1] = '\0';
+  
+  i = PRINT_bvcounter;
+  while(i) {
+    cname[digits] = (i%10 + '0');
+    i = i/10;
+    digits--;
+  }
+  PRINT_bvcounter++;
+
+  bvname = (DF_StrDataPtr)EM_malloc(sizeof(Word)*(MCSTR_numWords(length) +
+						  DF_STRDATA_HEAD_SIZE));
+ 
+  DF_mkStrDataHead((MemPtr)bvname);
+  MCSTR_toString((MemPtr)((MemPtr)bvname + DF_STRDATA_HEAD_SIZE),
+		 cname, length);
+  free(cname);
+  return bvname;
+}
+
+static void PRINT_writeAbstBinders(WordPtr outStream, int nabs) 
+{
+  DF_StrDataPtr bvname;
+  PRINT_BVList  tmpbvs;
+
+  while(nabs > 0) {
+    nabs--;
+    while(1) {//make a bvname not in FV table
+      bvname = PRINT_makeBVarName();
+      if (!PRINT_nameInFVTab(bvname)) break;
+      free(bvname);
+    }
+
+    //record the name into the head of the current bvlist
+    tmpbvs = (PRINT_BVList)EM_malloc(sizeof(struct PRINT_BVList_));
+    tmpbvs->name = bvname;
+    tmpbvs->next = PRINT_bvs;
+    PRINT_bvs = tmpbvs;
+    //write out binder
+    STREAM_printf(outStream, "%s", MCSTR_toCString(DF_strDataValue(bvname)));
+    PRINT_writeInfixLam(outStream);
+  }
+}
+
 static void PRINT_writeAbst(WordPtr outStream, DF_TermPtr tmPtr, 
                             OP_FixityType fx, int prec, OP_TermContext tc)
 {    
     int     numabs = 0;
     Boolean pparen = PRINT_parenNeeded(OP_LAM_FIXITY,OP_LAM_PREC,tc,fx,prec);
+    PRINT_BVList tmpbvs;
+    int          tmpbvc = PRINT_bvcounter;
     
     if (pparen) PRINT_writeLParen(outStream);
     while (DF_isLam(tmPtr)){
         numabs += DF_lamNumAbs(tmPtr);
         tmPtr = DF_termDeref(DF_lamBody(tmPtr));
     }
-    PRINT_writeLam(outStream, numabs);
+    PRINT_writeAbstBinders(outStream, numabs);
     PRINT_writeTerm(outStream, tmPtr, OP_LAM_FIXITY,OP_LAM_PREC,OP_RIGHT_TERM);
-    PRINT_writeRParen(outStream);
     if (pparen) PRINT_writeRParen(outStream);
+
+    while (numabs > 0) {
+      numabs--;
+      tmpbvs = PRINT_bvs;
+      PRINT_bvs = PRINT_bvs->next;
+      PRINT_cleanBV(tmpbvs);
+    } 
+    PRINT_bvcounter = tmpbvc;
 }      
 
 /****************************************************************************
@@ -641,6 +761,9 @@ void PRINT_resetPrintState()
 
     /* free space for information created for local consts and reset counter */
     PRINT_cleanCList();    
+    
+    /* free space for information created for bound vars and reset counter */
+    PRINT_cleanBVList();
 }
 
 Boolean PRINT_queryHasVars()
