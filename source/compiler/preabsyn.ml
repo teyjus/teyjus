@@ -63,14 +63,14 @@ and pkind = Kind of psymbol list * int option * pos
 and pfixity = Fixity of psymbol list * pfixitykind * int * pos
 
 (********************************************************************
- * Module:
- *  This type stores information about a preabsyn module.
- *  See interface for details.
- ********************************************************************)
+* Module:
+*  This type stores information about a preabsyn module.
+*  See interface for details.
+********************************************************************)
 type pmodule =
   | Module of string * pconstant list * pconstant list * 
-      pconstant list * pconstant list * pfixity list * pkind list *
-      pkind list * ptypeabbrev list * pclause list * psymbol list *
+      pconstant list * pconstant list * pconstant list * pfixity list *
+      pkind list * pkind list * ptypeabbrev list * pclause list * psymbol list *
       psymbol list * psymbol list * psymbol list
   | Signature of string * pconstant list * pconstant list *
       pconstant list * pkind list *
@@ -207,7 +207,7 @@ let printPreAbsyn m out =
   let output_list f list = List.iter (fun t -> output_line (f t)) list in
     match m with
       | Module(name, gconstants, lconstants, cconstants, uconstants,
-               fixities, gkinds, lkinds, tabbrevs, clauses, accummod,
+               econstants, fixities, gkinds, lkinds, tabbrevs, clauses, accummod,
                accumsig, usesig, impmods) ->
           output_line ("Module: " ^ name) ;
           output_line "Constants:" ;
@@ -260,7 +260,7 @@ let getClauseTerm = function
   Clause(t) -> t
 
 let getModuleClauses = function
-  | Module(name, gconsts, lconsts, cconsts, uconsts, fixities,
+  | Module(name, gconsts, lconsts, cconsts, uconsts, econsts, fixities,
       gkinds, lkinds, tabbrevs, clauses, accummods,
       accumsigs, usesigs, impmods) -> clauses
   | _ ->
