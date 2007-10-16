@@ -118,7 +118,7 @@ let makeConst ?ty sym =
 let makeModule () =
   reverseResults () ;
   let m = Module(basename (), !globalConstants, !localConstants,
-                 !closedConstants, !useOnlyList, !fixityList,
+                 !closedConstants, !useOnlyList, !exportList, !fixityList,
                  !globalKinds, !localKinds, !globalTypeAbbrevs,
                  !clauseList, !accumulatedModList, !accumulatedSigList,
                  !useSigList, !importedModList) in
