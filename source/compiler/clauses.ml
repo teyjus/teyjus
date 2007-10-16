@@ -887,7 +887,6 @@ and etaFluffQuantifier term arg =
 * defined by this clause into the list uvdefs.
 **********************************************************************)
 and normalizeClause clauseterm clauses uvs uvdefs embedded =
-
   (********************************************************************
   *indeterminate:
   * Indicates that a predicate head's name didn't resolve.
