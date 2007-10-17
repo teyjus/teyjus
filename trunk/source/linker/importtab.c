@@ -215,11 +215,12 @@ void RestoreImportTab()
   //Resolve predicate collisions
   int i;
   int size=LK_VECTOR_Size(&(CT->findCodeTabs));
+  ConstInd LowLConst=*(ConstInd*)LK_VECTOR_GetPtr(&(CT->LConstInds),0);
   HashTab_t* tmp=(HashTab_t*)LK_VECTOR_GetPtr(&(CT->findCodeTabs),0);
   mutter("After get\n");
   for(i=1;i<size;i++)
   {
-    MergeFindCodeTabs(tmp,tmp+i);
+    MergeFindCodeTabs(tmp,tmp+i,LowLConst);
   }
   
   mutter("Resolving predicate calls\n");
