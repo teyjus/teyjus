@@ -20,8 +20,11 @@
 #include "../tables/instructions.h"//to be modifed
 #include "../loader/searchtab.h"
 
+
 //#include "print.h"
 #include <stdio.h>  //to be removed
+#include "printterm.h"
+#include "../system/stream.h"
 
 static AM_DataTypePtr regX, regA;
 static AM_DataTypePtr envY, clenvY;
@@ -551,7 +554,7 @@ void SINSTR_get_list()                  //get_list Xi -- R_X
     tmPtr = DF_termDeref((DF_TermPtr)regX);
     switch (DF_termTag(tmPtr)){
     case DF_TM_TAG_VAR:{ SINSTRL_bindCons(tmPtr); return; }
-    case DF_TM_TAG_CONS: {AM_sreg=DF_consArgs(tmPtr); AM_writeFlag=ON; return; }
+    case DF_TM_TAG_CONS: {AM_sreg=DF_consArgs(tmPtr); AM_writeFlag=OFF; return; }
     case DF_TM_TAG_APP: 
     {
         if (DF_isConst(DF_termDeref(DF_appFunc(tmPtr)))) EM_THROW(EM_FAIL);
@@ -608,9 +611,12 @@ void SINSTR_unify_value_t()             //unify_value Xi -- R_X
 {
     INSACC_RX(regX);
     if (AM_writeFlag) {
-        if (AM_ocFlag) SINSTRL_bindSreg(DF_termDeref((DF_TermPtr)regX));
-        else *((AM_DataTypePtr)AM_sreg) = *regX;
-    } else  HOPU_patternUnifyPair((DF_TermPtr)regX, AM_sreg);  //read mode
+      if (AM_ocFlag) SINSTRL_bindSreg(DF_termDeref((DF_TermPtr)regX));
+      else *((AM_DataTypePtr)AM_sreg) = *regX;
+
+    } else  {
+      HOPU_patternUnifyPair((DF_TermPtr)regX, AM_sreg);  //read mode
+    }
     AM_sreg++;
 }
 
