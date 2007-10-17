@@ -419,7 +419,7 @@ void WriteCode(int fd)
           break;
         
         case INSTR_L:
-          debug("L(%x) ",*(CodeInd*)(code+j));
+          debug("L(%lx) ",*(CodeInd*)(code+j));
           PutCodeInd(fd,*(CodeInd*)(code+j));
           j+=sizeof(CodeInd);
           break;
@@ -575,15 +575,16 @@ CodeInd MergeSubSequence(CodeInd younger, CodeInd older, Byte n)
   }
 }
 
-//Append definition at older to definition at younger.
-CodeInd MergeDefs(CodeInd older, CodeInd younger)
+int TidySwitchOnReg(CodeInd* pyounger)
 {
+  debug("Tidying switch_on_reg at %lx\n",*pyounger);
   Byte* code=LK_VECTOR_GetPtr(&Code,0);
   CodeInd c=-1;
   int n=-1;
+  CodeInd younger=*pyounger;
   
-  //Assert switch_on_reg for younger.
-  ASSERT(code[younger]==switch_on_reg,"Expected \"switch_on_reg\" at beginning of younger definition.")
+  if(code[younger]!=switch_on_reg)
+    return -1;
   
   //Get predicate arity.
   //Set c to L1 of switch_on_reg.
@@ -606,8 +607,21 @@ CodeInd MergeDefs(CodeInd older, CodeInd younger)
   code[younger]=fail;
   code[younger+sizeof(CodeInd)]=fail;
   code[younger+2*sizeof(CodeInd)]=fail;
-  //Set c to the start address of the definition.
-  younger=c;
+  //return the start address of the definition.
+  *pyounger=c;
+  return n;
+}
+
+//Append definition at older to definition at younger.
+CodeInd MergeDefs(CodeInd older, CodeInd younger)
+{
+  CodeInd c=-1;
+  debug("Merging defs at %lx and %lx\n",older,younger);
+  Byte* code=LK_VECTOR_GetPtr(&Code,0);
+  //Assert switch_on_reg for younger.
+  ASSERT(code[younger]==switch_on_reg,"Expected \"switch_on_reg\" at beginning of younger definition.")
+  
+  int n = TidySwitchOnReg(&younger);
   
   //Check for switch_on_reg for older
   if(code[older]==switch_on_reg)
