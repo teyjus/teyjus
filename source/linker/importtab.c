@@ -20,6 +20,7 @@ typedef struct{
   int NctSize;
   ConstInd* NextClauseTable;
   struct Vector LConstInds;
+  ConstInd LowLConst;
   PredInfoTab* newPred;
   Byte findCodeFun;
   struct Vector findCodeTabs;
@@ -88,6 +89,8 @@ void TopImportTab(int fd, struct Module_st* CMData)
   int i;
   
   AddLocalConstants(&(CT->LConstInds),CMData);
+  CT->LowLConst.index=0;
+  CT->LowLConst.gl_flag=LOCAL;
   
   //Use next clause table for top level predicate names.
   TwoBytes count=CT->NctSize=LK_FILE_GET2(fd);
@@ -165,6 +168,8 @@ void ImpImportTab(int fd, struct Module_st* CMData)
   int i;
   struct Vector* vec;
   AddLocalConstants(&(CT->LConstInds),CMData);
+  CT->LowLConst.index=CMData->LConstAdj.offset;
+  CT->LowLConst.gl_flag=LOCAL;
   PredInfoTab* CMInfoTab=CT->newPred;
   PredInfoTab* ParInfoTab=((TImportTab_t*)LK_VECTOR_GetPtr(&ImportTabs,CT->parent))->newPred;
   //Set next clause table and mark contents dynamic
@@ -215,12 +220,11 @@ void RestoreImportTab()
   //Resolve predicate collisions
   int i;
   int size=LK_VECTOR_Size(&(CT->findCodeTabs));
-  ConstInd LowLConst=*(ConstInd*)LK_VECTOR_GetPtr(&(CT->LConstInds),0);
   HashTab_t* tmp=(HashTab_t*)LK_VECTOR_GetPtr(&(CT->findCodeTabs),0);
   mutter("After get\n");
   for(i=1;i<size;i++)
   {
-    MergeFindCodeTabs(tmp,tmp+i,LowLConst);
+    MergeFindCodeTabs(tmp,tmp+i,CT->LowLConst);
   }
   
   mutter("Resolving predicate calls\n");

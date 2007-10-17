@@ -9,7 +9,7 @@ void LK_VECTOR_Read(int fd, struct Vector* vec, struct Module_st* CMData, Adjust
   Word count=adj->count=LK_FILE_GET2(fd);
   if(count==0)
   {
-    adj->offset=0;
+    adj->offset=LK_VECTOR_Size(vec);
     return;
   }
   Word offset=adj->offset=LK_VECTOR_Grow(vec,count);
