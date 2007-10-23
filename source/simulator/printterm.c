@@ -583,8 +583,9 @@ static void PRINT_writeApp(WordPtr outStream, DF_TermPtr tmPtr,
                                           inprec);
     OP_FixityType  fix;
     int            prec;
-    
-    PRINT_getHeadInfo(head, &fix, &prec);
+
+    HN_hnorm(tmPtr);
+    PRINT_getHeadInfo(AM_head, &fix, &prec);  
     
     switch(fix){
     case OP_PREFIX: case OP_PREFIXR:
@@ -668,8 +669,8 @@ static void PRINT_writeTerm(WordPtr outStream, DF_TermPtr tmPtr,
 free variables if the boolean variable PRINT_names is set. */
 void PRINT_fPrintTerm(WordPtr outStream, DF_TermPtr tmPtr)
 {
-    HN_lnorm(tmPtr);
-    PRINT_writeTerm(outStream, tmPtr, OP_NONE, 0, OP_WHOLE_TERM);
+  HN_lnorm(tmPtr);
+  PRINT_writeTerm(outStream, tmPtr, OP_NONE, 0, OP_WHOLE_TERM);
 }
 
 /* Printing routine for debugging */

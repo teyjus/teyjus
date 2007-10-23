@@ -18,10 +18,13 @@
 #include "hnorm.h"
 #include "hnormlocal.h"
 #include "abstmachine.h"
-#include "../system/error.h" //to be changed
+#include "../system/error.h" 
 
 //for debugging: to be removed
 #include <stdio.h>
+#include "printterm.h"
+//#include "print.h"
+#include "../system/stream.h"
 
 /*****************************************************************************/
 /* a global(to file hnorm.c) encoding  of the explicit suspension environment*/
@@ -256,6 +259,7 @@ static DF_TermPtr HN_hnormCons(DF_TermPtr consPtr, Boolean whnf)
             rtPtr = (DF_TermPtr)AM_hreg;
             HNL_pushCons(AM_argVec);
         } else rtPtr = consPtr;
+	HN_setEmptyEnv();
     }
     HNL_setRegsCons(rtPtr);
     return rtPtr;
@@ -346,9 +350,10 @@ static DF_TermPtr HN_hnormSusp(DF_TermPtr suspPtr, Boolean whnf)
     //first (weak) head normalize the explicit susp
     HN_setEnv(DF_suspOL(suspPtr), DF_suspNL(suspPtr), DF_suspEnv(suspPtr));
     rtPtr = HN_hnormDispatch(DF_suspTermSkel(suspPtr), whnf);
-
     if (emptyTopEnv) {
-        if (HN_isEmptyEnv()) HNL_updateToRef(suspPtr, rtPtr);
+        if (HN_isEmptyEnv()) {
+	  HNL_updateToRef(suspPtr, rtPtr);
+	}
     } else {           // ! emptyTopEnv
         if (HN_isEmptyEnv()) HNL_updateToRef(suspPtr, rtPtr);
         else rtPtr = HN_pushSuspOverLam(rtPtr);
@@ -521,6 +526,7 @@ static DF_TermPtr HN_hnormConsOcc(DF_TermPtr consPtr, Boolean whnf)
             rtPtr = (DF_TermPtr)AM_hreg;
             HNL_pushCons(AM_argVec);
         } else rtPtr = consPtr;
+	HN_setEmptyEnv();
     }
     HNL_setRegsCons(rtPtr);
     return rtPtr;
@@ -916,6 +922,7 @@ static DF_TermPtr HN_lnormCons(DF_TermPtr consPtr, Boolean whnf)
         AM_numArgs = DF_CONS_ARITY;
         rtPtr = (DF_TermPtr)AM_hreg;
         HNL_pushCons(AM_argVec);
+	HN_setEmptyEnv();
     }
     HNL_setRegsCons(rtPtr);
     return rtPtr;

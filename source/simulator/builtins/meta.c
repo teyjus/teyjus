@@ -7,17 +7,20 @@
 /*                                                                          */
 /****************************************************************************/
 #include <stdio.h>            //temp
+#include "../printterm.h"
+//#include "../print.h"
+#include "../../system/stream.h"
 
 #include "meta.h"
 #include "builtins.h"
-#include "../dataformats.h"   //to be modified
-#include "../abstmachine.h"   //to be modified
-#include "../hnorm.h"         //to be modified
-#include "../../tables/pervasives.h" //to be modified
-#include "../../tables/instructions.h" // to be modified
-#include "../../system/error.h"      //to be modified
+#include "../dataformats.h"   
+#include "../abstmachine.h"   
+#include "../hnorm.h"         
+#include "../../tables/pervasives.h" 
+#include "../../tables/instructions.h" 
+#include "../../system/error.h"      
 
-//#include "../print.h" //temp
+
 /****************************************************************************/
 /* Auxiliary functions for BIMETA_solve();                                  */
 /* The decomposition of the top-level term being processed is assumed to    */
@@ -61,7 +64,7 @@ static void BIMETA_solveSome()
     MemPtr nhreg  = varPtr  + DF_TM_ATOMIC_SIZE;
     
     AM_heapError(nhreg);
-    DF_mkApp(AM_hreg, 1, (DF_TermPtr)varPtr, AM_argVec);
+    DF_mkApp(AM_hreg, 1, AM_argVec, (DF_TermPtr)varPtr);
     DF_mkVar(varPtr, AM_ucreg);
     DF_mkRef((MemPtr)AM_reg(1), (DF_TermPtr)AM_hreg);
     
@@ -80,12 +83,12 @@ static void BIMETA_solveAll()
     AM_cpreg = AM_allCode;
     
     AM_heapError(nhreg); 
-    DF_mkApp(AM_hreg, 1, (DF_TermPtr)constPtr, AM_argVec);
+    DF_mkApp(AM_hreg, 1, AM_argVec, (DF_TermPtr)constPtr);
     AM_ucError(AM_ucreg);
     AM_ucreg++;
     DF_mkConst(constPtr, AM_ucreg, PERV_UNIV_INDEX);
     DF_mkRef((MemPtr)AM_reg(1), (DF_TermPtr)AM_hreg);
-    
+
     AM_hreg = nhreg;
     AM_preg = AM_solveCode;
 }
