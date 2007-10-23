@@ -694,6 +694,8 @@ and mergeTypeAbbrevs t1 t2 =
 * Determines whether two constants are defined in compatible ways.
 **********************************************************************)
 and compareConstants c1 c2 =
+  let name = Absyn.getConstantName c1 in
+  
   let fix = Absyn.getConstantFixity c1 in
   let fix' = Absyn.getConstantFixity c2 in
   
@@ -706,27 +708,20 @@ and compareConstants c1 c2 =
   let p = Absyn.getConstantPos c1 in
   let p' = Absyn.getConstantPos c2 in
   
-  let useonly = Absyn.getConstantUseOnly c1 in
-  let useonly' = Absyn.getConstantUseOnly c2 in
-  
-  let ed = Absyn.getConstantExportDef c1 in
-  let ed' = Absyn.getConstantExportDef c2 in
   
   if not (checkFixity fix fix') then
-    (Errormsg.error p ("constant already declared with fixity " ^
+    (Errormsg.error p' ("constant already declared with fixity " ^
       (Absyn.string_of_fixity fix') ^
-      (Errormsg.see p' "constant declaration"));
+      (Errormsg.see p "constant declaration"));
     false)
   else if not (checkPrec prec prec') then
-    (Errormsg.error p ("constant already declared with precedence" ^
-    (string_of_int prec'));
+    (Errormsg.error p' ("constant '" ^ name ^ "' already declared with precedence" ^
+      (string_of_int prec') ^ (Errormsg.see p "constant declaration"));
     false)
   else if (Option.isSome skel) && (Option.isSome skel') &&
     (skel <> skel') then
-    (Errormsg.error p "constant already declared with different type";
-    false)
-  else if useonly && ed' || useonly' && ed then
-    (Errormsg.error p "constant declared as both useonly and exportdef";
+    (Errormsg.error p' ("constant '" ^ name ^ "' declared with incompatible type" ^
+      (Errormsg.see p "constant declaration"));
     false)
   else
     true
@@ -794,11 +789,32 @@ and checkKindArities ktable =
 and checkConstantBodies ctable =
   let result = ref true in
   let check s c =
+    let p = (Absyn.getConstantPos c) in
+    let name = (Absyn.getConstantName c) in
     match (Absyn.getConstantSkeleton c) with
-      Some skel -> ()
+      Some skel ->
+        (*  Check that the type declared here is correct for
+        useonly and exportdef constants.  *)
+        let ty = Absyn.getSkeletonType skel in
+        if (Absyn.getConstantUseOnly c) || (Absyn.getConstantExportDef c) then
+          if not (Absyn.isArrowType ty) then
+            (Errormsg.error p
+              ("constant '" ^ name ^ "' declared as exportdef without target type 'o'");
+            result := false)
+          else
+            let targ = Absyn.getArrowTypeTarget ty in
+            if (Absyn.isConstantType targ) &&
+              (Pervasive.iskbool (Absyn.getTypeKind targ)) then
+              ()
+            else
+              (Errormsg.error p
+                ("constant '" ^ name ^ "' declared as exportdef without target type 'o'");
+              result := false)              
+        else
+          ()
     | None ->
-        (Errormsg.error (Absyn.getConstantPos c)
-          ("constant declared without type");
+        (Errormsg.error p
+          ("constant '" ^ name ^ "' declared without type");
         result := false)
   in
   
@@ -826,12 +842,205 @@ and checkPrec = fun f1 f2 ->
 * Merges a list of constants into a table of constants, based on the
 * options specified.
 **********************************************************************)
-and mergeConstants clist ctable mustExist needs=
+and mergeConstants clist ctable f =
   let merge table constant =
-    ()
+    let sym = Absyn.getConstantSymbol constant in
+    let constant' = Table.find sym ctable in
+    (f constant' constant ctable)
   in
   List.fold_left merge ctable clist
 
+(**********************************************************************
+*mergeKinds:
+* Merges a list of kinds into a table of kinds, based on the
+* options specified.
+**********************************************************************)
+and mergeKinds klist ktable f =
+  let merge table kind =
+    let sym = Absyn.getKindSymbol kind in
+    let kind' = Table.find sym ktable in
+    (f kind' kind ktable)
+  in
+  List.fold_left merge ktable klist
+
+(**********************************************************************
+*previouslyExists:
+* Checks that the constant already existed.
+**********************************************************************)
+and previouslyExists =
+  fun currentConstant newConstant ->
+    Option.isSome currentConstant
+
+(**********************************************************************
+*hasSkeleton:
+* Ensures that the new constant has a skeleton.
+**********************************************************************)
+and hasSkeleton =
+  fun currentConstant newConstant ->
+    Option.isSome (Absyn.getConstantSkeleton newConstant)
+
+(**********************************************************************
+*mustCompare:
+* Requires that the two constants are compatible.
+**********************************************************************)
+and mustCompare =
+  fun currentConstant newConstant ->
+    if (Option.isSome currentConstant) then
+      compareConstants (Option.get currentConstant) newConstant
+    else
+      Errormsg.impossible Errormsg.none "Translate.mustCompare: invalid constant"
+
+(**********************************************************************
+*ifThenElse:
+**********************************************************************)
+and ifThenElse test ifBranch elseBranch =
+  fun currentConstant newConstant ctable ->
+    if (test currentConstant newConstant) then
+      ifBranch currentConstant newConstant ctable
+    else
+      elseBranch currentConstant newConstant ctable
+
+and success = fun _ _ ctable -> ctable
+and failure = fun _ _ ctable -> ctable
+and error s = fun currentConstant newConstant ctable ->
+  let p = Absyn.getConstantPos newConstant in
+  let s' = "constant '" ^ (Absyn.getConstantName newConstant) ^ "' " ^ s in
+  if Option.isSome currentConstant then
+    let p' = Absyn.getConstantPos (Option.get currentConstant) in
+    (Errormsg.error p
+      (s' ^ (Errormsg.see p' "constant declaration"));
+    ctable)
+  else
+    (Errormsg.error p s';
+    ctable)
+and orElse left right =
+  fun currentConstant newConstant ->
+    (left currentConstant newConstant) || (right currentConstant newConstant)
+
+and andAlso args =
+  fun currentConstant newConstant ->
+    let forall f = (f currentConstant newConstant) in
+    List.for_all forall args
+    
+and seq functions =
+  fun currentConstant newConstant ctable ->
+    let folder ctable f =
+      (f currentConstant newConstant ctable)
+    in
+    List.fold_left folder ctable functions
+
+(**********************************************************************
+*doesNot:
+**********************************************************************)
+and doesNot test =
+  fun currentConstant newConstant ->
+    not (test currentConstant newConstant)
+
+(**********************************************************************
+*copySkeleton:
+* Copies the skeleton from the new constant to the old.
+**********************************************************************)
+and copySkeleton =
+  fun currentConstant newConstant ctable ->
+    let skelref = Absyn.getConstantSkeletonRef currentConstant in
+    let newskel = Absyn.getConstantSkeleton newConstant in
+    (skelref := newskel;
+    ctable)
+  
+(**********************************************************************
+*enterConstant:
+**********************************************************************)
+and enterConstant f =
+  fun currentConstant newConstant ctable ->
+    let sym = Absyn.getConstantSymbol newConstant in
+    let ctable' = Table.add sym newConstant ctable in
+    f (Some newConstant) newConstant ctable'
+
+and hasCurrentConstantType t =
+  fun currentConstant newConstant ->
+    if (Option.isSome currentConstant) then
+      (Absyn.getConstantType (Option.get currentConstant)) = t
+    else
+      Errormsg.impossible Errormsg.none
+        "Translate.hasCurrentConstantType: invalid current constant"
+
+and hasCurrentConstantUseonly v =
+  fun currentConstant newConstant ->
+    if (Option.isSome currentConstant) then
+      (Absyn.getConstantUseOnly (Option.get currentConstant)) = v
+    else
+      Errormsg.impossible Errormsg.none
+        "Translate.hasCurrentConstantUseonly: invalid current constant"
+
+and hasCurrentConstantExportdef v =
+  fun currentConstant newConstant ->
+    if (Option.isSome currentConstant) then
+      (Absyn.getConstantExportDef (Option.get currentConstant)) = v
+    else
+      Errormsg.impossible Errormsg.none
+        "Translate.hasCurrentConstantExportdef: invalid current constant"
+
+and setCurrentConstantClosed v =
+  fun currentConstant newConstant ctable ->
+    if (Option.isSome currentConstant) then
+      let cref = Absyn.getConstantClosedRef (Option.get currentConstant) in
+      (cref := v;
+      ctable)
+    else
+      Errormsg.impossible Errormsg.none
+        "Translate.setCurrentConstantClosed: invalid current constant"
+
+and setCurrentConstantUseonly v =
+  fun currentConstant newConstant ctable ->
+    if (Option.isSome currentConstant) then
+      let cref = Absyn.getConstantUseOnlyRef (Option.get currentConstant) in
+      (cref := v;
+      ctable)
+    else
+      Errormsg.impossible Errormsg.none
+        "Translate.setCurrentConstantUseonly: invalid current constant"
+
+and setCurrentConstantExportdef v =
+  fun currentConstant newConstant ctable ->
+    if (Option.isSome currentConstant) then
+      let cref = Absyn.getConstantExportDefRef (Option.get currentConstant) in
+      (cref := v;
+      ctable)
+    else
+      Errormsg.impossible Errormsg.none
+        "Translate.setCurrentConstantExportDef: invalid current constant"
+
+(**********************************************************************
+*setCurrentConstantType:
+**********************************************************************)
+and setCurrentConstantType t =
+  fun currentConstant newConstant ctable ->
+    if Option.isSome currentConstant then
+      let tyref = Absyn.getConstantTypeRef (Option.get currentConstant) in
+      (tyref := t;
+      ctable)
+    else
+      Errormsg.impossible Errormsg.none
+        "Translate.setCurrentConstantType: invalid current constant"
+
+and copyConstant =
+  fun currentConstant newConstant ctable ->
+    if (Option.isSome currentConstant) then
+      let currentConstant = Option.get currentConstant in
+      let tyref = Absyn.getConstantTypeRef currentConstant in
+      let skelref = Absyn.getConstantSkeletonRef currentConstant in
+      let uoref = Absyn.getConstantUseOnlyRef currentConstant in
+      let edref = Absyn.getConstantExportDefRef currentConstant in
+      let closedref = Absyn.getConstantClosedRef currentConstant in
+      (tyref := Absyn.getConstantType newConstant;
+      skelref := Absyn.getConstantSkeleton newConstant;
+      uoref := Absyn.getConstantUseOnly newConstant;
+      edref := Absyn.getConstantExportDef newConstant;
+      closedref := Absyn.getConstantClosed newConstant;
+      ctable)
+    else
+      Errormsg.impossible Errormsg.none
+        "Translate.copyConstant: invalid current constant"
 (**********************************************************************
 *translate:
 * Convert from a preabsyn module to an absyn module.
@@ -1139,122 +1348,63 @@ and translateModule mod' ktable ctable atable =
     * the constant must already exist as a global.  If the type is
     * declared then it must either match an existing global declaration
     * or there must not be any global declaration.
+    *
     ********************************************************************)
     let mergeLocalConstants clist ctable =
-      let merge table constant =
-        let skel = Absyn.getConstantSkeleton constant in
-        let s = Absyn.getConstantSymbol constant in
-        match skel with
-          None -> (*  This local has no defined type  *)
-            (match (Table.find s table) with
-              Some c2 ->
-                if (Absyn.getConstantRedefinable c2) || (compareConstants constant c2) then
-                  let tyref = Absyn.getConstantTypeRef c2 in
-                  (tyref := Absyn.LocalConstant;
-                  table)
-                else
-                  table
-            | None -> (Table.add s constant table))
-        | Some skel -> (*  This local was defined with a type  *)
-            (match (Table.find s table) with
-              Some c2 ->
-                if (Absyn.getConstantRedefinable c2) || (compareConstants constant c2) then
-                  let tyref = Absyn.getConstantTypeRef c2 in
-                  let skelref = Absyn.getConstantSkeletonRef c2 in
-                  (tyref := Absyn.LocalConstant;
-                  skelref := Some skel;
-                  table)
-                else
-                  table
-            | None ->
-                (Table.add s constant table))
-      in
-      (List.fold_left merge ctable clist)
+      let f = 
+        ifThenElse (doesNot hasSkeleton)
+          (ifThenElse (previouslyExists)
+            (setCurrentConstantType Absyn.LocalConstant)
+            (enterConstant (setCurrentConstantType Absyn.LocalConstant)))
+          (ifThenElse (doesNot previouslyExists)
+            (enterConstant (setCurrentConstantType Absyn.LocalConstant))
+            (ifThenElse (mustCompare)
+              (seq [copyConstant; setCurrentConstantType Absyn.LocalConstant])
+              (failure)))
+      in    
+      mergeConstants clist ctable f
     in
-    
+        
     (********************************************************************
     *mergeClosedConstants:
     * Merge the closed constants in the module into the constant table.
     ********************************************************************)
     let mergeClosedConstants clist ctable =
-      let merge table constant =
-        let skel = Absyn.getConstantSkeleton constant in
-        let ty = Absyn.getConstantType constant in
-        let s = Absyn.getConstantSymbol constant in
-        match skel with
-          None -> (*  This local has no defined type  *)
-            (match (Table.find s table) with
-              Some c2 ->
-                if (Absyn.getConstantRedefinable c2) || (compareConstants constant c2) then
-                  let tyref = Absyn.getConstantTypeRef c2 in
-                  let closedref = Absyn.getConstantClosedRef c2 in
-                  (tyref := ty;
-                  closedref := true;
-                  table)
-                else
-                  table
-            | None ->
-                (Table.add s constant table))
-        | Some skel -> (*  This local was defined with a type  *)
-            (match (Table.find s table) with
-              Some c2 ->
-                if (Absyn.getConstantRedefinable c2) || (compareConstants constant c2) then
-                  let tyref = Absyn.getConstantTypeRef c2 in
-                  let skelref = Absyn.getConstantSkeletonRef c2 in
-                  let closedref = Absyn.getConstantClosedRef c2 in
-                  (tyref := ty;
-                  skelref := Some skel;
-                  closedref := true;
-                  table)
-                else
-                  table
-            | None ->
-                (Table.add s constant table))
-      in
-      (List.fold_left merge ctable clist)
+      let f = 
+        ifThenElse (doesNot hasSkeleton)
+          (ifThenElse (previouslyExists)
+            (setCurrentConstantClosed true)
+            (enterConstant (setCurrentConstantClosed true)))
+          (ifThenElse (doesNot previouslyExists)
+            (enterConstant (setCurrentConstantClosed true))
+            (ifThenElse (mustCompare)
+              (seq [copyConstant; setCurrentConstantClosed true])
+              (failure)))
+      in    
+      mergeConstants clist ctable f
     in
     
     (********************************************************************
     *mergeUseOnlyConstants:
     * Merge the useonly constants in the module into the constant table.
     ********************************************************************)
-    let mergeUseOnlyConstants clist ctable =
-      let merge table constant =
-        let skel = Absyn.getConstantSkeleton constant in
-        let ty = Absyn.getConstantType constant in
-        let useonly = Absyn.getConstantUseOnly constant in
-        let s = Absyn.getConstantSymbol constant in
-        match skel with
-          None -> (*  This local has no defined type  *)
-            (match (Table.find s table) with
-              Some c2 ->
-                if (Absyn.getConstantRedefinable c2) || (compareConstants constant c2) then
-                  let tyref = Absyn.getConstantTypeRef c2 in
-                  let useonlyref = Absyn.getConstantUseOnlyRef c2 in
-                  (tyref := ty;
-                  useonlyref := useonly;
-                  table)
-                else
-                  table
-            | None ->
-                (Table.add s constant table))
-        | Some skel -> (*  This local was defined with a type  *)
-            (match (Table.find s table) with
-              Some c2 ->
-                if (Absyn.getConstantRedefinable c2) || (compareConstants constant c2) then
-                  let tyref = Absyn.getConstantTypeRef c2 in
-                  let skelref = Absyn.getConstantSkeletonRef c2 in
-                  let useonlyref = Absyn.getConstantUseOnlyRef c2 in
-                  (tyref := ty;
-                  skelref := Some skel;
-                  useonlyref := useonly;
-                  table)
-                else
-                  table
-            | None ->
-                (Table.add s constant table))
-      in
-      (List.fold_left merge ctable clist)
+    let mergeUseonlyConstants clist ctable =
+      let f = 
+        ifThenElse (doesNot hasSkeleton)
+          (ifThenElse
+            (andAlso
+              [previouslyExists; hasCurrentConstantType Absyn.GlobalConstant;
+              hasCurrentConstantUseonly true; hasCurrentConstantExportdef false])
+            (success)
+            (error "declared as useonly without corresponding declaration in signature"))
+          (ifThenElse
+            (andAlso
+              [previouslyExists; hasCurrentConstantType Absyn.GlobalConstant;
+              hasCurrentConstantUseonly true; hasCurrentConstantExportdef false; mustCompare])
+            (success)
+            (error "declared as useonly without corresponding declaration in signature"))
+      in    
+      mergeConstants clist ctable f
     in
 
     (********************************************************************
@@ -1262,46 +1412,23 @@ and translateModule mod' ktable ctable atable =
     * Merge the exportdef constants in the module into the constant table.
     ********************************************************************)
     let mergeExportdefConstants clist ctable =
-      let merge table constant =
-        let skel = Absyn.getConstantSkeleton constant in
-        let ty = Absyn.getConstantType constant in
-        let ed = Absyn.getConstantExportDef constant in
-        let s = Absyn.getConstantSymbol constant in
-        match skel with
-          None -> (*  This exportdef has no defined type  *)
-            (match (Table.find s table) with
-              Some c2 ->
-                if (Absyn.getConstantRedefinable c2) || (compareConstants constant c2) then
-                  let tyref = Absyn.getConstantTypeRef c2 in
-                  let edref = Absyn.getConstantExportDefRef c2 in
-                  (tyref := ty;
-                  edref := ed;
-                  table)
-                else
-                  table
-            | None ->
-                (Errormsg.error (Absyn.getConstantPos constant)
-                  "exportdef declared without corresponding signature declaration";
-                table))
-        | Some skel -> (*  This local was defined with a type  *)
-            (match (Table.find s table) with
-              Some c2 ->
-                if (Absyn.getConstantRedefinable c2) || (compareConstants constant c2) then
-                  let tyref = Absyn.getConstantTypeRef c2 in
-                  let skelref = Absyn.getConstantSkeletonRef c2 in
-                  let edref = Absyn.getConstantExportDefRef c2 in
-                  (tyref := ty;
-                  skelref := Some skel;
-                  edref := ed;
-                  table)
-                else
-                  table
-            | None ->
-                (Errormsg.error (Absyn.getConstantPos constant)
-                  "exportdef declared without corresponding signature declaration";
-                table))
-      in
-      (List.fold_left merge ctable clist)
+      let f = 
+        ifThenElse (doesNot hasSkeleton)
+          (ifThenElse
+            (andAlso
+              [previouslyExists; hasCurrentConstantType Absyn.GlobalConstant;
+              hasCurrentConstantUseonly false; hasCurrentConstantExportdef true])
+            (success)
+            (error "declared as exportdef without corresponding declaration in signature"))
+          (ifThenElse
+            (andAlso
+              [previouslyExists; hasCurrentConstantType Absyn.GlobalConstant;
+              hasCurrentConstantUseonly false; hasCurrentConstantExportdef true;
+              mustCompare])
+            (success)
+            (error "declared as exportdef without corresponding declaration in signature"))
+      in    
+      mergeConstants clist ctable f
     in
     
     (********************************************************************
@@ -1309,20 +1436,14 @@ and translateModule mod' ktable ctable atable =
     * Merge the global constants in the module into the constant table.
     ********************************************************************)
     let mergeGlobalConstants clist ctable =
-      let merge ctable constant =
-        let s = Absyn.getConstantSymbol constant in
-        match (Table.find s ctable) with
-          Some c2 ->
-            if not (compareConstants constant c2) then
-              ctable
-            else
-              ctable
-        | None ->
-            let tyref = Absyn.getConstantTypeRef constant in
-            (tyref := Absyn.LocalConstant;
-            Table.add s constant ctable)
+      let f =
+        ifThenElse previouslyExists
+          (ifThenElse mustCompare
+            (success)
+            (failure))
+          (enterConstant (setCurrentConstantType Absyn.LocalConstant))
       in
-      (List.fold_left merge ctable clist)
+      mergeConstants clist ctable f
     in
     
     (******************************************************************
@@ -1414,7 +1535,7 @@ and translateModule mod' ktable ctable atable =
         let ctable = mergeGlobalConstants gconstlist ctable in
         let ctable = mergeLocalConstants lconstlist ctable in
         let ctable = mergeClosedConstants cconstlist ctable in
-        let ctable = mergeUseOnlyConstants uconstlist ctable in
+        let ctable = mergeUseonlyConstants uconstlist ctable in
         let ctable = mergeExportdefConstants econstlist ctable in
         
         (*  Apply fixity flags  *)
