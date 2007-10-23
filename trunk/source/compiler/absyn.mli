@@ -338,6 +338,7 @@ val getSkeletonNew : askeleton -> bool
 val setSkeletonNew : askeleton -> bool -> unit
 
 val string_of_skeleton : askeleton -> string
+
 (*************************************************************************)
 (*  afixity:                                                             *)
 (*************************************************************************)
