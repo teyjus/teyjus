@@ -252,7 +252,7 @@ and translateTypeSkeleton = fun ty kindtable typeabbrevtable newsymfunc ->
     * tree of arrow types.  Pretty sure this function exists somewhere
     * else...
     ******************************************************************)
-    let rec buildArrow = fun target args ->
+    let rec buildArrow target args =
       match args with
         arg::rest -> Absyn.ArrowType(arg, buildArrow target rest)
       | [] -> target
@@ -771,7 +771,6 @@ and compareAccumConstants c1 c2 =
     false)
   else
     true
-  
 (**********************************************************************
 *checkKindArities:
 * Ensures that all constants have arities.
@@ -821,6 +820,17 @@ and checkFixity f1 f2 =
 **********************************************************************)
 and checkPrec = fun f1 f2 ->
   (f1 = f2 || (f1 = -1 || f2 = -1))
+
+(**********************************************************************
+*mergeConstants:
+* Merges a list of constants into a table of constants, based on the
+* options specified.
+**********************************************************************)
+and mergeConstants clist ctable mustExist needs=
+  let merge table constant =
+    ()
+  in
+  List.fold_left merge ctable clist
 
 (**********************************************************************
 *translate:
@@ -1008,11 +1018,11 @@ and translateSignature s owner ktable ctable tabbrevtable kbuilder cbuilder =
 *translateModule:
 * Translates a module from preabsyn to absyn.
 **********************************************************************)
-and translateModule = fun mod' ktable ctable atable ->
+and translateModule mod' ktable ctable atable =
     (******************************************************************
     *getSkeleton:
     * Used when folding over the constant lists to get all constant
-    * skeletons.
+    * skeletons.  Assumes that the constant has a skeleton.
     ******************************************************************)
     let getSkeleton result c =
       let skel = Absyn.getConstantSkeletonValue c in
@@ -1134,7 +1144,6 @@ and translateModule = fun mod' ktable ctable atable ->
       let merge table constant =
         let skel = Absyn.getConstantSkeleton constant in
         let s = Absyn.getConstantSymbol constant in
-        let p = Absyn.getConstantPos constant in
         match skel with
           None -> (*  This local has no defined type  *)
             (match (Table.find s table) with
@@ -1167,9 +1176,10 @@ and translateModule = fun mod' ktable ctable atable ->
     *mergeClosedConstants:
     * Merge the closed constants in the module into the constant table.
     ********************************************************************)
-    let mergeClosedConstants = fun clist ctable ->
-      let merge = fun table constant ->
+    let mergeClosedConstants clist ctable =
+      let merge table constant =
         let skel = Absyn.getConstantSkeleton constant in
+        let ty = Absyn.getConstantType constant in
         let s = Absyn.getConstantSymbol constant in
         match skel with
           None -> (*  This local has no defined type  *)
@@ -1178,7 +1188,7 @@ and translateModule = fun mod' ktable ctable atable ->
                 if (Absyn.getConstantRedefinable c2) || (compareConstants constant c2) then
                   let tyref = Absyn.getConstantTypeRef c2 in
                   let closedref = Absyn.getConstantClosedRef c2 in
-                  (tyref := Absyn.LocalConstant;
+                  (tyref := ty;
                   closedref := true;
                   table)
                 else
@@ -1192,7 +1202,7 @@ and translateModule = fun mod' ktable ctable atable ->
                   let tyref = Absyn.getConstantTypeRef c2 in
                   let skelref = Absyn.getConstantSkeletonRef c2 in
                   let closedref = Absyn.getConstantClosedRef c2 in
-                  (tyref := Absyn.LocalConstant;
+                  (tyref := ty;
                   skelref := Some skel;
                   closedref := true;
                   table)
@@ -1211,6 +1221,7 @@ and translateModule = fun mod' ktable ctable atable ->
     let mergeUseOnlyConstants clist ctable =
       let merge table constant =
         let skel = Absyn.getConstantSkeleton constant in
+        let ty = Absyn.getConstantType constant in
         let useonly = Absyn.getConstantUseOnly constant in
         let s = Absyn.getConstantSymbol constant in
         match skel with
@@ -1220,7 +1231,7 @@ and translateModule = fun mod' ktable ctable atable ->
                 if (Absyn.getConstantRedefinable c2) || (compareConstants constant c2) then
                   let tyref = Absyn.getConstantTypeRef c2 in
                   let useonlyref = Absyn.getConstantUseOnlyRef c2 in
-                  (tyref := Absyn.LocalConstant;
+                  (tyref := ty;
                   useonlyref := useonly;
                   table)
                 else
@@ -1234,7 +1245,7 @@ and translateModule = fun mod' ktable ctable atable ->
                   let tyref = Absyn.getConstantTypeRef c2 in
                   let skelref = Absyn.getConstantSkeletonRef c2 in
                   let useonlyref = Absyn.getConstantUseOnlyRef c2 in
-                  (tyref := Absyn.LocalConstant;
+                  (tyref := ty;
                   skelref := Some skel;
                   useonlyref := useonly;
                   table)
@@ -1253,22 +1264,25 @@ and translateModule = fun mod' ktable ctable atable ->
     let mergeExportdefConstants clist ctable =
       let merge table constant =
         let skel = Absyn.getConstantSkeleton constant in
+        let ty = Absyn.getConstantType constant in
         let ed = Absyn.getConstantExportDef constant in
         let s = Absyn.getConstantSymbol constant in
         match skel with
-          None -> (*  This local has no defined type  *)
+          None -> (*  This exportdef has no defined type  *)
             (match (Table.find s table) with
               Some c2 ->
                 if (Absyn.getConstantRedefinable c2) || (compareConstants constant c2) then
                   let tyref = Absyn.getConstantTypeRef c2 in
                   let edref = Absyn.getConstantExportDefRef c2 in
-                  (tyref := Absyn.LocalConstant;
+                  (tyref := ty;
                   edref := ed;
                   table)
                 else
                   table
             | None ->
-                (Table.add s constant table))
+                (Errormsg.error (Absyn.getConstantPos constant)
+                  "exportdef declared without corresponding signature declaration";
+                table))
         | Some skel -> (*  This local was defined with a type  *)
             (match (Table.find s table) with
               Some c2 ->
@@ -1276,14 +1290,16 @@ and translateModule = fun mod' ktable ctable atable ->
                   let tyref = Absyn.getConstantTypeRef c2 in
                   let skelref = Absyn.getConstantSkeletonRef c2 in
                   let edref = Absyn.getConstantExportDefRef c2 in
-                  (tyref := Absyn.LocalConstant;
+                  (tyref := ty;
                   skelref := Some skel;
                   edref := ed;
                   table)
                 else
                   table
             | None ->
-                (Table.add s constant table))
+                (Errormsg.error (Absyn.getConstantPos constant)
+                  "exportdef declared without corresponding signature declaration";
+                table))
       in
       (List.fold_left merge ctable clist)
     in
