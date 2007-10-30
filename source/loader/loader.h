@@ -21,5 +21,6 @@ extern BytePtr LD_LOADER_ExtendModSpaceInByte(MEM_GmtEnt* ent, int size);
 //extern MEM_GmtEnt* LD_LOADER_GetNewGMTEnt();
 //extern void LD_LOADER_DropGMTEnt(MEM_GmtEnt* ent);
 
+void LD_LOADER_setPath(char* path);
 
 #endif //_LOADER_H_
