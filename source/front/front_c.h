@@ -10,6 +10,7 @@ int FRONT_systemInit(int memSize);
 /***************************************************************************/
 int FRONT_link(char* modName);
 int FRONT_load(char* modName, int index);
+int FRONT_setPath(char* path);
 
 /***************************************************************************/
 /*                simulator memory partition                               */

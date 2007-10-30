@@ -79,10 +79,10 @@ int FRONT_systemInit(int inSize)
         PERVINIT_tableInit();
         /* initialize top module */
         MEM_topModuleInit();
-        return EM_NO_ERR;
     } EM_CATCH {
         return EM_CurrentExnType;
     }
+    return EM_NO_ERR;
 }
 
 /*****************************************************************************/
@@ -105,20 +105,20 @@ int FRONT_simulatorInit()
         SINIT_simInit();
         //initialize built-in error messages
         BI_init();
-        return EM_NO_ERR;   
     } EM_CATCH {
         return EM_CurrentExnType;
     }
+    return EM_NO_ERR;   
 }
 
 int FRONT_simulatorReInit(Boolean inDoInitializeImports)
 {
     EM_TRY {
         SINIT_reInitSimState(inDoInitializeImports);
-        return EM_NO_ERR;
     } EM_CATCH {
         return EM_CurrentExnType;
     } 
+    return EM_NO_ERR;
 }
 
 /*****************************************************************************/
@@ -157,6 +157,12 @@ int FRONT_load(char* modName, int index)
     return EM_NO_ERR;
 }
 
+int FRONT_setPath(char* path)
+{
+  LK_setPath(path);
+  LD_LOADER_setPath(path);
+  return EM_NO_ERR;
+}
 
 /*****************************************************************************/
 /*              install and open a module                                    */
@@ -189,10 +195,10 @@ int FRONT_topModuleInstall ()
         FRONT_saveRegs();
         //register symbol table bases
         FRONT_initSymbolTableBases();
-        return EM_NO_ERR;   
     } EM_CATCH {
         return EM_CurrentExnType;
     }
+    return EM_NO_ERR;   
 }
 
 static void FRONT_addModuleImportPoint()
@@ -246,10 +252,10 @@ int FRONT_moduleInstall(int ind)
       //register symbol table bases
       FRONT_initSymbolTableBases();
       FRONT_installModule(ind);
-      return EM_NO_ERR;   
     } EM_CATCH {
       return EM_CurrentExnType;
     }
+    return EM_NO_ERR;   
 }   
 
 
@@ -268,8 +274,8 @@ int FRONT_initModuleContext()
         /* increment univ counter if there are hidden constants */
         i = MEM_impNLC(addtable);
         if (i > 0) AM_ucreg++;
-        return EM_NO_ERR;
     } EM_CATCH {
         return EM_CurrentExnType;
     }
+    return EM_NO_ERR;
 }
