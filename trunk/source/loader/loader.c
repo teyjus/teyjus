@@ -15,6 +15,19 @@
 #include "implgoal.h"
 #include "importtab.h"
 
+static char* LD_LOADER_path = "./";
+void  LD_LOADER_setPath(char* path) 
+{
+  if (path) LD_LOADER_path = path;
+}
+
+char* LD_LOADER_makePath(char* modname)
+{
+  char* buf=EM_malloc(strlen(LD_LOADER_path)+strlen(modname)+1);
+  sprintf(buf,"%s%s",LD_LOADER_path,modname);
+  return buf;
+}
+
 
 #define LINKCODE_EXT ".lp"
 #define BYTECODE_EXT ".lpo"
@@ -38,7 +51,7 @@ int LD_verbosity = 0;
 int LD_LOADER_Load(char* modname, int index)
 {
   EM_TRY{
-    LD_FILE_Open(modname,LINKCODE_EXT);
+    LD_FILE_Open(LD_LOADER_makePath(modname),LINKCODE_EXT);
     LD_LOADER_LoadLinkcodeVer();
     LD_LOADER_LoadModuleName(modname);
   }EM_CATCH{
