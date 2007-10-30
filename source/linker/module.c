@@ -18,6 +18,19 @@
 #include "../system/error.h"
 #include "message.h"
 
+static char* LK_path = "./";
+void  LK_setPath(char* path) 
+{
+  if (path) LK_path = path;
+}
+
+char* LK_makePath(char* modname)
+{
+  char* buf=EM_malloc(strlen(LK_path)+strlen(modname)+1);
+  sprintf(buf,"%s%s",LK_path,modname);
+  return buf;
+}
+
 #define BC_VER 2
 #define LINKCODE_VER 3
 
@@ -25,6 +38,7 @@ static void LoadAccModule(char* modname);
 static void LoadAccModules();
 static void LoadImpModule(char* modname);
 static void LoadImpModules();
+
 
 void CheckBytecodeVersion(int fd)
 {
@@ -80,7 +94,7 @@ void LoadTopModule(char* modname)
   EM_TRY{
     NewImportTab();
     struct Module_st* CMData=NewModule();
-    int fd = LK_FILE_OpenInput(modname, LK_FILE_ByteCodeExt);
+    int fd = LK_FILE_OpenInput(LK_makePath(modname), LK_FILE_ByteCodeExt);
     CheckBytecodeVersion(fd);
     CheckModuleName(fd,modname);
     
@@ -121,7 +135,7 @@ void LoadAccModule(char* modname)
   mutter("Accumulating module %s\n",modname);
   EM_TRY{
     struct Module_st* CMData=NewModule();
-    int fd = LK_FILE_OpenInput(modname, LK_FILE_ByteCodeExt);
+    int fd = LK_FILE_OpenInput(LK_makePath(modname), LK_FILE_ByteCodeExt);
     CheckBytecodeVersion(fd);
     CheckModuleName(fd,modname);
     
@@ -161,7 +175,7 @@ void LoadImpModule(char* modname)
   mutter("Accumulating module %s\n",modname);
   EM_TRY{
     struct Module_st* CMData=NewModule();
-    int fd = LK_FILE_OpenInput(modname, LK_FILE_ByteCodeExt);
+    int fd = LK_FILE_OpenInput(LK_makePath(modname), LK_FILE_ByteCodeExt);
     CheckBytecodeVersion(fd);
     CheckModuleName(fd,modname);
     
@@ -239,7 +253,7 @@ void LoadAccModules(int fd, struct Module_st* CMData)
 
 void WriteAll(char* modname)
 {
-  int fd = LK_FILE_OpenOutput(modname,LK_FILE_LinkCodeExt);
+  int fd = LK_FILE_OpenOutput(LK_makePath(modname),LK_FILE_LinkCodeExt);
   LK_FILE_PUTWord(fd,(Word)LINKCODE_VER);
   LK_FILE_PutString(fd,modname);
   WriteCodeSize(fd);

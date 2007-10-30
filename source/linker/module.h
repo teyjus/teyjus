@@ -52,6 +52,7 @@ struct Module_st{
 
 struct Module_st* CM; 		//The module currently being loaded
 
+void  LK_setPath(char* path); 
 extern void LoadTopModule(char* filename);
 extern void InitAll();
 extern void WriteAll();
