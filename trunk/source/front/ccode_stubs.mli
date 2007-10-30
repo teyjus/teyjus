@@ -7,6 +7,7 @@ external load              : string -> int -> int = "c_load"
 external topModuleInstall  : unit   -> int = "c_topModuleInstall"
 external moduleInstall     : int    -> int = "c_moduleInstall"
 external initModuleContext : unit   -> int = "c_initModuleContext"
+external setPath           : string -> int = "c_setPath"
 
 (* query *)
 external setTypeAndTermLocation : unit -> unit = "c_setTypeAndTermLocation"
