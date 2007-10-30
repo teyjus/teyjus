@@ -2,6 +2,7 @@
 (*            link and load a module                                       *)
 (***************************************************************************)
 val moduleLoad : string -> unit
+val setPath    : string -> unit
 
 (***************************************************************************)
 (*       install and open a module context                                 *)

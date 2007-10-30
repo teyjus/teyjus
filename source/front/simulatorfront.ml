@@ -5,14 +5,16 @@ let maxSolutions = ref max_int
 let quiet = ref false
 let batch = ref false
 let heapSize = ref 0 
+let path  = ref "./"
 
 let queryStrings = ref []
 
 let addQuery str =
   queryStrings := !queryStrings @ [str]
 
-let setPath path =
-  print_string "not implemented\n"
+let setPath p =
+  (*print_string "not implemented\n"*)
+  path := p
 
 let inputName = ref ""
 
@@ -47,41 +49,41 @@ let usageMsg =
 let solveQueries () =
   (* solve a query in batch mode *)
   let solveQueryBatch () =
-	let rec solveQueryBatchAux numResults =
-	  if Query.solveQuery () && numResults < !maxSolutions then
-		(Query.showAnswers ();
-		 solveQueryBatchAux (numResults + 1))
-	  else
-		numResults
-	in
+    let rec solveQueryBatchAux numResults =
+      if Query.solveQuery () && numResults < !maxSolutions then
+	(Query.showAnswers ();
+	 solveQueryBatchAux (numResults + 1))
+      else
+	 numResults
+    in
 
-	if Query.queryHasVars () then
-	  let numResults = solveQueryBatchAux 0 in
-	    if numResults < !minSolutions then
-		  Parseargs.error "fewer answers than expected"
-        else ()
-	else (* query does not have free variables *)
-	  if Query.solveQuery () then 
-		if !minSolutions > 1 then 
-		  Parseargs.error "fewer answers than expected"
-		else ()
-	  else 
-		if !minSolutions > 0 then
-		  Parseargs.error "fewer answers than expected"
-		else ()
+    if Query.queryHasVars () then
+      let numResults = solveQueryBatchAux 0 in
+      if numResults < !minSolutions then
+	Parseargs.error "fewer answers than expected"
+      else ()
+    else (* query does not have free variables *)
+      if Query.solveQuery () then 
+	if !minSolutions > 1 then 
+	  Parseargs.error "fewer answers than expected"
+	else ()
+      else 
+	if !minSolutions > 0 then
+	  Parseargs.error "fewer answers than expected"
+	else ()
   in
-		  
+  
   (* solve one query *)
   let rec solveQuery query =
-	if Query.buildQueryTerm query (Module.getCurrentModule ()) then
-	  if !batch then
+    if Query.buildQueryTerm query (Module.getCurrentModule ()) then
+      if !batch then
         solveQueryBatch ()
-	  else
+      else
         Query.interactSolveQuery ()
-	else
-	  Parseargs.error "" ;
-	Front.simulatorReInit false ;
-	Module.initModuleContext ()
+    else
+      Parseargs.error "" ;
+    Front.simulatorReInit false ;
+    Module.initModuleContext ()
       
   in
     List.iter solveQuery !queryStrings
@@ -91,8 +93,9 @@ let _ =
   Arg.parse (Arg.align specList) anonFunc usageMsg ;
 
   try 
-	Front.systemInit !heapSize ;  
-	Module.moduleLoad !inputName ;
+	Front.systemInit  !heapSize ;
+        Module.setPath    !path;
+	Module.moduleLoad !inputName;
 	Front.simulatorInit () ;
 	Module.moduleInstall !inputName ;
 	Module.initModuleContext () ;
@@ -101,8 +104,7 @@ let _ =
 	| Simerrors.Query    -> () (* query is done *)
 	| Simerrors.TopLevel -> () (* stop *)
 	| Simerrors.Exit     ->    (* halt *)
-        exit 1
-	| exp                  ->    (* other exceptions *)
-		print_endline "Uncaught internal exception" ;
-		(*	raise exp *)
-        exit 2 
+            exit 1
+	| exp                ->    (* other exceptions *)
+	    print_endline "Uncaught internal exception" ;
+            exit 2 

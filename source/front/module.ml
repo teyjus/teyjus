@@ -1,6 +1,11 @@
 (************************************************************************)
 (*                     global module table                              *)
 (************************************************************************)
+let path = ref "./"
+let setPath p = 
+  (path := p;
+   Simerrors.handleSimExceptions (Ccode_stubs.setPath p))
+   
 
 (** **************************************************************** **)
 (**               module table entry                                 **)
@@ -123,15 +128,15 @@ let loadModule modName =
 	(print_endline "Module table has no space for more modules.";
 	 raise Simerrors.TopLevel)
   else
-	(* linking  *)	 
-	let _ = Simerrors.handleSimExceptions (Ccode_stubs.link modName) in
-	(* loading  *)
+    (* linking  *)	 
+    let _ = Simerrors.handleSimExceptions (Ccode_stubs.link modName) in
+    (* loading  *)
     let _ = Simerrors.handleSimExceptions (Ccode_stubs.load modName index) in
-	(* load ocaml (compiler) symbol tables.                              *)
+    (* load ocaml (compiler) symbol tables.                              *)
     (* impossible to fail: any failure should be caught by the c loader  *)
     (* already                                                           *)
-	let amod = Loadmodtab.loadModuleTable modName in
-	enterModuleTable amod index
+    let amod = Loadmodtab.loadModuleTable ((!path) ^ modName) in
+    enterModuleTable amod index
 		 
 		 
 (* load module *)
