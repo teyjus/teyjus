@@ -301,20 +301,22 @@ static int HOPU_constIndex(DF_TermPtr cPtr, DF_TermPtr args, int nargs, int lev)
 {
     int ind;
     for (ind = nargs; ind > 0; ind--){
-        DF_TermPtr tPtr = DF_termDeref(args);
-        if (DF_isConst(tPtr) && DF_sameConsts(tPtr, cPtr)) {
-               if (DF_isTConst(tPtr)) {
-                EM_TRY { 
-                    HOPU_typesUnify(DF_constType(tPtr), DF_constType(cPtr), 
-                                    AM_cstTyEnvSize(DF_constTabIndex(cPtr)));
-                    return (ind+lev);
-                } EM_CATCH {//remove types added for ty unif from the PDL
-                    if (EM_CurrentExnType == EM_FAIL) AM_resetTypesPDL();
-                    else EM_RETHROW();
-                }
-               } else return (ind+lev);  //cPtr does not have type associated
-        } //otherwise try the next
-        args = (DF_TermPtr)(((MemPtr)args) + DF_TM_ATOMIC_SIZE);
+      DF_TermPtr tPtr = DF_termDeref(args);
+      if (DF_isConst(tPtr) && DF_sameConsts(tPtr, cPtr)) {
+	if (DF_isTConst(tPtr)) {
+	  Boolean found = FALSE;
+	  EM_TRY { 
+	    HOPU_typesUnify(DF_constType(tPtr), DF_constType(cPtr), 
+			    AM_cstTyEnvSize(DF_constTabIndex(cPtr)));
+	    found = TRUE;
+	  } EM_CATCH {//remove types added for ty unif from the PDL
+	    if (EM_CurrentExnType == EM_FAIL)  AM_resetTypesPDL();
+	    else EM_RETHROW();
+	  }
+	  if (found) return (ind+lev);
+	} else return (ind+lev);  //cPtr does not have type associated
+      } //otherwise try the next
+      args = (DF_TermPtr)(((MemPtr)args) + DF_TM_ATOMIC_SIZE);
     }
     return 0; //not found
 }
@@ -509,21 +511,21 @@ static int HOPU_pruneSameVar(DF_TermPtr args1, int nargs1, DF_TermPtr args2,
             } else {// tPtr1 is a constant
                 if (DF_isConst(tPtr2) && DF_sameConsts(tPtr1, tPtr2)){
                     if (DF_isTConst(tPtr2)) {
-                        EM_TRY {
+		      EM_TRY {
                         HOPU_typesUnify(DF_constType(tPtr1),DF_constType(tPtr2),
-                                     AM_cstTyEnvSize(DF_constTabIndex(tPtr1)));
+					AM_cstTyEnvSize(DF_constTabIndex(tPtr1)));
                         DF_mkBV(AM_hreg, nargs2); AM_hreg += DF_TM_ATOMIC_SIZE;
                         numNotPruned++;
                         HOPU_copyFlagGlb = TRUE;
-                        } EM_CATCH {//remove tys for type unif from the PDL
-                            if (EM_CurrentExnType == EM_FAIL) 
-                                AM_resetTypesPDL();        
-                            else EM_RETHROW();
-                        } //EM_catch
+		      } EM_CATCH {//remove tys for type unif from the PDL
+			if (EM_CurrentExnType == EM_FAIL) 
+			  AM_resetTypesPDL();        
+			else EM_RETHROW();
+		      } //EM_catch
                     } else {//no type association
-                        DF_mkBV(AM_hreg, nargs2); AM_hreg+=DF_TM_ATOMIC_SIZE;
-                        numNotPruned++;
-                        HOPU_copyFlagGlb = TRUE;
+		      DF_mkBV(AM_hreg, nargs2); AM_hreg+=DF_TM_ATOMIC_SIZE;
+		      numNotPruned++;
+		      HOPU_copyFlagGlb = TRUE;
                     }
                 }//else pruned 
             }       //tPtr1 is a constant
@@ -858,25 +860,29 @@ static DF_TermPtr HOPU_flexNestedSubst(DF_TermPtr args1, int nargs1,
     } else {// the internal flex term is not LLambda: delay (opt possible)
         DF_TermPtr newVar;
         DF_TermPtr newTerm;
+	Boolean    found = FALSE;
         if (fhPtr != AM_vbbreg) {
             EM_TRY{ 
                 HOPU_bndVarNestedFlex(fhPtr, args2, nargs2, emblev);
-                return tmPtr;
+                bnd = tmPtr;
+		found = TRUE;
             } EM_CATCH {if (EM_CurrentExnType != EM_FAIL) EM_RETHROW();}
-        }
-        newVar = (DF_TermPtr)AM_hreg;
-        HOPU_pushVarToHeap(AM_adjreg);
-        HOPU_copyFlagGlb = TRUE;
-        if ((nargs1 == 0) && (emblev == 0)) {
+        } 
+	if (!found) {
+	  newVar = (DF_TermPtr)AM_hreg;
+	  HOPU_pushVarToHeap(AM_adjreg);
+	  HOPU_copyFlagGlb = TRUE;
+	  if ((nargs1 == 0) && (emblev == 0)) {
             bnd = newVar;
             AM_addDisPair(bnd, tmPtr);
-        } else {                          
+	  } else {                          
             newTerm = (DF_TermPtr)AM_hreg;
             HOPU_mkTermNLL(newVar, args1, nargs1, emblev);
             AM_addDisPair(newTerm, tmPtr);
             bnd = (DF_TermPtr)AM_hreg;
             HOPU_mkSubstNLL(newVar, emblev + nargs1);
-        }
+	  }
+	}
     }
     return bnd;
 }
@@ -894,6 +900,7 @@ DF_TermPtr HOPU_flexNestedSubstC(DF_TermPtr fhPtr, DF_TermPtr args, int nargs,
 {
     DF_TermPtr bnd, newVar, newTerm;
     int varuc;
+    Boolean found = FALSE;
 
     EM_TRY {
         HOPU_flexCheckC(args, nargs, emblev);
@@ -902,27 +909,30 @@ DF_TermPtr HOPU_flexNestedSubstC(DF_TermPtr fhPtr, DF_TermPtr args, int nargs,
             AM_bndFlag = ON;
             DF_modVarUC(fhPtr, AM_adjreg);
         }
-        return tmPtr;
+	bnd = tmPtr;
+	found = TRUE;
     } EM_CATCH { if (EM_CurrentExnType != EM_FAIL) EM_RETHROW(); }
 
-    varuc = DF_fvUnivCount(fhPtr);
-    if (HOPU_isLLambda(varuc, nargs, args)){
+    if (!found) {
+      varuc = DF_fvUnivCount(fhPtr);
+      if (HOPU_isLLambda(varuc, nargs, args)){
         bnd = HOPU_flexNestedLLambda(NULL, 0, varuc, tmPtr, fhPtr, args, nargs,
                                      emblev);
-    } else {//otherwise delay this pair onto the live list
+      } else {//otherwise delay this pair onto the live list
         HOPU_copyFlagGlb = TRUE;
         newVar = (DF_TermPtr)AM_hreg;
         HOPU_pushVarToHeap(AM_adjreg);
         if (emblev == 0) {
-            bnd = newVar;
-            AM_addDisPair(bnd, tmPtr);
+	  bnd = newVar;
+	  AM_addDisPair(bnd, tmPtr);
         } else {
-            newTerm = (DF_TermPtr)AM_hreg;
-            HOPU_mkTermNLL(newVar, NULL, 0, emblev);
-            AM_addDisPair(newTerm, tmPtr);
-            bnd = (DF_TermPtr)AM_hreg;
-            HOPU_mkSubstNLL(newVar, emblev);
+	  newTerm = (DF_TermPtr)AM_hreg;
+	  HOPU_mkTermNLL(newVar, NULL, 0, emblev);
+	  AM_addDisPair(newTerm, tmPtr);
+	  bnd = (DF_TermPtr)AM_hreg;
+	  HOPU_mkSubstNLL(newVar, emblev);
         }
+      }
     }
     return bnd;    
 }
@@ -1007,34 +1017,26 @@ static void HOPU_flexMkSubst(DF_TermPtr tPtr1, DF_TermPtr h1, int nargs1,
             }  
         }               //different variable
     } else {            //the first term is non-LLambda
-        if ((nargs2 == 0) && (lev == 0) && (h1 != h2)) { // (F t1 ... tm) = G  
-            EM_TRY{ HOPU_bndVarFlex(h2, tPtr1, h1, args1, nargs1); return;
-            } EM_CATCH { if (EM_CurrentExnType != EM_FAIL) EM_RETHROW(); } 
-        } 
+      Boolean found = FALSE;
+      if ((nargs2 == 0) && (lev == 0) && (h1 != h2)) { // (F t1 ... tm) = G  
+	EM_TRY{ 
+	  HOPU_bndVarFlex(h2, tPtr1, h1, args1, nargs1); 
+	  found = TRUE;
+	} EM_CATCH { 
+	  if (EM_CurrentExnType != EM_FAIL) EM_RETHROW(); 
+	} 
+      } 
+      if (!found) {
         if (lev == 0) AM_addDisPair(tPtr1, tPtr2); 
         else {
-            MemPtr nhtop = AM_hreg + DF_TM_LAM_SIZE;
-            DF_TermPtr tmPtr = (DF_TermPtr)AM_hreg;
-            AM_heapError(AM_hreg);
-            DF_mkLam(AM_hreg, lev, tPtr2);
-            AM_hreg = nhtop;
-            AM_addDisPair(tPtr1, tmPtr);
-        } //(lev != 0) 
-        /*
-        if ((nargs2 == 0) && (lev == 0) && (h1 != h2))  // (F t1 ... tm) = G
-            HOPU_bndVarFlex(h2, tPtr1, h1, args1, nargs1);
-        else {
-            if (lev == 0) AM_addDisPair(tPtr1, tPtr2);
-            else {
-                MemPtr nhtop = AM_hreg + DF_TM_LAM_SIZE;
-                DF_TermPtr tmPtr = (DF_TermPtr)AM_hreg;
-                AM_heapError(AM_hreg);
-                DF_mkLam(AM_hreg, lev, tPtr2);
-                AM_hreg = nhtop;
-                AM_addDisPair(tPtr1, tmPtr);
-            }
+	  MemPtr nhtop = AM_hreg + DF_TM_LAM_SIZE;
+	  DF_TermPtr tmPtr = (DF_TermPtr)AM_hreg;
+	  AM_heapError(AM_hreg);
+	  DF_mkLam(AM_hreg, lev, tPtr2);
+	  AM_hreg = nhtop;
+	  AM_addDisPair(tPtr1, tmPtr);
         } //(lev != 0)
-        */
+      }
     }                  //the first term is non-LLambda
 }
 
@@ -1086,16 +1088,21 @@ static void HOPU_flexMkSubstGlb(DF_TermPtr tPtr1, DF_TermPtr h1, int nargs1,
             }
         }
     } else {//the first term is non-LLambda (must locate on heap)
-        if ((nargs2 == 0) && (lev == 0) && (h1 != h2)) {//(F t1...tm)[nll] = G
-            EM_TRY { HOPU_bndVarFlex(h2, tPtr1, h1, args1, nargs1); return;
-            } EM_CATCH {
-                if (EM_CurrentExnType == EM_FAIL) 
-                    tPtr2 = HOPU_globalizeFlex(tPtr2);
-                else EM_RETHROW();
-            }
-        }
+      Boolean found = FALSE;
+      if ((nargs2 == 0) && (lev == 0) && (h1 != h2)) {//(F t1...tm)[nll] = G
+	EM_TRY { 
+	  HOPU_bndVarFlex(h2, tPtr1, h1, args1, nargs1); 
+	  found = TRUE;
+	} EM_CATCH {
+	  if (EM_CurrentExnType == EM_FAIL) 
+	    tPtr2 = HOPU_globalizeFlex(tPtr2);
+	  else EM_RETHROW();
+	}
+      }
+      if (!found) {
         if (lev == 0) AM_addDisPair(tPtr1, tPtr2);
         else AM_addDisPair(tPtr1, DF_termDeref(topPtr2));
+      }
     }       //the first term is non-LLambda
 }
  
