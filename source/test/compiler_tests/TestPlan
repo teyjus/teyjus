@@ -71,7 +71,12 @@ Accumulates/imports
 
   (2) call_link_only, execute_link_only         -- test17
 
-  (2) combine definitions                       -- test18
+  (3) combine definitions                       -- test18, test19
+
+  (4) generating dummy "try_me_else"            -- test21
 
 
-
+MISC
+====
+  (1) exportdef                                 -- test22
+  (2) un-terminated parseTerm bug               -- test23
