@@ -797,9 +797,10 @@ and checkConstantBodies ctable =
         useonly and exportdef constants.  *)
         let ty = Absyn.getSkeletonType skel in
         if (Absyn.getConstantUseOnly c) || (Absyn.getConstantExportDef c) then
+          let sort = if (Absyn.getConstantUseOnly c) then "useonly" else "exportdef" in
           if not (Absyn.isArrowType ty) then
             (Errormsg.error p
-              ("constant '" ^ name ^ "' declared as exportdef without target type 'o'");
+              ("constant '" ^ name ^ "' declared as " ^ sort ^ " without target type 'o'");
             result := false)
           else
             let targ = Absyn.getArrowTypeTarget ty in
@@ -808,7 +809,7 @@ and checkConstantBodies ctable =
               ()
             else
               (Errormsg.error p
-                ("constant '" ^ name ^ "' declared as exportdef without target type 'o'");
+                ("constant '" ^ name ^ "' declared as " ^ sort ^ " without target type 'o'");
               result := false)              
         else
           ()
@@ -1071,7 +1072,29 @@ and translateSignature s owner ktable ctable tabbrevtable kbuilder cbuilder =
   match s with
     Preabsyn.Module(_) -> (Errormsg.impossible Errormsg.none "Translate.translateSignature: expected Preabsyn.Signature.")
   | Preabsyn.Signature(name, gconsts, uconsts, econsts, gkinds, tabbrevs, fixities,accumsigs) ->
-
+  
+  (*  Copiers: they need an explanation.   *)
+  (*  Really merging should be handled as it is in translateModule, duh.  *)
+  let copy currentConstant newConstant = () in
+  
+  let copyExportdef currentConstant newConstant =
+    let edref = Absyn.getConstantExportDefRef currentConstant in
+    let ed = Absyn.getConstantExportDef newConstant in
+    let nodefsref = Absyn.getConstantNoDefsRef currentConstant in
+    (edref := ed;
+    if not owner then
+      nodefsref := true
+    else
+      ())
+  in
+  
+  let copyUseonly currentConstant newConstant =
+    let uoref = Absyn.getConstantUseOnlyRef currentConstant in
+    let uo = Absyn.getConstantUseOnly newConstant in
+    let nodefsref = Absyn.getConstantNoDefsRef currentConstant in
+    (uoref := uo;
+    nodefsref := true)
+  in
   (******************************************************************
   *mergeKinds:
   * Adds the kinds from one signature into the kinds
@@ -1127,7 +1150,7 @@ and translateSignature s owner ktable ctable tabbrevtable kbuilder cbuilder =
   * Adds the constants from one signature into the constants from
   * all accumulated signatures.
   ******************************************************************)
-  let mergeConstants clist ctable rename =
+  let mergeConstants clist ctable rename copier =
     let merge (ctable, renamingList) c =
       let s = Absyn.getConstantSymbol c in
       match (Table.find s ctable) with
@@ -1136,13 +1159,14 @@ and translateSignature s owner ktable ctable tabbrevtable kbuilder cbuilder =
             (ctable, renamingList)
           else if (not owner) && not (compareAccumConstants c c2) then
             (ctable, renamingList)
-          else if Absyn.isGlobalConstant c then
+          else
+            let () = copier c2 c in
+            if Absyn.isGlobalConstant c then
 	          if Absyn.isGlobalConstant c2 then
 	            (ctable, c2::renamingList)
 	          else
 	            (ctable, c::renamingList) (* c2 must be perv then *)
-	        else (* c must be local *)
-          if Absyn.isPervasiveConstant c2 then
+	        else if Absyn.isPervasiveConstant c2 then
             (ctable, c::renamingList)
 	        else (* c2 local or global *)
 		        (ctable, c2::renamingList)
@@ -1213,9 +1237,12 @@ and translateSignature s owner ktable ctable tabbrevtable kbuilder cbuilder =
   let uconstantlist = translateUseOnlyConstants owner uconsts ktable tabbrevtable in
   let econstantlist = translateExportdefConstants owner econsts ktable tabbrevtable in
 
-  let (ctable, constRenaming) = mergeConstants constantlist ctable [] in
-  let (ctable, constRenaming) = mergeConstants uconstantlist ctable constRenaming in
-  let (ctable, constRenaming) = mergeConstants econstantlist ctable constRenaming in
+  let (ctable, constRenaming) =
+    mergeConstants constantlist ctable [] copy in
+  let (ctable, constRenaming) =
+    mergeConstants uconstantlist ctable constRenaming copyUseonly in
+  let (ctable, constRenaming) =
+    mergeConstants econstantlist ctable constRenaming copyExportdef in
 
   (*  Translate fixities *)
   let ctable = translateFixities fixities ctable in

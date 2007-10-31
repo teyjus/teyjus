@@ -924,68 +924,68 @@ and normalizeClause clauseterm clauses uvs uvdefs embedded =
       Absyn.ConstantTerm(c, env, b, pos) ->
 		(*  Clause is: all P  *)
 		if c = Pervasive.allConstant then
-          let (arg, tsym) = etaFluffQuantifier t (List.hd args) in
-          (distributeUniversal t tsym (normalizeClause arg [] uvs uvdefs embedded)) @ clauses
-																						
+      let (arg, tsym) = etaFluffQuantifier t (List.hd args) in
+      (distributeUniversal t tsym (normalizeClause arg [] uvs uvdefs embedded)) @ clauses
+																				
 	    (*  Clause is: a, b or a & b  *)
 		else if c = Pervasive.andConstant || c = Pervasive.ampandConstant then
-          let arg1 = List.hd args in
-          let arg2 = List.hd (List.tl args) in
-          (normalizeClause arg2 (normalizeClause arg1 clauses uvs uvdefs embedded) uvs uvdefs embedded)
+      let arg1 = List.hd args in
+      let arg2 = List.hd (List.tl args) in
+      (normalizeClause arg2 (normalizeClause arg1 clauses uvs uvdefs embedded) uvs uvdefs embedded)
 			
 			(*  Clause is an implication. *)
 		else if c = Pervasive.implConstant then
-          let arg1 = List.hd args in
-          let arg2 = List.hd (List.tl args) in
-          (distributeImplication arg1 (normalizeClause arg2 [] uvs uvdefs embedded) clauses)
+      let arg1 = List.hd args in
+      let arg2 = List.hd (List.tl args) in
+      (distributeImplication arg1 (normalizeClause arg2 [] uvs uvdefs embedded) clauses)
 			
 			(*  Clause is: a :- b.  *)
 		else if c = Pervasive.colondashConstant then
-          let arg1 = List.hd args in
-          let arg2 = List.hd (List.tl args) in
-          (distributeImplication arg2 (normalizeClause arg1 [] uvs uvdefs embedded) clauses)
+      let arg1 = List.hd args in
+      let arg2 = List.hd (List.tl args) in
+      (distributeImplication arg2 (normalizeClause arg1 [] uvs uvdefs embedded) clauses)
 			
 			(*  Clause is an exists clause. *)
 		else if c = Pervasive.someConstant then
-          (Errormsg.error (Absyn.getTermPos t) "Existential quantifer illegal at top-level in clause";
-           clauses)
-			
+      (Errormsg.error (Absyn.getTermPos t) "Existential quantifer illegal at top-level in clause";
+       clauses)
+	
 			(*  Clause is: a; b *)
 		else if c = Pervasive.orConstant then
-          (Errormsg.error (Absyn.getTermPos t) "Disjunction illegal at top-level in clause";
-           clauses)
-			
+      (Errormsg.error (Absyn.getTermPos t) "Disjunction illegal at top-level in clause";
+       clauses)
+		
 		else if (Absyn.getConstantType c) = (Absyn.PervasiveConstant(false)) then
-          (Errormsg.error (Absyn.getTermPos t) ("attempting to redefine predicate" ^
-												(Errormsg.info (Absyn.getConstantName c)));
-           clauses)
-			
+      (Errormsg.error (Absyn.getTermPos t) ("attempting to redefine predicate" ^
+									    (Errormsg.info (Absyn.getConstantName c)));
+       clauses)
+
 		else if (Absyn.getConstantNoDefs c) then
-          (Errormsg.error (Absyn.getTermPos t) ("clauses for constant " ^
-												(Absyn.getConstantName c) ^ " prohibited in this module");
-           clauses)
+      (Errormsg.error (Absyn.getTermPos t) ("clauses for constant " ^
+									    (Absyn.getConstantName c) ^ " prohibited in this module");
+       clauses)
 			
 		else 
 		  if embedded then
-			((Absyn.getConstantClosedRef c) := false;
-			 rigidAtom t clauses args)
+			  ((Absyn.getConstantClosedRef c) := false;
+			   rigidAtom t clauses args)
 		  else
-			(rigidAtom t clauses args)
+			  (rigidAtom t clauses args)
 			  
 	| Absyn.BoundVarTerm(Absyn.NamedBoundVar(tsym), _, pos) ->
 		if List.memq tsym uvs then
-          let t' = Absyn.ConstantTerm(Absyn.getTypeSymbolHiddenConstant tsym,
-									  [], false, Errormsg.none) in
-          if not (List.memq tsym !uvdefs) then
-			(uvdefs := tsym :: !uvdefs;
-			 rigidAtom t' clauses args)
-          else
-			(rigidAtom t' clauses args)
+      let t' = Absyn.ConstantTerm(Absyn.getTypeSymbolHiddenConstant tsym,
+							  [], false, Errormsg.none) in
+      if not (List.memq tsym !uvdefs) then
+			  (uvdefs := tsym :: !uvdefs;
+			   rigidAtom t' clauses args)
+      else
+			  (rigidAtom t' clauses args)
 		else
-          (indeterminate tsym pos)
+      (indeterminate tsym pos)
 	| _ ->
 		(Errormsg.impossible (Absyn.getTermPos t) ("Clauses.normalizeClause: Invalid term type: " ^
-				  (Absyn.string_of_term_ast t) ^ "; " ^ (Absyn.string_of_term_ast clauseterm)))
+		  (Absyn.string_of_term_ast t) ^ "; " ^ (Absyn.string_of_term_ast clauseterm)))
 
 (**********************************************************************
 *translateClauses:
