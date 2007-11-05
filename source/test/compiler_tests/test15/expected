@@ -4,10 +4,11 @@ Module name: existentialvars
 
 LABEL               INSTRUCTION              OPERANDS
 
-                    fail                     
+L6                  fail                     
 foo                 switch_on_reg            #1, L0, L1
-L0                  try_me_else              #1, L2
-L1                  try_me_else              #1, L3
+L0                  try                      #1, L1
+                    trust_ext                #1, #1
+L1                  try_me_else              #1, L2
                     allocate                 #3
                     get_variable_p           Y1, A1
                     tag_exists_p             Y2
@@ -18,7 +19,7 @@ L1                  try_me_else              #1, L3
                     pop_impl_point           
                     deallocate               
                     proceed                  
-L3                  retry_me_else            #1, L4
+L2                  retry_me_else            #1, L3
                     allocate                 #2
                     tag_exists_p             Y1
                     push_impl_point          #1, <impl #1>
@@ -28,7 +29,7 @@ L3                  retry_me_else            #1, L4
                     pop_impl_point           
                     deallocate               
                     proceed                  
-L4                  trust_me                 #1
+L3                  trust_me                 #1
                     allocate                 #3
                     get_variable_p           Y1, A1
                     tag_variable             Y2
@@ -39,36 +40,38 @@ L4                  trust_me                 #1
                     pop_impl_point           
                     deallocate               
                     proceed                  
-L2                  trust_ext                #1, #1
-bar                 switch_on_reg            #1, L5, L6
-L5                  try_me_else              #1, L7
-L6                  init_variable_t          A2, Y1
+bar                 switch_on_reg            #1, L4, L5
+L4                  try                      #1, L5
+                    trust_ext                #1, #1
+                    try_me_else              #0, L6
+L5                  init_variable_t          A2, Y1
                     init_variable_t          A3, Y2
                     pattern_unify_t          A2, A1
                     finish_unify             
                     put_value_t              A3, A1
                     head_normalize_t         A1
                     execute_name             bar
-L7                  trust_ext                #1, #1
-bar                 switch_on_reg            #1, L8, L9
-L8                  try_me_else              #1, L10
-L9                  init_variable_t          A2, Y1
+bar                 switch_on_reg            #1, L7, L8
+L7                  try                      #1, L8
+                    trust_ext                #1, #1
+                    try_me_else              #0, L6
+L8                  init_variable_t          A2, Y1
                     pattern_unify_t          A2, A1
                     finish_unify             
                     put_value_t              A2, A1
                     head_normalize_t         A1
                     execute_name             foo
-L10                 trust_ext                #1, #1
-bar                 switch_on_reg            #1, L11, L12
-L11                 try_me_else              #1, L13
-L12                 init_variable_t          A2, Y2
+bar                 switch_on_reg            #1, L9, L10
+L9                  try                      #1, L10
+                    trust_ext                #1, #1
+                    try_me_else              #0, L6
+L10                 init_variable_t          A2, Y2
                     init_variable_t          A3, Y1
                     pattern_unify_t          A2, A1
                     finish_unify             
                     put_value_t              A3, A1
                     head_normalize_t         A1
                     execute_name             foo
-L13                 trust_ext                #1, #1
 
 Global kind table:
 0: i/0

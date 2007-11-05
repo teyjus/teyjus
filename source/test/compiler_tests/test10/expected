@@ -6,12 +6,13 @@ LABEL               INSTRUCTION              OPERANDS
 
                     fail                     
 foo                 switch_on_reg            #1, L0, L1
-L0                  try_me_else              #1, L2
-L1                  try_me_else              #1, L3
+L0                  try                      #1, L1
+                    trust_ext                #1, #1
+L1                  try_me_else              #1, L2
                     neck_cut                 
                     head_normalize_t         A1
                     execute_name             bar
-L3                  retry_me_else            #1, L4
+L2                  retry_me_else            #1, L3
                     allocate                 #3
                     get_variable_p           Y1, A1
                     get_level                Y2
@@ -23,10 +24,9 @@ L3                  retry_me_else            #1, L4
                     head_normalize_t         A1
                     deallocate               
                     execute_name             bar
-L4                  trust_me                 #1
+L3                  trust_me                 #1
                     neck_cut                 
                     fail                     
-L2                  trust_ext                #1, #1
 
 Global kind table:
 0: i/0

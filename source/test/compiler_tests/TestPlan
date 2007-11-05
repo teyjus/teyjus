@@ -79,4 +79,5 @@ Accumulates/imports
 MISC
 ====
   (1) exportdef                                 -- test22
+  (2) useonly                                   -- test25
   (2) un-terminated parseTerm bug               -- test23

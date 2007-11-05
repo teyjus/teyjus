@@ -1,6 +1,6 @@
-Disassembling from bytecode file: linkonly.lp
+Disassembling from bytecode file: combinedefs.lp
 Bytecode version: 3
-Module name: linkonly
+Module name: combinedefs
 
 LABEL               INSTRUCTION              OPERANDS
 
@@ -9,20 +9,17 @@ foo                 switch_on_reg            #1, L0, L1
 L0                  try                      #1, L1
                     trust_ext                #1, #1
                     try_me_else              #0, L2
-L1                  proceed                  
-<local const #0>    try_me_else              #1, L3
-                    head_normalize_t         A1
+L1                  head_normalize_t         A1
                     execute                  <local const #0>
-L3                  trust_me                 #1
-                    allocate                 #2
-                    get_variable_p           Y1, A1
-                    put_value_p              Y1, A1
-                    head_normalize_t         A1
-                    call                     #1, <local const #0>
-                    put_value_p              Y1, A1
-                    head_normalize_t         A1
-                    deallocate               
-                    execute_name             foo
+L3                  fail                     
+                    fail                     
+                    fail                     
+                    fail                     
+                    fail                     
+                    fail                     
+                    fail                     
+                    try_me_else              #0, L3
+<local const #0>    proceed                  
 
 Global kind table:
 0: i/0
@@ -31,6 +28,7 @@ Local kind table:
 
 Type skeleton table:
 0: (i -> o)
+1: (i -> o)
 
 Global constant table: 
 0: foo (No Fixity, precedence 0)
@@ -58,8 +56,8 @@ Import tables:
    <local const #0>
     Find function type: hash
     Search table: 2
-   <local const #0>
    foo
+   <local const #0>
 
 Accumulated tables:
 
