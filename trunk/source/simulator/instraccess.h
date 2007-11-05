@@ -274,7 +274,8 @@
 
 
 //INSTR_CAT_I1I1WPX
-#define INSACC_I1I1WPX_I1(op1) {\
+#define INSACC_I1I1WPX(op1) {\
    (op1) = *((INSTR_OneByteInt *)(AM_preg + INSTR_I1I1WPX_I12)); \
+   AM_preg += INSTR_I1I1WPX_LEN;                                 \
 }
 #endif //INSTRACCESS_H
