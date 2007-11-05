@@ -21,7 +21,7 @@
 #include "../loader/searchtab.h"
 
 
-//#include "print.h"
+#include "print.h"
 #include <stdio.h>  //to be removed
 #include "printterm.h"
 #include "../system/stream.h"
@@ -456,6 +456,7 @@ void SINSTR_get_nil()                   //get_nil Xi --  R_X
     INSACC_RX(regX);
     tmPtr = DF_termDeref((DF_TermPtr)regX);
     SINSTRL_unifyNil(tmPtr);
+   
 }
 
 void SINSTR_get_m_structure()           //get_m_structure Xi,f,n--R_C_I1_X
@@ -558,6 +559,7 @@ void SINSTR_get_list()                  //get_list Xi -- R_X
     case DF_TM_TAG_APP: 
     {
         if (DF_isConst(DF_termDeref(DF_appFunc(tmPtr)))) EM_THROW(EM_FAIL);
+	//otherwise continue with next case
     }
     case DF_TM_TAG_SUSP: //and other APP cases 
     { //Note ABS cannot arise here due to well-typedness
@@ -569,7 +571,7 @@ void SINSTR_get_list()                  //get_list Xi -- R_X
         if (AM_rigFlag) EM_THROW(EM_FAIL); //non cons rigid term
         //otherwise flex term with #abs being 0 (due to well-typedness)
         if (AM_numArgs == 0) SINSTRL_bindCons(AM_head); //fv
-        else SINSTRL_delayCons(tmPtr);                  //higher-order
+        else SINSTRL_delayCons(tmPtr);                 //higher-order
         return;
     }
     default: { EM_THROW(EM_FAIL); } //NIL, CONST, BV
@@ -1287,7 +1289,7 @@ void SINSTR_create_type_variable()      //create_type_variable Yi -- E_X
 void SINSTR_pattern_unify_t()           //pattern_unify Xi,Aj -- R_R_X
 {
     INSACC_RRX(regX, regA);
-    HOPU_patternUnifyPair((DF_TermPtr)regX, (DF_TermPtr)regA);    
+    HOPU_patternUnifyPair((DF_TermPtr)regX, (DF_TermPtr)regA);
 }
 
 void SINSTR_pattern_unify_p()           //pattern_unify Yi,Aj -- E_R_X
@@ -1750,7 +1752,7 @@ void SINSTR_cut()                       //cut Yn -- E_X
 /*****************************************************************************/
 void SINSTR_call_builtin()              //call_builtin n -- I1_WP_X
 {
-    INSACC_I1I1WPX_I1(n);
+    INSACC_I1I1WPX(n);
     AM_cpreg = AM_preg;
     BI_dispatch(n);
 }
