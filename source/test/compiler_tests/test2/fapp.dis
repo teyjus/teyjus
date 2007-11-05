@@ -6,8 +6,9 @@ LABEL               INSTRUCTION              OPERANDS
 
                     fail                     
 foo                 switch_on_reg            #1, L0, L1
-L0                  try_me_else              #1, L2
-L1                  try_me_else              #1, L3
+L0                  try                      #1, L1
+                    trust_ext                #1, #1
+L1                  try_me_else              #1, L2
                     allocate                 #2
                     put_variable_t           A253, A254
                     put_app                  A255, A254, #2
@@ -26,7 +27,7 @@ L1                  try_me_else              #1, L3
                     head_normalize_t         A1
                     deallocate               
                     execute_name             foo
-L3                  trust_me                 #1
+L2                  trust_me                 #1
                     allocate                 #2
                     get_m_structure          A1, appl, #1
                     unify_variable_t         A255
@@ -52,7 +53,6 @@ L3                  trust_me                 #1
                     set_value_t              A254
                     deallocate               
                     execute_name             foo
-L2                  trust_ext                #1, #1
 
 Global kind table:
 0: i/0
