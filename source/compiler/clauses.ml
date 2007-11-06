@@ -1048,8 +1048,8 @@ and translateClauses pmod amod =
   let amod' = setHiddenConstants amod hcs' in
   let newclauses'' = getNewClauses newclauses' in
   (amod', List.map Parse.removeNestedAbstractions clauses', 
-   List.map Parse.removeNestedAbstractions (List.concat newclauses''),
-   getClosedDefs ()) 
+  List.map Parse.removeNestedAbstractions (List.concat newclauses''),
+  getClosedDefs ())
 
 (**********************************************************************
 *printTranslatedClauses:

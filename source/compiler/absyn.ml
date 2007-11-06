@@ -379,7 +379,7 @@ let makeNewTypeVariableData () =
 (*  atype:                                                               *)
 (*************************************************************************)
 (* dereference a type *)
-let rec dereferenceType = fun ty ->
+let rec dereferenceType ty =
   match ty with
     TypeVarType(r) ->
       (match !r with
@@ -396,7 +396,7 @@ let rec dereferenceType = fun ty ->
   | _ -> ty
 
 (* string_of_type                    *)
-let rec string_of_type ty =
+and string_of_type ty =
   let rec print' = function
       t::[] -> (string_of_type t)
     | t::ts -> (string_of_type t) ^ " " ^ (print' ts)

@@ -1255,340 +1255,347 @@ and translateSignature s owner ktable ctable tabbrevtable kbuilder cbuilder =
 * Translates a module from preabsyn to absyn.
 **********************************************************************)
 and translateModule mod' ktable ctable atable =
-    (******************************************************************
-    *getSkeleton:
-    * Used when folding over the constant lists to get all constant
-    * skeletons.  Assumes that the constant has a skeleton.
-    ******************************************************************)
-    let getSkeleton result c =
-      let skel = Absyn.getConstantSkeletonValue c in
-      skel :: result
-    in
-    (******************************************************************
-    *getGlobalKind:
-    * Used when folding over the kind table to collect all global
-    * kinds.
-    ******************************************************************)
-    let getGlobalKind sym k result =
-      if Absyn.isGlobalKind k then
-        k::result
-      else
-        result
-    in
-    (******************************************************************
-    *getLocalKind:
-    * Used when folding over the kind table to collect all local
-    * kinds.
-    ******************************************************************)
-    let getLocalKind sym k result =
-      if Absyn.isLocalKind k then
-        k::result
-      else
-        result
-    in
-    
-    (******************************************************************
-    *getConstant:
-    * Used when folding over a table to collect all constants of a
-    * particular kind (Global, Local, etc).
-    ******************************************************************)
-    let getConstant kind sym constant result =
-      if (Absyn.getConstantType constant) = kind then
-        constant :: result
-      else
-        result
-    in
-    
-    (********************************************************************
-    *mergeLocalKinds:
-    * Merges the list of local kinds and the kind table.  Any local
-    * kind without an associated arity must be declared already.
-    ********************************************************************)
-    let mergeLocalKinds = fun klist kt ->
-      let merge = fun ktable kind ->
-        match kind with
-          Absyn.Kind(s, Some a, _, Absyn.LocalKind, p) ->
-            (match (Table.find s ktable) with
-              Some Absyn.Kind(s', Some a', _, Absyn.GlobalKind, p') ->
-                if a <> a' then
-                  (Errormsg.error p ("kind already declared with arity " ^ (string_of_int a));
-                  ktable)
-                else
-                  (Table.add s kind ktable)
-            | Some Absyn.Kind(s', Some a', _, Absyn.LocalKind, p') ->
-                if a <> a' then
-                  (Errormsg.error p ("kind already declared with arity " ^ (string_of_int a));
-                  ktable)
-                else
-                  ktable
-            | Some k ->
-                (Errormsg.impossible Errormsg.none "Translate.translateModule: invalid kind")
-            | None -> (Table.add s kind ktable))
-        | Absyn.Kind(s, None, _, Absyn.LocalKind, p) ->
-            (match (Table.find s ktable) with
-              Some Absyn.Kind(s', Some a', m, Absyn.GlobalKind, p') ->
-                (Table.add s (Absyn.Kind(s', Some a', m,Absyn.LocalKind, p')) ktable)
-            | Some Absyn.Kind(s', Some a', m, Absyn.LocalKind, p') ->
+  let _ = Errormsg.log Errormsg.none "Translate.translateModule: Translating module..." in
+  (******************************************************************
+  *getSkeleton:
+  * Used when folding over the constant lists to get all constant
+  * skeletons.  Assumes that the constant has a skeleton.
+  ******************************************************************)
+  let getSkeleton result c =
+    let skel = Absyn.getConstantSkeletonValue c in
+    skel :: result
+  in
+  (******************************************************************
+  *getGlobalKind:
+  * Used when folding over the kind table to collect all global
+  * kinds.
+  ******************************************************************)
+  let getGlobalKind sym k result =
+    if Absyn.isGlobalKind k then
+      k::result
+    else
+      result
+  in
+  (******************************************************************
+  *getLocalKind:
+  * Used when folding over the kind table to collect all local
+  * kinds.
+  ******************************************************************)
+  let getLocalKind sym k result =
+    if Absyn.isLocalKind k then
+      k::result
+    else
+      result
+  in
+  
+  (******************************************************************
+  *getConstant:
+  * Used when folding over a table to collect all constants of a
+  * particular kind (Global, Local, etc).
+  ******************************************************************)
+  let getConstant kind sym constant result =
+    if (Absyn.getConstantType constant) = kind then
+      constant :: result
+    else
+      result
+  in
+  
+  (********************************************************************
+  *mergeLocalKinds:
+  * Merges the list of local kinds and the kind table.  Any local
+  * kind without an associated arity must be declared already.
+  ********************************************************************)
+  let mergeLocalKinds = fun klist kt ->
+    let merge = fun ktable kind ->
+      match kind with
+        Absyn.Kind(s, Some a, _, Absyn.LocalKind, p) ->
+          (match (Table.find s ktable) with
+            Some Absyn.Kind(s', Some a', _, Absyn.GlobalKind, p') ->
+              if a <> a' then
+                (Errormsg.error p ("kind already declared with arity " ^ (string_of_int a));
+                ktable)
+              else
+                (Table.add s kind ktable)
+          | Some Absyn.Kind(s', Some a', _, Absyn.LocalKind, p') ->
+              if a <> a' then
+                (Errormsg.error p ("kind already declared with arity " ^ (string_of_int a));
+                ktable)
+              else
                 ktable
-            | Some k ->
-                (Errormsg.impossible (Absyn.getKindPos k) "invalid kind type")
-            | None ->
-                (Errormsg.error p ("undeclared kind " ^ (Symbol.name s));
-                ktable))
-        | _ -> (Errormsg.impossible (Absyn.getKindPos kind) "mergeLocalKinds(): invalid kind type")
-      in
-      (List.fold_left merge kt klist)
+          | Some k ->
+              (Errormsg.impossible Errormsg.none "Translate.translateModule: invalid kind")
+          | None -> (Table.add s kind ktable))
+      | Absyn.Kind(s, None, _, Absyn.LocalKind, p) ->
+          (match (Table.find s ktable) with
+            Some Absyn.Kind(s', Some a', m, Absyn.GlobalKind, p') ->
+              (Table.add s (Absyn.Kind(s', Some a', m,Absyn.LocalKind, p')) ktable)
+          | Some Absyn.Kind(s', Some a', m, Absyn.LocalKind, p') ->
+              ktable
+          | Some k ->
+              (Errormsg.impossible (Absyn.getKindPos k) "invalid kind type")
+          | None ->
+              (Errormsg.error p ("undeclared kind " ^ (Symbol.name s));
+              ktable))
+      | _ -> (Errormsg.impossible (Absyn.getKindPos kind) "mergeLocalKinds(): invalid kind type")
     in
-    
-    (********************************************************************
-    *mergeGlobalKinds:
-    * Merges the global kinds declared in the module with the kind table.
-    * All global kinds are added as locals unless they appear as globals
-    * in the kindtable already.
-    ********************************************************************)
-    let mergeGlobalKinds = fun klist kt ->
-      let merge = fun ktable kind ->
-        match kind with
-          | Absyn.Kind(s,Some a,m, Absyn.GlobalKind,p) ->
-              begin match (Table.find s ktable) with
-                  Some Absyn.Kind(s',Some a',_,Absyn.GlobalKind, p') ->
-                    if a <> a' then
-                      (Errormsg.error p ("kind already declared with arity " ^ (string_of_int a) ^
-                                           (Errormsg.see p' "kind declaration"));
-                       ktable)
-                    else
-                      ktable
-                | Some k ->
-                    (Errormsg.impossible (Absyn.getKindPos k) "invalid kind type")
-                | None ->
-                    (Table.add s (Absyn.Kind(s, Some a, m,Absyn.LocalKind, p)) ktable)
-              end
-          | _ -> Errormsg.impossible Errormsg.none "Non-global kind encountered in mergeGlobalKinds"
-      in
-      (List.fold_left merge kt klist)
+    (List.fold_left merge kt klist)
+  in
+  
+  (********************************************************************
+  *mergeGlobalKinds:
+  * Merges the global kinds declared in the module with the kind table.
+  * All global kinds are added as locals unless they appear as globals
+  * in the kindtable already.
+  ********************************************************************)
+  let mergeGlobalKinds = fun klist kt ->
+    let merge = fun ktable kind ->
+      match kind with
+        | Absyn.Kind(s,Some a,m, Absyn.GlobalKind,p) ->
+            begin match (Table.find s ktable) with
+                Some Absyn.Kind(s',Some a',_,Absyn.GlobalKind, p') ->
+                  if a <> a' then
+                    (Errormsg.error p ("kind already declared with arity " ^ (string_of_int a) ^
+                                         (Errormsg.see p' "kind declaration"));
+                     ktable)
+                  else
+                    ktable
+              | Some k ->
+                  (Errormsg.impossible (Absyn.getKindPos k) "invalid kind type")
+              | None ->
+                  (Table.add s (Absyn.Kind(s, Some a, m,Absyn.LocalKind, p)) ktable)
+            end
+        | _ -> Errormsg.impossible Errormsg.none "Non-global kind encountered in mergeGlobalKinds"
     in
+    (List.fold_left merge kt klist)
+  in
 
-    (********************************************************************
-    *mergeLocalConstants:
-    * Merge the local constants in the module into the constant table.
-    * If a constant is declared as local and has no declared type then
-    * the constant must already exist as a global.  If the type is
-    * declared then it must either match an existing global declaration
-    * or there must not be any global declaration.
-    *
-    ********************************************************************)
-    let mergeLocalConstants clist ctable =
-      let f = 
-        ifThenElse (doesNot hasSkeleton)
-          (ifThenElse (previouslyExists)
-            (setCurrentConstantType Absyn.LocalConstant)
-            (enterConstant (setCurrentConstantType Absyn.LocalConstant)))
-          (ifThenElse (doesNot previouslyExists)
-            (enterConstant (setCurrentConstantType Absyn.LocalConstant))
-            (ifThenElse (mustCompare)
-              (seq [copyConstant; setCurrentConstantType Absyn.LocalConstant])
-              (failure)))
-      in    
-      mergeConstants clist ctable f
-    in
-        
-    (********************************************************************
-    *mergeClosedConstants:
-    * Merge the closed constants in the module into the constant table.
-    ********************************************************************)
-    let mergeClosedConstants clist ctable =
-      let f = 
-        ifThenElse (doesNot hasSkeleton)
-          (ifThenElse (previouslyExists)
-            (setCurrentConstantClosed true)
-            (enterConstant (setCurrentConstantClosed true)))
-          (ifThenElse (doesNot previouslyExists)
-            (enterConstant (setCurrentConstantClosed true))
-            (ifThenElse (mustCompare)
-              (seq [copyConstant; setCurrentConstantClosed true])
-              (failure)))
-      in    
-      mergeConstants clist ctable f
-    in
-    
-    (********************************************************************
-    *mergeUseOnlyConstants:
-    * Merge the useonly constants in the module into the constant table.
-    ********************************************************************)
-    let mergeUseonlyConstants clist ctable =
-      let f = 
-        ifThenElse (doesNot hasSkeleton)
-          (ifThenElse
-            (andAlso
-              [previouslyExists; hasCurrentConstantType Absyn.GlobalConstant;
-              hasCurrentConstantUseonly true; hasCurrentConstantExportdef false])
-            (success)
-            (error "declared as useonly without corresponding declaration in signature"))
-          (ifThenElse
-            (andAlso
-              [previouslyExists; hasCurrentConstantType Absyn.GlobalConstant;
-              hasCurrentConstantUseonly true; hasCurrentConstantExportdef false; mustCompare])
-            (success)
-            (error "declared as useonly without corresponding declaration in signature"))
-      in    
-      mergeConstants clist ctable f
-    in
-
-    (********************************************************************
-    *mergeExportdefConstants:
-    * Merge the exportdef constants in the module into the constant table.
-    ********************************************************************)
-    let mergeExportdefConstants clist ctable =
-      let f = 
-        ifThenElse (doesNot hasSkeleton)
-          (ifThenElse
-            (andAlso
-              [previouslyExists; hasCurrentConstantType Absyn.GlobalConstant;
-              hasCurrentConstantUseonly false; hasCurrentConstantExportdef true])
-            (success)
-            (error "declared as exportdef without corresponding declaration in signature"))
-          (ifThenElse
-            (andAlso
-              [previouslyExists; hasCurrentConstantType Absyn.GlobalConstant;
-              hasCurrentConstantUseonly false; hasCurrentConstantExportdef true;
-              mustCompare])
-            (success)
-            (error "declared as exportdef without corresponding declaration in signature"))
-      in    
-      mergeConstants clist ctable f
-    in
-    
-    (********************************************************************
-    *mergeGlobalConstants:
-    * Merge the global constants in the module into the constant table.
-    ********************************************************************)
-    let mergeGlobalConstants clist ctable =
-      let f =
-        ifThenElse previouslyExists
-          (ifThenElse mustCompare
-            (success)
-            (failure))
+  (********************************************************************
+  *mergeLocalConstants:
+  * Merge the local constants in the module into the constant table.
+  * If a constant is declared as local and has no declared type then
+  * the constant must already exist as a global.  If the type is
+  * declared then it must either match an existing global declaration
+  * or there must not be any global declaration.
+  *
+  ********************************************************************)
+  let mergeLocalConstants clist ctable =
+    let f = 
+      ifThenElse (doesNot hasSkeleton)
+        (ifThenElse (previouslyExists)
+          (ifThenElse (hasCurrentConstantType Absyn.GlobalConstant)
+            (error "local constant appears in signature")
+            (setCurrentConstantType Absyn.LocalConstant))
+          (enterConstant (setCurrentConstantType Absyn.LocalConstant)))
+        (ifThenElse (doesNot previouslyExists)
           (enterConstant (setCurrentConstantType Absyn.LocalConstant))
-      in
-      mergeConstants clist ctable f
-    in
-    
-    (******************************************************************
-    *processAccumMods:
-    * Convert a list of accumulated modules filenames into a list of
-    * preabsyn signatures.
-    ******************************************************************)
-    let rec processAccumMods = function
-      Preabsyn.Symbol(accum,_,_)::rest ->
-        (Compile.compileSignature ((Symbol.name accum)))::(processAccumMods rest)
-    | [] -> []
-    in
-    
-    (******************************************************************
-    *processImpMods:
-    * Convert a list of imported modules filenames into a list of
-    * preabsyn signatures.
-    ******************************************************************)
-    let rec processImpMods = function
-      Preabsyn.Symbol(accum,_,_)::rest ->
-        (Compile.compileSignature ((Symbol.name accum)))::(processImpMods rest)
-    | [] -> []
-    in
-    
-    (********************************************************************
-    *translateAccumMods:
-    * Goes through all of the accumulated modules, parses them, and
-    * gets the appropriate tables and suchlike.
-    ********************************************************************)
-    let rec translateAccumMods = fun accums ktable ctable atable sigs ->
-      match accums with
-        s::rest ->
-          let (asig, (ktable', ctable', atable')) =
-            translateSignature s false ktable ctable atable buildLocalKind buildLocalConstant in
-          let a = Absyn.AccumulatedModule(Absyn.getSignatureName asig, asig) in
-          (translateAccumMods rest ktable' ctable' atable' (a::sigs))
-      | [] ->
-          (sigs, (ktable, ctable, atable))
-    in
-    
-    (********************************************************************
-    *translateImpMods:
-    * Goes through all of the imported modules, parses them, and
-    * gets the appropriate tables and suchlike.
-    ********************************************************************)
-    let rec translateImpMods = fun imps ktable ctable atable sigs ->
-      match imps with
-        s::rest ->
-          let (asig, (ktable', ctable', atable')) =
-            translateSignature s false ktable ctable atable buildLocalKind buildLocalConstant in
-		      let i = Absyn.ImportedModule(Absyn.getSignatureName asig, asig) in
-          (translateImpMods rest ktable' ctable' atable' (i::sigs))
-      | [] ->
-          (sigs, (ktable, ctable, atable))
-    in
-    (*  Get the pieces of the module  *)
-    match mod' with
-      Preabsyn.Module(name, gconsts, lconsts, cconsts, uconsts, econsts, fixities,
-                        gkinds, lkinds, tabbrevs, clauses, accummods,
-                        accumsigs, usesigs, impmods) ->
+          (ifThenElse (mustCompare)
+            (ifThenElse (hasCurrentConstantType Absyn.GlobalConstant)
+              (error "local constant appears in signature")
+              (seq [copyConstant; setCurrentConstantType Absyn.LocalConstant]))
+          (failure)))
+    in    
+    mergeConstants clist ctable f
+  in
+      
+  (********************************************************************
+  *mergeClosedConstants:
+  * Merge the closed constants in the module into the constant table.
+  ********************************************************************)
+  let mergeClosedConstants clist ctable =
+    let f = 
+      ifThenElse (doesNot hasSkeleton)
+        (ifThenElse (previouslyExists)
+          (setCurrentConstantClosed true)
+          (enterConstant (setCurrentConstantClosed true)))
+        (ifThenElse (doesNot previouslyExists)
+          (enterConstant (setCurrentConstantClosed true))
+          (ifThenElse (mustCompare)
+            (seq [copyConstant; setCurrentConstantClosed true])
+            (failure)))
+    in    
+    mergeConstants clist ctable f
+  in
+  
+  (********************************************************************
+  *mergeUseOnlyConstants:
+  * Merge the useonly constants in the module into the constant table.
+  ********************************************************************)
+  let mergeUseonlyConstants clist ctable =
+    let f = 
+      ifThenElse (doesNot hasSkeleton)
+        (ifThenElse
+          (andAlso
+            [previouslyExists; hasCurrentConstantType Absyn.GlobalConstant;
+            hasCurrentConstantUseonly true; hasCurrentConstantExportdef false])
+          (success)
+          (error "declared as useonly without corresponding declaration in signature"))
+        (ifThenElse
+          (andAlso
+            [previouslyExists; hasCurrentConstantType Absyn.GlobalConstant;
+            hasCurrentConstantUseonly true; hasCurrentConstantExportdef false; mustCompare])
+          (success)
+          (error "declared as useonly without corresponding declaration in signature"))
+    in    
+    mergeConstants clist ctable f
+  in
 
-        (*  Translate the accumulated modules *)
-        let accummods' = processAccumMods accummods in
-        let (accums, (ktable, ctable, atable)) = translateAccumMods accummods' ktable ctable atable [] in
-        
-        (*  Translate the imported modules  *)
-        let impmods' = processImpMods impmods in
-        let (imps, (ktable, ctable, atable)) = translateImpMods impmods' ktable ctable atable [] in
-        
-        (*  Translate local and global kinds, and get associated tables *)
-        let gkindlist = translateGlobalKinds gkinds in
-        let lkindlist = translateLocalKinds lkinds in
-        
-        let ktable = mergeGlobalKinds gkindlist ktable in
-        let ktable = mergeLocalKinds lkindlist ktable in
-            
-        (*  Translate type abbreviations and get the associated table *)
-        let atable' = translateTypeAbbrevs tabbrevs ktable in
-        let atable = mergeTypeAbbrevs atable' atable in
-        
-        (*  Translate local, global, closed, useonly, and exportdef constants
-            and get the associated tables. *)
-        let gconstlist = translateGlobalConstants gconsts ktable atable in
-        let lconstlist = translateLocalConstants lconsts ktable atable in
-        let cconstlist = translateClosedConstants cconsts ktable atable in
-        let uconstlist = translateUseOnlyConstants true uconsts ktable atable in
-        let econstlist = translateExportdefConstants true econsts ktable atable in
-        
-        let ctable = mergeGlobalConstants gconstlist ctable in
-        let ctable = mergeLocalConstants lconstlist ctable in
-        let ctable = mergeClosedConstants cconstlist ctable in
-        let ctable = mergeUseonlyConstants uconstlist ctable in
-        let ctable = mergeExportdefConstants econstlist ctable in
-        
-        (*  Apply fixity flags  *)
-        let ctable = translateFixities fixities ctable in
-        
-        (*  Get local and global kind lists.  *)
-        let globalkinds = Table.fold (getGlobalKind) ktable [] in
-        let localkinds = Table.fold (getLocalKind) ktable [] in
-        
-        (*  Get local and global constant lists.  *)
-        let globalconstants = Table.fold (getConstant Absyn.GlobalConstant) ctable [] in
-        let localconstants = Table.fold (getConstant Absyn.LocalConstant) ctable [] in
-        
-        (*  Verify that all constants have a body, and
-            all kinds have an arity.  *)
-        if (checkConstantBodies ctable) && (checkKindArities ktable) then
-          (*  Get constant skeletons. *)
-          let skeletons = (List.fold_left (getSkeleton) [] globalconstants) in
-          let skeletons = (List.fold_left (getSkeleton) skeletons localconstants) in
+  (********************************************************************
+  *mergeExportdefConstants:
+  * Merge the exportdef constants in the module into the constant table.
+  ********************************************************************)
+  let mergeExportdefConstants clist ctable =
+    let f = 
+      ifThenElse (doesNot hasSkeleton)
+        (ifThenElse
+          (andAlso
+            [previouslyExists; hasCurrentConstantType Absyn.GlobalConstant;
+            hasCurrentConstantUseonly false; hasCurrentConstantExportdef true])
+          (success)
+          (error "declared as exportdef without corresponding declaration in signature"))
+        (ifThenElse
+          (andAlso
+            [previouslyExists; hasCurrentConstantType Absyn.GlobalConstant;
+            hasCurrentConstantUseonly false; hasCurrentConstantExportdef true;
+            mustCompare])
+          (success)
+          (error "declared as exportdef without corresponding declaration in signature"))
+    in    
+    mergeConstants clist ctable f
+  in
+  
+  (********************************************************************
+  *mergeGlobalConstants:
+  * Merge the global constants in the module into the constant table.
+  ********************************************************************)
+  let mergeGlobalConstants clist ctable =
+    let f =
+      ifThenElse previouslyExists
+        (ifThenElse mustCompare
+          (success)
+          (failure))
+        (enterConstant (setCurrentConstantType Absyn.LocalConstant))
+    in
+    mergeConstants clist ctable f
+  in
+  
+  (******************************************************************
+  *processAccumMods:
+  * Convert a list of accumulated modules filenames into a list of
+  * preabsyn signatures.
+  ******************************************************************)
+  let rec processAccumMods = function
+    Preabsyn.Symbol(accum,_,_)::rest ->
+      (Compile.compileSignature ((Symbol.name accum)))::(processAccumMods rest)
+  | [] -> []
+  in
+  
+  (******************************************************************
+  *processImpMods:
+  * Convert a list of imported modules filenames into a list of
+  * preabsyn signatures.
+  ******************************************************************)
+  let rec processImpMods = function
+    Preabsyn.Symbol(accum,_,_)::rest ->
+      (Compile.compileSignature ((Symbol.name accum)))::(processImpMods rest)
+  | [] -> []
+  in
+  
+  (********************************************************************
+  *translateAccumMods:
+  * Goes through all of the accumulated modules, parses them, and
+  * gets the appropriate tables and suchlike.
+  ********************************************************************)
+  let rec translateAccumMods = fun accums ktable ctable atable sigs ->
+    match accums with
+      s::rest ->
+        let (asig, (ktable', ctable', atable')) =
+          translateSignature s false ktable ctable atable buildLocalKind buildLocalConstant in
+        let a = Absyn.AccumulatedModule(Absyn.getSignatureName asig, asig) in
+        (translateAccumMods rest ktable' ctable' atable' (a::sigs))
+    | [] ->
+        (sigs, (ktable, ctable, atable))
+  in
+  
+  (********************************************************************
+  *translateImpMods:
+  * Goes through all of the imported modules, parses them, and
+  * gets the appropriate tables and suchlike.
+  ********************************************************************)
+  let rec translateImpMods = fun imps ktable ctable atable sigs ->
+    match imps with
+      s::rest ->
+        let (asig, (ktable', ctable', atable')) =
+          translateSignature s false ktable ctable atable buildLocalKind buildLocalConstant in
+	      let i = Absyn.ImportedModule(Absyn.getSignatureName asig, asig) in
+        (translateImpMods rest ktable' ctable' atable' (i::sigs))
+    | [] ->
+        (sigs, (ktable, ctable, atable))
+  in
+  (*  Get the pieces of the module  *)
+  match mod' with
+    Preabsyn.Module(name, gconsts, lconsts, cconsts, uconsts, econsts, fixities,
+                      gkinds, lkinds, tabbrevs, clauses, accummods,
+                      accumsigs, usesigs, impmods) ->
 
-          let amod =
-            Absyn.Module(name, imps, accums, ref ctable, ref ktable,
-            atable, [], globalkinds, localkinds, globalconstants, localconstants,
-            ref [], skeletons, ref [], ref(Absyn.ClauseBlocks([]))) in
-          amod
-        else
-          Absyn.ErrorModule
-    | Preabsyn.Signature _ ->
-        invalid_arg "Types.translateModule: attempted to translate Preabsyn.Signature()"
+      (*  Translate the accumulated modules *)
+      let accummods' = processAccumMods accummods in
+      let (accums, (ktable, ctable, atable)) = translateAccumMods accummods' ktable ctable atable [] in
+      
+      (*  Translate the imported modules  *)
+      let impmods' = processImpMods impmods in
+      let (imps, (ktable, ctable, atable)) = translateImpMods impmods' ktable ctable atable [] in
+      
+      (*  Translate local and global kinds, and get associated tables *)
+      let gkindlist = translateGlobalKinds gkinds in
+      let lkindlist = translateLocalKinds lkinds in
+      
+      let ktable = mergeGlobalKinds gkindlist ktable in
+      let ktable = mergeLocalKinds lkindlist ktable in
+          
+      (*  Translate type abbreviations and get the associated table *)
+      let atable' = translateTypeAbbrevs tabbrevs ktable in
+      let atable = mergeTypeAbbrevs atable' atable in
+      
+      (*  Translate local, global, closed, useonly, and exportdef constants
+          and get the associated tables. *)
+      let gconstlist = translateGlobalConstants gconsts ktable atable in
+      let lconstlist = translateLocalConstants lconsts ktable atable in
+      let cconstlist = translateClosedConstants cconsts ktable atable in
+      let uconstlist = translateUseOnlyConstants true uconsts ktable atable in
+      let econstlist = translateExportdefConstants true econsts ktable atable in
+      
+      let ctable = mergeGlobalConstants gconstlist ctable in
+      let ctable = mergeLocalConstants lconstlist ctable in
+      let ctable = mergeClosedConstants cconstlist ctable in
+      let ctable = mergeUseonlyConstants uconstlist ctable in
+      let ctable = mergeExportdefConstants econstlist ctable in
+      
+      (*  Apply fixity flags  *)
+      let ctable = translateFixities fixities ctable in
+      
+      (*  Get local and global kind lists.  *)
+      let globalkinds = Table.fold (getGlobalKind) ktable [] in
+      let localkinds = Table.fold (getLocalKind) ktable [] in
+      
+      (*  Get local and global constant lists.  *)
+      let globalconstants = Table.fold (getConstant Absyn.GlobalConstant) ctable [] in
+      let localconstants = Table.fold (getConstant Absyn.LocalConstant) ctable [] in
+      
+      (*  Verify that all constants have a body, and
+          all kinds have an arity.  *)
+      if (checkConstantBodies ctable) && (checkKindArities ktable) then
+        (*  Get constant skeletons. *)
+        let skeletons = (List.fold_left (getSkeleton) [] globalconstants) in
+        let skeletons = (List.fold_left (getSkeleton) skeletons localconstants) in
+
+        let amod =
+          Absyn.Module(name, imps, accums, ref ctable, ref ktable,
+          atable, [], globalkinds, localkinds, globalconstants, localconstants,
+          ref [], skeletons, ref [], ref(Absyn.ClauseBlocks([]))) in
+          let _ = Errormsg.log Errormsg.none
+            "Translate.translateModule: Translated module." in
+        amod
+      else
+        Absyn.ErrorModule
+  | Preabsyn.Signature _ ->
+      invalid_arg "Types.translateModule: attempted to translate Preabsyn.Signature()"

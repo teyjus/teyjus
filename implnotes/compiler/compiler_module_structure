@@ -68,7 +68,7 @@ Compiler Module Organization:
   Datatype Definition Modules:
   Preabsyn:
     This module defines the various types representing the pre-abstract
-    syntax of a module.  The types defined represent pre-abstract syntax
+    syntax of a module.
 
   Absyn:
     This module defines the various types representing the abstract syntax
