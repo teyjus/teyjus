@@ -86,7 +86,7 @@ Output:
      a. kind category (local/global/pervasive)
      b. arity
      c. [index]: this field should be allocated, but left to be filled in
-                 till the code generation phase.
+                 during the code generation phase.
   
      constant:
      ---------

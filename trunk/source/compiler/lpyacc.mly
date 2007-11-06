@@ -57,16 +57,16 @@ let reverseResults () =
   accumulatedModList := List.rev !accumulatedModList;
   accumulatedSigList := List.rev !accumulatedSigList;
   useSigList := List.rev !useSigList;
-  useOnlyList := List.rev !useOnlyList;
-  exportList := List.rev !exportList;
   clauseList := List.rev !clauseList;
 
-  globalConstants := List.rev !globalConstants;
-  closedConstants := List.rev !closedConstants;
-  localConstants := List.rev !localConstants;
-
-  globalKinds := List.rev !globalKinds;
-  localKinds := List.rev !localKinds;
+  globalConstants := !globalConstants;
+  closedConstants := !closedConstants;
+  localConstants := !localConstants;
+  useOnlyList := !useOnlyList;
+  exportList := !exportList;
+  
+  globalKinds := !globalKinds;
+  localKinds := !localKinds;
 
   globalTypeAbbrevs := List.rev !globalTypeAbbrevs;
 

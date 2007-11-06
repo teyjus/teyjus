@@ -95,7 +95,7 @@ let warning = fun pos (msg:string) ->
 *	Outputs logging information.
 ********************************************************************)
 let log = fun pos msg ->
-  if !loggingEnabled && !warningsEnabled && !errorsEnabled then
+  if !loggingEnabled then
 	  (printPosition pos;
 	  prerr_string " : Log : ";
 	  prerr_string msg;

@@ -398,7 +398,7 @@ let rec unify (tm1 : typemolecule) (tm2 : typemolecule) =
   *unify':
   * Auxiliary unification function.
   ********************************************************************)
-  let rec unify' = fun t1 t2 bindings ->
+  let rec unify' t1 t2 bindings =
     (*  Get the actual type and evironment for each molecule. *)
     let t1 = (dereferenceMolecule t1) in
     let skel1 = (getMoleculeType t1) in
@@ -434,9 +434,14 @@ let rec unify (tm1 : typemolecule) (tm2 : typemolecule) =
           unbindVariables bindings;
           raise (UnifyException ClashFailure))
         else
-          (set1 := inter;
-          (Absyn.getTypeSetRef skel2) := Some(skel1);
-          bindings)
+          let ref1 = Absyn.getTypeSetRef skel1 in
+          let ref2 = Absyn.getTypeSetRef skel2 in
+          let _ = set1 := inter in
+          if ref1 == ref2 then
+            bindings
+          else
+            (ref2 := Some(skel1);
+            bindings)
       else
 
       (*  Check if the other type is in the list.  If it is, then
@@ -455,7 +460,7 @@ let rec unify (tm1 : typemolecule) (tm2 : typemolecule) =
       (*  Type set: check if skel1 is in the type set; if so,
           set the type set to only have skel1 in it.  Otherwise,
           clash error.  *)
-      Absyn.TypeSetType(default, set2, r2) ->
+      Absyn.TypeSetType(def, set2, r2) ->
         if (isGround skel1) && (inSet skel1 (!set2)) then
           (set2 := [skel1];
           bindings)
