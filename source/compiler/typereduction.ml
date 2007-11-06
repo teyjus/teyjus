@@ -160,9 +160,9 @@ let reduceSkeletons amod =
     let ty = Absyn.getSkeletonType skel in
 	let (args, target) = 
 	  if (Absyn.isArrowType ty) then 
-		(Absyn.getArrowTypeArguments ty, Absyn.getArrowTypeTarget ty)
+		  (Absyn.getArrowTypeArguments ty, Absyn.getArrowTypeTarget ty)
 	  else
-		([], ty)
+		  ([], ty)
 	in
 
     (*let args = Absyn.getArrowTypeArguments ty in

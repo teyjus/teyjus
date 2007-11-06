@@ -5,7 +5,8 @@ type symbol = Symbol.symbol
 *translateTerm:
 * Given a preabstract syntax term (assumed to have been parsed at the
 * top-level interface), parses the term and returns an abstract syntax
-* term and associated information.
+* term and associated information.  The resulting term has no overloaded
+* constants in it.  The resulting term has no nested abstractions in it.
 *
 * Arguments:
 *   a preabsyn term
@@ -24,7 +25,8 @@ val translateTerm : Preabsyn.pterm -> Absyn.amodule ->
 *translateClause:
 * Given a preabstract syntax term representing a clause (assumed to
 * have been parsed while processing a file), parses the term and returns
-* an abstract syntax term.
+* an abstract syntax term.  The resulting clause has no overloaded
+* constants in it.
 *
 * Arguments:
 *   a preabsyn term
@@ -39,7 +41,8 @@ val translateClause : Preabsyn.pterm -> Absyn.amodule -> Absyn.aterm
 *removeNestedAbstractions:
 * Removes any nested abstractions in an absyn term, replacing them
 * with "flattened" unnested abstractions.  It is assumed that the absyn
-* term has no unnested abstractions in it.
+* term has no unnested abstractions in it; if it does they are not merged
+* in any way.
 *
 * Arguments:
 *   an absyn term

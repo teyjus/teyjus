@@ -14,19 +14,3 @@ useonly   foo5  i -> o.
 
 type      foo6  i -> o.
 useonly   foo6.
-
-% negative cases:
-
-%type      foo3  i -> o.
-
-%type      foo4  i -> o.
-
-% case 7: 
-% useonly_test.mod:
-%   type      foo7 i -> o.
-%   useonly   foo7 i -> o.
-
-
-% case 9:
-%useonly foo9 i.
-
