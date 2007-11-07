@@ -9,8 +9,6 @@ foo1 X.
 type foo2 i -> o.
 foo2 X.
 
-foo5 X.
-foo6 X.
 
 
 

@@ -174,7 +174,7 @@ let rec rationalizeType = fun
             else
               TypeAndBindings(Absyn.ApplicationType(k, []), vartable)
         | None ->
-          (Errormsg.error pos ("undeclared constant " ^ (Symbol.name s));
+          (Errormsg.error pos ("undeclared constant '" ^ (Symbol.name s) ^ "'");
           TypeAndBindings(Absyn.ErrorType, vartable)))
         
     | Preabsyn.App(f, t, p) ->
@@ -847,7 +847,7 @@ and mergeConstants clist ctable f =
   let merge table constant =
     let sym = Absyn.getConstantSymbol constant in
     let constant' = Table.find sym ctable in
-    (f constant' constant ctable)
+    (f constant' constant table)
   in
   List.fold_left merge ctable clist
 
@@ -903,6 +903,7 @@ and ifThenElse test ifBranch elseBranch =
 
 and success = fun _ _ ctable -> ctable
 and failure = fun _ _ ctable -> ctable
+
 and error s = fun currentConstant newConstant ctable ->
   let p = Absyn.getConstantPos newConstant in
   let s' = "constant '" ^ (Absyn.getConstantName newConstant) ^ "' " ^ s in
@@ -914,6 +915,19 @@ and error s = fun currentConstant newConstant ctable ->
   else
     (Errormsg.error p s';
     ctable)
+
+and log s = fun currentConstant newConstant ctable ->
+  let p = Absyn.getConstantPos newConstant in
+  let s' = "constant '" ^ (Absyn.getConstantName newConstant) ^ "' " ^ s in
+  if Option.isSome currentConstant then
+    let p' = Absyn.getConstantPos (Option.get currentConstant) in
+    (Errormsg.log p
+      (s' ^ (Errormsg.see p' "constant declaration"));
+    ctable)
+  else
+    (Errormsg.log p s';
+    ctable)
+
 and orElse left right =
   fun currentConstant newConstant ->
     (left currentConstant newConstant) || (right currentConstant newConstant)
@@ -1376,7 +1390,6 @@ and translateModule mod' ktable ctable atable =
   * the constant must already exist as a global.  If the type is
   * declared then it must either match an existing global declaration
   * or there must not be any global declaration.
-  *
   ********************************************************************)
   let mergeLocalConstants clist ctable =
     let f = 
@@ -1392,7 +1405,7 @@ and translateModule mod' ktable ctable atable =
             (ifThenElse (hasCurrentConstantType Absyn.GlobalConstant)
               (error "local constant appears in signature")
               (seq [copyConstant; setCurrentConstantType Absyn.LocalConstant]))
-          (failure)))
+            (failure)))
     in    
     mergeConstants clist ctable f
   in
@@ -1421,7 +1434,7 @@ and translateModule mod' ktable ctable atable =
   * Merge the useonly constants in the module into the constant table.
   ********************************************************************)
   let mergeUseonlyConstants clist ctable =
-    let f = 
+    let f =
       ifThenElse (doesNot hasSkeleton)
         (ifThenElse
           (andAlso

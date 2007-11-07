@@ -2,9 +2,9 @@ module localconsts.
 
 kind i type.
 
+type foo i -> o.
 type c i.
 type a i.
-type foo i -> o.
 
 
 foo X.

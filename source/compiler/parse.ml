@@ -528,10 +528,9 @@ and translateId parsingtoplevel inlist term fvs bvs amodule =
                            | None -> (makeVarToOpTerm term fvs bvs amodule
                                                       makeImplicitTypeSymbol)
                       else (* only remaining case is that of an unknown const *)
-		        (Errormsg.error pos ("undeclared constant " ^ 
-                                                        (Symbol.name sym));
-		         (StackError, fvs)))
-
+		                    (Errormsg.error pos
+		                      ("undeclared constant '" ^ (Symbol.name sym) ^ "'");
+		                    (StackError, fvs)))
   | _ -> (Errormsg.impossible (Preabsyn.getTermPos term) 
                               "Parse.translateId: invalid term")
 
@@ -1178,32 +1177,21 @@ and removeOverloads term =
   | Absyn.BoundVarTerm(_) -> term
   
   | Absyn.AbstractionTerm(Absyn.NestedAbstraction(t, body), b, p) ->
-      let _ = Errormsg.log Errormsg.none
-        "Parse.removeOverloads: Absyn.AbstractionTerm" in
       let body' = removeOverloads body in
       Absyn.AbstractionTerm(Absyn.NestedAbstraction(t, body'), b, p)
   | Absyn.AbstractionTerm(Absyn.UNestedAbstraction(ts, c, body), b, p) ->
-      let _ = Errormsg.log Errormsg.none
-        "Parse.removeOverloads: Absyn.AbstractionTerm" in
       let body' = removeOverloads body in
       Absyn.AbstractionTerm(Absyn.UNestedAbstraction(ts, c, body'), b, p)
   | Absyn.ApplicationTerm(Absyn.FirstOrderApplication(f, args, i), b, p) ->
-      let _ = Errormsg.log Errormsg.none
-        "Parse.removeOverloads: Absyn.ApplicationTerm" in
       let f' = removeOverloads f in
       let args' = List.map removeOverloads args in
       Absyn.ApplicationTerm(Absyn.FirstOrderApplication(f', args', i), b, p)
   | Absyn.ApplicationTerm(Absyn.CurriedApplication(f, a), b, p) ->
-      let _ = Errormsg.log Errormsg.none
-        "Parse.removeOverloads: Absyn.ApplicationTerm" in
       let f' = removeOverloads f in
       let a' = removeOverloads a in
       Absyn.ApplicationTerm(Absyn.CurriedApplication(f', a'), b, p)
 
   | Absyn.ConstantTerm(c, tl, b, p) ->
-      let _ = Errormsg.log Errormsg.none
-        "Parse.removeOverloads: Absyn.ConstantTerm" in
-
       if Pervasiveutils.isOverloaded c then
         let ty = List.hd tl in
         let ty' = Absyn.dereferenceType ty in
@@ -1216,8 +1204,6 @@ and removeOverloads term =
                 Absyn.getTypeKind (List.hd !l)
               else
                 Absyn.getTypeKind def) in
-            let _ = Errormsg.log Errormsg.none
-              "Parse.removeOverloads: getting overload" in
             Absyn.ConstantTerm(Pervasiveutils.getOverload k c, [], b, p)
         | _ -> Absyn.ErrorTerm)
       else
