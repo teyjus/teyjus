@@ -570,7 +570,6 @@ val getClauseBlockClose : aclausesblock -> bool
 val setClauseBlockClose : aclausesblock -> bool -> unit
 val getClauseBlockNextClause : aclausesblock -> int
 val setClauseBlockNextClause : aclausesblock -> int -> unit
-val getClauseBlockClauses : aclausesblock -> aclause list
 val getClauseBlockOffset : aclausesblock -> int
 val setClauseBlockOffset : aclausesblock -> int -> unit
 (* if the given clause has a body as CutFailGoal, then set the second   *)
