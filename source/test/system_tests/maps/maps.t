@@ -1,6 +1,6 @@
 use lib '../lib';
 use strict;
-use Test::More tests =>  9;
+use Test::More tests =>  11;
 
 my $TJSIM = "../../tjsim";
 my $PATH = "-p maps/";
@@ -191,14 +191,29 @@ same_answers( `$TJSIM -b $PATH --solve "$code" $MODULE\n`, $ans,"mappred");
 ############################################
 ############################################
 
-#$code = <<'CODE';
-#reduce [1,2,3,4,5] ((A:int)\ B\ (A + B)) 0 X.
-#CODE
-#$ans = <<'ANS';
+$code = <<'CODE';
+reduce [1,2,3,4,5] (A\ B\ (A + B)) 0 X.
+CODE
+$ans = <<'ANS';
+
+The answer substitution:
+X = 1 %i+ (2 %i+ (3 %i+ (4 %i+ (5 %i+ 0))))
+
+
+ANS
+same_answers( `$TJSIM -b $PATH --solve "$code" $MODULE\n`, $ans,"reduce");
 
 ############################################
 ############################################
-#$code = <<'CODE';
-#reduce_eval [1,2,3] (X\ (Y:int)\ (X + Y)) 0 Z.
-#CODE
-#$ans = <<'ANS';
+$code = <<'CODE';
+reduce_eval [1,2,3] (X\ Y\ (X + Y)) 0 Z.
+CODE
+$ans = <<'ANS';
+
+The answer substitution:
+Z = 6
+
+ANS
+same_answers( `$TJSIM -b $PATH --solve "$code" $MODULE\n`, $ans,"reduce_eval");
+############################################
+############################################
