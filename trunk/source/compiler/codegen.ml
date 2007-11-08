@@ -359,27 +359,13 @@ let assignStringIndex strs =
 (* collect renaming information for imported and accumulated modules        *)
 (****************************************************************************)
 let collectRenamingInfo amod =
-  let rec collectLocals toCheck checked number isGlobalFunc =
-    match toCheck with
-      [] -> (List.rev checked, number)
-    | (elem :: rest) ->
-	(*if (isGlobalFunc elem) then
-	  collectLocals rest checked number isGlobalFunc
-	else*) collectLocals rest (elem :: checked) (number + 1) isGlobalFunc
-  in 
-
   (* function body of collectRenamingInfo *)
   let gkinds = Absyn.getSignatureGlobalKindsList amod in
   let gconsts = Absyn.getSignatureGlobalConstantsList amod in
-  let (renamingKinds, numRenamingKinds) = 
-    collectLocals gkinds [] 0 Absyn.isGlobalKind 
-  in
-  let (renamingConsts, numRenamingConsts) =
-    collectLocals gconsts [] 0 Absyn.isGlobalConstant
-  in
   RenamingInfo(Absyn.getSignatureName amod, 
-	       KindList(renamingKinds, numRenamingKinds),
-	       ConstantList(renamingConsts, numRenamingConsts))
+	       KindList(List.rev gkinds, List.length gkinds),
+	       ConstantList(List.rev gconsts, List.length gconsts))
+
 
 let collectImports imps = 
   let rec collectImportsAux imps renamingInfo =
@@ -393,7 +379,7 @@ let collectImports imps =
 let collectAccs accs = 
   let rec collectAccsAux accs renamingInfo =
     match accs with
-      [] -> (*(List.rev renamingInfo)*) renamingInfo (*reversed order *)
+      [] -> (List.rev renamingInfo)
     | (Absyn.AccumulatedModule(_, amod) :: rest) ->
 	collectAccsAux rest ((collectRenamingInfo amod) :: renamingInfo)
   in 
