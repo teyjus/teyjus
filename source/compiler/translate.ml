@@ -480,7 +480,7 @@ and translateUseOnlyConstants owner clist kindtable typeabbrevtable =
   let constantType = if owner then Absyn.GlobalConstant else Absyn.LocalConstant in
   let buildConstant = fun sym ty tyskel esize pos ->
     Absyn.Constant(sym, ref Absyn.NoFixity, ref (-1), ref false, ref true,
-      ref (not owner), ref true, ref false, ref false, tyskel,
+      ref true, ref true, ref false, ref false, tyskel,
       ref esize, ref (Some(Array.make esize true)), ref (Some(Array.make esize true)),
       ref None, ref constantType, ref 0, pos)
   in
@@ -1089,13 +1089,25 @@ and translateSignature s owner ktable ctable tabbrevtable kbuilder cbuilder =
   
   (*  Copiers: they need an explanation.   *)
   (*  Really merging should be handled as it is in translateModule, duh.  *)
-  let copy currentConstant newConstant = () in
+  let copy currentConstant newConstant =
+    let () = Errormsg.log Errormsg.none ("constant '" ^ (Absyn.getConstantName newConstant) ^ "'") in
+    let skelref = Absyn.getConstantSkeletonRef currentConstant in
+    let sizeref = Absyn.getConstantTypeEnvSizeRef currentConstant in
+    let tref = Absyn.getConstantTypeRef currentConstant in
+    let () = tref := Absyn.getConstantType newConstant in
+    if (Option.isSome !skelref) then
+      (sizeref := Absyn.getConstantTypeEnvSize false newConstant;
+      skelref := Absyn.getConstantSkeleton newConstant)
+    else
+      ()
+  in
   
   let copyExportdef currentConstant newConstant =
+    let () = Errormsg.log Errormsg.none ("exportdef '" ^ (Absyn.getConstantName newConstant) ^ "'") in
+    let () = copy currentConstant newConstant in
     let edref = Absyn.getConstantExportDefRef currentConstant in
-    let ed = Absyn.getConstantExportDef newConstant in
     let nodefsref = Absyn.getConstantNoDefsRef currentConstant in
-    (edref := ed;
+    (edref := Absyn.getConstantExportDef newConstant;
     if not owner then
       nodefsref := true
     else
@@ -1103,12 +1115,14 @@ and translateSignature s owner ktable ctable tabbrevtable kbuilder cbuilder =
   in
   
   let copyUseonly currentConstant newConstant =
+    let () = Errormsg.log Errormsg.none ("useonly '" ^ (Absyn.getConstantName newConstant) ^ "'") in
+    let () = copy currentConstant newConstant in
     let uoref = Absyn.getConstantUseOnlyRef currentConstant in
-    let uo = Absyn.getConstantUseOnly newConstant in
     let nodefsref = Absyn.getConstantNoDefsRef currentConstant in
-    (uoref := uo;
+    (uoref := Absyn.getConstantUseOnly newConstant;
     nodefsref := true)
   in
+
   (******************************************************************
   *mergeKinds:
   * Adds the kinds from one signature into the kinds
@@ -1174,6 +1188,7 @@ and translateSignature s owner ktable ctable tabbrevtable kbuilder cbuilder =
           else if (not owner) && not (compareAccumConstants c c2) then
             (ctable, renamingList)
           else
+            let () = Errormsg.log Errormsg.none "copying" in
             let () = copier c2 c in
             if Absyn.isGlobalConstant c then
 	          if Absyn.isGlobalConstant c2 then

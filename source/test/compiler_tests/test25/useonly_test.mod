@@ -8,7 +8,3 @@ foo1 X.
 %      useonly foo2  i -> o.
 type foo2 i -> o.
 foo2 X.
-
-
-
-
