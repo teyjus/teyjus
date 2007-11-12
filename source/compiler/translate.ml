@@ -1056,15 +1056,55 @@ and copyConstant =
     else
       Errormsg.impossible Errormsg.none
         "Translate.copyConstant: invalid current constant"
+        
+(*  Copiers: they need an explanation.   *)
+(*  Really merging should be handled as it is in translateModule, duh.  *)
+let copy currentConstant newConstant =
+  let () = Errormsg.log Errormsg.none ("constant '" ^ (Absyn.getConstantName newConstant) ^ "'") in
+  let skelref = Absyn.getConstantSkeletonRef currentConstant in
+  let sizeref = Absyn.getConstantTypeEnvSizeRef currentConstant in
+  let tref = Absyn.getConstantTypeRef currentConstant in
+  let () = tref := Absyn.getConstantType newConstant in
+  if (Option.isSome !skelref) then
+    (sizeref := Absyn.getConstantTypeEnvSize false newConstant;
+    skelref := Absyn.getConstantSkeleton newConstant)
+  else
+    ()
+
+let copyAccum currentConstant newConstant =
+  let currentType = Absyn.getConstantType currentConstant in
+  let () = copy currentConstant newConstant in
+  (Absyn.getConstantTypeRef currentConstant) := currentType
+
+let copyExportdef generalCopier owner currentConstant newConstant =
+  let () = Errormsg.log Errormsg.none ("exportdef '" ^ (Absyn.getConstantName newConstant) ^ "'") in
+  let () = generalCopier currentConstant newConstant in
+  let edref = Absyn.getConstantExportDefRef currentConstant in
+  let nodefsref = Absyn.getConstantNoDefsRef currentConstant in
+  (edref := Absyn.getConstantExportDef newConstant;
+  if not owner then
+    nodefsref := true
+  else
+    ())
+
+let copyUseonly generalCopier owner currentConstant newConstant =
+  let () = Errormsg.log Errormsg.none ("useonly '" ^ (Absyn.getConstantName newConstant) ^ "'") in
+  let () = generalCopier currentConstant newConstant in
+  let uoref = Absyn.getConstantUseOnlyRef currentConstant in
+  let nodefsref = Absyn.getConstantNoDefsRef currentConstant in
+  (uoref := Absyn.getConstantUseOnly newConstant;
+  nodefsref := true)
+
+
 (**********************************************************************
 *translate:
 * Convert from a preabsyn module to an absyn module.
 **********************************************************************)
-and translate mod' sig' =
+let rec translate mod' sig' =
     let (asig, (ktable, ctable, atable)) =
       translateSignature sig' true Pervasive.pervasiveKinds
         Pervasive.pervasiveConstants Pervasive.pervasiveTypeAbbrevs
-        buildGlobalKind buildGlobalConstant in
+        buildGlobalKind buildGlobalConstant copy in
     let amod = translateModule mod' ktable ctable atable in
     (amod, asig)
 
@@ -1082,46 +1122,11 @@ and translate mod' sig' =
 *   kbuilder: the kind builder to use
 *   cbuilder: the constant builder to use
 **********************************************************************)
-and translateSignature s owner ktable ctable tabbrevtable kbuilder cbuilder =
+and translateSignature s owner ktable ctable tabbrevtable
+  kbuilder cbuilder generalCopier =
   match s with
     Preabsyn.Module(_) -> (Errormsg.impossible Errormsg.none "Translate.translateSignature: expected Preabsyn.Signature.")
   | Preabsyn.Signature(name, gconsts, uconsts, econsts, gkinds, tabbrevs, fixities,accumsigs) ->
-  
-  (*  Copiers: they need an explanation.   *)
-  (*  Really merging should be handled as it is in translateModule, duh.  *)
-  let copy currentConstant newConstant =
-    let () = Errormsg.log Errormsg.none ("constant '" ^ (Absyn.getConstantName newConstant) ^ "'") in
-    let skelref = Absyn.getConstantSkeletonRef currentConstant in
-    let sizeref = Absyn.getConstantTypeEnvSizeRef currentConstant in
-    let tref = Absyn.getConstantTypeRef currentConstant in
-    let () = tref := Absyn.getConstantType newConstant in
-    if (Option.isSome !skelref) then
-      (sizeref := Absyn.getConstantTypeEnvSize false newConstant;
-      skelref := Absyn.getConstantSkeleton newConstant)
-    else
-      ()
-  in
-  
-  let copyExportdef currentConstant newConstant =
-    let () = Errormsg.log Errormsg.none ("exportdef '" ^ (Absyn.getConstantName newConstant) ^ "'") in
-    let () = copy currentConstant newConstant in
-    let edref = Absyn.getConstantExportDefRef currentConstant in
-    let nodefsref = Absyn.getConstantNoDefsRef currentConstant in
-    (edref := Absyn.getConstantExportDef newConstant;
-    if not owner then
-      nodefsref := true
-    else
-      ())
-  in
-  
-  let copyUseonly currentConstant newConstant =
-    let () = Errormsg.log Errormsg.none ("useonly '" ^ (Absyn.getConstantName newConstant) ^ "'") in
-    let () = copy currentConstant newConstant in
-    let uoref = Absyn.getConstantUseOnlyRef currentConstant in
-    let nodefsref = Absyn.getConstantNoDefsRef currentConstant in
-    (uoref := Absyn.getConstantUseOnly newConstant;
-    nodefsref := true)
-  in
 
   (******************************************************************
   *mergeKinds:
@@ -1237,7 +1242,7 @@ and translateSignature s owner ktable ctable tabbrevtable kbuilder cbuilder =
       s::rest ->	
         let (asig, (ktable', ctable', atable')) =
           translateSignature s true ktable ctable atable
-            buildGlobalKind buildGlobalConstant in
+            buildGlobalKind buildGlobalConstant copy in
         (translateAccumSigs rest 
 	        (union kindRenaming (Absyn.getSignatureGlobalKindsList asig))
 	        (union constRenaming (Absyn.getSignatureGlobalConstantsList asig))
@@ -1269,9 +1274,11 @@ and translateSignature s owner ktable ctable tabbrevtable kbuilder cbuilder =
   let (ctable, constRenaming) =
     mergeConstants constantlist ctable [] copy in
   let (ctable, constRenaming) =
-    mergeConstants uconstantlist ctable constRenaming copyUseonly in
+    mergeConstants
+      uconstantlist ctable constRenaming (copyUseonly generalCopier owner) in
   let (ctable, constRenaming) =
-    mergeConstants econstantlist ctable constRenaming copyExportdef in
+    mergeConstants
+      econstantlist ctable constRenaming (copyExportdef generalCopier owner)  in
 
   (*  Translate fixities *)
   let ctable = translateFixities fixities ctable in
@@ -1537,7 +1544,8 @@ and translateModule mod' ktable ctable atable =
     match accums with
       s::rest ->
         let (asig, (ktable', ctable', atable')) =
-          translateSignature s false ktable ctable atable buildLocalKind buildLocalConstant in
+          translateSignature s false ktable ctable atable
+          buildLocalKind buildLocalConstant copyAccum in
         let a = Absyn.AccumulatedModule(Absyn.getSignatureName asig, asig) in
         (translateAccumMods rest ktable' ctable' atable' (a::sigs))
     | [] ->
@@ -1553,7 +1561,8 @@ and translateModule mod' ktable ctable atable =
     match imps with
       s::rest ->
         let (asig, (ktable', ctable', atable')) =
-          translateSignature s false ktable ctable atable buildLocalKind buildLocalConstant in
+          translateSignature s false ktable ctable atable
+          buildLocalKind buildLocalConstant copyAccum in
 	      let i = Absyn.ImportedModule(Absyn.getSignatureName asig, asig) in
         (translateImpMods rest ktable' ctable' atable' (i::sigs))
     | [] ->
