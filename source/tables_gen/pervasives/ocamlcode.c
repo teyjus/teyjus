@@ -982,7 +982,7 @@ char* OC_mkGenericConstVar(char* varList)
   text = UTIL_appendStr(varList, constVar);   free(constVar);
   varList = UTIL_appendStr(text, "\n\n");       free(text);
 
-  constVar = OC_mkOverLoadConstVar("abs", "ref Absyn.NoFixity", "ref 0",
+  constVar = OC_mkOverLoadConstVar("aabs", "ref Absyn.NoFixity", "ref 0",
 				   OVERLOADTYSKEL1, OVERLOADABS);
   text = UTIL_appendStr(varList, constVar);   free(constVar);
   varList = UTIL_appendStr(text, "\n\n");       free(text);
@@ -1085,7 +1085,7 @@ char* OC_mkGenericConstTabEntry(char* entries)
   free(tabEntry); free(entries);
   entries = text;
 
-  tabEntry = OC_mkTabEntry("abs", OVERLOADABS);
+  tabEntry = OC_mkTabEntry("aabs", OVERLOADABS);
   text = UTIL_appendStr(entries, tabEntry);
   free(tabEntry); free(entries);
   entries = text;
