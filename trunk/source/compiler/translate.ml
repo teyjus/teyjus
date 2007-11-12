@@ -1065,7 +1065,7 @@ let copy currentConstant newConstant =
   let sizeref = Absyn.getConstantTypeEnvSizeRef currentConstant in
   let tref = Absyn.getConstantTypeRef currentConstant in
   let () = tref := Absyn.getConstantType newConstant in
-  if (Option.isSome !skelref) then
+  if (Option.isNone !skelref) then
     (sizeref := Absyn.getConstantTypeEnvSize false newConstant;
     skelref := Absyn.getConstantSkeleton newConstant)
   else
