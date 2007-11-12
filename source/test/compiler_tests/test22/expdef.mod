@@ -27,26 +27,7 @@ foo5 X.
  */
 foo6 X.
 
-% negative test cases: currently commented out
-/* case 3:
-    expdef.sig: 
-      type      foo3  i -> o.   
- */
-%exportdef foo3 i -> o.
-%foo3 X.
 
-/* case 4:
-    expdef.sig
-      type      foo4 i -> o.
-*/
-%exportdef foo4.
-%foo4 X.
-
-/* case 7: 
-*/
-%type      foo7 i -> o.
-%exportdef foo7 i -> o.
-%foo7 X.
 
 
 
