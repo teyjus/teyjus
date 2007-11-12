@@ -31,6 +31,8 @@ Global constant table:
     Env Size: 0, Type Skeleton: #0
 3: foo6 (No Fixity, precedence 0)
     Env Size: 0, Type Skeleton: #0
+4: foo3 (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #0
 
 Local constant table: 
 
