@@ -71,7 +71,7 @@ Accumulates/imports
 
   (2) call_link_only, execute_link_only         -- test17
 
-  (3) combine definitions                       -- test18, test19
+  (3) combine definitions                       -- test18, test19, test24
 
   (4) generating dummy "try_me_else"            -- test21
 
@@ -79,5 +79,21 @@ Accumulates/imports
 MISC
 ====
   (1) exportdef                                 -- test22
-  (2) useonly                                   -- test25
   (2) un-terminated parseTerm bug               -- test23
+
+
+
+Compiler front 
+==============
+(Please refer to teyjus/implnotes/compiler/compiler_testing for the detailed
+ description.)
+
+  Parsing
+  -------
+
+   (1) constant fixity and precedence           -- test25
+
+   (2) redefine pervasive definitions           -- test26
+
+   (3) comma operator                           -- test27
+       
