@@ -1193,17 +1193,19 @@ and translateSignature s owner ktable ctable tabbrevtable
           else if (not owner) && not (compareAccumConstants c c2) then
             (ctable, renamingList)
           else
-            let () = Errormsg.log Errormsg.none "copying" in
             let () = copier c2 c in
+            let () = Errormsg.log Errormsg.none
+              ("Copied constant: " ^ (Absyn.getConstantName c2) ^ ", " ^
+                (if (Absyn.getConstantType c2) = Absyn.LocalConstant then "local" else "global")) in
             if Absyn.isGlobalConstant c then
-	          if Absyn.isGlobalConstant c2 then
-	            (ctable, c2::renamingList)
-	          else
-	            (ctable, c::renamingList) (* c2 must be perv then *)
-	        else if Absyn.isPervasiveConstant c2 then
-            (ctable, c::renamingList)
-	        else (* c2 local or global *)
-		        (ctable, c2::renamingList)
+	            if Absyn.isGlobalConstant c2 then
+	              (ctable, c2::renamingList)
+	            else
+	              (ctable, c::renamingList) (* c2 must be perv then *)
+	          else if Absyn.isPervasiveConstant c2 then
+              (ctable, c::renamingList)
+	          else (* c2 local or global *)
+		          (ctable, c2::renamingList)
       | None -> ((Table.add s c ctable), c::renamingList)
     in
     (List.fold_left merge (ctable, rename) clist)
@@ -1272,7 +1274,7 @@ and translateSignature s owner ktable ctable tabbrevtable
   let econstantlist = translateExportdefConstants owner econsts ktable tabbrevtable in
 
   let (ctable, constRenaming) =
-    mergeConstants constantlist ctable [] copy in
+    mergeConstants constantlist ctable [] generalCopier in
   let (ctable, constRenaming) =
     mergeConstants
       uconstantlist ctable constRenaming (copyUseonly generalCopier owner) in
