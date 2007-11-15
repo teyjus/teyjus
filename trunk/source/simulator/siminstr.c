@@ -21,7 +21,7 @@
 #include "../loader/searchtab.h"
 
 
-#include "print.h"
+//#include "print.h"
 #include <stdio.h>  //to be removed
 #include "printterm.h"
 #include "../system/stream.h"
