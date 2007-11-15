@@ -82,7 +82,6 @@ MISC
   (2) un-terminated parseTerm bug               -- test23
 
 
-
 Compiler front 
 ==============
 (Please refer to teyjus/implnotes/compiler/compiler_testing for the detailed
@@ -96,4 +95,18 @@ Compiler front
    (2) redefine pervasive definitions           -- test26
 
    (3) comma operator                           -- test27
+
+   (4) scoping of bound variables               -- test28
+
+  
+  Type Checking
+  -------------
+
+   (1) overload operators                       -- test29, overloaded_ops (neg)
+       . default type if no specialization      
+       . specialization 
        
+
+        
+  
+  
