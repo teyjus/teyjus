@@ -2,6 +2,7 @@ sig fixity_prec.
 
 type   foo    int -> o.
 
+% Infixl:
 type   plus   int -> int -> int.
 infixl plus   6.
 
@@ -14,3 +15,20 @@ infixl mul    7.
 type   divide int -> int -> int.
 infixl divide 7.
 
+% Infix
+type ** int -> int -> int.
+infix ** 9.
+
+% Postfix:
+type inc_non int -> int.
+postfix inc_non 10.
+
+type inc int -> int.
+postfixl inc 10.
+
+% Prefix
+type inc_non int -> int.
+postfix inc_non 10.
+
+type preinc int -> int.
+prefixr preinc 10.
