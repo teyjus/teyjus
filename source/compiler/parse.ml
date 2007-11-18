@@ -866,7 +866,7 @@ and stackOperation parsingtoplevel o amodule stack =
     *preOrInfr:
     * Handles the case where state is PrefixrState or InfixrState.
     ******************************************************************)
-    let preOrInfr = fun stack ->
+    let preOrInfr stack =
       if (Absyn.isFixityPrefix fixity) && (prec >= (getStackPrec stack)) then
         pushOperation o stack
       else if (Absyn.isFixityPrefix fixity) then
@@ -1000,7 +1000,7 @@ and stackOperation parsingtoplevel o amodule stack =
     (*  Body of stackOperation' *)
     match state with
       NoneState ->
-        if (Absyn.isFixityPrefix fixity) then
+        if not (Absyn.isFixityPrefix fixity) then
           (Errormsg.error pos
             ("missing left argument for " ^
             (Absyn.string_of_fixity fixity) ^

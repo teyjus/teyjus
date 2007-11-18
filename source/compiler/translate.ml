@@ -870,7 +870,11 @@ and mergeKinds klist ktable f =
 **********************************************************************)
 and previouslyExists =
   fun currentConstant newConstant ->
-    Option.isSome currentConstant
+    if Option.isSome currentConstant then
+      let c = Option.get currentConstant in
+      not(Absyn.getConstantRedefinable c)
+    else
+      false
 
 (**********************************************************************
 *hasSkeleton:
@@ -1188,7 +1192,9 @@ and translateSignature s owner ktable ctable tabbrevtable
       let s = Absyn.getConstantSymbol c in
       match (Table.find s ctable) with
         Some c2 ->
-          if owner && not (compareConstants c c2) then
+          if Absyn.getConstantRedefinable c2 then
+            ((Table.add s c ctable), c::renamingList)
+          else if owner && not (compareConstants c c2) then
             (ctable, renamingList)
           else if (not owner) && not (compareAccumConstants c c2) then
             (ctable, renamingList)
