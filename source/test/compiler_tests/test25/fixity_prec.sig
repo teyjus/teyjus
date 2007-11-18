@@ -17,7 +17,7 @@ infixl divide 7.
 
 % Infix
 type ** int -> int -> int.
-infix ** 9.
+infixl ** 9.
 
 % Postfix:
 type inc_non int -> int.
