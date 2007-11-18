@@ -13,4 +13,4 @@ foo (3 inc_non).
 
 % Prefix
 foo (preinc 4).
-foo (preinc preinc 4)
+foo (preinc preinc 4).
