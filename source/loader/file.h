@@ -40,6 +40,9 @@ extern int  LD_FILE_ModTime(char* modname, char* extension);
 //!Get the next word of the open file.
 extern Word LD_FILE_GETWORD();
 
+//!Get the next four bytes of the open file.
+extern int LD_FILE_GET4();
+
 //!Get the next two bytes of the open file.
 extern TwoBytes LD_FILE_GET2();
 
