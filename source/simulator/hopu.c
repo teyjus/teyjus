@@ -1202,8 +1202,7 @@ static DF_TermPtr HOPU_rigNestedSubst(DF_TermPtr fargs, int fnargs,
                                       DF_TermPtr rhPtr, DF_TermPtr rPtr,
                                       DF_TermPtr rargs, int rnargs, int emblev)
 {
-    rhPtr = HOPU_getHead(rhPtr, fargs, fnargs, emblev); //head of the binding
-    
+    rhPtr = HOPU_getHead(rhPtr, fargs, fnargs, emblev); //head of the binding    
     if (rnargs == 0) return rhPtr;       //the rigid term is atomic
     else {                               //the rigid term is cons or app
         Boolean myCopyFlagHead = HOPU_copyFlagGlb, myCopyFlagArgs = FALSE;
@@ -1218,7 +1217,10 @@ static DF_TermPtr HOPU_rigNestedSubst(DF_TermPtr fargs, int fnargs,
         for (i = 0; i < rnargs; i++){
             DF_TermPtr bnd;
             int        nabs;
+	    MemPtr     tmpHreg = AM_hreg;
             HN_hnorm(rargs);  nabs = AM_numAbs;     //dereference of hnf
+	    if (AM_hreg != tmpHreg) {myCopyFlagArgs = TRUE; }
+
             if (AM_rigFlag){
                 bnd = HOPU_rigNestedSubst(fargs, fnargs, AM_head,
                        HOPU_lamBody(rargs), AM_argVec, AM_numArgs, nabs+emblev);
@@ -1232,7 +1234,7 @@ static DF_TermPtr HOPU_rigNestedSubst(DF_TermPtr fargs, int fnargs,
             if (HOPU_copyFlagGlb) {myCopyFlagArgs=TRUE; HOPU_copyFlagGlb=FALSE;}
             rargs = (DF_TermPtr)(((MemPtr)rargs)+DF_TM_ATOMIC_SIZE); //next arg
         } //for loop
-        if (myCopyFlagArgs) {
+        if (myCopyFlagArgs) {	  
             DF_TermPtr tmPtr = (DF_TermPtr)AM_hreg; //new cons or app
             HOPU_mkConsOrApp(rPtr, rhPtr, newArgs, rnargs);
             HOPU_copyFlagGlb = TRUE;
@@ -1246,7 +1248,7 @@ static DF_TermPtr HOPU_rigNestedSubst(DF_TermPtr fargs, int fnargs,
                 HOPU_copyFlagGlb = TRUE;
                 return tmPtr;
             } else  return rPtr; //myCopyFlagHead==FALSE, myCopyFlagArgs==FALSE
-        }
+     	}
     }//rnargs > 0
 }
 
@@ -1275,14 +1277,19 @@ DF_TermPtr HOPU_rigNestedSubstC(DF_TermPtr rhPtr, DF_TermPtr rPtr,
         for (i = 0; i < rnargs; i++) {
             DF_TermPtr bnd;
             int        nabs;
+	    MemPtr     tmpHreg = AM_hreg;
             HN_hnormOcc(rargs); nabs = AM_numAbs;
+	    if (tmpHreg != AM_hreg) {myCopyFlagArgs = TRUE; }
             if (AM_rigFlag) 
                 bnd = HOPU_rigNestedSubstC(AM_head, HOPU_lamBody(rargs), 
                                            AM_argVec, AM_numArgs, nabs+emblev);
             else  //AM_rigFlag == FALSE
                 bnd = HOPU_flexNestedSubstC(AM_head, AM_argVec, AM_numArgs, 
                                             HOPU_lamBody(rargs), nabs+emblev);
+
             if (nabs == 0) DF_mkRef(argLoc, bnd);
+	    else DF_mkLam(argLoc, nabs, bnd);
+
             argLoc += DF_TM_ATOMIC_SIZE;
             if (HOPU_copyFlagGlb) {myCopyFlagArgs=TRUE; HOPU_copyFlagGlb=FALSE;}
             rargs = (DF_TermPtr)(((MemPtr)rargs)+DF_TM_ATOMIC_SIZE);
@@ -1293,13 +1300,13 @@ DF_TermPtr HOPU_rigNestedSubstC(DF_TermPtr rhPtr, DF_TermPtr rPtr,
             HOPU_copyFlagGlb = TRUE;
             return tmPtr;
         } else { //myCopyFlagArgs == FALSE
-            AM_hreg = oldHreg;//deallocate space for arg vector
-            if (myCopyFlagHead) {
-                DF_TermPtr tmPtr = (DF_TermPtr)AM_hreg;
-                HOPU_mkConsOrApp(rPtr, rhPtr, oldArgs, rnargs);
-                HOPU_copyFlagGlb = TRUE;
-                return tmPtr;
-            } else return rPtr; ////myCopyFlagHead==FALSE, myCopyFlagArgs==FALSE
+	  AM_hreg = oldHreg;//deallocate space for arg vector
+	  if (myCopyFlagHead) {
+	    DF_TermPtr tmPtr = (DF_TermPtr)AM_hreg;
+	    HOPU_mkConsOrApp(rPtr, rhPtr, oldArgs, rnargs);
+	    HOPU_copyFlagGlb = TRUE;
+	    return tmPtr;
+	  } else return rPtr; ////myCopyFlagHead==FALSE, myCopyFlagArgs==FALSE
         }
     }//rnargs > 0
 }
@@ -1586,6 +1593,7 @@ void HOPU_patternUnifyPair(DF_TermPtr tPtr1, DF_TermPtr tPtr2)
     nabs1 = AM_numAbs; nargs1 = AM_numArgs; rig1 = AM_rigFlag;    
     HN_hnorm(tPtr2); h2Ptr = AM_head; args2 = AM_argVec;
     nabs2 = AM_numAbs; nargs2 = AM_numArgs; rig2 = AM_rigFlag;
+
 
     if (rig1) {
         if (rig2) { //rigid-rigid
