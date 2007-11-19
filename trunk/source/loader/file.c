@@ -96,13 +96,18 @@ Word LD_FILE_GETWORD()
 #endif
 }
 
-/*
-FourBytes LD_FILE_GET4()
+
+int LD_FILE_GET4()
 {
-	FourBytes tmp;
-	read(fd,&tmp,sizeof(tmp));
-	return ntohl(tmp);
-}*/
+  int tmp;
+  read(fd,&tmp,sizeof(tmp));
+#if BYTE_ORDER == LITTLE_ENDIAN
+  return bswap_32(tmp);
+#elif BYTE_ORDER == BIG_ENDIAN
+  return tmp;
+#endif
+}
+
 
 TwoBytes LD_FILE_GET2()
 {
