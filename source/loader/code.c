@@ -14,6 +14,13 @@
 
 CSpacePtr codeSpaceBeg;
 
+INSTR_Float LD_getFloat()
+{
+  int exponent = LD_FILE_GET4();
+  double fval = (double)LD_FILE_GET4();
+  return ldexp(fval, exponent);
+}
+
 int LD_CODE_LoadCode(MEM_GmtEnt* ent)
 {
   int i,j;
@@ -54,12 +61,7 @@ int LD_CODE_LoadCode(MEM_GmtEnt* ent)
               LD_debug("#%d ",*(Byte*)(code+j));
               j+=sizeof(Byte);
               break;
-        
-              /*case INSTR_I2:
-               *(TwoBytes*)(code+j)=LD_FILE_GET2();
-               j+=sizeof(TwoBytes);
-               break;
-              */  
+              
           case INSTR_C:///\todo Check on constant index size in code
               *(TwoBytes*)(code+j)=LD_CONST_GetConstInd();
               j+=sizeof(TwoBytes);
@@ -102,13 +104,14 @@ int LD_CODE_LoadCode(MEM_GmtEnt* ent)
               break;
               
           case INSTR_I:
-              *(Word*)(code+j)=LD_FILE_GETWORD();
+              *(INSTR_Int*)(code+j)=LD_FILE_GET4();
+	      LD_debug("%d ",*(INSTR_Int*)(code+j));
               j+=sizeof(Word);///\todo Check length of integer encoding across arch types
               break;
         
           case INSTR_F:
-              // something needs to be fixed; we have our own float encoding!! -- XQ
-              *(Word*)(code+j)=LD_FILE_GETWORD();
+    	      *(INSTR_Float*)(code+j)=LD_getFloat();
+              //*(Word*)(code+j)=LD_FILE_GETWORD();
               j+=sizeof(Word);///\todo Check length of float encoding across arch types
               break;
               
