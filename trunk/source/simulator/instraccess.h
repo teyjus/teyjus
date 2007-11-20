@@ -113,7 +113,7 @@
 //INSTR_CAT_RI1X
 #define INSACC_RI1X(op1, op2) {\
    (op1) = AM_reg(*((INSTR_RegInd *)(AM_preg + INSTR_RI1X_R))); \
-   (op2) = *((INSTR_OneByteInt *)AM_preg);                      \
+   (op2) = *((INSTR_OneByteInt *)(AM_preg + INSTR_RI1X_I1));    \
    AM_preg += INSTR_RI1X_LEN;                                   \
 }
 
