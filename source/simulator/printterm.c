@@ -35,7 +35,7 @@
 
 //temp
 #include <stdio.h>
-//#include "print.h"
+#include "print.h"
 
 /* This variable records the number of query variables */
 int PRINT_numQueryVars;
@@ -576,6 +576,7 @@ static void PRINT_writePostfixTerm(WordPtr outStream, DF_TermPtr head,
 static void PRINT_writeApp(WordPtr outStream, DF_TermPtr tmPtr, 
                            OP_FixityType infx, int inprec, OP_TermContext tc)
 {   
+  
     DF_TermPtr head   = DF_termDeref(DF_appFunc(tmPtr));
     DF_TermPtr args   = DF_appArgs(tmPtr);
     int        arity  = DF_appArity(tmPtr);
@@ -589,41 +590,45 @@ static void PRINT_writeApp(WordPtr outStream, DF_TermPtr tmPtr,
     
     switch(fix){
     case OP_PREFIX: case OP_PREFIXR:
-        if (arity == 1)
-            PRINT_writePrefixTerm(outStream, head, fix, prec, tc, infx, inprec,
-                                  args);
-        else { 
-            if (pparen) PRINT_writeLParen(outStream);
-            PRINT_writePrefixTerm(outStream, head, fix, prec, OP_LEFT_TERM,
-                                  OP_APP_FIXITY, OP_APP_PREC, args);
-        }
-        arity--; args++;
-        break;
+      if (arity == 1) {
+	pparen = FALSE;
+	PRINT_writePrefixTerm(outStream, head, fix, prec, tc, infx, inprec,
+			      args);
+	
+       } else { 
+	 if (pparen) PRINT_writeLParen(outStream);
+	 PRINT_writePrefixTerm(outStream, head, fix, prec, OP_LEFT_TERM,
+			       OP_APP_FIXITY, OP_APP_PREC, args);
+       }
+      arity--; args++;
+      break;
     case OP_INFIX: case OP_INFIXL: case OP_INFIXR:
-        if (arity == 2)
-            PRINT_writeInfixTerm(outStream, head, fix, prec, tc, infx, inprec, 
-                                 args);
-        else {
-            if (pparen) PRINT_writeLParen(outStream);
-            PRINT_writeInfixTerm(outStream, head, fix, prec, OP_LEFT_TERM,
-                                 OP_APP_FIXITY, OP_APP_PREC, args);
-        }
-        arity -= 2; args += 2;
-        break;
+      if (arity == 2) {
+	pparen = FALSE;
+	PRINT_writeInfixTerm(outStream, head, fix, prec, tc, infx, inprec, 
+			     args);
+      } else {
+	if (pparen) PRINT_writeLParen(outStream);
+	PRINT_writeInfixTerm(outStream, head, fix, prec, OP_LEFT_TERM,
+			     OP_APP_FIXITY, OP_APP_PREC, args);
+      }
+      arity -= 2; args += 2;
+      break;
     case OP_POSTFIX: case OP_POSTFIXL:
-        if (arity == 1)
-            PRINT_writePostfixTerm(outStream, head, fix, prec, tc, infx,
-                                   inprec, args);
-        else { 
-            if (pparen) PRINT_writeLParen(outStream);
-            PRINT_writePostfixTerm(outStream, head, fix, prec, OP_LEFT_TERM,
-                                   OP_APP_FIXITY, OP_APP_PREC, args);
-        }
-        break;
+      if (arity == 1) {
+	pparen = FALSE;
+	PRINT_writePostfixTerm(outStream, head, fix, prec, tc, infx,
+			       inprec, args);
+      }  else { 
+	if (pparen) PRINT_writeLParen(outStream);
+	PRINT_writePostfixTerm(outStream, head, fix, prec, OP_LEFT_TERM,
+			       OP_APP_FIXITY, OP_APP_PREC, args);
+      }
+      break;
     case OP_NONE:
-        if (pparen) PRINT_writeLParen(outStream);
-        PRINT_writeTerm(outStream,head,OP_APP_FIXITY,OP_APP_PREC,OP_LEFT_TERM);
-        break;
+      if (pparen) PRINT_writeLParen(outStream);
+      PRINT_writeTerm(outStream,head,OP_APP_FIXITY,OP_APP_PREC,OP_LEFT_TERM);
+      break;
     } /*switch*/
 
     /* print the arguments (if any) of the application */
