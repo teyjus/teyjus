@@ -1,0 +1,413 @@
+Disassembling from bytecode file: monoinfer.lpo
+Bytecode version: 2
+Module name: monoinfer
+
+LABEL               INSTRUCTION              OPERANDS
+
+L26                 fail                     
+infer               switch_on_reg            #1, L21, L22
+L21                 try                      #2, L22
+                    trust_ext                #2, #1
+L22                 try_me_else              #2, L23
+                    switch_on_term           L24, L25, L26, L24
+L24                 try_me_else              #2, L27
+L3                  allocate                 #3
+                    get_m_structure          A1, @, #2
+                    unify_variable_t         A1
+                    unify_variable_p         Y1
+                    finish_unify             
+                    put_value_t              A2, A3
+                    head_normalize_t         A1
+                    put_m_const              A255, -->
+                    put_app                  A2, A255, #2
+                    set_variable_p           Y2
+                    globalize_t              A3
+                    set_value_t              A3
+                    call_name                #2, infer
+                    put_value_p              Y1, A1
+                    head_normalize_t         A1
+                    put_value_p              Y2, A2
+                    head_normalize_t         A2
+                    deallocate               
+                    execute_name             infer
+L27                 retry_me_else            #2, L28
+L2                  allocate                 #3
+                    get_m_structure          A1, fn, #1
+                    unify_variable_t         A3
+                    get_m_structure          A2, -->, #2
+                    unify_variable_p         Y1
+                    unify_variable_t         A2
+                    finish_unify             
+                    incr_universe            
+                    set_univ_tag             Y2, <hidden const #0>
+                    push_impl_point          #2, <impl #0>
+                    put_app                  A1, A3, #1
+                    globalize_pt             Y2, A255
+                    set_value_t              A255
+                    head_normalize_t         A1
+                    head_normalize_t         A2
+                    call_name                #2, infer
+                    pop_impl_point           
+                    decr_universe            
+                    deallocate               
+                    proceed                  
+L28                 retry_me_else            #2, L29
+L1                  allocate                 #3
+                    get_variable_p           Y1, A2
+                    get_m_structure          A1, fixpt, #1
+                    unify_variable_t         A3
+                    finish_unify             
+                    incr_universe            
+                    set_univ_tag             Y2, <hidden const #1>
+                    push_impl_point          #2, <impl #1>
+                    put_app                  A1, A3, #1
+                    globalize_pt             Y2, A255
+                    set_value_t              A255
+                    head_normalize_t         A1
+                    put_value_p              Y1, A2
+                    head_normalize_t         A2
+                    call_name                #2, infer
+                    pop_impl_point           
+                    decr_universe            
+                    deallocate               
+                    proceed                  
+L29                 trust_me                 #2
+L0                  allocate                 #4
+                    get_variable_p           Y1, A2
+                    get_m_structure          A1, cond, #3
+                    unify_variable_t         A1
+                    unify_variable_p         Y2
+                    unify_variable_p         Y3
+                    finish_unify             
+                    head_normalize_t         A1
+                    put_m_const              A2, bool
+                    call_name                #3, infer
+                    put_value_p              Y2, A1
+                    head_normalize_t         A1
+                    put_value_p              Y1, A2
+                    head_normalize_t         A2
+                    call_name                #3, infer
+                    put_value_p              Y3, A1
+                    head_normalize_t         A1
+                    put_value_p              Y1, A2
+                    head_normalize_t         A2
+                    deallocate               
+                    execute_name             infer
+L25                 switch_on_constant       #4, <hash #0>
+L23                 trust_me                 #2
+                    head_normalize_t         A1
+                    head_normalize_t         A2
+                    execute_link_only        <local const #0>
+                    try_me_else              #0, L26
+<local const #0>    switch_on_term           L30, L31, L26, L30
+L30                 try_me_else              #2, L32
+L20                 get_m_constant           A1, car
+                    get_m_structure          A2, -->, #2
+                    unify_variable_t         A255
+                    unify_variable_t         A1
+                    get_m_structure          A255, lst, #1
+                    unify_value_t            A1
+                    finish_unify             
+                    proceed                  
+L32                 retry_me_else            #2, L33
+L19                 get_m_constant           A1, cdr
+                    get_m_structure          A2, -->, #2
+                    unify_variable_t         A255
+                    unify_variable_t         A254
+                    get_m_structure          A255, lst, #1
+                    unify_variable_t         A1
+                    get_m_structure          A254, lst, #1
+                    unify_value_t            A1
+                    finish_unify             
+                    proceed                  
+L33                 retry_me_else            #2, L34
+L18                 get_m_constant           A1, empty
+                    get_m_structure          A2, lst, #1
+                    unify_variable_t         A255
+                    finish_unify             
+                    proceed                  
+L34                 retry_me_else            #2, L35
+L17                 get_m_constant           A1, cons
+                    get_m_structure          A2, -->, #2
+                    unify_variable_t         A1
+                    unify_variable_t         A255
+                    get_m_structure          A255, -->, #2
+                    unify_variable_t         A255
+                    unify_variable_t         A254
+                    get_m_structure          A255, lst, #1
+                    unify_value_t            A1
+                    get_m_structure          A254, lst, #1
+                    unify_value_t            A1
+                    finish_unify             
+                    proceed                  
+L35                 retry_me_else            #2, L36
+L16                 get_m_constant           A1, nullp
+                    get_m_structure          A2, -->, #2
+                    unify_variable_t         A255
+                    unify_m_constant         bool
+                    get_m_structure          A255, lst, #1
+                    unify_variable_t         A255
+                    finish_unify             
+                    proceed                  
+L36                 retry_me_else            #2, L37
+L15                 get_m_constant           A1, consp
+                    get_m_structure          A2, -->, #2
+                    unify_variable_t         A255
+                    unify_m_constant         bool
+                    get_m_structure          A255, lst, #1
+                    unify_variable_t         A255
+                    finish_unify             
+                    proceed                  
+L37                 retry_me_else            #2, L38
+L14                 get_m_constant           A1, equal
+                    get_m_structure          A2, -->, #2
+                    unify_variable_t         A1
+                    unify_variable_t         A255
+                    get_m_structure          A255, -->, #2
+                    unify_value_t            A1
+                    unify_m_constant         bool
+                    finish_unify             
+                    proceed                  
+L38                 retry_me_else            #2, L39
+L13                 get_m_constant           A1, and
+                    get_m_structure          A2, -->, #2
+                    unify_m_constant         bool
+                    unify_variable_t         A255
+                    get_m_structure          A255, -->, #2
+                    unify_m_constant         bool
+                    unify_m_constant         bool
+                    finish_unify             
+                    proceed                  
+L39                 retry_me_else            #2, L40
+L12                 get_m_constant           A1, or
+                    get_m_structure          A2, -->, #2
+                    unify_m_constant         bool
+                    unify_variable_t         A255
+                    get_m_structure          A255, -->, #2
+                    unify_m_constant         bool
+                    unify_m_constant         bool
+                    finish_unify             
+                    proceed                  
+L40                 retry_me_else            #2, L41
+L11                 get_m_constant           A1, truth
+                    get_m_constant           A2, bool
+                    finish_unify             
+                    proceed                  
+L41                 retry_me_else            #2, L42
+L10                 get_m_constant           A1, false
+                    get_m_constant           A2, bool
+                    finish_unify             
+                    proceed                  
+L42                 retry_me_else            #2, L43
+L9                  get_m_constant           A1, times
+                    get_m_structure          A2, -->, #2
+                    unify_m_constant         num
+                    unify_variable_t         A255
+                    get_m_structure          A255, -->, #2
+                    unify_m_constant         num
+                    unify_m_constant         num
+                    finish_unify             
+                    proceed                  
+L43                 retry_me_else            #2, L44
+L8                  get_m_constant           A1, plus
+                    get_m_structure          A2, -->, #2
+                    unify_m_constant         num
+                    unify_variable_t         A255
+                    get_m_structure          A255, -->, #2
+                    unify_m_constant         num
+                    unify_m_constant         num
+                    finish_unify             
+                    proceed                  
+L44                 retry_me_else            #2, L45
+L7                  get_m_constant           A1, minus
+                    get_m_structure          A2, -->, #2
+                    unify_m_constant         num
+                    unify_variable_t         A255
+                    get_m_structure          A255, -->, #2
+                    unify_m_constant         num
+                    unify_m_constant         num
+                    finish_unify             
+                    proceed                  
+L45                 retry_me_else            #2, L46
+L6                  get_m_constant           A1, zerop
+                    get_m_structure          A2, -->, #2
+                    unify_m_constant         num
+                    unify_m_constant         bool
+                    finish_unify             
+                    proceed                  
+L46                 retry_me_else            #2, L47
+L5                  get_m_constant           A1, greater
+                    get_m_structure          A2, -->, #2
+                    unify_m_constant         num
+                    unify_variable_t         A255
+                    get_m_structure          A255, -->, #2
+                    unify_m_constant         num
+                    unify_m_constant         bool
+                    finish_unify             
+                    proceed                  
+L47                 trust_me                 #2
+L4                  get_m_structure          A1, in, #1
+                    unify_variable_t         A255
+                    get_m_constant           A2, num
+                    finish_unify             
+                    proceed                  
+L31                 switch_on_constant       #17, <hash #1>
+infer               switch_on_reg            #1, L48, L49
+L48                 try                      #2, L49
+                    trust_ext                #2, #1
+                    try_me_else              #0, L26
+L49                 init_variable_t          A3, Y2
+                    init_variable_t          A4, Y1
+                    pattern_unify_t          A3, A1
+                    pattern_unify_t          A4, A2
+                    finish_unify             
+                    proceed                  
+infer               switch_on_reg            #1, L50, L51
+L50                 try                      #2, L51
+                    trust_ext                #2, #1
+                    try_me_else              #0, L26
+L51                 init_variable_t          A3, Y2
+                    init_variable_t          A4, Y1
+                    pattern_unify_t          A3, A1
+                    pattern_unify_t          A4, A2
+                    finish_unify             
+                    proceed                  
+
+Global kind table:
+0: ty/0
+1: tm/0
+
+Local kind table:
+
+Type skeleton table:
+0: (tm -> (ty -> o))
+1: (tm -> (tm -> tm))
+2: (ty -> (ty -> ty))
+3: ((tm -> tm) -> tm)
+4: (tm -> (tm -> (tm -> tm)))
+5: ty
+6: tm
+7: (ty -> ty)
+8: (int -> tm)
+
+Global constant table: 
+0: infer (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #0
+1: @ (Infixl, precedence 6)
+    Env Size: 0, Type Skeleton: #1
+2: --> (Infixr, precedence 5)
+    Env Size: 0, Type Skeleton: #2
+3: fn (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #3
+4: fixpt (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #3
+5: cond (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #4
+6: bool (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #5
+7: car (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #6
+8: lst (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #7
+9: cdr (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #6
+10: empty (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #6
+11: cons (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #6
+12: nullp (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #6
+13: consp (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #6
+14: equal (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #6
+15: and (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #6
+16: or (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #6
+17: truth (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #6
+18: false (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #6
+19: times (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #6
+20: num (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #5
+21: plus (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #6
+22: minus (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #6
+23: zerop (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #6
+24: greater (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #6
+25: in (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #8
+
+Local constant table: 
+0:  (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #0
+
+Hidden constant table: 
+0:  Type Skeleton: #6
+1:  Type Skeleton: #6
+
+String table:
+
+Implication Tables:
+0:
+  Predicate definitions possibly extending previous ones: 1
+   infer
+  Find function type: hash
+  In-core table size: 1
+   infer
+1:
+  Predicate definitions possibly extending previous ones: 1
+   infer
+  Find function type: hash
+  In-core table size: 1
+   infer
+
+Hash tables:
+0:
+    Table size: 4
+    Constants:
+    cond -> L0
+    fixpt -> L1
+    fn -> L2
+    @ -> L3
+1:
+    Table size: 17
+    Constants:
+    in -> L4
+    greater -> L5
+    zerop -> L6
+    minus -> L7
+    plus -> L8
+    times -> L9
+    false -> L10
+    truth -> L11
+    or -> L12
+    and -> L13
+    equal -> L14
+    consp -> L15
+    nullp -> L16
+    cons -> L17
+    empty -> L18
+    cdr -> L19
+    car -> L20
+
+Module table:
+  Predicate definitions possibly extending previous ones: 1
+   infer
+  Exportdef predicates: 0
+  Local predicates: 1
+   <local const #0>
+  Find function type: hash
+  In-core table size: 2
+   <local const #0>
+   infer
+
+Accumulated tables:
+
+Imported tables:

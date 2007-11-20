@@ -1,0 +1,447 @@
+Disassembling from bytecode file: unifytypes.lpo
+Bytecode version: 2
+Module name: unifytypes
+
+LABEL               INSTRUCTION              OPERANDS
+
+L5                  fail                     
+<local const #0>    try_me_else              #4, L1
+                    allocate                 #5
+                    get_variable_p           Y1, A1
+                    get_variable_p           Y2, A2
+                    get_variable_p           Y3, A3
+                    get_variable_p           Y4, A4
+                    put_value_p              Y3, A1
+                    head_normalize_t         A1
+                    call_name                #4, tvar
+                    put_p_const              A255, =
+                    set_type_constant        ty
+                    put_app                  A1, A255, #2
+                    globalize_pt             Y1, A255
+                    set_value_t              A255
+                    globalize_pt             Y3, A255
+                    set_value_t              A255
+                    put_p_const              A255, =
+                    set_type_constant        ty
+                    put_app                  A2, A255, #2
+                    globalize_pt             Y4, A255
+                    set_value_t              A255
+                    globalize_pt             Y2, A255
+                    set_value_t              A255
+                    put_p_const              A255, =
+                    set_type_constant        ty
+                    put_app                  A3, A255, #2
+                    set_value_p              Y4
+                    set_value_p              Y3
+                    deallocate               
+                    execute_link_only        <local const #1>
+L1                  retry_me_else            #4, L2
+                    get_m_constant           A3, num
+                    get_m_constant           A4, num
+                    finish_unify             
+                    proceed                  
+L2                  retry_me_else            #4, L3
+                    get_m_constant           A3, bool
+                    get_m_constant           A4, bool
+                    finish_unify             
+                    proceed                  
+L3                  retry_me_else            #4, L4
+                    get_m_structure          A3, lst, #1
+                    unify_variable_t         A3
+                    get_m_structure          A4, lst, #1
+                    unify_variable_t         A4
+                    finish_unify             
+                    head_normalize_t         A1
+                    head_normalize_t         A2
+                    head_normalize_t         A3
+                    head_normalize_t         A4
+                    execute_link_only        <local const #0>
+L4                  trust_me                 #4
+                    allocate                 #5
+                    get_variable_p           Y1, A1
+                    get_variable_p           Y2, A2
+                    get_m_structure          A3, -->, #2
+                    unify_variable_t         A3
+                    unify_variable_p         Y3
+                    get_m_structure          A4, -->, #2
+                    unify_variable_t         A4
+                    unify_variable_p         Y4
+                    finish_unify             
+                    put_value_p              Y1, A1
+                    head_normalize_t         A1
+                    put_value_p              Y2, A2
+                    head_normalize_t         A2
+                    head_normalize_t         A3
+                    head_normalize_t         A4
+                    call_link_only           #4, <local const #0>
+                    put_value_p              Y1, A1
+                    head_normalize_t         A1
+                    put_value_p              Y2, A2
+                    head_normalize_t         A2
+                    put_value_p              Y3, A3
+                    head_normalize_t         A3
+                    put_value_p              Y4, A4
+                    head_normalize_t         A4
+                    deallocate               
+                    execute_link_only        <local const #0>
+                    try_me_else              #0, L5
+<local const #2>    allocate                 #5
+                    get_variable_p           Y1, A1
+                    get_variable_p           Y2, A2
+                    get_m_structure          A3, ==, #2
+                    unify_variable_t         A3
+                    unify_variable_p         Y3
+                    get_m_structure          A4, ==, #2
+                    unify_variable_t         A4
+                    unify_variable_p         Y4
+                    finish_unify             
+                    put_value_p              Y1, A1
+                    head_normalize_t         A1
+                    put_value_p              Y2, A2
+                    head_normalize_t         A2
+                    head_normalize_t         A3
+                    head_normalize_t         A4
+                    call_link_only           #4, <local const #0>
+                    put_value_p              Y1, A1
+                    head_normalize_t         A1
+                    put_value_p              Y2, A2
+                    head_normalize_t         A2
+                    put_value_p              Y3, A3
+                    head_normalize_t         A3
+                    put_value_p              Y4, A4
+                    head_normalize_t         A4
+                    deallocate               
+                    execute_link_only        <local const #0>
+<local const #3>    try_me_else              #4, L6
+                    get_nil                  A3
+                    get_nil                  A4
+                    finish_unify             
+                    proceed                  
+L6                  trust_me                 #4
+                    allocate                 #5
+                    get_variable_p           Y1, A1
+                    get_variable_p           Y2, A2
+                    get_list                 A3
+                    unify_variable_t         A3
+                    unify_variable_p         Y3
+                    get_list                 A4
+                    unify_variable_t         A4
+                    unify_variable_p         Y4
+                    finish_unify             
+                    put_value_p              Y1, A1
+                    head_normalize_t         A1
+                    put_value_p              Y2, A2
+                    head_normalize_t         A2
+                    head_normalize_t         A3
+                    head_normalize_t         A4
+                    call_link_only           #4, <local const #2>
+                    put_value_p              Y1, A1
+                    head_normalize_t         A1
+                    put_value_p              Y2, A2
+                    head_normalize_t         A2
+                    put_value_p              Y3, A3
+                    head_normalize_t         A3
+                    put_value_p              Y4, A4
+                    head_normalize_t         A4
+                    deallocate               
+                    execute_link_only        <local const #3>
+<local const #4>    try_me_else              #2, L7
+                    pattern_unify_t          A1, A2
+                    finish_unify             
+                    head_normalize_t         A1
+                    execute_name             tvar
+L7                  retry_me_else            #2, L8
+                    get_m_structure          A2, -->, #2
+                    unify_variable_t         A4
+                    unify_variable_t         A2
+                    finish_unify             
+                    put_value_t              A1, A3
+                    put_value_t              A4, A1
+                    head_normalize_t         A1
+                    head_normalize_t         A2
+                    head_normalize_t         A3
+                    execute                  L9
+L8                  trust_me                 #2
+                    get_m_structure          A2, lst, #1
+                    unify_variable_t         A2
+                    finish_unify             
+                    head_normalize_t         A1
+                    head_normalize_t         A2
+                    execute_link_only        <local const #4>
+unify               switch_on_reg            #1, L10, L11
+L10                 try                      #3, L11
+                    trust_ext                #3, #1
+                    try_me_else              #0, L5
+L11                 switch_on_term           L12, L13, L14, L12
+L12                 try_me_else              #3, L15
+L0                  get_nil                  A1
+                    pattern_unify_t          A2, A3
+                    finish_unify             
+                    proceed                  
+L15                 retry_me_else            #3, L16
+L20                 get_list                 A1
+                    unify_variable_t         A255
+                    unify_variable_t         A1
+                    get_m_structure          A255, ==, #2
+                    unify_variable_t         A4
+                    unify_value_t            A4
+                    finish_unify             
+                    neck_cut                 
+                    head_normalize_t         A1
+                    head_normalize_t         A2
+                    head_normalize_t         A3
+                    execute_name             unify
+L16                 retry_me_else            #3, L17
+L21                 get_list                 A1
+                    unify_variable_t         A255
+                    unify_variable_t         A4
+                    get_m_structure          A255, ==, #2
+                    unify_variable_t         A255
+                    unify_variable_t         A254
+                    get_m_structure          A255, -->, #2
+                    unify_variable_t         A5
+                    unify_variable_t         A6
+                    get_m_structure          A254, -->, #2
+                    unify_variable_t         A7
+                    unify_variable_t         A8
+                    finish_unify             
+                    put_m_const              A254, ==
+                    put_app                  A255, A254, #2
+                    set_value_t              A5
+                    set_value_t              A7
+                    put_m_const              A252, ==
+                    put_app                  A253, A252, #2
+                    set_value_t              A6
+                    set_value_t              A8
+                    put_list                 A254
+                    set_value_t              A253
+                    set_value_t              A4
+                    put_list                 A1
+                    set_value_t              A255
+                    set_value_t              A254
+                    head_normalize_t         A2
+                    head_normalize_t         A3
+                    execute_name             unify
+L17                 retry_me_else            #3, L18
+L22                 get_list                 A1
+                    unify_variable_t         A255
+                    unify_variable_t         A4
+                    get_m_structure          A255, ==, #2
+                    unify_variable_t         A255
+                    unify_variable_t         A254
+                    get_m_structure          A255, lst, #1
+                    unify_variable_t         A5
+                    get_m_structure          A254, lst, #1
+                    unify_variable_t         A6
+                    finish_unify             
+                    put_m_const              A254, ==
+                    put_app                  A255, A254, #2
+                    set_value_t              A5
+                    set_value_t              A6
+                    put_list                 A1
+                    set_value_t              A255
+                    set_value_t              A4
+                    head_normalize_t         A2
+                    head_normalize_t         A3
+                    execute_name             unify
+L18                 retry_me_else            #3, L19
+L23                 allocate                 #9
+                    get_variable_p           Y1, A2
+                    get_variable_p           Y2, A3
+                    get_list                 A1
+                    unify_variable_t         A255
+                    unify_variable_p         Y7
+                    get_m_structure          A255, ==, #2
+                    unify_variable_p         Y3
+                    unify_variable_p         Y4
+                    finish_unify             
+                    get_level                Y8
+                    put_value_p              Y3, A1
+                    head_normalize_t         A1
+                    call_name                #8, tvar
+                    cut                      Y8
+                    put_m_const              A255, <local const #4>
+                    put_app                  A1, A255, #2
+                    set_value_p              Y3
+                    set_value_p              Y4
+                    call_builtin             #8, #2
+                    put_value_p              Y3, A1
+                    head_normalize_t         A1
+                    put_value_p              Y4, A2
+                    head_normalize_t         A2
+                    put_value_p              Y7, A3
+                    head_normalize_t         A3
+                    put_variable_p           Y5, A4
+                    call_link_only           #8, <local const #3>
+                    put_value_p              Y3, A1
+                    head_normalize_t         A1
+                    put_value_p              Y4, A2
+                    head_normalize_t         A2
+                    put_value_p              Y1, A3
+                    head_normalize_t         A3
+                    put_variable_p           Y6, A4
+                    call_link_only           #8, <local const #0>
+                    put_unsafe_value         Y5, A1
+                    head_normalize_t         A1
+                    put_unsafe_value         Y6, A2
+                    head_normalize_t         A2
+                    put_value_p              Y2, A3
+                    head_normalize_t         A3
+                    deallocate               
+                    execute_name             unify
+L19                 trust_me                 #3
+L24                 allocate                 #9
+                    get_variable_p           Y1, A2
+                    get_variable_p           Y2, A3
+                    get_list                 A1
+                    unify_variable_t         A255
+                    unify_variable_p         Y7
+                    get_m_structure          A255, ==, #2
+                    unify_variable_p         Y3
+                    unify_variable_p         Y4
+                    finish_unify             
+                    get_level                Y8
+                    put_value_p              Y4, A1
+                    head_normalize_t         A1
+                    call_name                #8, tvar
+                    cut                      Y8
+                    put_m_const              A255, <local const #4>
+                    put_app                  A1, A255, #2
+                    set_value_p              Y4
+                    set_value_p              Y3
+                    call_builtin             #8, #2
+                    put_value_p              Y4, A1
+                    head_normalize_t         A1
+                    put_value_p              Y3, A2
+                    head_normalize_t         A2
+                    put_value_p              Y7, A3
+                    head_normalize_t         A3
+                    put_variable_p           Y5, A4
+                    call_link_only           #8, <local const #3>
+                    put_value_p              Y4, A1
+                    head_normalize_t         A1
+                    put_value_p              Y3, A2
+                    head_normalize_t         A2
+                    put_value_p              Y1, A3
+                    head_normalize_t         A3
+                    put_variable_p           Y6, A4
+                    call_link_only           #8, <local const #0>
+                    put_unsafe_value         Y5, A1
+                    head_normalize_t         A1
+                    put_unsafe_value         Y6, A2
+                    head_normalize_t         A2
+                    put_value_p              Y2, A3
+                    head_normalize_t         A3
+                    deallocate               
+                    execute_name             unify
+L13                 switch_on_constant       #1, <hash #0>
+L14                 try                      #3, L20
+                    retry                    #3, L21
+                    retry                    #3, L22
+                    retry                    #3, L23
+                    trust                    #3, L24
+L9                  try_me_else              #3, L25
+                    put_value_t              A1, A2
+                    put_value_t              A3, A1
+                    head_normalize_t         A1
+                    head_normalize_t         A2
+                    execute_link_only        <local const #4>
+L25                 trust_me                 #3
+                    put_value_t              A3, A1
+                    head_normalize_t         A1
+                    head_normalize_t         A2
+                    execute_link_only        <local const #4>
+
+Global kind table:
+0: eq/0
+1: ty/0
+
+Local kind table:
+
+Type skeleton table:
+0: (ty -> (ty -> (ty -> (ty -> o))))
+1: (o -> (o -> (o -> o)))
+2: (ty -> (ty -> (eq -> (eq -> o))))
+3: (ty -> (ty -> ((list eq) -> ((list eq) -> o))))
+4: (ty -> (ty -> o))
+5: (o -> o)
+6: (ty -> o)
+7: (ty -> (ty -> eq))
+8: ty
+9: (ty -> ty)
+10: (ty -> (ty -> ty))
+11: ((list eq) -> (ty -> (ty -> o)))
+
+Global constant table: 
+0: tvar (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #6
+1: == (Infix, precedence 4)
+    Env Size: 0, Type Skeleton: #7
+2: num (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #8
+3: bool (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #8
+4: lst (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #9
+5: --> (Infixr, precedence 5)
+    Env Size: 0, Type Skeleton: #10
+6: unify (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #11
+
+Local constant table: 
+0:  (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #0
+1:  (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #1
+2:  (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #2
+3:  (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #3
+4:  (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #4
+5:  (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #5
+6:  (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #5
+7:  (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #5
+
+Hidden constant table: 
+
+String table:
+
+Implication Tables:
+
+Hash tables:
+0:
+    Table size: 1
+    Constants:
+    nil -> L0
+
+Module table:
+  Predicate definitions possibly extending previous ones: 1
+   unify
+  Exportdef predicates: 0
+  Local predicates: 4
+   <local const #0>
+   <local const #2>
+   <local const #3>
+   <local const #4>
+  Find function type: hash
+  In-core table size: 5
+   <local const #0>
+   <local const #2>
+   <local const #3>
+   <local const #4>
+   unify
+
+Accumulated tables:
+0: control
+    Kind renamings:
+    Constant renamings:
+    announce -> <local const #5>
+    spi -> <local const #6>
+    if -> <local const #1>
+    once -> <local const #7>
+
+Imported tables:
