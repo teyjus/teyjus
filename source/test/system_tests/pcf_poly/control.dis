@@ -1,0 +1,164 @@
+Disassembling from bytecode file: control.lpo
+Bytecode version: 2
+Module name: control
+
+LABEL               INSTRUCTION              OPERANDS
+
+L5                  fail                     
+if                  switch_on_reg            #1, L0, L1
+L0                  try                      #3, L1
+                    trust_ext                #3, #1
+L1                  try_me_else              #3, L2
+                    allocate                 #3
+                    get_variable_p           Y1, A2
+                    get_level                Y2
+                    head_normalize_t         A1
+                    call_builtin             #2, #0
+                    cut                      Y2
+                    put_value_p              Y1, A1
+                    head_normalize_t         A1
+                    deallocate               
+                    builtin                  #0
+L2                  trust_me                 #3
+                    put_value_t              A3, A1
+                    head_normalize_t         A1
+                    builtin                  #0
+once                switch_on_reg            #2, L3, L4
+L3                  try                      #1, L4
+                    trust_ext                #1, #2
+                    try_me_else              #0, L5
+L4                  allocate                 #2
+                    get_level                Y1
+                    head_normalize_t         A1
+                    call_builtin             #1, #0
+                    cut                      Y1
+                    deallocate               
+                    proceed                  
+announce            switch_on_reg            #3, L6, L7
+L6                  try                      #1, L7
+                    trust_ext                #1, #3
+                    try_me_else              #0, L5
+L7                  allocate                 #2
+                    put_value_t              A1, A4
+                    put_string               A1, <string #0>
+                    call_builtin             #1, #28
+                    put_value_t              A4, A1
+                    head_normalize_t         A1
+                    put_variable_p           Y1, A2
+                    call_builtin             #1, #31
+                    put_value_p              Y1, A1
+                    head_normalize_t         A1
+                    call_builtin             #1, #28
+                    put_string               A1, <string #1>
+                    call_builtin             #1, #28
+                    fail                     
+spi                 switch_on_reg            #4, L8, L9
+L8                  try                      #1, L9
+                    trust_ext                #1, #4
+                    try_me_else              #0, L5
+L9                  put_value_t              A1, A2
+                    put_variable_t           A255, A1
+                    head_normalize_t         A2
+                    put_variable_t           A255, A3
+                    execute                  L10
+L10                 try_me_else              #3, L11
+                    allocate                 #3
+                    get_variable_p           Y1, A1
+                    get_variable_p           Y2, A2
+                    put_string               A1, <string #2>
+                    call_builtin             #2, #28
+                    put_value_t              A3, A2
+                    put_value_p              Y2, A1
+                    head_normalize_t         A1
+                    head_normalize_t         A2
+                    call_builtin             #2, #31
+                    put_value_t              A2, A1
+                    head_normalize_t         A1
+                    call_builtin             #2, #28
+                    put_string               A1, <string #1>
+                    call_builtin             #2, #28
+                    put_value_p              Y2, A1
+                    head_normalize_t         A1
+                    call_builtin             #2, #0
+                    put_string               A1, <string #3>
+                    call_builtin             #2, #28
+                    put_value_p              Y2, A1
+                    head_normalize_t         A1
+                    put_value_p              Y1, A2
+                    head_normalize_t         A2
+                    call_builtin             #2, #31
+                    put_value_p              Y1, A1
+                    head_normalize_t         A1
+                    call_builtin             #2, #28
+                    put_string               A1, <string #1>
+                    deallocate               
+                    builtin                  #28
+L11                 trust_me                 #3
+                    allocate                 #1
+                    put_string               A1, <string #4>
+                    call_builtin             #0, #28
+                    put_value_t              A3, A4
+                    put_value_t              A2, A1
+                    head_normalize_t         A1
+                    put_value_t              A4, A2
+                    head_normalize_t         A2
+                    call_builtin             #0, #31
+                    put_value_t              A4, A1
+                    head_normalize_t         A1
+                    call_builtin             #0, #28
+                    put_string               A1, <string #1>
+                    call_builtin             #0, #28
+                    fail                     
+
+Global kind table:
+
+Local kind table:
+
+Type skeleton table:
+0: (o -> (o -> (o -> o)))
+1: (o -> o)
+
+Global constant table: 
+0: if (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #0
+1: once (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #1
+2: announce (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #1
+3: spi (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #1
+
+Local constant table: 
+
+Hidden constant table: 
+
+String table:
+0: >> 
+1: 
+
+2: >Entering 
+3: >Success  
+4: >Leaving  
+
+Implication Tables:
+
+Hash tables:
+
+Module table:
+  Predicate definitions possibly extending previous ones: 4
+   if
+   once
+   announce
+   spi
+  Exportdef predicates: 0
+  Local predicates: 0
+  Find function type: hash
+  In-core table size: 4
+   if
+   once
+   announce
+   spi
+
+Accumulated tables:
+
+Imported tables:

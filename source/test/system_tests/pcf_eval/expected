@@ -11,7 +11,7 @@ L37                 try                      #2, L38
                     try_me_else              #0, L39
 L38                 switch_on_term           L40, L41, L39, L40
 L40                 try_me_else              #2, L42
-L46                 allocate                 #3
+L47                 allocate                 #3
                     get_variable_p           Y1, A2
                     get_integer              A1, 1
                     finish_unify             
@@ -21,7 +21,7 @@ L46                 allocate                 #3
                     put_m_const              A255, @
                     put_m_const              A253, in
                     put_app                  A254, A253, #1
-                    set_integer              1
+                    set_integer              12
                     put_app                  A1, A255, #2
                     globalize_pt             Y2, A255
                     set_value_t              A255
@@ -31,7 +31,7 @@ L46                 allocate                 #3
                     deallocate               
                     execute_name             eval
 L42                 retry_me_else            #2, L43
-L47                 allocate                 #4
+L48                 allocate                 #4
                     get_variable_p           Y1, A2
                     get_integer              A1, 2
                     finish_unify             
@@ -78,7 +78,7 @@ L47                 allocate                 #4
                     deallocate               
                     execute_name             eval
 L43                 retry_me_else            #2, L44
-L48                 allocate                 #3
+L49                 allocate                 #3
                     get_variable_p           Y1, A2
                     get_integer              A1, 3
                     finish_unify             
@@ -121,7 +121,7 @@ L48                 allocate                 #3
                     deallocate               
                     execute_name             eval
 L44                 retry_me_else            #2, L45
-L49                 allocate                 #3
+L50                 allocate                 #3
                     get_variable_p           Y1, A2
                     get_integer              A1, 4
                     finish_unify             
@@ -166,8 +166,8 @@ L49                 allocate                 #3
                     head_normalize_t         A2
                     deallocate               
                     execute_name             eval
-L45                 trust_me                 #2
-L50                 allocate                 #3
+L45                 retry_me_else            #2, L46
+L51                 allocate                 #3
                     get_variable_p           Y1, A2
                     get_integer              A1, 5
                     finish_unify             
@@ -212,23 +212,44 @@ L50                 allocate                 #3
                     head_normalize_t         A2
                     deallocate               
                     execute_name             eval
-L0                  try                      #2, L46
-                    retry                    #2, L47
+L46                 trust_me                 #2
+L52                 allocate                 #3
+                    get_variable_p           Y1, A2
+                    get_integer              A1, 6
+                    finish_unify             
+                    put_string               A1, <string #4>
+                    put_variable_p           Y2, A2
+                    call                     #2, <local const #0>
+                    put_m_const              A255, @
+                    put_m_const              A253, in
+                    put_app                  A254, A253, #1
+                    set_integer              4
+                    put_app                  A1, A255, #2
+                    globalize_pt             Y2, A255
+                    set_value_t              A255
+                    set_value_t              A254
+                    put_value_p              Y1, A2
+                    head_normalize_t         A2
+                    deallocate               
+                    execute_name             eval
+L0                  try                      #2, L47
                     retry                    #2, L48
                     retry                    #2, L49
-                    trust                    #2, L50
+                    retry                    #2, L50
+                    retry                    #2, L51
+                    trust                    #2, L52
 L41                 switch_on_constant       #1, <hash #0>
-L51                 fail                     
+L53                 fail                     
                     fail                     
                     fail                     
                     fail                     
                     fail                     
                     fail                     
                     fail                     
-                    try_me_else              #0, L51
-<local const #0>    switch_on_term           L52, L53, L51, L52
-L52                 try_me_else              #2, L54
-L72                 get_string               A1, <string #4>
+                    try_me_else              #0, L53
+<local const #0>    switch_on_term           L54, L55, L53, L54
+L54                 try_me_else              #2, L56
+L74                 get_string               A1, <string #5>
                     get_m_structure          A2, fn, #1
                     unify_variable_t         A255
                     put_m_const              A252, @
@@ -246,8 +267,8 @@ L72                 get_string               A1, <string #4>
                     pattern_unify_t          A254, A255
                     finish_unify             
                     proceed                  
-L54                 retry_me_else            #2, L55
-L73                 get_string               A1, <string #5>
+L56                 retry_me_else            #2, L57
+L75                 get_string               A1, <string #6>
                     get_m_structure          A2, fn, #1
                     unify_variable_t         A255
                     put_m_const              A252, fn
@@ -278,8 +299,8 @@ L73                 get_string               A1, <string #5>
                     pattern_unify_t          A254, A255
                     finish_unify             
                     proceed                  
-L55                 retry_me_else            #2, L56
-L74                 get_string               A1, <string #6>
+L57                 retry_me_else            #2, L58
+L76                 get_string               A1, <string #7>
                     get_m_structure          A2, fn, #1
                     unify_variable_t         A255
                     put_m_const              A252, fn
@@ -318,8 +339,8 @@ L74                 get_string               A1, <string #6>
                     pattern_unify_t          A254, A255
                     finish_unify             
                     proceed                  
-L56                 retry_me_else            #2, L57
-L75                 get_string               A1, <string #7>
+L58                 retry_me_else            #2, L59
+L77                 get_string               A1, <string #8>
                     get_m_structure          A2, fixpt, #1
                     unify_variable_t         A255
                     put_m_const              A252, fn
@@ -399,8 +420,8 @@ L75                 get_string               A1, <string #7>
                     pattern_unify_t          A254, A255
                     finish_unify             
                     proceed                  
-L57                 retry_me_else            #2, L58
-L76                 get_string               A1, <string #8>
+L59                 retry_me_else            #2, L60
+L78                 get_string               A1, <string #9>
                     get_m_structure          A2, fixpt, #1
                     unify_variable_t         A255
                     put_m_const              A252, fn
@@ -452,8 +473,8 @@ L76                 get_string               A1, <string #8>
                     pattern_unify_t          A254, A255
                     finish_unify             
                     proceed                  
-L58                 retry_me_else            #2, L59
-L77                 get_string               A1, <string #9>
+L60                 retry_me_else            #2, L61
+L79                 get_string               A1, <string #10>
                     get_m_structure          A2, fixpt, #1
                     unify_variable_t         A255
                     put_m_const              A252, fn
@@ -518,8 +539,8 @@ L77                 get_string               A1, <string #9>
                     pattern_unify_t          A254, A255
                     finish_unify             
                     proceed                  
-L59                 retry_me_else            #2, L60
-L78                 get_string               A1, <string #10>
+L61                 retry_me_else            #2, L62
+L80                 get_string               A1, <string #11>
                     get_m_structure          A2, fixpt, #1
                     unify_variable_t         A255
                     put_m_const              A252, fn
@@ -577,8 +598,8 @@ L78                 get_string               A1, <string #10>
                     pattern_unify_t          A254, A255
                     finish_unify             
                     proceed                  
-L60                 retry_me_else            #2, L61
-L79                 get_string               A1, <string #11>
+L62                 retry_me_else            #2, L63
+L81                 get_string               A1, <string #12>
                     get_m_structure          A2, fixpt, #1
                     unify_variable_t         A255
                     put_m_const              A252, fn
@@ -626,8 +647,8 @@ L79                 get_string               A1, <string #11>
                     pattern_unify_t          A254, A255
                     finish_unify             
                     proceed                  
-L61                 retry_me_else            #2, L62
-L80                 get_string               A1, <string #12>
+L63                 retry_me_else            #2, L64
+L82                 get_string               A1, <string #13>
                     get_m_structure          A2, fixpt, #1
                     unify_variable_t         A255
                     put_m_const              A252, fn
@@ -711,8 +732,8 @@ L80                 get_string               A1, <string #12>
                     pattern_unify_t          A254, A255
                     finish_unify             
                     proceed                  
-L62                 retry_me_else            #2, L63
-L81                 get_string               A1, <string #13>
+L64                 retry_me_else            #2, L65
+L83                 get_string               A1, <string #14>
                     get_m_structure          A2, @, #2
                     unify_variable_t         A255
                     unify_variable_t         A254
@@ -725,8 +746,8 @@ L81                 get_string               A1, <string #13>
                     unify_integer            2
                     finish_unify             
                     proceed                  
-L63                 retry_me_else            #2, L64
-L82                 get_string               A1, <string #14>
+L65                 retry_me_else            #2, L66
+L84                 get_string               A1, <string #15>
                     get_m_structure          A2, @, #2
                     unify_variable_t         A255
                     unify_variable_t         A254
@@ -737,8 +758,8 @@ L82                 get_string               A1, <string #14>
                     unify_integer            1
                     finish_unify             
                     proceed                  
-L64                 retry_me_else            #2, L65
-L83                 get_string               A1, <string #15>
+L66                 retry_me_else            #2, L67
+L85                 get_string               A1, <string #16>
                     get_m_structure          A2, cond, #3
                     unify_m_constant         truth
                     unify_variable_t         A255
@@ -747,8 +768,8 @@ L83                 get_string               A1, <string #15>
                     unify_integer            3
                     finish_unify             
                     proceed                  
-L65                 retry_me_else            #2, L66
-L84                 get_string               A1, <string #16>
+L67                 retry_me_else            #2, L68
+L86                 get_string               A1, <string #17>
                     get_m_structure          A2, fn, #1
                     unify_variable_t         A255
                     put_m_const              A252, fn
@@ -760,8 +781,8 @@ L84                 get_string               A1, <string #16>
                     pattern_unify_t          A254, A255
                     finish_unify             
                     proceed                  
-L66                 retry_me_else            #2, L67
-L85                 get_string               A1, <string #17>
+L68                 retry_me_else            #2, L69
+L87                 get_string               A1, <string #18>
                     get_m_structure          A2, cond, #3
                     unify_m_constant         truth
                     unify_variable_t         A255
@@ -772,8 +793,8 @@ L85                 get_string               A1, <string #17>
                     unify_integer            5
                     finish_unify             
                     proceed                  
-L67                 retry_me_else            #2, L68
-L86                 get_string               A1, <string #18>
+L69                 retry_me_else            #2, L70
+L88                 get_string               A1, <string #19>
                     get_m_structure          A2, @, #2
                     unify_variable_t         A255
                     unify_variable_t         A254
@@ -789,8 +810,8 @@ L86                 get_string               A1, <string #18>
                     pattern_unify_t          A254, A255
                     finish_unify             
                     proceed                  
-L68                 retry_me_else            #2, L69
-L87                 get_string               A1, <string #19>
+L70                 retry_me_else            #2, L71
+L89                 get_string               A1, <string #20>
                     get_m_structure          A2, fn, #1
                     unify_variable_t         A255
                     put_index                A253, #1
@@ -798,8 +819,8 @@ L87                 get_string               A1, <string #19>
                     pattern_unify_t          A254, A255
                     finish_unify             
                     proceed                  
-L69                 retry_me_else            #2, L70
-L88                 get_string               A1, <string #20>
+L71                 retry_me_else            #2, L72
+L90                 get_string               A1, <string #21>
                     get_m_structure          A2, fn, #1
                     unify_variable_t         A255
                     put_m_const              A252, fn
@@ -811,8 +832,8 @@ L88                 get_string               A1, <string #20>
                     pattern_unify_t          A254, A255
                     finish_unify             
                     proceed                  
-L70                 retry_me_else            #2, L71
-L89                 get_string               A1, <string #21>
+L72                 retry_me_else            #2, L73
+L91                 get_string               A1, <string #22>
                     get_m_structure          A2, fn, #1
                     unify_variable_t         A255
                     put_m_const              A252, fn
@@ -839,8 +860,8 @@ L89                 get_string               A1, <string #21>
                     pattern_unify_t          A254, A255
                     finish_unify             
                     proceed                  
-L71                 trust_me                 #2
-L90                 get_string               A1, <string #22>
+L73                 trust_me                 #2
+L92                 get_string               A1, <string #23>
                     get_m_structure          A2, fn, #1
                     unify_variable_t         A255
                     put_m_const              A252, fn
@@ -863,9 +884,7 @@ L90                 get_string               A1, <string #22>
                     pattern_unify_t          A254, A255
                     finish_unify             
                     proceed                  
-L1                  try                      #2, L72
-                    retry                    #2, L73
-                    retry                    #2, L74
+L1                  try                      #2, L74
                     retry                    #2, L75
                     retry                    #2, L76
                     retry                    #2, L77
@@ -881,22 +900,24 @@ L1                  try                      #2, L72
                     retry                    #2, L87
                     retry                    #2, L88
                     retry                    #2, L89
-                    trust                    #2, L90
-L53                 switch_on_constant       #1, <hash #1>
-L93                 fail                     
-eval                switch_on_reg            #1, L91, L92
-L91                 try                      #2, L92
+                    retry                    #2, L90
+                    retry                    #2, L91
+                    trust                    #2, L92
+L55                 switch_on_constant       #1, <hash #1>
+L95                 fail                     
+eval                switch_on_reg            #1, L93, L94
+L93                 try                      #2, L94
                     trust_ext                #2, #1
-                    try_me_else              #0, L93
-L92                 switch_on_term           L94, L95, L93, L94
-L94                 try_me_else              #2, L96
+                    try_me_else              #0, L95
+L94                 switch_on_term           L96, L97, L95, L96
+L96                 try_me_else              #2, L98
 L21                 get_m_structure          A1, fn, #1
                     unify_variable_t         A1
                     get_m_structure          A2, fn, #1
                     unify_value_t            A1
                     finish_unify             
                     proceed                  
-L96                 retry_me_else            #2, L97
+L98                 retry_me_else            #2, L99
 L20                 allocate                 #5
                     get_variable_p           Y1, A2
                     get_m_structure          A1, @, #2
@@ -918,7 +939,7 @@ L20                 allocate                 #5
                     head_normalize_t         A3
                     deallocate               
                     execute                  <local const #1>
-L97                 retry_me_else            #2, L98
+L99                 retry_me_else            #2, L100
 L19                 get_m_structure          A1, fixpt, #1
                     unify_variable_t         A3
                     finish_unify             
@@ -930,7 +951,7 @@ L19                 get_m_structure          A1, fixpt, #1
                     head_normalize_t         A1
                     head_normalize_t         A2
                     execute_name             eval
-L98                 retry_me_else            #2, L99
+L100                retry_me_else            #2, L101
 L18                 allocate                 #5
                     get_variable_p           Y1, A2
                     get_m_structure          A1, cond, #3
@@ -958,29 +979,29 @@ L18                 allocate                 #5
                     set_value_p              Y1
                     deallocate               
                     execute                  <local const #3>
-L99                 retry_me_else            #2, L100
+L101                retry_me_else            #2, L102
 L17                 get_m_structure          A1, in, #1
                     unify_variable_t         A1
                     get_m_structure          A2, in, #1
                     unify_value_t            A1
                     finish_unify             
                     proceed                  
-L100                retry_me_else            #2, L101
+L102                retry_me_else            #2, L103
 L16                 get_m_constant           A1, truth
                     get_m_constant           A2, truth
                     finish_unify             
                     proceed                  
-L101                retry_me_else            #2, L102
+L103                retry_me_else            #2, L104
 L15                 get_m_constant           A1, false
                     get_m_constant           A2, false
                     finish_unify             
                     proceed                  
-L102                retry_me_else            #2, L103
+L104                retry_me_else            #2, L105
 L14                 get_m_constant           A1, empty
                     get_m_constant           A2, empty
                     finish_unify             
                     proceed                  
-L103                retry_me_else            #2, L104
+L105                retry_me_else            #2, L106
 L13                 get_m_constant           A1, and
                     get_m_structure          A2, special, #3
                     unify_m_constant         and
@@ -988,7 +1009,7 @@ L13                 get_m_constant           A1, and
                     unify_nil                
                     finish_unify             
                     proceed                  
-L104                retry_me_else            #2, L105
+L106                retry_me_else            #2, L107
 L12                 get_m_constant           A1, car
                     get_m_structure          A2, special, #3
                     unify_m_constant         car
@@ -996,7 +1017,7 @@ L12                 get_m_constant           A1, car
                     unify_nil                
                     finish_unify             
                     proceed                  
-L105                retry_me_else            #2, L106
+L107                retry_me_else            #2, L108
 L11                 get_m_constant           A1, cdr
                     get_m_structure          A2, special, #3
                     unify_m_constant         cdr
@@ -1004,7 +1025,7 @@ L11                 get_m_constant           A1, cdr
                     unify_nil                
                     finish_unify             
                     proceed                  
-L106                retry_me_else            #2, L107
+L108                retry_me_else            #2, L109
 L10                 get_m_constant           A1, cons
                     get_m_structure          A2, special, #3
                     unify_m_constant         cons
@@ -1012,7 +1033,7 @@ L10                 get_m_constant           A1, cons
                     unify_nil                
                     finish_unify             
                     proceed                  
-L107                retry_me_else            #2, L108
+L109                retry_me_else            #2, L110
 L9                  get_m_constant           A1, consp
                     get_m_structure          A2, special, #3
                     unify_m_constant         consp
@@ -1020,7 +1041,7 @@ L9                  get_m_constant           A1, consp
                     unify_nil                
                     finish_unify             
                     proceed                  
-L108                retry_me_else            #2, L109
+L110                retry_me_else            #2, L111
 L8                  get_m_constant           A1, equal
                     get_m_structure          A2, special, #3
                     unify_m_constant         equal
@@ -1028,7 +1049,7 @@ L8                  get_m_constant           A1, equal
                     unify_nil                
                     finish_unify             
                     proceed                  
-L109                retry_me_else            #2, L110
+L111                retry_me_else            #2, L112
 L7                  get_m_constant           A1, greater
                     get_m_structure          A2, special, #3
                     unify_m_constant         greater
@@ -1036,7 +1057,7 @@ L7                  get_m_constant           A1, greater
                     unify_nil                
                     finish_unify             
                     proceed                  
-L110                retry_me_else            #2, L111
+L112                retry_me_else            #2, L113
 L6                  get_m_constant           A1, minus
                     get_m_structure          A2, special, #3
                     unify_m_constant         minus
@@ -1044,7 +1065,7 @@ L6                  get_m_constant           A1, minus
                     unify_nil                
                     finish_unify             
                     proceed                  
-L111                retry_me_else            #2, L112
+L113                retry_me_else            #2, L114
 L5                  get_m_constant           A1, nullp
                     get_m_structure          A2, special, #3
                     unify_m_constant         nullp
@@ -1052,7 +1073,7 @@ L5                  get_m_constant           A1, nullp
                     unify_nil                
                     finish_unify             
                     proceed                  
-L112                retry_me_else            #2, L113
+L114                retry_me_else            #2, L115
 L4                  get_m_constant           A1, plus
                     get_m_structure          A2, special, #3
                     unify_m_constant         plus
@@ -1060,7 +1081,7 @@ L4                  get_m_constant           A1, plus
                     unify_nil                
                     finish_unify             
                     proceed                  
-L113                retry_me_else            #2, L114
+L115                retry_me_else            #2, L116
 L3                  get_m_constant           A1, times
                     get_m_structure          A2, special, #3
                     unify_m_constant         times
@@ -1068,7 +1089,7 @@ L3                  get_m_constant           A1, times
                     unify_nil                
                     finish_unify             
                     proceed                  
-L114                trust_me                 #2
+L116                trust_me                 #2
 L2                  get_m_constant           A1, zerop
                     get_m_structure          A2, special, #3
                     unify_m_constant         zerop
@@ -1076,10 +1097,10 @@ L2                  get_m_constant           A1, zerop
                     unify_nil                
                     finish_unify             
                     proceed                  
-L95                 switch_on_constant       #20, <hash #2>
-                    try_me_else              #0, L93
-<local const #1>    switch_on_term           L115, L116, L93, L115
-L115                try_me_else              #3, L117
+L97                 switch_on_constant       #20, <hash #2>
+                    try_me_else              #0, L95
+<local const #1>    switch_on_term           L117, L118, L95, L117
+L117                try_me_else              #3, L119
 L23                 get_m_structure          A1, fn, #1
                     unify_variable_t         A4
                     finish_unify             
@@ -1091,8 +1112,8 @@ L23                 get_m_structure          A1, fn, #1
                     put_value_t              A3, A2
                     head_normalize_t         A2
                     execute_name             eval
-L117                retry_me_else            #3, L118
-L119                get_m_structure          A1, special, #3
+L119                retry_me_else            #3, L120
+L121                get_m_structure          A1, special, #3
                     unify_variable_t         A1
                     unify_integer            1
                     unify_variable_t         A4
@@ -1106,8 +1127,8 @@ L119                get_m_structure          A1, special, #3
                     set_value_t              A4
                     head_normalize_t         A3
                     execute                  <local const #2>
-L118                trust_me                 #3
-L120                get_m_structure          A1, special, #3
+L120                trust_me                 #3
+L122                get_m_structure          A1, special, #3
                     unify_variable_t         A4
                     unify_variable_t         A5
                     unify_variable_t         A6
@@ -1126,12 +1147,12 @@ L120                get_m_structure          A1, special, #3
                     set_value_t              A5
                     set_integer              1
                     builtin                  #1
-L22                 try                      #3, L119
-                    trust                    #3, L120
-L116                switch_on_constant       #2, <hash #3>
-                    try_me_else              #0, L93
-<local const #2>    switch_on_term           L121, L122, L93, L121
-L121                try_me_else              #3, L123
+L22                 try                      #3, L121
+                    trust                    #3, L122
+L118                switch_on_constant       #2, <hash #3>
+                    try_me_else              #0, L95
+<local const #2>    switch_on_term           L123, L124, L95, L123
+L123                try_me_else              #3, L125
 L36                 get_m_constant           A1, car
                     get_list                 A2
                     unify_variable_t         A255
@@ -1144,7 +1165,7 @@ L36                 get_m_constant           A1, car
                     unify_local_value_t      A3
                     finish_unify             
                     proceed                  
-L123                retry_me_else            #3, L124
+L125                retry_me_else            #3, L126
 L35                 get_m_constant           A1, cdr
                     get_list                 A2
                     unify_variable_t         A255
@@ -1157,7 +1178,7 @@ L35                 get_m_constant           A1, cdr
                     unify_variable_t         A255
                     finish_unify             
                     proceed                  
-L124                retry_me_else            #3, L125
+L126                retry_me_else            #3, L127
 L34                 get_m_constant           A1, cons
                     get_list                 A2
                     unify_variable_t         A1
@@ -1173,7 +1194,7 @@ L34                 get_m_constant           A1, cons
                     unify_value_t            A2
                     finish_unify             
                     proceed                  
-L125                retry_me_else            #3, L126
+L127                retry_me_else            #3, L128
 L33                 get_m_constant           A1, nullp
                     get_list                 A2
                     unify_variable_t         A4
@@ -1197,7 +1218,7 @@ L33                 get_m_constant           A1, nullp
                     set_value_t              A5
                     set_m_const              false
                     execute                  <local const #3>
-L126                retry_me_else            #3, L127
+L128                retry_me_else            #3, L129
 L32                 get_m_constant           A1, consp
                     get_list                 A2
                     unify_variable_t         A4
@@ -1221,7 +1242,7 @@ L32                 get_m_constant           A1, consp
                     set_value_t              A5
                     set_m_const              truth
                     execute                  <local const #3>
-L127                retry_me_else            #3, L128
+L129                retry_me_else            #3, L130
 L31                 get_m_constant           A1, and
                     get_list                 A2
                     unify_variable_t         A4
@@ -1263,7 +1284,7 @@ L31                 get_m_constant           A1, and
                     set_value_t              A253
                     set_value_t              A252
                     execute                  <local const #3>
-L128                retry_me_else            #3, L129
+L130                retry_me_else            #3, L131
 L30                 get_m_constant           A1, or
                     get_list                 A2
                     unify_variable_t         A4
@@ -1305,7 +1326,7 @@ L30                 get_m_constant           A1, or
                     set_value_t              A253
                     set_value_t              A252
                     execute                  <local const #3>
-L129                retry_me_else            #3, L130
+L131                retry_me_else            #3, L132
 L29                 get_m_constant           A1, minus
                     get_list                 A2
                     unify_variable_t         A255
@@ -1327,7 +1348,7 @@ L29                 get_m_constant           A1, minus
                     set_value_t              A5
                     set_value_t              A4
                     builtin                  #1
-L130                retry_me_else            #3, L131
+L132                retry_me_else            #3, L133
 L28                 get_m_constant           A1, plus
                     get_list                 A2
                     unify_variable_t         A255
@@ -1349,7 +1370,7 @@ L28                 get_m_constant           A1, plus
                     set_value_t              A5
                     set_value_t              A4
                     builtin                  #1
-L131                retry_me_else            #3, L132
+L133                retry_me_else            #3, L134
 L27                 get_m_constant           A1, times
                     get_list                 A2
                     unify_variable_t         A255
@@ -1371,7 +1392,7 @@ L27                 get_m_constant           A1, times
                     set_value_t              A5
                     set_value_t              A4
                     builtin                  #1
-L132                retry_me_else            #3, L133
+L134                retry_me_else            #3, L135
 L26                 get_m_constant           A1, zerop
                     get_list                 A2
                     unify_variable_t         A255
@@ -1397,7 +1418,7 @@ L26                 get_m_constant           A1, zerop
                     set_value_t              A5
                     set_m_const              false
                     execute                  <local const #3>
-L133                retry_me_else            #3, L134
+L135                retry_me_else            #3, L136
 L25                 get_m_constant           A1, equal
                     get_list                 A2
                     unify_variable_t         A4
@@ -1424,7 +1445,7 @@ L25                 get_m_constant           A1, equal
                     set_value_t              A6
                     set_m_const              false
                     execute                  <local const #3>
-L134                trust_me                 #3
+L136                trust_me                 #3
 L24                 get_m_constant           A1, greater
                     get_list                 A2
                     unify_variable_t         A255
@@ -1454,15 +1475,15 @@ L24                 get_m_constant           A1, greater
                     set_value_t              A6
                     set_m_const              false
                     execute                  <local const #3>
-L122                switch_on_constant       #13, <hash #4>
-L136                fail                     
+L124                switch_on_constant       #13, <hash #4>
+L138                fail                     
                     fail                     
                     fail                     
                     fail                     
                     fail                     
                     fail                     
                     fail                     
-<local const #3>    try_me_else              #3, L135
+<local const #3>    try_me_else              #3, L137
                     allocate                 #3
                     get_variable_p           Y1, A2
                     get_level                Y2
@@ -1473,7 +1494,7 @@ L136                fail
                     head_normalize_t         A1
                     deallocate               
                     builtin                  #0
-L135                trust_me                 #3
+L137                trust_me                 #3
                     put_value_t              A3, A1
                     head_normalize_t         A1
                     builtin                  #0
@@ -1483,7 +1504,7 @@ L135                trust_me                 #3
                     fail                     
                     fail                     
                     fail                     
-                    try_me_else              #0, L136
+                    try_me_else              #0, L138
 <local const #6>    allocate                 #2
                     get_level                Y1
                     head_normalize_t         A1
@@ -1497,10 +1518,10 @@ L135                trust_me                 #3
                     fail                     
                     fail                     
                     fail                     
-                    try_me_else              #0, L136
+                    try_me_else              #0, L138
 <local const #4>    allocate                 #2
                     put_value_t              A1, A4
-                    put_string               A1, <string #23>
+                    put_string               A1, <string #24>
                     call_builtin             #1, #28
                     put_value_t              A4, A1
                     head_normalize_t         A1
@@ -1509,7 +1530,7 @@ L135                trust_me                 #3
                     put_value_p              Y1, A1
                     head_normalize_t         A1
                     call_builtin             #1, #28
-                    put_string               A1, <string #24>
+                    put_string               A1, <string #25>
                     call_builtin             #1, #28
                     fail                     
                     fail                     
@@ -1518,17 +1539,17 @@ L135                trust_me                 #3
                     fail                     
                     fail                     
                     fail                     
-                    try_me_else              #0, L136
+                    try_me_else              #0, L138
 <local const #5>    put_value_t              A1, A2
                     put_variable_t           A255, A1
                     head_normalize_t         A2
                     put_variable_t           A255, A3
-                    execute                  L137
-L137                try_me_else              #3, L138
+                    execute                  L139
+L139                try_me_else              #3, L140
                     allocate                 #3
                     get_variable_p           Y1, A1
                     get_variable_p           Y2, A2
-                    put_string               A1, <string #25>
+                    put_string               A1, <string #26>
                     call_builtin             #2, #28
                     put_value_t              A3, A2
                     put_value_p              Y2, A1
@@ -1538,12 +1559,12 @@ L137                try_me_else              #3, L138
                     put_value_t              A2, A1
                     head_normalize_t         A1
                     call_builtin             #2, #28
-                    put_string               A1, <string #24>
+                    put_string               A1, <string #25>
                     call_builtin             #2, #28
                     put_value_p              Y2, A1
                     head_normalize_t         A1
                     call_builtin             #2, #0
-                    put_string               A1, <string #26>
+                    put_string               A1, <string #27>
                     call_builtin             #2, #28
                     put_value_p              Y2, A1
                     head_normalize_t         A1
@@ -1553,12 +1574,12 @@ L137                try_me_else              #3, L138
                     put_value_p              Y1, A1
                     head_normalize_t         A1
                     call_builtin             #2, #28
-                    put_string               A1, <string #24>
+                    put_string               A1, <string #25>
                     deallocate               
                     builtin                  #28
-L138                trust_me                 #3
+L140                trust_me                 #3
                     allocate                 #1
-                    put_string               A1, <string #27>
+                    put_string               A1, <string #28>
                     call_builtin             #0, #28
                     put_value_t              A3, A4
                     put_value_t              A2, A1
@@ -1569,7 +1590,7 @@ L138                trust_me                 #3
                     put_value_t              A4, A1
                     head_normalize_t         A1
                     call_builtin             #0, #28
-                    put_string               A1, <string #24>
+                    put_string               A1, <string #25>
                     call_builtin             #0, #28
                     fail                     
 
@@ -1681,31 +1702,32 @@ String table:
 1: map
 2: app
 3: mem
-4: successor
-5: onep
-6: is_sym
-7: fib
-8: map
-9: mem
-10: fact
-11: app
-12: gcd
-13: ex1
-14: ex2
-15: ex3
-16: ex4
-17: ex5
-18: ex6
-19: i
-20: k
-21: s
-22: comp
-23: >> 
-24: 
+4: partial
+5: successor
+6: onep
+7: is_sym
+8: fib
+9: map
+10: mem
+11: fact
+12: app
+13: gcd
+14: ex1
+15: ex2
+16: ex3
+17: ex4
+18: ex5
+19: ex6
+20: i
+21: k
+22: s
+23: comp
+24: >> 
+25: 
 
-25: >Entering 
-26: >Success  
-27: >Leaving  
+26: >Entering 
+27: >Success  
+28: >Leaving  
 
 Implication Tables:
 
