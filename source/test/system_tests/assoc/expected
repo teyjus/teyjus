@@ -10,7 +10,7 @@ L2                  try                      #5, L3
                     trust_ext                #5, #1
                     try_me_else              #0, L4
 L3                  allocate                 #1
-                    add_imports              #0, #0, L5
+                    add_imports              #1, #0, L5
                     push_import              <import #1>
 L5                  put_value_t              A3, A6
                     put_value_t              A1, A7
@@ -27,7 +27,7 @@ L5                  put_value_t              A3, A6
                     put_value_t              A6, A2
                     head_normalize_t         A2
                     call_name                #0, <local const #0>
-                    remove_imports           #0, L6
+                    remove_imports           #1, L6
                     pop_imports              #1
 L6                  deallocate               
                     proceed                  
