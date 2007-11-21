@@ -1,0 +1,228 @@
+Disassembling from bytecode file: tr_recognizer.lpo
+Bytecode version: 2
+Module name: tr_recognizer
+
+LABEL               INSTRUCTION              OPERANDS
+
+L1                  fail                     
+                    try_me_else              #0, L1
+tl_rec              switch_on_term           L2, L3, L1, L2
+L2                  try_me_else              #1, L4
+L6                  get_m_structure          A1, fix, #1
+                    unify_variable_t         A255
+                    put_m_const              A252, abs
+                    put_m_const              A249, abs
+                    put_variable_t           A245, A246
+                    put_app                  A247, A246, #2
+                    set_index                #2
+                    set_index                #1
+                    put_lambda               A248, A247, #1
+                    put_app                  A250, A249, #1
+                    set_value_t              A248
+                    put_lambda               A251, A250, #1
+                    put_app                  A253, A252, #1
+                    set_value_t              A251
+                    put_lambda               A254, A253, #1
+                    pattern_unify_t          A254, A255
+                    finish_unify             
+                    proceed                  
+L4                  retry_me_else            #1, L5
+L7                  get_m_structure          A1, fix, #1
+                    unify_variable_t         A255
+                    put_m_const              A252, abs
+                    put_m_const              A249, abs
+                    put_m_const              A246, app
+                    put_m_const              A244, app
+                    put_variable_t           A241, A242
+                    put_app                  A243, A242, #2
+                    set_index                #2
+                    set_index                #1
+                    put_app                  A245, A244, #2
+                    set_index                #3
+                    set_value_t              A243
+                    put_variable_t           A242, A243
+                    put_app                  A244, A243, #2
+                    set_index                #2
+                    set_index                #1
+                    put_app                  A247, A246, #2
+                    set_value_t              A245
+                    set_value_t              A244
+                    put_lambda               A248, A247, #1
+                    put_app                  A250, A249, #1
+                    set_value_t              A248
+                    put_lambda               A251, A250, #1
+                    put_app                  A253, A252, #1
+                    set_value_t              A251
+                    put_lambda               A254, A253, #1
+                    pattern_unify_t          A254, A255
+                    finish_unify             
+                    proceed                  
+L5                  trust_me                 #1
+L8                  allocate                 #2
+                    get_m_structure          A1, fix, #1
+                    unify_variable_t         A255
+                    put_m_const              A252, abs
+                    put_m_const              A249, abs
+                    put_m_const              A246, cond
+                    put_variable_t           A243, A244
+                    put_app                  A245, A244, #2
+                    set_index                #2
+                    set_index                #1
+                    put_variable_t           A2, A243
+                    put_app                  A244, A243, #3
+                    set_index                #3
+                    set_index                #2
+                    set_index                #1
+                    put_variable_p           Y1, A242
+                    globalize_t              A242
+                    put_app                  A243, A242, #3
+                    set_index                #3
+                    set_index                #2
+                    set_index                #1
+                    put_app                  A247, A246, #3
+                    set_value_t              A245
+                    set_value_t              A244
+                    set_value_t              A243
+                    put_lambda               A248, A247, #1
+                    put_app                  A250, A249, #1
+                    set_value_t              A248
+                    put_lambda               A251, A250, #1
+                    put_app                  A253, A252, #1
+                    set_value_t              A251
+                    put_lambda               A254, A253, #1
+                    pattern_unify_t          A254, A255
+                    finish_unify             
+                    put_m_const              A255, fix
+                    put_m_const              A252, abs
+                    put_m_const              A249, abs
+                    globalize_t              A2
+                    put_app                  A247, A2, #3
+                    set_index                #3
+                    set_index                #2
+                    set_index                #1
+                    put_lambda               A248, A247, #1
+                    put_app                  A250, A249, #1
+                    set_value_t              A248
+                    put_lambda               A251, A250, #1
+                    put_app                  A253, A252, #1
+                    set_value_t              A251
+                    put_lambda               A254, A253, #1
+                    put_app                  A1, A255, #1
+                    set_value_t              A254
+                    call_link_only           #1, tl_rec
+                    put_m_const              A255, fix
+                    put_m_const              A252, abs
+                    put_m_const              A249, abs
+                    globalize_pt             Y1, A246
+                    put_app                  A247, A246, #3
+                    set_index                #3
+                    set_index                #2
+                    set_index                #1
+                    put_lambda               A248, A247, #1
+                    put_app                  A250, A249, #1
+                    set_value_t              A248
+                    put_lambda               A251, A250, #1
+                    put_app                  A253, A252, #1
+                    set_value_t              A251
+                    put_lambda               A254, A253, #1
+                    put_app                  A1, A255, #1
+                    set_value_t              A254
+                    deallocate               
+                    execute_link_only        tl_rec
+L0                  try                      #1, L6
+                    retry                    #1, L7
+                    trust                    #1, L8
+L3                  switch_on_constant       #1, <hash #0>
+
+Global kind table:
+0: tm/0
+
+Local kind table:
+
+Type skeleton table:
+0: (tm -> o)
+1: ((tm -> tm) -> tm)
+2: (tm -> (tm -> tm))
+3: (tm -> (tm -> (tm -> tm)))
+4: (int -> tm)
+5: tm
+6: (tm -> tm)
+
+Global constant table: 
+0: tl_rec (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #0
+1: fix (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #1
+2: abs (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #1
+3: app (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #2
+4: cond (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #3
+5: c (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #4
+6: truth (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #5
+7: false (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #5
+8: && (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #2
+9: plus (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #2
+10: minus (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #2
+11: times (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #2
+12: lss (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #2
+13: eq (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #2
+14: intp (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #6
+15: pr (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #2
+16: prp (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #6
+17: fst (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #6
+18: snd (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #6
+19: null (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #5
+20: cons (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #2
+21: hd (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #6
+22: tl (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #6
+23: nullp (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #6
+24: err (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #5
+
+Local constant table: 
+
+Hidden constant table: 
+
+String table:
+
+Implication Tables:
+
+Hash tables:
+0:
+    Table size: 1
+    Constants:
+    fix -> L0
+
+Module table:
+  Predicate definitions possibly extending previous ones: 0
+  Exportdef predicates: 1
+   tl_rec
+  Local predicates: 0
+  Find function type: hash
+  In-core table size: 1
+   tl_rec
+
+Accumulated tables:
+
+Imported tables:
