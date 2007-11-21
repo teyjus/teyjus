@@ -1,0 +1,773 @@
+Disassembling from bytecode file: examples.lpo
+Bytecode version: 2
+Module name: examples
+
+LABEL               INSTRUCTION              OPERANDS
+
+L3                  fail                     
+prog                switch_on_reg            #1, L1, L2
+L1                  try                      #2, L2
+                    trust_ext                #2, #1
+                    try_me_else              #0, L3
+L2                  switch_on_term           L4, L5, L3, L4
+L4                  try_me_else              #2, L6
+L24                 get_string               A1, <string #0>
+                    get_m_structure          A2, fn, #1
+                    unify_variable_t         A255
+                    put_m_const              A252, @
+                    put_m_const              A250, @
+                    put_app                  A251, A250, #2
+                    set_m_const              plus
+                    set_index                #1
+                    put_m_const              A249, in
+                    put_app                  A250, A249, #1
+                    set_integer              1
+                    put_app                  A253, A252, #2
+                    set_value_t              A251
+                    set_value_t              A250
+                    put_lambda               A254, A253, #1
+                    pattern_unify_t          A254, A255
+                    finish_unify             
+                    proceed                  
+L6                  retry_me_else            #2, L7
+L25                 get_string               A1, <string #1>
+                    get_m_structure          A2, fn, #1
+                    unify_variable_t         A255
+                    put_m_const              A252, fn
+                    put_m_const              A249, fn
+                    put_m_const              A246, cond
+                    put_m_const              A244, @
+                    put_m_const              A242, @
+                    put_m_const              A240, in
+                    put_app                  A241, A240, #1
+                    set_integer              1
+                    put_app                  A243, A242, #2
+                    set_m_const              equal
+                    set_value_t              A241
+                    put_app                  A245, A244, #2
+                    set_value_t              A243
+                    set_index                #3
+                    put_app                  A247, A246, #3
+                    set_value_t              A245
+                    set_index                #2
+                    set_index                #1
+                    put_lambda               A248, A247, #1
+                    put_app                  A250, A249, #1
+                    set_value_t              A248
+                    put_lambda               A251, A250, #1
+                    put_app                  A253, A252, #1
+                    set_value_t              A251
+                    put_lambda               A254, A253, #1
+                    pattern_unify_t          A254, A255
+                    finish_unify             
+                    proceed                  
+L7                  retry_me_else            #2, L8
+L26                 get_string               A1, <string #2>
+                    get_m_structure          A2, fn, #1
+                    unify_variable_t         A255
+                    put_m_const              A252, fn
+                    put_m_const              A249, fn
+                    put_m_const              A246, @
+                    put_m_const              A244, @
+                    put_m_const              A242, @
+                    put_m_const              A240, @
+                    put_app                  A241, A240, #2
+                    set_index                #3
+                    set_index                #2
+                    put_app                  A243, A242, #2
+                    set_value_t              A241
+                    set_index                #1
+                    put_app                  A245, A244, #2
+                    set_m_const              equal
+                    set_value_t              A243
+                    put_m_const              A243, @
+                    put_m_const              A241, @
+                    put_app                  A242, A241, #2
+                    set_index                #3
+                    set_index                #1
+                    put_app                  A244, A243, #2
+                    set_value_t              A242
+                    set_index                #2
+                    put_app                  A247, A246, #2
+                    set_value_t              A245
+                    set_value_t              A244
+                    put_lambda               A248, A247, #1
+                    put_app                  A250, A249, #1
+                    set_value_t              A248
+                    put_lambda               A251, A250, #1
+                    put_app                  A253, A252, #1
+                    set_value_t              A251
+                    put_lambda               A254, A253, #1
+                    pattern_unify_t          A254, A255
+                    finish_unify             
+                    proceed                  
+L8                  retry_me_else            #2, L9
+L27                 get_string               A1, <string #3>
+                    get_m_structure          A2, fixpt, #1
+                    unify_variable_t         A255
+                    put_m_const              A252, fn
+                    put_m_const              A249, cond
+                    put_m_const              A247, @
+                    put_app                  A248, A247, #2
+                    set_m_const              zerop
+                    set_index                #1
+                    put_m_const              A246, in
+                    put_app                  A247, A246, #1
+                    set_integer              0
+                    put_m_const              A245, cond
+                    put_m_const              A243, @
+                    put_m_const              A241, @
+                    put_app                  A242, A241, #2
+                    set_m_const              equal
+                    set_index                #1
+                    put_m_const              A240, in
+                    put_app                  A241, A240, #1
+                    set_integer              1
+                    put_app                  A244, A243, #2
+                    set_value_t              A242
+                    set_value_t              A241
+                    put_m_const              A242, in
+                    put_app                  A243, A242, #1
+                    set_integer              1
+                    put_m_const              A241, @
+                    put_m_const              A239, @
+                    put_m_const              A237, @
+                    put_m_const              A235, @
+                    put_m_const              A233, @
+                    put_app                  A234, A233, #2
+                    set_m_const              minus
+                    set_index                #1
+                    put_m_const              A232, in
+                    put_app                  A233, A232, #1
+                    set_integer              1
+                    put_app                  A236, A235, #2
+                    set_value_t              A234
+                    set_value_t              A233
+                    put_app                  A238, A237, #2
+                    set_index                #2
+                    set_value_t              A236
+                    put_app                  A240, A239, #2
+                    set_m_const              plus
+                    set_value_t              A238
+                    put_m_const              A238, @
+                    put_m_const              A236, @
+                    put_m_const              A234, @
+                    put_app                  A235, A234, #2
+                    set_m_const              minus
+                    set_index                #1
+                    put_m_const              A233, in
+                    put_app                  A234, A233, #1
+                    set_integer              2
+                    put_app                  A237, A236, #2
+                    set_value_t              A235
+                    set_value_t              A234
+                    put_app                  A239, A238, #2
+                    set_index                #2
+                    set_value_t              A237
+                    put_app                  A242, A241, #2
+                    set_value_t              A240
+                    set_value_t              A239
+                    put_app                  A246, A245, #3
+                    set_value_t              A244
+                    set_value_t              A243
+                    set_value_t              A242
+                    put_app                  A250, A249, #3
+                    set_value_t              A248
+                    set_value_t              A247
+                    set_value_t              A246
+                    put_lambda               A251, A250, #1
+                    put_app                  A253, A252, #1
+                    set_value_t              A251
+                    put_lambda               A254, A253, #1
+                    pattern_unify_t          A254, A255
+                    finish_unify             
+                    proceed                  
+L9                  retry_me_else            #2, L10
+L28                 get_string               A1, <string #4>
+                    get_m_structure          A2, fixpt, #1
+                    unify_variable_t         A255
+                    put_m_const              A252, fn
+                    put_m_const              A249, fn
+                    put_m_const              A246, cond
+                    put_m_const              A244, @
+                    put_app                  A245, A244, #2
+                    set_m_const              nullp
+                    set_index                #1
+                    put_m_const              A243, @
+                    put_m_const              A241, @
+                    put_m_const              A239, @
+                    put_m_const              A237, @
+                    put_app                  A238, A237, #2
+                    set_m_const              car
+                    set_index                #1
+                    put_app                  A240, A239, #2
+                    set_index                #2
+                    set_value_t              A238
+                    put_app                  A242, A241, #2
+                    set_m_const              cons
+                    set_value_t              A240
+                    put_m_const              A240, @
+                    put_m_const              A238, @
+                    put_app                  A239, A238, #2
+                    set_index                #3
+                    set_index                #2
+                    put_m_const              A237, @
+                    put_app                  A238, A237, #2
+                    set_m_const              cdr
+                    set_index                #1
+                    put_app                  A241, A240, #2
+                    set_value_t              A239
+                    set_value_t              A238
+                    put_app                  A244, A243, #2
+                    set_value_t              A242
+                    set_value_t              A241
+                    put_app                  A247, A246, #3
+                    set_value_t              A245
+                    set_m_const              empty
+                    set_value_t              A244
+                    put_lambda               A248, A247, #1
+                    put_app                  A250, A249, #1
+                    set_value_t              A248
+                    put_lambda               A251, A250, #1
+                    put_app                  A253, A252, #1
+                    set_value_t              A251
+                    put_lambda               A254, A253, #1
+                    pattern_unify_t          A254, A255
+                    finish_unify             
+                    proceed                  
+L10                 retry_me_else            #2, L11
+L29                 get_string               A1, <string #5>
+                    get_m_structure          A2, fixpt, #1
+                    unify_variable_t         A255
+                    put_m_const              A252, fn
+                    put_m_const              A249, fn
+                    put_m_const              A246, cond
+                    put_m_const              A244, @
+                    put_app                  A245, A244, #2
+                    set_m_const              nullp
+                    set_index                #1
+                    put_m_const              A243, cond
+                    put_m_const              A241, @
+                    put_m_const              A239, @
+                    put_m_const              A237, @
+                    put_app                  A238, A237, #2
+                    set_m_const              consp
+                    set_index                #1
+                    put_app                  A240, A239, #2
+                    set_m_const              and
+                    set_value_t              A238
+                    put_m_const              A238, @
+                    put_m_const              A236, @
+                    put_m_const              A234, @
+                    put_app                  A235, A234, #2
+                    set_m_const              car
+                    set_index                #1
+                    put_app                  A237, A236, #2
+                    set_m_const              equal
+                    set_value_t              A235
+                    put_app                  A239, A238, #2
+                    set_value_t              A237
+                    set_index                #2
+                    put_app                  A242, A241, #2
+                    set_value_t              A240
+                    set_value_t              A239
+                    put_m_const              A240, @
+                    put_m_const              A238, @
+                    put_app                  A239, A238, #2
+                    set_index                #3
+                    set_index                #2
+                    put_m_const              A237, @
+                    put_app                  A238, A237, #2
+                    set_m_const              cdr
+                    set_index                #1
+                    put_app                  A241, A240, #2
+                    set_value_t              A239
+                    set_value_t              A238
+                    put_app                  A244, A243, #3
+                    set_value_t              A242
+                    set_m_const              truth
+                    set_value_t              A241
+                    put_app                  A247, A246, #3
+                    set_value_t              A245
+                    set_m_const              false
+                    set_value_t              A244
+                    put_lambda               A248, A247, #1
+                    put_app                  A250, A249, #1
+                    set_value_t              A248
+                    put_lambda               A251, A250, #1
+                    put_app                  A253, A252, #1
+                    set_value_t              A251
+                    put_lambda               A254, A253, #1
+                    pattern_unify_t          A254, A255
+                    finish_unify             
+                    proceed                  
+L11                 retry_me_else            #2, L12
+L30                 get_string               A1, <string #6>
+                    get_m_structure          A2, fixpt, #1
+                    unify_variable_t         A255
+                    put_m_const              A252, fn
+                    put_m_const              A249, fn
+                    put_m_const              A246, cond
+                    put_m_const              A244, @
+                    put_m_const              A242, @
+                    put_app                  A243, A242, #2
+                    set_m_const              equal
+                    set_index                #2
+                    put_m_const              A241, in
+                    put_app                  A242, A241, #1
+                    set_integer              0
+                    put_app                  A245, A244, #2
+                    set_value_t              A243
+                    set_value_t              A242
+                    put_m_const              A243, @
+                    put_m_const              A241, @
+                    put_m_const              A239, @
+                    put_m_const              A237, @
+                    put_app                  A238, A237, #2
+                    set_m_const              minus
+                    set_index                #2
+                    put_m_const              A236, in
+                    put_app                  A237, A236, #1
+                    set_integer              1
+                    put_app                  A240, A239, #2
+                    set_value_t              A238
+                    set_value_t              A237
+                    put_app                  A242, A241, #2
+                    set_index                #3
+                    set_value_t              A240
+                    put_m_const              A240, @
+                    put_m_const              A238, @
+                    put_app                  A239, A238, #2
+                    set_m_const              times
+                    set_index                #2
+                    put_app                  A241, A240, #2
+                    set_value_t              A239
+                    set_index                #1
+                    put_app                  A244, A243, #2
+                    set_value_t              A242
+                    set_value_t              A241
+                    put_app                  A247, A246, #3
+                    set_value_t              A245
+                    set_index                #1
+                    set_value_t              A244
+                    put_lambda               A248, A247, #1
+                    put_app                  A250, A249, #1
+                    set_value_t              A248
+                    put_lambda               A251, A250, #1
+                    put_app                  A253, A252, #1
+                    set_value_t              A251
+                    put_lambda               A254, A253, #1
+                    pattern_unify_t          A254, A255
+                    finish_unify             
+                    proceed                  
+L12                 retry_me_else            #2, L13
+L31                 get_string               A1, <string #7>
+                    get_m_structure          A2, fixpt, #1
+                    unify_variable_t         A255
+                    put_m_const              A252, fn
+                    put_m_const              A249, fn
+                    put_m_const              A246, cond
+                    put_m_const              A244, @
+                    put_app                  A245, A244, #2
+                    set_m_const              nullp
+                    set_index                #2
+                    put_m_const              A243, @
+                    put_m_const              A241, @
+                    put_m_const              A239, @
+                    put_app                  A240, A239, #2
+                    set_m_const              car
+                    set_index                #2
+                    put_app                  A242, A241, #2
+                    set_m_const              cons
+                    set_value_t              A240
+                    put_m_const              A240, @
+                    put_m_const              A238, @
+                    put_m_const              A236, @
+                    put_app                  A237, A236, #2
+                    set_m_const              cdr
+                    set_index                #2
+                    put_app                  A239, A238, #2
+                    set_index                #3
+                    set_value_t              A237
+                    put_app                  A241, A240, #2
+                    set_value_t              A239
+                    set_index                #1
+                    put_app                  A244, A243, #2
+                    set_value_t              A242
+                    set_value_t              A241
+                    put_app                  A247, A246, #3
+                    set_value_t              A245
+                    set_index                #1
+                    set_value_t              A244
+                    put_lambda               A248, A247, #1
+                    put_app                  A250, A249, #1
+                    set_value_t              A248
+                    put_lambda               A251, A250, #1
+                    put_app                  A253, A252, #1
+                    set_value_t              A251
+                    put_lambda               A254, A253, #1
+                    pattern_unify_t          A254, A255
+                    finish_unify             
+                    proceed                  
+L13                 retry_me_else            #2, L14
+L32                 get_string               A1, <string #8>
+                    get_m_structure          A2, fixpt, #1
+                    unify_variable_t         A255
+                    put_m_const              A252, fn
+                    put_m_const              A249, fn
+                    put_m_const              A246, cond
+                    put_m_const              A244, @
+                    put_m_const              A242, @
+                    put_m_const              A240, in
+                    put_app                  A241, A240, #1
+                    set_integer              1
+                    put_app                  A243, A242, #2
+                    set_m_const              equal
+                    set_value_t              A241
+                    put_app                  A245, A244, #2
+                    set_value_t              A243
+                    set_index                #2
+                    put_m_const              A243, in
+                    put_app                  A244, A243, #1
+                    set_integer              1
+                    put_m_const              A242, cond
+                    put_m_const              A240, @
+                    put_m_const              A238, @
+                    put_app                  A239, A238, #2
+                    set_m_const              greater
+                    set_index                #1
+                    put_app                  A241, A240, #2
+                    set_value_t              A239
+                    set_index                #2
+                    put_m_const              A239, @
+                    put_m_const              A237, @
+                    put_app                  A238, A237, #2
+                    set_index                #3
+                    set_index                #1
+                    put_app                  A240, A239, #2
+                    set_value_t              A238
+                    set_index                #2
+                    put_m_const              A238, cond
+                    put_m_const              A236, @
+                    put_m_const              A234, @
+                    put_app                  A235, A234, #2
+                    set_m_const              equal
+                    set_index                #2
+                    put_app                  A237, A236, #2
+                    set_value_t              A235
+                    set_index                #1
+                    put_m_const              A235, @
+                    put_m_const              A233, @
+                    put_m_const              A231, @
+                    put_m_const              A229, @
+                    put_app                  A230, A229, #2
+                    set_m_const              minus
+                    set_index                #2
+                    put_app                  A232, A231, #2
+                    set_value_t              A230
+                    set_index                #1
+                    put_app                  A234, A233, #2
+                    set_index                #3
+                    set_value_t              A232
+                    put_app                  A236, A235, #2
+                    set_value_t              A234
+                    set_index                #1
+                    put_app                  A239, A238, #3
+                    set_value_t              A237
+                    set_index                #2
+                    set_value_t              A236
+                    put_app                  A243, A242, #3
+                    set_value_t              A241
+                    set_value_t              A240
+                    set_value_t              A239
+                    put_app                  A247, A246, #3
+                    set_value_t              A245
+                    set_value_t              A244
+                    set_value_t              A243
+                    put_lambda               A248, A247, #1
+                    put_app                  A250, A249, #1
+                    set_value_t              A248
+                    put_lambda               A251, A250, #1
+                    put_app                  A253, A252, #1
+                    set_value_t              A251
+                    put_lambda               A254, A253, #1
+                    pattern_unify_t          A254, A255
+                    finish_unify             
+                    proceed                  
+L14                 retry_me_else            #2, L15
+L33                 get_string               A1, <string #9>
+                    get_m_structure          A2, @, #2
+                    unify_variable_t         A255
+                    unify_variable_t         A254
+                    get_m_structure          A255, @, #2
+                    unify_m_constant         cons
+                    unify_variable_t         A255
+                    get_m_structure          A255, in, #1
+                    unify_integer            1
+                    get_m_structure          A254, in, #1
+                    unify_integer            2
+                    finish_unify             
+                    proceed                  
+L15                 retry_me_else            #2, L16
+L34                 get_string               A1, <string #10>
+                    get_m_structure          A2, @, #2
+                    unify_variable_t         A255
+                    unify_variable_t         A254
+                    get_m_structure          A255, @, #2
+                    unify_m_constant         plus
+                    unify_m_constant         empty
+                    get_m_structure          A254, in, #1
+                    unify_integer            1
+                    finish_unify             
+                    proceed                  
+L16                 retry_me_else            #2, L17
+L35                 get_string               A1, <string #11>
+                    get_m_structure          A2, cond, #3
+                    unify_m_constant         truth
+                    unify_variable_t         A255
+                    unify_m_constant         empty
+                    get_m_structure          A255, in, #1
+                    unify_integer            3
+                    finish_unify             
+                    proceed                  
+L17                 retry_me_else            #2, L18
+L36                 get_string               A1, <string #12>
+                    get_m_structure          A2, fn, #1
+                    unify_variable_t         A255
+                    put_m_const              A252, fn
+                    put_index                A250, #1
+                    put_lambda               A251, A250, #1
+                    put_app                  A253, A252, #1
+                    set_value_t              A251
+                    put_lambda               A254, A253, #1
+                    pattern_unify_t          A254, A255
+                    finish_unify             
+                    proceed                  
+L18                 retry_me_else            #2, L19
+L37                 get_string               A1, <string #13>
+                    get_m_structure          A2, cond, #3
+                    unify_m_constant         truth
+                    unify_variable_t         A255
+                    unify_variable_t         A254
+                    get_m_structure          A255, in, #1
+                    unify_integer            3
+                    get_m_structure          A254, in, #1
+                    unify_integer            5
+                    finish_unify             
+                    proceed                  
+L19                 retry_me_else            #2, L20
+L38                 get_string               A1, <string #14>
+                    get_m_structure          A2, @, #2
+                    unify_variable_t         A255
+                    unify_variable_t         A254
+                    get_m_structure          A255, fn, #1
+                    unify_variable_t         A255
+                    put_index                A252, #1
+                    put_lambda               A253, A252, #1
+                    pattern_unify_t          A253, A255
+                    get_m_structure          A254, fn, #1
+                    unify_variable_t         A255
+                    put_index                A253, #1
+                    put_lambda               A254, A253, #1
+                    pattern_unify_t          A254, A255
+                    finish_unify             
+                    proceed                  
+L20                 retry_me_else            #2, L21
+L39                 get_string               A1, <string #15>
+                    get_m_structure          A2, fn, #1
+                    unify_variable_t         A255
+                    put_index                A253, #1
+                    put_lambda               A254, A253, #1
+                    pattern_unify_t          A254, A255
+                    finish_unify             
+                    proceed                  
+L21                 retry_me_else            #2, L22
+L40                 get_string               A1, <string #16>
+                    get_m_structure          A2, fn, #1
+                    unify_variable_t         A255
+                    put_m_const              A252, fn
+                    put_index                A250, #2
+                    put_lambda               A251, A250, #1
+                    put_app                  A253, A252, #1
+                    set_value_t              A251
+                    put_lambda               A254, A253, #1
+                    pattern_unify_t          A254, A255
+                    finish_unify             
+                    proceed                  
+L22                 retry_me_else            #2, L23
+L41                 get_string               A1, <string #17>
+                    get_m_structure          A2, fn, #1
+                    unify_variable_t         A255
+                    put_m_const              A252, fn
+                    put_m_const              A249, fn
+                    put_m_const              A246, @
+                    put_m_const              A244, @
+                    put_app                  A245, A244, #2
+                    set_index                #3
+                    set_index                #1
+                    put_m_const              A243, @
+                    put_app                  A244, A243, #2
+                    set_index                #2
+                    set_index                #1
+                    put_app                  A247, A246, #2
+                    set_value_t              A245
+                    set_value_t              A244
+                    put_lambda               A248, A247, #1
+                    put_app                  A250, A249, #1
+                    set_value_t              A248
+                    put_lambda               A251, A250, #1
+                    put_app                  A253, A252, #1
+                    set_value_t              A251
+                    put_lambda               A254, A253, #1
+                    pattern_unify_t          A254, A255
+                    finish_unify             
+                    proceed                  
+L23                 trust_me                 #2
+L42                 get_string               A1, <string #18>
+                    get_m_structure          A2, fn, #1
+                    unify_variable_t         A255
+                    put_m_const              A252, fn
+                    put_m_const              A249, fn
+                    put_m_const              A246, @
+                    put_m_const              A244, @
+                    put_app                  A245, A244, #2
+                    set_index                #2
+                    set_index                #1
+                    put_app                  A247, A246, #2
+                    set_index                #3
+                    set_value_t              A245
+                    put_lambda               A248, A247, #1
+                    put_app                  A250, A249, #1
+                    set_value_t              A248
+                    put_lambda               A251, A250, #1
+                    put_app                  A253, A252, #1
+                    set_value_t              A251
+                    put_lambda               A254, A253, #1
+                    pattern_unify_t          A254, A255
+                    finish_unify             
+                    proceed                  
+L0                  try                      #2, L24
+                    retry                    #2, L25
+                    retry                    #2, L26
+                    retry                    #2, L27
+                    retry                    #2, L28
+                    retry                    #2, L29
+                    retry                    #2, L30
+                    retry                    #2, L31
+                    retry                    #2, L32
+                    retry                    #2, L33
+                    retry                    #2, L34
+                    retry                    #2, L35
+                    retry                    #2, L36
+                    retry                    #2, L37
+                    retry                    #2, L38
+                    retry                    #2, L39
+                    retry                    #2, L40
+                    retry                    #2, L41
+                    trust                    #2, L42
+L5                  switch_on_constant       #1, <hash #0>
+
+Global kind table:
+0: tm/0
+
+Local kind table:
+
+Type skeleton table:
+0: (string -> (tm -> o))
+1: ((tm -> tm) -> tm)
+2: tm
+3: (tm -> (tm -> tm))
+4: (int -> tm)
+5: (tm -> (tm -> (tm -> tm)))
+
+Global constant table: 
+0: prog (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #0
+1: fn (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #1
+2: plus (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #2
+3: @ (Infixl, precedence 6)
+    Env Size: 0, Type Skeleton: #3
+4: in (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #4
+5: cond (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #5
+6: equal (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #2
+7: fixpt (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #1
+8: zerop (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #2
+9: minus (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #2
+10: nullp (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #2
+11: empty (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #2
+12: cons (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #2
+13: car (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #2
+14: cdr (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #2
+15: false (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #2
+16: and (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #2
+17: consp (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #2
+18: truth (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #2
+19: times (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #2
+20: greater (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #2
+21: or (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #2
+
+Local constant table: 
+
+Hidden constant table: 
+
+String table:
+0: successor
+1: onep
+2: is_sym
+3: fib
+4: map
+5: mem
+6: fact
+7: app
+8: gcd
+9: ex1
+10: ex2
+11: ex3
+12: ex4
+13: ex5
+14: ex6
+15: i
+16: k
+17: s
+18: comp
+
+Implication Tables:
+
+Hash tables:
+0:
+    Table size: 1
+    Constants:
+    <str_constant> -> L0
+
+Module table:
+  Predicate definitions possibly extending previous ones: 1
+   prog
+  Exportdef predicates: 0
+  Local predicates: 0
+  Find function type: hash
+  In-core table size: 1
+   prog
+
+Accumulated tables:
+
+Imported tables:

@@ -1,0 +1,158 @@
+Disassembling from bytecode file: curry_transform.lpo
+Bytecode version: 2
+Module name: curry_transform
+
+LABEL               INSTRUCTION              OPERANDS
+
+L0                  fail                     
+                    try_me_else              #0, L0
+curry               get_m_structure          A1, fix, #1
+                    unify_variable_t         A255
+                    put_m_const              A252, abs
+                    put_variable_t           A1, A249
+                    put_m_const              A247, fst
+                    put_app                  A248, A247, #1
+                    set_index                #1
+                    put_m_const              A246, snd
+                    put_app                  A247, A246, #1
+                    set_index                #1
+                    put_m_const              A245, prp
+                    put_app                  A246, A245, #1
+                    set_index                #1
+                    put_m_const              A243, app
+                    put_m_const              A241, pr
+                    put_app                  A242, A241, #2
+                    set_index                #2
+                    set_index                #1
+                    put_app                  A244, A243, #2
+                    set_index                #4
+                    set_value_t              A242
+                    put_lambda               A245, A244, #2
+                    put_app                  A250, A249, #4
+                    set_value_t              A248
+                    set_value_t              A247
+                    set_value_t              A246
+                    set_value_t              A245
+                    put_lambda               A251, A250, #1
+                    put_app                  A253, A252, #1
+                    set_value_t              A251
+                    put_lambda               A254, A253, #1
+                    pattern_unify_t          A254, A255
+                    get_m_structure          A2, fix, #1
+                    unify_variable_t         A255
+                    put_m_const              A252, abs
+                    put_m_const              A249, abs
+                    globalize_t              A1
+                    put_m_const              A244, app
+                    put_m_const              A242, app
+                    put_app                  A243, A242, #2
+                    set_index                #5
+                    set_index                #2
+                    put_app                  A245, A244, #2
+                    set_value_t              A243
+                    set_index                #1
+                    put_lambda               A246, A245, #2
+                    put_app                  A247, A1, #4
+                    set_index                #2
+                    set_index                #1
+                    set_m_const              truth
+                    set_value_t              A246
+                    put_lambda               A248, A247, #1
+                    put_app                  A250, A249, #1
+                    set_value_t              A248
+                    put_lambda               A251, A250, #1
+                    put_app                  A253, A252, #1
+                    set_value_t              A251
+                    put_lambda               A254, A253, #1
+                    pattern_unify_t          A254, A255
+                    finish_unify             
+                    proceed                  
+
+Global kind table:
+0: tm/0
+
+Local kind table:
+
+Type skeleton table:
+0: (tm -> (tm -> o))
+1: ((tm -> tm) -> tm)
+2: (tm -> tm)
+3: (tm -> (tm -> tm))
+4: tm
+5: (tm -> (tm -> (tm -> tm)))
+6: (int -> tm)
+
+Global constant table: 
+0: curry (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #0
+1: fix (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #1
+2: abs (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #1
+3: fst (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #2
+4: snd (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #2
+5: prp (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #2
+6: app (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #3
+7: pr (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #3
+8: truth (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #4
+9: cond (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #5
+10: c (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #6
+11: false (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #4
+12: && (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #3
+13: plus (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #3
+14: minus (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #3
+15: times (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #3
+16: lss (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #3
+17: eq (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #3
+18: intp (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #2
+19: null (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #4
+20: cons (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #3
+21: hd (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #2
+22: tl (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #2
+23: nullp (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #2
+24: err (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #4
+
+Local constant table: 
+
+Hidden constant table: 
+
+String table:
+
+Implication Tables:
+
+Hash tables:
+
+Module table:
+  Predicate definitions possibly extending previous ones: 0
+  Exportdef predicates: 1
+   curry
+  Local predicates: 0
+  Find function type: hash
+  In-core table size: 1
+   curry
+
+Accumulated tables:
+
+Imported tables:
