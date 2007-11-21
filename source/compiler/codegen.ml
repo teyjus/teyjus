@@ -1063,29 +1063,32 @@ let rec genImpPointCode impPoints insts startLoc impGoals numImpPoints =
 (*  Collect local constants appearing in acc modules for instruction        *)
 (*  generation.                                                             *)
 (****************************************************************************)
-let collectLocalConstsInAccs accs =
-  let rec collectLocalConsts accConsts consts =
+let collectClosedConstsInAccs accs =
+  let rec collectClosedConsts accConsts consts =
     match accConsts with
       [] -> consts
     | (c::rest) ->
 	if (Absyn.isLocalConstant c) && not(List.memq c consts) then
-	  collectLocalConsts rest (c::consts)
-	else 
-	  collectLocalConsts rest consts
+	  collectClosedConsts rest (c::consts)
+	else (* global constants *)
+	  if (Absyn.getConstantExportDef c) then
+	    collectClosedConsts rest (c::consts)
+	  else
+	    collectClosedConsts rest consts
   in	  
 
-  let rec collectLocalConstsInAccsAux accs consts =
+  let rec collectClosedConstsInAccsAux accs consts =
     match accs with
       [] -> List.rev consts
     | (Absyn.AccumulatedModule(_, asig) :: rest) ->
 	let consts' = 
-	  collectLocalConsts (Absyn.getSignatureGlobalConstantsList asig) consts
+	  collectClosedConsts (Absyn.getSignatureGlobalConstantsList asig) consts
 	in
-	collectLocalConstsInAccsAux rest consts'
+	collectClosedConstsInAccsAux rest consts'
   in
 
   Clausegen.initAccConsts ();
-  let consts = collectLocalConstsInAccsAux accs [] in
+  let consts = collectClosedConstsInAccsAux accs [] in
   Clausegen.setAccConsts consts
 
   
@@ -1104,7 +1107,7 @@ let generateModuleCode amod =
 				 gconsts, lconsts, hconsts, skels, hskels, clauses) ->
       (* collect local constants appearing in acc modules for the use   *)
       (* generating instructions.                                       *)
-	 collectLocalConstsInAccs modaccs;
+	 collectClosedConstsInAccs modaccs;
       (* assign indexes to global and local kinds *)				   
 	  let (cgGKinds, cgLKinds) = assignKindIndex gkinds lkinds in
 	  (* 1) assign indexes to global, local and hidden constants;   *)
