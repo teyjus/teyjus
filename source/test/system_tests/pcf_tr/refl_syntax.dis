@@ -1,0 +1,280 @@
+Disassembling from bytecode file: refl_syntax.lpo
+Bytecode version: 2
+Module name: refl_syntax
+
+LABEL               INSTRUCTION              OPERANDS
+
+L23                 fail                     
+term                switch_on_reg            #1, L21, L22
+L21                 try                      #1, L22
+                    trust_ext                #1, #1
+                    try_me_else              #0, L23
+L22                 switch_on_term           L24, L25, L23, L24
+L24                 try_me_else              #1, L26
+L20                 allocate                 #2
+                    get_m_structure          A1, fn, #1
+                    unify_variable_t         A2
+                    finish_unify             
+                    incr_universe            
+                    set_univ_tag             Y1, <hidden const #0>
+                    push_impl_point          #1, <impl #0>
+                    put_app                  A1, A2, #1
+                    globalize_pt             Y1, A255
+                    set_value_t              A255
+                    head_normalize_t         A1
+                    call_name                #1, term
+                    pop_impl_point           
+                    decr_universe            
+                    deallocate               
+                    proceed                  
+L26                 retry_me_else            #1, L27
+L19                 allocate                 #2
+                    get_m_structure          A1, @, #2
+                    unify_variable_t         A1
+                    unify_variable_p         Y1
+                    finish_unify             
+                    head_normalize_t         A1
+                    call_name                #1, term
+                    put_value_p              Y1, A1
+                    head_normalize_t         A1
+                    deallocate               
+                    execute_name             term
+L27                 retry_me_else            #1, L28
+L18                 allocate                 #2
+                    get_m_structure          A1, fixpt, #1
+                    unify_variable_t         A2
+                    finish_unify             
+                    incr_universe            
+                    set_univ_tag             Y1, <hidden const #1>
+                    push_impl_point          #1, <impl #1>
+                    put_app                  A1, A2, #1
+                    globalize_pt             Y1, A255
+                    set_value_t              A255
+                    head_normalize_t         A1
+                    call_name                #1, term
+                    pop_impl_point           
+                    decr_universe            
+                    deallocate               
+                    proceed                  
+L28                 retry_me_else            #1, L29
+L17                 allocate                 #3
+                    get_m_structure          A1, cond, #3
+                    unify_variable_t         A1
+                    unify_variable_p         Y1
+                    unify_variable_p         Y2
+                    finish_unify             
+                    head_normalize_t         A1
+                    call_name                #2, term
+                    put_value_p              Y1, A1
+                    head_normalize_t         A1
+                    call_name                #2, term
+                    put_value_p              Y2, A1
+                    head_normalize_t         A1
+                    deallocate               
+                    execute_name             term
+L29                 retry_me_else            #1, L30
+L16                 get_m_structure          A1, in, #1
+                    unify_variable_t         A255
+                    finish_unify             
+                    proceed                  
+L30                 retry_me_else            #1, L31
+L15                 get_m_constant           A1, and
+                    finish_unify             
+                    proceed                  
+L31                 retry_me_else            #1, L32
+L14                 get_m_constant           A1, or
+                    finish_unify             
+                    proceed                  
+L32                 retry_me_else            #1, L33
+L13                 get_m_constant           A1, false
+                    finish_unify             
+                    proceed                  
+L33                 retry_me_else            #1, L34
+L12                 get_m_constant           A1, truth
+                    finish_unify             
+                    proceed                  
+L34                 retry_me_else            #1, L35
+L11                 get_m_constant           A1, car
+                    finish_unify             
+                    proceed                  
+L35                 retry_me_else            #1, L36
+L10                 get_m_constant           A1, cdr
+                    finish_unify             
+                    proceed                  
+L36                 retry_me_else            #1, L37
+L9                  get_m_constant           A1, cons
+                    finish_unify             
+                    proceed                  
+L37                 retry_me_else            #1, L38
+L8                  get_m_constant           A1, nullp
+                    finish_unify             
+                    proceed                  
+L38                 retry_me_else            #1, L39
+L7                  get_m_constant           A1, consp
+                    finish_unify             
+                    proceed                  
+L39                 retry_me_else            #1, L40
+L6                  get_m_constant           A1, empty
+                    finish_unify             
+                    proceed                  
+L40                 retry_me_else            #1, L41
+L5                  get_m_constant           A1, equal
+                    finish_unify             
+                    proceed                  
+L41                 retry_me_else            #1, L42
+L4                  get_m_constant           A1, greater
+                    finish_unify             
+                    proceed                  
+L42                 retry_me_else            #1, L43
+L3                  get_m_constant           A1, zerop
+                    finish_unify             
+                    proceed                  
+L43                 retry_me_else            #1, L44
+L2                  get_m_constant           A1, minus
+                    finish_unify             
+                    proceed                  
+L44                 retry_me_else            #1, L45
+L1                  get_m_constant           A1, plus
+                    finish_unify             
+                    proceed                  
+L45                 trust_me                 #1
+L0                  get_m_constant           A1, times
+                    finish_unify             
+                    proceed                  
+L25                 switch_on_constant       #21, <hash #0>
+term                switch_on_reg            #1, L46, L47
+L46                 try                      #1, L47
+                    trust_ext                #1, #1
+                    try_me_else              #0, L23
+L47                 init_variable_t          A2, Y1
+                    pattern_unify_t          A2, A1
+                    finish_unify             
+                    proceed                  
+term                switch_on_reg            #1, L48, L49
+L48                 try                      #1, L49
+                    trust_ext                #1, #1
+                    try_me_else              #0, L23
+L49                 init_variable_t          A2, Y1
+                    pattern_unify_t          A2, A1
+                    finish_unify             
+                    proceed                  
+
+Global kind table:
+0: tm/0
+
+Local kind table:
+
+Type skeleton table:
+0: (tm -> o)
+1: ((tm -> tm) -> tm)
+2: (tm -> (tm -> tm))
+3: (tm -> (tm -> (tm -> tm)))
+4: (int -> tm)
+5: tm
+
+Global constant table: 
+0: term (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #0
+1: fn (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #1
+2: @ (Infixl, precedence 6)
+    Env Size: 0, Type Skeleton: #2
+3: fixpt (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #1
+4: cond (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #3
+5: in (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #4
+6: and (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #5
+7: or (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #5
+8: false (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #5
+9: truth (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #5
+10: car (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #5
+11: cdr (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #5
+12: cons (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #5
+13: nullp (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #5
+14: consp (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #5
+15: empty (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #5
+16: equal (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #5
+17: greater (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #5
+18: zerop (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #5
+19: minus (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #5
+20: plus (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #5
+21: times (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #5
+
+Local constant table: 
+
+Hidden constant table: 
+0:  Type Skeleton: #5
+1:  Type Skeleton: #5
+
+String table:
+
+Implication Tables:
+0:
+  Predicate definitions possibly extending previous ones: 1
+   term
+  Find function type: hash
+  In-core table size: 1
+   term
+1:
+  Predicate definitions possibly extending previous ones: 1
+   term
+  Find function type: hash
+  In-core table size: 1
+   term
+
+Hash tables:
+0:
+    Table size: 21
+    Constants:
+    times -> L0
+    plus -> L1
+    minus -> L2
+    zerop -> L3
+    greater -> L4
+    equal -> L5
+    empty -> L6
+    consp -> L7
+    nullp -> L8
+    cons -> L9
+    cdr -> L10
+    car -> L11
+    truth -> L12
+    false -> L13
+    or -> L14
+    and -> L15
+    in -> L16
+    cond -> L17
+    fixpt -> L18
+    @ -> L19
+    fn -> L20
+
+Module table:
+  Predicate definitions possibly extending previous ones: 1
+   term
+  Exportdef predicates: 0
+  Local predicates: 0
+  Find function type: hash
+  In-core table size: 1
+   term
+
+Accumulated tables:
+
+Imported tables:
