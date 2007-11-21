@@ -745,9 +745,10 @@ and compareAccumConstants c1 c2 =
   let p = Absyn.getConstantPos c1 in
   let p' = Absyn.getConstantPos c2 in
     
+  (*
   let ed = Absyn.getConstantExportDef c1 in
   let ed' = Absyn.getConstantExportDef c2 in
-  
+  *)
   if not (checkFixity fix fix') then
     (Errormsg.error p ("constant already declared with fixity " ^
       (Absyn.string_of_fixity fix') ^
@@ -760,10 +761,10 @@ and compareAccumConstants c1 c2 =
   else if (skel <> skel') then
     (Errormsg.error p "constant already declared with different type";
     false)
-  else if ed && ed' then
+  (* else if ed && ed' then
     (Errormsg.error p ("constant declared as exportdef in multiple modules" ^
       (Errormsg.see p' "constant declaration"));
-    false)
+    false) *)
   else
     true
 (**********************************************************************
