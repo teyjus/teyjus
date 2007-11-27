@@ -473,6 +473,7 @@ and deOrifyUniversalGoal t arg1 uvs uvdefs andgoal wholegoal newclauses hcs =
   let uvs' = tsym :: uvs in
   let DeOrifyGoalResult(goals', fvs', uvdefs', hascut', newclauses', hcs') = 
 	deOrifyGoal body uvs' uvdefs None wholegoal newclauses hcs in
+
   let hcs'' = hc :: hcs' in
   let uvdefs'' = closeUniversalDefinitions tsym uvdefs' in 
   (* let (uvdefs'', newgoals) = closeUniversalDefinitions tsym uvdefs' goals' in *)
@@ -626,7 +627,7 @@ and deOrifyImplicationGoal clause goal uvs uvdefs andgoal wholegoal newclauses h
   let defuvs = !defuvs in
 
   let DeOrifyClauseResult(clauses', fvs', uvdefs', newclauses', hcs') = 
-    deOrifyClauses clauses [] uvs [] hcs in
+    deOrifyClauses clauses [] uvs newclauses hcs in
   let defuvs = addUVDefs defuvs uvdefs' in 
   
   let DeOrifyGoalResult(goals', fvs, uvdefs', hascut, newclauses'', hcs'') = 
@@ -648,6 +649,7 @@ and deOrifyImplicationGoal clause goal uvs uvdefs andgoal wholegoal newclauses h
     DeOrifyGoalResult([goal''], union fvs' fvs, uvdefs', hascut, newclauses'', hcs'')
   else
     DeOrifyGoalResult([], [], [], false, newclauses, hcs')
+
 
 (**********************************************************************
 *deOrifyAtomicGoal:
@@ -1046,7 +1048,7 @@ and translateClauses pmod amod =
   
   (*  Enter the hidden constants into the module  *)
   let amod' = setHiddenConstants amod hcs' in
-  let newclauses'' = getNewClauses newclauses' in
+  let newclauses'' = getNewClauses newclauses' in  
   (amod', List.map Parse.removeNestedAbstractions clauses', 
   List.map Parse.removeNestedAbstractions (List.concat newclauses''),
   getClosedDefs ())
