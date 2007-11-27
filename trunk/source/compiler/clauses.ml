@@ -648,7 +648,7 @@ and deOrifyImplicationGoal clause goal uvs uvdefs andgoal wholegoal newclauses h
     
     DeOrifyGoalResult([goal''], union fvs' fvs, uvdefs', hascut, newclauses'', hcs'')
   else
-    DeOrifyGoalResult([], [], [], false, newclauses, hcs')
+    DeOrifyGoalResult([], [], [], false, newclauses'', hcs')
 
 
 (**********************************************************************
