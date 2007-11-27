@@ -1,0 +1,211 @@
+Disassembling from bytecode file: refl_syntax.lpo
+Bytecode version: 2
+Module name: refl_syntax
+
+LABEL               INSTRUCTION              OPERANDS
+
+L13                 fail                     
+termp               switch_on_reg            #1, L11, L12
+L11                 try                      #1, L12
+                    trust_ext                #1, #1
+                    try_me_else              #0, L13
+L12                 switch_on_term           L14, L15, L13, L14
+L14                 try_me_else              #1, L16
+L3                  get_m_constant           A1, a
+                    finish_unify             
+                    proceed                  
+L16                 retry_me_else            #1, L17
+L2                  get_m_constant           A1, b
+                    finish_unify             
+                    proceed                  
+L17                 retry_me_else            #1, L18
+L1                  get_m_constant           A1, c
+                    finish_unify             
+                    proceed                  
+L18                 trust_me                 #1
+L0                  get_m_structure          A1, f, #1
+                    unify_variable_t         A1
+                    finish_unify             
+                    head_normalize_t         A1
+                    execute_name             termp
+L15                 switch_on_constant       #4, <hash #0>
+                    try_me_else              #0, L13
+atom                switch_on_term           L19, L20, L13, L19
+L19                 try_me_else              #1, L21
+L5                  allocate                 #2
+                    get_m_structure          A1, path, #2
+                    unify_variable_t         A1
+                    unify_variable_p         Y1
+                    finish_unify             
+                    head_normalize_t         A1
+                    call_name                #1, termp
+                    put_value_p              Y1, A1
+                    head_normalize_t         A1
+                    deallocate               
+                    execute_name             termp
+L21                 trust_me                 #1
+L4                  allocate                 #2
+                    get_m_structure          A1, adj, #2
+                    unify_variable_t         A1
+                    unify_variable_p         Y1
+                    finish_unify             
+                    head_normalize_t         A1
+                    call_name                #1, termp
+                    put_value_p              Y1, A1
+                    head_normalize_t         A1
+                    deallocate               
+                    execute_name             termp
+L20                 switch_on_constant       #2, <hash #1>
+quant_free          try_me_else              #1, L22
+                    switch_on_term           L23, L24, L13, L23
+L23                 try_me_else              #1, L25
+L7                  get_m_constant           A1, perp
+                    finish_unify             
+                    proceed                  
+L25                 trust_me                 #1
+L6                  get_m_constant           A1, tru
+                    finish_unify             
+                    proceed                  
+L24                 switch_on_constant       #2, <hash #2>
+L22                 retry_me_else            #1, L26
+                    head_normalize_t         A1
+                    execute_link_only        atom
+L26                 trust_me                 #1
+                    switch_on_term           L27, L28, L13, L27
+L27                 try_me_else              #1, L29
+L10                 allocate                 #2
+                    get_m_structure          A1, and, #2
+                    unify_variable_t         A1
+                    unify_variable_p         Y1
+                    finish_unify             
+                    head_normalize_t         A1
+                    call_link_only           #1, quant_free
+                    put_value_p              Y1, A1
+                    head_normalize_t         A1
+                    deallocate               
+                    execute_link_only        quant_free
+L29                 retry_me_else            #1, L30
+L9                  allocate                 #2
+                    get_m_structure          A1, or, #2
+                    unify_variable_t         A1
+                    unify_variable_p         Y1
+                    finish_unify             
+                    head_normalize_t         A1
+                    call_link_only           #1, quant_free
+                    put_value_p              Y1, A1
+                    head_normalize_t         A1
+                    deallocate               
+                    execute_link_only        quant_free
+L30                 trust_me                 #1
+L8                  allocate                 #2
+                    get_m_structure          A1, imp, #2
+                    unify_variable_t         A1
+                    unify_variable_p         Y1
+                    finish_unify             
+                    head_normalize_t         A1
+                    call_link_only           #1, quant_free
+                    put_value_p              Y1, A1
+                    head_normalize_t         A1
+                    deallocate               
+                    execute_link_only        quant_free
+L28                 switch_on_constant       #3, <hash #3>
+
+Global kind table:
+0: form/0
+1: term/0
+
+Local kind table:
+
+Type skeleton table:
+0: (term -> o)
+1: (form -> o)
+2: term
+3: (term -> term)
+4: (term -> (term -> form))
+5: form
+6: (form -> (form -> form))
+7: ((term -> form) -> form)
+
+Global constant table: 
+0: termp (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #0
+1: atom (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #1
+2: quant_free (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #1
+3: a (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #2
+4: b (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #2
+5: c (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #2
+6: f (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #3
+7: path (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #4
+8: adj (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #4
+9: perp (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #5
+10: tru (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #5
+11: and (Infixr, precedence 120)
+    Env Size: 0, Type Skeleton: #6
+12: or (Infixr, precedence 120)
+    Env Size: 0, Type Skeleton: #6
+13: imp (Infixr, precedence 110)
+    Env Size: 0, Type Skeleton: #6
+14: all (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #7
+15: some (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #7
+
+Local constant table: 
+
+Hidden constant table: 
+
+String table:
+
+Implication Tables:
+
+Hash tables:
+0:
+    Table size: 4
+    Constants:
+    f -> L0
+    c -> L1
+    b -> L2
+    a -> L3
+1:
+    Table size: 2
+    Constants:
+    adj -> L4
+    path -> L5
+2:
+    Table size: 2
+    Constants:
+    tru -> L6
+    perp -> L7
+3:
+    Table size: 3
+    Constants:
+    imp -> L8
+    or -> L9
+    and -> L10
+
+Module table:
+  Predicate definitions possibly extending previous ones: 1
+   termp
+  Exportdef predicates: 2
+   atom
+   quant_free
+  Local predicates: 0
+  Find function type: hash
+  In-core table size: 3
+   termp
+   atom
+   quant_free
+
+Accumulated tables:
+
+Imported tables:
