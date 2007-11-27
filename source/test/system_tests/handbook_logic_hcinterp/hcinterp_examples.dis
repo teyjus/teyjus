@@ -1,0 +1,200 @@
+Disassembling from bytecode file: hcinterp_examples.lpo
+Bytecode version: 2
+Module name: hcinterp_examples
+
+LABEL               INSTRUCTION              OPERANDS
+
+L0                  fail                     
+                    try_me_else              #0, L0
+<local const #1>    get_list                 A1
+                    unify_variable_t         A255
+                    unify_variable_t         A254
+                    get_m_structure          A255, adj, #2
+                    unify_m_constant         a
+                    unify_m_constant         b
+                    get_list                 A254
+                    unify_variable_t         A255
+                    unify_variable_t         A254
+                    get_m_structure          A255, adj, #2
+                    unify_m_constant         b
+                    unify_m_constant         c
+                    get_list                 A254
+                    unify_variable_t         A255
+                    unify_variable_t         A254
+                    get_m_structure          A255, adj, #2
+                    unify_m_constant         c
+                    unify_variable_t         A255
+                    get_m_structure          A255, f, #1
+                    unify_m_constant         c
+                    get_list                 A254
+                    unify_variable_t         A255
+                    unify_variable_t         A254
+                    get_m_structure          A255, all, #1
+                    unify_variable_t         A255
+                    put_m_const              A251, all
+                    put_m_const              A248, imp
+                    put_m_const              A246, adj
+                    put_app                  A247, A246, #2
+                    set_index                #2
+                    set_index                #1
+                    put_m_const              A245, path
+                    put_app                  A246, A245, #2
+                    set_index                #2
+                    set_index                #1
+                    put_app                  A249, A248, #2
+                    set_value_t              A247
+                    set_value_t              A246
+                    put_lambda               A250, A249, #1
+                    put_app                  A252, A251, #1
+                    set_value_t              A250
+                    put_lambda               A253, A252, #1
+                    pattern_unify_t          A253, A255
+                    get_list                 A254
+                    unify_variable_t         A255
+                    unify_nil                
+                    get_m_structure          A255, all, #1
+                    unify_variable_t         A255
+                    put_m_const              A252, all
+                    put_m_const              A249, all
+                    put_m_const              A246, imp
+                    put_m_const              A244, and
+                    put_m_const              A242, adj
+                    put_app                  A243, A242, #2
+                    set_index                #3
+                    set_index                #2
+                    put_m_const              A241, path
+                    put_app                  A242, A241, #2
+                    set_index                #2
+                    set_index                #1
+                    put_app                  A245, A244, #2
+                    set_value_t              A243
+                    set_value_t              A242
+                    put_m_const              A243, path
+                    put_app                  A244, A243, #2
+                    set_index                #3
+                    set_index                #1
+                    put_app                  A247, A246, #2
+                    set_value_t              A245
+                    set_value_t              A244
+                    put_lambda               A248, A247, #1
+                    put_app                  A250, A249, #1
+                    set_value_t              A248
+                    put_lambda               A251, A250, #1
+                    put_app                  A253, A252, #1
+                    set_value_t              A251
+                    put_lambda               A254, A253, #1
+                    pattern_unify_t          A254, A255
+                    finish_unify             
+                    proceed                  
+pathfroma           switch_on_reg            #1, L1, L2
+L1                  try                      #1, L2
+                    trust_ext                #1, #1
+                    try_me_else              #0, L0
+L2                  allocate                 #3
+                    get_variable_p           Y1, A1
+                    put_variable_p           Y2, A1
+                    call_link_only           #2, <local const #1>
+                    put_unsafe_value         Y2, A1
+                    head_normalize_t         A1
+                    put_m_const              A255, path
+                    put_app                  A2, A255, #2
+                    set_m_const              a
+                    globalize_pt             Y1, A255
+                    set_value_t              A255
+                    deallocate               
+                    execute_link_only        <local const #0>
+
+Global kind table:
+0: term/0
+1: form/0
+
+Local kind table:
+
+Type skeleton table:
+0: ((list form) -> (form -> o))
+1: ((list form) -> o)
+2: (term -> (term -> form))
+3: term
+4: (term -> term)
+5: ((term -> form) -> form)
+6: (form -> (form -> form))
+7: (term -> o)
+8: form
+
+Global constant table: 
+0: adj (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #2
+1: a (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #3
+2: b (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #3
+3: c (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #3
+4: f (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #4
+5: all (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #5
+6: imp (Infixr, precedence 110)
+    Env Size: 0, Type Skeleton: #6
+7: path (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #2
+8: and (Infixr, precedence 120)
+    Env Size: 0, Type Skeleton: #6
+9: pathfroma (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #7
+10: perp (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #8
+11: tru (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #8
+12: or (Infixr, precedence 120)
+    Env Size: 0, Type Skeleton: #6
+13: some (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #5
+
+Local constant table: 
+0:  (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #0
+1:  (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #1
+
+Hidden constant table: 
+
+String table:
+
+Implication Tables:
+
+Hash tables:
+
+Module table:
+  Predicate definitions possibly extending previous ones: 1
+   pathfroma
+  Exportdef predicates: 0
+  Local predicates: 1
+   <local const #1>
+  Find function type: hash
+  In-core table size: 2
+   <local const #1>
+   pathfroma
+
+Accumulated tables:
+0: hc_interp
+    Kind renamings:
+    term -> term
+    form -> form
+    Constant renamings:
+    hc_interp -> <local const #0>
+    a -> a
+    b -> b
+    c -> c
+    f -> f
+    path -> path
+    adj -> adj
+    perp -> perp
+    tru -> tru
+    and -> and
+    or -> or
+    imp -> imp
+    all -> all
+    some -> some
+
+Imported tables:
