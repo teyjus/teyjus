@@ -35,7 +35,6 @@
 
 //temp
 #include <stdio.h>
-#include "print.h"
 
 /* This variable records the number of query variables */
 int PRINT_numQueryVars;

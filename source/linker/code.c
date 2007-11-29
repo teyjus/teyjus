@@ -480,8 +480,110 @@ void MakeCall(CodeInd from, int arity, CodeInd to)
   }
 }
 
+CodeInd GetSwitchOnRegL1(Byte* code,CodeInd inst_addr)
+{
+  CodeInd tmp = *(CodeInd*)(code+inst_addr+sizeof(CodeInd));
+  ASSERT(tmp<LK_VECTOR_Size(&Code),"Invalid L1 in switch_on_reg")
+  return tmp;
+}
+
+CodeInd GetSwitchOnRegL2(Byte* code,CodeInd inst_addr)
+{
+  CodeInd tmp = *(CodeInd*)(code+inst_addr+2*sizeof(CodeInd));
+  ASSERT(tmp<LK_VECTOR_Size(&Code),"Invalid L2 in switch_on_reg")
+  return tmp;
+}
+
+void SetSwitchOnRegL2(Byte* code,CodeInd inst_addr,CodeInd value)
+{
+  *(CodeInd*)(code+inst_addr+2*sizeof(CodeInd)) = value;
+}
+
+CodeInd GetSwitchOnTermLV(Byte* code,CodeInd inst_addr)
+{
+  CodeInd tmp = *(CodeInd*)(code+inst_addr+sizeof(CodeInd));
+  ASSERT(tmp<LK_VECTOR_Size(&Code),"Invalid LV in switch_on_term")
+    return tmp;
+}
+
+void SetSwitchOnTermLV(Byte* code,CodeInd inst_addr,CodeInd value)
+{
+  *(CodeInd*)(code+inst_addr+sizeof(CodeInd)) = value;
+}
+
+CodeInd GetSwitchOnTermLC(Byte* code,CodeInd inst_addr)
+{
+  CodeInd tmp = *(CodeInd*)(code+inst_addr+2*sizeof(CodeInd));
+  ASSERT(tmp<LK_VECTOR_Size(&Code),"Invalid LC in switch_on_term")
+    return tmp;
+}
+
+void SetSwitchOnTermLC(Byte* code,CodeInd inst_addr,CodeInd value)
+{
+  *(CodeInd*)(code+inst_addr+2*sizeof(CodeInd)) = value;
+}
+
+CodeInd GetSwitchOnTermLL(Byte* code,CodeInd inst_addr)
+{
+  CodeInd tmp = *(CodeInd*)(code+inst_addr+3*sizeof(CodeInd));
+  ASSERT(tmp<LK_VECTOR_Size(&Code),"Invalid LL in switch_on_term")
+    return tmp;
+}
+
+void SetSwitchOnTermLL(Byte* code,CodeInd inst_addr,CodeInd value)
+{
+  *(CodeInd*)(code+inst_addr+3*sizeof(CodeInd)) = value;
+}
+
+CodeInd GetSwitchOnTermLB(Byte* code,CodeInd inst_addr)
+{
+  CodeInd tmp = *(CodeInd*)(code+inst_addr+4*sizeof(CodeInd));
+  ASSERT(tmp<LK_VECTOR_Size(&Code),"Invalid LB in switch_on_term")
+    return tmp;
+}
+
+void SetSwitchOnTermLB(Byte* code,CodeInd inst_addr,CodeInd value)
+{
+  *(CodeInd*)(code+inst_addr+4*sizeof(CodeInd)) = value;
+}
+
+void SetTryL1(Byte* code,CodeInd inst_addr,CodeInd value)
+{
+  *(CodeInd*)(code+inst_addr+sizeof(CodeInd)) = value;
+}
+
+CodeInd GetTryMeElseL1(Byte* code,CodeInd inst_addr)
+{
+  CodeInd tmp = *(CodeInd*)(code+inst_addr+sizeof(CodeInd));
+  ASSERT(tmp<LK_VECTOR_Size(&Code),"Invalid L1 in try_me_else")
+    return tmp;
+}
+
+void SetTryMeElseL1(Byte* code,CodeInd inst_addr,CodeInd value)
+{
+  *(CodeInd*)(code+inst_addr+sizeof(CodeInd)) = value;
+}
+
+CodeInd GetTryElseL2(Byte* code,CodeInd inst_addr)
+{
+  CodeInd tmp = *(CodeInd*)(code+inst_addr+2*sizeof(CodeInd));
+  ASSERT(tmp<LK_VECTOR_Size(&Code),"Invalid L2 in try_else")
+  return tmp;
+}
+
+void SetTryElseL2(Byte* code,CodeInd inst_addr, CodeInd value)
+{
+  *(CodeInd*)(code+inst_addr+2*sizeof(CodeInd)) = value;
+}
+
+void SetTrustL1(Byte* code,CodeInd inst_addr, CodeInd value)
+{
+  *(CodeInd*)(code+inst_addr+sizeof(CodeInd)) = value;
+}
+
 CodeInd MergeSubSequence(CodeInd younger, CodeInd older, Byte n)
 {
+  debug("Merging subsequences %lx & %lx\n",younger,older);
   CodeInd c,d;
   Byte* code=(Byte*)LK_VECTOR_GetPtr(&Code,0);
   int trysize=INSTR_instrSize(try);
@@ -495,7 +597,7 @@ CodeInd MergeSubSequence(CodeInd younger, CodeInd older, Byte n)
     if(code[c]==try)
       c+=trysize;
     else //code[c]==try_else
-      c=*(CodeInd*)(code+c+2*INSTR_LLen);
+      c=GetTryElseL2(code,c);
     
     //Get c to the trust instruction for the sequence.
     while(code[c]!=trust)
@@ -507,14 +609,12 @@ CodeInd MergeSubSequence(CodeInd younger, CodeInd older, Byte n)
       else
       {
         ASSERT(code[c]==retry_else,"Unexpected subsequence instruction")
-        c=*(CodeInd*)(code+c+2*INSTR_LLen);
+        c=GetTryElseL2(code,c);
       }
     }
     
     //Convert this into a retry else.
     code[c]=retry_else;
-    //Move c to the address of the else label.
-    c+=2*INSTR_LLen;
     
     //Check for plurality of the older subsequence.
     if(code[older]==try||code[older]==try_else)
@@ -524,18 +624,17 @@ CodeInd MergeSubSequence(CodeInd younger, CodeInd older, Byte n)
         code[older]=retry;
       else //code[older]==try_else
         code[older]=retry_else;
-      //Fix label
-      *(CodeInd*)(code+c)=older;
+      SetTryElseL2(code,c,older);
     }
     else
     {
       //Older is singular, so make a new block for the choice point info.
       d=LK_VECTOR_Grow(&Code,trustsize);
       code=(Byte*)LK_VECTOR_GetPtr(&Code,0);
-      *(CodeInd*)(code+c)=d;
+      SetTryElseL2(code,c,d);
       code[d]=trust;
       code[d+1]=n;
-      *(CodeInd*)(code+d+INSTR_LLen)=older;
+      SetTrustL1(code,d,older);
     }
     return younger;
   }
@@ -556,7 +655,7 @@ CodeInd MergeSubSequence(CodeInd younger, CodeInd older, Byte n)
       code[c]=try_else;
       code[c+1]=n;
       *(CodeInd*)(code+c+INSTR_LLen)=younger;
-      *(CodeInd*)(code+c+2*INSTR_LLen)=older;
+      SetTryElseL2(code,c,older);
       return c;
     }
     else
@@ -566,10 +665,10 @@ CodeInd MergeSubSequence(CodeInd younger, CodeInd older, Byte n)
       code=LK_VECTOR_GetPtr(&Code,0);
       code[c]=try;
       code[c+1]=n;
-      *(CodeInd*)(code+c+INSTR_LLen)=younger;
+      SetTryL1(code,c,younger);
       code[c+trysize]=trust;
       code[c+trysize+1]=n;
-      *(CodeInd*)(code+c+trysize+INSTR_LLen)=older;
+      SetTrustL1(code,c+trysize,older);
       return c;
     }
   }
@@ -587,10 +686,7 @@ int TidySwitchOnReg(CodeInd* pyounger)
     return -1;
   
   //Get predicate arity.
-  //Set c to L1 of switch_on_reg.
-  c=*(CodeInd*)(code+younger+sizeof(CodeInd));
-  
-  //Assert that the opcode at c is try.
+  c=GetSwitchOnRegL1(code,younger);
   ASSERT(code[c]==try,"Expected \"try\" at branch L1 after switch_on_reg.")
   
   //Set n to the arity of the predicate.
@@ -601,13 +697,13 @@ int TidySwitchOnReg(CodeInd* pyounger)
   code[c+2*sizeof(CodeInd)]=fail;
   
   //Get procedure address
-  //Set c to L2 of switch_on_reg
-  c=*(CodeInd*)(code+younger+2*sizeof(CodeInd));
+  c=GetSwitchOnRegL2(code,younger);
   //Delete switch_on_reg
   code[younger]=fail;
   code[younger+sizeof(CodeInd)]=fail;
   code[younger+2*sizeof(CodeInd)]=fail;
   //return the start address of the definition.
+  debug("Setting pyounger %lx\n",c);
   *pyounger=c;
   return n;
 }
@@ -615,31 +711,25 @@ int TidySwitchOnReg(CodeInd* pyounger)
 //Append definition at older to definition at younger.
 CodeInd MergeDefs(CodeInd older, CodeInd younger)
 {
-  CodeInd c=-1;
   debug("Merging defs at %lx and %lx\n",older,younger);
+  ASSERT(older<LK_VECTOR_Size(&Code),"Invalid argument to MergeDefs")
+  ASSERT(younger<LK_VECTOR_Size(&Code),"Invalid argument to MergeDefs")
   Byte* code=LK_VECTOR_GetPtr(&Code,0);
-  //Assert switch_on_reg for younger.
   ASSERT(code[younger]==switch_on_reg,"Expected \"switch_on_reg\" at beginning of younger definition.")
   
   int n = TidySwitchOnReg(&younger);
   
-  //Check for switch_on_reg for older
   if(code[older]==switch_on_reg)
   {
-    //Set c to older's L2
-    c=*(CodeInd*)(code+older+2*sizeof(CodeInd));
-    //Call MergeSequence on the sequences
+    CodeInd c=GetSwitchOnRegL2(code,older);
     younger=MergeSequence(younger,c,n);
-    //Set older's L2
-    code=LK_VECTOR_GetPtr(&Code,0);
-    *(CodeInd*)(code+older+2*sizeof(CodeInd))=younger;
-    //Get the address of the try for the older definition.
-    c=*(CodeInd*)(code+older+sizeof(CodeInd));
     
-    //Assert that the opcode at c is try.
+    code=LK_VECTOR_GetPtr(&Code,0);
+    SetSwitchOnRegL2(code,older,younger);
+    
+    c=GetSwitchOnRegL1(code,older);
     ASSERT(code[c]==try,"Expected \"try\" at branch L1 after switch_on_reg.")
-    //Fix the try clause.
-    *(CodeInd*)(code+c+sizeof(CodeInd))=younger;
+    SetTryL1(code,c,younger);
     return older;
   }
   else
@@ -651,6 +741,9 @@ CodeInd MergeDefs(CodeInd older, CodeInd younger)
 //Append definition at older to definition at younger.
 CodeInd MergeSequence(CodeInd younger, CodeInd older, Byte n)
 {
+  debug("Merging sequences %lx & %lx\n",younger,older);
+  ASSERT(younger<LK_VECTOR_Size(&Code),"Invalid older in MergeSequence")
+  ASSERT(older<LK_VECTOR_Size(&Code),"Invalid younger in MergeSequence")
   CodeInd c;
   Byte* code=LK_VECTOR_GetPtr(&Code,0);
   int tmesize=INSTR_instrSize(try_me_else);
@@ -659,9 +752,12 @@ CodeInd MergeSequence(CodeInd younger, CodeInd older, Byte n)
   if(code[younger]==try_me_else)
   {
     //Younger is plural, set c to jump to last clause
-    c=*(CodeInd*)(code+younger+INSTR_LLen);
-    while(code[c]==retry_me_else)
-      c=*(CodeInd*)(code+c+INSTR_LLen);
+    c=GetTryMeElseL1(code,younger);
+    ASSERT(c<LK_VECTOR_Size(&Code),"Invalid L1 in try_me_else")
+    while(code[c]==retry_me_else){
+      c=GetTryMeElseL1(code,c);
+      ASSERT(c<LK_VECTOR_Size(&Code),"Invalid L1 in retry_me_else")
+    }
     ASSERT(code[c]==trust_me,"Expected trust at end of definition.");
     
     //Check plurality of older definition.
@@ -674,14 +770,15 @@ CodeInd MergeSequence(CodeInd younger, CodeInd older, Byte n)
       if((code[c+tmesize]==switch_on_term)&&(code[older+tmesize]==switch_on_term))
       {
         //Bridge over the indexing of the older
-        *(CodeInd*)(code+c+INSTR_LLen)=*(CodeInd*)(code+older+INSTR_LLen);
+        CodeInd tmp = GetTryMeElseL1(code,older);
+        SetTryMeElseL1(code,c,tmp);
         MergeTerm(c+tmesize,older+tmesize,n);
         return younger;
       }
       else
       {
         //Append whole older definition.
-        *(CodeInd*)(code+c+INSTR_LLen)=older;
+        SetTryMeElseL1(code,c,older);
         //Change first older clause to continuation
         code[older]=retry_me_else;
         return younger;
@@ -704,7 +801,7 @@ CodeInd MergeSequence(CodeInd younger, CodeInd older, Byte n)
         code[older]=trust_me;
         code[older+1]=n;
         code[c]=retry_me_else;
-        *(CodeInd*)(code+c+INSTR_LLen)=older;
+        SetTryMeElseL1(code,c,older);
         return younger;
       }
     }
@@ -723,15 +820,15 @@ CodeInd MergeSequence(CodeInd younger, CodeInd older, Byte n)
       if((code[younger+tmesize]==switch_on_term)&&(code[older+tmesize]==switch_on_term))
       {
         //Bridge over first old clause.
-        *(CodeInd*)(code+younger+INSTR_LLen)=*(CodeInd*)(code+older+INSTR_LLen);
-        //Merge indexing.
+        CodeInd tmp = GetTryMeElseL1(code,older);
+        SetTryMeElseL1(code,younger,tmp);
         MergeTerm(younger+tmesize,older+tmesize,n);
         return younger;
       }
       else
       {
         //Append old definition whole
-        *(CodeInd*)(code+younger+INSTR_LLen)=older;
+        SetTryMeElseL1(code,younger,older);
         code[older]=retry_me_else;
         return younger;
       }
@@ -752,7 +849,7 @@ CodeInd MergeSequence(CodeInd younger, CodeInd older, Byte n)
         older-=tmesize;
         code[younger]=try_me_else;
         code[younger+1]=n;
-        *(CodeInd*)(code+younger+INSTR_LLen)=older;
+        SetTryMeElseL1(code,younger,older);
         code[older]=trust_me;
         code[older+1]=n;
         return younger;
@@ -763,24 +860,23 @@ CodeInd MergeSequence(CodeInd younger, CodeInd older, Byte n)
 
 void MergeTerm(CodeInd younger, CodeInd older,Byte n)
 {
+  debug("Merging terms %lx & %lx\n",younger,older);
   Byte* code=(Byte*)LK_VECTOR_GetPtr(&Code,0);
   
   CodeInd c,d;//Holder variables for the younger and older labels, respectively.
   //Combine variable subsequences.
-  younger+=INSTR_LLen;
-  older+=INSTR_LLen;
-  c=MergeSequence(*(CodeInd*)(code+younger),*(CodeInd*)(code+older),n);
+  
+  c=GetSwitchOnTermLV(code,younger);
+  d=GetSwitchOnTermLV(code,older);
+  d=MergeSequence(c,d,n);
   //Reload code location.
   code=(Byte*)LK_VECTOR_GetPtr(&Code,0);
-  //Set V label
-  *(CodeInd*)(code+younger)=c;
+  SetSwitchOnTermLV(code,younger,d);
   
   //Combine constant subsequences.
   Byte tabsize;
-  younger+=INSTR_LLen;
-  older+=INSTR_LLen;
-  c=*(CodeInd*)(code+younger);
-  d=*(CodeInd*)(code+older);
+  c=GetSwitchOnTermLC(code,younger);
+  d=GetSwitchOnTermLC(code,older);
   
   //Check if older subsequence exists.
   if(code[d]==switch_on_constant)
@@ -796,15 +892,13 @@ void MergeTerm(CodeInd younger, CodeInd older,Byte n)
     else
     {
       //Use only the existing older case.
-      *(CodeInd*)(code+younger)=d;
+      SetSwitchOnTermLC(code,younger,d);
     }
   }
   
   //Combine List subsequences.
-  younger+=INSTR_LLen;
-  older+=INSTR_LLen;
-  c=*(CodeInd*)(code+younger);
-  d=*(CodeInd*)(code+older);
+  c=GetSwitchOnTermLL(code,younger);
+  d=GetSwitchOnTermLL(code,older);
   //Check older case
   if(code[d]!=fail)
   {
@@ -815,14 +909,12 @@ void MergeTerm(CodeInd younger, CodeInd older,Byte n)
       //Reload code variable.
       code=(Byte*)LK_VECTOR_GetPtr(&Code,0);
     }
-    *(CodeInd*)(code+younger)=d;
+    SetSwitchOnTermLL(code,younger,d);
   }
   
   //Combine Bvr subsequences
-  younger+=INSTR_LLen;
-  older+=INSTR_LLen;
-  c=*(CodeInd*)(code+younger);
-  d=*(CodeInd*)(code+older);
+  c=GetSwitchOnTermLB(code,younger);
+  d=GetSwitchOnTermLB(code,older);
   if(code[d]==switch_on_bvar)
   {
     if(code[c]==switch_on_bvar)
@@ -835,7 +927,7 @@ void MergeTerm(CodeInd younger, CodeInd older,Byte n)
     }
     else
     {
-      *(CodeInd*)(code+younger)=d;
+      SetSwitchOnTermLB(code,younger,d);
     }
   }
 }
