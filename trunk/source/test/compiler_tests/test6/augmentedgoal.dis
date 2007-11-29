@@ -4,7 +4,7 @@ Module name: augmentedgoal
 
 LABEL               INSTRUCTION              OPERANDS
 
-L13                 fail                     
+L10                 fail                     
 foo                 switch_on_reg            #1, L0, L1
 L0                  try                      #2, L1
                     trust_ext                #2, #1
@@ -74,7 +74,7 @@ L5                  retry_me_else            #2, L6
                     decr_universe            
                     deallocate               
                     proceed                  
-L6                  trust_me                 #2
+L6                  retry_me_else            #2, L7
                     allocate                 #4
                     get_variable_p           Y1, A1
                     get_variable_p           Y2, A2
@@ -88,7 +88,34 @@ L6                  trust_me                 #2
                     pop_impl_point           
                     deallocate               
                     proceed                  
-<hidden const #2>   try_me_else              #2, L7
+L7                  trust_me                 #2
+                    allocate                 #6
+                    get_variable_p           Y1, A1
+                    get_variable_p           Y2, A2
+                    put_variable_p           Y3, A1
+                    put_variable_p           Y5, A2
+                    call_name                #5, foo
+                    tag_variable             Y4
+                    push_impl_point          #4, <impl #6>
+                    put_value_p              Y1, A1
+                    head_normalize_t         A1
+                    put_value_p              Y2, A2
+                    head_normalize_t         A2
+                    call_name                #4, foo
+                    pop_impl_point           
+                    deallocate               
+                    proceed                  
+foo                 switch_on_reg            #1, L8, L9
+L8                  try                      #2, L9
+                    trust_ext                #2, #1
+                    try_me_else              #0, L10
+L9                  init_variable_t          A3, Y3
+                    init_variable_t          A4, Y4
+                    pattern_unify_t          A3, A1
+                    pattern_unify_t          A4, A2
+                    finish_unify             
+                    proceed                  
+<hidden const #2>   try_me_else              #2, L11
                     init_variable_t          A3, Y1
                     init_variable_t          A4, Y2
                     init_variable_t          A5, Y3
@@ -100,7 +127,7 @@ L6                  trust_me                 #2
                     put_value_t              A5, A2
                     head_normalize_t         A2
                     execute_name             foo
-L7                  trust_me                 #2
+L11                 trust_me                 #2
                     init_variable_t          A3, Y1
                     init_variable_t          A4, Y3
                     pattern_unify_t          A3, A1
@@ -111,10 +138,10 @@ L7                  trust_me                 #2
                     put_value_t              A4, A2
                     head_normalize_t         A2
                     execute_name             foo
-foo                 switch_on_reg            #1, L8, L9
-L8                  try                      #2, L9
+foo                 switch_on_reg            #1, L12, L13
+L12                 try                      #2, L13
                     trust_ext                #2, #1
-L9                  try_me_else              #2, L10
+L13                 try_me_else              #2, L14
                     init_variable_t          A3, Y2
                     init_variable_t          A4, Y1
                     pattern_unify_t          A3, A1
@@ -125,7 +152,7 @@ L9                  try_me_else              #2, L10
                     put_value_t              A4, A2
                     head_normalize_t         A2
                     execute_name             foo
-L10                 trust_me                 #2
+L14                 trust_me                 #2
                     init_variable_t          A3, Y2
                     init_variable_t          A4, Y1
                     pattern_unify_t          A3, A1
@@ -136,21 +163,21 @@ L10                 trust_me                 #2
                     put_value_t              A4, A2
                     head_normalize_t         A2
                     execute_name             foo
-foo                 switch_on_reg            #1, L11, L12
-L11                 try                      #2, L12
+foo                 switch_on_reg            #1, L15, L16
+L15                 try                      #2, L16
                     trust_ext                #2, #1
-                    try_me_else              #0, L13
-L12                 init_variable_t          A3, Y2
+                    try_me_else              #0, L10
+L16                 init_variable_t          A3, Y2
                     init_variable_t          A4, Y1
                     pattern_unify_t          A3, A1
                     pattern_unify_t          A4, A2
                     finish_unify             
                     proceed                  
-foo                 switch_on_reg            #1, L14, L15
-L14                 try                      #2, L15
+foo                 switch_on_reg            #1, L17, L18
+L17                 try                      #2, L18
                     trust_ext                #2, #1
-                    try_me_else              #0, L13
-L15                 init_variable_t          A3, Y1
+                    try_me_else              #0, L10
+L18                 init_variable_t          A3, Y1
                     init_variable_t          A4, Y3
                     init_variable_t          A5, Y2
                     pattern_unify_t          A3, A1
@@ -161,36 +188,36 @@ L15                 init_variable_t          A3, Y1
                     put_value_t              A5, A2
                     head_normalize_t         A2
                     execute_name             foo
-foo                 switch_on_reg            #1, L16, L17
-L16                 try                      #2, L17
-                    trust_ext                #2, #1
-L17                 try_me_else              #2, L18
-                    init_variable_t          A3, Y2
-                    init_variable_t          A4, Y1
-                    pattern_unify_t          A3, A1
-                    pattern_unify_t          A4, A2
-                    finish_unify             
-                    put_value_t              A3, A1
-                    head_normalize_t         A1
-                    put_value_t              A4, A2
-                    head_normalize_t         A2
-                    execute_name             foo
-L18                 trust_me                 #2
-                    init_variable_t          A3, Y2
-                    init_variable_t          A4, Y1
-                    pattern_unify_t          A3, A1
-                    pattern_unify_t          A4, A2
-                    finish_unify             
-                    put_value_t              A3, A1
-                    head_normalize_t         A1
-                    put_value_t              A4, A2
-                    head_normalize_t         A2
-                    execute_name             foo
 foo                 switch_on_reg            #1, L19, L20
 L19                 try                      #2, L20
                     trust_ext                #2, #1
-                    try_me_else              #0, L13
-L20                 init_variable_t          A3, Y2
+L20                 try_me_else              #2, L21
+                    init_variable_t          A3, Y2
+                    init_variable_t          A4, Y1
+                    pattern_unify_t          A3, A1
+                    pattern_unify_t          A4, A2
+                    finish_unify             
+                    put_value_t              A3, A1
+                    head_normalize_t         A1
+                    put_value_t              A4, A2
+                    head_normalize_t         A2
+                    execute_name             foo
+L21                 trust_me                 #2
+                    init_variable_t          A3, Y2
+                    init_variable_t          A4, Y1
+                    pattern_unify_t          A3, A1
+                    pattern_unify_t          A4, A2
+                    finish_unify             
+                    put_value_t              A3, A1
+                    head_normalize_t         A1
+                    put_value_t              A4, A2
+                    head_normalize_t         A2
+                    execute_name             foo
+foo                 switch_on_reg            #1, L22, L23
+L22                 try                      #2, L23
+                    trust_ext                #2, #1
+                    try_me_else              #0, L10
+L23                 init_variable_t          A3, Y2
                     init_variable_t          A4, Y1
                     pattern_unify_t          A3, A1
                     pattern_unify_t          A4, A2
@@ -256,6 +283,12 @@ Implication Tables:
   Find function type: hash
   In-core table size: 1
    <hidden const #2>
+6:
+  Predicate definitions possibly extending previous ones: 1
+   foo
+  Find function type: hash
+  In-core table size: 1
+   foo
 
 Hash tables:
 

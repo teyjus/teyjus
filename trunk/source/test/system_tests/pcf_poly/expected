@@ -1788,7 +1788,7 @@ L149                trust_me                 #3
                     try_me_else              #0, L150
 <local const #17>   allocate                 #2
                     put_value_t              A1, A4
-                    put_string               A1, <string #19>
+                    put_string               A1, <string #20>
                     call_builtin             #1, #28
                     put_value_t              A4, A1
                     head_normalize_t         A1
@@ -1797,7 +1797,7 @@ L149                trust_me                 #3
                     put_value_p              Y1, A1
                     head_normalize_t         A1
                     call_builtin             #1, #28
-                    put_string               A1, <string #20>
+                    put_string               A1, <string #19>
                     call_builtin             #1, #28
                     fail                     
                     fail                     
@@ -1816,7 +1816,7 @@ L151                try_me_else              #3, L152
                     allocate                 #3
                     get_variable_p           Y1, A1
                     get_variable_p           Y2, A2
-                    put_string               A1, <string #21>
+                    put_string               A1, <string #22>
                     call_builtin             #2, #28
                     put_value_t              A3, A2
                     put_value_p              Y2, A1
@@ -1826,12 +1826,12 @@ L151                try_me_else              #3, L152
                     put_value_t              A2, A1
                     head_normalize_t         A1
                     call_builtin             #2, #28
-                    put_string               A1, <string #20>
+                    put_string               A1, <string #19>
                     call_builtin             #2, #28
                     put_value_p              Y2, A1
                     head_normalize_t         A1
                     call_builtin             #2, #0
-                    put_string               A1, <string #22>
+                    put_string               A1, <string #21>
                     call_builtin             #2, #28
                     put_value_p              Y2, A1
                     head_normalize_t         A1
@@ -1841,7 +1841,7 @@ L151                try_me_else              #3, L152
                     put_value_p              Y1, A1
                     head_normalize_t         A1
                     call_builtin             #2, #28
-                    put_string               A1, <string #20>
+                    put_string               A1, <string #19>
                     deallocate               
                     builtin                  #28
 L152                trust_me                 #3
@@ -1857,7 +1857,7 @@ L152                trust_me                 #3
                     put_value_t              A4, A1
                     head_normalize_t         A1
                     call_builtin             #0, #28
-                    put_string               A1, <string #20>
+                    put_string               A1, <string #19>
                     call_builtin             #0, #28
                     fail                     
 
@@ -2056,11 +2056,11 @@ String table:
 16: k
 17: s
 18: comp
-19: >> 
-20: 
+19: 
 
-21: >Entering 
-22: >Success  
+20: >> 
+21: >Success  
+22: >Entering 
 23: >Leaving  
 
 Implication Tables:
