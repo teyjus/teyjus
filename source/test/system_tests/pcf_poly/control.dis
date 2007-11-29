@@ -40,7 +40,7 @@ L6                  try                      #1, L7
                     try_me_else              #0, L5
 L7                  allocate                 #2
                     put_value_t              A1, A4
-                    put_string               A1, <string #0>
+                    put_string               A1, <string #1>
                     call_builtin             #1, #28
                     put_value_t              A4, A1
                     head_normalize_t         A1
@@ -49,7 +49,7 @@ L7                  allocate                 #2
                     put_value_p              Y1, A1
                     head_normalize_t         A1
                     call_builtin             #1, #28
-                    put_string               A1, <string #1>
+                    put_string               A1, <string #0>
                     call_builtin             #1, #28
                     fail                     
 spi                 switch_on_reg            #4, L8, L9
@@ -65,7 +65,7 @@ L10                 try_me_else              #3, L11
                     allocate                 #3
                     get_variable_p           Y1, A1
                     get_variable_p           Y2, A2
-                    put_string               A1, <string #2>
+                    put_string               A1, <string #3>
                     call_builtin             #2, #28
                     put_value_t              A3, A2
                     put_value_p              Y2, A1
@@ -75,12 +75,12 @@ L10                 try_me_else              #3, L11
                     put_value_t              A2, A1
                     head_normalize_t         A1
                     call_builtin             #2, #28
-                    put_string               A1, <string #1>
+                    put_string               A1, <string #0>
                     call_builtin             #2, #28
                     put_value_p              Y2, A1
                     head_normalize_t         A1
                     call_builtin             #2, #0
-                    put_string               A1, <string #3>
+                    put_string               A1, <string #2>
                     call_builtin             #2, #28
                     put_value_p              Y2, A1
                     head_normalize_t         A1
@@ -90,7 +90,7 @@ L10                 try_me_else              #3, L11
                     put_value_p              Y1, A1
                     head_normalize_t         A1
                     call_builtin             #2, #28
-                    put_string               A1, <string #1>
+                    put_string               A1, <string #0>
                     deallocate               
                     builtin                  #28
 L11                 trust_me                 #3
@@ -106,7 +106,7 @@ L11                 trust_me                 #3
                     put_value_t              A4, A1
                     head_normalize_t         A1
                     call_builtin             #0, #28
-                    put_string               A1, <string #1>
+                    put_string               A1, <string #0>
                     call_builtin             #0, #28
                     fail                     
 
@@ -133,11 +133,11 @@ Local constant table:
 Hidden constant table: 
 
 String table:
-0: >> 
-1: 
+0: 
 
-2: >Entering 
-3: >Success  
+1: >> 
+2: >Success  
+3: >Entering 
 4: >Leaving  
 
 Implication Tables:
