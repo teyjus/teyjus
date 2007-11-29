@@ -84,6 +84,7 @@ int HashTabSearch(HashTab_t* HashTab, ConstInd x)
 
 Byte MergeHashTabs(HashTabInd a, HashTabInd b,Byte n)
 {
+  debug("Merging HashTabs %d and %d.\n",a,b);
   HashTab_t* pa=(HashTab_t*)LK_VECTOR_GetPtr(&HashTabs,a);
   HashTab_t* pb=(HashTab_t*)LK_VECTOR_GetPtr(&HashTabs,b);
   

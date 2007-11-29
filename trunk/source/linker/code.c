@@ -199,7 +199,7 @@ void LoadCode(int fd, struct Module_st* CMData)
   {
     j=i;
     opcode=code[j++]=LK_FILE_GET1(fd);
-    debug("\t%lx:%lx:[%x]%s\n",lseek(fd,0,SEEK_CUR)-1,i,opcode,INSTR_instrName(opcode));
+    debug("\t%lx:%lx:[%x]%s\t",lseek(fd,0,SEEK_CUR)-1,i,opcode,INSTR_instrName(opcode));
     if(opcode==call_link_only)
     {
       code[j]=LK_FILE_GET1(fd);
@@ -234,6 +234,7 @@ void LoadCode(int fd, struct Module_st* CMData)
         case INSTR_SEG:
           LK_FILE_GET1(fd);//Consume dummy argument
           *(Byte*)(code+j)=CMData->SegmentID;
+          debug("ID:%d\t",CMData->SegmentID);
           j+=sizeof(Byte);
           break;
         
@@ -243,6 +244,7 @@ void LoadCode(int fd, struct Module_st* CMData)
         case INSTR_I1:
         case INSTR_CE:
           *(Byte*)(code+j)=LK_FILE_GET1(fd);
+          debug("%d\t",*(Byte*)(code+j));
           j+=sizeof(Byte);
           break;
 
@@ -253,51 +255,61 @@ void LoadCode(int fd, struct Module_st* CMData)
           
         case INSTR_C:
           *(TwoBytes*)(code+j)=PackConstInd(GetConstInd(fd,CMData));
+          debug("C:%d\t",*(TwoBytes*)(code+j));
           j+=sizeof(TwoBytes);
           break;
           
         case INSTR_K:
           *(TwoBytes*)(code+j)=PackKindInd(GetKindInd(fd,CMData));
+          debug("K:%d\t",*(TwoBytes*)(code+j));
           j+=sizeof(TwoBytes);
           break;
           
         case INSTR_MT:
           *(ImportTabInd*)(code+j)=GetImportTabInd(fd,CMData);
+          debug("IT:%d\t",*(ImportTabInd*)(code+j));
           j+=sizeof(ImportTabInd);
           break;
           
         case INSTR_IT:
           *(ImplGoalInd*)(code+j)=GetImplGoalInd(fd,CMData);
+          debug("IG:%d\t",*(ImplGoalInd*)(code+j));
           j+=sizeof(ImplGoalInd);
           break;
           
         case INSTR_HT:
           *(HashTabInd*)(code+j)=GetHashTabInd(fd,CMData);
+          debug("HT:%d\t",*(HashTabInd*)(code+j));
           j+=sizeof(HashTabInd);
           break;
           
         case INSTR_BVT:
           *(BvrTabInd*)(code+j)=GetBvrTabInd(fd,CMData);
+          debug("BT:%d\t",*(BvrTabInd*)(code+j));
           j+=sizeof(BvrTabInd);
           break;
           
         case INSTR_S:
           *(StringInd*)(code+j)=GetStringInd(fd,CMData);
+          debug("S:%d\t",*(StringInd*)(code+j));
           j+=sizeof(StringInd);
           break;
         
         case INSTR_L:
           *(CodeInd*)(code+j)=GetCodeInd(fd,CMData);
+          debug("L:%d\t",*(CodeInd*)(code+j));
           j+=sizeof(CodeInd);
           break;
           
         case INSTR_I:
           *(INT4*)(code+j)=LK_FILE_GET4(fd);
+          debug("I:%d\t",*(INT4*)(code+j));
           j+=sizeof(INT4);
           break;
 
         case INSTR_F:
           *(INT4*)(code+j)=GetFloat(fd);
+          debug("F:%d\t",*(INT4*)(code+j));
           j+=sizeof(INT4);
           break;
           
@@ -311,6 +323,7 @@ void LoadCode(int fd, struct Module_st* CMData)
       argid++;
     }
     while(opType[argid]!=INSTR_X);
+    debug("\n");
     i += INSTR_instrSize(opcode);
   }
   debug("NOWD -> %d[%d,%d]\n",166,(*(ConstInd*)(code+166)).gl_flag,(*(ConstInd*)(code+166)).index);
@@ -499,6 +512,18 @@ void SetSwitchOnRegL2(Byte* code,CodeInd inst_addr,CodeInd value)
   *(CodeInd*)(code+inst_addr+2*sizeof(CodeInd)) = value;
 }
 
+void DeleteSwitchOnReg(Byte* code,CodeInd inst_addr)
+{
+  code[inst_addr]=fail;
+  code[inst_addr+sizeof(CodeInd)]=fail;
+  code[inst_addr+2*sizeof(CodeInd)]=fail;
+}
+
+void DeleteTrustExt(Byte* code, CodeInd inst_addr)
+{
+  code[inst_addr]=fail;
+}
+
 CodeInd GetSwitchOnTermLV(Byte* code,CodeInd inst_addr)
 {
   CodeInd tmp = *(CodeInd*)(code+inst_addr+sizeof(CodeInd));
@@ -542,6 +567,15 @@ CodeInd GetSwitchOnTermLB(Byte* code,CodeInd inst_addr)
     return tmp;
 }
 
+void DeleteSwitchOnTerm(Byte* code,CodeInd inst_addr)
+{
+  code[inst_addr]=fail;
+  code[inst_addr+sizeof(CodeInd)]=fail;
+  code[inst_addr+2*sizeof(CodeInd)]=fail;
+  code[inst_addr+3*sizeof(CodeInd)]=fail;
+  code[inst_addr+4*sizeof(CodeInd)]=fail;
+}
+
 void SetSwitchOnTermLB(Byte* code,CodeInd inst_addr,CodeInd value)
 {
   *(CodeInd*)(code+inst_addr+4*sizeof(CodeInd)) = value;
@@ -550,6 +584,12 @@ void SetSwitchOnTermLB(Byte* code,CodeInd inst_addr,CodeInd value)
 void SetTryL1(Byte* code,CodeInd inst_addr,CodeInd value)
 {
   *(CodeInd*)(code+inst_addr+sizeof(CodeInd)) = value;
+}
+
+void DeleteTry(Byte* code,CodeInd inst_addr)
+{
+  code[inst_addr]=fail;
+  code[inst_addr+sizeof(CodeInd)]=fail;
 }
 
 CodeInd GetTryMeElseL1(Byte* code,CodeInd inst_addr)
@@ -576,9 +616,26 @@ void SetTryElseL2(Byte* code,CodeInd inst_addr, CodeInd value)
   *(CodeInd*)(code+inst_addr+2*sizeof(CodeInd)) = value;
 }
 
+void DeleteTryMeElse(Byte* code,CodeInd inst_addr)
+{
+  code[inst_addr]=fail;
+  code[inst_addr+sizeof(CodeInd)]=fail;
+}
+
 void SetTrustL1(Byte* code,CodeInd inst_addr, CodeInd value)
 {
   *(CodeInd*)(code+inst_addr+sizeof(CodeInd)) = value;
+}
+
+HashTabInd GetSwitchOnConstantHT(Byte* code, CodeInd inst_addr)
+{
+  return *(HashTabInd*)(code+inst_addr+sizeof(CodeInd));
+}
+
+void DeleteSwitchOnConstant(Byte* code,CodeInd inst_addr)
+{
+  code[inst_addr]=fail;
+  code[inst_addr+sizeof(CodeInd)]=fail;
 }
 
 CodeInd MergeSubSequence(CodeInd younger, CodeInd older, Byte n)
@@ -691,17 +748,12 @@ int TidySwitchOnReg(CodeInd* pyounger)
   
   //Set n to the arity of the predicate.
   n=code[c+1];
-  //Change the try -> trust_ext block to fails.
-  code[c]=fail;
-  code[c+sizeof(CodeInd)]=fail;
-  code[c+2*sizeof(CodeInd)]=fail;
+  DeleteTry(code,c);
+  DeleteTrustExt(code,c+INSTR_instrSize(try));
   
   //Get procedure address
   c=GetSwitchOnRegL2(code,younger);
-  //Delete switch_on_reg
-  code[younger]=fail;
-  code[younger+sizeof(CodeInd)]=fail;
-  code[younger+2*sizeof(CodeInd)]=fail;
+  DeleteSwitchOnReg(code,younger);
   //return the start address of the definition.
   debug("Setting pyounger %lx\n",c);
   *pyounger=c;
@@ -772,6 +824,7 @@ CodeInd MergeSequence(CodeInd younger, CodeInd older, Byte n)
         //Bridge over the indexing of the older
         CodeInd tmp = GetTryMeElseL1(code,older);
         SetTryMeElseL1(code,c,tmp);
+        DeleteTryMeElse(code,older);
         MergeTerm(c+tmesize,older+tmesize,n);
         return younger;
       }
@@ -822,6 +875,7 @@ CodeInd MergeSequence(CodeInd younger, CodeInd older, Byte n)
         //Bridge over first old clause.
         CodeInd tmp = GetTryMeElseL1(code,older);
         SetTryMeElseL1(code,younger,tmp);
+        DeleteTryMeElse(code,older);
         MergeTerm(younger+tmesize,older+tmesize,n);
         return younger;
       }
@@ -884,7 +938,10 @@ void MergeTerm(CodeInd younger, CodeInd older,Byte n)
     //Check if younger case exists.
     if(code[c]==switch_on_constant)
     {
-      tabsize=MergeHashTabs(*(HashTabInd*)(code+c+2),*(HashTabInd*)(code+d+2),n);
+      HashTabInd youngHT = GetSwitchOnConstantHT(code,c);
+      HashTabInd oldHT = GetSwitchOnConstantHT(code,d);
+      DeleteSwitchOnConstant(code,d);
+      tabsize=MergeHashTabs(youngHT,oldHT,n);
       code=(Byte*)LK_VECTOR_GetPtr(&Code,0);
       //Update table size.
       code[c+1]=tabsize;
@@ -930,4 +987,5 @@ void MergeTerm(CodeInd younger, CodeInd older,Byte n)
       SetSwitchOnTermLB(code,younger,d);
     }
   }
+  DeleteSwitchOnTerm(code,older);
 }
