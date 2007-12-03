@@ -125,23 +125,23 @@ let inClosedDefs const impterm =
 (**************************************************************************)
 let rec transType tyExp =
   match tyExp with 
-	Absyn.TypeVarType(typeVarInfo) -> 
-	  (* it is assumed the typeVarInfo here must take form of BindableTypeVar*)
-	  (match (!typeVarInfo) with 
-		Absyn.BindableTypeVar(binding) ->
-		  if Option.isNone (!binding) then (*actually a free var *)
-			let tyVarData =
-			  match gListFind tyExp tyVars with
-				None -> (*not encountered yet *)
-				  let varData = Absyn.makeNewTypeVariableData () in
-				  gListAdd tyExp varData tyVars; (* add into tyVars *)
-				  varData
-			  | Some(varData) -> varData
-			in
-			Absyn.makeNewTypeVariable tyVarData
-		  else (transType (Option.get (!binding))) (* a type reference *)
-	  | _ -> Errormsg.impossible 
-			   Errormsg.none "transType: invalid type expression")
+    Absyn.TypeVarType(typeVarInfo) -> 
+      (* it is assumed the typeVarInfo here must take form of BindableTypeVar*)
+      (match (!typeVarInfo) with 
+	Absyn.BindableTypeVar(binding) ->
+	  if Option.isNone (!binding) then (*actually a free var *)
+	    let tyVarData =
+	      match gListFind tyExp tyVars with
+		None -> (*not encountered yet *)
+		  let varData = Absyn.makeNewTypeVariableData () in
+		  gListAdd tyExp varData tyVars; (* add into tyVars *)
+		  varData
+	      | Some(varData) -> varData
+	    in
+	    Absyn.makeNewTypeVariable tyVarData
+	  else (transType (Option.get (!binding))) (* a type reference *)
+      | _ -> Errormsg.impossible 
+	    Errormsg.none "transType: invalid type expression")
   | Absyn.ArrowType(arg, target) ->
 	  Absyn.ArrowType(transType arg, transType target)
   | Absyn.ApplicationType(kind, args) ->
@@ -197,8 +197,7 @@ and transTermStr s =
 (* by type reduction.                                                     *)
 (**************************************************************************)
 and transTermConst c tyenv =
- 
-  (*  a general list function needed to truncated type environments here *)
+  (*  a general list function needed to truncate type environments here *)
   let rec trunclist l n = 
 	if n = 0 then []
     else 
@@ -213,17 +212,18 @@ and transTermConst c tyenv =
 	match tyenv with
 	  [] -> List.rev newtyenv 
 	| (ty :: rest) ->
-		if Array.get skeletonNeededness index then
-		  trimTypeEnvironment rest (index + 1) ((transType ty) :: newtyenv)
-		else
-		  trimTypeEnvironment rest (index + 1) newtyenv
+	    if Array.get skeletonNeededness index then
+	      trimTypeEnvironment rest (index + 1) ((transType ty) :: newtyenv)
+	    else
+	      trimTypeEnvironment rest (index + 1) newtyenv
   in
   if (Absyn.isPervasiveConstant c) then
-	Absyn.ConstantTerm(c, trunclist tyenv (Absyn.getConstantTypeEnvSize false c),
-					   false, Errormsg.none)
+    Absyn.ConstantTerm(c, List.map transType 
+				   (trunclist tyenv (Absyn.getConstantTypeEnvSize false c)),
+		       false, Errormsg.none)
   else
-	Absyn.ConstantTerm(c, trimTypeEnvironment tyenv 0 [], false, Errormsg.none)
-
+    Absyn.ConstantTerm(c, trimTypeEnvironment tyenv 0 [], false, Errormsg.none)
+      
 (**************************************************************************)
 (* transform variables:                                                   *)
 (* The variable could be quantified in the following three situations:    *)
@@ -518,13 +518,13 @@ and processGoal gltm =
 (**************************************************************************)
 and processAtomicGoal gltm head args arity =
   match head with
-	Absyn.FreeVarTerm(Absyn.NamedFreeVar(_), _, _) -> (* free var head *)
-	  Absyn.AtomicGoal(Pervasive.solveConstant, 1, 1, [(transTerm [] gltm)],[])
+    Absyn.FreeVarTerm(Absyn.NamedFreeVar(_), _, _) -> (* free var head *)
+      Absyn.AtomicGoal(Pervasive.solveConstant, 1, 1, [(transTerm [] gltm)],[])
   | Absyn.ConstantTerm(pred, tyenv, _, _) ->
-	  Absyn.AtomicGoal(pred, arity + (Absyn.getConstantTypeEnvSize false pred), arity,
-					   List.map (transTerm []) args, List.map transType tyenv)
+      Absyn.AtomicGoal(pred, arity + (Absyn.getConstantTypeEnvSize false pred), arity,
+		       List.map (transTerm []) args, List.map transType tyenv)
   | _ -> Errormsg.impossible Errormsg.none "processAtomicGoal: invalid pred"
-
+	
 
 (***************************************************************************)
 (* process and goal:                                                       *)
