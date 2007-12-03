@@ -105,7 +105,7 @@ type pmodule =
       psymbol list * psymbol list * psymbol list
   | Signature of string * pconstant list * pconstant list *
       pconstant list * pkind list *
-      ptypeabbrev list * pfixity list * psymbol list
+      ptypeabbrev list * pfixity list * psymbol list * psymbol list
 
 val printPreAbsyn : pmodule -> out_channel -> unit
 

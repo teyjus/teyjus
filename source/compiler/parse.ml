@@ -246,7 +246,8 @@ let rec translateClause term amodule =
   (*  Remove all overloaded operators.  *)
   let _ = Errormsg.log Errormsg.none "Parse.translateClause: Removing overloads..." in
   let term'' = removeOverloads term' in
-  let _ = Errormsg.log Errormsg.none "Parse.translateClause: Removed overloads." in
+  let _ = Errormsg.log Errormsg.none
+    ("Parse.translateClause: Removed overloads: " ^ (Absyn.string_of_term_ast term'')) in
   
   (*  Ensure that the term is valid and is of the correct type. *)                        
   if term'' = Absyn.errorTerm then
@@ -1169,13 +1170,43 @@ and makeBinaryApply = fun f (arg1 : ptterm) (arg2 : ptterm) ->
 *removeOverloads:
 **********************************************************************)
 and removeOverloads term =
+  let removeTypeSymbolOverloads ti =
+    let replace r =
+      if Option.isSome r then
+        Some (Types.replaceTypeSetType (Option.get r))
+      else
+        r
+    in
+    match ti with
+        Absyn.ImplicitVar(s,c,b,tor) ->
+          let _ = tor := replace !tor in
+          ti
+      | Absyn.BoundVar(s,c,b,tor) ->
+          let _ = tor := replace !tor in
+          ti
+      | Absyn.AnonymousImplicitVar(s,c,b,tor) ->
+          let _ = tor := replace !tor in
+          ti
+  in
+
   match term with
     Absyn.IntTerm(_) -> term
   | Absyn.RealTerm(_) -> term
   | Absyn.StringTerm(_) -> term
-  | Absyn.FreeVarTerm(_) -> term
-  | Absyn.BoundVarTerm(_) -> term
-  
+  | Absyn.FreeVarTerm(Absyn.NamedFreeVar(tsym), b, p) ->
+      let tsym' = removeTypeSymbolOverloads tsym in
+      Absyn.FreeVarTerm(Absyn.NamedFreeVar(tsym'), b, p)
+  | Absyn.FreeVarTerm(_) ->
+      (Errormsg.impossible Errormsg.none
+        "Parse.removeOverloads: invalid free variable term";
+      term)
+  | Absyn.BoundVarTerm(Absyn.NamedBoundVar(tsym), b, p) ->
+      let tsym' = removeTypeSymbolOverloads tsym in
+      Absyn.BoundVarTerm(Absyn.NamedBoundVar(tsym'), b, p)
+  | Absyn.BoundVarTerm(_) ->
+      (Errormsg.impossible Errormsg.none
+        "Parse.removeOverloads: invalid bound variable term";
+      term)
   | Absyn.AbstractionTerm(Absyn.NestedAbstraction(t, body), b, p) ->
       let body' = removeOverloads body in
       Absyn.AbstractionTerm(Absyn.NestedAbstraction(t, body'), b, p)

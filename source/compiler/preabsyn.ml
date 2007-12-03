@@ -74,7 +74,7 @@ type pmodule =
       psymbol list * psymbol list * psymbol list
   | Signature of string * pconstant list * pconstant list *
       pconstant list * pkind list *
-      ptypeabbrev list * pfixity list * psymbol list
+      ptypeabbrev list * pfixity list * psymbol list * psymbol list
 
 let string_of_pos pos = Errormsg.string_of_pos pos
 
@@ -226,7 +226,7 @@ let printPreAbsyn m out =
           output_line "Fixities:" ;
           output_list string_of_fixity fixities
             
-      | Signature(name, gconstants, _,_, gkinds, tabbrevs, fixities, accumsig) ->
+      | Signature(name, gconstants, _,_, gkinds, tabbrevs, fixities, accumsig, usig) ->
           output_line ("Signature: " ^ name) ;
           output_line "Constants:" ;
           output_list string_of_constant gconstants ;

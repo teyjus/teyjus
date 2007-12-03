@@ -122,7 +122,8 @@ let rec newHead fvs =
   else
     let (args, argtys) = argumentsAndTypes fvs in
     let ty = Absyn.makeArrowType (Absyn.makeKindType Pervasive.kbool) argtys in
-    let tymol = Types.skeletonizeType(ty) in
+    let _ = Errormsg.log Errormsg.none ("Clauses.newHead: type: " ^ (Absyn.string_of_type_ast ty)) in
+    let tymol = Types.skeletonizeType ty in
     let env = (Types.getMoleculeEnvironment tymol) in
     let c = Absyn.makeAnonymousConstant (List.length env) in
     let t = Absyn.ConstantTerm(c, env, false, Errormsg.none) in
@@ -1020,6 +1021,7 @@ and translateClauses pmod amod =
     let clause =
       Parse.translateClause preterm amod in
     
+    let _ = Errormsg.log Errormsg.none ("Clauses.translateClause: " ^ (Absyn.string_of_term_ast clause)) in
     let uvdefs = ref [] in
     let clauses' = normalizeClause clause [] [] uvdefs false in
     let DeOrifyClauseResult(clauses', _, _, newclauses', hcs') = 

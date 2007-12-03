@@ -396,6 +396,30 @@ let rec dereferenceType ty =
   | _ -> ty
 
 (* string_of_type                    *)
+and string_of_type_ast ty =
+  let rec print' = function
+      t::[] -> (string_of_type_ast t)
+    | t::ts -> (string_of_type_ast t) ^ " " ^ (print' ts)
+    | [] -> ""
+  in
+  let ty' = dereferenceType ty in
+  match ty' with
+      ArrowType(t1, t2) -> "(" ^ (string_of_type_ast t1) ^ " -> " ^ (string_of_type_ast t2) ^ ")"
+    | TypeVarType(r) ->
+        let i : int = (Obj.magic r) in
+        "'" ^ (string_of_int i)
+    | ApplicationType(kind, tlist) ->
+        if (List.length tlist) > 0 then
+          "(" ^ (string_of_kind kind) ^ " " ^ (print' tlist) ^ ")"
+        else
+          (string_of_kind kind)
+    | SkeletonVarType(i) -> "SkeletonVarType(" ^ (string_of_int !i) ^ ")"
+    | TypeSetType(d, tl, _) ->
+        (match !tl with
+          [t] -> "TypeSet(" ^ string_of_type_ast t ^ ")"
+        | _ -> "TypeSet(" ^ string_of_type_ast d ^ ")")
+    | ErrorType -> "ErrorType"
+
 and string_of_type ty =
   let rec print' = function
       t::[] -> (string_of_type t)
@@ -1162,10 +1186,11 @@ let rec string_of_term_ast term =
   | RealTerm(r,_,_) -> string_of_float r
   | StringTerm(StringLiteral(s),_,_) -> "\"" ^ (s) ^ "\""
   | StringTerm(StringData(s,_,_),_,_) -> "\"" ^ (s) ^ "\""
-  | ConstantTerm(c,_,_,_) -> 
+  | ConstantTerm(c,tl,_,_) -> 
+    let tlstr = "[" ^ (String.concat "," (List.map string_of_type_ast tl)) ^ "]" in
 	  if (getConstantType c = HiddenConstant) then
-		"hc: " ^ getConstantName c
-	  else getConstantName c
+		"hc: " ^ (getConstantName c) ^ tlstr
+	  else (getConstantName c) ^ tlstr
   | FreeVarTerm(NamedFreeVar(s),_,_) -> 
 	  "fv: " ^ 
 	  (Symbol.name (getTypeSymbolSymbol s))
