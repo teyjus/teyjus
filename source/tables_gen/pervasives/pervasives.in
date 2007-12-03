@@ -333,8 +333,8 @@
       TYPE      34     instream -> string -> bool
         /* input_line */
        39  input_line inputline  0 0  0  TRUE   TRUE   0   NOFIXITY 24
-        /* look_ahead */
-       40  look_ahead lookahead  0 0  0  TRUE   TRUE   0   NOFIXITY 25
+        /* lookahead */
+       40  lookahead lookahead  0 0  0  TRUE   TRUE   0   NOFIXITY 25
       ;;
 
       /* string -> o */            
