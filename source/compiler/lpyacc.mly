@@ -21,7 +21,7 @@ open Lexing
 open Preabsyn
 
 let basename () =
-  Filename.chop_extension (symbol_start_pos ()).pos_fname
+  Filename.chop_extension (Filename.basename (symbol_start_pos ()).pos_fname)
 
 type pos = Errormsg.pos
 
@@ -128,7 +128,8 @@ let makeModule () =
 let makeSignature () =
   reverseResults ();
   let s = Signature(basename (), !globalConstants, !useOnlyList, !exportList,
-                    !globalKinds, !globalTypeAbbrevs, !fixityList, !accumulatedSigList) in
+                    !globalKinds, !globalTypeAbbrevs, !fixityList,
+                    !accumulatedSigList, !useSigList) in
     clearResults ();
     s
 
@@ -198,7 +199,8 @@ modheader:
   | MODULE tok PERIOD
       { if getIDName $2 <> basename () then
           Errormsg.error (getPos 2)
-            ("Expected module name '" ^ basename () ^ "'.") }
+            ("Expected module name '" ^ basename () ^
+            "', found moodule name '" ^ (getIDName $2) ^ "'.") }
 
   | error PERIOD              { genericError "header" }
 
@@ -239,6 +241,9 @@ modpreamble:
 
 sigpreamble:
   |                           {  }
+
+  | sigpreamble USESIG cvidlist PERIOD
+      { useSigList := $3 @ !useSigList }
 
   | sigpreamble ACCUMSIG cvidlist PERIOD
       { accumulatedSigList := $3 @ !accumulatedSigList }
