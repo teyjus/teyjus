@@ -326,6 +326,7 @@ val isApplicationType : atype -> bool
 val makeTypeEnvironment : int -> atype list
 
 val string_of_type : atype -> string
+val string_of_type_ast : atype -> string
 
 (*************************************************************************)
 (*  askeleton:                                                           *)

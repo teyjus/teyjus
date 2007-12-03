@@ -230,6 +230,7 @@ let rec skeletonizeType ty =
     match args with
       [] -> ([], env, false, index)
     | a::aa ->
+        let _ = Errormsg.log Errormsg.none ("Types.skeletonizeArgs: " ^ (Absyn.string_of_type_ast a)) in
         let (a', newvars, index') = skeletonize a env index in
         let env' = getMoleculeEnvironment a' in
         
@@ -269,10 +270,12 @@ let rec skeletonizeType ty =
     | _ -> (Molecule(ty', env), false, index)
   in
 
+  let _ = Errormsg.log Errormsg.none ("Types.skeletonizeType: " ^ (Absyn.string_of_type_ast ty)) in
   let (mol, newvars, index) = skeletonize ty [] 0 in
   
   if index > Pervasiveutils.maxSkeletonIndex then
-    (Errormsg.error Errormsg.none "unable to skeletonize type: type contains too many free variables";
+    (Errormsg.error Errormsg.none
+      "Unable to skeletonize type: type contains too many free variables";
     errorMolecule)
   else
     mol
@@ -760,7 +763,7 @@ let getNewVarsInTypeMol (Molecule(ty,tyenv)) ftyvars =
 * set contains only one type, that type is returned.  Any other case
 * is an error.
 **********************************************************************)
-let replaceTypeSetType t =
+let rec replaceTypeSetType t =
   let t' = Absyn.dereferenceType t in
   match t' with
     Absyn.TypeSetType(_) ->
@@ -770,10 +773,15 @@ let replaceTypeSetType t =
           Errormsg.impossible Errormsg.none
             ("Types.replaceTypeSetType: invalid type set in " ^
              "constant environment.")
-      | [t''] -> Absyn.dereferenceType t''
-      | _ -> Absyn.getTypeSetDefault t')
-  | _ -> t'
-		
+      | [t''] -> replaceTypeSetType t''
+      | _ -> replaceTypeSetType (Absyn.getTypeSetDefault t'))
+  | Absyn.ApplicationType(k,l) ->
+      Absyn.ApplicationType(k, List.map replaceTypeSetType l)
+  | Absyn.ArrowType(l,r) ->
+      Absyn.ArrowType(replaceTypeSetType l, replaceTypeSetType r)
+  | Absyn.TypeVarType(_)
+  | Absyn.SkeletonVarType(_)
+  | Absyn.ErrorType -> t'
 
 (**********************************************************************
 *unitTests:
@@ -853,5 +861,4 @@ let unitTests () =
   
   let _ = Errormsg.log Errormsg.none ("Types Unit Tests Compete.\n") in
   ()
-
   
