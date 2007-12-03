@@ -8,21 +8,21 @@ L2                  fail
 foo                 switch_on_reg            #1, L0, L1
 L0                  try                      #1, L1
                     trust_ext                #1, #1
-                    trust_me                 #1
+L3                  trust_me                 #1
                     proceed                  
                     try_me_else              #0, L2
 <local const #0>    proceed                  
-L3                  fail                     
+L4                  fail                     
                     fail                     
                     fail                     
                     fail                     
                     fail                     
                     fail                     
                     fail                     
-L1                  try_me_else              #1, L2
+L1                  try_me_else              #1, L3
                     head_normalize_t         A1
                     execute_name             <local const #0>
-                    try_me_else              #0, L3
+                    try_me_else              #0, L4
 <local const #1>    proceed                  
 
 Global kind table:
