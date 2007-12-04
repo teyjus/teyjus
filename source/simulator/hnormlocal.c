@@ -238,8 +238,8 @@ static void HNL_renumberAsArg(DF_TermPtr skPtr, int nl, MemPtr loc,
             AM_embedError(newnl);
             DF_mkRef(loc, (DF_TermPtr)(*spLocPtr)); 
             HNL_pushSuspOnLoc(myskPtr, myol, newnl, myenv, spLocPtr); 
-            break;
         }          
+	break;
     }
     case DF_TM_TAG_BVAR: //[|#i, 0, adj, nil |] -> #(i+adj)
     {    
@@ -316,7 +316,7 @@ static void HNL_BVSuspAsArg(DF_TermPtr bv, int ol, int nl, DF_EnvPtr env,
             DF_mkBV(loc, nladj);
         } else { //DF_IsPairEnv(envitem)
             DF_TermPtr tmPtr = DF_envPairTerm(envitem); 
-            HNL_renumberAsArg(tmPtr, nladj, loc, spLocPtr);
+	    HNL_renumberAsArg(tmPtr, nladj, loc, spLocPtr);
         }   //ind <= ol
     }
 }
@@ -408,6 +408,7 @@ static void HNL_suspAsArg(DF_TermPtr skPtr, int ol, int nl, DF_EnvPtr env,
     }
     case DF_TM_TAG_BVAR:
     {
+
         HNL_BVSuspAsArg(skPtr, ol, nl, env, loc, spLocPtr);
         *changed = TRUE;
         break;
@@ -526,7 +527,7 @@ Boolean HNL_makeArgvec(DF_TermPtr argvec, int arity, int ol, int nl,
 
     //unfold nested app first when necessary
     if (AM_numArgs == 0){  //no nested app
-        //assume new arg vector has to be created because of susp propagating
+        //assume new arg vector has to be created because of susp propagating      
         spLocPtr = newArgvec + arity * DF_TM_ATOMIC_SIZE;  
         AM_heapError(spLocPtr);
         AM_numArgs = arity;
@@ -545,7 +546,7 @@ Boolean HNL_makeArgvec(DF_TermPtr argvec, int arity, int ol, int nl,
     
     //push susp over the argument vector of the top-level app
     HNL_pushSuspOverArgs(argvec, arity, ol, nl, env, &spLocPtr, &changed);
-    
+ 
     if (changed) {             //changes because of unfold app or propagate susp
         AM_hreg = spLocPtr;
         AM_argVec = (DF_TermPtr)newArgvec;
