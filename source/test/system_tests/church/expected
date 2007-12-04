@@ -1,0 +1,706 @@
+Disassembling from bytecode file: church.lp
+Bytecode version: 3
+Module name: church
+
+LABEL               INSTRUCTION              OPERANDS
+
+L4                  fail                     
+succ                switch_on_reg            #1, L2, L3
+L2                  try                      #3, L3
+                    trust_ext                #3, #1
+                    try_me_else              #0, L4
+L3                  get_type_arrow           A3
+                    unify_type_variable_t    A255
+                    unify_type_variable_t    A255
+                    get_type_arrow           A255
+                    unify_type_variable_t    A255
+                    unify_type_variable_t    A255
+                    put_index                A253, #3
+                    put_index                A251, #2
+                    put_app                  A252, A251, #1
+                    set_index                #1
+                    put_app                  A254, A253, #2
+                    set_index                #2
+                    set_value_t              A252
+                    put_lambda               A255, A254, #3
+                    pattern_unify_t          A255, A1
+                    finish_unify             
+                    proceed                  
+plus                switch_on_reg            #2, L5, L6
+L5                  try                      #3, L6
+                    trust_ext                #3, #2
+                    try_me_else              #0, L4
+L6                  get_type_arrow           A3
+                    unify_type_variable_t    A255
+                    unify_type_variable_t    A255
+                    get_type_arrow           A255
+                    unify_type_variable_t    A255
+                    unify_type_variable_t    A255
+                    get_type_arrow           A255
+                    unify_type_variable_t    A255
+                    unify_type_variable_t    A255
+                    put_index                A253, #4
+                    put_index                A251, #3
+                    put_app                  A252, A251, #2
+                    set_index                #2
+                    set_index                #1
+                    put_app                  A254, A253, #2
+                    set_index                #2
+                    set_value_t              A252
+                    put_lambda               A255, A254, #4
+                    pattern_unify_t          A255, A1
+                    finish_unify             
+                    proceed                  
+mult                switch_on_reg            #3, L7, L8
+L7                  try                      #3, L8
+                    trust_ext                #3, #3
+                    try_me_else              #0, L4
+L8                  get_type_arrow           A3
+                    unify_type_variable_t    A255
+                    unify_type_variable_t    A255
+                    get_type_arrow           A255
+                    unify_type_variable_t    A255
+                    unify_type_variable_t    A255
+                    get_type_arrow           A255
+                    unify_type_variable_t    A255
+                    unify_type_variable_t    A255
+                    put_index                A253, #4
+                    put_index                A251, #3
+                    put_app                  A252, A251, #1
+                    set_index                #2
+                    put_app                  A254, A253, #2
+                    set_value_t              A252
+                    set_index                #1
+                    put_lambda               A255, A254, #4
+                    pattern_unify_t          A255, A1
+                    finish_unify             
+                    proceed                  
+church              switch_on_reg            #4, L9, L10
+L9                  try                      #3, L10
+                    trust_ext                #3, #4
+L10                 try_me_else              #3, L11
+                    get_type_arrow           A3
+                    unify_type_variable_t    A2
+                    unify_type_local_value_t A2
+                    put_index                A254, #1
+                    put_lambda               A255, A254, #2
+                    pattern_unify_t          A255, A1
+                    finish_unify             
+                    proceed                  
+L11                 trust_me                 #3
+                    get_type_arrow           A3
+                    unify_type_variable_t    A255
+                    unify_type_variable_t    A255
+                    put_variable_t           A4, A253
+                    put_index                A251, #2
+                    put_app                  A252, A251, #1
+                    set_index                #1
+                    put_app                  A254, A253, #2
+                    set_index                #2
+                    set_value_t              A252
+                    put_lambda               A255, A254, #2
+                    pattern_unify_t          A255, A1
+                    finish_unify             
+                    put_type_variable_t      A2, A2
+                    put_type_variable_t      A3, A3
+                    put_value_t              A4, A1
+                    head_normalize_t         A1
+                    execute_name             church
+zero                switch_on_reg            #5, L12, L13
+L12                 try                      #3, L13
+                    trust_ext                #3, #5
+                    try_me_else              #0, L4
+L13                 get_type_arrow           A3
+                    unify_type_variable_t    A2
+                    unify_type_local_value_t A2
+                    put_index                A254, #1
+                    put_lambda               A255, A254, #2
+                    pattern_unify_t          A255, A1
+                    finish_unify             
+                    proceed                  
+one                 switch_on_reg            #6, L14, L15
+L14                 try                      #3, L15
+                    trust_ext                #3, #6
+                    try_me_else              #0, L4
+L15                 get_type_arrow           A3
+                    unify_type_variable_t    A255
+                    unify_type_variable_t    A255
+                    put_index                A253, #2
+                    put_app                  A254, A253, #1
+                    set_index                #1
+                    put_lambda               A255, A254, #2
+                    pattern_unify_t          A255, A1
+                    finish_unify             
+                    proceed                  
+problem1            switch_on_reg            #7, L16, L17
+L16                 try                      #8, L17
+                    trust_ext                #8, #7
+                    try_me_else              #0, L4
+L17                 allocate                 #15
+                    get_type_variable_p      Y1, A6
+                    get_type_variable_p      Y12, A7
+                    get_type_variable_p      Y2, A8
+                    get_type_arrow           A5
+                    unify_type_variable_p    Y9
+                    unify_type_variable_p    Y10
+                    get_variable_p           Y3, A1
+                    get_variable_p           Y4, A2
+                    get_variable_p           Y5, A3
+                    get_variable_p           Y6, A4
+                    put_type_value_p         Y9, A2
+                    put_type_value_p         Y10, A3
+                    put_variable_p           Y11, A1
+                    call_name                #14, one
+                    put_type_arrow           A2
+                    set_type_local_value_p   Y9
+                    set_type_local_value_p   Y10
+                    put_type_variable_p      Y14, A3
+                    put_variable_p           Y7, A1
+                    call_name                #14, plus
+                    put_type_value_p         Y12, A2
+                    put_type_variable_p      Y13, A3
+                    put_variable_p           Y8, A1
+                    call_name                #13, mult
+                    put_type_arrow           A3
+                    set_type_value_p         Y9
+                    set_type_value_p         Y10
+                    put_value_p              Y3, A1
+                    head_normalize_t         A1
+                    put_value_p              Y11, A2
+                    head_normalize_t         A2
+                    call_builtin             #11, #3
+                    put_type_value_p         Y1, A3
+                    put_value_p              Y4, A1
+                    head_normalize_t         A1
+                    globalize_pt             Y7, A255
+                    put_app                  A2, A255, #2
+                    globalize_pt             Y3, A255
+                    set_value_t              A255
+                    set_value_p              Y3
+                    head_normalize_t         A2
+                    call_builtin             #8, #3
+                    put_type_value_p         Y2, A3
+                    put_value_p              Y6, A1
+                    head_normalize_t         A1
+                    copy_value               Y7, A255
+                    put_app                  A2, A255, #2
+                    set_value_p              Y3
+                    globalize_pt             Y5, A255
+                    set_value_t              A255
+                    head_normalize_t         A2
+                    call_builtin             #8, #3
+                    put_type_value_p         Y1, A3
+                    put_value_p              Y4, A1
+                    head_normalize_t         A1
+                    globalize_pt             Y8, A255
+                    put_app                  A2, A255, #2
+                    set_value_p              Y5
+                    globalize_pt             Y6, A255
+                    set_value_t              A255
+                    head_normalize_t         A2
+                    deallocate               
+                    builtin                  #3
+cn                  switch_on_reg            #8, L18, L19
+L18                 try                      #4, L19
+                    trust_ext                #4, #8
+L19                 try_me_else              #4, L20
+                    switch_on_term           L21, L22, L4, L21
+L21                 try_me_else              #4, L23
+L24                 get_integer              A1, 0
+                    finish_unify             
+                    put_value_t              A2, A1
+                    put_type_value_t         A3, A5
+                    put_type_value_t         A5, A2
+                    put_type_value_t         A4, A3
+                    head_normalize_t         A1
+                    execute_name             zero
+L23                 trust_me                 #4
+L25                 get_integer              A1, 1
+                    finish_unify             
+                    put_value_t              A2, A1
+                    put_type_value_t         A3, A5
+                    put_type_value_t         A5, A2
+                    put_type_value_t         A4, A3
+                    head_normalize_t         A1
+                    execute_name             one
+L0                  try                      #4, L24
+                    trust                    #4, L25
+L22                 switch_on_constant       #1, <hash #0>
+L20                 trust_me                 #4
+                    allocate                 #9
+                    put_variable_p           Y6, A254
+                    globalize_t              A254
+                    put_app                  A255, A254, #2
+                    set_variable_p           Y1
+                    set_variable_p           Y2
+                    pattern_unify_t          A255, A2
+                    finish_unify             
+                    head_normalize_t         A1
+                    put_integer              A2, 1
+                    call_builtin             #8, #5
+                    put_value_t              A1, A4
+                    put_type_const           A3, int
+                    put_variable_p           Y3, A1
+                    put_m_const              A255, %i-
+                    put_app                  A2, A255, #2
+                    globalize_t              A4
+                    set_value_t              A4
+                    set_integer              1
+                    call_builtin             #8, #1
+                    put_type_variable_p      Y7, A2
+                    put_type_variable_p      Y8, A3
+                    put_value_p              Y6, A1
+                    head_normalize_t         A1
+                    call_name                #8, plus
+                    put_type_variable_p      Y4, A2
+                    put_type_variable_p      Y5, A3
+                    put_value_p              Y2, A1
+                    head_normalize_t         A1
+                    call_name                #5, one
+                    put_type_variable_t      A3, A3
+                    put_type_variable_t      A4, A4
+                    put_unsafe_value         Y3, A1
+                    head_normalize_t         A1
+                    put_value_p              Y1, A2
+                    head_normalize_t         A2
+                    deallocate               
+                    execute_name             cn
+test                switch_on_reg            #9, L26, L27
+L26                 try                      #1, L27
+                    trust_ext                #1, #9
+                    try_me_else              #0, L4
+L27                 switch_on_term           L28, L29, L4, L28
+L28                 try_me_else              #1, L30
+L38                 allocate                 #9
+                    get_integer              A1, 1
+                    finish_unify             
+                    put_type_variable_p      Y1, A3
+                    put_type_variable_p      Y2, A4
+                    put_integer              A1, 30
+                    put_variable_p           Y3, A2
+                    call_name                #8, cn
+                    put_type_variable_p      Y7, A3
+                    put_type_variable_p      Y8, A4
+                    put_integer              A1, 87
+                    put_variable_p           Y4, A2
+                    call_name                #8, cn
+                    put_type_arrow           A2
+                    set_type_local_value_p   Y1
+                    set_type_local_value_p   Y2
+                    put_type_variable_p      Y5, A3
+                    put_variable_p           Y6, A1
+                    call_name                #6, plus
+                    put_type_variable_t      A3, A3
+                    globalize_pt             Y6, A255
+                    put_app                  A1, A255, #2
+                    globalize_pt             Y3, A255
+                    set_value_t              A255
+                    globalize_pt             Y4, A255
+                    set_value_t              A255
+                    head_normalize_t         A1
+                    put_variable_t           A255, A2
+                    deallocate               
+                    builtin                  #3
+L30                 retry_me_else            #1, L31
+L39                 allocate                 #6
+                    get_integer              A1, 2
+                    finish_unify             
+                    put_type_variable_p      Y1, A3
+                    put_type_variable_p      Y2, A4
+                    put_integer              A1, 12
+                    put_variable_p           Y3, A2
+                    call_name                #5, cn
+                    put_type_arrow           A2
+                    set_type_local_value_p   Y1
+                    set_type_local_value_p   Y2
+                    put_type_variable_p      Y4, A3
+                    put_variable_p           Y5, A1
+                    call_name                #5, mult
+                    put_type_variable_t      A3, A3
+                    put_variable_t           A255, A1
+                    globalize_pt             Y5, A255
+                    put_app                  A2, A255, #2
+                    globalize_pt             Y3, A255
+                    set_value_t              A255
+                    set_value_p              Y3
+                    head_normalize_t         A2
+                    deallocate               
+                    builtin                  #3
+L31                 retry_me_else            #1, L32
+L40                 allocate                 #10
+                    get_integer              A1, 3
+                    finish_unify             
+                    put_type_variable_p      Y8, A3
+                    put_type_variable_p      Y9, A4
+                    put_integer              A1, 14
+                    put_variable_p           Y1, A2
+                    call_name                #9, cn
+                    put_type_variable_p      Y6, A3
+                    put_type_variable_p      Y7, A4
+                    put_integer              A1, 17
+                    put_variable_p           Y2, A2
+                    call_name                #7, cn
+                    put_type_variable_p      Y3, A3
+                    put_type_variable_p      Y4, A4
+                    put_integer              A1, 8
+                    put_variable_p           Y5, A2
+                    call_name                #5, cn
+                    put_type_variable_t      A3, A3
+                    put_variable_t           A254, A255
+                    put_variable_t           A252, A253
+                    put_app                  A254, A253, #2
+                    globalize_pt             Y1, A253
+                    set_value_t              A253
+                    globalize_pt             Y5, A253
+                    set_value_t              A253
+                    put_app                  A1, A255, #2
+                    globalize_pt             Y2, A255
+                    set_value_t              A255
+                    set_value_t              A254
+                    put_variable_t           A255, A2
+                    deallocate               
+                    builtin                  #3
+L32                 retry_me_else            #1, L33
+L41                 allocate                 #10
+                    get_integer              A1, 4
+                    finish_unify             
+                    put_type_variable_p      Y8, A3
+                    put_type_variable_p      Y9, A4
+                    put_integer              A1, 70
+                    put_variable_p           Y1, A2
+                    call_name                #9, cn
+                    put_type_variable_p      Y6, A3
+                    put_type_variable_p      Y7, A4
+                    put_integer              A1, 50
+                    put_variable_p           Y2, A2
+                    call_name                #7, cn
+                    put_type_variable_p      Y3, A3
+                    put_type_variable_p      Y4, A4
+                    put_integer              A1, 60
+                    put_variable_p           Y5, A2
+                    call_name                #5, cn
+                    put_type_variable_t      A3, A3
+                    put_variable_t           A4, A255
+                    globalize_t              A4
+                    put_app                  A252, A4, #2
+                    globalize_pt             Y5, A251
+                    set_value_t              A251
+                    globalize_pt             Y2, A251
+                    set_value_t              A251
+                    put_app                  A253, A4, #2
+                    globalize_pt             Y1, A251
+                    set_value_t              A251
+                    set_value_t              A252
+                    put_app                  A254, A4, #2
+                    set_value_p              Y2
+                    set_value_t              A253
+                    put_app                  A1, A255, #2
+                    set_value_p              Y1
+                    set_value_t              A254
+                    put_variable_t           A255, A2
+                    deallocate               
+                    builtin                  #3
+L33                 retry_me_else            #1, L34
+L42                 allocate                 #10
+                    get_integer              A1, 5
+                    finish_unify             
+                    put_type_variable_p      Y8, A3
+                    put_type_variable_p      Y9, A4
+                    put_integer              A1, 70
+                    put_variable_p           Y1, A2
+                    call_name                #9, cn
+                    put_type_variable_p      Y6, A3
+                    put_type_variable_p      Y7, A4
+                    put_integer              A1, 50
+                    put_variable_p           Y2, A2
+                    call_name                #7, cn
+                    put_type_variable_p      Y3, A3
+                    put_type_variable_p      Y4, A4
+                    put_integer              A1, 60
+                    put_variable_p           Y5, A2
+                    call_name                #5, cn
+                    put_type_variable_t      A3, A3
+                    put_variable_t           A254, A255
+                    put_variable_t           A4, A253
+                    globalize_t              A4
+                    put_app                  A251, A4, #2
+                    globalize_pt             Y5, A250
+                    set_value_t              A250
+                    globalize_pt             Y2, A250
+                    set_value_t              A250
+                    put_app                  A252, A4, #2
+                    globalize_pt             Y1, A250
+                    set_value_t              A250
+                    set_value_t              A251
+                    put_app                  A254, A253, #2
+                    set_value_p              Y2
+                    set_value_t              A252
+                    put_app                  A1, A255, #2
+                    set_value_p              Y1
+                    set_value_t              A254
+                    put_variable_t           A255, A2
+                    deallocate               
+                    builtin                  #3
+L34                 retry_me_else            #1, L35
+L43                 allocate                 #6
+                    get_integer              A1, 6
+                    finish_unify             
+                    put_type_variable_p      Y1, A3
+                    put_type_variable_p      Y2, A4
+                    put_integer              A1, 39
+                    put_variable_p           Y3, A2
+                    call_name                #5, cn
+                    put_type_arrow           A2
+                    set_type_local_value_p   Y1
+                    set_type_local_value_p   Y2
+                    put_type_variable_p      Y4, A3
+                    put_variable_p           Y5, A1
+                    call_name                #5, plus
+                    put_type_variable_t      A3, A3
+                    put_variable_t           A255, A1
+                    globalize_pt             Y5, A255
+                    copy_value               Y5, A253
+                    put_app                  A254, A253, #2
+                    globalize_pt             Y3, A253
+                    set_value_t              A253
+                    set_value_p              Y3
+                    put_app                  A2, A255, #2
+                    set_value_p              Y3
+                    set_value_t              A254
+                    head_normalize_t         A2
+                    deallocate               
+                    builtin                  #3
+L35                 retry_me_else            #1, L36
+L44                 allocate                 #10
+                    get_integer              A1, 7
+                    finish_unify             
+                    put_type_variable_p      Y8, A3
+                    put_type_variable_p      Y9, A4
+                    put_integer              A1, 50
+                    put_variable_p           Y1, A2
+                    call_name                #9, cn
+                    put_type_variable_p      Y6, A3
+                    put_type_variable_p      Y7, A4
+                    put_integer              A1, 5
+                    put_variable_p           Y2, A2
+                    call_name                #7, cn
+                    put_type_variable_p      Y3, A3
+                    put_type_variable_p      Y4, A4
+                    put_integer              A1, 19
+                    put_variable_p           Y5, A2
+                    call_name                #5, cn
+                    put_type_variable_t      A3, A3
+                    put_variable_t           A255, A1
+                    put_variable_t           A254, A255
+                    put_variable_t           A252, A253
+                    put_app                  A254, A253, #2
+                    globalize_pt             Y5, A253
+                    set_value_t              A253
+                    globalize_pt             Y2, A253
+                    set_value_t              A253
+                    put_app                  A2, A255, #2
+                    globalize_pt             Y1, A255
+                    set_value_t              A255
+                    set_value_t              A254
+                    deallocate               
+                    builtin                  #3
+L36                 retry_me_else            #1, L37
+L45                 allocate                 #6
+                    get_integer              A1, 8
+                    finish_unify             
+                    put_type_arrow           A2
+                    set_type_variable_p      Y1
+                    set_type_variable_p      Y2
+                    put_type_variable_p      Y5, A3
+                    put_variable_p           Y3, A1
+                    call_name                #5, mult
+                    put_type_value_p         Y1, A3
+                    put_type_value_p         Y2, A4
+                    put_integer              A1, 2
+                    put_variable_p           Y4, A2
+                    call_name                #4, cn
+                    put_type_variable_t      A3, A3
+                    put_variable_t           A255, A1
+                    globalize_pt             Y3, A255
+                    copy_value               Y3, A253
+                    copy_value               Y3, A251
+                    copy_value               Y3, A249
+                    copy_value               Y3, A247
+                    copy_value               Y3, A245
+                    copy_value               Y3, A243
+                    copy_value               Y3, A241
+                    put_app                  A242, A241, #2
+                    globalize_pt             Y4, A241
+                    set_value_t              A241
+                    set_value_p              Y4
+                    put_app                  A244, A243, #2
+                    set_value_p              Y4
+                    set_value_t              A242
+                    put_app                  A246, A245, #2
+                    set_value_p              Y4
+                    set_value_t              A244
+                    put_app                  A248, A247, #2
+                    set_value_p              Y4
+                    set_value_t              A246
+                    put_app                  A250, A249, #2
+                    set_value_p              Y4
+                    set_value_t              A248
+                    put_app                  A252, A251, #2
+                    set_value_p              Y4
+                    set_value_t              A250
+                    put_app                  A254, A253, #2
+                    set_value_p              Y4
+                    set_value_t              A252
+                    put_app                  A2, A255, #2
+                    set_value_p              Y4
+                    set_value_t              A254
+                    head_normalize_t         A2
+                    deallocate               
+                    builtin                  #3
+L37                 trust_me                 #1
+L46                 allocate                 #10
+                    get_integer              A1, 9
+                    finish_unify             
+                    put_type_variable_p      Y1, A3
+                    put_type_variable_p      Y2, A4
+                    put_integer              A1, 11
+                    put_variable_p           Y3, A2
+                    call_name                #9, cn
+                    put_type_variable_p      Y8, A3
+                    put_type_variable_p      Y9, A4
+                    put_integer              A1, 13
+                    put_variable_p           Y4, A2
+                    call_name                #9, cn
+                    put_type_arrow           A2
+                    set_type_local_value_p   Y1
+                    set_type_local_value_p   Y2
+                    put_type_variable_p      Y7, A3
+                    put_variable_p           Y5, A1
+                    call_name                #7, mult
+                    put_type_arrow           A3
+                    set_type_value_p         Y1
+                    set_type_value_p         Y2
+                    put_variable_p           Y6, A1
+                    globalize_pt             Y5, A255
+                    put_app                  A2, A255, #2
+                    globalize_pt             Y3, A255
+                    set_value_t              A255
+                    globalize_pt             Y4, A255
+                    set_value_t              A255
+                    head_normalize_t         A2
+                    call_builtin             #6, #3
+                    put_type_variable_t      A3, A3
+                    put_variable_t           A255, A1
+                    copy_value               Y5, A255
+                    put_app                  A2, A255, #2
+                    globalize_pt             Y6, A255
+                    set_value_t              A255
+                    set_value_p              Y6
+                    head_normalize_t         A2
+                    deallocate               
+                    builtin                  #3
+L1                  try                      #1, L38
+                    retry                    #1, L39
+                    retry                    #1, L40
+                    retry                    #1, L41
+                    retry                    #1, L42
+                    retry                    #1, L43
+                    retry                    #1, L44
+                    retry                    #1, L45
+                    trust                    #1, L46
+L29                 switch_on_constant       #1, <hash #1>
+go                  switch_on_reg            #10, L47, L48
+L47                 try                      #0, L48
+                    trust_ext                #0, #10
+L48                 try_me_else              #0, L49
+                    allocate                 #2
+                    put_variable_p           Y1, A1
+                    call_name                #1, test
+                    fail                     
+L49                 trust_me                 #0
+                    stop                     
+
+Global kind table:
+0: i/0
+
+Local kind table:
+
+Type skeleton table:
+0: ((SkeletonVarType(0) -> SkeletonVarType(1)) -> o)
+1: (SkeletonVarType(0) -> (SkeletonVarType(1) -> (SkeletonVarType(2) -> (SkeletonVarType(3) -> o))))
+2: (int -> ((SkeletonVarType(0) -> SkeletonVarType(1)) -> o))
+3: (int -> o)
+4: o
+
+Global constant table: 
+0: succ (No Fixity, precedence 0)
+    Env Size: 2, Type Skeleton: #0
+1: plus (No Fixity, precedence 0)
+    Env Size: 2, Type Skeleton: #0
+2: mult (No Fixity, precedence 0)
+    Env Size: 2, Type Skeleton: #0
+3: church (No Fixity, precedence 0)
+    Env Size: 2, Type Skeleton: #0
+4: zero (No Fixity, precedence 0)
+    Env Size: 2, Type Skeleton: #0
+5: one (No Fixity, precedence 0)
+    Env Size: 2, Type Skeleton: #0
+6: problem1 (No Fixity, precedence 0)
+    Env Size: 4, Type Skeleton: #1
+7: cn (No Fixity, precedence 0)
+    Env Size: 2, Type Skeleton: #2
+8: test (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #3
+9: go (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #4
+
+Local constant table: 
+
+Hidden constant table: 
+
+String table:
+
+Implication Tables:
+
+Hash tables:
+0:
+    Table size: 1
+    Constants:
+    <int_constant> -> L0
+1:
+    Table size: 1
+    Constants:
+    <int_constant> -> L1
+
+Import tables:
+
+  Import table:
+    number of code segments: 0
+    Next clause table: 10
+   succ
+   plus
+   mult
+   church
+   zero
+   one
+   problem1
+   cn
+   test
+   go
+    Local constant table: 0
+    Find function type: hash
+    Search table: 10
+   succ
+   plus
+   mult
+   church
+   zero
+   one
+   problem1
+   cn
+   test
+   go
+
+Accumulated tables:
+
+Imported tables:
