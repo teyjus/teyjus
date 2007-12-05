@@ -531,7 +531,7 @@ L60                 allocate                 #7
                     head_normalize_t         A1
                     put_variable_p           Y5, A2
                     call_link_only           #6, <local const #3>
-                    neck_cut                 
+                    cut                      Y6
                     put_unsafe_value         Y5, A1
                     head_normalize_t         A1
                     put_value_p              Y4, A2
