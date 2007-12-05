@@ -1212,7 +1212,7 @@ L105                allocate                 #7
                     head_normalize_t         A1
                     put_variable_p           Y5, A2
                     call                     #6, <local const #4>
-                    neck_cut                 
+                    cut                      Y6
                     put_unsafe_value         Y5, A1
                     head_normalize_t         A1
                     put_value_p              Y4, A2
@@ -1664,7 +1664,7 @@ L146                allocate                 #9
                     put_value_p              Y7, A3
                     head_normalize_t         A3
                     put_variable_p           Y5, A4
-                    call                     #8, <local const #15>
+                    call                     #7, <local const #15>
                     put_value_p              Y3, A1
                     head_normalize_t         A1
                     put_value_p              Y4, A2
@@ -1672,7 +1672,7 @@ L146                allocate                 #9
                     put_value_p              Y1, A3
                     head_normalize_t         A3
                     put_variable_p           Y6, A4
-                    call                     #8, <local const #12>
+                    call                     #6, <local const #12>
                     put_unsafe_value         Y5, A1
                     head_normalize_t         A1
                     put_unsafe_value         Y6, A2
@@ -1709,7 +1709,7 @@ L147                allocate                 #9
                     put_value_p              Y7, A3
                     head_normalize_t         A3
                     put_variable_p           Y5, A4
-                    call                     #8, <local const #15>
+                    call                     #7, <local const #15>
                     put_value_p              Y4, A1
                     head_normalize_t         A1
                     put_value_p              Y3, A2
@@ -1717,7 +1717,7 @@ L147                allocate                 #9
                     put_value_p              Y1, A3
                     head_normalize_t         A3
                     put_variable_p           Y6, A4
-                    call                     #8, <local const #12>
+                    call                     #6, <local const #12>
                     put_unsafe_value         Y5, A1
                     head_normalize_t         A1
                     put_unsafe_value         Y6, A2
