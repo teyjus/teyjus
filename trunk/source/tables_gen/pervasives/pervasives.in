@@ -394,6 +394,6 @@
    PRED SYMBOL  37
                 PRED_START solve  PRED_END time
              
-   REGCL  solve getenv strtoterm readterm read is lookahead input inputline
+   REGCL  solve not getenv strtoterm readterm read is lookahead input inputline
    
    BACKTRACK eq
