@@ -272,7 +272,7 @@ L23                 allocate                 #9
                     put_value_p              Y7, A3
                     head_normalize_t         A3
                     put_variable_p           Y5, A4
-                    call_link_only           #8, <local const #3>
+                    call_link_only           #7, <local const #3>
                     put_value_p              Y3, A1
                     head_normalize_t         A1
                     put_value_p              Y4, A2
@@ -280,7 +280,7 @@ L23                 allocate                 #9
                     put_value_p              Y1, A3
                     head_normalize_t         A3
                     put_variable_p           Y6, A4
-                    call_link_only           #8, <local const #0>
+                    call_link_only           #6, <local const #0>
                     put_unsafe_value         Y5, A1
                     head_normalize_t         A1
                     put_unsafe_value         Y6, A2
@@ -317,7 +317,7 @@ L24                 allocate                 #9
                     put_value_p              Y7, A3
                     head_normalize_t         A3
                     put_variable_p           Y5, A4
-                    call_link_only           #8, <local const #3>
+                    call_link_only           #7, <local const #3>
                     put_value_p              Y4, A1
                     head_normalize_t         A1
                     put_value_p              Y3, A2
@@ -325,7 +325,7 @@ L24                 allocate                 #9
                     put_value_p              Y1, A3
                     head_normalize_t         A3
                     put_variable_p           Y6, A4
-                    call_link_only           #8, <local const #0>
+                    call_link_only           #6, <local const #0>
                     put_unsafe_value         Y5, A1
                     head_normalize_t         A1
                     put_unsafe_value         Y6, A2
