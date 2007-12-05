@@ -1560,14 +1560,14 @@ let setUpGoalArgs goal chunk last hasenv =
 let getGoalEnvSize clause goalNum =
   let gesplist = Absyn.getClauseGespList clause in
   match gesplist with
-	Absyn.GoalEnvAssoc([]) -> 0
+    Absyn.GoalEnvAssoc([]) -> 0
   | Absyn.GoalEnvAssoc((goalInd, envSize)::rest) ->
-	  if (goalInd < goalNum) then 
-		(Absyn.setClauseGespList clause (Absyn.GoalEnvAssoc rest);
-		 match rest with
-		   [] -> 0
-		 | ((goalInd', envSize')::rest') ->envSize')
-	  else envSize
+      if (goalInd < goalNum) then 
+	(Absyn.setClauseGespList clause (Absyn.GoalEnvAssoc rest);	 
+	 match rest with
+	   [] -> 0
+	 | ((goalInd', envSize')::rest') -> envSize')
+      else envSize
 		  
 (*****************************************************************)
 (* getChunk:                                                     *)
@@ -1583,18 +1583,18 @@ let getChunk chunk chunks =
 (****************************************************************************)
 let rec genGoal goal cl goalNum last chunk chunks insts startLoc = 
   match goal with
-	Absyn.AtomicGoal(_) -> 
-	  genAtomicGoal goal cl goalNum last chunk chunks insts startLoc
+    Absyn.AtomicGoal(_) -> 
+      genAtomicGoal goal cl goalNum last chunk chunks insts startLoc
   | Absyn.AndGoal(_)    ->
       genAndGoal goal cl goalNum last chunk chunks insts startLoc
   | Absyn.ImpGoal(_)    ->
-	  genImpGoal goal cl goalNum last chunk chunks insts startLoc 
+      genImpGoal goal cl goalNum last chunk chunks insts startLoc 
   | Absyn.AllGoal(_)    ->
-	  genAllGoal goal cl goalNum last chunk chunks insts startLoc
+      genAllGoal goal cl goalNum last chunk chunks insts startLoc
   | Absyn.SomeGoal(_)   ->
-	  genSomeGoal goal cl goalNum last chunk chunks  insts startLoc
+      genSomeGoal goal cl goalNum last chunk chunks  insts startLoc
   | Absyn.CutFailGoal -> 
-	  Errormsg.impossible Errormsg.none "genGoal: cutfail goal"
+      Errormsg.impossible Errormsg.none "genGoal: cutfail goal"
 
 
 (****************************************************************************)
@@ -1674,7 +1674,7 @@ and genAtomicGoal goal cl goalNum last chunk chunks insts startLoc =
 		 Instr.getSize_call_builtin,
 		 if (Pervasive.regClobberingPerv pred) ||
 		 (Pervasive.backtrackablePerv pred)
-	     then goalNum + 1
+		 then goalNum + 1
 		 else goalNum)
 	in
 	(insts @ argsCode @ callCode, startLoc + argsCodeSize + callCodeSize,
@@ -1716,7 +1716,8 @@ and genAtomicGoal goal cl goalNum last chunk chunks insts startLoc =
 	      ([Instr.Ins_execute_link_only(pred)], Instr.getSize_execute_link_only,
 	       goalNum)
 	    else
-	      if (expdef) then ([Instr.Ins_fail], Instr.getSize_fail, goalNum)
+	      if (expdef) then 
+		 ([Instr.Ins_fail], Instr.getSize_fail, goalNum)
 	      else 
 		([Instr.Ins_execute_name(pred)], Instr.getSize_execute_name, 
 		 goalNum)
@@ -1727,46 +1728,45 @@ and genAtomicGoal goal cl goalNum last chunk chunks insts startLoc =
 
   (* generate "call" code *)
   let genCall pred envsize =
-	let myGoalNum = goalNum + 1 in
-	if (Absyn.getConstantClosed pred) then
-	  let expdef = (Absyn.getConstantExportDef pred) in
-	  if (Absyn.constantHasCode pred) && 
-	    ((not (Absyn.isGlobalConstant pred)) || expdef) then
-	    if (Absyn.isAnonymousConstant pred) then
-		let (instr, size) = 
-		  (Instr.Ins_call(envsize, ref 0), Instr.getSize_call)
-		in
-		addBackPatchCall pred instr;
-		([instr], size, myGoalNum)
-	    else
-	      ([Instr.Ins_call_link_only(envsize, pred)], Instr.getSize_call_link_only,
-	       goalNum)
-	  else (* do not have code *)
-	    if (List.memq pred (getAccConsts ())) then 
-	      ([Instr.Ins_call_link_only(envsize, pred)], Instr.getSize_call_link_only,
-	       goalNum)
-	    else
-	      ( (*print_endline "no code, closed";*)
-		if (expdef) then ([Instr.Ins_fail], Instr.getSize_fail, myGoalNum)
-		else 
-		  ([Instr.Ins_call_name(envsize, pred)], Instr.getSize_call_name, 
-		   myGoalNum))
-	else (* not closed *)
-         ( (*print_endline "open";*)
-	  ([Instr.Ins_call_name(envsize, pred)], Instr.getSize_call_name,
-	   myGoalNum))
+    let myGoalNum = goalNum + 1 in
+    if (Absyn.getConstantClosed pred) then
+      let expdef = (Absyn.getConstantExportDef pred) in
+      if (Absyn.constantHasCode pred) && 
+	((not (Absyn.isGlobalConstant pred)) || expdef) then
+	if (Absyn.isAnonymousConstant pred) then
+	  let (instr, size) = 
+	    (Instr.Ins_call(envsize, ref 0), Instr.getSize_call)
+	  in
+	  addBackPatchCall pred instr;
+	  ([instr], size, myGoalNum)
+	else
+	  ([Instr.Ins_call_link_only(envsize, pred)], Instr.getSize_call_link_only,
+	   myGoalNum)
+      else (* do not have code *)
+	if (List.memq pred (getAccConsts ())) then 
+	  ([Instr.Ins_call_link_only(envsize, pred)], Instr.getSize_call_link_only,
+	   myGoalNum)
+	else
+	  if (expdef) then 
+	    ([Instr.Ins_fail], Instr.getSize_fail, myGoalNum)
+	  else 
+	    ([Instr.Ins_call_name(envsize, pred)], Instr.getSize_call_name, 
+	     myGoalNum)
+    else (* not closed *)
+      ([Instr.Ins_call_name(envsize, pred)], Instr.getSize_call_name,
+       myGoalNum)
   in
 	  
   (* generate code for non pervasive predicates *)
   let genNonPervasiveAtomicGoal pred chunk envSize =
-	let hasEnv =  Absyn.getClauseHasEnv cl in
-	let (argsCode, argsCodeSize, newChunk) = genAtomicGoalArgs chunk hasEnv in
-	let (callCode, callCodeSize, newGoalNum) =
-	  if (last) then genExecute pred 
-	  else genCall pred envSize
-	in
-	(insts @ argsCode @ callCode, startLoc + argsCodeSize + callCodeSize,
-	 newChunk, newGoalNum)
+    let hasEnv =  Absyn.getClauseHasEnv cl in
+    let (argsCode, argsCodeSize, newChunk) = genAtomicGoalArgs chunk hasEnv in
+    let (callCode, callCodeSize, newGoalNum) =
+      if (last) then genExecute pred 
+      else genCall pred envSize
+    in
+    (insts @ argsCode @ callCode, startLoc + argsCodeSize + callCodeSize,
+     newChunk, newGoalNum)
   in
   
   (* function body of genAtomicGoal *)
@@ -1778,9 +1778,10 @@ and genAtomicGoal goal cl goalNum last chunk chunks insts startLoc =
   let envSize = getGoalEnvSize cl goalNum in
   (* find the predicate of this goal *)
   let pred = (Absyn.getAtomicGoalPredicate goal) in
+
   let (newInsts, newStartLoc, newChunk, newGoalNum) =
-	if (Pervasive.isPerv pred) then genPervasiveGoal pred myChunk envSize
-	else genNonPervasiveAtomicGoal pred myChunk envSize
+    if (Pervasive.isPerv pred) then genPervasiveGoal pred myChunk envSize
+    else genNonPervasiveAtomicGoal pred myChunk envSize
   in
   (newInsts, newStartLoc, newChunk, myChunks, newGoalNum)
   
@@ -1791,11 +1792,11 @@ and genAtomicGoal goal cl goalNum last chunk chunks insts startLoc =
 (************************************************************************)
 and genAndGoal goal cl goalNum last chunk chunks insts startLoc =
   let (newInsts, newStartLoc, newChunk, newChunks, newGoalNum) =
-	genGoal (Absyn.getAndGoalLeftOperand goal) cl goalNum false chunk
-	  chunks insts startLoc 
+    genGoal (Absyn.getAndGoalLeftOperand goal) cl goalNum false chunk
+      chunks insts startLoc 
   in
   genGoal (Absyn.getAndGoalRightOperand goal) cl newGoalNum last newChunk
-	newChunks newInsts newStartLoc
+    newChunks newInsts newStartLoc
 
 (************************************************************************)
 (* genAllGoal:                                                          *)
