@@ -1,5 +1,5 @@
-Disassembling from bytecode file: typeset.lpo
-Bytecode version: 2
+Disassembling from bytecode file: typeset.lp
+Bytecode version: 3
 Module name: typeset
 
 LABEL               INSTRUCTION              OPERANDS
@@ -53,13 +53,15 @@ Implication Tables:
 
 Hash tables:
 
-Module table:
-  Predicate definitions possibly extending previous ones: 1
+Import tables:
+
+  Import table:
+    number of code segments: 0
+    Next clause table: 1
    foo
-  Exportdef predicates: 0
-  Local predicates: 0
-  Find function type: hash
-  In-core table size: 1
+    Local constant table: 0
+    Find function type: hash
+    Search table: 1
    foo
 
 Accumulated tables:
