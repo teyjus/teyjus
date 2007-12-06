@@ -645,8 +645,7 @@ and reduceToTerm parsingtoplevel fvs amodule stack =
   | PrefixrState
   | InfixState
   | InfixrState ->
-      let term = (getTermTerm (getStackTermTerm (stackTop stack))) in
-      let pos = Absyn.getTermPos term in
+      let pos = getStackItemPos (stackTop stack) in
       let fixity = 
         (Absyn.string_of_fixity
           (Absyn.getConstantFixity 

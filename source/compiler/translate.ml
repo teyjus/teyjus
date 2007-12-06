@@ -1100,21 +1100,26 @@ let copyExportdef generalCopier owner currentConstant newConstant =
     ("copying exportdef '" ^ (Absyn.getConstantName newConstant) ^ "'") in
   let () = generalCopier currentConstant newConstant in
   
-  let edref = Absyn.getConstantExportDefRef currentConstant in
-  let nodefsref = Absyn.getConstantNoDefsRef currentConstant in
-  (edref := true;
-  nodefsref := not owner)
+  if owner then
+    let edref = Absyn.getConstantExportDefRef currentConstant in
+    let nodefsref = Absyn.getConstantNoDefsRef currentConstant in
+    (edref := true;
+    nodefsref := not owner)
+  else
+    ()
 
 let copyUseonly generalCopier owner currentConstant newConstant =
   let () = Errormsg.log Errormsg.none
     ("copying useonly '" ^ (Absyn.getConstantName newConstant) ^ "'") in
   let () = generalCopier currentConstant newConstant in
-  let uoref = Absyn.getConstantUseOnlyRef currentConstant in
-  let nodefsref = Absyn.getConstantNoDefsRef currentConstant in
-  (Errormsg.log Errormsg.none "setting useonly";
-  uoref := true;
-  nodefsref := true)
-
+  if owner then
+    let uoref = Absyn.getConstantUseOnlyRef currentConstant in
+    let nodefsref = Absyn.getConstantNoDefsRef currentConstant in
+    (Errormsg.log Errormsg.none "setting useonly";
+    uoref := true;
+    nodefsref := true)
+  else
+    ()
 
 (**********************************************************************
 *translate:
@@ -1333,10 +1338,8 @@ and translateSignature s owner accumOrUse ktable ctable tabbrevtable
   let uconstantlist = translateUseOnlyConstants owner uconsts ktable tabbrevtable in
   let econstantlist =
     if accumOrUse then
-      let () = Errormsg.log Errormsg.none "Accuming" in
       translateExportdefConstants owner econsts ktable tabbrevtable
     else
-      let () = Errormsg.log Errormsg.none "Using" in
       translateUseOnlyConstants owner econsts ktable tabbrevtable
   in
   
