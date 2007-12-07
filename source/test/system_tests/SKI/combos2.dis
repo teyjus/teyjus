@@ -1,0 +1,1332 @@
+Disassembling from bytecode file: combos2.lpo
+Bytecode version: 2
+Module name: combos2
+
+LABEL               INSTRUCTION              OPERANDS
+
+L3                  fail                     
+combo               switch_on_reg            #1, L1, L2
+L1                  try                      #2, L2
+                    trust_ext                #2, #1
+                    try_me_else              #0, L3
+L2                  switch_on_term           L4, L5, L3, L4
+L4                  try_me_else              #2, L6
+L20                 get_string               A1, <string #0>
+                    get_m_structure          A2, app, #2
+                    unify_variable_t         A255
+                    unify_variable_t         A254
+                    get_m_structure          A255, abs, #1
+                    unify_variable_t         A255
+                    put_index                A252, #1
+                    put_lambda               A253, A252, #1
+                    pattern_unify_t          A253, A255
+                    get_m_structure          A254, abs, #1
+                    unify_variable_t         A255
+                    put_m_const              A252, abs
+                    put_index                A250, #2
+                    put_lambda               A251, A250, #1
+                    put_app                  A253, A252, #1
+                    set_value_t              A251
+                    put_lambda               A254, A253, #1
+                    pattern_unify_t          A254, A255
+                    finish_unify             
+                    proceed                  
+L6                  retry_me_else            #2, L7
+L21                 get_string               A1, <string #1>
+                    get_m_structure          A2, app, #2
+                    unify_variable_t         A255
+                    unify_variable_t         A254
+                    get_m_structure          A255, app, #2
+                    unify_variable_t         A255
+                    unify_variable_t         A253
+                    get_m_structure          A255, app, #2
+                    unify_variable_t         A255
+                    unify_variable_t         A252
+                    get_m_structure          A255, app, #2
+                    unify_variable_t         A255
+                    unify_variable_t         A251
+                    get_m_structure          A255, abs, #1
+                    unify_variable_t         A255
+                    put_index                A249, #1
+                    put_lambda               A250, A249, #1
+                    pattern_unify_t          A250, A255
+                    get_m_structure          A251, abs, #1
+                    unify_variable_t         A255
+                    put_m_const              A249, abs
+                    put_index                A247, #2
+                    put_lambda               A248, A247, #1
+                    put_app                  A250, A249, #1
+                    set_value_t              A248
+                    put_lambda               A251, A250, #1
+                    pattern_unify_t          A251, A255
+                    get_m_structure          A252, abs, #1
+                    unify_variable_t         A255
+                    put_index                A251, #1
+                    put_lambda               A252, A251, #1
+                    pattern_unify_t          A252, A255
+                    get_m_structure          A253, abs, #1
+                    unify_variable_t         A255
+                    put_m_const              A251, abs
+                    put_m_const              A248, abs
+                    put_m_const              A245, app
+                    put_m_const              A243, app
+                    put_app                  A244, A243, #2
+                    set_index                #3
+                    set_index                #1
+                    put_m_const              A242, app
+                    put_app                  A243, A242, #2
+                    set_index                #2
+                    set_index                #1
+                    put_app                  A246, A245, #2
+                    set_value_t              A244
+                    set_value_t              A243
+                    put_lambda               A247, A246, #1
+                    put_app                  A249, A248, #1
+                    set_value_t              A247
+                    put_lambda               A250, A249, #1
+                    put_app                  A252, A251, #1
+                    set_value_t              A250
+                    put_lambda               A253, A252, #1
+                    pattern_unify_t          A253, A255
+                    get_m_structure          A254, abs, #1
+                    unify_variable_t         A255
+                    put_index                A253, #1
+                    put_lambda               A254, A253, #1
+                    pattern_unify_t          A254, A255
+                    finish_unify             
+                    proceed                  
+L7                  retry_me_else            #2, L8
+L22                 get_string               A1, <string #2>
+                    get_m_structure          A2, app, #2
+                    unify_variable_t         A255
+                    unify_variable_t         A254
+                    get_m_structure          A255, app, #2
+                    unify_variable_t         A255
+                    unify_variable_t         A253
+                    get_m_structure          A255, abs, #1
+                    unify_variable_t         A255
+                    put_m_const              A250, abs
+                    put_index                A248, #2
+                    put_lambda               A249, A248, #1
+                    put_app                  A251, A250, #1
+                    set_value_t              A249
+                    put_lambda               A252, A251, #1
+                    pattern_unify_t          A252, A255
+                    get_m_structure          A253, app, #2
+                    unify_variable_t         A255
+                    unify_variable_t         A253
+                    get_m_structure          A255, abs, #1
+                    unify_variable_t         A255
+                    put_m_const              A250, abs
+                    put_m_const              A247, abs
+                    put_m_const              A244, app
+                    put_m_const              A242, app
+                    put_app                  A243, A242, #2
+                    set_index                #3
+                    set_index                #1
+                    put_m_const              A241, app
+                    put_app                  A242, A241, #2
+                    set_index                #2
+                    set_index                #1
+                    put_app                  A245, A244, #2
+                    set_value_t              A243
+                    set_value_t              A242
+                    put_lambda               A246, A245, #1
+                    put_app                  A248, A247, #1
+                    set_value_t              A246
+                    put_lambda               A249, A248, #1
+                    put_app                  A251, A250, #1
+                    set_value_t              A249
+                    put_lambda               A252, A251, #1
+                    pattern_unify_t          A252, A255
+                    get_m_structure          A253, abs, #1
+                    unify_variable_t         A255
+                    put_m_const              A251, abs
+                    put_m_const              A248, abs
+                    put_m_const              A245, app
+                    put_m_const              A243, app
+                    put_app                  A244, A243, #2
+                    set_index                #3
+                    set_index                #1
+                    put_m_const              A242, app
+                    put_app                  A243, A242, #2
+                    set_index                #2
+                    set_index                #1
+                    put_app                  A246, A245, #2
+                    set_value_t              A244
+                    set_value_t              A243
+                    put_lambda               A247, A246, #1
+                    put_app                  A249, A248, #1
+                    set_value_t              A247
+                    put_lambda               A250, A249, #1
+                    put_app                  A252, A251, #1
+                    set_value_t              A250
+                    put_lambda               A253, A252, #1
+                    pattern_unify_t          A253, A255
+                    get_m_structure          A254, app, #2
+                    unify_variable_t         A255
+                    unify_variable_t         A254
+                    get_m_structure          A255, abs, #1
+                    unify_variable_t         A255
+                    put_index                A252, #1
+                    put_lambda               A253, A252, #1
+                    pattern_unify_t          A253, A255
+                    get_m_structure          A254, app, #2
+                    unify_variable_t         A255
+                    unify_variable_t         A254
+                    get_m_structure          A255, app, #2
+                    unify_variable_t         A255
+                    unify_variable_t         A253
+                    get_m_structure          A255, abs, #1
+                    unify_variable_t         A255
+                    put_m_const              A250, abs
+                    put_index                A248, #2
+                    put_lambda               A249, A248, #1
+                    put_app                  A251, A250, #1
+                    set_value_t              A249
+                    put_lambda               A252, A251, #1
+                    pattern_unify_t          A252, A255
+                    get_m_structure          A253, app, #2
+                    unify_variable_t         A255
+                    unify_variable_t         A253
+                    get_m_structure          A255, abs, #1
+                    unify_variable_t         A255
+                    put_m_const              A250, abs
+                    put_index                A248, #2
+                    put_lambda               A249, A248, #1
+                    put_app                  A251, A250, #1
+                    set_value_t              A249
+                    put_lambda               A252, A251, #1
+                    pattern_unify_t          A252, A255
+                    get_m_structure          A253, abs, #1
+                    unify_variable_t         A255
+                    put_m_const              A251, abs
+                    put_m_const              A248, abs
+                    put_m_const              A245, app
+                    put_m_const              A243, app
+                    put_app                  A244, A243, #2
+                    set_index                #3
+                    set_index                #1
+                    put_m_const              A242, app
+                    put_app                  A243, A242, #2
+                    set_index                #2
+                    set_index                #1
+                    put_app                  A246, A245, #2
+                    set_value_t              A244
+                    set_value_t              A243
+                    put_lambda               A247, A246, #1
+                    put_app                  A249, A248, #1
+                    set_value_t              A247
+                    put_lambda               A250, A249, #1
+                    put_app                  A252, A251, #1
+                    set_value_t              A250
+                    put_lambda               A253, A252, #1
+                    pattern_unify_t          A253, A255
+                    get_m_structure          A254, abs, #1
+                    unify_variable_t         A255
+                    put_m_const              A252, abs
+                    put_m_const              A249, abs
+                    put_m_const              A246, app
+                    put_m_const              A244, app
+                    put_app                  A245, A244, #2
+                    set_index                #3
+                    set_index                #1
+                    put_m_const              A243, app
+                    put_app                  A244, A243, #2
+                    set_index                #2
+                    set_index                #1
+                    put_app                  A247, A246, #2
+                    set_value_t              A245
+                    set_value_t              A244
+                    put_lambda               A248, A247, #1
+                    put_app                  A250, A249, #1
+                    set_value_t              A248
+                    put_lambda               A251, A250, #1
+                    put_app                  A253, A252, #1
+                    set_value_t              A251
+                    put_lambda               A254, A253, #1
+                    pattern_unify_t          A254, A255
+                    finish_unify             
+                    proceed                  
+L8                  retry_me_else            #2, L9
+L23                 get_string               A1, <string #3>
+                    get_m_structure          A2, abs, #1
+                    unify_variable_t         A255
+                    put_index                A253, #1
+                    put_lambda               A254, A253, #1
+                    pattern_unify_t          A254, A255
+                    finish_unify             
+                    proceed                  
+L9                  retry_me_else            #2, L10
+L24                 get_string               A1, <string #4>
+                    get_m_structure          A2, app, #2
+                    unify_variable_t         A255
+                    unify_variable_t         A254
+                    get_m_structure          A255, abs, #1
+                    unify_variable_t         A255
+                    put_m_const              A251, abs
+                    put_m_const              A248, abs
+                    put_m_const              A245, app
+                    put_m_const              A243, app
+                    put_app                  A244, A243, #2
+                    set_index                #3
+                    set_index                #1
+                    put_m_const              A242, app
+                    put_app                  A243, A242, #2
+                    set_index                #2
+                    set_index                #1
+                    put_app                  A246, A245, #2
+                    set_value_t              A244
+                    set_value_t              A243
+                    put_lambda               A247, A246, #1
+                    put_app                  A249, A248, #1
+                    set_value_t              A247
+                    put_lambda               A250, A249, #1
+                    put_app                  A252, A251, #1
+                    set_value_t              A250
+                    put_lambda               A253, A252, #1
+                    pattern_unify_t          A253, A255
+                    get_m_structure          A254, app, #2
+                    unify_variable_t         A255
+                    unify_variable_t         A254
+                    get_m_structure          A255, abs, #1
+                    unify_variable_t         A255
+                    put_index                A252, #1
+                    put_lambda               A253, A252, #1
+                    pattern_unify_t          A253, A255
+                    get_m_structure          A254, app, #2
+                    unify_variable_t         A255
+                    unify_variable_t         A254
+                    get_m_structure          A255, abs, #1
+                    unify_variable_t         A255
+                    put_m_const              A251, abs
+                    put_m_const              A248, abs
+                    put_m_const              A245, app
+                    put_m_const              A243, app
+                    put_app                  A244, A243, #2
+                    set_index                #3
+                    set_index                #1
+                    put_m_const              A242, app
+                    put_app                  A243, A242, #2
+                    set_index                #2
+                    set_index                #1
+                    put_app                  A246, A245, #2
+                    set_value_t              A244
+                    set_value_t              A243
+                    put_lambda               A247, A246, #1
+                    put_app                  A249, A248, #1
+                    set_value_t              A247
+                    put_lambda               A250, A249, #1
+                    put_app                  A252, A251, #1
+                    set_value_t              A250
+                    put_lambda               A253, A252, #1
+                    pattern_unify_t          A253, A255
+                    get_m_structure          A254, app, #2
+                    unify_variable_t         A255
+                    unify_variable_t         A254
+                    get_m_structure          A255, app, #2
+                    unify_variable_t         A255
+                    unify_variable_t         A253
+                    get_m_structure          A255, abs, #1
+                    unify_variable_t         A255
+                    put_m_const              A250, abs
+                    put_m_const              A247, abs
+                    put_m_const              A244, app
+                    put_m_const              A242, app
+                    put_app                  A243, A242, #2
+                    set_index                #3
+                    set_index                #1
+                    put_m_const              A241, app
+                    put_app                  A242, A241, #2
+                    set_index                #2
+                    set_index                #1
+                    put_app                  A245, A244, #2
+                    set_value_t              A243
+                    set_value_t              A242
+                    put_lambda               A246, A245, #1
+                    put_app                  A248, A247, #1
+                    set_value_t              A246
+                    put_lambda               A249, A248, #1
+                    put_app                  A251, A250, #1
+                    set_value_t              A249
+                    put_lambda               A252, A251, #1
+                    pattern_unify_t          A252, A255
+                    get_m_structure          A253, abs, #1
+                    unify_variable_t         A255
+                    put_index                A252, #1
+                    put_lambda               A253, A252, #1
+                    pattern_unify_t          A253, A255
+                    get_m_structure          A254, app, #2
+                    unify_variable_t         A255
+                    unify_variable_t         A254
+                    get_m_structure          A255, abs, #1
+                    unify_variable_t         A255
+                    put_m_const              A251, abs
+                    put_m_const              A248, abs
+                    put_m_const              A245, app
+                    put_m_const              A243, app
+                    put_app                  A244, A243, #2
+                    set_index                #3
+                    set_index                #1
+                    put_m_const              A242, app
+                    put_app                  A243, A242, #2
+                    set_index                #2
+                    set_index                #1
+                    put_app                  A246, A245, #2
+                    set_value_t              A244
+                    set_value_t              A243
+                    put_lambda               A247, A246, #1
+                    put_app                  A249, A248, #1
+                    set_value_t              A247
+                    put_lambda               A250, A249, #1
+                    put_app                  A252, A251, #1
+                    set_value_t              A250
+                    put_lambda               A253, A252, #1
+                    pattern_unify_t          A253, A255
+                    get_m_structure          A254, abs, #1
+                    unify_variable_t         A255
+                    put_m_const              A252, abs
+                    put_index                A250, #2
+                    put_lambda               A251, A250, #1
+                    put_app                  A253, A252, #1
+                    set_value_t              A251
+                    put_lambda               A254, A253, #1
+                    pattern_unify_t          A254, A255
+                    finish_unify             
+                    proceed                  
+L10                 retry_me_else            #2, L11
+L25                 get_string               A1, <string #5>
+                    get_m_structure          A2, app, #2
+                    unify_variable_t         A255
+                    unify_variable_t         A254
+                    get_m_structure          A255, abs, #1
+                    unify_variable_t         A255
+                    put_index                A252, #1
+                    put_lambda               A253, A252, #1
+                    pattern_unify_t          A253, A255
+                    get_m_structure          A254, abs, #1
+                    unify_variable_t         A255
+                    put_m_const              A252, abs
+                    put_m_const              A249, abs
+                    put_m_const              A246, app
+                    put_m_const              A244, app
+                    put_app                  A245, A244, #2
+                    set_index                #3
+                    set_index                #1
+                    put_m_const              A243, app
+                    put_app                  A244, A243, #2
+                    set_index                #2
+                    set_index                #1
+                    put_app                  A247, A246, #2
+                    set_value_t              A245
+                    set_value_t              A244
+                    put_lambda               A248, A247, #1
+                    put_app                  A250, A249, #1
+                    set_value_t              A248
+                    put_lambda               A251, A250, #1
+                    put_app                  A253, A252, #1
+                    set_value_t              A251
+                    put_lambda               A254, A253, #1
+                    pattern_unify_t          A254, A255
+                    finish_unify             
+                    proceed                  
+L11                 retry_me_else            #2, L12
+L26                 get_string               A1, <string #6>
+                    get_m_structure          A2, app, #2
+                    unify_variable_t         A255
+                    unify_variable_t         A254
+                    get_m_structure          A255, app, #2
+                    unify_variable_t         A255
+                    unify_variable_t         A253
+                    get_m_structure          A255, abs, #1
+                    unify_variable_t         A255
+                    put_index                A251, #1
+                    put_lambda               A252, A251, #1
+                    pattern_unify_t          A252, A255
+                    get_m_structure          A253, abs, #1
+                    unify_variable_t         A255
+                    put_m_const              A251, abs
+                    put_m_const              A248, abs
+                    put_m_const              A245, app
+                    put_m_const              A243, app
+                    put_app                  A244, A243, #2
+                    set_index                #3
+                    set_index                #1
+                    put_m_const              A242, app
+                    put_app                  A243, A242, #2
+                    set_index                #2
+                    set_index                #1
+                    put_app                  A246, A245, #2
+                    set_value_t              A244
+                    set_value_t              A243
+                    put_lambda               A247, A246, #1
+                    put_app                  A249, A248, #1
+                    set_value_t              A247
+                    put_lambda               A250, A249, #1
+                    put_app                  A252, A251, #1
+                    set_value_t              A250
+                    put_lambda               A253, A252, #1
+                    pattern_unify_t          A253, A255
+                    get_m_structure          A254, abs, #1
+                    unify_variable_t         A255
+                    put_m_const              A252, abs
+                    put_index                A250, #2
+                    put_lambda               A251, A250, #1
+                    put_app                  A253, A252, #1
+                    set_value_t              A251
+                    put_lambda               A254, A253, #1
+                    pattern_unify_t          A254, A255
+                    finish_unify             
+                    proceed                  
+L12                 retry_me_else            #2, L13
+L27                 get_string               A1, <string #7>
+                    get_m_structure          A2, abs, #1
+                    unify_variable_t         A255
+                    put_m_const              A252, abs
+                    put_m_const              A249, abs
+                    put_m_const              A246, app
+                    put_m_const              A244, app
+                    put_app                  A245, A244, #2
+                    set_index                #3
+                    set_index                #1
+                    put_m_const              A243, app
+                    put_app                  A244, A243, #2
+                    set_index                #2
+                    set_index                #1
+                    put_app                  A247, A246, #2
+                    set_value_t              A245
+                    set_value_t              A244
+                    put_lambda               A248, A247, #1
+                    put_app                  A250, A249, #1
+                    set_value_t              A248
+                    put_lambda               A251, A250, #1
+                    put_app                  A253, A252, #1
+                    set_value_t              A251
+                    put_lambda               A254, A253, #1
+                    pattern_unify_t          A254, A255
+                    finish_unify             
+                    proceed                  
+L13                 retry_me_else            #2, L14
+L28                 get_string               A1, <string #8>
+                    get_m_structure          A2, app, #2
+                    unify_variable_t         A255
+                    unify_variable_t         A254
+                    get_m_structure          A255, abs, #1
+                    unify_variable_t         A255
+                    put_m_const              A251, abs
+                    put_index                A249, #2
+                    put_lambda               A250, A249, #1
+                    put_app                  A252, A251, #1
+                    set_value_t              A250
+                    put_lambda               A253, A252, #1
+                    pattern_unify_t          A253, A255
+                    get_m_structure          A254, app, #2
+                    unify_variable_t         A255
+                    unify_variable_t         A254
+                    get_m_structure          A255, abs, #1
+                    unify_variable_t         A255
+                    put_m_const              A251, abs
+                    put_index                A249, #2
+                    put_lambda               A250, A249, #1
+                    put_app                  A252, A251, #1
+                    set_value_t              A250
+                    put_lambda               A253, A252, #1
+                    pattern_unify_t          A253, A255
+                    get_m_structure          A254, abs, #1
+                    unify_variable_t         A255
+                    put_m_const              A252, abs
+                    put_index                A250, #2
+                    put_lambda               A251, A250, #1
+                    put_app                  A253, A252, #1
+                    set_value_t              A251
+                    put_lambda               A254, A253, #1
+                    pattern_unify_t          A254, A255
+                    finish_unify             
+                    proceed                  
+L14                 retry_me_else            #2, L15
+L29                 get_string               A1, <string #9>
+                    get_m_structure          A2, app, #2
+                    unify_variable_t         A255
+                    unify_variable_t         A254
+                    get_m_structure          A255, abs, #1
+                    unify_variable_t         A255
+                    put_m_const              A251, abs
+                    put_index                A249, #2
+                    put_lambda               A250, A249, #1
+                    put_app                  A252, A251, #1
+                    set_value_t              A250
+                    put_lambda               A253, A252, #1
+                    pattern_unify_t          A253, A255
+                    get_m_structure          A254, abs, #1
+                    unify_variable_t         A255
+                    put_index                A253, #1
+                    put_lambda               A254, A253, #1
+                    pattern_unify_t          A254, A255
+                    finish_unify             
+                    proceed                  
+L15                 retry_me_else            #2, L16
+L30                 get_string               A1, <string #10>
+                    get_m_structure          A2, app, #2
+                    unify_variable_t         A255
+                    unify_variable_t         A254
+                    get_m_structure          A255, app, #2
+                    unify_variable_t         A255
+                    unify_variable_t         A253
+                    get_m_structure          A255, abs, #1
+                    unify_variable_t         A255
+                    put_index                A251, #1
+                    put_lambda               A252, A251, #1
+                    pattern_unify_t          A252, A255
+                    get_m_structure          A253, app, #2
+                    unify_variable_t         A255
+                    unify_variable_t         A253
+                    get_m_structure          A255, app, #2
+                    unify_variable_t         A255
+                    unify_variable_t         A252
+                    get_m_structure          A255, app, #2
+                    unify_variable_t         A255
+                    unify_variable_t         A251
+                    get_m_structure          A255, abs, #1
+                    unify_variable_t         A255
+                    put_m_const              A248, abs
+                    put_index                A246, #2
+                    put_lambda               A247, A246, #1
+                    put_app                  A249, A248, #1
+                    set_value_t              A247
+                    put_lambda               A250, A249, #1
+                    pattern_unify_t          A250, A255
+                    get_m_structure          A251, abs, #1
+                    unify_variable_t         A255
+                    put_index                A250, #1
+                    put_lambda               A251, A250, #1
+                    pattern_unify_t          A251, A255
+                    get_m_structure          A252, app, #2
+                    unify_variable_t         A255
+                    unify_variable_t         A252
+                    get_m_structure          A255, app, #2
+                    unify_variable_t         A255
+                    unify_variable_t         A251
+                    get_m_structure          A255, app, #2
+                    unify_variable_t         A255
+                    unify_variable_t         A250
+                    get_m_structure          A255, abs, #1
+                    unify_variable_t         A255
+                    put_m_const              A247, abs
+                    put_m_const              A244, abs
+                    put_m_const              A241, app
+                    put_m_const              A239, app
+                    put_app                  A240, A239, #2
+                    set_index                #3
+                    set_index                #1
+                    put_m_const              A238, app
+                    put_app                  A239, A238, #2
+                    set_index                #2
+                    set_index                #1
+                    put_app                  A242, A241, #2
+                    set_value_t              A240
+                    set_value_t              A239
+                    put_lambda               A243, A242, #1
+                    put_app                  A245, A244, #1
+                    set_value_t              A243
+                    put_lambda               A246, A245, #1
+                    put_app                  A248, A247, #1
+                    set_value_t              A246
+                    put_lambda               A249, A248, #1
+                    pattern_unify_t          A249, A255
+                    get_m_structure          A250, app, #2
+                    unify_variable_t         A255
+                    unify_variable_t         A250
+                    get_m_structure          A255, app, #2
+                    unify_variable_t         A255
+                    unify_variable_t         A249
+                    get_m_structure          A255, abs, #1
+                    unify_variable_t         A255
+                    put_m_const              A246, abs
+                    put_m_const              A243, abs
+                    put_m_const              A240, app
+                    put_m_const              A238, app
+                    put_app                  A239, A238, #2
+                    set_index                #3
+                    set_index                #1
+                    put_m_const              A237, app
+                    put_app                  A238, A237, #2
+                    set_index                #2
+                    set_index                #1
+                    put_app                  A241, A240, #2
+                    set_value_t              A239
+                    set_value_t              A238
+                    put_lambda               A242, A241, #1
+                    put_app                  A244, A243, #1
+                    set_value_t              A242
+                    put_lambda               A245, A244, #1
+                    put_app                  A247, A246, #1
+                    set_value_t              A245
+                    put_lambda               A248, A247, #1
+                    pattern_unify_t          A248, A255
+                    get_m_structure          A249, abs, #1
+                    unify_variable_t         A255
+                    put_index                A248, #1
+                    put_lambda               A249, A248, #1
+                    pattern_unify_t          A249, A255
+                    get_m_structure          A250, abs, #1
+                    unify_variable_t         A255
+                    put_m_const              A248, abs
+                    put_m_const              A245, abs
+                    put_m_const              A242, app
+                    put_m_const              A240, app
+                    put_app                  A241, A240, #2
+                    set_index                #3
+                    set_index                #1
+                    put_m_const              A239, app
+                    put_app                  A240, A239, #2
+                    set_index                #2
+                    set_index                #1
+                    put_app                  A243, A242, #2
+                    set_value_t              A241
+                    set_value_t              A240
+                    put_lambda               A244, A243, #1
+                    put_app                  A246, A245, #1
+                    set_value_t              A244
+                    put_lambda               A247, A246, #1
+                    put_app                  A249, A248, #1
+                    set_value_t              A247
+                    put_lambda               A250, A249, #1
+                    pattern_unify_t          A250, A255
+                    get_m_structure          A251, app, #2
+                    unify_variable_t         A255
+                    unify_variable_t         A251
+                    get_m_structure          A255, abs, #1
+                    unify_variable_t         A255
+                    put_m_const              A248, abs
+                    put_index                A246, #2
+                    put_lambda               A247, A246, #1
+                    put_app                  A249, A248, #1
+                    set_value_t              A247
+                    put_lambda               A250, A249, #1
+                    pattern_unify_t          A250, A255
+                    get_m_structure          A251, abs, #1
+                    unify_variable_t         A255
+                    put_m_const              A249, abs
+                    put_index                A247, #2
+                    put_lambda               A248, A247, #1
+                    put_app                  A250, A249, #1
+                    set_value_t              A248
+                    put_lambda               A251, A250, #1
+                    pattern_unify_t          A251, A255
+                    get_m_structure          A252, app, #2
+                    unify_variable_t         A255
+                    unify_variable_t         A252
+                    get_m_structure          A255, abs, #1
+                    unify_variable_t         A255
+                    put_m_const              A249, abs
+                    put_m_const              A246, abs
+                    put_m_const              A243, app
+                    put_m_const              A241, app
+                    put_app                  A242, A241, #2
+                    set_index                #3
+                    set_index                #1
+                    put_m_const              A240, app
+                    put_app                  A241, A240, #2
+                    set_index                #2
+                    set_index                #1
+                    put_app                  A244, A243, #2
+                    set_value_t              A242
+                    set_value_t              A241
+                    put_lambda               A245, A244, #1
+                    put_app                  A247, A246, #1
+                    set_value_t              A245
+                    put_lambda               A248, A247, #1
+                    put_app                  A250, A249, #1
+                    set_value_t              A248
+                    put_lambda               A251, A250, #1
+                    pattern_unify_t          A251, A255
+                    get_m_structure          A252, abs, #1
+                    unify_variable_t         A255
+                    put_m_const              A250, abs
+                    put_index                A248, #2
+                    put_lambda               A249, A248, #1
+                    put_app                  A251, A250, #1
+                    set_value_t              A249
+                    put_lambda               A252, A251, #1
+                    pattern_unify_t          A252, A255
+                    get_m_structure          A253, app, #2
+                    unify_variable_t         A255
+                    unify_variable_t         A253
+                    get_m_structure          A255, app, #2
+                    unify_variable_t         A255
+                    unify_variable_t         A252
+                    get_m_structure          A255, abs, #1
+                    unify_variable_t         A255
+                    put_m_const              A249, abs
+                    put_m_const              A246, abs
+                    put_m_const              A243, app
+                    put_m_const              A241, app
+                    put_app                  A242, A241, #2
+                    set_index                #3
+                    set_index                #1
+                    put_m_const              A240, app
+                    put_app                  A241, A240, #2
+                    set_index                #2
+                    set_index                #1
+                    put_app                  A244, A243, #2
+                    set_value_t              A242
+                    set_value_t              A241
+                    put_lambda               A245, A244, #1
+                    put_app                  A247, A246, #1
+                    set_value_t              A245
+                    put_lambda               A248, A247, #1
+                    put_app                  A250, A249, #1
+                    set_value_t              A248
+                    put_lambda               A251, A250, #1
+                    pattern_unify_t          A251, A255
+                    get_m_structure          A252, abs, #1
+                    unify_variable_t         A255
+                    put_index                A251, #1
+                    put_lambda               A252, A251, #1
+                    pattern_unify_t          A252, A255
+                    get_m_structure          A253, app, #2
+                    unify_variable_t         A255
+                    unify_variable_t         A253
+                    get_m_structure          A255, app, #2
+                    unify_variable_t         A255
+                    unify_variable_t         A252
+                    get_m_structure          A255, abs, #1
+                    unify_variable_t         A255
+                    put_m_const              A249, abs
+                    put_m_const              A246, abs
+                    put_m_const              A243, app
+                    put_m_const              A241, app
+                    put_app                  A242, A241, #2
+                    set_index                #3
+                    set_index                #1
+                    put_m_const              A240, app
+                    put_app                  A241, A240, #2
+                    set_index                #2
+                    set_index                #1
+                    put_app                  A244, A243, #2
+                    set_value_t              A242
+                    set_value_t              A241
+                    put_lambda               A245, A244, #1
+                    put_app                  A247, A246, #1
+                    set_value_t              A245
+                    put_lambda               A248, A247, #1
+                    put_app                  A250, A249, #1
+                    set_value_t              A248
+                    put_lambda               A251, A250, #1
+                    pattern_unify_t          A251, A255
+                    get_m_structure          A252, abs, #1
+                    unify_variable_t         A255
+                    put_index                A251, #1
+                    put_lambda               A252, A251, #1
+                    pattern_unify_t          A252, A255
+                    get_m_structure          A253, abs, #1
+                    unify_variable_t         A255
+                    put_index                A252, #1
+                    put_lambda               A253, A252, #1
+                    pattern_unify_t          A253, A255
+                    get_m_structure          A254, app, #2
+                    unify_variable_t         A255
+                    unify_variable_t         A254
+                    get_m_structure          A255, app, #2
+                    unify_variable_t         A255
+                    unify_variable_t         A253
+                    get_m_structure          A255, app, #2
+                    unify_variable_t         A255
+                    unify_variable_t         A252
+                    get_m_structure          A255, app, #2
+                    unify_variable_t         A255
+                    unify_variable_t         A251
+                    get_m_structure          A255, abs, #1
+                    unify_variable_t         A255
+                    put_m_const              A248, abs
+                    put_index                A246, #2
+                    put_lambda               A247, A246, #1
+                    put_app                  A249, A248, #1
+                    set_value_t              A247
+                    put_lambda               A250, A249, #1
+                    pattern_unify_t          A250, A255
+                    get_m_structure          A251, app, #2
+                    unify_variable_t         A255
+                    unify_variable_t         A251
+                    get_m_structure          A255, abs, #1
+                    unify_variable_t         A255
+                    put_index                A249, #1
+                    put_lambda               A250, A249, #1
+                    pattern_unify_t          A250, A255
+                    get_m_structure          A251, abs, #1
+                    unify_variable_t         A255
+                    put_index                A250, #1
+                    put_lambda               A251, A250, #1
+                    pattern_unify_t          A251, A255
+                    get_m_structure          A252, app, #2
+                    unify_variable_t         A255
+                    unify_variable_t         A252
+                    get_m_structure          A255, app, #2
+                    unify_variable_t         A255
+                    unify_variable_t         A251
+                    get_m_structure          A255, abs, #1
+                    unify_variable_t         A255
+                    put_m_const              A248, abs
+                    put_m_const              A245, abs
+                    put_m_const              A242, app
+                    put_m_const              A240, app
+                    put_app                  A241, A240, #2
+                    set_index                #3
+                    set_index                #1
+                    put_m_const              A239, app
+                    put_app                  A240, A239, #2
+                    set_index                #2
+                    set_index                #1
+                    put_app                  A243, A242, #2
+                    set_value_t              A241
+                    set_value_t              A240
+                    put_lambda               A244, A243, #1
+                    put_app                  A246, A245, #1
+                    set_value_t              A244
+                    put_lambda               A247, A246, #1
+                    put_app                  A249, A248, #1
+                    set_value_t              A247
+                    put_lambda               A250, A249, #1
+                    pattern_unify_t          A250, A255
+                    get_m_structure          A251, abs, #1
+                    unify_variable_t         A255
+                    put_m_const              A249, abs
+                    put_m_const              A246, abs
+                    put_m_const              A243, app
+                    put_m_const              A241, app
+                    put_app                  A242, A241, #2
+                    set_index                #3
+                    set_index                #1
+                    put_m_const              A240, app
+                    put_app                  A241, A240, #2
+                    set_index                #2
+                    set_index                #1
+                    put_app                  A244, A243, #2
+                    set_value_t              A242
+                    set_value_t              A241
+                    put_lambda               A245, A244, #1
+                    put_app                  A247, A246, #1
+                    set_value_t              A245
+                    put_lambda               A248, A247, #1
+                    put_app                  A250, A249, #1
+                    set_value_t              A248
+                    put_lambda               A251, A250, #1
+                    pattern_unify_t          A251, A255
+                    get_m_structure          A252, abs, #1
+                    unify_variable_t         A255
+                    put_m_const              A250, abs
+                    put_index                A248, #2
+                    put_lambda               A249, A248, #1
+                    put_app                  A251, A250, #1
+                    set_value_t              A249
+                    put_lambda               A252, A251, #1
+                    pattern_unify_t          A252, A255
+                    get_m_structure          A253, app, #2
+                    unify_variable_t         A255
+                    unify_variable_t         A253
+                    get_m_structure          A255, app, #2
+                    unify_variable_t         A255
+                    unify_variable_t         A252
+                    get_m_structure          A255, abs, #1
+                    unify_variable_t         A255
+                    put_m_const              A249, abs
+                    put_index                A247, #2
+                    put_lambda               A248, A247, #1
+                    put_app                  A250, A249, #1
+                    set_value_t              A248
+                    put_lambda               A251, A250, #1
+                    pattern_unify_t          A251, A255
+                    get_m_structure          A252, abs, #1
+                    unify_variable_t         A255
+                    put_m_const              A250, abs
+                    put_index                A248, #2
+                    put_lambda               A249, A248, #1
+                    put_app                  A251, A250, #1
+                    set_value_t              A249
+                    put_lambda               A252, A251, #1
+                    pattern_unify_t          A252, A255
+                    get_m_structure          A253, abs, #1
+                    unify_variable_t         A255
+                    put_m_const              A251, abs
+                    put_index                A249, #2
+                    put_lambda               A250, A249, #1
+                    put_app                  A252, A251, #1
+                    set_value_t              A250
+                    put_lambda               A253, A252, #1
+                    pattern_unify_t          A253, A255
+                    get_m_structure          A254, abs, #1
+                    unify_variable_t         A255
+                    put_m_const              A252, abs
+                    put_m_const              A249, abs
+                    put_m_const              A246, app
+                    put_m_const              A244, app
+                    put_app                  A245, A244, #2
+                    set_index                #3
+                    set_index                #1
+                    put_m_const              A243, app
+                    put_app                  A244, A243, #2
+                    set_index                #2
+                    set_index                #1
+                    put_app                  A247, A246, #2
+                    set_value_t              A245
+                    set_value_t              A244
+                    put_lambda               A248, A247, #1
+                    put_app                  A250, A249, #1
+                    set_value_t              A248
+                    put_lambda               A251, A250, #1
+                    put_app                  A253, A252, #1
+                    set_value_t              A251
+                    put_lambda               A254, A253, #1
+                    pattern_unify_t          A254, A255
+                    finish_unify             
+                    proceed                  
+L16                 retry_me_else            #2, L17
+L31                 get_string               A1, <string #11>
+                    get_m_structure          A2, app, #2
+                    unify_variable_t         A255
+                    unify_variable_t         A254
+                    get_m_structure          A255, app, #2
+                    unify_variable_t         A255
+                    unify_variable_t         A253
+                    get_m_structure          A255, abs, #1
+                    unify_variable_t         A255
+                    put_m_const              A250, abs
+                    put_index                A248, #2
+                    put_lambda               A249, A248, #1
+                    put_app                  A251, A250, #1
+                    set_value_t              A249
+                    put_lambda               A252, A251, #1
+                    pattern_unify_t          A252, A255
+                    get_m_structure          A253, abs, #1
+                    unify_variable_t         A255
+                    put_m_const              A251, abs
+                    put_m_const              A248, abs
+                    put_m_const              A245, app
+                    put_m_const              A243, app
+                    put_app                  A244, A243, #2
+                    set_index                #3
+                    set_index                #1
+                    put_m_const              A242, app
+                    put_app                  A243, A242, #2
+                    set_index                #2
+                    set_index                #1
+                    put_app                  A246, A245, #2
+                    set_value_t              A244
+                    set_value_t              A243
+                    put_lambda               A247, A246, #1
+                    put_app                  A249, A248, #1
+                    set_value_t              A247
+                    put_lambda               A250, A249, #1
+                    put_app                  A252, A251, #1
+                    set_value_t              A250
+                    put_lambda               A253, A252, #1
+                    pattern_unify_t          A253, A255
+                    get_m_structure          A254, abs, #1
+                    unify_variable_t         A255
+                    put_m_const              A252, abs
+                    put_m_const              A249, abs
+                    put_m_const              A246, app
+                    put_m_const              A244, app
+                    put_app                  A245, A244, #2
+                    set_index                #3
+                    set_index                #1
+                    put_m_const              A243, app
+                    put_app                  A244, A243, #2
+                    set_index                #2
+                    set_index                #1
+                    put_app                  A247, A246, #2
+                    set_value_t              A245
+                    set_value_t              A244
+                    put_lambda               A248, A247, #1
+                    put_app                  A250, A249, #1
+                    set_value_t              A248
+                    put_lambda               A251, A250, #1
+                    put_app                  A253, A252, #1
+                    set_value_t              A251
+                    put_lambda               A254, A253, #1
+                    pattern_unify_t          A254, A255
+                    finish_unify             
+                    proceed                  
+L17                 retry_me_else            #2, L18
+L32                 get_string               A1, <string #7>
+                    get_m_structure          A2, abs, #1
+                    unify_variable_t         A255
+                    put_m_const              A252, abs
+                    put_m_const              A249, abs
+                    put_m_const              A246, app
+                    put_m_const              A244, app
+                    put_app                  A245, A244, #2
+                    set_index                #3
+                    set_index                #1
+                    put_m_const              A243, app
+                    put_app                  A244, A243, #2
+                    set_index                #2
+                    set_index                #1
+                    put_app                  A247, A246, #2
+                    set_value_t              A245
+                    set_value_t              A244
+                    put_lambda               A248, A247, #1
+                    put_app                  A250, A249, #1
+                    set_value_t              A248
+                    put_lambda               A251, A250, #1
+                    put_app                  A253, A252, #1
+                    set_value_t              A251
+                    put_lambda               A254, A253, #1
+                    pattern_unify_t          A254, A255
+                    finish_unify             
+                    proceed                  
+L18                 retry_me_else            #2, L19
+L33                 get_string               A1, <string #12>
+                    get_m_structure          A2, app, #2
+                    unify_variable_t         A255
+                    unify_variable_t         A254
+                    get_m_structure          A255, app, #2
+                    unify_variable_t         A255
+                    unify_variable_t         A253
+                    get_m_structure          A255, abs, #1
+                    unify_variable_t         A255
+                    put_index                A251, #1
+                    put_lambda               A252, A251, #1
+                    pattern_unify_t          A252, A255
+                    get_m_structure          A253, app, #2
+                    unify_variable_t         A255
+                    unify_variable_t         A253
+                    get_m_structure          A255, abs, #1
+                    unify_variable_t         A255
+                    put_index                A251, #1
+                    put_lambda               A252, A251, #1
+                    pattern_unify_t          A252, A255
+                    get_m_structure          A253, abs, #1
+                    unify_variable_t         A255
+                    put_m_const              A251, abs
+                    put_index                A249, #2
+                    put_lambda               A250, A249, #1
+                    put_app                  A252, A251, #1
+                    set_value_t              A250
+                    put_lambda               A253, A252, #1
+                    pattern_unify_t          A253, A255
+                    get_m_structure          A254, abs, #1
+                    unify_variable_t         A255
+                    put_m_const              A252, abs
+                    put_m_const              A249, abs
+                    put_m_const              A246, app
+                    put_m_const              A244, app
+                    put_app                  A245, A244, #2
+                    set_index                #3
+                    set_index                #1
+                    put_m_const              A243, app
+                    put_app                  A244, A243, #2
+                    set_index                #2
+                    set_index                #1
+                    put_app                  A247, A246, #2
+                    set_value_t              A245
+                    set_value_t              A244
+                    put_lambda               A248, A247, #1
+                    put_app                  A250, A249, #1
+                    set_value_t              A248
+                    put_lambda               A251, A250, #1
+                    put_app                  A253, A252, #1
+                    set_value_t              A251
+                    put_lambda               A254, A253, #1
+                    pattern_unify_t          A254, A255
+                    finish_unify             
+                    proceed                  
+L19                 trust_me                 #2
+L34                 get_string               A1, <string #13>
+                    get_m_structure          A2, app, #2
+                    unify_variable_t         A255
+                    unify_variable_t         A254
+                    get_m_structure          A255, app, #2
+                    unify_variable_t         A255
+                    unify_variable_t         A253
+                    get_m_structure          A255, abs, #1
+                    unify_variable_t         A255
+                    put_m_const              A250, abs
+                    put_index                A248, #2
+                    put_lambda               A249, A248, #1
+                    put_app                  A251, A250, #1
+                    set_value_t              A249
+                    put_lambda               A252, A251, #1
+                    pattern_unify_t          A252, A255
+                    get_m_structure          A253, app, #2
+                    unify_variable_t         A255
+                    unify_variable_t         A253
+                    get_m_structure          A255, abs, #1
+                    unify_variable_t         A255
+                    put_index                A251, #1
+                    put_lambda               A252, A251, #1
+                    pattern_unify_t          A252, A255
+                    get_m_structure          A253, abs, #1
+                    unify_variable_t         A255
+                    put_m_const              A251, abs
+                    put_index                A249, #2
+                    put_lambda               A250, A249, #1
+                    put_app                  A252, A251, #1
+                    set_value_t              A250
+                    put_lambda               A253, A252, #1
+                    pattern_unify_t          A253, A255
+                    get_m_structure          A254, abs, #1
+                    unify_variable_t         A255
+                    put_index                A253, #1
+                    put_lambda               A254, A253, #1
+                    pattern_unify_t          A254, A255
+                    finish_unify             
+                    proceed                  
+L0                  try                      #2, L20
+                    retry                    #2, L21
+                    retry                    #2, L22
+                    retry                    #2, L23
+                    retry                    #2, L24
+                    retry                    #2, L25
+                    retry                    #2, L26
+                    retry                    #2, L27
+                    retry                    #2, L28
+                    retry                    #2, L29
+                    retry                    #2, L30
+                    retry                    #2, L31
+                    retry                    #2, L32
+                    retry                    #2, L33
+                    trust                    #2, L34
+L5                  switch_on_constant       #1, <hash #0>
+
+Global kind table:
+0: i/0
+
+Local kind table:
+
+Type skeleton table:
+0: (string -> (i -> o))
+1: (i -> (i -> i))
+2: ((i -> i) -> i)
+3: (i -> i)
+4: (i -> o)
+5: (i -> (i -> o))
+6: (int -> ((list i) -> (i -> o)))
+7: ((list SkeletonVarType(0)) -> (int -> o))
+8: (int -> (int -> o))
+9: (int -> ((list SkeletonVarType(0)) -> (SkeletonVarType(0) -> o)))
+10: (in_stream -> o)
+11: (out_stream -> o)
+12: (int -> o)
+13: (int -> (string -> (i -> o)))
+14: (int -> (int -> (string -> o)))
+15: o
+
+Global constant table: 
+0: combo (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #0
+1: app (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #1
+2: abs (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #2
+3: freevar (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #3
+4: bvar (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #4
+5: hnorm (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #5
+6: fnorm (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #5
+7: hnormw (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #5
+8: fnormw (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #5
+9: randterm (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #4
+10: genterm (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #6
+11: length (No Fixity, precedence 0)
+    Env Size: 1, Type Skeleton: #7
+12: random (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #8
+13: nthmemb (No Fixity, precedence 0)
+    Env Size: 1, Type Skeleton: #9
+14: instream (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #10
+15: outstream (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #11
+16: lambdaterm (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #4
+17: go (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #12
+18: go2 (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #12
+19: combinator (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #13
+20: randomcombo (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #13
+21: makecombos (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #14
+22: test (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #15
+23: single_test (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #0
+
+Local constant table: 
+
+Hidden constant table: 
+
+String table:
+0: (I K)
+1: ((((I K) I) S) I)
+2: ((K (S S)) (I ((K (K S)) S)))
+3: I
+4: (S (I (S ((S I) (S K)))))
+5: (I S)
+6: ((I S) K)
+7: S
+8: (K (K K))
+9: (K I)
+10: ((I (((K I) (((S ((S I) S)) (K K)) (S K))) ((S I) ((S I) I)))) ((((K (I I)) ((S S) K)) ((K K) K)) S))
+11: ((K S) S)
+12: ((I (I K)) S)
+13: ((K (I K)) I)
+
+Implication Tables:
+
+Hash tables:
+0:
+    Table size: 1
+    Constants:
+    <str_constant> -> L0
+
+Module table:
+  Predicate definitions possibly extending previous ones: 1
+   combo
+  Exportdef predicates: 0
+  Local predicates: 0
+  Find function type: hash
+  In-core table size: 1
+   combo
+
+Accumulated tables:
+0: randomlams
+    Kind renamings:
+    i -> i
+    Constant renamings:
+    app -> app
+    abs -> abs
+    freevar -> freevar
+    bvar -> bvar
+    hnorm -> hnorm
+    fnorm -> fnorm
+    hnormw -> hnormw
+    fnormw -> fnormw
+    randterm -> randterm
+    genterm -> genterm
+    length -> length
+    random -> random
+    nthmemb -> nthmemb
+    instream -> instream
+    outstream -> outstream
+    lambdaterm -> lambdaterm
+    go -> go
+    go2 -> go2
+    combinator -> combinator
+    randomcombo -> randomcombo
+    combo -> combo
+    makecombos -> makecombos
+    test -> test
+    single_test -> single_test
+
+Imported tables:
