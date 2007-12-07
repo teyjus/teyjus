@@ -206,7 +206,7 @@
       /* string -> string -> string */ 
       TYPE      18     string -> string -> string 
         /* string concatination */
-       78  ^          scat       0 0  0  TRUE   TRUE   150 INFIX    NOCODE   
+       78  ^          scat       0 0  0  TRUE   TRUE   150 INFIXL    NOCODE   
       ;;
 
       /* string -> string -> o */
