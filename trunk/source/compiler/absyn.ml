@@ -653,14 +653,14 @@ let string_of_skeleton (Skeleton(ty,_,_)) =
 (*************************************************************************)
 (* * Convert an absyn fixity to a string.  Used only in print *)
 let string_of_fixity = function
-  Infix -> "infix"
-| Infixl -> "infixl"
-| Infixr -> "infixr"
-| Prefix -> "prefix"
-| Prefixr -> "prefixr"
-| Postfix -> "postfix"
-| Postfixl -> "postfixl"
-| NoFixity -> "<no fixity>"
+  Infix -> "Infix"
+| Infixl -> "Infixl"
+| Infixr -> "Infixr"
+| Prefix -> "Prefix"
+| Prefixr -> "Prefixr"
+| Postfix -> "Postfix"
+| Postfixl -> "Postfixl"
+| NoFixity -> "NoFixity"
 
 let isFixityPrefix = function
   Prefix -> true

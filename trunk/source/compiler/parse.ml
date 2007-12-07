@@ -651,7 +651,8 @@ and reduceToTerm parsingtoplevel fvs amodule stack =
           (Absyn.getConstantFixity 
           (getStackOpConstant (stackTop stack)))) in
 
-      (Errormsg.error pos ("missing right argument for " ^ fixity ^ " operator");
+      (Errormsg.error pos ("missing right argument for " ^
+        (String.lowercase fixity) ^ " operator");
       (errorTerm, fvs))
   | _ -> (reduce' stack)
 
@@ -841,7 +842,8 @@ and stackOperation parsingtoplevel o amodule stack =
       Errormsg.error pos
         ("'" ^ name ^ "': conflict in operator precedences:" ^
         (Errormsg.info "precedence: " ^ (string_of_int prec)) ^ "." ^
-        (Errormsg.info "fixity: " ^ (Absyn.string_of_fixity fixity)) ^ ".")
+        (Errormsg.info "fixity: " ^
+        (String.lowercase (Absyn.string_of_fixity fixity))) ^ ".")
     in
 
     (******************************************************************
@@ -857,7 +859,7 @@ and stackOperation parsingtoplevel o amodule stack =
       else
         (Errormsg.error pos 
           ("missing left argument for " ^
-          (Absyn.string_of_fixity fixity) ^
+          (String.lowercase (Absyn.string_of_fixity fixity)) ^
           " operator");
         raise TermException)
     in
@@ -875,7 +877,7 @@ and stackOperation parsingtoplevel o amodule stack =
       else
         (Errormsg.error pos 
           ("missing left argument for " ^
-          (Absyn.string_of_fixity fixity) ^
+          (String.lowercase (Absyn.string_of_fixity fixity)) ^
           " operator");
         raise TermException)
     in
@@ -1003,7 +1005,7 @@ and stackOperation parsingtoplevel o amodule stack =
         if not (Absyn.isFixityPrefix fixity) then
           (Errormsg.error pos
             ("missing left argument for " ^
-            (Absyn.string_of_fixity fixity) ^
+            (String.lowercase (Absyn.string_of_fixity fixity)) ^
             " operator");
           raise TermException)
         else
