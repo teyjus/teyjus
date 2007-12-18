@@ -1168,40 +1168,47 @@ and translateSignature s owner accumOrUse ktable ctable tabbrevtable
         Absyn.Kind(s, Some a, _, Absyn.GlobalKind, p) ->
           (*  If the kind is already in the table, match the arity.
               Otherwise, add it to the table. *)
-	        let kindInTab = Table.find s ktable in
-            (match kindInTab with
-              Some Absyn.Kind(s', Some a', _, Absyn.GlobalKind, p') ->
-                if a <> a' then
-                  (Errormsg.error p ("kind already declared with arity " ^
-				            (string_of_int a') ^ (Errormsg.see p' "kind declaration"));
-                    (ktable, renamingList))
-                else
-                  (ktable, (Option.get kindInTab) :: renamingList)
-            | Some Absyn.Kind(s', Some a', _, Absyn.PervasiveKind, p') ->
-                ((Table.add s kind ktable), kind::renamingList)
-            | Some k -> (Errormsg.impossible (Absyn.getKindPos k) ("invalid kind type " ^ (Absyn.string_of_kind k)))
-            | None -> (Table.add s kind ktable, kind::renamingList))
+	  let kindInTab = Table.find s ktable in
+          (match kindInTab with
+           (* Some Absyn.Kind(s', Some a', _, Absyn.GlobalKind, p') ->
+              if a <> a' then
+                (Errormsg.error p ("kind already declared with arity " ^
+				   (string_of_int a') ^ (Errormsg.see p' "kind declaration"));
+                 (ktable, renamingList))
+              else
+                (ktable, (Option.get kindInTab) :: renamingList)
+          | *)Some Absyn.Kind(s', Some a', _, Absyn.PervasiveKind, p') ->
+              ((Table.add s kind ktable), kind::renamingList)
+	  | Some Absyn.Kind(s', Some a', _, _, p') -> (* global or local kinds *) 
+	      if a <> a' then
+                (Errormsg.error p ("kind already declared with arity " ^
+				   (string_of_int a') ^ (Errormsg.see p' "kind declaration"));
+                 (ktable, renamingList))
+              else
+                (ktable, (Option.get kindInTab) :: renamingList)
+          | Some k -> (Errormsg.impossible (Absyn.getKindPos k) ("invalid kind type " ^ (Absyn.string_of_kind k)))
+          | None -> (Table.add s kind ktable, kind::renamingList))
       | Absyn.Kind(s, Some a, _, Absyn.LocalKind, p) ->
-	        let kindInTab = Table.find s ktable in
-	          (match kindInTab with
-	            Some Absyn.Kind(s', Some a', _, Absyn.GlobalKind, p') ->
-	              if a <> a' then
-                  (Errormsg.error p ("kind already declared with arity " ^
-				            (string_of_int a') ^ (Errormsg.see p' "kind declaration"));
-                  (ktable, renamingList))
-                else
-                  (ktable, (Option.get kindInTab) :: renamingList)
-            | Some Absyn.Kind(s', Some a', _, Absyn.LocalKind, p') ->
-                if a <> a' then
-                  (Errormsg.error p ("kind already declared with arity " ^
-	                  (string_of_int a') ^ (Errormsg.see p' "kind declaration"));
-                    (ktable, renamingList))
-                else
-                  (ktable, (Option.get kindInTab) :: renamingList)
-            | Some Absyn.Kind(s', Some a', _, Absyn.PervasiveKind, p') ->
-                (Table.add s kind ktable, kind :: renamingList)
-            | Some k -> (Errormsg.impossible (Absyn.getKindPos k) ("invalid kind type " ^ (Absyn.string_of_kind k)))
-            | None -> (Table.add s kind ktable, kind :: renamingList))
+	  let kindInTab = Table.find s ktable in
+	  (match kindInTab with
+	    Some Absyn.Kind(s', Some a', _, Absyn.GlobalKind, p') ->
+	      if a <> a' then
+                (Errormsg.error p ("kind already declared with arity " ^
+				   (string_of_int a') ^ (Errormsg.see p' "kind declaration"));
+                 (ktable, renamingList))
+              else
+                (ktable, (Option.get kindInTab) :: renamingList)
+          | Some Absyn.Kind(s', Some a', _, Absyn.LocalKind, p') ->
+              if a <> a' then
+                (Errormsg.error p ("kind already declared with arity " ^
+				   (string_of_int a') ^ (Errormsg.see p' "kind declaration"));
+                 (ktable, renamingList))
+              else
+                (ktable, (Option.get kindInTab) :: renamingList)
+          | Some Absyn.Kind(s', Some a', _, Absyn.PervasiveKind, p') ->
+              (Table.add s kind ktable, kind :: renamingList)
+          | Some k -> (Errormsg.impossible (Absyn.getKindPos k) ("invalid kind type " ^ (Absyn.string_of_kind k)))
+          | None -> (Table.add s kind ktable, kind :: renamingList))
       | _ -> Errormsg.impossible Errormsg.none "Non-global kind encountered in mergeGlobalKinds"              
     in
     (List.fold_left merge (kt,[]) klist)
@@ -1418,6 +1425,7 @@ and translateModule mod' ktable ctable atable =
   * kind without an associated arity must be declared already.
   ********************************************************************)
   let mergeLocalKinds = fun klist kt ->
+
     let merge = fun ktable kind ->
       match kind with
         Absyn.Kind(s, Some a, _, Absyn.LocalKind, p) ->
@@ -1425,13 +1433,13 @@ and translateModule mod' ktable ctable atable =
             Some Absyn.Kind(s', Some a', _, Absyn.GlobalKind, p') ->
               if a <> a' then
                 (Errormsg.error p ("kind already declared with arity " ^ (string_of_int a));
-                ktable)
+                 ktable)
               else
                 (Table.add s kind ktable)
           | Some Absyn.Kind(s', Some a', _, Absyn.LocalKind, p') ->
               if a <> a' then
                 (Errormsg.error p ("kind already declared with arity " ^ (string_of_int a));
-                ktable)
+                 ktable)
               else
                 ktable
           | Some k ->
@@ -1444,11 +1452,11 @@ and translateModule mod' ktable ctable atable =
           | Some Absyn.Kind(s', Some a', m, Absyn.LocalKind, p') ->
               ktable
           | Some k ->
-              (Errormsg.impossible (Absyn.getKindPos k) "invalid kind type")
+              (Errormsg.impossible (Absyn.getKindPos k) "invalid kind type ")
           | None ->
               (Errormsg.error p ("undeclared kind " ^ (Symbol.name s));
-              ktable))
-      | _ -> (Errormsg.impossible (Absyn.getKindPos kind) "mergeLocalKinds(): invalid kind type")
+               ktable))
+      | _ -> (Errormsg.impossible (Absyn.getKindPos kind) "mergeLocalKinds(): invalid kind type ")
     in
     (List.fold_left merge kt klist)
   in
@@ -1462,21 +1470,27 @@ and translateModule mod' ktable ctable atable =
   let mergeGlobalKinds = fun klist kt ->
     let merge = fun ktable kind ->
       match kind with
-        | Absyn.Kind(s,Some a,m, Absyn.GlobalKind,p) ->
-            begin match (Table.find s ktable) with
-                Some Absyn.Kind(s',Some a',_,Absyn.GlobalKind, p') ->
-                  if a <> a' then
-                    (Errormsg.error p ("kind already declared with arity " ^ (string_of_int a) ^
-                                         (Errormsg.see p' "kind declaration"));
-                     ktable)
-                  else
-                    ktable
-              | Some k ->
-                  (Errormsg.impossible (Absyn.getKindPos k) "invalid kind type")
-              | None ->
-                  (Table.add s (Absyn.Kind(s, Some a, m,Absyn.LocalKind, p)) ktable)
-            end
-        | _ -> Errormsg.impossible Errormsg.none "Non-global kind encountered in mergeGlobalKinds"
+      | Absyn.Kind(s,Some a,m, Absyn.GlobalKind,p) ->
+          begin match (Table.find s ktable) with
+            Some Absyn.Kind(s',Some a',_,Absyn.GlobalKind, p') ->
+              if a <> a' then
+                (Errormsg.error p ("kind already declared with arity " ^ (string_of_int a) ^
+                                   (Errormsg.see p' "kind declaration"));
+                 ktable)
+              else
+                ktable	      
+          | Some Absyn.Kind(s',Some a',_,Absyn.LocalKind, p') ->
+	      if a <> a' then
+                (Errormsg.error p ("kind already declared with arity " ^ (string_of_int a) ^
+                                   (Errormsg.see p' "kind declaration"));
+                 ktable)
+              else
+                ktable
+          | Some k ->  (Errormsg.impossible (Absyn.getKindPos k) "invalid kind type ")
+          | None ->
+              (Table.add s (Absyn.Kind(s, Some a, m,Absyn.LocalKind, p)) ktable)
+          end
+      | _ -> Errormsg.impossible Errormsg.none "Non-global kind encountered in mergeGlobalKinds"
     in
     (List.fold_left merge kt klist)
   in
@@ -1621,7 +1635,7 @@ and translateModule mod' ktable ctable atable =
       s::rest ->
         let (asig, (ktable', ctable', atable')) =
           translateSignature s false true ktable ctable atable
-          buildLocalKind buildLocalConstant copyAccum in
+            buildLocalKind buildLocalConstant copyAccum in
         let a = Absyn.AccumulatedModule(Absyn.getSignatureName asig, asig) in
         (translateAccumMods rest ktable' ctable' atable' (a::sigs))
     | [] ->
@@ -1647,9 +1661,8 @@ and translateModule mod' ktable ctable atable =
   (*  Get the pieces of the module  *)
   match mod' with
     Preabsyn.Module(name, gconsts, lconsts, cconsts, uconsts, econsts, fixities,
-                      gkinds, lkinds, tabbrevs, clauses, accummods,
-                      accumsigs, usesigs, impmods) ->
-
+                    gkinds, lkinds, tabbrevs, clauses, accummods,
+                    accumsigs, usesigs, impmods) ->
       (*  Translate the accumulated modules *)
       let accummods' = processAccumMods accummods in
       let (accums, (ktable, ctable, atable)) = translateAccumMods accummods' ktable ctable atable [] in
@@ -1660,6 +1673,7 @@ and translateModule mod' ktable ctable atable =
       
       (*  Translate local and global kinds, and get associated tables *)
       let gkindlist = translateGlobalKinds gkinds in
+
       let lkindlist = translateLocalKinds lkinds in
       
       let ktable = mergeGlobalKinds gkindlist ktable in
