@@ -1,0 +1,27 @@
+Linker tests
+============
+
+1. Constant renaming (accumulte and import)
+   a. renaming to parent modules' global constant/kind
+   b. renaming to parent modules' local constant/kind
+
+   test cases: renaming_acc, renaming_imp
+
+  
+
+2. Combine definitions of predicates in accumulating and accumulated modules:
+      Top                             Acc                test case
+      ------------------------------------------------------------
+      foo: global                     foo: global
+       
+      has def                         has def            combine_def1
+      no  def                         has def
+      has def                         no  def            
+      no  def                         no  def            combine_def4
+
+ 
+      foo: local                      foo: global
+      has def                         has def            combine_def5
+      no def                          has def
+      has def                         no def
+      no def                          no def
