@@ -61,7 +61,6 @@ Variables in clauses:
   (5) existential quantified variables in the antecedent of implication goals
                                                 -- test15
 
-
 Accumulates/imports
 ====================
 
@@ -80,6 +79,8 @@ MISC
 ====
   (1) exportdef                                 -- test22
   (2) un-terminated parseTerm bug               -- test23
+  (3) "not" predicate bug                       -- test31
+  (4) a bug in removing overloads               -- test32, test33
 
 
 Compiler front 
