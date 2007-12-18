@@ -660,7 +660,7 @@ let string_of_fixity = function
 | Prefixr -> "Prefixr"
 | Postfix -> "Postfix"
 | Postfixl -> "Postfixl"
-| NoFixity -> "NoFixity"
+| NoFixity -> "No Fixity"
 
 let isFixityPrefix = function
   Prefix -> true
