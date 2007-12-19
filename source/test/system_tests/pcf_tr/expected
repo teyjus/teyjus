@@ -1122,8 +1122,9 @@ Import tables:
 
   Import table:
     number of code segments: 0
-    Next clause table: 1
+    Next clause table: 2
    tr_test
+   term
     Local constant table: 4
    <local const #0>
    <local const #1>
