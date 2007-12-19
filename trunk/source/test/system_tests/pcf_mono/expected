@@ -1126,8 +1126,9 @@ Import tables:
 
   Import table:
     number of code segments: 0
-    Next clause table: 1
+    Next clause table: 2
    mono_test
+   infer
     Local constant table: 2
    <local const #0>
    <local const #1>
