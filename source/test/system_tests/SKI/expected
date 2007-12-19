@@ -2585,8 +2585,24 @@ Import tables:
 
   Import table:
     number of code segments: 0
-    Next clause table: 1
+    Next clause table: 17
    combo
+   genterm
+   length
+   random
+   nthmemb
+   hnorm
+   hnormw
+   go
+   go2
+   randterm
+   combinator
+   randomcombo
+   makecombos
+   test
+   single_test
+   fnorm
+   fnormw
     Local constant table: 1
    <local const #0>
     Find function type: hash
