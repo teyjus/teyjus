@@ -17,8 +17,8 @@
 typedef struct{
   ImportTabInd parent;
   Byte numSegs;
-  int NctSize;
-  ConstInd* NextClauseTable;
+  struct Vector NextClauseTable;
+  struct Vector ExportDefPreds;//This should probably be some kind of hash.
   struct Vector LConstInds;
   ConstInd LowLConst;
   PredInfoTab* newPred;
@@ -52,6 +52,8 @@ ImportTabInd NewImportTab()
   CT=LK_VECTOR_GetPtr(&ImportTabs,CTID);
   CT->parent=tmp;
   CT->numSegs=0;
+  LK_VECTOR_Init(&(CT->NextClauseTable),32,sizeof(ConstInd));
+  LK_VECTOR_Init(&(CT->ExportDefPreds),32,sizeof(ConstInd));
   LK_VECTOR_Init(&(CT->LConstInds),32,sizeof(ConstInd));
   LK_VECTOR_Init(&(CT->findCodeTabs),2,sizeof(HashTab_t));
   CT->newPred=EM_malloc(sizeof(PredInfoTab));
@@ -82,6 +84,53 @@ void WriteLocalConstant(int fd, void* entry)
   PutConstInd(fd,*(ConstInd*)entry);
 }
 
+///Add the index if it isn't already there
+///and isn't local or exportdef in the top level
+void ConditionallyAddToNextClauseTable(ConstInd ind)
+{
+  //Doing sequential search may be a performance issue.
+  int i;
+  struct Vector* vec = &(CT->NextClauseTable);
+  int size = LK_VECTOR_Size(vec);
+  ConstInd* table=(ConstInd*)LK_VECTOR_GetPtr(vec,0);
+  for(i=0;i<size;i++)
+  {
+    if(table[i].index==ind.index && 
+       table[i].gl_flag==ind.gl_flag)
+    {
+      return;
+    }
+  }
+  
+  vec = &(CT->ExportDefPreds);
+  size = LK_VECTOR_Size(vec);
+  table=(ConstInd*)LK_VECTOR_GetPtr(vec,0);
+  for(i=0;i<size;i++)
+  {
+    if(table[i].index==ind.index && 
+       table[i].gl_flag==ind.gl_flag)
+    {
+      return;
+    }
+  }
+  
+  vec = &(CT->LConstInds);
+  size = LK_VECTOR_Size(vec);
+  table=(ConstInd*)LK_VECTOR_GetPtr(vec,0);
+  for(i=0;i<size;i++)
+  {
+    if(table[i].index==ind.index && 
+       table[i].gl_flag==ind.gl_flag)
+    {
+      return;
+    }
+  }
+  
+  vec = &(CT->NextClauseTable);
+  table=(ConstInd*)LK_VECTOR_GetPtr(vec,LK_VECTOR_Grow(vec,1));
+  *table=ind;
+}
+
 //Load the Import tab of the top level module.
 void TopImportTab(int fd, struct Module_st* CMData)
 {
@@ -93,8 +142,9 @@ void TopImportTab(int fd, struct Module_st* CMData)
   CT->LowLConst.gl_flag=LOCAL;
   
   //Use next clause table for top level predicate names.
-  TwoBytes count=CT->NctSize=LK_FILE_GET2(fd);
-  ConstInd* nct=CT->NextClauseTable=EM_malloc(count*sizeof(ConstInd));
+  TwoBytes count=LK_FILE_GET2(fd);
+  struct Vector* nct_vec = &CT->NextClauseTable;
+  ConstInd* nct=(ConstInd*)LK_VECTOR_GetPtr(nct_vec,LK_VECTOR_Grow(nct_vec,count));
   for(i=0;i<count;i++)
   {
     nct[i]=GetConstInd(fd,CMData);
@@ -102,9 +152,11 @@ void TopImportTab(int fd, struct Module_st* CMData)
   
   //Ignore exportdef predicates.
   count=LK_FILE_GET2(fd);
+  struct Vector* expd_vec = &CT->ExportDefPreds;
+  ConstInd* expd=(ConstInd*)LK_VECTOR_GetPtr(expd_vec,LK_VECTOR_Grow(expd_vec,count));
   for(i=0;i<count;i++)
   {
-    GetConstInd(fd,CMData);
+    expd[i]=GetConstInd(fd,CMData);
   }
   
   //Ignore local predicates.
@@ -128,14 +180,16 @@ void AccImportTab(int fd, struct Module_st* CMData)
 {
   mutter("Loading Accumulated Import Tab.\n");
   int i;
-  AddLocalConstants(&(CT->LConstInds),CMData);
   
   //Ignore next clause table
   TwoBytes count=LK_FILE_GET2(fd);
   for(i=0;i<count;i++)
   {
-    GetConstInd(fd,CMData);
+    ConditionallyAddToNextClauseTable(GetConstInd(fd,CMData));
   }
+  
+  //These are added later to reduce search times
+  AddLocalConstants(&(CT->LConstInds),CMData);
   
   //Ignore exportdef global predicates
   count=LK_FILE_GET2(fd);
@@ -143,7 +197,6 @@ void AccImportTab(int fd, struct Module_st* CMData)
   {
     GetConstInd(fd,CMData);
   }
-  
   
   //Ignore local predicates.
   count=LK_FILE_GET2(fd);
@@ -173,8 +226,9 @@ void ImpImportTab(int fd, struct Module_st* CMData)
   PredInfoTab* CMInfoTab=CT->newPred;
   PredInfoTab* ParInfoTab=((TImportTab_t*)LK_VECTOR_GetPtr(&ImportTabs,CT->parent))->newPred;
   //Set next clause table and mark contents dynamic
-  TwoBytes count=CT->NctSize=LK_FILE_GET2(fd);
-  ConstInd* nct=CT->NextClauseTable=EM_malloc(count*sizeof(ConstInd));
+  TwoBytes count=LK_FILE_GET2(fd);
+  struct Vector* nct_vec = &CT->NextClauseTable;
+  ConstInd* nct=(ConstInd*)LK_VECTOR_GetPtr(nct_vec,LK_VECTOR_Grow(nct_vec,count));
   for(i=0;i<count;i++)
   {
     nct[i]=GetConstInd(fd,CMData);
@@ -186,10 +240,12 @@ void ImpImportTab(int fd, struct Module_st* CMData)
   //and add them to the predicate info table as new statics.
   ConstInd index;
   count=LK_FILE_GET2(fd);
+  struct Vector* expd_vec = &CT->ExportDefPreds;
+  ConstInd* expd=(ConstInd*)LK_VECTOR_GetPtr(expd_vec,LK_VECTOR_Grow(expd_vec,count));
   for(i=0;i<count;i++)
   {
-    index=GetConstInd(fd,CMData);
-    MarkDynamic(ParInfoTab,index);
+    expd[i]=GetConstInd(fd,CMData);
+    MarkDynamic(ParInfoTab,expd[i]);
   }
     
   //Ignore local predicates.
@@ -236,6 +292,11 @@ void RestoreImportTab()
     CT=LK_VECTOR_GetPtr(&ImportTabs,CTID);
 }
 
+void WriteNctEntry(int fd, void* entry)
+{
+  PutConstInd(fd,*(ConstInd*)entry);
+}
+
 //Write out a single import table to file.
 void WriteImportTab(int fd, void* entry)
 {
@@ -244,11 +305,7 @@ void WriteImportTab(int fd, void* entry)
   debug("Writing an import table.\n");
   LK_FILE_PUT1(fd,ImportTab->numSegs);
   
-  LK_FILE_PUT2(fd,ImportTab->NctSize);
-  for(i=0;i<ImportTab->NctSize;i++)
-  {
-    PutConstInd(fd,ImportTab->NextClauseTable[i]);
-  }
+  LK_VECTOR_Write(fd,&(ImportTab->NextClauseTable),WriteNctEntry);
   
   LK_VECTOR_Write(fd,&(ImportTab->LConstInds),WriteLocalConstant);
   
