@@ -1,6 +1,6 @@
-Disassembling from bytecode file: acc.lpo
+Disassembling from bytecode file: top.lpo
 Bytecode version: 2
-Module name: acc
+Module name: top
 
 LABEL               INSTRUCTION              OPERANDS
 
@@ -37,5 +37,11 @@ Module table:
   In-core table size: 0
 
 Accumulated tables:
+0: acc
+    Kind renamings:
+    i -> i
+    Constant renamings:
+    foo1 -> foo1
+    foo2 -> foo2
 
 Imported tables:

@@ -1,6 +1,6 @@
-Disassembling from bytecode file: acc.lpo
+Disassembling from bytecode file: top.lpo
 Bytecode version: 2
-Module name: acc
+Module name: top
 
 LABEL               INSTRUCTION              OPERANDS
 
@@ -14,9 +14,7 @@ Type skeleton table:
 0: (i -> o)
 
 Global constant table: 
-0: foo1 (No Fixity, precedence 0)
-    Env Size: 0, Type Skeleton: #0
-1: foo2 (No Fixity, precedence 0)
+0: foo (No Fixity, precedence 0)
     Env Size: 0, Type Skeleton: #0
 
 Local constant table: 
@@ -37,5 +35,10 @@ Module table:
   In-core table size: 0
 
 Accumulated tables:
+0: acc
+    Kind renamings:
+    i -> i
+    Constant renamings:
+    foo -> foo
 
 Imported tables:
