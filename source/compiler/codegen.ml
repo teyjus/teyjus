@@ -232,33 +232,40 @@ let assignConstIndex gconsts lconsts hconsts =
   (*     by this module (non-exportDef ones);                             *)
   (* d). gather exportDef predicates and close off their definitions.     *)
   let rec assignGlobalConstIndex consts index defs numDefs nonExpDefs 
-	  numNonExpDefs expDefs numExpDefs =
+      numNonExpDefs expDefs numExpDefs =
     match consts with
-	  [] -> (index, defs, numDefs, nonExpDefs, numNonExpDefs, expDefs, 
-			 numExpDefs) (* reverse?! *)
-	| (const :: rest) ->
-	    Absyn.setConstantIndex const index;
-	    let codeInfo = Absyn.getConstantCodeInfo const in
-	    let (newDefs, newNumDefs, newNonExpDefs, newNumNonExpDefs, newExpDefs, 
-			 newNumExpDefs) =
-	      match (!codeInfo) with
-			None -> (defs, numDefs, nonExpDefs, numNonExpDefs, expDefs, 
-					 numExpDefs)
-	      | Some(Absyn.Clauses(clauseBlock)) -> 
-			  if (Absyn.getConstantExportDef const) then
-				(Absyn.setClauseBlockClose clauseBlock true;
-				 (const :: defs, numDefs + 1, nonExpDefs, numNonExpDefs, 
-				  const :: expDefs, numExpDefs + 1))
-			  else
-				(Absyn.setClauseBlockNextClause clauseBlock 
-				   (numNonExpDefs + 1);
-				 (const :: defs, numDefs + 1, const :: nonExpDefs, 
-				  numNonExpDefs + 1, expDefs, numExpDefs))
-	      | _ -> Errormsg.impossible Errormsg.none 
-				   "assignConstIndex: invalid constant codeInfo"
-	    in
-	    assignGlobalConstIndex rest (index+1) newDefs newNumDefs newNonExpDefs
-	      newNumNonExpDefs newExpDefs newNumExpDefs
+      [] -> (index, defs, numDefs, nonExpDefs, numNonExpDefs, expDefs, 
+	     numExpDefs) (* reverse?! *)
+    | (const :: rest) ->
+	Absyn.setConstantIndex const index;
+	let codeInfo = Absyn.getConstantCodeInfo const in
+	let (newDefs, newNumDefs, newNonExpDefs, newNumNonExpDefs, newExpDefs, 
+	     newNumExpDefs) =
+	  match (!codeInfo) with
+	   (* None -> (defs, numDefs, nonExpDefs, numNonExpDefs, expDefs, 
+		     numExpDefs) *)
+	    None ->
+	      if (Absyn.getConstantExportDef const) then
+		(defs, numDefs, nonExpDefs, numNonExpDefs, const::expDefs,
+		 numExpDefs+1)
+	      else
+		(defs, numDefs, nonExpDefs, numNonExpDefs, expDefs, 
+		 numExpDefs)
+	  | Some(Absyn.Clauses(clauseBlock)) -> 
+	      if (Absyn.getConstantExportDef const) then
+		(Absyn.setClauseBlockClose clauseBlock true;
+		 (const :: defs, numDefs + 1, nonExpDefs, numNonExpDefs, 
+		  const :: expDefs, numExpDefs + 1))
+	      else
+		(Absyn.setClauseBlockNextClause clauseBlock 
+		   (numNonExpDefs + 1);
+		 (const :: defs, numDefs + 1, const :: nonExpDefs, 
+		  numNonExpDefs + 1, expDefs, numExpDefs))
+	  | _ -> Errormsg.impossible Errormsg.none 
+		"assignConstIndex: invalid constant codeInfo"
+	in
+	assignGlobalConstIndex rest (index+1) newDefs newNumDefs newNonExpDefs
+	  newNumNonExpDefs newExpDefs newNumExpDefs
   in
 
   (* function body of assignConstIndex *)
@@ -1109,18 +1116,18 @@ let generateModuleCode amod =
       (* generating instructions.                                       *)
 	 collectClosedConstsInAccs modaccs;
       (* assign indexes to global and local kinds *)				   
-	  let (cgGKinds, cgLKinds) = assignKindIndex gkinds lkinds in
-	  (* 1) assign indexes to global, local and hidden constants;   *)
+      let (cgGKinds, cgLKinds) = assignKindIndex gkinds lkinds in
+      (* 1) assign indexes to global, local and hidden constants;   *)
       (* 2) gather predicates have definitions in this module;      *)
       (* 3) gather predicates whose previous defintions may be      *)
       (*    extended by code in this module (global non-exportDef)  *)
       (* 4) gather global export-def predicates                     *)
       (* 5) gather local predicates                                 *)
-	  let (cgGConsts, cgLConsts, cgHConsts, cgDefs, cgGNonExpDefs, 
-		   cgGExpDefs, cgLDefs) = 
-		assignConstIndex (List.rev gconsts) (List.rev lconsts) 
-		  (List.rev (!hconsts))
-	  in
+      let (cgGConsts, cgLConsts, cgHConsts, cgDefs, cgGNonExpDefs, 
+	   cgGExpDefs, cgLDefs) = 
+	assignConstIndex (List.rev gconsts) (List.rev lconsts) 
+	  (List.rev (!hconsts))
+      in
       (* merge type skeletons and those of hidden constants; assign indexes *)
       let cgTySkels = assignSkelIndex skels !hskels in 
       (* assign indexes to strings *)
@@ -1143,7 +1150,7 @@ let generateModuleCode amod =
       Clausegen.backPatch ();
       Module(modname, cgGKinds, cgLKinds, cgGConsts, cgLConsts, cgHConsts,
              cgDefs, cgGNonExpDefs, cgGExpDefs, cgLDefs, 
-			 cgTySkels, cgStrings, cgImports, cgAccumulates, cgInstructions,
-			 getHashTabs (), cgImpGoals)
+	     cgTySkels, cgStrings, cgImports, cgAccumulates, cgInstructions,
+	     getHashTabs (), cgImpGoals)
   | _ -> Errormsg.impossible Errormsg.none 
-		   "genModuleCode: invalid input module"
+	"genModuleCode: invalid input module"
