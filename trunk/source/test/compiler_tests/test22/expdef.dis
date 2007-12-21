@@ -46,11 +46,12 @@ Hash tables:
 
 Module table:
   Predicate definitions possibly extending previous ones: 0
-  Exportdef predicates: 4
+  Exportdef predicates: 5
    foo1
    foo2
    foo5
    foo6
+   foo3
   Local predicates: 0
   Find function type: hash
   In-core table size: 4
