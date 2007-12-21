@@ -44,8 +44,7 @@
 void BIEVAL_eval()
 {
     DF_TermPtr tmPtr = (DF_TermPtr)AM_reg(2);
-    DF_TypePtr tyPtr = DF_typeDeref((DF_TypePtr)AM_reg(3));
-    
+    DF_TypePtr tyPtr = DF_typeDeref((DF_TypePtr)AM_reg(3));    
     switch (DF_typeKindTabIndex(tyPtr)) {
     case PERV_INT_INDEX: 
     {  DF_mkInt((MemPtr)AM_reg(2), BIEVAL_evalInt(tmPtr));     break; }
@@ -220,6 +219,7 @@ static DF_StrDataPtr BIEVAL_subString(MCSTR_Str str, int startPos, int endPos)
     
     if (startPos < 0) startPos = 0;
     if (endPos < startPos) endPos = startPos;
+    if (endPos >= length) endPos = length - 1; 
     if (startPos > length) startPos = length;
     length = endPos - startPos + 1;
     
@@ -227,7 +227,6 @@ static DF_StrDataPtr BIEVAL_subString(MCSTR_Str str, int startPos, int endPos)
     AM_heapError(nhreg);
     DF_mkStrDataHead(strDataHead);
     MCSTR_subString((MCSTR_Str)strData, str, startPos, endPos - startPos + 1);
-    
     AM_hreg = nhreg;
     return (DF_StrDataPtr)strDataHead;
 }
@@ -308,34 +307,33 @@ DF_StrDataPtr BIEVAL_evalStr(DF_TermPtr tmPtr)
         default:            EM_error(BI_ERROR_ILLEGAL_ARG, mytmPtr);
         }
     } else { //non atomic term
-        if (DF_isApp(mytmPtr)) {
-            DF_TermPtr argVec = AM_argVec;
-            int        cstInd;
+      if (DF_isApp(mytmPtr)) {
+	DF_TermPtr argVec = AM_argVec;
+	int        cstInd;
+	
+	if (!AM_rigFlag) EM_error(BI_ERROR_FLEX_HEAD, mytmPtr); //non cst hd
             
-            if (!AM_rigFlag) EM_error(BI_ERROR_FLEX_HEAD, mytmPtr); //non cst hd
-            
-            cstInd = DF_constTabIndex(AM_head);
-            switch(cstInd) {
-            case PERV_SCAT_INDEX:
-                return BIEVAL_strConcat(
-                    DF_strDataValue(BIEVAL_evalStr(argVec)),
-                    DF_strDataValue(BIEVAL_evalStr(argVec+1)));
-            case PERV_SUBSTR_INDEX:
-            {
-                DF_StrDataPtr str  = BIEVAL_evalStr(argVec);
-                int           ival = BIEVAL_evalInt(argVec+1);
-                return BIEVAL_subString(DF_strDataValue(str), ival,
-                                        ival+BIEVAL_evalInt(argVec+2));
-            }
-            case PERV_ITOCHR_INDEX:
-                return BIEVAL_chr(BIEVAL_evalInt(argVec));
-            case PERV_ITOSTR_INDEX:
-                return BIEVAL_intToStr(BIEVAL_evalInt(argVec));
-            case PERV_RTOS_INDEX:
-                return BIEVAL_floatToStr(BIEVAL_evalFloat(argVec));
-            default:   EM_error(BI_ERROR_CONST_IND, cstInd);
-            } //switch
-        } else EM_error(BI_ERROR_ILLEGAL_ARG, mytmPtr);//non-atomic and non-app
+	cstInd = DF_constTabIndex(AM_head);
+	switch(cstInd) {
+	case PERV_SCAT_INDEX:
+	  return BIEVAL_strConcat(DF_strDataValue(BIEVAL_evalStr(argVec)),
+				  DF_strDataValue(BIEVAL_evalStr(argVec+1)));
+	case PERV_SUBSTR_INDEX:
+	  {
+	    DF_StrDataPtr str  = BIEVAL_evalStr(argVec);
+	    int           ival = BIEVAL_evalInt(argVec+1);
+	    return BIEVAL_subString(DF_strDataValue(str), ival,
+				    ival+BIEVAL_evalInt(argVec+2));
+	  }
+	case PERV_ITOCHR_INDEX:
+	  return BIEVAL_chr(BIEVAL_evalInt(argVec));
+	case PERV_ITOSTR_INDEX:
+	  return BIEVAL_intToStr(BIEVAL_evalInt(argVec));
+	case PERV_RTOS_INDEX:
+	  return BIEVAL_floatToStr(BIEVAL_evalFloat(argVec));
+	default:   EM_error(BI_ERROR_CONST_IND, cstInd);
+	} //switch
+      } else EM_error(BI_ERROR_ILLEGAL_ARG, mytmPtr);//non-atomic and non-app
     } //non atomic       
 }
 
