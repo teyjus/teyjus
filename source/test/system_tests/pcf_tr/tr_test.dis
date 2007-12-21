@@ -99,7 +99,8 @@ Hash tables:
 Module table:
   Predicate definitions possibly extending previous ones: 1
    tr_test
-  Exportdef predicates: 0
+  Exportdef predicates: 1
+   tailrec
   Local predicates: 0
   Find function type: hash
   In-core table size: 1
