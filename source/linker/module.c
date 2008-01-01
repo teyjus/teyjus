@@ -160,7 +160,9 @@ void LoadAccModule(char* modname)
     LoadAccModules(fd,CMData);
     LoadImpModules(fd,CMData);
     
+    debug("ACC load code\n");
     LoadCode(fd,CMData);
+    debug("ACC post-load code\n");
     
     LK_FILE_Close(fd);
     free(CMData);
