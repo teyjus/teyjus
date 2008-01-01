@@ -29,6 +29,6 @@ extern CodeInd HashCodeAddr(HashTab_t* HashTab, ConstInd x);
 
 //Makes a=a+b and b=0;  Returns size of combined table.
 extern Byte MergeHashTabs(HashTabInd a, HashTabInd b,Byte n);
-extern void MergeFindCodeTabs(HashTab_t* a, HashTab_t* b,ConstInd LowLConst);
+extern void MergeFindCodeTabs(HashTab_t* a, HashTab_t* b);
 
 #endif //_HASHTAB_H_

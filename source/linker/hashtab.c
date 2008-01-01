@@ -109,7 +109,7 @@ Byte MergeHashTabs(HashTabInd a, HashTabInd b,Byte n)
   return LK_VECTOR_Size((struct Vector*)pa);
 }
 
-void MergeFindCodeTabs(HashTab_t* pa, HashTab_t* pb,ConstInd LowLConst)
+void MergeFindCodeTabs(HashTab_t* pa, HashTab_t* pb)
 {
   int size=LK_VECTOR_Size((struct Vector*)pb);
   int i,j;
@@ -124,14 +124,11 @@ void MergeFindCodeTabs(HashTab_t* pa, HashTab_t* pb,ConstInd LowLConst)
     }
     else
     {
-      if(tmpb[i].index.gl_flag==LOCAL && 
-         tmpb[i].index.index>=LowLConst.index)
+      if(shouldTidySwitchOnReg(tmpb[i].index))
       {
-        debug("[%d:%d] > [%d:%d]\n",
+        debug("Need to tidy [%d:%d]\n",
               tmpb[i].index.gl_flag,
-              tmpb[i].index.index,
-              LowLConst.gl_flag,
-              LowLConst.index);
+              tmpb[i].index.index);
         TidySwitchOnReg(&(tmpb[i].addr));
       }
       HASH_AddEntry(pa,tmpb+i);

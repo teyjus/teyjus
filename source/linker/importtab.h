@@ -16,4 +16,6 @@ extern void WriteImportTabs(int fd);
 extern void WriteAddCodeTable(int fd);
 extern void LK_IMPORT_AssignSegmentId(struct Module_st* CMData);
 
+extern Boolean shouldTidySwitchOnReg(ConstInd ind);
+
 #endif //_IMPORTTAB_H_
