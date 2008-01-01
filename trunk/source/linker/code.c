@@ -185,9 +185,13 @@ void LoadCode(int fd, struct Module_st* CMData)
   Word i,j;
   Word offset=CMData->CodeOffset;
   Word size=CMData->CodeSize;
-  
+  if(size<=0){
+    debug("No code for current module.\n");
+    return;
+  }
   debug("Loading 0x%lx bytes of code at %lx to offset 0x%lx.\n",size,lseek(fd,0,SEEK_CUR),offset);
   Byte* code=(Byte*)LK_VECTOR_GetPtr(&Code,offset);
+  debug("After get\n");
   ConstInd tmpIndex;
   
   Byte opcode=-1;

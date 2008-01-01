@@ -84,24 +84,24 @@ void WriteLocalConstant(int fd, void* entry)
   PutConstInd(fd,*(ConstInd*)entry);
 }
 
-///Add the index if it isn't already there
-///and isn't local or exportdef in the top level
-void ConditionallyAddToNextClauseTable(ConstInd ind)
+Boolean isImportLocal(ConstInd ind)
 {
-  //Doing sequential search may be a performance issue.
-  int i;
-  struct Vector* vec = &(CT->NextClauseTable);
-  int size = LK_VECTOR_Size(vec);
-  ConstInd* table=(ConstInd*)LK_VECTOR_GetPtr(vec,0);
-  for(i=0;i<size;i++)
+  if(ind.gl_flag == LOCAL)
   {
-    if(table[i].index==ind.index && 
-       table[i].gl_flag==ind.gl_flag)
-    {
-      return;
+    if(CT->LowLConst.index<=ind.index){
+      return TRUE;
     }
   }
-  
+  return FALSE;
+}
+
+Boolean isImportExportDef(ConstInd ind)
+{
+  struct Vector* vec;
+  int size;
+  ConstInd* table;
+  int i;
+  //Test for exportdef global
   vec = &(CT->ExportDefPreds);
   size = LK_VECTOR_Size(vec);
   table=(ConstInd*)LK_VECTOR_GetPtr(vec,0);
@@ -110,11 +110,20 @@ void ConditionallyAddToNextClauseTable(ConstInd ind)
     if(table[i].index==ind.index && 
        table[i].gl_flag==ind.gl_flag)
     {
-      return;
+      return TRUE;
     }
   }
-  
-  vec = &(CT->LConstInds);
+  return FALSE;
+}
+
+Boolean isInNextClauseTable(ConstInd ind)
+{
+  int i;
+  struct Vector* vec;
+  int size;
+  ConstInd* table;
+  //Doing sequential search may be a performance issue.
+  vec = &(CT->NextClauseTable);
   size = LK_VECTOR_Size(vec);
   table=(ConstInd*)LK_VECTOR_GetPtr(vec,0);
   for(i=0;i<size;i++)
@@ -122,10 +131,34 @@ void ConditionallyAddToNextClauseTable(ConstInd ind)
     if(table[i].index==ind.index && 
        table[i].gl_flag==ind.gl_flag)
     {
-      return;
+      return TRUE;
     }
   }
+  return FALSE;
+}
+
+Boolean shouldTidySwitchOnReg(ConstInd ind)
+{
+  return isImportLocal(ind) || isImportExportDef(ind);
+}
+
+///Add the index if it isn't already there
+///and isn't local or exportdef in the top level
+void ConditionallyAddToNextClauseTable(ConstInd ind)
+{
+  if(isImportLocal(ind))
+    return;
   
+  if(isImportExportDef(ind))
+    return;
+  
+  if(isInNextClauseTable(ind))
+    return;
+  
+  struct Vector* vec;
+  int size;
+  ConstInd* table;
+  //Add constant to the next clause table.
   vec = &(CT->NextClauseTable);
   table=(ConstInd*)LK_VECTOR_GetPtr(vec,LK_VECTOR_Grow(vec,1));
   *table=ind;
@@ -280,7 +313,7 @@ void RestoreImportTab()
   mutter("After get\n");
   for(i=1;i<size;i++)
   {
-    MergeFindCodeTabs(tmp,tmp+i,CT->LowLConst);
+    MergeFindCodeTabs(tmp,tmp+i);
   }
   
   mutter("Resolving predicate calls\n");
