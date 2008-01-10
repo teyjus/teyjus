@@ -167,7 +167,8 @@ void BIMETA_not()
     cp = AM_tosreg - 1;
     
     AM_saveStateCP(cp, AM_notCode2);
-    AM_b0reg = AM_breg = cp;
+    AM_b0reg = AM_breg;
+    AM_breg  = cp;
     AM_hbreg = AM_hreg;
 
     AM_preg = AM_notCode1;
