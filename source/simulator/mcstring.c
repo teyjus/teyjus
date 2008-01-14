@@ -56,7 +56,7 @@ void MCSTR_concat(MCSTR_Str loc, MCSTR_Str str1, MCSTR_Str str2)
     char* chloc = (char*)(loc + 1);
     *((int *)loc) = MCSTR_strLength(str1) + MCSTR_strLength(str2);
     strcpy(chloc, (char*)(str1+1));
-    strcat(chloc, (char*)(str2+2));
+    strcat(chloc, (char*)(str2+1));
 }
 
 //substring (the new string is created at address started from loc)
