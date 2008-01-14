@@ -477,16 +477,13 @@ and deOrifyUniversalGoal t arg1 uvs uvdefs andgoal wholegoal newclauses hcs =
 
   let hcs'' = hc :: hcs' in
   let uvdefs'' = closeUniversalDefinitions tsym uvdefs' in 
-  (* let (uvdefs'', newgoals) = closeUniversalDefinitions tsym uvdefs' goals' in *)
 
   if List.memq tsym fvs' then
     let fvs'' = (List.filter ((<>) tsym) fvs') in
     let goals'' = distributeQuantifierTerms t tsym goals' andgoal in 
-    (* let goals'' = distributeQuantifierTerms t tsym newgoals andgoal in *)
     DeOrifyGoalResult(goals'', fvs'', uvdefs'', hascut', newclauses', hcs'')
   else
     let goals'' = distributeAndGoal goals' [] andgoal in
-    (* let goals'' = distributeAndGoal newgoals [] andgoal in *)
     DeOrifyGoalResult(goals'', fvs', uvdefs'', hascut', newclauses', hcs'')
 
 (**********************************************************************
@@ -629,6 +626,7 @@ and deOrifyImplicationGoal clause goal uvs uvdefs andgoal wholegoal newclauses h
 
   let DeOrifyClauseResult(clauses', fvs', uvdefs', newclauses', hcs') = 
     deOrifyClauses clauses [] uvs newclauses hcs in
+
   let defuvs = addUVDefs defuvs uvdefs' in 
   
   let DeOrifyGoalResult(goals', fvs, uvdefs', hascut, newclauses'', hcs'') = 
@@ -826,7 +824,7 @@ and deOrifyClause term currentclauses fvs uvs uvdefs newclauses hcs =
             let DeOrifyClauseResult(clauses', fvs', uvdefs', newclauses', hcs') =
               deOrifyClause (Absyn.getTermAbstractionBody arg) [] fvs uvs uvdefs newclauses hcs in
             let clauses'' = distributeUniversal f tsym clauses' in
-            let fvs'' = List.filter ((==) tsym) fvs' in
+            let fvs'' = List.filter ((!=) tsym) fvs' in
             DeOrifyClauseResult(clauses'' @ currentclauses, fvs'', uvdefs', newclauses', hcs') 
 			(* DeOrifyClauseResult(clauses'', fvs'', uvdefs', newclauses', hcs') *)
             
@@ -846,7 +844,7 @@ and deOrifyClause term currentclauses fvs uvs uvdefs newclauses hcs =
       | _ ->
           atomicHead ())
     
-    (*  The term is a propositional head.  *)
+  (*  The term is a propositional head.  *)
   | _ -> DeOrifyClauseResult(term::currentclauses, fvs, uvdefs, newclauses, hcs)
 
 (**********************************************************************
@@ -860,8 +858,8 @@ and deOrifyClauses clauses currentclauses uvs newclauses hcs =
       DeOrifyClauseResult(currentclauses, [], [], newclauses, hcs)
   | c::cs ->
       let DeOrifyClauseResult(clauses', fvs', uvdefs', newclauses', hcs') = 
-		deOrifyClauses cs currentclauses uvs newclauses hcs 
-	  in
+	deOrifyClauses cs currentclauses uvs newclauses hcs 
+      in
       (deOrifyClause c clauses' fvs' uvs uvdefs' newclauses' hcs')
 
 (**********************************************************************
@@ -1020,10 +1018,12 @@ and translateClauses pmod amod =
     let preterm = Preabsyn.getClauseTerm preclause in
     let clause =
       Parse.translateClause preterm amod in
-    
+
+
     let _ = Errormsg.log Errormsg.none ("Clauses.translateClause: " ^ (Absyn.string_of_term_ast clause)) in
     let uvdefs = ref [] in
     let clauses' = normalizeClause clause [] [] uvdefs false in
+
     let DeOrifyClauseResult(clauses', _, _, newclauses', hcs') = 
 	  (deOrifyClauses clauses' clauses [] newclauses hcs) 
 	in
