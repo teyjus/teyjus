@@ -1,0 +1,1762 @@
+Disassembling from bytecode file: typecat.lpo
+Bytecode version: 2
+Module name: typecat
+
+LABEL               INSTRUCTION              OPERANDS
+
+L18                 fail                     
+copyty              switch_on_reg            #1, L16, L17
+L16                 try                      #2, L17
+                    trust_ext                #2, #1
+                    try_me_else              #0, L18
+L17                 switch_on_term           L19, L20, L18, L19
+L19                 try_me_else              #2, L21
+L22                 get_m_structure          A1, tarr, #2
+                    unify_nil                
+                    unify_variable_t         A1
+                    get_m_structure          A2, tarr, #2
+                    unify_nil                
+                    unify_variable_t         A2
+                    finish_unify             
+                    head_normalize_t         A1
+                    head_normalize_t         A2
+                    execute_name             copyty
+L21                 trust_me                 #2
+L23                 allocate                 #5
+                    get_m_structure          A1, tarr, #2
+                    unify_variable_t         A255
+                    unify_variable_p         Y1
+                    get_list                 A255
+                    unify_variable_t         A1
+                    unify_variable_p         Y2
+                    get_m_structure          A2, tarr, #2
+                    unify_variable_t         A255
+                    unify_variable_p         Y3
+                    get_list                 A255
+                    unify_variable_t         A2
+                    unify_variable_p         Y4
+                    finish_unify             
+                    head_normalize_t         A1
+                    head_normalize_t         A2
+                    call_name                #4, copyty
+                    put_m_const              A255, tarr
+                    put_app                  A1, A255, #2
+                    set_value_p              Y2
+                    set_value_p              Y1
+                    put_m_const              A255, tarr
+                    put_app                  A2, A255, #2
+                    set_value_p              Y4
+                    set_value_p              Y3
+                    deallocate               
+                    execute_name             copyty
+L0                  try                      #2, L22
+                    trust                    #2, L23
+L20                 switch_on_constant       #1, <hash #0>
+<local const #3>    try_me_else              #3, L24
+                    allocate                 #3
+                    get_m_structure          A1, nameterm, #1
+                    unify_variable_t         A1
+                    get_list                 A2
+                    unify_variable_p         Y1
+                    unify_variable_t         A2
+                    finish_unify             
+                    neck_cut                 
+                    incr_universe            
+                    set_univ_tag             Y2, <hidden const #1>
+                    push_impl_point          #2, <impl #0>
+                    put_value_t              A1, A4
+                    put_app                  A1, A4, #1
+                    globalize_pt             Y2, A255
+                    set_value_t              A255
+                    head_normalize_t         A1
+                    head_normalize_t         A2
+                    head_normalize_t         A3
+                    call_link_only           #2, <local const #3>
+                    pop_impl_point           
+                    decr_universe            
+                    deallocate               
+                    proceed                  
+L24                 trust_me                 #3
+                    get_nil                  A2
+                    finish_unify             
+                    neck_cut                 
+                    head_normalize_t         A1
+                    put_value_t              A3, A2
+                    head_normalize_t         A2
+                    execute_name             typeexp
+<local const #2>    try_me_else              #4, L25
+                    allocate                 #7
+                    get_variable_p           Y1, A4
+                    get_m_structure          A2, decabs, #1
+                    unify_variable_p         Y2
+                    get_m_structure          A3, nameterm, #1
+                    unify_variable_p         Y3
+                    finish_unify             
+                    incr_universe            
+                    set_univ_tag             Y4, <hidden const #0>
+                    put_type_const           A4, string
+                    head_normalize_t         A1
+                    put_list                 A2
+                    globalize_pt             Y4, A255
+                    set_value_t              A255
+                    set_nil                  
+                    put_variable_p           Y5, A255
+                    globalize_t              A255
+                    put_app                  A3, A255, #1
+                    set_value_p              Y4
+                    call_name                #6, append
+                    tag_variable             Y6
+                    push_impl_point          #6, <impl #1>
+                    globalize_pt             Y5, A255
+                    put_app                  A1, A255, #1
+                    set_value_p              Y4
+                    head_normalize_t         A1
+                    copy_value               Y2, A255
+                    put_app                  A2, A255, #1
+                    set_value_p              Y4
+                    head_normalize_t         A2
+                    copy_value               Y3, A255
+                    put_app                  A3, A255, #1
+                    set_value_p              Y4
+                    head_normalize_t         A3
+                    put_value_p              Y1, A4
+                    head_normalize_t         A4
+                    call_link_only           #6, <local const #2>
+                    pop_impl_point           
+                    decr_universe            
+                    deallocate               
+                    proceed                  
+L25                 trust_me                 #4
+                    switch_on_term           L26, L27, L28, L26
+L26                 try_me_else              #4, L29
+L1                  get_nil                  A1
+                    get_m_structure          A2, declist, #1
+                    unify_nil                
+                    finish_unify             
+                    put_value_t              A3, A1
+                    head_normalize_t         A1
+                    put_value_t              A4, A2
+                    head_normalize_t         A2
+                    execute_name             typeexp
+L29                 retry_me_else            #4, L30
+L33                 allocate                 #10
+                    get_variable_p           Y1, A3
+                    get_variable_p           Y2, A4
+                    get_list                 A1
+                    unify_variable_p         Y7
+                    unify_variable_p         Y3
+                    get_m_structure          A2, declist, #1
+                    unify_variable_t         A255
+                    get_list                 A255
+                    unify_variable_t         A1
+                    unify_variable_p         Y4
+                    finish_unify             
+                    get_level                Y8
+                    put_type_const           A3, tdec
+                    head_normalize_t         A1
+                    put_m_const              A255, vardec
+                    put_app                  A2, A255, #3
+                    set_variable_te          A255
+                    set_variable_p           Y9
+                    set_variable_p           Y5
+                    call_builtin             #9, #3
+                    put_value_p              Y9, A1
+                    head_normalize_t         A1
+                    put_variable_p           Y6, A2
+                    call                     #9, L31
+                    cut                      Y8
+                    put_m_const              A255, varexp
+                    put_m_const              A253, simplevar
+                    put_app                  A254, A253, #1
+                    set_value_p              Y7
+                    put_app                  A1, A255, #1
+                    set_value_t              A254
+                    put_value_p              Y6, A2
+                    head_normalize_t         A2
+                    call_name                #8, typeexp
+                    put_value_p              Y5, A1
+                    head_normalize_t         A1
+                    put_value_p              Y6, A2
+                    head_normalize_t         A2
+                    call_name                #6, typeexp
+                    put_value_p              Y3, A1
+                    head_normalize_t         A1
+                    put_m_const              A255, declist
+                    put_app                  A2, A255, #1
+                    set_value_p              Y4
+                    put_value_p              Y1, A3
+                    head_normalize_t         A3
+                    put_value_p              Y2, A4
+                    head_normalize_t         A4
+                    deallocate               
+                    execute_link_only        <local const #2>
+L30                 retry_me_else            #4, L32
+L34                 allocate                 #9
+                    get_variable_p           Y1, A3
+                    get_variable_p           Y2, A4
+                    get_list                 A1
+                    unify_variable_p         Y3
+                    unify_variable_p         Y4
+                    get_m_structure          A2, declist, #1
+                    unify_variable_t         A255
+                    get_list                 A255
+                    unify_variable_t         A1
+                    unify_variable_p         Y5
+                    finish_unify             
+                    put_type_const           A3, tdec
+                    head_normalize_t         A1
+                    put_m_const              A255, fixptdec
+                    put_app                  A2, A255, #4
+                    set_variable_te          A255
+                    set_variable_p           Y6
+                    set_variable_p           Y7
+                    set_variable_p           Y8
+                    call_builtin             #8, #3
+                    put_m_const              A255, varexp
+                    put_m_const              A253, simplevar
+                    put_app                  A254, A253, #1
+                    set_value_p              Y3
+                    put_app                  A1, A255, #1
+                    set_value_t              A254
+                    put_m_const              A255, tarr
+                    put_app                  A2, A255, #2
+                    set_value_p              Y7
+                    set_value_p              Y8
+                    call_name                #8, typeexp
+                    copy_value               Y6, A255
+                    put_app                  A1, A255, #1
+                    set_value_p              Y3
+                    head_normalize_t         A1
+                    put_value_p              Y7, A2
+                    head_normalize_t         A2
+                    put_value_p              Y8, A3
+                    head_normalize_t         A3
+                    call_link_only           #8, <local const #3>
+                    put_value_p              Y4, A1
+                    head_normalize_t         A1
+                    put_m_const              A255, declist
+                    put_app                  A2, A255, #1
+                    set_value_p              Y5
+                    put_value_p              Y1, A3
+                    head_normalize_t         A3
+                    put_value_p              Y2, A4
+                    head_normalize_t         A4
+                    deallocate               
+                    execute_link_only        <local const #2>
+L32                 trust_me                 #4
+L35                 allocate                 #1
+                    get_list                 A1
+                    unify_variable_t         A255
+                    unify_variable_t         A255
+                    get_m_structure          A2, declist, #1
+                    unify_variable_t         A255
+                    get_list                 A255
+                    unify_variable_t         A2
+                    unify_variable_t         A255
+                    finish_unify             
+                    neck_cut                 
+                    put_string               A1, <string #4>
+                    call_builtin             #0, #28
+                    put_m_const              A1, std_out
+                    head_normalize_t         A2
+                    call_builtin             #0, #30
+                    put_string               A1, <string #3>
+                    call_builtin             #0, #28
+                    stop                     
+L27                 switch_on_constant       #1, <hash #1>
+L28                 try                      #4, L33
+                    retry                    #4, L34
+                    trust                    #4, L35
+                    try_me_else              #0, L18
+<local const #0>    switch_on_term           L36, L37, L18, L36
+L36                 try_me_else              #2, L38
+L46                 get_string               A1, <string #6>
+                    get_m_structure          A2, tarr, #2
+                    unify_variable_t         A255
+                    unify_variable_t         A254
+                    get_list                 A255
+                    unify_variable_t         A255
+                    unify_variable_t         A253
+                    get_m_structure          A255, namety, #1
+                    unify_string             <string #0>
+                    get_list                 A253
+                    unify_variable_t         A255
+                    unify_nil                
+                    get_m_structure          A255, namety, #1
+                    unify_string             <string #0>
+                    get_m_structure          A254, namety, #1
+                    unify_string             <string #0>
+                    finish_unify             
+                    proceed                  
+L38                 retry_me_else            #2, L39
+L47                 get_string               A1, <string #7>
+                    get_m_structure          A2, tarr, #2
+                    unify_variable_t         A255
+                    unify_variable_t         A254
+                    get_list                 A255
+                    unify_variable_t         A255
+                    unify_variable_t         A253
+                    get_m_structure          A255, namety, #1
+                    unify_string             <string #0>
+                    get_list                 A253
+                    unify_variable_t         A255
+                    unify_nil                
+                    get_m_structure          A255, namety, #1
+                    unify_string             <string #0>
+                    get_m_structure          A254, namety, #1
+                    unify_string             <string #0>
+                    finish_unify             
+                    proceed                  
+L39                 retry_me_else            #2, L40
+L48                 get_string               A1, <string #8>
+                    get_m_structure          A2, tarr, #2
+                    unify_variable_t         A255
+                    unify_variable_t         A254
+                    get_list                 A255
+                    unify_variable_t         A255
+                    unify_variable_t         A253
+                    get_m_structure          A255, namety, #1
+                    unify_string             <string #0>
+                    get_list                 A253
+                    unify_variable_t         A255
+                    unify_nil                
+                    get_m_structure          A255, namety, #1
+                    unify_string             <string #0>
+                    get_m_structure          A254, namety, #1
+                    unify_string             <string #0>
+                    finish_unify             
+                    proceed                  
+L40                 retry_me_else            #2, L41
+L49                 get_string               A1, <string #9>
+                    get_m_structure          A2, tarr, #2
+                    unify_variable_t         A255
+                    unify_variable_t         A254
+                    get_list                 A255
+                    unify_variable_t         A255
+                    unify_variable_t         A253
+                    get_m_structure          A255, namety, #1
+                    unify_variable_t         A1
+                    get_list                 A253
+                    unify_variable_t         A255
+                    unify_nil                
+                    get_m_structure          A255, namety, #1
+                    unify_value_t            A1
+                    get_m_structure          A254, namety, #1
+                    unify_string             <string #2>
+                    finish_unify             
+                    proceed                  
+L41                 retry_me_else            #2, L42
+L50                 get_string               A1, <string #10>
+                    get_m_structure          A2, tarr, #2
+                    unify_variable_t         A255
+                    unify_variable_t         A254
+                    get_list                 A255
+                    unify_variable_t         A255
+                    unify_variable_t         A253
+                    get_m_structure          A255, namety, #1
+                    unify_string             <string #0>
+                    get_list                 A253
+                    unify_variable_t         A255
+                    unify_nil                
+                    get_m_structure          A255, namety, #1
+                    unify_string             <string #0>
+                    get_m_structure          A254, namety, #1
+                    unify_string             <string #2>
+                    finish_unify             
+                    proceed                  
+L42                 retry_me_else            #2, L43
+L51                 get_string               A1, <string #11>
+                    get_m_structure          A2, tarr, #2
+                    unify_variable_t         A255
+                    unify_variable_t         A254
+                    get_list                 A255
+                    unify_variable_t         A255
+                    unify_variable_t         A253
+                    get_m_structure          A255, namety, #1
+                    unify_string             <string #0>
+                    get_list                 A253
+                    unify_variable_t         A255
+                    unify_nil                
+                    get_m_structure          A255, namety, #1
+                    unify_string             <string #0>
+                    get_m_structure          A254, namety, #1
+                    unify_string             <string #2>
+                    finish_unify             
+                    proceed                  
+L43                 retry_me_else            #2, L44
+L52                 get_string               A1, <string #12>
+                    get_m_structure          A2, tarr, #2
+                    unify_variable_t         A255
+                    unify_variable_t         A254
+                    get_list                 A255
+                    unify_variable_t         A255
+                    unify_variable_t         A253
+                    get_m_structure          A255, namety, #1
+                    unify_string             <string #0>
+                    get_list                 A253
+                    unify_variable_t         A255
+                    unify_nil                
+                    get_m_structure          A255, namety, #1
+                    unify_string             <string #0>
+                    get_m_structure          A254, namety, #1
+                    unify_string             <string #2>
+                    finish_unify             
+                    proceed                  
+L44                 retry_me_else            #2, L45
+L53                 get_string               A1, <string #13>
+                    get_m_structure          A2, tarr, #2
+                    unify_variable_t         A255
+                    unify_variable_t         A254
+                    get_list                 A255
+                    unify_variable_t         A255
+                    unify_variable_t         A253
+                    get_m_structure          A255, namety, #1
+                    unify_string             <string #0>
+                    get_list                 A253
+                    unify_variable_t         A255
+                    unify_nil                
+                    get_m_structure          A255, namety, #1
+                    unify_string             <string #0>
+                    get_m_structure          A254, namety, #1
+                    unify_string             <string #2>
+                    finish_unify             
+                    proceed                  
+L45                 trust_me                 #2
+L54                 get_string               A1, <string #14>
+                    get_m_structure          A2, tarr, #2
+                    unify_variable_t         A255
+                    unify_variable_t         A254
+                    get_list                 A255
+                    unify_variable_t         A255
+                    unify_variable_t         A253
+                    get_m_structure          A255, namety, #1
+                    unify_variable_t         A1
+                    get_list                 A253
+                    unify_variable_t         A255
+                    unify_nil                
+                    get_m_structure          A255, namety, #1
+                    unify_value_t            A1
+                    get_m_structure          A254, namety, #1
+                    unify_string             <string #2>
+                    finish_unify             
+                    proceed                  
+L2                  try                      #2, L46
+                    retry                    #2, L47
+                    retry                    #2, L48
+                    retry                    #2, L49
+                    retry                    #2, L50
+                    retry                    #2, L51
+                    retry                    #2, L52
+                    retry                    #2, L53
+                    trust                    #2, L54
+L37                 switch_on_constant       #1, <hash #2>
+<local const #1>    try_me_else              #5, L55
+                    get_nil                  A2
+                    get_nil                  A3
+                    finish_unify             
+                    proceed                  
+L55                 trust_me                 #5
+                    allocate                 #6
+                    get_type_variable_p      Y1, A4
+                    get_type_variable_p      Y2, A5
+                    get_variable_p           Y3, A1
+                    get_list                 A2
+                    unify_variable_t         A2
+                    unify_variable_p         Y4
+                    get_list                 A3
+                    unify_variable_t         A3
+                    unify_variable_p         Y5
+                    finish_unify             
+                    globalize_pt             Y3, A255
+                    put_app                  A1, A255, #2
+                    set_value_t              A2
+                    set_value_t              A3
+                    head_normalize_t         A1
+                    call_builtin             #5, #0
+                    put_type_value_p         Y1, A4
+                    put_type_value_p         Y2, A5
+                    put_value_p              Y3, A1
+                    head_normalize_t         A1
+                    put_value_p              Y4, A2
+                    head_normalize_t         A2
+                    put_value_p              Y5, A3
+                    head_normalize_t         A3
+                    deallocate               
+                    execute_link_only        <local const #1>
+typeexp             switch_on_reg            #2, L56, L57
+L56                 try                      #2, L57
+                    trust_ext                #2, #2
+L57                 try_me_else              #2, L58
+                    switch_on_term           L59, L60, L18, L59
+L59                 try_me_else              #2, L61
+L15                 get_m_constant           A1, dummyexp
+                    get_m_constant           A2, dummytype
+                    finish_unify             
+                    proceed                  
+L61                 retry_me_else            #2, L62
+L14                 get_m_constant           A1, nilexp
+                    get_m_constant           A2, dummytype
+                    finish_unify             
+                    proceed                  
+L62                 retry_me_else            #2, L63
+L13                 get_m_structure          A1, intexp, #1
+                    unify_variable_t         A255
+                    get_m_structure          A2, namety, #1
+                    unify_string             <string #0>
+                    finish_unify             
+                    proceed                  
+L63                 retry_me_else            #2, L64
+L12                 get_m_structure          A1, stringexp, #1
+                    unify_variable_t         A255
+                    get_m_structure          A2, namety, #1
+                    unify_string             <string #1>
+                    finish_unify             
+                    proceed                  
+L64                 retry_me_else            #2, L65
+L11                 allocate                 #5
+                    get_m_structure          A1, opexp, #3
+                    unify_variable_t         A1
+                    unify_variable_p         Y1
+                    unify_variable_p         Y2
+                    finish_unify             
+                    put_value_t              A2, A3
+                    head_normalize_t         A1
+                    put_m_const              A255, tarr
+                    put_list                 A253
+                    set_variable_p           Y3
+                    set_nil                  
+                    put_list                 A254
+                    set_variable_p           Y4
+                    set_value_t              A253
+                    put_app                  A2, A255, #2
+                    set_value_t              A254
+                    globalize_t              A3
+                    set_value_t              A3
+                    call_link_only           #4, <local const #0>
+                    put_value_p              Y1, A1
+                    head_normalize_t         A1
+                    put_value_p              Y4, A2
+                    head_normalize_t         A2
+                    call_name                #4, typeexp
+                    put_value_p              Y2, A1
+                    head_normalize_t         A1
+                    put_value_p              Y3, A2
+                    head_normalize_t         A2
+                    deallocate               
+                    execute_name             typeexp
+L65                 retry_me_else            #2, L66
+L10                 allocate                 #3
+                    get_m_structure          A1, callexp, #2
+                    unify_variable_t         A3
+                    unify_variable_p         Y1
+                    finish_unify             
+                    put_value_t              A2, A4
+                    put_m_const              A255, varexp
+                    put_app                  A1, A255, #1
+                    set_value_t              A3
+                    put_m_const              A255, tarr
+                    put_app                  A2, A255, #2
+                    set_variable_p           Y2
+                    globalize_t              A4
+                    set_value_t              A4
+                    call_name                #2, typeexp
+                    put_type_const           A4, texp
+                    put_type_const           A5, ttype
+                    put_m_const              A254, typeexp
+                    put_app                  A255, A254, #2
+                    set_index                #2
+                    set_index                #1
+                    put_lambda               A1, A255, #2
+                    put_value_p              Y1, A2
+                    head_normalize_t         A2
+                    put_value_p              Y2, A3
+                    head_normalize_t         A3
+                    deallocate               
+                    execute_link_only        <local const #1>
+L66                 retry_me_else            #2, L67
+L78                 get_m_structure          A1, seqexp, #1
+                    unify_nil                
+                    get_m_constant           A2, dummytype
+                    finish_unify             
+                    proceed                  
+L67                 retry_me_else            #2, L68
+L79                 get_m_structure          A1, seqexp, #1
+                    unify_variable_t         A255
+                    get_list                 A255
+                    unify_variable_t         A1
+                    unify_nil                
+                    finish_unify             
+                    head_normalize_t         A1
+                    head_normalize_t         A2
+                    execute_name             typeexp
+L68                 retry_me_else            #2, L69
+L80                 allocate                 #5
+                    get_variable_p           Y1, A2
+                    get_m_structure          A1, seqexp, #1
+                    unify_variable_t         A255
+                    get_list                 A255
+                    unify_variable_t         A1
+                    unify_variable_t         A255
+                    get_list                 A255
+                    unify_variable_p         Y2
+                    unify_variable_p         Y3
+                    finish_unify             
+                    head_normalize_t         A1
+                    put_variable_p           Y4, A2
+                    call_name                #4, typeexp
+                    put_m_const              A255, seqexp
+                    put_list                 A254
+                    set_value_p              Y2
+                    set_value_p              Y3
+                    put_app                  A1, A255, #1
+                    set_value_t              A254
+                    put_value_p              Y1, A2
+                    head_normalize_t         A2
+                    deallocate               
+                    execute_name             typeexp
+L69                 retry_me_else            #2, L70
+L8                  allocate                 #3
+                    get_variable_p           Y1, A2
+                    get_m_structure          A1, assignexp, #2
+                    unify_variable_t         A3
+                    unify_variable_p         Y2
+                    finish_unify             
+                    put_m_const              A255, varexp
+                    put_app                  A1, A255, #1
+                    set_value_t              A3
+                    put_value_p              Y1, A2
+                    head_normalize_t         A2
+                    call_name                #2, typeexp
+                    put_value_p              Y2, A1
+                    head_normalize_t         A1
+                    put_value_p              Y1, A2
+                    head_normalize_t         A2
+                    deallocate               
+                    execute_name             typeexp
+L70                 retry_me_else            #2, L71
+L76                 allocate                 #3
+                    get_variable_p           Y1, A2
+                    get_m_structure          A1, ifexp, #3
+                    unify_variable_t         A1
+                    unify_variable_p         Y2
+                    unify_m_constant         dummyexp
+                    finish_unify             
+                    neck_cut                 
+                    head_normalize_t         A1
+                    put_m_const              A255, namety
+                    put_app                  A2, A255, #1
+                    set_string               <string #2>
+                    call_name                #2, typeexp
+                    put_value_p              Y2, A1
+                    head_normalize_t         A1
+                    put_value_p              Y1, A2
+                    head_normalize_t         A2
+                    deallocate               
+                    execute_name             typeexp
+L71                 retry_me_else            #2, L72
+L77                 allocate                 #4
+                    get_variable_p           Y1, A2
+                    get_m_structure          A1, ifexp, #3
+                    unify_variable_t         A1
+                    unify_variable_p         Y2
+                    unify_variable_p         Y3
+                    finish_unify             
+                    head_normalize_t         A1
+                    put_m_const              A255, namety
+                    put_app                  A2, A255, #1
+                    set_string               <string #2>
+                    call_name                #3, typeexp
+                    put_value_p              Y2, A1
+                    head_normalize_t         A1
+                    put_value_p              Y1, A2
+                    head_normalize_t         A2
+                    call_name                #3, typeexp
+                    put_value_p              Y3, A1
+                    head_normalize_t         A1
+                    put_value_p              Y1, A2
+                    head_normalize_t         A2
+                    deallocate               
+                    execute_name             typeexp
+L72                 retry_me_else            #2, L73
+L6                  allocate                 #3
+                    get_variable_p           Y1, A2
+                    get_m_structure          A1, whileexp, #2
+                    unify_variable_t         A1
+                    unify_variable_p         Y2
+                    finish_unify             
+                    head_normalize_t         A1
+                    put_m_const              A255, namety
+                    put_app                  A2, A255, #1
+                    set_string               <string #2>
+                    call_name                #2, typeexp
+                    put_value_p              Y2, A1
+                    head_normalize_t         A1
+                    put_value_p              Y1, A2
+                    head_normalize_t         A2
+                    deallocate               
+                    execute_name             typeexp
+L73                 retry_me_else            #2, L74
+L5                  allocate                 #3
+                    get_m_structure          A1, arrayexp, #3
+                    unify_variable_p         Y1
+                    unify_variable_t         A1
+                    unify_variable_p         Y2
+                    get_m_structure          A2, arrayty, #1
+                    unify_value_p            Y1
+                    finish_unify             
+                    head_normalize_t         A1
+                    put_m_const              A255, namety
+                    put_app                  A2, A255, #1
+                    set_string               <string #0>
+                    call_name                #2, typeexp
+                    put_value_p              Y2, A1
+                    head_normalize_t         A1
+                    put_m_const              A255, namety
+                    put_app                  A2, A255, #1
+                    set_value_p              Y1
+                    deallocate               
+                    execute_name             typeexp
+L74                 retry_me_else            #2, L75
+L4                  allocate                 #3
+                    get_m_structure          A1, varexp, #1
+                    unify_variable_t         A255
+                    get_m_structure          A255, subscriptvar, #2
+                    unify_variable_t         A255
+                    unify_variable_t         A1
+                    get_m_structure          A255, simplevar, #1
+                    unify_variable_p         Y1
+                    get_m_structure          A2, namety, #1
+                    unify_variable_p         Y2
+                    finish_unify             
+                    head_normalize_t         A1
+                    put_m_const              A255, namety
+                    put_app                  A2, A255, #1
+                    set_string               <string #0>
+                    call_name                #2, typeexp
+                    put_m_const              A255, varexp
+                    put_m_const              A253, simplevar
+                    put_app                  A254, A253, #1
+                    set_value_p              Y1
+                    put_app                  A1, A255, #1
+                    set_value_t              A254
+                    put_m_const              A255, arrayty
+                    put_app                  A2, A255, #1
+                    set_value_p              Y2
+                    deallocate               
+                    execute_name             typeexp
+L75                 trust_me                 #2
+L3                  get_m_structure          A1, letexp, #2
+                    unify_variable_t         A5
+                    unify_variable_t         A3
+                    finish_unify             
+                    put_value_t              A2, A4
+                    put_nil                  A1
+                    put_value_t              A5, A2
+                    head_normalize_t         A2
+                    head_normalize_t         A3
+                    head_normalize_t         A4
+                    execute_link_only        <local const #2>
+L7                  try                      #2, L76
+                    trust                    #2, L77
+L9                  try                      #2, L78
+                    retry                    #2, L79
+                    trust                    #2, L80
+L60                 switch_on_constant       #13, <hash #3>
+L58                 retry_me_else            #2, L81
+                    allocate                 #1
+                    get_m_constant           A2, dummytype
+                    finish_unify             
+                    neck_cut                 
+                    put_value_t              A1, A2
+                    put_string               A1, <string #5>
+                    call_builtin             #0, #28
+                    put_m_const              A1, std_out
+                    head_normalize_t         A2
+                    call_builtin             #0, #30
+                    put_string               A1, <string #3>
+                    call_builtin             #0, #28
+                    stop                     
+L81                 trust_me                 #2
+                    get_m_structure          A1, varexp, #1
+                    unify_variable_t         A255
+                    get_m_structure          A255, simplevar, #1
+                    unify_string             <string #15>
+                    get_m_structure          A2, tarr, #2
+                    unify_variable_t         A255
+                    unify_m_constant         dummytype
+                    get_list                 A255
+                    unify_variable_t         A255
+                    unify_variable_t         A254
+                    get_m_structure          A255, namety, #1
+                    unify_string             <string #1>
+                    finish_unify             
+                    proceed                  
+L31                 try_me_else              #2, L82
+                    put_type_const           A3, ttype
+                    head_normalize_t         A1
+                    put_m_const              A2, dummytype
+                    builtin                  #3
+L82                 trust_me                 #2
+                    put_value_t              A1, A4
+                    put_value_t              A2, A5
+                    put_type_const           A3, ttype
+                    put_value_t              A5, A1
+                    head_normalize_t         A1
+                    put_value_t              A4, A2
+                    head_normalize_t         A2
+                    builtin                  #3
+typeexp             switch_on_reg            #1, L83, L84
+L83                 try                      #2, L84
+                    trust_ext                #2, #1
+                    try_me_else              #0, L18
+L84                 init_variable_t          A3, Y4
+                    init_variable_t          A4, Y6
+                    get_m_structure          A1, varexp, #1
+                    unify_variable_t         A255
+                    get_m_structure          A255, simplevar, #1
+                    unify_value_t            A3
+                    pattern_unify_t          A4, A2
+                    finish_unify             
+                    proceed                  
+typeexp             switch_on_reg            #1, L85, L86
+L85                 try                      #2, L86
+                    trust_ext                #2, #1
+                    try_me_else              #0, L18
+L86                 init_variable_t          A3, Y2
+                    init_variable_t          A4, Y1
+                    get_m_structure          A1, varexp, #1
+                    unify_variable_t         A255
+                    get_m_structure          A255, simplevar, #1
+                    unify_value_t            A3
+                    pattern_unify_t          A4, A2
+                    finish_unify             
+                    proceed                  
+
+Global kind table:
+0: tfieldexp/0
+1: tvar/0
+2: tfield/0
+3: ch/0
+4: decl/0
+5: gs/0
+6: ttype/0
+7: texp/0
+8: tdec/0
+
+Local kind table:
+
+Type skeleton table:
+0: (string -> (ttype -> o))
+1: ((SkeletonVarType(0) -> (SkeletonVarType(1) -> o)) -> ((list SkeletonVarType(0)) -> ((list SkeletonVarType(1)) -> o)))
+2: ((list string) -> (tdec -> (texp -> (ttype -> o))))
+3: (texp -> ((list ttype) -> (ttype -> o)))
+4: (ttype -> (ttype -> o))
+5: ((list ttype) -> (ttype -> ttype))
+6: (texp -> (ttype -> o))
+7: texp
+8: ttype
+9: (int -> texp)
+10: (string -> ttype)
+11: (string -> texp)
+12: (string -> (texp -> (texp -> texp)))
+13: (tvar -> ((list texp) -> texp))
+14: (tvar -> texp)
+15: ((list texp) -> texp)
+16: (tvar -> (texp -> texp))
+17: (texp -> (texp -> (texp -> texp)))
+18: (texp -> (texp -> texp))
+19: (tvar -> (texp -> tvar))
+20: (string -> tvar)
+21: (tdec -> (texp -> texp))
+22: ((string -> tdec) -> tdec)
+23: ((string -> texp) -> texp)
+24: ((list SkeletonVarType(0)) -> ((list SkeletonVarType(0)) -> ((list SkeletonVarType(0)) -> o)))
+25: ((list tdec) -> tdec)
+26: (string -> (ttype -> (texp -> tdec)))
+27: (string -> ((string -> texp) -> ((list ttype) -> (ttype -> tdec))))
+28: (decl -> (o -> decl))
+29: (gs -> ((list gs) -> decl))
+30: (gs -> o)
+31: ((list decl) -> o)
+32: (decl -> o)
+33: gs
+34: (string -> gs)
+35: (int -> gs)
+36: (int -> (gs -> o))
+37: (int -> o)
+38: (gs -> (gs -> o))
+39: (int -> (gs -> (gs -> o)))
+40: (gs -> ((list gs) -> o))
+41: (out_stream -> (int -> o))
+42: ((list gs) -> (gs -> o))
+43: (gs -> ((list gs) -> (gs -> o)))
+44: (gs -> (decl -> (gs -> ch)))
+45: ((list ch) -> ((list ch) -> ((list ch) -> o)))
+46: (gs -> (gs -> ((list gs) -> ((list gs) -> ((list gs) -> o)))))
+47: ((list gs) -> ((list ch) -> o))
+48: (gs -> (gs -> (decl -> (ch -> o))))
+49: (gs -> ((list decl) -> o))
+50: ((list ch) -> o)
+51: (ch -> (ch -> o))
+52: (gs -> ((list gs) -> ((list gs) -> ((list gs) -> o))))
+53: ((list decl) -> ((list ch) -> o))
+54: ((list ch) -> ((list ch) -> o))
+55: ((list gs) -> (decl -> ((list gs) -> o)))
+56: ((list gs) -> (decl -> ((list gs) -> ch)))
+57: (decl -> (ch -> o))
+58: ((list gs) -> ((list gs) -> (gs -> (ch -> o))))
+59: ((list gs) -> ((list gs) -> ((list gs) -> ((list ch) -> o))))
+60: (string -> o)
+61: (string -> (string -> (string -> o)))
+62: (out_stream -> (ch -> o))
+63: (out_stream -> ((list gs) -> ((list gs) -> (gs -> o))))
+64: (out_stream -> ((list gs) -> (gs -> o)))
+65: (out_stream -> o)
+66: ((list gs) -> ((list gs) -> (gs -> (string -> o))))
+67: (gs -> (gs -> (gs -> (string -> (int -> o)))))
+68: (gs -> (gs -> (string -> (int -> o))))
+69: (gs -> (gs -> (int -> o)))
+70: (SkeletonVarType(0) -> ((list SkeletonVarType(0)) -> o))
+71: (int -> (SkeletonVarType(0) -> ((list SkeletonVarType(0)) -> o)))
+72: ((list SkeletonVarType(0)) -> (int -> o))
+73: ((list SkeletonVarType(0)) -> ((list SkeletonVarType(0)) -> o))
+74: ((SkeletonVarType(0) -> SkeletonVarType(1)) -> ((list SkeletonVarType(0)) -> ((list SkeletonVarType(1)) -> o)))
+75: ((SkeletonVarType(0) -> o) -> ((list SkeletonVarType(0)) -> o))
+76: ((SkeletonVarType(0) -> o) -> ((list SkeletonVarType(0)) -> ((list SkeletonVarType(0)) -> o)))
+77: ((SkeletonVarType(0) -> (SkeletonVarType(1) -> o)) -> (SkeletonVarType(0) -> (SkeletonVarType(1) -> ((list SkeletonVarType(0)) -> ((list SkeletonVarType(1)) -> o)))))
+78: ((list SkeletonVarType(0)) -> o)
+79: (SkeletonVarType(0) -> o)
+80: (SkeletonVarType(0) -> (string -> (gs -> o)))
+81: (int -> (in_stream -> ((list gs) -> o)))
+82: (string -> (in_stream -> (gs -> o)))
+83: (in_stream -> o)
+84: (string -> (SkeletonVarType(0) -> o))
+85: (string -> (int -> o))
+86: (string -> (int -> (int -> (int -> (int -> o)))))
+87: ((list gs) -> ((list gs) -> o))
+88: (int -> ((list gs) -> o))
+89: (texp -> gs)
+90: (tdec -> gs)
+91: ((list tdec) -> gs)
+92: (ttype -> gs)
+93: ((list tfield) -> gs)
+94: (tvar -> gs)
+95: ((list texp) -> gs)
+96: ((list tfieldexp) -> gs)
+97: (tvar -> (texp -> (texp -> (texp -> o))))
+98: ((list tdec) -> (texp -> (texp -> o)))
+99: ((list tdec) -> ((list tdec) -> (texp -> (tdec -> (texp -> o)))))
+100: (string -> ((list tfield) -> (ttype -> (texp -> (tdec -> o)))))
+101: (texp -> (texp -> ((list tfield) -> ((list ttype) -> o))))
+102: (tvar -> (string -> tvar))
+103: (string -> ((list tfieldexp) -> texp))
+104: (tdec -> (texp -> (texp -> texp)))
+105: ((list tdec) -> (texp -> texp))
+106: ((list tfield) -> ttype)
+107: (string -> (ttype -> tdec))
+108: (string -> ((list tfield) -> (ttype -> (texp -> tdec))))
+109: (string -> ((list tfield) -> ((list tdec) -> tdec)))
+110: (string -> (int -> (ttype -> ((texp -> texp) -> tdec))))
+111: (texp -> (ttype -> tfield))
+112: (texp -> (texp -> tfieldexp))
+113: ((texp -> texp) -> texp)
+114: (tdec -> texp)
+115: (texp -> (texp -> o))
+116: (tvar -> (tvar -> o))
+117: (string -> (string -> o))
+118: (tdec -> (tdec -> o))
+119: (string -> (texp -> ((list ttype) -> (ttype -> tdec))))
+120: (texp -> texp)
+121: ((list string) -> (tdec -> (texp -> (texp -> o))))
+122: (texp -> ((texp -> texp) -> texp))
+123: string
+
+Global constant table: 
+0: copyty (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #4
+1: tarr (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #5
+2: typeexp (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #6
+3: dummyexp (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #7
+4: dummytype (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #8
+5: nilexp (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #7
+6: intexp (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #9
+7: namety (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #10
+8: stringexp (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #11
+9: opexp (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #12
+10: callexp (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #13
+11: varexp (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #14
+12: seqexp (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #15
+13: assignexp (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #16
+14: ifexp (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #17
+15: whileexp (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #18
+16: arrayexp (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #12
+17: arrayty (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #10
+18: subscriptvar (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #19
+19: simplevar (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #20
+20: letexp (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #21
+21: decabs (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #22
+22: nameterm (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #23
+23: append (No Fixity, precedence 0)
+    Env Size: 1, Type Skeleton: #24
+24: declist (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #25
+25: vardec (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #26
+26: fixptdec (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #27
+27: rule (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #28
+28: ==> (Infixl, precedence 10)
+    Env Size: 0, Type Skeleton: #29
+29: terminal (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #30
+30: non_terminal (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #30
+31: start_symbol (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #30
+32: cfg (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #31
+33: getrule (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #32
+34: bofs (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #33
+35: eofs (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #33
+36: sprime (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #33
+37: id (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #34
+38: iconst (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #35
+39: sconst (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #34
+40: test (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #36
+41: ntnum (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #37
+42: first (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #38
+43: find_first (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #39
+44: before (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #40
+45: follow (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #40
+46: epsilon (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #33
+47: first_stage (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #39
+48: gen_first (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #41
+49: head (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #42
+50: last (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #42
+51: look (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #43
+52: handle (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #44
+53: gen_handles (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #45
+54: context_search (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #46
+55: make_handles (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #47
+56: rule_to_h (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #48
+57: getprods (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #49
+58: freshcopy (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #38
+59: brcvh (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #50
+60: convert_to_sets (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #51
+61: lcontext_search (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #52
+62: rcontext_search (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #52
+63: fsbrc (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #50
+64: fprepare (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #53
+65: lgen_shandles (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #54
+66: rgen_shandles (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #54
+67: shandle (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #55
+68: shand (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #56
+69: sbrc (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #50
+70: sprepare (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #53
+71: gen_shandles (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #54
+72: make_shandle (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #57
+73: rrdeterministic (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #50
+74: srdeterministic (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #54
+75: rr_conflict (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #51
+76: sr_conflict (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #58
+77: srprocess (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #59
+78: genparser_sbrc (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #60
+79: genparser (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #61
+80: gen_reduce (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #62
+81: gen_shift (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #63
+82: srdecision (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #64
+83: decresolve (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #42
+84: stream_name (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #65
+85: parse (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #66
+86: binaryop (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #67
+87: implicitop (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #68
+88: unaryop (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #69
+89: member (No Fixity, precedence 0)
+    Env Size: 1, Type Skeleton: #70
+90: oncememb (No Fixity, precedence 0)
+    Env Size: 1, Type Skeleton: #70
+91: nth (No Fixity, precedence 0)
+    Env Size: 1, Type Skeleton: #71
+92: length (No Fixity, precedence 0)
+    Env Size: 1, Type Skeleton: #72
+93: reverse (No Fixity, precedence 0)
+    Env Size: 1, Type Skeleton: #73
+94: map1 (No Fixity, precedence 0)
+    Env Size: 2, Type Skeleton: #74
+95: map_pred2 (No Fixity, precedence 0)
+    Env Size: 2, Type Skeleton: #1
+96: allare (No Fixity, precedence 0)
+    Env Size: 1, Type Skeleton: #75
+97: filter (No Fixity, precedence 0)
+    Env Size: 1, Type Skeleton: #76
+98: preplace (No Fixity, precedence 0)
+    Env Size: 2, Type Skeleton: #77
+99: openlist (No Fixity, precedence 0)
+    Env Size: 1, Type Skeleton: #78
+100: close_list (No Fixity, precedence 0)
+    Env Size: 1, Type Skeleton: #78
+101: openadd (No Fixity, precedence 0)
+    Env Size: 1, Type Skeleton: #70
+102: openmemb (No Fixity, precedence 0)
+    Env Size: 1, Type Skeleton: #70
+103: opennil (No Fixity, precedence 0)
+    Env Size: 1, Type Skeleton: #79
+104: openmap2 (No Fixity, precedence 0)
+    Env Size: 2, Type Skeleton: #1
+105: printname (No Fixity, precedence 0)
+    Env Size: 1, Type Skeleton: #80
+106: yyinitial (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #81
+107: yyalphanum (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #82
+108: yyspecial (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #82
+109: yycomment (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #83
+110: yystring (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #82
+111: decdigit (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #60
+112: alphab (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #60
+113: alphanum (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #60
+114: white_space (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #60
+115: parseline (No Fixity, precedence 0)
+    Env Size: 1, Type Skeleton: #79
+116: parsefile (No Fixity, precedence 0)
+    Env Size: 1, Type Skeleton: #84
+117: yynat (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #82
+118: natconst (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #35
+119: parseint (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #85
+120: parseint_aux (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #86
+121: eof_symbol (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #60
+122: linenum (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #35
+123: finderrline (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #87
+124: print_tokens (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #88
+125: comma (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #33
+126: colon (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #33
+127: semicolon (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #33
+128: lparen (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #33
+129: rparen (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #33
+130: lbrack (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #33
+131: rbrack (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #33
+132: lbrace (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #33
+133: rbrace (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #33
+134: dott (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #33
+135: plust (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #33
+136: minust (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #33
+137: timest (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #33
+138: dividet (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #33
+139: eqt (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #33
+140: neqt (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #33
+141: ltt (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #33
+142: let (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #33
+143: gtt (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #33
+144: get (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #33
+145: andt (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #33
+146: ort (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #33
+147: assignt (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #33
+148: arrayt (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #33
+149: ift (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #33
+150: thent (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #33
+151: elset (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #33
+152: whilet (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #33
+153: fort (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #33
+154: tot (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #33
+155: dot (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #33
+156: lett (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #33
+157: intok (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #33
+158: endt (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #33
+159: oft (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #33
+160: breakt (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #33
+161: nilt (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #33
+162: classt (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #33
+163: functiont (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #33
+164: vart (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #33
+165: typet (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #33
+166: errort (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #33
+167: ldbrace (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #33
+168: rdbrace (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #33
+169: publict (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #33
+170: privatet (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #33
+171: program (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #89
+172: te (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #89
+173: dec (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #90
+174: decs (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #91
+175: tydec_gs (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #90
+176: ty_gs (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #92
+177: tfields (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #93
+178: vdec_gs (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #90
+179: fdec_gs (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #90
+180: cdec_gs (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #90
+181: lvalue (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #94
+182: args (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #95
+183: expseq (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #95
+184: moreinits (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #96
+185: index (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #94
+186: tyfcomma (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #33
+187: acomma (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #33
+188: fundech (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #34
+189: funcallh (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #94
+190: teqt (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #33
+191: tydechd (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #34
+192: createrec (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #34
+193: eqtinit (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #89
+194: ty_gshd (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #33
+195: mkarrayexp (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #97
+196: formlet (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #98
+197: formnabs (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #99
+198: formfix (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #100
+199: formfix2 (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #101
+200: fieldvar (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #102
+201: breakexp (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #7
+202: recordexp (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #103
+203: forexp (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #104
+204: fletexp (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #105
+205: recordty (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #106
+206: typedec (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #107
+207: functiondec (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #108
+208: classdec (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #109
+209: hfuncdec (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #110
+210: etpair (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #111
+211: eepair (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #112
+212: depair (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #21
+213: absterm (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #113
+214: coercexp (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #114
+215: copyexp (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #115
+216: copyvar (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #116
+217: copystr (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #117
+218: copydec (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #118
+219: hastype (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #6
+220: fixdec2 (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #119
+221: let2 (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #120
+222: changelet (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #121
+223: changelet0 (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #115
+224: let0 (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #122
+225: lamexp (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #113
+
+Local constant table: 
+0:  (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #0
+1:  (No Fixity, precedence 0)
+    Env Size: 2, Type Skeleton: #1
+2:  (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #2
+3:  (No Fixity, precedence 0)
+    Env Size: 0, Type Skeleton: #3
+
+Hidden constant table: 
+0:  Type Skeleton: #123
+1:  Type Skeleton: #123
+
+String table:
+0: int
+1: string
+2: bool
+3: 
+.
+4: Error type checking declaration 
+5: Error type checking expression 
+6: +
+7: -
+8: *
+9: =
+10: <
+11: >
+12: <=
+13: >=
+14: <>
+15: printf
+
+Implication Tables:
+0:
+  Predicate definitions possibly extending previous ones: 1
+   typeexp
+  Find function type: hash
+  In-core table size: 1
+   typeexp
+1:
+  Predicate definitions possibly extending previous ones: 1
+   typeexp
+  Find function type: hash
+  In-core table size: 1
+   typeexp
+
+Hash tables:
+0:
+    Table size: 1
+    Constants:
+    tarr -> L0
+1:
+    Table size: 1
+    Constants:
+    nil -> L1
+2:
+    Table size: 1
+    Constants:
+    <str_constant> -> L2
+3:
+    Table size: 13
+    Constants:
+    letexp -> L3
+    varexp -> L4
+    arrayexp -> L5
+    whileexp -> L6
+    ifexp -> L7
+    assignexp -> L8
+    seqexp -> L9
+    callexp -> L10
+    opexp -> L11
+    stringexp -> L12
+    intexp -> L13
+    nilexp -> L14
+    dummyexp -> L15
+
+Module table:
+  Predicate definitions possibly extending previous ones: 2
+   copyty
+   typeexp
+  Exportdef predicates: 0
+  Local predicates: 4
+   <local const #0>
+   <local const #1>
+   <local const #2>
+   <local const #3>
+  Find function type: hash
+  In-core table size: 6
+   <local const #0>
+   <local const #1>
+   <local const #2>
+   <local const #3>
+   copyty
+   typeexp
+
+Accumulated tables:
+0: bobparser
+    Kind renamings:
+    texp -> texp
+    tvar -> tvar
+    ttype -> ttype
+    tdec -> tdec
+    tfieldexp -> tfieldexp
+    tfield -> tfield
+    gs -> gs
+    decl -> decl
+    ch -> ch
+    Constant renamings:
+    comma -> comma
+    colon -> colon
+    semicolon -> semicolon
+    lparen -> lparen
+    rparen -> rparen
+    lbrack -> lbrack
+    rbrack -> rbrack
+    lbrace -> lbrace
+    rbrace -> rbrace
+    dott -> dott
+    plust -> plust
+    minust -> minust
+    timest -> timest
+    dividet -> dividet
+    eqt -> eqt
+    neqt -> neqt
+    ltt -> ltt
+    let -> let
+    gtt -> gtt
+    get -> get
+    andt -> andt
+    ort -> ort
+    assignt -> assignt
+    arrayt -> arrayt
+    ift -> ift
+    thent -> thent
+    elset -> elset
+    whilet -> whilet
+    fort -> fort
+    tot -> tot
+    dot -> dot
+    lett -> lett
+    intok -> intok
+    endt -> endt
+    oft -> oft
+    breakt -> breakt
+    nilt -> nilt
+    classt -> classt
+    functiont -> functiont
+    vart -> vart
+    typet -> typet
+    errort -> errort
+    ldbrace -> ldbrace
+    rdbrace -> rdbrace
+    publict -> publict
+    privatet -> privatet
+    program -> program
+    te -> te
+    dec -> dec
+    decs -> decs
+    tydec_gs -> tydec_gs
+    ty_gs -> ty_gs
+    tfields -> tfields
+    vdec_gs -> vdec_gs
+    fdec_gs -> fdec_gs
+    cdec_gs -> cdec_gs
+    lvalue -> lvalue
+    args -> args
+    expseq -> expseq
+    moreinits -> moreinits
+    index -> index
+    tyfcomma -> tyfcomma
+    acomma -> acomma
+    fundech -> fundech
+    funcallh -> funcallh
+    teqt -> teqt
+    tydechd -> tydechd
+    createrec -> createrec
+    eqtinit -> eqtinit
+    ty_gshd -> ty_gshd
+    mkarrayexp -> mkarrayexp
+    formlet -> formlet
+    formnabs -> formnabs
+    formfix -> formfix
+    formfix2 -> formfix2
+    simplevar -> simplevar
+    fieldvar -> fieldvar
+    subscriptvar -> subscriptvar
+    varexp -> varexp
+    nilexp -> nilexp
+    breakexp -> breakexp
+    intexp -> intexp
+    stringexp -> stringexp
+    callexp -> callexp
+    opexp -> opexp
+    dummyexp -> dummyexp
+    recordexp -> recordexp
+    seqexp -> seqexp
+    assignexp -> assignexp
+    ifexp -> ifexp
+    whileexp -> whileexp
+    forexp -> forexp
+    arrayexp -> arrayexp
+    fletexp -> fletexp
+    namety -> namety
+    recordty -> recordty
+    arrayty -> arrayty
+    dummytype -> dummytype
+    typedec -> typedec
+    vardec -> vardec
+    functiondec -> functiondec
+    classdec -> classdec
+    hfuncdec -> hfuncdec
+    etpair -> etpair
+    eepair -> eepair
+    depair -> depair
+    letexp -> letexp
+    fixptdec -> fixptdec
+    absterm -> absterm
+    nameterm -> nameterm
+    decabs -> decabs
+    declist -> declist
+    coercexp -> coercexp
+    copyexp -> copyexp
+    copyty -> copyty
+    copyvar -> copyvar
+    copystr -> copystr
+    copydec -> copydec
+    hastype -> hastype
+    fixdec2 -> fixdec2
+    let2 -> let2
+    changelet -> changelet
+    changelet0 -> changelet0
+    let0 -> let0
+    lamexp -> lamexp
+    rule -> rule
+    ==> -> ==>
+    terminal -> terminal
+    non_terminal -> non_terminal
+    start_symbol -> start_symbol
+    cfg -> cfg
+    getrule -> getrule
+    bofs -> bofs
+    eofs -> eofs
+    sprime -> sprime
+    id -> id
+    iconst -> iconst
+    sconst -> sconst
+    test -> test
+    ntnum -> ntnum
+    first -> first
+    find_first -> find_first
+    before -> before
+    follow -> follow
+    epsilon -> epsilon
+    first_stage -> first_stage
+    gen_first -> gen_first
+    head -> head
+    last -> last
+    look -> look
+    handle -> handle
+    gen_handles -> gen_handles
+    context_search -> context_search
+    make_handles -> make_handles
+    rule_to_h -> rule_to_h
+    getprods -> getprods
+    freshcopy -> freshcopy
+    brcvh -> brcvh
+    convert_to_sets -> convert_to_sets
+    lcontext_search -> lcontext_search
+    rcontext_search -> rcontext_search
+    fsbrc -> fsbrc
+    fprepare -> fprepare
+    lgen_shandles -> lgen_shandles
+    rgen_shandles -> rgen_shandles
+    shandle -> shandle
+    shand -> shand
+    sbrc -> sbrc
+    sprepare -> sprepare
+    gen_shandles -> gen_shandles
+    make_shandle -> make_shandle
+    rrdeterministic -> rrdeterministic
+    srdeterministic -> srdeterministic
+    rr_conflict -> rr_conflict
+    sr_conflict -> sr_conflict
+    srprocess -> srprocess
+    genparser_sbrc -> genparser_sbrc
+    genparser -> genparser
+    gen_reduce -> gen_reduce
+    gen_shift -> gen_shift
+    srdecision -> srdecision
+    decresolve -> decresolve
+    stream_name -> stream_name
+    parse -> parse
+    binaryop -> binaryop
+    implicitop -> implicitop
+    unaryop -> unaryop
+    append -> append
+    member -> member
+    oncememb -> oncememb
+    nth -> nth
+    length -> length
+    reverse -> reverse
+    map1 -> map1
+    map_pred2 -> map_pred2
+    allare -> allare
+    filter -> filter
+    preplace -> preplace
+    openlist -> openlist
+    close_list -> close_list
+    openadd -> openadd
+    openmemb -> openmemb
+    opennil -> opennil
+    openmap2 -> openmap2
+    printname -> printname
+    yyinitial -> yyinitial
+    yyalphanum -> yyalphanum
+    yyspecial -> yyspecial
+    yycomment -> yycomment
+    yystring -> yystring
+    decdigit -> decdigit
+    alphab -> alphab
+    alphanum -> alphanum
+    white_space -> white_space
+    parseline -> parseline
+    parsefile -> parsefile
+    yynat -> yynat
+    natconst -> natconst
+    parseint -> parseint
+    parseint_aux -> parseint_aux
+    eof_symbol -> eof_symbol
+    linenum -> linenum
+    finderrline -> finderrline
+    print_tokens -> print_tokens
+
+Imported tables:
