@@ -13,14 +13,13 @@ let addQuery str =
   queryStrings := !queryStrings @ [str]
 
 let setPath p =
-  (*print_string "not implemented\n"*)
   path := p
 
 let inputName = ref ""
 
 let specList = dualArgs
   [("-p", "--path", Arg.String setPath, 
-	" Add PATH to the search path. Several paths may be specified") ;
+	" Add PATH to the search path.") ;
    ("-s", "--solve", Arg.String addQuery, 
 	" Solve the given query on startup. Several queries may be specified") ;
    ("-e", "--expect", Arg.Set_int minSolutions,
@@ -42,7 +41,7 @@ let anonFunc name =
   inputName := getModName name
 
 let usageMsg =
-  "Usage: tjsim <options> <module file>\n" ^
+  "Usage: tjsim <options> <module-name>\n" ^
     "options are:"
 
 

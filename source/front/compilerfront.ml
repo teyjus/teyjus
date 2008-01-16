@@ -69,7 +69,7 @@ let specList = dualArgs
   [("-o", "--output", Arg.Set_string outputName,
     " Specifies the name of the output bytecode file") ;
    ("-p", "--path", Arg.String setPath,
-    " Add PATH to the search path. Several paths may be specified.") ;
+    " Add PATH to the search path.") ;
    ("--log", "--log", Arg.Set(Errormsg.loggingEnabled),
     " Enable logging information.") ;
    versionspec]
