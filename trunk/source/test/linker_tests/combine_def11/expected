@@ -4,18 +4,12 @@ Module name: top
 
 LABEL               INSTRUCTION              OPERANDS
 
-L2                  fail                     
-foo1                switch_on_reg            #1, L0, L1
-L0                  try                      #1, L1
-                    trust_ext                #1, #1
-                    try_me_else              #0, L2
-L1                  proceed                  
-foo2                switch_on_reg            #2, L3, L4
-L3                  try                      #1, L4
-                    trust_ext                #1, #2
-L4                  try_me_else              #1, L5
+L0                  fail                     
+                    try_me_else              #0, L0
+foo1                proceed                  
+foo2                try_me_else              #1, L1
                     proceed                  
-L5                  trust_me                 #1
+L1                  trust_me                 #1
                     proceed                  
 
 Global kind table:
@@ -47,9 +41,7 @@ Import tables:
 
   Import table:
     number of code segments: 0
-    Next clause table: 2
-   foo1
-   foo2
+    Next clause table: 0
     Local constant table: 0
     Find function type: hash
     Search table: 2
