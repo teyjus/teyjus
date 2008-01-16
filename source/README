@@ -105,7 +105,7 @@ All tests reside in teyjus/source/test.
    a. all test cases:
       use "omake compiler-test" under teyjus/source/test
 
-   b. individual test cases:
+   b. individual test case:
       use "omake compiler-test" under the directory containing a test case
 
 
@@ -114,8 +114,8 @@ All tests reside in teyjus/source/test.
    a. all test cases:
       use "omake test" under teyjus/source/test
 
-   b. individual test cases:
-      use "omake test" under the directory containing a test cases
+   b. individual test case:
+      use "omake test" under the directory containing a test case
 
 
 3. system test
