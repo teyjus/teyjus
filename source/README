@@ -1,20 +1,132 @@
-1. compiler (tjcc)
+                          BUILD SYSTEM
+                          ============
 
-   compile: 
-   use command "omake tjcc" under the source directory.
+component                   command                  path
+-----------------------------------------------------------------
+compiler                  omake tjcc                 teyjus/source
 
-   run:
-   use command "tjcc <module name>" or "tjcc <module name> -o <bytecode name>".
-  
+simulator                 omake tjsim                teyjus/source
 
-2. disassembler (tjdis)
-  
-   compile:
-   use command "omake tjdis" under the source directory.
+disassembler              omake tjdis                teyjus/source
 
-   run:
-     object code: use command "tjdis <bytecode name>" 
-     linked code: use command "tjdis -l <bytecode name>"
+linker (debug only)       omake tjlink               teyjus/source/linker
 
-3. simulator (tjsim) -- to be finished.
- 
+all                       omake all                  teyjus/source
+
+
+
+
+                            SYSTEM USAGE
+                            ============
+
+1. compiler (teyjus/source/tjcc)
+--------------------------------
+
+Usage: tjcc <options> <files>
+options are:
+  -o         Specifies the name of the output bytecode file
+  --output   Specifies the name of the output bytecode file
+  -p         Add PATH to the search path. 
+  --path     Add PATH to the search path. 
+  --log      Enable logging information.
+  --log      Enable logging information.
+  -v         Return the system version
+  --version  Return the system version
+  -help      Display this list of options
+  --help     Display this list of options
+
+
+2. simulator (tejus/source/tjsim)
+---------------------------------
+
+Usage: tjsim -b <options> <module-name>
+options are:
+  -p         Add PATH to the search path. 
+  --path     Add PATH to the search path. 
+  -s         Solve the given query on startup. Several queries may be specified
+  --solve    Solve the given query on startup. Several queries may be specified
+  -e         Expect at least this many solutions from each query;
+                error if fewer. Valid only in batch mode
+  --expect   Expect at least this many solutions from each query;
+                error if fewer. Valid only in batch mode
+  -m         Halt after this many solutions to the query have been found.
+                Valid only in batch mode
+  --maximum  Halt after this many solutions to the query have been found.
+                Valid only in batch mode
+  -q         Suppress all non-error output from the system,
+                except variable bindings on query success
+  --quiet    Suppress all non-error output from the system,
+                except variable bindings on query success
+  -b         Suppress system interaction; send all output without stopping
+  --batch    Suppress system interaction; send all output without stopping
+  -k         Allocate a heap of the given size (K)
+  --heap     Allocate a heap of the given size (K)
+  -v         Return the system version
+  --version  Return the system version
+  -help      Display this list of options
+  --help     Display this list of options
+
+
+Note that the interactive interface is not implemented. The simulator only 
+works in batch mode (with option -b specified).
+
+3. disassembler (teyjus/source/tjdis)
+-------------------------------------
+
+Using: tjdis <options> <object-file>
+options are:
+  -t         Only print tables
+  --table    Only print tables
+  -i         Only print instructions
+  --instr    Only print instructions
+  -l         Disassemble linked file
+  --link     Disassemble linked file
+  -v         Return the system version
+  --version  Return the system version
+  -help      Display this list of options
+  --help     Display this list of options
+
+
+4. linker (teyjus/source/linker/tjlink) DEBUG ONLY
+--------------------------------------------------
+
+Using: tjlink <top-level module name>
+
+
+
+
+                        TESTING
+                        =======
+
+All tests reside in teyjus/source/test.
+
+1. testing compiler:
+
+   a. all test cases:
+      use "omake compiler-test" under teyjus/source/test
+
+   b. individual test cases:
+      use "omake compiler-test" under the directory containing a test case
+
+
+2. testing linker:
+   
+   a. all test cases:
+      use "omake test" under teyjus/source/test
+
+   b. individual test cases:
+      use "omake test" under the directory containing a test cases
+
+
+3. system test
+   
+   use "omake compiler-test" under teyjus/source/test/system_test to compile;
+   use "perl harness" under teyjus/source/test/system_test to run the test 
+   suites.
+   
+   
+
+
+
+
+
