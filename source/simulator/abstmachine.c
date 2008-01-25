@@ -13,15 +13,13 @@
 #include   "dataformats.h"
 #include   "abstmachine.h"
 #include   "instraccess.h"
-#include   "../system/error.h"   //to be changed
-#include   "../system/memory.h"  //to be changed
+#include   "../system/error.h"   
+#include   "../system/memory.h"  
 
-//to be removed:
-#include   <stdio.h>
 /****************************************************************************/
 /*                ABSTRACT MACHINE REGISTERS (AND FLAGS)                    */
 /****************************************************************************/
-AM_DataType  AM_regs[AM_MAX_REG_IND];//argument regs/temp variable
+AM_DataType  AM_regs[AM_NUM_OF_REG];//argument regs/temp variable
 //data register access: return the address of the ith register
 AM_DataTypePtr AM_reg(int i)        {  return (AM_regs + i);                 }
 
@@ -111,7 +109,7 @@ Boolean    AM_isFailInstr(CSpacePtr cptr)    { return (cptr == AM_failCode); }
 //is the given addr referring to a register?
 Boolean AM_regAddr(MemPtr p)
 {
-    return ((((MemPtr)AM_reg) <= p) && (p < (MemPtr)(AM_reg + AM_MAX_REG_IND)));
+    return ((((MemPtr)AM_reg) <= p) && (p < (MemPtr)(AM_reg + AM_NUM_OF_REG)));
 }
 //is the given addr on stack?
 Boolean AM_stackAddr(MemPtr p)    { return (p > AM_hreg);                      }
@@ -550,7 +548,7 @@ int   AM_cstTySkelInd(int n)   //type skeleton index
 
 void AM_setCstUnivCount(int n, int uc)    //set universe count
 {
-    ((MEM_CstPtr)((MemPtr)AM_cstBase)+n*MEM_CST_ENTRY_SIZE)->univCount = uc;
+    ((MEM_CstPtr)(((MemPtr)AM_cstBase)+n*MEM_CST_ENTRY_SIZE))->univCount = uc;
 }
 
 /****************************************************************************
