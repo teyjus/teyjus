@@ -55,10 +55,10 @@ typedef enum {OFF = 0, ON = 1}     AM_FlagTypes;     //FLAG type
 typedef Byte                       Flag;
 
 
-/*There are 256 argument registers numbered 1 through 256  
-  (agree with instruction format)*/
-#define AM_MAX_REG_IND 256      
-extern AM_DataType  AM_regs[AM_MAX_REG_IND];//argument regs/temp variables
+/*There are 255 argument registers numbered 1 through 255; Reg_0 is never
+  used. (agree with instruction format)*/
+#define AM_NUM_OF_REG 256      
+extern AM_DataType  AM_regs[AM_NUM_OF_REG];//argument regs/temp variables
 
 //data register access: return the address of the ith register
 AM_DataTypePtr      AM_reg(int i);               
