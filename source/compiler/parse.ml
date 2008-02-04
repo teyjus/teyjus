@@ -725,8 +725,7 @@ and reduceOperation parsingtoplevel amodule stack =
 
     | InfixWithArgState
     | InfixrWithArgState -> reduceInfix ()
-    | _ -> (Errormsg.impossible Errormsg.none 
-                                "reduceOperation: invalid stack state")
+    | _ -> errorStack
   in
   
   (********************************************************************
@@ -1020,9 +1019,7 @@ and stackOperation parsingtoplevel o amodule stack =
     | InfixrWithArgState -> preOrInfrWithArg stack
     | PostfixState -> post stack
     | TermState -> termState stack
-    | _ -> Errormsg.impossible Errormsg.none 
-                               ("Parse.stackOperation: invalid stack state " 
-                                         ^ (string_of_parserstate state))
+    | _ -> errorStack
   in
   (stackOperation' stack)
 
@@ -1039,9 +1036,7 @@ and pushTerm term stack =
   | InfixState -> Stack(stackdata,InfixWithArgState,f,p)
   | InfixrState -> Stack(stackdata,InfixrWithArgState,f,p)
   | NoneState -> Stack(stackdata,TermState,f,p)
-  | _ -> Errormsg.impossible Errormsg.none 
-                             ("Parse.pushTerm: invalid stack state " 
-                                         ^ (string_of_parserstate state))
+  | _ -> errorStack
 
 and pushOperation o stack =
   let stackdata = o :: (getStackStack stack) in
@@ -1108,7 +1103,8 @@ and makeAbstraction termmol bvs pos =
   in
 
   if (List.length bvs) == 0 then
-    (Errormsg.impossible Errormsg.none "Parse.makeType: invalid number of bvs.")
+    (Errormsg.impossible Errormsg.none
+      "Parse.makeType: invalid number of bvs.")
   else
     let term = getTermTerm termmol in
     let term' = makeTerm term bvs in
@@ -1255,33 +1251,33 @@ and removeOverloads term =
 **********************************************************************)
 and removeNestedAbstractions term =
   let rec remove term =
-	  match term with
-	      Absyn.AbstractionTerm(abst, b, p) ->
-		      let (tsyms, body) = removeAbstraction abst [] in
-		      Absyn.AbstractionTerm(Absyn.UNestedAbstraction(
-            tsyms,List.length tsyms, body), b, p)
-	    | Absyn.ApplicationTerm(Absyn.CurriedApplication(t1, t2), b, p) ->
-		      let t1' = removeNestedAbstractions t1 in
-		      let t2' = removeNestedAbstractions t2 in
-		      Absyn.ApplicationTerm(Absyn.CurriedApplication(t1', t2'), b, p) 
-	    | Absyn.ApplicationTerm(
-                       Absyn.FirstOrderApplication(head, args, l), b, p) ->
-		      let head' = removeNestedAbstractions head in
-		      let args' = List.map removeNestedAbstractions args in
-		      Absyn.ApplicationTerm(
-                          Absyn.FirstOrderApplication(head', args', l), b, p)
-	    | _ -> term
+    match term with
+      Absyn.AbstractionTerm(abst, b, p) ->
+        let (tsyms, body) = removeAbstraction abst [] in
+        Absyn.AbstractionTerm(Absyn.UNestedAbstraction(
+          tsyms,List.length tsyms, body), b, p)
+    | Absyn.ApplicationTerm(Absyn.CurriedApplication(t1, t2), b, p) ->
+        let t1' = removeNestedAbstractions t1 in
+        let t2' = removeNestedAbstractions t2 in
+        Absyn.ApplicationTerm(Absyn.CurriedApplication(t1', t2'), b, p) 
+    | Absyn.ApplicationTerm(
+        Absyn.FirstOrderApplication(head, args, l), b, p) ->
+        let head' = removeNestedAbstractions head in
+        let args' = List.map removeNestedAbstractions args in
+        Absyn.ApplicationTerm(
+          Absyn.FirstOrderApplication(head', args', l), b, p)
+    | _ -> term
 
   and removeAbstraction abst tsyms =
-	  match abst with 
-        Absyn.NestedAbstraction(tsym, body) ->
-	        (match body with
-	            Absyn.AbstractionTerm(abst', b, p) -> 
-                removeAbstraction abst' (tsym :: tsyms)
-	          | _ -> (List.rev (tsym :: tsyms), remove body))
-      | Absyn.UNestedAbstraction(_) ->
-	      (Errormsg.impossible Errormsg.none
-               "Parse.removeNestedAbstractions: unexpected unnested abstraction")
+    match abst with 
+      Absyn.NestedAbstraction(tsym, body) ->
+        (match body with
+          Absyn.AbstractionTerm(abst', b, p) -> 
+            removeAbstraction abst' (tsym :: tsyms)
+        | _ -> (List.rev (tsym :: tsyms), remove body))
+    | Absyn.UNestedAbstraction(_) ->
+        (Errormsg.impossible Errormsg.none
+          "Parse.removeNestedAbstractions: unexpected unnested abstraction")
   in
   remove term									   
 
@@ -1522,12 +1518,11 @@ and fixTerm term =
          let (h,args) = unCurryTopLevelApps appterm [] in
          let (nh,nfvars,nftyvars,ind) = fixTerm' h bvars fvars ftyvars in
          let (nargs,nfvars',nftyvars',ind') = 
-                   (fixTerms args bvars nfvars nftyvars ind) in
-            (Absyn.ApplicationTerm(Absyn.FirstOrderApplication(nh,nargs,
-                                                               List.length nargs),
+           (fixTerms args bvars nfvars nftyvars ind) in
+         (Absyn.ApplicationTerm(Absyn.FirstOrderApplication(nh,nargs,
+                                                            List.length nargs),
                                    (ind' > 0),p),nfvars',nftyvars',ind')
-      | _ -> Errormsg.impossible Errormsg.none
-                                   "Parse.fixTerm: unexpected case for term"
+      | Absyn.ErrorTerm -> (Absyn.ErrorTerm, fvars, ftyvars, 0)
 
   and fixTerms ts bvars fvars ftyvars ind = 
     match ts with
