@@ -50,27 +50,6 @@ void TR_trailETerm(DF_TermPtr addr)      //trailing a stack term
     }
 }
 
-void TR_trailMultTerm1(DF_TermPtr addr)   //trailing an application term
-{
-    if ((MemPtr)addr < AM_hbreg) {
-        AM_trailError(TR_TRAIL_MULTERM1_SIZE);
-        DF_copyApp(addr, AM_trreg);
-        ((TR_TrailItem*)(AM_trreg+DF_TM_APP_SIZE)) -> tag = TR_TAG_MULTERM1;
-        ((TR_TrailItem*)(AM_trreg+DF_TM_APP_SIZE)) -> addr = (MemPtr)addr;
-        AM_trreg += TR_TRAIL_MULTERM1_SIZE;
-    }
-}
-
-void TR_trailMultTerm2(DF_TermPtr addr)   //trailing a suspension term
-{
-    if ((MemPtr)addr < AM_hbreg) {
-        AM_trailError(TR_TRAIL_MULTERM2_SIZE);
-        DF_copySusp(addr, AM_trreg);
-        ((TR_TrailItem*)(AM_trreg+DF_TM_SUSP_SIZE)) -> tag = TR_TAG_MULTERM2;
-        ((TR_TrailItem*)(AM_trreg+DF_TM_SUSP_SIZE)) -> addr = (MemPtr)addr;
-        AM_trreg += TR_TRAIL_MULTERM2_SIZE;
-    }
-}
     
 void TR_trailType(DF_TypePtr addr)       //trailing a type (free variable)
 {
