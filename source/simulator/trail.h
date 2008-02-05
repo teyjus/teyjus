@@ -48,8 +48,6 @@ typedef struct
 void TR_trailTerm(DF_TermPtr addr);     //trailing a term of atomic size
 void TR_trailHTerm(DF_TermPtr addr);    //trailing a heap term of atomic size
 void TR_trailETerm(DF_TermPtr addr);    //trailing a stack term 
-void TR_trailMultTerm1(DF_TermPtr addr);//trailing a application term
-void TR_trailMultTerm2(DF_TermPtr addr);//trailing a suspension term
 void TR_trailType(DF_TypePtr addr);     //trailing a type (free type variable)
 void TR_trailImport(MemPtr addr);       //trailing a backchained field 
 
