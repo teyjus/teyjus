@@ -24,12 +24,12 @@ void LD_STRING_LoadStrings(MEM_GmtEnt* ent)
 
 DF_StrDataPtr LD_STRING_LoadString(MEM_GmtEnt* ent)
 {
+  DF_StrDataPtr loc;
   int str_length=LD_FILE_GET1();
   char* string=(char*)EM_malloc((str_length+1)*sizeof(char));
   LD_FILE_GetString(string,str_length);
   
-  DF_StrDataPtr loc=
-      (DF_StrDataPtr)LD_LOADER_ExtendModSpace(ent,
+  loc=(DF_StrDataPtr)LD_LOADER_ExtendModSpace(ent,
                                               MCSTR_numWords(str_length) + 
                                               DF_STRDATA_HEAD_SIZE);
   

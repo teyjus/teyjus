@@ -51,7 +51,7 @@ static int FRONT_trailSize;
 static int FRONT_pdlSize;
 
 // heap size : stack size : trail size : pdl size = 7 : 4 : 4 : 1 
-static FRONT_setMemorySizes(int memSize)
+static void FRONT_setMemorySizes(int memSize)
 {
     FRONT_heapSize  = memSize / 16 * 7;
     FRONT_stackSize = memSize / 16 * 4;
@@ -134,8 +134,8 @@ int FRONT_link(char* modName)
         WriteAll(modName);
     } EM_CATCH {
         if (EM_CurrentExnType == LK_LinkError) {
-            printf("linking failed\n");
-            return EM_ABORT;
+          printf("Error : linking failed\n");
+          return EM_ABORT;
         }
         return EM_CurrentExnType;
     }
@@ -251,7 +251,10 @@ int FRONT_moduleInstall(int ind)
       MEM_currentModule = &(MEM_modTable[ind]);
       //register symbol table bases
       FRONT_initSymbolTableBases();
-      FRONT_installModule(ind);
+
+      //TODO: Is this a bug?
+      //FRONT_installModule(ind);
+      FRONT_installModule();
     } EM_CATCH {
       return EM_CurrentExnType;
     }

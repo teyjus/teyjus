@@ -319,12 +319,14 @@ int STREAM_file_close(STREAML_Stream *inStream)
 {
     fclose(inStream->mUnion.mFile.mFile);
     STREAM_listRemove(inStream);
+    return 0;
 }
 
 int STREAM_file_remove(STREAML_Stream *inStream)
 {
     remove(inStream->mUnion.mFile.mName);
     STREAM_listRemove(inStream);
+    return 0;
 }
 
 int STREAM_string_close(STREAML_Stream *inStream)
@@ -332,6 +334,7 @@ int STREAM_string_close(STREAML_Stream *inStream)
     if (inStream->mUnion.mString.mMalloc && inStream->mUnion.mString.mData)
         free(inStream->mUnion.mString.mData);
     STREAM_listRemove(inStream);
+    return 0;
 }
 
 FILE *STREAM_file_getFile(STREAML_Stream *inStream)

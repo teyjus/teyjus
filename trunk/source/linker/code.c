@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <sys/types.h>
-#include <unistd.h>
+#include "../include/standardlib.h"
 #include "../tables/instructions.h"
 #include "code.h"
 #include "module.h"
@@ -44,10 +43,13 @@ void InitOffsets()
 {
   int j;
   int argid;
+  INSTR_InstrCategory instrCat;
+  INSTR_OperandType* opType;
+
   j=1;
   argid=0;
-  INSTR_InstrCategory instrCat = INSTR_instrType(call);
-  INSTR_OperandType* opType = INSTR_operandTypes(instrCat);
+  instrCat = INSTR_instrType(call);
+  opType = INSTR_operandTypes(instrCat);
   do{
     switch(opType[argid])
     {
@@ -185,20 +187,25 @@ void LoadCode(int fd, struct Module_st* CMData)
   Word i,j;
   Word offset=CMData->CodeOffset;
   Word size=CMData->CodeSize;
+  Byte* code;
+  Byte opcode;
+  ConstInd tmpIndex;
+  INSTR_InstrCategory instrCat;
+  INSTR_OperandType* opType;
+  int argid=0;
+
   if(size<=0){
     debug("No code for current module.\n");
     return;
   }
   debug("Loading 0x%lx bytes of code at %lx to offset 0x%lx.\n",size,lseek(fd,0,SEEK_CUR),offset);
-  Byte* code=(Byte*)LK_VECTOR_GetPtr(&Code,offset);
+  code=(Byte*)LK_VECTOR_GetPtr(&Code,offset);
   debug("After get\n");
-  ConstInd tmpIndex;
   
-  Byte opcode=-1;
-  INSTR_InstrCategory instrCat=INSTR_CAT_X;
-  INSTR_OperandType* opType=NULL;
+  opcode=-1;
+  instrCat=INSTR_CAT_X;
+  opType=NULL;
   
-  int argid=0;
   for(i=0;i<size;)
   {
     j=i;
@@ -355,13 +362,14 @@ void WriteCode(int fd)
 {
   Word i,j;
   Word size=LK_VECTOR_Size(&Code);
-  char* code=LK_VECTOR_GetPtr(&Code,0);
-  
+  char* code=(char *)LK_VECTOR_GetPtr(&Code,0);
   Byte opcode=-1;
   INSTR_InstrCategory instrCat=INSTR_CAT_X;
   INSTR_OperandType* opType=NULL;
-  debug("Writing 0x%lx bytes of instructions at %lx.\n",size,lseek(fd,0,SEEK_CUR));
   int argid=0;
+
+  debug("Writing 0x%lx bytes of instructions at %lx.\n",size,lseek(fd,0,SEEK_CUR));
+  
   for(i=0;i<size;)
   {
     j=i;
@@ -467,7 +475,7 @@ void WriteCode(int fd)
 
 void MakeCallName(CodeInd from, int arity, ConstInd to)
 {
-  Byte* tmp=LK_VECTOR_GetPtr(&Code,from);
+  Byte* tmp=(Byte *)LK_VECTOR_GetPtr(&Code,from);
   if(-1==arity)
   {
     tmp[0]=execute_name;
@@ -483,7 +491,7 @@ void MakeCallName(CodeInd from, int arity, ConstInd to)
   
 void MakeCall(CodeInd from, int arity, CodeInd to)
 {
-  Byte* tmp=LK_VECTOR_GetPtr(&Code,from);
+  Byte* tmp=(Byte *)LK_VECTOR_GetPtr(&Code,from);
   if(-1==arity)
   {
     tmp[0]=execute;
@@ -644,11 +652,14 @@ void DeleteSwitchOnConstant(Byte* code,CodeInd inst_addr)
 
 CodeInd MergeSubSequence(CodeInd younger, CodeInd older, Byte n)
 {
-  debug("Merging subsequences %lx & %lx\n",younger,older);
   CodeInd c,d;
-  Byte* code=(Byte*)LK_VECTOR_GetPtr(&Code,0);
+  Byte* code;
   int trysize=INSTR_instrSize(try);
   int trustsize=INSTR_instrSize(trust);
+
+  debug("Merging subsequences %lx & %lx\n",younger,older);
+
+  code=(Byte*)LK_VECTOR_GetPtr(&Code,0);
   
   //Check plurality of the younger definition
   if(code[younger]==try||code[younger]==try_else)
@@ -712,7 +723,7 @@ CodeInd MergeSubSequence(CodeInd younger, CodeInd older, Byte n)
       
       //Make a new try_else block
       c=LK_VECTOR_Grow(&Code,trustsize);
-      code=LK_VECTOR_GetPtr(&Code,0);
+      code=(Byte *)LK_VECTOR_GetPtr(&Code,0);
       code[c]=try_else;
       code[c+1]=n;
       *(CodeInd*)(code+c+INSTR_LLen)=younger;
@@ -723,7 +734,7 @@ CodeInd MergeSubSequence(CodeInd younger, CodeInd older, Byte n)
     {
       //Both are singular, create a try->trust block
       c=LK_VECTOR_Grow(&Code,trysize+trustsize);
-      code=LK_VECTOR_GetPtr(&Code,0);
+      code=(Byte *)LK_VECTOR_GetPtr(&Code,0);
       code[c]=try;
       code[c+1]=n;
       SetTryL1(code,c,younger);
@@ -737,11 +748,15 @@ CodeInd MergeSubSequence(CodeInd younger, CodeInd older, Byte n)
 
 int TidySwitchOnReg(CodeInd* pyounger)
 {
-  debug("Tidying switch_on_reg at %lx\n",*pyounger);
-  Byte* code=LK_VECTOR_GetPtr(&Code,0);
+  Byte* code;
   CodeInd c=-1;
   int n=-1;
-  CodeInd younger=*pyounger;
+  CodeInd younger;
+  
+  debug("Tidying switch_on_reg at %lx\n",*pyounger);
+  code=(Byte *)LK_VECTOR_GetPtr(&Code,0);
+  
+  younger=*pyounger;
   
   if(code[younger]!=switch_on_reg)
     return -1;
@@ -767,20 +782,23 @@ int TidySwitchOnReg(CodeInd* pyounger)
 //Append definition at older to definition at younger.
 CodeInd MergeDefs(CodeInd older, CodeInd younger)
 {
+  Byte* code;
+  int n;
+
   debug("Merging defs at %lx and %lx\n",older,younger);
   ASSERT(older<LK_VECTOR_Size(&Code),"Invalid argument to MergeDefs")
   ASSERT(younger<LK_VECTOR_Size(&Code),"Invalid argument to MergeDefs")
-  Byte* code=LK_VECTOR_GetPtr(&Code,0);
+  code=(Byte *)LK_VECTOR_GetPtr(&Code,0);
   ASSERT(code[younger]==switch_on_reg,"Expected \"switch_on_reg\" at beginning of younger definition.")
   
-  int n = TidySwitchOnReg(&younger);
+  n = TidySwitchOnReg(&younger);
   
   if(code[older]==switch_on_reg)
   {
     CodeInd c=GetSwitchOnRegL2(code,older);
     younger=MergeSequence(younger,c,n);
     
-    code=LK_VECTOR_GetPtr(&Code,0);
+    code=(Byte *)LK_VECTOR_GetPtr(&Code,0);
     SetSwitchOnRegL2(code,older,younger);
     
     c=GetSwitchOnRegL1(code,older);
@@ -797,12 +815,16 @@ CodeInd MergeDefs(CodeInd older, CodeInd younger)
 //Append definition at older to definition at younger.
 CodeInd MergeSequence(CodeInd younger, CodeInd older, Byte n)
 {
+  CodeInd c;
+  Byte* code;
+  int tmesize;
+
   debug("Merging sequences %lx & %lx\n",younger,older);
+  
   ASSERT(younger<LK_VECTOR_Size(&Code),"Invalid older in MergeSequence")
   ASSERT(older<LK_VECTOR_Size(&Code),"Invalid younger in MergeSequence")
-  CodeInd c;
-  Byte* code=LK_VECTOR_GetPtr(&Code,0);
-  int tmesize=INSTR_instrSize(try_me_else);
+  code=(Byte *)LK_VECTOR_GetPtr(&Code,0);
+  tmesize=INSTR_instrSize(try_me_else);
   
   //Check if the younger definition is singular or plural.
   if(code[younger]==try_me_else)
@@ -918,10 +940,13 @@ CodeInd MergeSequence(CodeInd younger, CodeInd older, Byte n)
 
 void MergeTerm(CodeInd younger, CodeInd older,Byte n)
 {
-  debug("Merging terms %lx & %lx\n",younger,older);
-  Byte* code=(Byte*)LK_VECTOR_GetPtr(&Code,0);
-  
+  Byte tabsize;
+  Byte* code;
   CodeInd c,d;//Holder variables for the younger and older labels, respectively.
+
+  debug("Merging terms %lx & %lx\n",younger,older);
+  code=(Byte*)LK_VECTOR_GetPtr(&Code,0);
+  
   //Combine variable subsequences.
   
   c=GetSwitchOnTermLV(code,younger);
@@ -932,7 +957,6 @@ void MergeTerm(CodeInd younger, CodeInd older,Byte n)
   SetSwitchOnTermLV(code,younger,d);
   
   //Combine constant subsequences.
-  Byte tabsize;
   c=GetSwitchOnTermLC(code,younger);
   d=GetSwitchOnTermLC(code,older);
   

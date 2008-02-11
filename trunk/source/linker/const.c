@@ -1,6 +1,5 @@
 #include <stdio.h>
-#include <unistd.h>
-#include <sys/types.h>
+#include "../include/standardlib.h"
 #include "../system/error.h"
 #include "../tables/pervasives.h"
 #include "module.h"
@@ -27,16 +26,19 @@ typedef struct{
   TySkelInd ty_skel_index;
 }Const_t;
 
-int CheckGConstEqv(ConstInd i,Const_t new);
+int CheckGConstEqv(ConstInd i,Const_t newC);
 
 ConstInd LoadGConst(int fd, struct Module_st* CMData)
 {
   Const_t tmp;
+  char* name;
+  ConstInd index;
+
   tmp.fixity=LK_FILE_GET1(fd);
   tmp.precedence=LK_FILE_GET1(fd);
   tmp.ty_env_size=LK_FILE_GET1(fd);
-  char* name=LK_FILE_GetString(fd);
-  ConstInd index=LK_RENAME_RenameConst(name);
+  name=LK_FILE_GetString(fd);
+  index=LK_RENAME_RenameConst(name);
   free(name);
   tmp.ty_skel_index=GetTySkelInd(fd,CMData);
   //if(!CheckGConstEqv(index,tmp))
@@ -91,9 +93,9 @@ TwoBytes PackConstInd(ConstInd ind){
 }
 
 ConstInd UnPackConstInd(TwoBytes ind){
+  ConstInd tmp;
   debug("[%d %d %d]\n",(int)PERV_CONST_NUM,(int)GConstTabSize,TotalLConsts);
   debug("UnPacking const %d to ",ind);
-  ConstInd tmp;
   if(ind<PERV_CONST_NUM){
     tmp.gl_flag=PERVASIVE;
     tmp.index=ind;
@@ -250,7 +252,7 @@ void WriteConsts(int fd)
 /////////////////////////////////////////////////////////////
 //Utility Functions
 ////////////////////////////////////////////////////////////
-int CheckGConstEqv(ConstInd i,Const_t new)
+int CheckGConstEqv(ConstInd i,Const_t newC)
 {
   int b=1;
   Const_t* tmp;
@@ -259,9 +261,9 @@ int CheckGConstEqv(ConstInd i,Const_t new)
   else
     tmp=&GConstTab[i.index];
   
-  b=b&&tmp->fixity==new.fixity;
-  b=b&&tmp->precedence==new.precedence;
-  b=b&&tmp->ty_env_size==new.ty_env_size;
+  b=b&&tmp->fixity==newC.fixity;
+  b=b&&tmp->precedence==newC.precedence;
+  b=b&&tmp->ty_env_size==newC.ty_env_size;
   //b=b&&0==TySkelCmp(tmp->ty_skel_index,new.ty_skel_index);
   return b;
 }

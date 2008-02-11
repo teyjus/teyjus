@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <sys/types.h>
-#include <unistd.h>
+#include "../include/standardlib.h"
 #include "vector.h"
 #include "datatypes.h"
 #include "module.h"
@@ -9,6 +9,7 @@
 #include "code.h"
 #include "VectorRW.h"
 #include "message.h"
+#include "importtab.h"
 //////////////////////////////////////////////////////
 //HashTab Load and Write Code
 //////////////////////////////////////////////////////
@@ -36,8 +37,10 @@ void LoadHashTabEnt(int fd, struct Module_st* CMData,void* entry)
 
 void LoadHashTab(int fd, struct Module_st* CMData,void* entry)
 {
-  debug("Loading HashTab at %lx\n",lseek(fd,0,SEEK_CUR));
   Adjust_t ignore_me;
+  
+  debug("Loading HashTab at %lx\n",lseek(fd,0,SEEK_CUR));
+  
   LK_VECTOR_Init((struct Vector*)entry,0,sizeof(HashTabEnt));
   LK_VECTOR_Read(fd,(struct Vector*)entry,CMData,&ignore_me,LoadHashTabEnt);
 }
@@ -71,7 +74,7 @@ void WriteHashTabs(int fd)
 
 int HashTabSearch(HashTab_t* HashTab, ConstInd x)
 {
-  HashTabEnt* tmp=LK_VECTOR_GetPtr((struct Vector*)HashTab,0);
+  HashTabEnt* tmp=(HashTabEnt *)LK_VECTOR_GetPtr((struct Vector*)HashTab,0);
   int i;
   int size=LK_VECTOR_Size((struct Vector*)HashTab);
   for(i=0;i<size;i++)
@@ -84,14 +87,21 @@ int HashTabSearch(HashTab_t* HashTab, ConstInd x)
 
 Byte MergeHashTabs(HashTabInd a, HashTabInd b,Byte n)
 {
-  debug("Merging HashTabs %d and %d.\n",a,b);
-  HashTab_t* pa=(HashTab_t*)LK_VECTOR_GetPtr(&HashTabs,a);
-  HashTab_t* pb=(HashTab_t*)LK_VECTOR_GetPtr(&HashTabs,b);
-  
-  int size=LK_VECTOR_Size((struct Vector*)pb);
+  HashTab_t* pa;
+  HashTab_t* pb;
+  HashTabEnt* tmpa;
+  HashTabEnt* tmpb;
+  int size;
   int i,j;
-  HashTabEnt* tmpa=(HashTabEnt*)LK_VECTOR_GetPtr((struct Vector*)pa,0);
-  HashTabEnt* tmpb=(HashTabEnt*)LK_VECTOR_GetPtr((struct Vector*)pb,0);
+  
+
+  debug("Merging HashTabs %d and %d.\n",a,b);
+  pa=(HashTab_t*)LK_VECTOR_GetPtr(&HashTabs,a);
+  pb=(HashTab_t*)LK_VECTOR_GetPtr(&HashTabs,b);
+  
+  size=LK_VECTOR_Size((struct Vector*)pb);
+  tmpa=(HashTabEnt*)LK_VECTOR_GetPtr((struct Vector*)pa,0);
+  tmpb=(HashTabEnt*)LK_VECTOR_GetPtr((struct Vector*)pb,0);
   for(i=0;i<size;i++)
   {
     j=HashTabSearch(pa,tmpb[i].index);
@@ -140,15 +150,14 @@ void MergeFindCodeTabs(HashTab_t* pa, HashTab_t* pb)
 
 void HASH_AddEntry(HashTab_t* HashTab, HashTabEnt* entry)
 {
-  HashTabEnt* new=LK_VECTOR_GetPtr((struct Vector*)HashTab,LK_VECTOR_Grow((struct Vector*)HashTab,1));
-  new->index=entry->index;
-  new->addr=entry->addr;
+  HashTabEnt* newT=(HashTabEnt *)LK_VECTOR_GetPtr((struct Vector*)HashTab,LK_VECTOR_Grow((struct Vector*)HashTab,1));
+  newT->index=entry->index;
+  newT->addr=entry->addr;
 }
 
 CodeInd HashCodeAddr(HashTab_t* HashTab, ConstInd x)
 {
-  
-  HashTabEnt* tmp=LK_VECTOR_GetPtr((struct Vector*)HashTab,0);
+  HashTabEnt* tmp=(HashTabEnt *)LK_VECTOR_GetPtr((struct Vector*)HashTab,0);
   int i;
   int size=LK_VECTOR_Size((struct Vector*)HashTab);
   for(i=0;i<size;i++)

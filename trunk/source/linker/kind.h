@@ -26,7 +26,7 @@ extern void InitTLKinds();
 extern void LoadLKinds();
 
 //Writes out the contents of the Global and Local Kind Vectors.
-extern void WriteKinds();
+extern void WriteKinds(int fd);
 extern void WriteGKinds(int fd);
 extern void WriteLKinds(int fd);
 

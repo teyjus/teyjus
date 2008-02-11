@@ -209,17 +209,53 @@ int main(argc, argv)
     int argc;
     char * argv[];
 {
-    if (sizeof(void*) == 8) yyin = UTIL_fopenR("instrformats_64.in");
-    else yyin = UTIL_fopenR("instrformats_32.in");
+    char * root = NULL;
+    int ret = 0;
+    
+    if(argc <= 1)
+    {
+      if (sizeof(void*) == 8)
+      {
+        printf("No input file specified; using 'instrformats_64.in'.\n");
+        yyin = UTIL_fopenR("instrformats_64.in");
+      }
+      else
+      {
+        printf("No input file specified; using 'instrformats_32.in'.\n");
+        yyin = UTIL_fopenR("instrformats_32.in");
+      }
+    }
+    else
+    {
+      yyin = UTIL_fopenR(argv[1]);
+    }
+    
+    if(argc > 2)
+    {
+      root = argv[2];
+    }
+    else
+    {
+      printf("Teyjus source root directory not specified; using '../../'.\n");
+      root = "../../";
+    }
+    
+    printf("Generating instruction files...\n");
 
-    yyparse();
+    ret = yyparse();
     UTIL_fclose(yyin);
-    cspitCInstructionsH();
-    cspitCInstructionsC();
-    cspitSimDispatch();
-    ocSpitInstructionMLI();
-    ocSpitInstructionML();
-    printf("Instruction files genereated\n");
+    
+    if(ret != 0)
+    {
+      printf("Generation failed.\n");
+      return -1;
+    }
+    cspitCInstructionsH(root);
+    cspitCInstructionsC(root);
+    cspitSimDispatch(root);
+    ocSpitInstructionMLI(root);
+    ocSpitInstructionML(root);
+    printf("Done.\n");
 
     return 0;
 }

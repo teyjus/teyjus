@@ -22,7 +22,7 @@ void LD_IMPORTTAB_LoadImportTabs(MEM_GmtEnt* ent)
   EM_TRY{
     ent->addtable=(CSpacePtr)LD_IMPORTTAB_LoadImportTab(ent);
   }EM_CATCH{
-    LD_bad("While loading add code table %d\n",i);
+    LD_error("While loading add code table %d\n",i);
     EM_RETHROW();
   }
   for(i=1;i<count;i++)
@@ -31,7 +31,7 @@ void LD_IMPORTTAB_LoadImportTabs(MEM_GmtEnt* ent)
     EM_TRY{
       LD_IMPORTTAB_ImportTabs[i]=LD_IMPORTTAB_LoadImportTab(ent);
     }EM_CATCH{
-      LD_bad("While loading import table %d\n",i);
+      LD_error("While loading import table %d\n",i);
       EM_RETHROW();
     }
   }
@@ -41,17 +41,25 @@ void LD_IMPORTTAB_LoadImportTabs(MEM_GmtEnt* ent)
 
 WordPtr LD_IMPORTTAB_LoadImportTab(MEM_GmtEnt* ent)
 {
+  WordPtr tab;
+  int psts;
+  int cst;
+  int i;
+  int numSegs;
+  int nctSize;
+  int lctSize;
+  Byte fcf;
+  MemPtr lcTab;
+
   LD_debug("Loading import table\n");
   ///\todo Check on the space requirements of the import table.
 
-  WordPtr tab=LD_LOADER_ExtendModSpace(ent,MEM_IMP_FIX_SIZE);
-  int cst;
-  int i;
-  int numSegs = LD_FILE_GET1();//Get number of segments.
+  tab=LD_LOADER_ExtendModSpace(ent,MEM_IMP_FIX_SIZE);
+  numSegs = LD_FILE_GET1();//Get number of segments.
   MEM_impPutNCSEG(tab,numSegs);
   LD_debug(" Import table has %d segments\n",numSegs);
   //Load Next Clause Table
-  int nctSize=(int)LD_FILE_GET2();
+  nctSize=(int)LD_FILE_GET2();
   LD_debug(" Next clause table has %d entries\n",nctSize);
   
   MEM_impPutLTS(tab,nctSize);
@@ -65,11 +73,11 @@ WordPtr LD_IMPORTTAB_LoadImportTab(MEM_GmtEnt* ent)
   }
   
   //Local Constant table
-  int lctSize=(int)LD_FILE_GET2();
+  lctSize=(int)LD_FILE_GET2();
   LD_debug(" Local constant table has %d entries\n",lctSize);
   
   MEM_impPutNLC(tab, lctSize);
-  MemPtr lcTab=MEM_impLCT(tab,nctSize);
+  lcTab=MEM_impLCT(tab,nctSize);
   ///\todo Reorder Link table and local constant table
   // added by XQ
   LD_LOADER_ExtendModSpace(ent, lctSize);
@@ -82,8 +90,7 @@ WordPtr LD_IMPORTTAB_LoadImportTab(MEM_GmtEnt* ent)
   }
   
   //Load FindCodeFunc
-  Byte fcf=LD_FILE_GET1();
-  int psts;
+  fcf=LD_FILE_GET1();
   if(fcf==SEARCHTAB_FCF_SEQNSEARCH)
   {
     LD_debug(" Loading sequential search table\n");
@@ -101,7 +108,7 @@ WordPtr LD_IMPORTTAB_LoadImportTab(MEM_GmtEnt* ent)
     MEM_impPutPSTS(tab,psts);
     ///\todo do something with returned address.
   } else {
-    LD_bad("Invalid find code function %d\n",fcf);
+    LD_error("Invalid find code function %d\n",fcf);
     EM_THROW(LD_LoadError);
   }
   LD_debug("Done Loading Import table\n");

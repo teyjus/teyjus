@@ -1,13 +1,8 @@
-#include <sys/types.h>
 #include <sys/stat.h>
 #include <stdlib.h>
-#include <fcntl.h>
-#include <unistd.h>
+#include "../include/standardlib.h"
 #include <stdio.h>
 #include <string.h>
-#include <endian.h>
-#include <byteswap.h>
-#include <bits/wordsize.h>
 #include "file.h"
 #include "../system/error.h"
 #include "message.h"
@@ -20,10 +15,11 @@ char* LK_FILE_ByteCodeExt=".lpo";
 
 int LK_FILE_OpenInput(char* modname, char* extension)
 {
-  char* buf=EM_malloc(strlen(modname)+strlen(extension)+1);
+  int fd;
+  char* buf=(char *)EM_malloc(strlen(modname)+strlen(extension)+1);
   sprintf(buf,"%s%s",modname,extension);
   
-  int fd=open(buf,O_RDONLY,0000);
+  fd=open(buf,O_RDONLY,0000);
   if(fd==-1)
   {
     bad("Couldn't open file %s for reading.\n",buf); 
@@ -34,10 +30,11 @@ int LK_FILE_OpenInput(char* modname, char* extension)
 
 int LK_FILE_OpenOutput(char* modname, char* extension)
 {
-  char* buf=EM_malloc(strlen(modname)+strlen(extension)+1);
+  int fd;
+  char* buf=(char *)EM_malloc(strlen(modname)+strlen(extension)+1);
   sprintf(buf,"%s%s",modname,extension);
   
-  int fd=open(buf,O_WRONLY|O_CREAT|O_TRUNC,0666);
+  fd=open(buf,O_WRONLY|O_CREAT|O_TRUNC,0666);
   if(fd==-1)
   {
     bad("Couldn't open file %s for writing.\n",buf); 
@@ -109,7 +106,7 @@ char* LK_FILE_GetString(int fd)
   char* tmp;
   Byte size=LK_FILE_GET1(fd);
   //printf("Name:%d ",size);//DEBUG
-  tmp=EM_malloc(size+1);
+  tmp=(char *)EM_malloc(size+1);
   read(fd,tmp,size);
   tmp[size]='\0';
   //printf("\"%s\"\n",tmp);//DEBUG

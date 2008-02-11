@@ -5,12 +5,12 @@
 
 extern int LD_verbosity;
 
-#define LD_debug(args...) if(LD_verbosity>2) fprintf(stderr,args)
+#define LD_debug(...) {if(LD_verbosity>2){fprintf(stderr,__VA_ARGS__);}}
 
-#define LD_detail(args...) if(LD_verbosity>1) fprintf(stderr,args)
+#define LD_detail(...) {if(LD_verbosity>1){fprintf(stderr,__VA_ARGS__);}}
 
-#define LD_mutter(args...) if(LD_verbosity>0) fprintf(stderr,args)
+#define LD_mutter(...) {if(LD_verbosity>0){fprintf(stderr,__VA_ARGS__);}}
 
-#define LD_bad(args...) fprintf(stderr,args)
+#define LD_error(...) {fprintf(stderr,__VA_ARGS__);}
 
 #endif

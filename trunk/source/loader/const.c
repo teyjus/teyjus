@@ -20,12 +20,16 @@ TwoBytes LD_CONST_numLConsts;
 int LD_CONST_LoadCst(MEM_GmtEnt* ent)
 {
   int i;
-  
+  MEM_CstEnt* cst;
+  TwoBytes num_glob;
+  TwoBytes num_loc;
+  TwoBytes num_hid;
+
   TwoBytes cstsize=LD_FILE_GET2();
   LD_detail("Loading %d consts\n",cstsize);
   
   /* MEM_CstEnt* cst=(MEM_CstEnt*)LD_LOADER_ExtendModSpace(ent,(cstsize+PERV_CONST_NUM)*sizeof(MEM_CstEnt)); -- XQ*/
-  MEM_CstEnt* cst=(MEM_CstEnt*)LD_LOADER_ExtendModSpace(ent,
+  cst=(MEM_CstEnt*)LD_LOADER_ExtendModSpace(ent,
                                                         (cstsize+PERV_CONST_NUM) * 
                                                         MEM_CST_ENTRY_SIZE);
   ent->cstBase=(MEM_CstPtr)cst;
@@ -34,7 +38,7 @@ int LD_CONST_LoadCst(MEM_GmtEnt* ent)
   cst+=PERV_CONST_NUM;
   
   //Get the number of global constants
-  TwoBytes num_glob=LD_CONST_numGConsts=LD_FILE_GET2();
+  num_glob=LD_CONST_numGConsts=LD_FILE_GET2();
   if(num_glob>cstsize)
       return -1;
   
@@ -52,7 +56,7 @@ int LD_CONST_LoadCst(MEM_GmtEnt* ent)
   cst+=num_glob;
   
   //Get the number of local constants
-  TwoBytes num_loc=LD_CONST_numLConsts=LD_FILE_GET2();
+  num_loc=LD_CONST_numLConsts=LD_FILE_GET2();
   if(num_glob+num_loc>cstsize)
       return -1;
   
@@ -70,7 +74,7 @@ int LD_CONST_LoadCst(MEM_GmtEnt* ent)
   cst+=num_loc;
   
   //Get the number of hidden constants
-  TwoBytes num_hid=LD_FILE_GET2();
+  num_hid=LD_FILE_GET2();
   if(num_glob+num_loc+num_hid!=cstsize)
       return -1;
   
@@ -104,7 +108,7 @@ TwoBytes LD_CONST_GetConstInd()
       return ind;
       break;
     default:
-      LD_bad("Invalid Const type %d\n",gl);
+      LD_error("Invalid Const type %d\n",gl);
       EM_THROW(LD_LoadError);
       break;
   }

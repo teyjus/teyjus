@@ -25,8 +25,8 @@ let _ =
     error "No input file specified." ;
   
   if (!tablesOnly && !instrOnly) then
-    error ("tables only (-t/--table) and instrunctions only " ^
-             "(-i/--instr) can not be simultaneously selected.") ;
+    error ("tables only (-t/--table) and instructions only " ^
+             "(-i/--instr) can not be selected simultaneously.") ;
   
   Bytecode.setWordSize () ;
   Pervasiveutils.pervasiveKindIndexMappingInit () ;

@@ -401,10 +401,14 @@ static void  cgenFixedC()
 }
 
 /* dump peravsives.h   */
-void spitCPervasivesH()
+void spitCPervasivesH(char * root)
 {
     FILE* outFile;
-    outFile = UTIL_fopenW("../../tables/pervasives.h");
+    char * filename = malloc(strlen(root) + 32);
+    strcpy(filename, root);
+    strcat(filename, "tables/pervasives.h");
+
+    outFile = UTIL_fopenW(filename);
     cgenFixedH();
     fprintf(outFile, "%s\n", pervBegH); free(pervBegH);
     fprintf(outFile, "%s\n", kindH);    free(kindH);
@@ -412,13 +416,17 @@ void spitCPervasivesH()
     fprintf(outFile, "%s\n", constH);   free(constH);
     fprintf(outFile, "%s\n", pervEndH); free(pervEndH);
     UTIL_fclose(outFile);
+    free(filename);
 }
 
 /* dump pervasives.c */
-void spitCPervasivesC()
+void spitCPervasivesC(char * root)
 {
     FILE* outFile;
-    outFile = UTIL_fopenW("../../tables/pervasives.c");
+    char * filename = malloc(strlen(root) + 32);
+    strcpy(filename, root);
+    strcat(filename, "tables/pervasives.c");
+    outFile = UTIL_fopenW(filename);
     cgenFixedC();
     fprintf(outFile, "%s\n", pervBegC); free(pervBegC);
     fprintf(outFile, "%s\n", kindC);    free(kindC);
@@ -426,4 +434,5 @@ void spitCPervasivesC()
     fprintf(outFile, "%s\n", constC);   free(constC);
     fprintf(outFile, "%s\n", pervEndC); free(pervEndC);
     UTIL_fclose(outFile);
+    free(filename);
 }

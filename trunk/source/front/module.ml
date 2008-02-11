@@ -63,7 +63,7 @@ let enterModuleTable amod index =
   Array.set moduleTables index (makeModuleTableEntry amod)
 
 (* look for a module of given name in the current module table and     *)
-(* return its abstract syntax if founded; otherwise Absyn.ErrorModule  *)
+(* return its abstract syntax if found; otherwise Absyn.ErrorModule    *)
 (* is returned.                                                        *)
 let findModule modName =
   let rec findModuleAux ind =

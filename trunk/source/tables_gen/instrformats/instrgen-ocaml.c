@@ -782,27 +782,40 @@ void ocgenInstr()
 /* dump files                                                               */
 /****************************************************************************/
 /* dump files */
-void ocSpitInstructionMLI()
+void ocSpitInstructionMLI(char * root)
 {
     FILE* outFile;
-    outFile = UTIL_fopenW("../../compiler/instr.mli");
+
+    char * filename = malloc(strlen(root) + 32);
+    strcpy(filename, root);
+    strcat(filename, "compiler/instr.mli");
+
+    outFile = UTIL_fopenW(filename);
     fprintf(outFile, typeDefs);          
     fprintf(outFile, opMLI);             free(opMLI);
     fprintf(outFile, instrCatMLI);       free(instrCatMLI);
     fprintf(outFile, "\n\n");
     fprintf(outFile, instrMLI);          free(instrMLI);
     UTIL_fclose(outFile);
+    free(filename);
 }
 
 /* dump files */
-void ocSpitInstructionML()
+void ocSpitInstructionML(char * root)
 {
     FILE* outFile;
-    outFile = UTIL_fopenW("../../compiler/instr.ml");
+
+    char * filename = malloc(strlen(root) + 32);
+    strcpy(filename, root);
+    strcat(filename, "compiler/instr.ml");
+
+    outFile = UTIL_fopenW(filename);
     fprintf(outFile, typeDefs);          free(typeDefs);
     fprintf(outFile, opML);              free(opML);
     fprintf(outFile, instrCatML);        free(instrCatML);
     fprintf(outFile, instrML);           free(instrML);
     UTIL_fclose(outFile);
+
+    free(filename);
 }
 

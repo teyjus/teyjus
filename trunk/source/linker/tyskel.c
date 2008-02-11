@@ -1,9 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
-#include <obstack.h>
-#include <endian.h>
-#include <byteswap.h>
-#include <unistd.h>
+#include "../include/standardlib.h"
 #include "module.h"
 #include "tyskel.h"
 #include "kind.h"
@@ -79,13 +76,18 @@ void LoadTySkel(int fd, struct Module_st* CMData)
 
 void LoadTySkels(int fd, struct Module_st* CMData)
 {
+  int i;
+  int offset;
+  int count;
+  TySkel_t* tab;
+  
   if(StackBot==NULL)
     StackBot=obstack_alloc(&TySkelStack,1);
-  int i;
-  int count=CMData->TySkelAdj.count=LK_FILE_GET2(fd);
-  int offset=LK_VECTOR_Grow(&TySkels,count);
+  
+  count=CMData->TySkelAdj.count=LK_FILE_GET2(fd);
+  offset=LK_VECTOR_Grow(&TySkels,count);
   CMData->TySkelAdj.offset=offset;
-  TySkel_t* tab=LK_VECTOR_GetPtr(&TySkels,offset);
+  tab=(TySkel_t *)LK_VECTOR_GetPtr(&TySkels,offset);
   for(i=0;i<count;i++)
   {
     LoadTySkel(fd,CMData);
@@ -96,7 +98,7 @@ void LoadTySkels(int fd, struct Module_st* CMData)
 
 void WriteTySkel(int fd, void* entry)
 {
-  TySkel_t* p=entry;
+  TySkel_t* p=(TySkel_t *)entry;
   LK_FILE_PUTN(fd,p->TySkel,p->size);
 }
 

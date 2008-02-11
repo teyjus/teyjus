@@ -74,6 +74,6 @@ void cgenConstProperty();
 /* Writing files                                                            */
 /****************************************************************************/
 /* dump files pervasives.h   */
-void spitCPervasivesH();
+void spitCPervasivesH(char * root);
 /* dump files pervasives.c   */
-void spitCPervasivesC();
+void spitCPervasivesC(char * root);

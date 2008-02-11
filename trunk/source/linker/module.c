@@ -1,8 +1,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <sys/types.h>
-#include <unistd.h>
 #include <string.h>
+#include "../include/standardlib.h"
 #include "module.h"
 #include "kind.h"
 #include "tyskel.h"
@@ -26,7 +26,7 @@ void  LK_setPath(char* path)
 
 char* LK_makePath(char* modname)
 {
-  char* buf=EM_malloc(strlen(LK_path)+strlen(modname)+1);
+  char* buf=(char *)EM_malloc(strlen(LK_path)+strlen(modname)+1);
   sprintf(buf,"%s%s",LK_path,modname);
   return buf;
 }
@@ -35,9 +35,9 @@ char* LK_makePath(char* modname)
 #define LINKCODE_VER 3
 
 static void LoadAccModule(char* modname);
-static void LoadAccModules();
+static void LoadAccModules(int fd, struct Module_st* CMData);
 static void LoadImpModule(char* modname);
-static void LoadImpModules();
+static void LoadImpModules(int fd, struct Module_st* CMData);
 
 
 void CheckBytecodeVersion(int fd)
@@ -90,11 +90,13 @@ void InitAll()
 
 void LoadTopModule(char* modname)
 {
+  struct Module_st* CMData;
+  int fd;
   mutter("Loading %s as top level module\n",modname);
   EM_TRY{
     NewImportTab();
-    struct Module_st* CMData=NewModule();
-    int fd = LK_FILE_OpenInput(LK_makePath(modname), LK_FILE_ByteCodeExt);
+    CMData=NewModule();
+    fd = LK_FILE_OpenInput(LK_makePath(modname), LK_FILE_ByteCodeExt);
     CheckBytecodeVersion(fd);
     CheckModuleName(fd,modname);
     
@@ -224,7 +226,7 @@ void LoadImpModules(int fd, struct Module_st* CMData)
     return;
   }
   LK_IMPORT_AssignSegmentId(CMData);
-  CMData->Import=EM_malloc(sizeof(ImportTabInd)*count);
+  CMData->Import=(ImportTabInd *)EM_malloc(sizeof(ImportTabInd)*count);
   
   for(i=0;i<count;i++)
   {
@@ -240,9 +242,9 @@ void LoadImpModules(int fd, struct Module_st* CMData)
 
 void LoadAccModules(int fd, struct Module_st* CMData)
 {
+  int i;
   int count=LK_FILE_GET1(fd);
   mutter("Accumulating %d modules\n",count);
-  int i;
   for(i=0;i<count;i++)
   {
     char* name=LK_FILE_GetString(fd);

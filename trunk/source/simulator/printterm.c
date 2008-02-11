@@ -384,7 +384,7 @@ static void PRINT_writeCons(WordPtr outStream, DF_TermPtr tmPtr,
 {
     DF_TermPtr    args     = DF_consArgs(tmPtr);
     DF_TermPtr    arg;
-    OP_FixityType consfix  = AM_cstFixity(PERV_CONS_INDEX);
+    OP_FixityType consfix  = (OP_FixityType)AM_cstFixity(PERV_CONS_INDEX);
     int           consprec = AM_cstPrecedence(PERV_CONS_INDEX);
     Boolean       pparen   = PRINT_parenNeeded(consfix, consprec, tc, fx,prec);
 
@@ -508,7 +508,7 @@ static void PRINT_getHeadInfo(DF_TermPtr hdPtr, OP_FixityType *fx, int* prec)
     case DF_TM_TAG_CONST:
         cstInd = DF_constTabIndex(hdPtr);
         if (AM_cstName(cstInd)) {
-            *fx   = AM_cstFixity(cstInd);
+            *fx   = (OP_FixityType)AM_cstFixity(cstInd);
             *prec = AM_cstPrecedence(cstInd);
         } else {
             *fx   = OP_NONE;

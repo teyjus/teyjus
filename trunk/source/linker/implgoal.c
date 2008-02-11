@@ -32,7 +32,7 @@ void LoadImplGoal(int fd, struct Module_st* CMData,void* entry)
   int i;
   TImplGoal_t* ImplGoal=(TImplGoal_t*)entry;
   TwoBytes nctSize = ImplGoal->nctSize=LK_FILE_GET2(fd);
-  ConstInd* tmp=ImplGoal->extPred=EM_malloc(nctSize*sizeof(ConstInd));
+  ConstInd* tmp=ImplGoal->extPred=(ConstInd *)EM_malloc(nctSize*sizeof(ConstInd));
   for(i=0;i<nctSize;i++)
   {
     tmp[i]=GetConstInd(fd,CMData);

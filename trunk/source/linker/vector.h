@@ -1,7 +1,7 @@
 #ifndef _VECTOR_H_
 #define _VECTOR_H_
 #include <stddef.h>
-#include <obstack.h>
+#include "../include/standardlib.h"
 #include "datatypes.h"
 /////////////////////////////////////////////////////////////////
 //Defines structures and methods for treating extendable arrays//
