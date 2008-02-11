@@ -65,7 +65,7 @@ void WriteBvrTabs(int fd)
 
 int BvrTabSearch(struct Vector* BvrTab,Byte index)
 {
-  BvrTabEnt* tmp=LK_VECTOR_GetPtr(BvrTab,0);
+  BvrTabEnt* tmp=(BvrTabEnt *)LK_VECTOR_GetPtr(BvrTab,0);
   int i;
   int size=LK_VECTOR_Size(BvrTab);
   for(i=0;i<size;i++)
@@ -103,7 +103,7 @@ void MergeBvrTabs(BvrTabInd a, BvrTabInd b,Byte n)
 
 void BVR_AddEntry(struct Vector* BvrTab, BvrTabEnt* entry)
 {
-  BvrTabEnt* new=LK_VECTOR_GetPtr(BvrTab,LK_VECTOR_Grow(BvrTab,1));
-  new->index=entry->index;
-  new->addr=entry->addr;
+  BvrTabEnt* newB=(BvrTabEnt *)LK_VECTOR_GetPtr(BvrTab,LK_VECTOR_Grow(BvrTab,1));
+  newB->index=entry->index;
+  newB->addr=entry->addr;
 }

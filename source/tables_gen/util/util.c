@@ -12,7 +12,7 @@ void* UTIL_malloc(size_t n)
 {
     void* ptr = (void*)malloc(n);
     if (ptr) return ptr;
-    printf("cannot allocate space\n");
+    printf("Error : cannot allocate space\n");
     exit(1);
     
 }
@@ -24,7 +24,7 @@ char* UTIL_mallocStr(size_t size)
     char* ptr = (char*)malloc(sizeof(char)*(size + 1));
     if (ptr) return ptr;
 
-    printf("cannot allocate space\n");
+    printf("Error : cannot allocate space\n");
     exit(1);
 }
 
@@ -92,7 +92,7 @@ FILE* UTIL_fopenR(char* filename)
     FILE* filePtr = fopen(filename, "r");
     if (filePtr) return filePtr;
     
-    printf("cannot open input file %s\n", filename);
+    printf("Error : cannot open input file %s\n", filename);
     exit(1);
 }
 
@@ -103,7 +103,7 @@ FILE* UTIL_fopenW(char* filename)
     FILE* filePtr = fopen(filename, "w");
     if (filePtr) return filePtr;
     
-    printf("cannot open output file %s\n", filename);
+    printf("Error : cannot open output file %s\n", filename);
     exit(1);
 }
 

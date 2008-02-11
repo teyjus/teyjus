@@ -4,8 +4,7 @@
 #include "file.h"
 #include "VectorRW.h"
 #include "message.h"
-#include <sys/types.h>
-#include <unistd.h>
+#include "../include/standardlib.h"
 
 typedef struct{
   char* str;

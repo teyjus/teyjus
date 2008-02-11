@@ -27,12 +27,14 @@ int LD_CODE_LoadCode(MEM_GmtEnt* ent)
   int size = (BytePtr)(ent->codeSpaceEnd) - (BytePtr)(ent->codeSpaceBeg) + 1;
   CSpacePtr code=(CSpacePtr)(ent->codeSpaceBeg);
   
-  LD_detail("Loading %d bytes of instructions\n",size);
   Byte opcode=-1;
   INSTR_InstrCategory instrCat=INSTR_CAT_X;
   INSTR_OperandType* opType=NULL;
-  
   int argid=0;
+  
+  LD_detail("Loading %d bytes of instructions\n",size);
+
+  
   for(i=0;i<size;) {
       j=i;
       opcode=code[j++]=LD_FILE_GET1();
@@ -118,7 +120,7 @@ int LD_CODE_LoadCode(MEM_GmtEnt* ent)
           case INSTR_X:
               break;
           default:
-              LD_bad("Unknown Operand Type %d\n",opType[argid]);
+              LD_error("Unknown Operand Type %d\n",opType[argid]);
               EM_THROW(LD_LoadError);
               break;
           }
@@ -149,7 +151,7 @@ void LD_CODE_LoadCodeSize(MEM_GmtEnt* ent)
     ent->codeSpaceBeg = (WordPtr)codeSpaceBeg;
 
     if(ent->modSpaceEnd>ent->codeSpaceBeg){
-        LD_bad("Out of module space.\n");
+        LD_error("Out of module space.\n");
         EM_THROW(LD_LoadError);
     }
 }

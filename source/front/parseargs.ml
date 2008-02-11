@@ -17,5 +17,5 @@ let getModName name =
     | Invalid_argument _ -> name
 
 let error str =
-  prerr_endline ("Error: " ^ str) ;
+  prerr_endline ("Error : " ^ str) ;
   exit 1

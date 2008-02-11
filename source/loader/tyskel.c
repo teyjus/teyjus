@@ -26,6 +26,7 @@ void LD_TYSKEL_LoadType(MEM_GmtEnt* ent,MemPtr loc);
 
 int LD_TYSKEL_LoadTst(MEM_GmtEnt* ent)
 {
+  MemPtr* tst;
   int i;
   TwoBytes tstSize=LD_FILE_GET2();
   LD_detail("Loading %d type skeletons\n",tstSize);
@@ -34,8 +35,7 @@ int LD_TYSKEL_LoadTst(MEM_GmtEnt* ent)
      (MemPtr*)LD_LOADER_ExtendModSpace(ent,(tstSize+PERV_TY_SKEL_NUM)*sizeof(MemPtr)); 
      -- XQ
   */
-  MemPtr* tst =
-      (MemPtr*)LD_LOADER_ExtendModSpace(ent,
+  tst =(MemPtr*)LD_LOADER_ExtendModSpace(ent,
                                         (tstSize+PERV_TY_SKEL_NUM) *
                                         MEM_TST_ENTRY_SIZE);
   
@@ -93,7 +93,7 @@ void LD_TYSKEL_LoadType(MEM_GmtEnt* ent,MemPtr loc)
       break;
       
     default:
-      LD_bad("Unexpected type skeleton prefix %d.\n",type);
+      LD_error("Unexpected type skeleton prefix %d.\n",type);
       EM_THROW(LD_LoadError);
   }
 }

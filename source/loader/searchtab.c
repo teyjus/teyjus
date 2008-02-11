@@ -23,21 +23,23 @@ int Hash(int ci,int size)
 
 WordPtr LD_SEARCHTAB_LoadHashTab(MEM_GmtEnt* ent, int* size)
 {
+  int i;
+  int cst;
+  struct HashTabEnt *tabEnt;
+  struct HashTabEnt *tab;
   int numEntries=*size=LD_FILE_GET2();
   LD_debug("Hash table has %d entries\n",numEntries);
-  int i;
   /*
   struct HashTabEnt *tab=(struct HashTabEnt*)LD_LOADER_ExtendModSpace(ent,sizeof(struct HashTabEnt)*numEntries); --XQ
   */
-  struct HashTabEnt *tab=(struct HashTabEnt*)LD_LOADER_ExtendModSpaceInByte(ent,sizeof(struct HashTabEnt)*numEntries);
+  tab=(struct HashTabEnt*)LD_LOADER_ExtendModSpaceInByte(ent,sizeof(struct HashTabEnt)*numEntries);
   for(i=0;i<numEntries;i++)
   {
     tab[i].constInd=-1;
     tab[i].next=NULL;
   }
   
-  int cst;
-  struct HashTabEnt *tabEnt=NULL;
+  tabEnt=NULL;
   for(i=0;i<numEntries;i++)
   {
     cst=(int)LD_CONST_GetConstInd();

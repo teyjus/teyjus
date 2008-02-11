@@ -10,11 +10,11 @@ WordPtr* LD_HASHTAB_HashTabs;
 void LD_HASHTAB_LoadHashTabs(MEM_GmtEnt* ent)
 {
   int i;
+  int ignore;///\note We do not check if the size given for a hash table matches the size used in code.
   TwoBytes count=LD_HASHTAB_numHashTabs=LD_FILE_GET2();
   LD_detail("Loading %d hash tables\n",count);
   LD_HASHTAB_HashTabs=(WordPtr*)EM_malloc(count*sizeof(WordPtr));
   
-  int ignore;///\note We do not check if the size given for a hash table matches the size used in code.
   for(i=0;i<count;i++)
   {   
     LD_HASHTAB_HashTabs[i]=LD_SEARCHTAB_LoadHashTab(ent,&ignore);

@@ -93,4 +93,5 @@ void QUERY_setQueryFreeVariables()
 Boolean QUERY_queryHasVars()
 {
     PRINT_queryHasVars();
+    return TRUE;
 }

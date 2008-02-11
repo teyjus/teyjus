@@ -37,8 +37,8 @@ void ocamlGenBC();
 /* Dump code into pervasive.ml and pervasive.mli                           */
 /***************************************************************************/
 /* dump peravsive.ml   */
-void spitOCPervasiveML();
+void spitOCPervasiveML(char * root);
 /* dump peravsive.mli   */
-void spitOCPervasiveMLI();
+void spitOCPervasiveMLI(char * root);
 
 

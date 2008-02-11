@@ -3,12 +3,13 @@
 
 extern int verbosity;
 
-#define debug(args...) if(verbosity>2) fprintf(stderr,args)
+#define debug(...) if(verbosity>2){fprintf(stderr,__VA_ARGS__);}
 
-#define detail(args...) if(verbosity>1) fprintf(stderr,args)
+#define detail(...) if(verbosity>1){fprintf(stderr,__VA_ARGS__);}
 
-#define mutter(args...) if(verbosity>0) fprintf(stderr,args)
+#define mutter(...) if(verbosity>0){fprintf(stderr,__VA_ARGS__);}
 
-#define bad(args...) fprintf(stderr,args)
+#define bad(...) fprintf(stderr,__VA_ARGS__)
+#define error bad
 
 #endif

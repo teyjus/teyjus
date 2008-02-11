@@ -4,10 +4,7 @@
 #include <string.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <unistd.h>
-#include <endian.h>
-#include <byteswap.h>
-#include <bits/wordsize.h>
+#include "../include/standardlib.h"
 #include "ld_message.h"
 #include "file.h"
 #include "loader.h"
@@ -22,7 +19,7 @@ void LD_FILE_GetString(char* buffer,int length)
 
 void LD_FILE_Open(char* modname, char* extension)
 {
-  char* buf=EM_malloc(sizeof(char)*(strlen(modname)+strlen(extension)+1));
+  char* buf=(char *)EM_malloc(sizeof(char)*(strlen(modname)+strlen(extension)+1));
   sprintf(buf,"%s%s",modname,extension);
   
   
@@ -42,10 +39,10 @@ void LD_FILE_Close()
 
 int LD_FILE_Exists(char* modname, char* extension)
 {
-  char* filepath=EM_malloc(sizeof(char)*(strlen(modname)+strlen(extension)+3));
+  struct stat buf;
+  char* filepath=(char *)EM_malloc(sizeof(char)*(strlen(modname)+strlen(extension)+3));
   sprintf(filepath,"./%s%s",modname,extension);
   
-  struct stat buf;
   if(-1==stat(filepath,&buf))
   {
     perror(filepath);
@@ -64,10 +61,10 @@ void LD_FILE_Link(char* modname)
 
 int LD_FILE_ModTime(char* modname, char* extension)
 {
-  char* filepath=EM_malloc(sizeof(char)*(strlen(modname)+strlen(extension)+3));
+  struct stat buf;
+  char* filepath=(char *)EM_malloc(sizeof(char)*(strlen(modname)+strlen(extension)+3));
   sprintf(filepath,"./%s%s",modname,extension);
   
-  struct stat buf;
   if(-1==stat(filepath,&buf))
   {
     perror(filepath);

@@ -307,10 +307,14 @@ void cgenInstrH(char* numInstr)
 
 
 /* dump instructions.h" */
-void cspitCInstructionsH()
+void cspitCInstructionsH(char * root)
 {
     FILE* outFile;
-    outFile = UTIL_fopenW("../../tables/instructions.h");
+    char * filename = malloc(strlen(root) + 32);
+    strcpy(filename, root);
+    strcat(filename, "tables/instructions.h");
+
+    outFile = UTIL_fopenW(filename);
     fprintf(outFile, "%s\n%s\n%s\n", COMMENTS_BEG_H, COMPDEF_BEG_H, INCLUDE_H);
     fprintf(outFile, "%s\n", opsH);
     fprintf(outFile, "%s\n", instrCatH);
@@ -321,6 +325,8 @@ void cspitCInstructionsH()
     free(opsH);
     free(instrCatH);
     free(instrOpc);
+
+    free(filename);
 }
 
 
@@ -513,10 +519,14 @@ void cgenInstrC()
 
 
 /* dump instructions.c" */
-void cspitCInstructionsC()
+void cspitCInstructionsC(char * root)
 {
     FILE* outFile;
-    outFile = UTIL_fopenW("../../tables/instructions.c");
+    char * filename = malloc(strlen(root) + 32);
+    strcpy(filename, root);
+    strcat(filename, "tables/instructions.c");
+
+    outFile = UTIL_fopenW(filename);
     fprintf(outFile, "%s\n%s\n", COMMENTS_BEG_C, INCLUDE_C);
     fprintf(outFile, "%s\n", opTypeC);
     fprintf(outFile, "%s\n", instrC);
@@ -524,6 +534,7 @@ void cspitCInstructionsC()
 
     free(opTypeC);
     free(instrC);
+    free(filename);
 }
 
 /* simdispatch.c    */
@@ -600,14 +611,18 @@ void cgenSimDispatch()
     free(myText);
 }
 
-void cspitSimDispatch()
+void cspitSimDispatch(char * root)
 {
     FILE* outFile;
-    outFile = UTIL_fopenW("../../simulator/simdispatch.c");
+    char * filename = malloc(strlen(root) + 32);
+    strcpy(filename, root);
+    strcat(filename, "simulator/simdispatch.c");
+    outFile = UTIL_fopenW(filename);
     fprintf(outFile, "%s\n", dispatch);
 
     free(dispatch);
     UTIL_fclose(outFile);
+    free(filename);
 }
 
 
