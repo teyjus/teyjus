@@ -25,7 +25,7 @@ void cgenOneInstrH(char* comments, char* opcode, char* name);
 
 
 /* dump instructions.h" */
-void cspitCInstructionsH();
+void cspitCInstructionsH(char * root);
 
 /* instructions.c */
 
@@ -40,11 +40,11 @@ void cgenOneInstrC(int opcode, char* name, char* cat, char* len, int last);
 void cgenInstrC();
 
 /* dump instructions.c" */
-void cspitCInstructionsC();
+void cspitCInstructionsC(char * root);
 
 /* simdispatch.c        */
 void cinitSimDispatch(int size);
 void cgenOneSimDispatch(int ind, char* instr, int last);
 void cgenSimDispatch();
 
-void cspitSimDispatch();
+void cspitSimDispatch(char * root);

@@ -1,5 +1,5 @@
 #include <stdio.h>
-#include <unistd.h>
+#include "../include/standardlib.h"
 #include "../system/error.h"
 #include "datatypes.h"
 #include "module.h"
@@ -45,7 +45,7 @@ void LoadGKinds(int fd, struct Module_st* CMData)
   TwoBytes count=CMData->GKindcount=LK_FILE_GET2(fd);
   mutter("Loading %d global kinds\n",count);
   EM_TRY{
-    CMData->GKind=EM_malloc(count*sizeof(KindInd));
+    CMData->GKind=(KindInd *)EM_malloc(count*sizeof(KindInd));
     for(i=0;i<count;i++)
     {
       CMData->GKind[i]=LoadGKind(fd);
@@ -117,9 +117,9 @@ void LoadTopGKinds(int fd, struct Module_st* CMData)
   size_t i;
   TwoBytes count=GKindTabSize=CMData->GKindcount=LK_FILE_GET2(fd);
   detail("Loading %d top level global kinds.\n",count);
-  GKindTab=EM_malloc(GKindTabSize*sizeof(Kind_t));
+  GKindTab=(Kind_t *)EM_malloc(GKindTabSize*sizeof(Kind_t));
   
-  CMData->GKind=EM_malloc(count*sizeof(MarkInd));
+  CMData->GKind=(KindInd *)EM_malloc(count*sizeof(MarkInd));
   
   for(i=0;i<count;i++)
   {

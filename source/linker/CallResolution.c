@@ -31,14 +31,14 @@ PredInfo* FindPredInfo(PredInfoTab* Pit, ConstInd index)
   int size=LK_VECTOR_Size(Pit);
   if(size>0)
   {
-    tmp=LK_VECTOR_GetPtr(Pit,0);
+    tmp=(PredInfo *)LK_VECTOR_GetPtr(Pit,0);
     for(i=0;i<size;i++)
     {
       if((tmp[i].index.gl_flag==index.gl_flag)&&(tmp[i].index.index==index.index))
         return tmp+i;
     }
   }
-  tmp=LK_VECTOR_GetPtr(Pit,LK_VECTOR_Grow(Pit,1));
+  tmp=(PredInfo *)LK_VECTOR_GetPtr(Pit,LK_VECTOR_Grow(Pit,1));
   tmp->index=index;
   tmp->dynamic_flag=0;
   LK_VECTOR_Init(&(tmp->predCalls),8,sizeof(PCallEnt));
@@ -62,14 +62,15 @@ void MarkDynamic(PredInfoTab* Pit, ConstInd index)
 void ResolvePredCall(PredInfo* PInfo,HashTab_t* PredSearchTab)
 {
   int i;
+  PCallEnt* tmp;
+  CodeInd addr;
   int size=LK_VECTOR_Size(&(PInfo->predCalls));
   if(size==0)
   {
     LK_VECTOR_Free(&(PInfo->predCalls));
     return;
   }
-  PCallEnt* tmp=LK_VECTOR_GetPtr(&(PInfo->predCalls),0);
-  CodeInd addr;
+  tmp=(PCallEnt *)LK_VECTOR_GetPtr(&(PInfo->predCalls),0);
   if(PInfo->dynamic_flag>0)
   {
     for(i=0;i<size;i++)

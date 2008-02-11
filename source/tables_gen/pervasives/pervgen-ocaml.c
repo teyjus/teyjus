@@ -293,10 +293,13 @@ static void  ocamlGenFixedMLI()
 /* Dump code into pervasive.ml and pervasive.mli                           */
 /***************************************************************************/
 /* dump peravsive.ml   */
-void spitOCPervasiveML()
+void spitOCPervasiveML(char * root)
 {
     FILE* outFile;
-    outFile = UTIL_fopenW("../../compiler/pervasive.ml");
+    char * filename = malloc(strlen(root) + 32);
+    strcpy(filename, root);
+    strcat(filename, "compiler/pervasive.ml");
+    outFile = UTIL_fopenW(filename);
 
     ocamlGenFixedML();
     fprintf(outFile, "%s\n\n", kindML);          free(kindML);
@@ -307,21 +310,25 @@ void spitOCPervasiveML()
     fprintf(outFile, "%s\n\n", backTrack);       free(backTrack);
     
     
-
     UTIL_fclose(outFile);
+    free(filename);
 }
 
 /* dump peravsive.mli   */
-void spitOCPervasiveMLI()
+void spitOCPervasiveMLI(char * root)
 {
     FILE* outFile;
-    outFile = UTIL_fopenW("../../compiler/pervasive.mli");
+    char * filename = malloc(strlen(root) + 32);
+    strcpy(filename, root);
+    strcat(filename, "compiler/pervasive.mli");
+    outFile = UTIL_fopenW(filename);
     
     ocamlGenFixedMLI();
     fprintf(outFile, "%s\n\n", kindMLI);         free(kindMLI);
     fprintf(outFile, "%s\n\n", constMLI);        free(constMLI);
     fprintf(outFile, "%s\n\n", fixedMLI);        free(fixedMLI);
     UTIL_fclose(outFile);
+    free(filename);
 }
 
 

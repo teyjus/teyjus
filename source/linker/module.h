@@ -50,12 +50,12 @@ struct Module_st{
   PredInfoTab* Pit;
 };
 
-struct Module_st* CM; 		//The module currently being loaded
+extern struct Module_st* CM; 		//The module currently being loaded
 
 void  LK_setPath(char* path); 
 extern void LoadTopModule(char* filename);
 extern void InitAll();
-extern void WriteAll();
+extern void WriteAll(char* modname);
 extern struct Module_st* NewModule();
 
 
@@ -66,12 +66,12 @@ extern struct Module_st* NewModule();
 extern ConstInd GetConstInd(int fd, struct Module_st* CMData);
 extern TySkelInd GetTySkelInd(int fd, struct Module_st* CMData);
 extern KindInd GetKindInd(int fd, struct Module_st* CMData);
-extern ImplGoalInd GetImplGoalInd();
-extern HashTabInd GetHashTabInd();
-extern BvrTabInd GetBvrTabInd();
+extern ImplGoalInd GetImplGoalInd(int fd, struct Module_st* CMData);
+extern HashTabInd GetHashTabInd(int fd, struct Module_st* CMData);
+extern BvrTabInd GetBvrTabInd(int fd, struct Module_st* CMData);
 extern StringInd GetStringInd(int fd, struct Module_st* CMData);
-extern CodeInd GetCodeInd();
-extern ImportTabInd GetImportTabInd();
+extern CodeInd GetCodeInd(int fd, struct Module_st* CMData);
+extern ImportTabInd GetImportTabInd(int fd, struct Module_st* CMData);
 
 extern void PutConstInd(int fd, ConstInd x);
 #define PutTySkelInd(fd,x) LK_FILE_PUT2(fd,(TwoBytes)x)

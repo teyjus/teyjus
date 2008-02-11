@@ -2,9 +2,9 @@
 <VisualStudioProject
 	ProjectType="Visual C++"
 	Version="8.00"
-	Name="Instructions"
-	ProjectGUID="{7EC79520-1ADC-4925-BB2D-76C21525660E}"
-	RootNamespace="Instructions"
+	Name="tables_gen"
+	ProjectGUID="{7AF031BC-DDAD-4700-91A3-05EAFAA90DFE}"
+	RootNamespace="tables_gen"
 	Keyword="Win32Proj"
 	>
 	<Platforms>
@@ -27,9 +27,9 @@
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
-				Description="Copying..."
-				CommandLine="xcopy &quot;$(TargetPath)&quot; &quot;$(SolutionDir)../bin&quot; /Y&#x0D;&#x0A;"
-				Outputs="$(SolutionDir)../bin/$(TargetFilename)"
+				Description=""
+				CommandLine="$(SolutionDir)$(ConfigurationName)\tables_gen.exe &quot;$(SolutionDir)..\tables_gen\pervasives\pervasives.in&quot; $(SolutionDir)..\&#x0D;&#x0A;"
+				Outputs="foo"
 			/>
 			<Tool
 				Name="VCXMLDataGeneratorTool"
@@ -43,11 +43,11 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="../util"
+				AdditionalIncludeDirectories="..\tables_gen\util"
 				PreprocessorDefinitions="WIN32;_DEBUG;_CONSOLE;_CRT_SECURE_NO_WARNINGS;_CRT_NONSTDC_NO_DEPRECATE;__STDC__=0"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
-				RuntimeLibrary="3"
+				RuntimeLibrary="1"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
 				Detect64BitPortabilityProblems="true"
@@ -64,6 +64,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
+				OutputFile="$(OutDir)\$(ProjectName).exe"
 				LinkIncremental="2"
 				GenerateDebugInformation="true"
 				SubSystem="1"
@@ -179,15 +180,31 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
-				RelativePath=".\instrgen-c.c"
+				RelativePath="..\tables_gen\pervasives\ccode.c"
 				>
 			</File>
 			<File
-				RelativePath=".\instrgen-ocaml.c"
+				RelativePath="..\tables_gen\pervasives\ocamlcode.c"
 				>
 			</File>
 			<File
-				RelativePath="..\util\util.c"
+				RelativePath="..\tables_gen\pervasives\op.c"
+				>
+			</File>
+			<File
+				RelativePath="..\tables_gen\pervasives\pervgen-c.c"
+				>
+			</File>
+			<File
+				RelativePath="..\tables_gen\pervasives\pervgen-ocaml.c"
+				>
+			</File>
+			<File
+				RelativePath="..\tables_gen\pervasives\types.c"
+				>
+			</File>
+			<File
+				RelativePath="..\tables_gen\util\util.c"
 				>
 			</File>
 		</Filter>
@@ -197,15 +214,31 @@
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
 			<File
-				RelativePath=".\instrgen-c.h"
+				RelativePath="..\tables_gen\pervasives\ccode.h"
 				>
 			</File>
 			<File
-				RelativePath=".\instrgen-ocaml.h"
+				RelativePath="..\tables_gen\pervasives\ocamlcode.h"
 				>
 			</File>
 			<File
-				RelativePath="..\util\util.h"
+				RelativePath="..\tables_gen\pervasives\op.h"
+				>
+			</File>
+			<File
+				RelativePath="..\tables_gen\pervasives\pervgen-c.h"
+				>
+			</File>
+			<File
+				RelativePath="..\tables_gen\pervasives\pervgen-ocaml.h"
+				>
+			</File>
+			<File
+				RelativePath="..\tables_gen\pervasives\types.h"
+				>
+			</File>
+			<File
+				RelativePath="..\tables_gen\util\util.h"
 				>
 			</File>
 		</Filter>
@@ -219,7 +252,11 @@
 			Name="Grammar"
 			>
 			<File
-				RelativePath=".\instrformats.l"
+				RelativePath="..\tables_gen\pervasives\lex.yy.c"
+				>
+			</File>
+			<File
+				RelativePath="..\tables_gen\pervasives\pervasives.l"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
@@ -227,13 +264,13 @@
 					<Tool
 						Name="VCCustomBuildTool"
 						Description="Generating lexer..."
-						CommandLine="flex instrformats.l&#x0D;&#x0A;"
-						Outputs="lex.yy.c"
+						CommandLine="flex -o$(InputDir)lex.yy.c $(InputPath)&#x0D;&#x0A;"
+						Outputs="$(InputDir)lex.yy.c"
 					/>
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\instrformats.y"
+				RelativePath="..\tables_gen\pervasives\pervasives.y"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"
@@ -241,22 +278,18 @@
 					<Tool
 						Name="VCCustomBuildTool"
 						Description="Generating parser..."
-						CommandLine="bison -y -d instrformats.y&#x0D;&#x0A;"
-						AdditionalDependencies="lex.yy.c"
-						Outputs="y.tab.c;y.tab.h"
+						CommandLine="bison -y -d -b $(InputDir)y $(InputPath)&#x0D;&#x0A;&#x0D;&#x0A;"
+						AdditionalDependencies=""
+						Outputs="$(InputDir)y.tab.c;$(InputDir)y.tab.h"
 					/>
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\lex.yy.c"
+				RelativePath="..\tables_gen\pervasives\y.tab.c"
 				>
 			</File>
 			<File
-				RelativePath=".\y.tab.c"
-				>
-			</File>
-			<File
-				RelativePath=".\y.tab.h"
+				RelativePath="..\tables_gen\pervasives\y.tab.h"
 				>
 			</File>
 		</Filter>

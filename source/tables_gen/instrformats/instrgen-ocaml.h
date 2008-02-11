@@ -22,6 +22,6 @@ void ocgenInstr();
 
 
 /* dump files */
-void ocSpitInstructionMLI();
-void ocSpitInstructionML();
+void ocSpitInstructionMLI(char * root);
+void ocSpitInstructionML(char * root);
 

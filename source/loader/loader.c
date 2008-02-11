@@ -23,7 +23,7 @@ void  LD_LOADER_setPath(char* path)
 
 char* LD_LOADER_makePath(char* modname)
 {
-  char* buf=EM_malloc(strlen(LD_LOADER_path)+strlen(modname)+1);
+  char* buf=(char *)EM_malloc(strlen(LD_LOADER_path)+strlen(modname)+1);
   sprintf(buf,"%s%s",LD_LOADER_path,modname);
   return buf;
 }
@@ -35,7 +35,7 @@ char* LD_LOADER_makePath(char* modname)
 void LD_LOADER_LoadLinkcodeVer();
 
 void LD_LOADER_LoadModuleName(char* modname);
-MEM_GmtEnt* LD_LOADER_GetNewGMTEnt();
+MEM_GmtEnt* LD_LOADER_GetNewGMTEnt(int index);
 WordPtr LD_LOADER_ExtendModSpace(MEM_GmtEnt* ent, int size);
 int LD_LOADER_SetName(MEM_GmtEnt* ent,char* modname);
 void LD_LOADER_AddGMTEnt(MEM_GmtEnt* ent);
@@ -50,6 +50,8 @@ int LD_verbosity = 0;
 //Returns -1 on failure.
 int LD_LOADER_Load(char* modname, int index)
 {
+  MEM_GmtEnt* gmtEnt;
+
   EM_TRY{
     LD_FILE_Open(LD_LOADER_makePath(modname),LINKCODE_EXT);
     LD_LOADER_LoadLinkcodeVer();
@@ -57,7 +59,7 @@ int LD_LOADER_Load(char* modname, int index)
   }EM_CATCH{
     EM_THROW(LD_LoadError);
   }
-  MEM_GmtEnt* gmtEnt=LD_LOADER_GetNewGMTEnt(index);
+  gmtEnt=LD_LOADER_GetNewGMTEnt(index);
   EM_TRY{
     LD_LOADER_SetName(gmtEnt,modname);
     LD_CODE_LoadCodeSize(gmtEnt);
@@ -85,7 +87,7 @@ void LD_LOADER_LoadLinkcodeVer()
 {
   Word tmp=LD_FILE_GETWORD();
   if(tmp!=LINKCODE_VER){
-    LD_bad("Incompatible linkcode version %ld.\n",tmp);
+    LD_error("Incompatible linkcode version %ld.\n",tmp);
     EM_THROW(LD_LoadError);
   }
 }
@@ -97,7 +99,7 @@ void LD_LOADER_LoadModuleName(char* modname)
   int len=LD_FILE_GET1();
   LD_FILE_GetString(buf,len);
   if(0!=strcmp(buf,modname)){
-    LD_bad("Unexpected module name %s in %s%s",buf,modname,LINKCODE_EXT);
+    LD_error("Unexpected module name %s in %s%s",buf,modname,LINKCODE_EXT);
     EM_THROW(LD_LoadError);
   }
 }
@@ -132,7 +134,7 @@ WordPtr LD_LOADER_ExtendModSpace(MEM_GmtEnt* ent, int size)
     WordPtr tmp = ent -> modSpaceEnd;
     ent -> modSpaceEnd += size;
     if(ent->modSpaceEnd > ent->codeSpaceBeg){
-        LD_bad("Out of module space.\n");
+        LD_error("Out of module space.\n");
         EM_THROW(LD_LoadError);
     }
     return tmp;
@@ -144,7 +146,7 @@ BytePtr LD_LOADER_ExtendModSpaceInByte(MEM_GmtEnt* ent, int size)
     BytePtr tmp = (BytePtr) (ent -> modSpaceEnd);
     ent -> modSpaceEnd = (WordPtr)(((BytePtr)ent->modSpaceEnd) + size);
     if (ent -> modSpaceEnd >  ent->codeSpaceBeg){
-        LD_bad("Out of module space.\n");
+        LD_error("Out of module space.\n");
         EM_THROW(LD_LoadError);
     }
     return tmp;

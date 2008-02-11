@@ -19,9 +19,12 @@ void LK_RENAME_LoadConstRNTabEnt(int fd ,struct Module_st* CMData)
 
 void LK_RENAME_LoadConstRNTable(int fd ,struct Module_st* CMData)
 {
-  LK_TREE_Empty(&ConstRNTree);
-  int size=LK_FILE_GET2(fd);
+  int size;
   int i;
+
+  LK_TREE_Empty(&ConstRNTree);
+  size=LK_FILE_GET2(fd);
+  
   for(i=0;i<size;i++)
   {
     LK_RENAME_LoadConstRNTabEnt(fd,CMData);
@@ -50,10 +53,13 @@ void LK_RENAME_LoadKindRNTabEnt(int fd ,struct Module_st* CMData)
 
 void LK_RENAME_LoadKindRNTable(int fd ,struct Module_st* CMData)
 {
+  int size;
+  int i;
+
   if(KindRNTree!=NULL)
     LK_TREE_Empty(&KindRNTree);
-  int size=(int)LK_FILE_GET2(fd);
-  int i;
+  size=(int)LK_FILE_GET2(fd);
+  
   for(i=0;i<size;i++)
     LK_RENAME_LoadKindRNTabEnt(fd,CMData);
 }

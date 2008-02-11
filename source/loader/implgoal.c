@@ -30,7 +30,8 @@ void LD_IMPLGOAL_LoadImplGoals(MEM_GmtEnt* ent)
 WordPtr LD_IMPLGOAL_LoadImplGoal(MEM_GmtEnt* ent)
 {
   int i;
-  
+  Byte fcf;
+
   //Load Next Clause Table
   int nctSize=(int)LD_FILE_GET2();
   ///\todo Check on the space requirements of the implgoal table.
@@ -38,6 +39,8 @@ WordPtr LD_IMPLGOAL_LoadImplGoal(MEM_GmtEnt* ent)
   WordPtr tab = LD_LOADER_ExtendModSpace(ent, MEM_IMPL_FIX_SIZE + nctSize);
 
   int cst;
+  int tabSize;
+
   MEM_implPutLTS(tab,nctSize);
   for(i=0;i<nctSize;i++)
   {
@@ -49,8 +52,7 @@ WordPtr LD_IMPLGOAL_LoadImplGoal(MEM_GmtEnt* ent)
 #define FCF_SEQNSEARCH 1
 #define FCF_HASHSEARCH 2
 ///\todo Correct and move these: shared with addcode.c
-  Byte fcf=LD_FILE_GET1();
-  int tabSize;
+  fcf=LD_FILE_GET1();
   if(fcf==FCF_SEQNSEARCH)
   {
     MEM_implPutFC(tab,(MEM_FindCodeFnPtr)&LD_SEARCHTAB_SeqnSrch);

@@ -62,7 +62,9 @@ else
 //throw
 /* Jump to the nearest (in a dynamic sense) EM_Try block, setting
    EM_CurrentExnType to TYPE. Given a constant, the conditional in
-   this macro will be optimized away. */
+   this macro will be optimized away. 
+   
+   TODO: added cast to EM_CurrentExnType. */
 #define EM_THROW(type) EM_THROWVAL((type), 1)
 
 #define EM_THROWVAL(type, val) \
@@ -71,7 +73,7 @@ do { \
       exit(1); \
    else \
    { \
-      EM_CurrentExnType = (type); \
+      EM_CurrentExnType = (EM_ExnType)(type); \
       SIGNAL_longjmp(EM_ExnHandlerStack[--EM_ExnHandlerStackTop], val); \
    } \
 } while(0)

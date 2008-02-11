@@ -6,18 +6,21 @@
 void LK_VECTOR_Read(int fd, struct Vector* vec, struct Module_st* CMData, Adjust_t* adj,void (*read_fn)(int fd, struct Module_st* CMData, void* entry))
 {
   Word i;
+  Word offset;
+  Word objSize;
+  void* base;
   Word count=adj->count=LK_FILE_GET2(fd);
   if(count==0)
   {
     adj->offset=LK_VECTOR_Size(vec);
     return;
   }
-  Word offset=adj->offset=LK_VECTOR_Grow(vec,count);
-  void* base=LK_VECTOR_GetPtr(vec,offset);
-  Word objSize=vec->objSize;
+  offset=adj->offset=LK_VECTOR_Grow(vec,count);
+  base=LK_VECTOR_GetPtr(vec,offset);
+  objSize=vec->objSize;
   for(i=0;i<count;i++)
   {
-    read_fn(fd,CMData,base+i*objSize);
+    read_fn(fd,CMData,((u_int8_t *)base)+i*objSize);
   }
 }
 
@@ -25,12 +28,14 @@ void LK_VECTOR_Write(int fd, struct Vector* vec,void (*write_fn)(int fd, void* e
 {
   Word i;
   Word size=LK_VECTOR_Size(vec);
+  Word objSize;
+  void* base;
   LK_FILE_PUT2(fd,size);
   if(size==0) return;
-  void* base = LK_VECTOR_GetPtr(vec,0);
-  Word objSize= vec->objSize;
+  base = LK_VECTOR_GetPtr(vec,0);
+  objSize= vec->objSize;
   for(i=0;i<size;i++)
   {
-    write_fn(fd,base+i*objSize);
+    write_fn(fd,((u_int8_t *)base)+i*objSize);
   }
 }

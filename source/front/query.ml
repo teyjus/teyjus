@@ -21,13 +21,14 @@ let buildQueryTerm query amod =
 	  (* check whether the query has boolean type *)
 	  let ty = Types.getMoleculeType tymol in
 	  if (isBooleanType ty) then
-		(* create the term and type onto simulator heap top *)
-		(Ccode_stubs.setTypeAndTermLocation ();
-		 Readterm.readTermAndType term tymol fvars tyfvars;
-		 true)
+    (* create the term and type onto simulator heap top *)
+		  (Ccode_stubs.setTypeAndTermLocation ();
+		   Readterm.readTermAndType term tymol fvars tyfvars;
+		   true)
 	  else 
-		(print_endline "error: query must have boolean type.";
-		 false)
+		  (print_endline ("Error: query has type " ^
+		    (Absyn.string_of_type ty) ^ " (expected type o).");
+		   false)
 	  
 (***************************************************************************)
 (*    invoke the simulator to solve a query                                *)

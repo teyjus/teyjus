@@ -74,7 +74,7 @@ BI_BuiltinTabIndex BI_number;
 
 void BI_dispatch(int index)
 {
-    BI_number = index;
+    BI_number = (BI_BuiltinTabIndex)index;
     (*BI_branchTab[index])();
 }
 

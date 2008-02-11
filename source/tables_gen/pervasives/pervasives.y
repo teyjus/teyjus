@@ -273,27 +273,42 @@ int main(argc, argv)
     int argc;
     char * argv[];
 {
+    int ret = 0;
+    char * root = NULL;
     if(argc == 1)
     {
       printf("No input file specified; using 'Pervasives.in'.\n");
       yyin = UTIL_fopenR("Pervasives.in");
     }
-    else if(argc == 2)
+    else
     {
       yyin = UTIL_fopenR(argv[1]);
     }
+    
+    if(argc > 2)
+    {
+      root = argv[2];
+    }
     else
     {
-      printf("Error: invalid command line arguments.\n");
-      return 1;
+      printf("Teyjus source root directory not specified; using '../../'.\n");
+      root = "../../";
     }
+    
     printf("Generating pervasive files...\n");
-    yyparse();
+
+    ret = yyparse();
     UTIL_fclose(yyin);
-    spitCPervasivesH();
-    spitCPervasivesC(); 
-    spitOCPervasiveMLI();
-    spitOCPervasiveML(); 
+
+    if(ret != 0)
+    {
+      printf("Generation failed.\n");
+      return -1;
+    }
+    spitCPervasivesH(root);
+    spitCPervasivesC(root); 
+    spitOCPervasiveMLI(root);
+    spitOCPervasiveML(root); 
     printf("Done.\n");
     return 0;
 }

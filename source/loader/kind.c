@@ -16,7 +16,10 @@ TwoBytes LD_KIND_numGKinds=-1;
 
 int LD_KIND_LoadKst(MEM_GmtEnt* ent)
 {
+  MEM_KstPtr kst;
   int i;
+  TwoBytes num_glob;
+  TwoBytes num_loc;
   
   //Allocate space for the kind table.
   TwoBytes kstsize=LD_FILE_GET2();
@@ -24,8 +27,7 @@ int LD_KIND_LoadKst(MEM_GmtEnt* ent)
   /*  Use MEM_KST_ENTRY_SIZE instead which is the number of *WORDS* for each KST entry
       -- XQ
   */
-  MEM_KstPtr kst=
-      (MEM_KstPtr)LD_LOADER_ExtendModSpace(ent,(kstsize+PERV_KIND_NUM)*MEM_KST_ENTRY_SIZE);
+  kst= (MEM_KstPtr)LD_LOADER_ExtendModSpace(ent,(kstsize+PERV_KIND_NUM)*MEM_KST_ENTRY_SIZE);
  
   ent->kstBase = kst;
   
@@ -34,7 +36,7 @@ int LD_KIND_LoadKst(MEM_GmtEnt* ent)
   kst+=PERV_KIND_NUM;
           
   //Get the number of global kinds
-  TwoBytes num_glob=LD_KIND_numGKinds=LD_FILE_GET2();
+  num_glob=LD_KIND_numGKinds=LD_FILE_GET2();
   //printf("GKind table size=%d\n",num_glob);
   if(num_glob>kstsize)
     return -1;
@@ -47,7 +49,7 @@ int LD_KIND_LoadKst(MEM_GmtEnt* ent)
   }
   
   //Load the local kinds
-  TwoBytes num_loc=LD_FILE_GET2();
+  num_loc=LD_FILE_GET2();
   //printf("LKind table size=%d\n",num_loc);
   if(num_glob+num_loc!=kstsize)
     return -1;
@@ -75,7 +77,7 @@ TwoBytes LD_KIND_GetKindInd()
     case PERVASIVE:
       return ind;
     default:
-      LD_bad("Invalid Kind type %d\n",gl);
+      LD_error("Invalid Kind type %d\n",gl);
       EM_THROW(LD_LoadError);
   }
 }

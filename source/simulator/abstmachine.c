@@ -109,7 +109,10 @@ Boolean    AM_isFailInstr(CSpacePtr cptr)    { return (cptr == AM_failCode); }
 //is the given addr referring to a register?
 Boolean AM_regAddr(MemPtr p)
 {
-    return ((((MemPtr)AM_reg) <= p) && (p < (MemPtr)(AM_reg + AM_NUM_OF_REG)));
+  //TODO:
+  //  AM_reg lacked conversion to MemPtr; why is a function getting
+  //  converted in this way?
+  return ((((MemPtr)AM_reg) <= p) && (p < (MemPtr)((MemPtr)AM_reg + AM_NUM_OF_REG)));
 }
 //is the given addr on stack?
 Boolean AM_stackAddr(MemPtr p)    { return (p > AM_hreg);                      }
