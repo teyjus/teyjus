@@ -656,10 +656,20 @@ let rec genSTermsCode regTermPairs chunk lowval last hasenv =
   genSTermsCodeAux regTermPairs [] 0 
   
 (****************************************************************************)
-(* genSTermCode:                                                            *)
-(* The main routine that generates code for putting terms into registers;   *)
-(* this may be invoked to set up the arguments for an atomic goals or to    *)
-(* construct structured parts of a structured term.                         *)
+(* genSTermCode and genSTermCodesansReg:                                    *)
+(* The main routines for generating code for putting terms into registers.  *)
+(* The first is used to set up the arguments for an atomic goal and the     *)
+(* second for constructing the structured parts of a structured term.       *)
+(* Two versions are needed because in the first case the registers in which *)
+(* the terms have to be put are predetermined (these are the argument       *)
+(* registers) whereas in the second case we hold off on assigning registers *)
+(* till after the subterms have been constructed so that we may reuse the   *)
+(* registers employed in the course of doing this. This is important since  *)
+(* big terms require more than the available number of registers otherwise. *)
+(* The difference in the two versions shows up in the fact that the first   *)
+(* takes a register as input whereas the second returns the register it     *)
+(* assigns to hold the term.                                                *)
+(*                                                                          *)
 (* The hasenv parameter is needed to distinguish between set_variable_t and *)
 (* set_variable_te: one that looks at the environment for the UC value and  *)
 (* the other that looks at the UC register.                                 *)
@@ -671,8 +681,8 @@ let rec genSTermsCode regTermPairs chunk lowval last hasenv =
 (* or not such a normalization instruction is to be emitted. This routine   *)
 (* returns a truth value that indicates whether or not the head is a        *)
 (* variable; this is needed because the routine can be called recursively   *)
-(* (e.g. genPuttingAppCode) and the decision of whether or not              *)
-(* to normalize can only be made at the call site.                          *)
+(* (e.g. see genSTermCodeApp) and the decision of whether or not to         *)
+(* normalize can only be made at the call site.                             *)
 (****************************************************************************)
 and genSTermCode regNum term chunk lowval last hasenv normalize =
   
@@ -810,6 +820,157 @@ and genSTermCode regNum term chunk lowval last hasenv normalize =
   | Absyn.ApplicationTerm(_)           ->  genSTermCodeApp term regNum 
   | _ -> genSTermCodeAbst term regNum (* must be abstraction then*) 
 
+
+(****************************************************************************)
+(* Here begins the second version, genSTermCodesansReg                      *)
+(****************************************************************************)
+and genSTermCodesansReg term chunk lowval last hasenv normalize =
+  
+  (* constant without type associations *)
+  let genSTermCodeMConstsansReg c =
+	let regNum = Registers.getHighFreeReg () in
+	if (Pervasive.isnilConstant c) then
+	  ([Instr.Ins_put_nil(regNum)], Instr.getSize_put_nil, regNum, false)
+	else
+	  ([Instr.Ins_put_m_const(regNum, c)], Instr.getSize_put_m_const, regNum, false)
+  in
+
+  (* constant with type associations *)
+  let genSTermCodePConstsansReg c tyenv =
+	let (typeCode, typeCodeSize, regTypePairs) =
+	  genSTypeArgsCode tyenv chunk lowval 
+	in
+        let regNum = Registers.getHighFreeReg () in
+	let (inst, size) = 
+	  (Instr.Ins_put_p_const(regNum, c), Instr.getSize_put_p_const)
+	in
+	let (typeSettingCode, typeSettingCodeSize) =
+	  genTypeSettingCode regTypePairs chunk lowval 
+	in
+	(typeCode @ (inst :: typeSettingCode),
+	 typeCodeSize + size + typeSettingCodeSize, regNum, false)
+  in
+
+  (* list cons (special case of application term) *)
+  let genSTermCodeConssansReg args =
+	let (argsCode, argsCodeSize, regTermList) = 
+	  genSTermArgsCode args chunk lowval hasenv 
+	in
+        let regNum = Registers.getHighFreeReg () in
+	let (inst, size) = (Instr.Ins_put_list(regNum), Instr.getSize_put_list) in
+	let (argsSettingCode, argsSettingCodeSize) =
+	  genTermSettingCode regTermList chunk lowval hasenv
+	in
+	(argsCode @ (inst :: argsSettingCode),
+	 argsCodeSize + argsSettingCodeSize + size, regNum, false)
+  in
+
+  (* auxiliary function used in genSTermCodeApp and genSTermCodeAbst  *)
+  (* for putting rigid application head or variable abstraction body. *)       
+  let genRigidsansReg rterm  =
+	let (insts, size, regNum, _) =
+	  genSTermCodesansReg rterm chunk lowval false hasenv false
+	in
+	(insts, size, regNum, false, true, false)
+  in
+
+  (* auxiliary function used in genSTermCodeApp and genSTermCodeAbst  *)
+  (* for free registers.                                              *)
+  let discardRegister regNum discard freeReg =
+	(if discard then Registers.markUnusedReg regNum else ());
+	if freeReg then Registers.mkRegFree regNum else ()
+  in
+  
+  (* The innards of creating an application. The main complication in this *)
+  (* part is dealing with the situation where the head is a free variable; *)
+  (* this value may need to be globalized.                                 *)
+  let genSTermCodeAppsansReg app =
+	let func = Absyn.getTermApplicationHead  term in
+	let args = Absyn.getTermApplicationArguments  term in
+	if (Absyn.isTermConstant func) && 
+	   (Pervasive.isconsConstant (Absyn.getTermConstant func))
+	then genSTermCodeConssansReg args
+	else                                       (* head code *)
+	  let (headCode, headSize, headReg, varHead, discardReg, freeReg) = 
+		if (Absyn.isTermFreeVariable func) then genGlobalize func chunk lowval
+		else genRigidsansReg func 
+	  in
+	  let (argsCode, argsSize, regTermList) = (* args code *)
+		genSTermArgsCode args chunk lowval hasenv 
+	  in
+	  let regNum = Registers.getHighFreeReg () in
+          let (inst, size) =                       (* put_app code *)
+		(Instr.Ins_put_app(regNum,headReg, Absyn.getTermApplicationArity term),
+		 Instr.getSize_put_app)
+	  in
+	  discardRegister headReg discardReg freeReg;
+	  let (argsSettingCode, argsSettingSize) = (* args setting code *)
+		genTermSettingCode regTermList chunk lowval hasenv 
+	  in
+	  if (normalize && varHead) then
+		(headCode @ argsCode @ (inst :: argsSettingCode) @ 
+		 [Instr.Ins_head_normalize_t(regNum)], 
+		 headSize+argsSize+size+argsSettingSize+Instr.getSize_head_normalize_t,
+                 regNum,
+		 varHead)
+	  else
+		(headCode @ argsCode @ (inst :: argsSettingCode),
+		 headSize + argsSize + size + argsSettingSize, regNum, varHead)
+  in
+
+  (*The innards of creating an abstraction term. The main complication in  *)
+  (*this part is that of dealing with the case when the body is a variable.*)
+  let genSTermCodeAbstsansReg abst =
+	let body   = Absyn.getTermAbstractionBody term in
+	let numAbs = Absyn.getTermAbstractionNumberOfLambda term in
+	let (bodyCode, bodySize, bodyReg, varHead, discardReg, freeReg) =
+	  if (Absyn.isTermFreeVariable body) then genGlobalize body chunk lowval
+	  else genRigidsansReg body
+	in
+        let regNum = Registers.getHighFreeReg () in
+	let (inst, size) = 
+	  if (normalize && varHead) then
+		([Instr.Ins_put_lambda(regNum, bodyReg, numAbs);
+		  Instr.Ins_head_normalize_t(regNum)],
+		 Instr.getSize_put_lambda + Instr.getSize_head_normalize_t)
+	  else 
+		([Instr.Ins_put_lambda(regNum, bodyReg, numAbs)], 
+		 Instr.getSize_put_lambda)
+	in
+	discardRegister bodyReg discardReg freeReg;
+	(bodyCode @ inst, bodySize + size, regNum, varHead)
+  in
+
+  (* function body of genSTermCodesansReg *)
+  match term with 
+	Absyn.IntTerm(i, _, _)             ->
+	  let regNum = Registers.getHighFreeReg () in
+          ([Instr.Ins_put_integer (regNum, i)], Instr.getSize_put_integer, regNum, false)
+  | Absyn.RealTerm(r, _, _)            ->
+	  let regNum = Registers.getHighFreeReg () in
+          ([Instr.Ins_put_float(regNum, r)], Instr.getSize_put_float, regNum, false)
+  | Absyn.StringTerm(s, _, _)          ->
+	  let regNum = Registers.getHighFreeReg () in
+	  ([Instr.Ins_put_string(regNum, Absyn.getStringInfoIndex s)],
+	   Instr.getSize_put_string, regNum, false)
+  | Absyn.BoundVarTerm(_)              ->
+	  let regNum = Registers.getHighFreeReg () in
+	  ([Instr.Ins_put_index(regNum, Absyn.getTermBoundVariableDBIndex term)],
+	   Instr.getSize_put_index, regNum, false)
+  | Absyn.ConstantTerm(c, [], _, _)    -> 
+	  genSTermCodeMConstsansReg c
+  | Absyn.ConstantTerm(c, tyenv, _, _) ->
+	  genSTermCodePConstsansReg c tyenv
+  | Absyn.FreeVarTerm(_)               ->
+	  let regNum = Registers.getHighFreeReg () in
+	  let (inst, size) =
+		genPuttingVarCode term regNum chunk lowval last normalize
+	  in
+	  (inst, size, regNum, false) 
+  | Absyn.ApplicationTerm(_)           ->  genSTermCodeAppsansReg term
+  | _ -> genSTermCodeAbstsansReg term (* must be abstraction then*) 
+
+
 (****************************************************************************)
 (* genSTermArgsCode:                                                        *)
 (* Generating code for creating the arguments of a structure term. For      *)
@@ -820,9 +981,8 @@ and genSTermCode regNum term chunk lowval last hasenv normalize =
 and genSTermArgsCode args chunk lowval hasenv  =
   (* for complex term *)
   let rec genSTermArgComplex term rest instsBlocks instsSize regTermList =
-	let regNum = Registers.getHighFreeReg () in
-	let (inst, size, _) =
-	  genSTermCode regNum term chunk lowval false hasenv false
+	let (inst, size, regNum, _) =
+	  genSTermCodesansReg term chunk lowval false hasenv false
 	in
 	genSTermArgsCodeAux rest (inst :: instsBlocks) (size + instsSize) 
 	                    ((RegTmReg regNum) :: regTermList)
