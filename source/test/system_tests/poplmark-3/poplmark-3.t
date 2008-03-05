@@ -15,7 +15,7 @@ of ((tabs top X\ (tabs X S\ (tabs X Z\ (abs (arrow X S) s\ (abs Z z\ (app s z)))
 CODE
 $ans = <<'ANS';
 ANS
-same_answers( `$TJSIM -b $PATH --solve "$code" $MODULE\n`, $ans,"append");
+same_answers( `$TJSIM -b $PATH --solve "$code" $MODULE\n`, $ans,"poplmark-3");
 ############################################
 ############################################
 $code = <<'CODE';
@@ -23,7 +23,7 @@ of ((abs (forall top A\ (forall A B\ (forall A C\ (arrow (arrow A B) (arrow C A)
 CODE
 $ans = <<'ANS';
 ANS
-same_answers( `$TJSIM -b $PATH --solve "$code" $MODULE\n`, $ans,"append");
+same_answers( `$TJSIM -b $PATH --solve "$code" $MODULE\n`, $ans,"poplmark-3");
 
 ############################################
 ############################################
@@ -32,7 +32,7 @@ of ((abs (forall top X\ (forall X S\ (forall X Z\ (arrow (arrow X S) (arrow Z S)
 CODE
 $ans = <<'ANS';
 ANS
-same_answers( `$TJSIM -b $PATH --solve "$code" $MODULE\n`, $ans,"pi append");
+same_answers( `$TJSIM -b $PATH --solve "$code" $MODULE\n`, $ans,"pi poplmark-3");
 
 ############################################
 ############################################
@@ -41,7 +41,7 @@ of ((abs (forall top X\ (forall X S\ (forall X Z\ (arrow (arrow X S) (arrow Z S)
 CODE
 $ans = <<'ANS';
 ANS
-same_answers( `$TJSIM -b $PATH --solve "$code" $MODULE\n`, $ans,"append");
+same_answers( `$TJSIM -b $PATH --solve "$code" $MODULE\n`, $ans,"poplmark-3");
 
 ############################################
 ############################################
@@ -50,7 +50,7 @@ of ((tabs top B301808\ (tabs B301808 B301831\ (tabs B301808 B301854\ (abs (arrow
 CODE
 $ans = <<'ANS';
 ANS
-same_answers( `$TJSIM -b $PATH --solve "$code" $MODULE\n`, $ans,"append");
+same_answers( `$TJSIM -b $PATH --solve "$code" $MODULE\n`, $ans,"poplmark-3");
 
 ############################################
 ############################################
@@ -59,7 +59,7 @@ step ((app (app (abs (forall top X\ (forall X S\ (forall X Z\ (arrow (arrow X S)
 CODE
 $ans = <<'ANS';
 ANS
-same_answers( `$TJSIM -b $PATH --solve "$code" $MODULE\n`, $ans,"append");
+same_answers( `$TJSIM -b $PATH --solve "$code" $MODULE\n`, $ans,"poplmark-3");
 
 ############################################
 ############################################
@@ -85,7 +85,7 @@ same_answers( `$TJSIM -b $PATH --solve "$code" $MODULE\n`, $ans,"memb");
 ############################################
 
 $code = <<'CODE';
-of ((app (abs (forall top X\ (forall X S\ (forall X Z\ (arrow (arrow X S) (arrow Z S))))) b41\ (tabs top B64\ (tabs B64 B87\ (tabs B64 B110\ (abs (arrow B64 B87) b121\ (app (tapp (tapp (tapp (tabs top B90\ (tabs B90 B113\ (tabs B90 B136\ (abs (arrow B90 B113) b147\ (abs B136 b158\ (app b147 b158)))))) B64) B87) B110) (app (tapp (tapp (tapp b41 B64) B87) B64) b121))))))) (tabs top B509\ (tabs B509 B532\ (tabs B509 B555\ (abs (arrow B509 B532) b566\ (abs B555 b577\ (app (app (tapp (tapp (tapp (tabs top B718\ (tabs B718 B741\ (tabs B718 B764\ (abs (arrow B718 B741) b775\ (abs B764 b786\ (app b775 b786)))))) B509) B532) B532) b566) (app (app (tapp (tapp (tapp (tabs top B1215\ (tabs B1215 B1238\ (tabs B1215 B1261\ (abs (arrow B1215 B1238) b1272\ (abs B1261 b1283\ (app b1272 b1283)))))) B509) B532) B555) b566) b577))))))))) ((tabs top B31\ (tabs B31 B54\ (tabs B31 B77\ (abs (arrow B31 B54) b88\ (app (tapp (tapp (tapp (tabs top B212\ (tabs B212 B31\ (tabs B212 B258\ (abs (arrow B212 B31) b269\ (abs B258 b280\ (app b269 b280)))))) B31) B54) B77) (app (tapp (tapp (tapp (tabs top B509\ (tabs B509 B532\ (tabs B509 B555\ (abs (arrow B509 B532) b566\ (abs B555 b577\ (app (app (tapp (tapp (tapp (tabs top B718\ (tabs B718 B741\ (tabs B718 B764\ (abs (arrow B718 B741) b775\ (abs B764 b786\ (app b775 b786)))))) B509) B532) B532) b566) (app (app (tapp (tapp (tapp (tabs top B1215\ (tabs B1215 B1238\ (tabs B1215 B1261\ (abs (arrow B1215 B1238) b1272\ (abs B1261 b1283\ (app b1272 b1283)))))) B509) B532) B555) b566) b577))))))) B31) B54) B31) b88))))))).
+step ((app (abs (forall top X\ (forall X S\ (forall X Z\ (arrow (arrow X S) (arrow Z S))))) b41\ (tabs top B64\ (tabs B64 B87\ (tabs B64 B110\ (abs (arrow B64 B87) b121\ (app (tapp (tapp (tapp (tabs top B90\ (tabs B90 B113\ (tabs B90 B136\ (abs (arrow B90 B113) b147\ (abs B136 b158\ (app b147 b158)))))) B64) B87) B110) (app (tapp (tapp (tapp b41 B64) B87) B64) b121))))))) (tabs top B509\ (tabs B509 B532\ (tabs B509 B555\ (abs (arrow B509 B532) b566\ (abs B555 b577\ (app (app (tapp (tapp (tapp (tabs top B718\ (tabs B718 B741\ (tabs B718 B764\ (abs (arrow B718 B741) b775\ (abs B764 b786\ (app b775 b786)))))) B509) B532) B532) b566) (app (app (tapp (tapp (tapp (tabs top B1215\ (tabs B1215 B1238\ (tabs B1215 B1261\ (abs (arrow B1215 B1238) b1272\ (abs B1261 b1283\ (app b1272 b1283)))))) B509) B532) B555) b566) b577))))))))) ((tabs top B31\ (tabs B31 B54\ (tabs B31 B77\ (abs (arrow B31 B54) b88\ (app (tapp (tapp (tapp (tabs top B212\ (tabs B212 B31\ (tabs B212 B258\ (abs (arrow B212 B31) b269\ (abs B258 b280\ (app b269 b280)))))) B31) B54) B77) (app (tapp (tapp (tapp (tabs top B509\ (tabs B509 B532\ (tabs B509 B555\ (abs (arrow B509 B532) b566\ (abs B555 b577\ (app (app (tapp (tapp (tapp (tabs top B718\ (tabs B718 B741\ (tabs B718 B764\ (abs (arrow B718 B741) b775\ (abs B764 b786\ (app b775 b786)))))) B509) B532) B532) b566) (app (app (tapp (tapp (tapp (tabs top B1215\ (tabs B1215 B1238\ (tabs B1215 B1261\ (abs (arrow B1215 B1238) b1272\ (abs B1261 b1283\ (app b1272 b1283)))))) B509) B532) B555) b566) b577))))))) B31) B54) B31) b88))))))).
 CODE
 $ans = <<'ANS';
 ANS
