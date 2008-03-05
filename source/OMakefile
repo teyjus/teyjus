@@ -18,6 +18,7 @@ TBL = $(dir tables)
 LOD = $(dir loader)
 LNK = $(dir linker)
 TST = $(dir test)
+INC = $(dir include)
 
 OCAMLINCLUDES += $(CMP) $(DIS) $(SIM) $(LOD)
 
@@ -142,7 +143,9 @@ LNK_C[] =
     $(LNK)/tyskel
     $(LNK)/vector
     $(LNK)/VectorRW
-    
+
+INC_C[] =
+    $(INC)/obstack
 
 DIS_MAIN = $(FNT)/disassemblerfront
 CMP_MAIN = $(FNT)/compilerfront
@@ -201,7 +204,7 @@ gen: $(INSTR_ML_FILES) $(PERV_ML_FILES) $(INSTR_C_FILES) $(PERV_C_FILES)
 # Include subdirectories
 #
 
-.SUBDIRS: compiler disassembler front linker loader simulator system tables
+.SUBDIRS: compiler disassembler front include linker loader simulator system tables
     if $(file-exists OMakefile)
         include OMakefile
 
@@ -215,7 +218,8 @@ OCamlProgram(tjcc, $(CMP_MAIN) $(CMP_ML) $(LOD_ML) $(FNT_ML))
 OCamlProgram(tjdis, $(DIS_MAIN) $(CMP_ML) $(LOD_ML) $(DIS_ML) $(FNT_ML))
 
 # For the simulator we need to package all the C code into a library first
-StaticCLibrary(libsim, $(SIM_C) $(SYS_C) $(TBL_C) $(FNT_C) $(LOD_C) $(LNK_C))
+StaticCLibrary(libsim, \
+  $(SIM_C) $(SYS_C) $(TBL_C) $(FNT_C) $(LOD_C) $(LNK_C) $(INC_C))
 OCAML_CLIBS += libsim
 OCamlProgram(tjsim, $(SIM_MAIN) $(LOD_ML) $(CMP_ML) $(FNT_ML) $(FNT_ML_TO_C))
 
