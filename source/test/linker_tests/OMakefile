@@ -38,6 +38,3 @@ SUBDIRS = $(glob D, *)
     update-compiler-test: $(addsuffix .dis-actual, $(FILES))
         foreach(file, $(FILES))
             cp $(file).dis-actual $(file).dis
-
-    clean:
-        rm -f *.lp *.lpo *.dis-actual actual
