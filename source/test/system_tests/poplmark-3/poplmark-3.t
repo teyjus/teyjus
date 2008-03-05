@@ -1,10 +1,10 @@
 use lib '../lib';
 use strict;
-use Test::More tests => 9;
+use Test::More tests => 12;
 
 my $TJSIM = "../../tjsim";
 my $PATH = "-p poplmark-3/";
-my $MODULE = "poplmark";
+my $MODULE = "poplmark-3";
 my $code;
 my $ans;
 
