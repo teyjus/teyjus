@@ -18,6 +18,3 @@ system-test: $(TJSIM)
 
     LPProgram($(ROOT), $(FILES))
     system-test: $(ROOT).lp
-
-    clean:
-        rm -f *.lp *.lpo
