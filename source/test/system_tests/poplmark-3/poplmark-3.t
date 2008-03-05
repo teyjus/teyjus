@@ -15,7 +15,7 @@ of ((tabs top X\ (tabs X S\ (tabs X Z\ (abs (arrow X S) s\ (abs Z z\ (app s z)))
 CODE
 $ans = <<'ANS';
 ANS
-same_answers( `$TJSIM -b $PATH --solve "$code" $MODULE\n`, $ans,"poplmark-3");
+same_answers( `$TJSIM -b $PATH --solve "$code" -m 1 $MODULE\n`, $ans,"poplmark-3");
 ############################################
 ############################################
 $code = <<'CODE';
@@ -23,7 +23,7 @@ of ((abs (forall top A\ (forall A B\ (forall A C\ (arrow (arrow A B) (arrow C A)
 CODE
 $ans = <<'ANS';
 ANS
-same_answers( `$TJSIM -b $PATH --solve "$code" $MODULE\n`, $ans,"poplmark-3");
+same_answers( `$TJSIM -b $PATH --solve "$code" -m 1 $MODULE\n`, $ans,"poplmark-3");
 
 ############################################
 ############################################
@@ -32,7 +32,7 @@ of ((abs (forall top X\ (forall X S\ (forall X Z\ (arrow (arrow X S) (arrow Z S)
 CODE
 $ans = <<'ANS';
 ANS
-same_answers( `$TJSIM -b $PATH --solve "$code" $MODULE\n`, $ans,"pi poplmark-3");
+same_answers( `$TJSIM -b $PATH --solve "$code" -m 1 $MODULE\n`, $ans,"pi poplmark-3");
 
 ############################################
 ############################################
@@ -41,7 +41,7 @@ of ((abs (forall top X\ (forall X S\ (forall X Z\ (arrow (arrow X S) (arrow Z S)
 CODE
 $ans = <<'ANS';
 ANS
-same_answers( `$TJSIM -b $PATH --solve "$code" $MODULE\n`, $ans,"poplmark-3");
+same_answers( `$TJSIM -b $PATH --solve "$code" -m 1 $MODULE\n`, $ans,"poplmark-3");
 
 ############################################
 ############################################
@@ -50,7 +50,7 @@ of ((tabs top B301808\ (tabs B301808 B301831\ (tabs B301808 B301854\ (abs (arrow
 CODE
 $ans = <<'ANS';
 ANS
-same_answers( `$TJSIM -b $PATH --solve "$code" $MODULE\n`, $ans,"poplmark-3");
+same_answers( `$TJSIM -b $PATH --solve "$code" -m 1 $MODULE\n`, $ans,"poplmark-3");
 
 ############################################
 ############################################
