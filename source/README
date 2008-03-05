@@ -120,6 +120,5 @@ All tests reside in teyjus/source/test.
 
 3. system test
 
-   use "omake compiler-test" under teyjus/source/test/system_test to compile;
-   use "perl harness" under teyjus/source/test/system_test to run the test
-   suites.
+   use "omake system-test" under teyjus/source/test
+

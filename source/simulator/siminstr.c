@@ -630,7 +630,7 @@ void SINSTR_unify_value_p()             //unify_value Yi -- E_X
         if (AM_ocFlag) SINSTRL_bindSreg(tmPtr);
         else {// AM_ocFlag == OFF
             if (AM_stackAddr((MemPtr)tmPtr)) { //needed?; in fact, what if a fv?
-                printf("unify_value_p -- stack addr\n");
+                //printf("unify_value_p -- stack addr\n");
                 DF_copyAtomic(tmPtr, (MemPtr)AM_sreg);
             } else DF_mkRef((MemPtr)AM_sreg, tmPtr);
         }
