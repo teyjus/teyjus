@@ -1,5 +1,9 @@
 SUBDIRS = $(glob D, *)
 
+.PHONY: system-test
+system-test: $(TJSIM)
+    perl harness
+
 .SUBDIRS: $(SUBDIRS)
     # The default root file is the name of the test directory
     ROOT = $(basename $(absname $(CWD)))
@@ -11,33 +15,9 @@ SUBDIRS = $(glob D, *)
         export
 
     FILES = $(rootname $(glob *.mod))
+
     LPProgram($(ROOT), $(FILES))
-
-    actual: $(TJDIS) $(ROOT).lp
-        $(TJDIS) --link $(ROOT).lp > actual
-
-    test: actual expected
-        diff expected actual
-
-    # This target updates the tests so they pass
-    .PHONY: update-test
-    update-test: actual
-        cp actual expected
-
-    # Tests for just the compiler - no linking step
-    %.dis-actual: %.lpo $(TJDIS)
-        $(TJDIS) $< >$@
-
-    .PHONY: compiler-test
-    compiler-test: $(TJDIS) $(addsuffix .dis-actual, $(FILES))
-        foreach(file, $(FILES))
-            diff $(file).dis $(file).dis-actual
-
-    # This target updates the compiler-tests so they pass
-    .PHONY: update-compiler-test
-    update-compiler-test: $(addsuffix .dis-actual, $(FILES))
-        foreach(file, $(FILES))
-            cp $(file).dis-actual $(file).dis
+    system-test: $(ROOT).lp
 
     clean:
-        rm -f *.lp *.lpo *.dis-actual actual
+        rm -f *.lp *.lpo
