@@ -69,13 +69,13 @@ L13                 get_p_structure          A1, tc1, #1
                     put_p_const              A255, tc1
                     set_type_local_value_t   A5
                     set_type_variable_t      A5
-                    put_p_const              A253, tc1
+                    put_p_const              A254, tc1
                     set_type_local_value_t   A5
                     set_type_local_value_t   A3
-                    put_app                  A254, A253, #1
+                    put_app                  A253, A254, #1
                     set_value_t              A4
                     put_app                  A1, A255, #1
-                    set_value_t              A254
+                    set_value_t              A253
                     execute_name             foo
 L1                  try                      #2, L11
                     retry                    #2, L12

@@ -10,11 +10,11 @@ L0                  try                      #1, L1
                     trust_ext                #1, #1
 L1                  try_me_else              #1, L2
                     allocate                 #2
-                    put_variable_t           A253, A254
-                    put_app                  A255, A254, #2
+                    put_variable_t           A254, A255
+                    put_app                  A254, A255, #2
                     set_m_const              a
                     set_m_const              b
-                    pattern_unify_t          A255, A1
+                    pattern_unify_t          A254, A1
                     finish_unify             
                     put_variable_p           Y1, A255
                     globalize_t              A255
@@ -31,26 +31,26 @@ L2                  trust_me                 #1
                     allocate                 #2
                     get_m_structure          A1, appl, #1
                     unify_variable_t         A255
-                    put_variable_t           A252, A253
-                    put_app                  A254, A253, #2
+                    put_variable_t           A253, A254
+                    put_app                  A253, A254, #2
                     set_m_const              a
                     set_m_const              b
-                    pattern_unify_t          A254, A255
+                    pattern_unify_t          A253, A255
                     finish_unify             
                     put_m_const              A255, appl
-                    put_variable_p           Y1, A253
-                    globalize_t              A253
-                    put_app                  A254, A253, #1
+                    put_variable_p           Y1, A254
+                    globalize_t              A254
+                    put_app                  A253, A254, #1
                     set_m_const              a
                     put_app                  A1, A255, #1
-                    set_value_t              A254
+                    set_value_t              A253
                     call_name                #1, foo
                     put_m_const              A255, appl
-                    globalize_pt             Y1, A253
-                    put_app                  A254, A253, #1
+                    globalize_pt             Y1, A254
+                    put_app                  A253, A254, #1
                     set_m_const              b
                     put_app                  A1, A255, #1
-                    set_value_t              A254
+                    set_value_t              A253
                     deallocate               
                     execute_name             foo
 

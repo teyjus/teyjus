@@ -10,8 +10,8 @@ L0                  try                      #2, L1
                     trust_ext                #2, #1
                     try_me_else              #0, L2
 L1                  get_type_constant        A2, int
-                    put_m_const              A253, %i+
-                    put_app                  A254, A253, #2
+                    put_m_const              A255, %i+
+                    put_app                  A254, A255, #2
                     set_index                #1
                     set_integer              3
                     put_lambda               A255, A254, #1
