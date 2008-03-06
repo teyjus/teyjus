@@ -79,10 +79,10 @@ int QUERY_showAnswers()
         }
         
         PRINT_resetPrintState();  /* reset printer state after display */
-        return EM_NO_ERR;
     } EM_CATCH {
         return EM_CurrentExnType;
     }
+    return EM_NO_ERR;
 }
 
 void QUERY_setQueryFreeVariables()
@@ -92,6 +92,5 @@ void QUERY_setQueryFreeVariables()
 
 Boolean QUERY_queryHasVars()
 {
-    PRINT_queryHasVars();
-    return TRUE;
+    return PRINT_queryHasVars();
 }
