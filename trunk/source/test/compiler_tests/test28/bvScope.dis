@@ -13,11 +13,11 @@ L2                  switch_on_term           L4, L5, L3, L4
 L4                  try_me_else              #1, L6
 L7                  get_m_structure          A1, abs, #1
                     unify_variable_t         A255
-                    put_m_const              A252, abs
-                    put_index                A250, #1
-                    put_lambda               A251, A250, #1
-                    put_app                  A253, A252, #1
-                    set_value_t              A251
+                    put_m_const              A254, abs
+                    put_index                A253, #1
+                    put_lambda               A252, A253, #1
+                    put_app                  A253, A254, #1
+                    set_value_t              A252
                     put_lambda               A254, A253, #1
                     pattern_unify_t          A254, A255
                     finish_unify             
@@ -25,15 +25,15 @@ L7                  get_m_structure          A1, abs, #1
 L6                  trust_me                 #1
 L8                  get_m_structure          A1, abs, #1
                     unify_variable_t         A255
-                    put_m_const              A252, app
-                    put_m_const              A250, abs
-                    put_index                A248, #1
-                    put_lambda               A249, A248, #1
-                    put_app                  A251, A250, #1
-                    set_value_t              A249
-                    put_app                  A253, A252, #2
-                    set_index                #1
+                    put_m_const              A254, app
+                    put_m_const              A253, abs
+                    put_index                A252, #1
+                    put_lambda               A251, A252, #1
+                    put_app                  A252, A253, #1
                     set_value_t              A251
+                    put_app                  A253, A254, #2
+                    set_index                #1
+                    set_value_t              A252
                     put_lambda               A254, A253, #1
                     pattern_unify_t          A254, A255
                     finish_unify             
