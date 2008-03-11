@@ -76,7 +76,7 @@ first in the file.
 
 //Common field formats
 [String] (Strings should not contain a '\0' terminator).
-<length of string in bytes> --- 1 byte
+<length of string in bytes> --- 4 bytes
 {
   <ith character of string> --- 1 byte
 }
