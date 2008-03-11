@@ -141,7 +141,11 @@ let writefloat4 number =
 (* the leading byte contains the length of the string  *)
 (* and is followed by a sequence of characters.        *)
 let writeString str =
-  writeint1 (String.length str);
+  writeint4 (String.length str);
+  output_string (getOutChannel ()) str
+
+let writeLongString str =
+  writeint4 (String.length str);
   output_string (getOutChannel ()) str
 
 (* write a kind index:                                 *)
@@ -198,7 +202,7 @@ let readWord () = readNBytes (getInChannel ()) (getWordSize ())
 (* read a string  *)
 let readString () =
   let input = getInChannel () in
-  let length = readNBytes input 1 in
+  let length = readNBytes input 4 in
   let myString = String.make length ' ' in
   let rec readStringAux index =
 	if (index = length) then ()
@@ -207,7 +211,20 @@ let readString () =
 	   readStringAux (index + 1))
   in
   readStringAux 0;
-  myString  
+  myString 
+
+let readLongString () = 
+  let input = getInChannel() in
+  let length = readNBytes input 4 in
+  let myString = String.make length ' ' in
+  let rec readStringAux index =
+	if (index = length) then ()
+	else 
+	  (String.set myString index (input_char input);
+	   readStringAux (index + 1))
+  in
+  readStringAux 0;
+  myString 
 
 (* skip n bytes   *)
 let skipNBytes numberBytes =
