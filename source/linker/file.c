@@ -104,12 +104,12 @@ Byte LK_FILE_GET1(int fd)
 char* LK_FILE_GetString(int fd)
 {
   char* tmp;
-  Byte size=LK_FILE_GET1(fd);
-  //printf("Name:%d ",size);//DEBUG
+  int size=LK_FILE_GET4(fd);
+  //fprintf(stderr, "Name:%d ",size);//DEBUG
   tmp=(char *)EM_malloc(size+1);
   read(fd,tmp,size);
   tmp[size]='\0';
-  //printf("\"%s\"\n",tmp);//DEBUG
+  //fprintf(stderr, "\"%s\"\n",tmp);//DEBUG
   return tmp;
 }
 
@@ -156,7 +156,8 @@ void LK_FILE_PUTWord(int fd, Word x)
 
 void LK_FILE_PutString(int fd, char* str)
 {
-  Byte size=strlen(str);
-  LK_FILE_PUT1(fd,size);
+  int size=strlen(str);
+  LK_FILE_PUT4(fd,size);
   write(fd,str,size);
 }
+
