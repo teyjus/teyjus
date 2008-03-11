@@ -15,7 +15,7 @@ let incrline lexbuf =
       pos_bol = lexbuf.lex_curr_p.pos_cnum ;
       pos_lnum = 1 + lexbuf.lex_curr_p.pos_lnum }
 
-let maxStringLength = 257
+let maxStringLength = Int32.to_int(Int32.max_int)
 
 let commentLev = ref 0
 

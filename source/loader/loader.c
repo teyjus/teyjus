@@ -95,13 +95,16 @@ void LD_LOADER_LoadLinkcodeVer()
 ///\note Check Purpose of module name in file
 void LD_LOADER_LoadModuleName(char* modname)
 {
-  char buf[1024];
-  int len=LD_FILE_GET1();
+  char *buf;
+  int len=LD_FILE_GET4();
+  buf = EM_malloc(len+1);
   LD_FILE_GetString(buf,len);
   if(0!=strcmp(buf,modname)){
     LD_error("Unexpected module name %s in %s%s",buf,modname,LINKCODE_EXT);
+    free(buf);
     EM_THROW(LD_LoadError);
   }
+  free(buf);
 }
 
 /* get a module table entry of given index from the global module tables   */

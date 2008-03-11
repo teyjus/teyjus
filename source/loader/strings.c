@@ -25,7 +25,7 @@ void LD_STRING_LoadStrings(MEM_GmtEnt* ent)
 DF_StrDataPtr LD_STRING_LoadString(MEM_GmtEnt* ent)
 {
   DF_StrDataPtr loc;
-  int str_length=LD_FILE_GET1();
+  int str_length=LD_FILE_GET4();
   char* string=(char*)EM_malloc((str_length+1)*sizeof(char));
   LD_FILE_GetString(string,str_length);
   
