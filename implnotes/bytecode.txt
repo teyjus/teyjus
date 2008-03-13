@@ -15,9 +15,8 @@ described in detail in the sibling file
 The structure of all segments is spelled out explicitly here. This
 file forms an interface between the compiler and the loader. While
 changes can be made to it to suit the needs of either, these changes
-must be approved by a gatekeeper (GN at UofC) and recorded in this
+must be approved by a gatekeeper (GN at UMN) and recorded in this
 file first before they become official. 
-
 
 Code for find code functions
 ----------------------------

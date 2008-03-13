@@ -1,4 +1,6 @@
-Compiler Module Organization:
+COMPILER MODULE ORGANIZATION:
+=============================
+
   The modules are generally divided into three kinds, those that define
   datatypes and associated functions, those that implement major
   functionality by making use of the aforementioned modules, and finally
@@ -11,9 +13,6 @@ Compiler Module Organization:
     then making calls into the Compile module to compile the specified
     module.
 
-    Eventually, a mode will have to be added to parse a single term, using
-    functionality defined in the Parse module.
-
   Compile:
     The compile module manages the compilation process.  The main function
     in the module is "compile".  This function makes calls into the Lpyacc
@@ -24,7 +23,7 @@ Compiler Module Organization:
     being compiled.  It then calls into the Clauses module to generate the
     abstract syntax for the module, and typecheck the module.  Next, type
     reduction will be applied to the module using module Typereduction.
-    Finally, codegeneration will be performed by calling into module Codegen,
+    Finally, code-generation will be performed by calling into module Codegen,
     and the output will be written to the specified file.
 
   Translate:
