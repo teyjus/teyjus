@@ -11,13 +11,14 @@
   bison
 
                           ---Windows---
-  The following dependencies must be in the path:
+  The following dependencies must be in the path.  Listed is a place
+  to get either the actual dependency, or information on procuring it.
 
-  OCaml
-  Microsoft Visual Studio 2008
-  ocamake
-  flex
-  bison
+  OCaml                           http://caml.inria.fr/
+  Microsoft Visual Studio 2008    http://msdn.microsoft.com/vstudio/
+  ocamake                         /util/ocamake.ml  (included)
+  flex                            http://gnuwin32.sourceforge.net/
+  bison                           http://gnuwin32.sourceforge.net/
 
                           BUILD SYSTEM
                           ============
@@ -39,13 +40,32 @@
   all                       omake all                  teyjus/source
 
                           ---Windows---
+  Installing dependencies:
+    Make sure that O'Caml is installed and in your path.
+    Make sure that flex and bison are in your path.
+    Build ocamake and make sure it is in your path.  To build ocamake,
+    run this command in the /util directory of the distribution:
+      ocamlc unix.cma str.cma ocamake.ml -o ocamake.exe
+    Then, copy that file into your ocaml/bin directory, or alternatively
+    modify your path.
 
-  To build the system in a Windows environment, use the provided
-  Microsoft Visual Studio 2008 solution file, (/source/VisualStudio/Teyjus.sln).
+  Building the System:
+    To build the system in a Windows environment, use the provided
+    Microsoft Visual Studio 2008 solution file, (/source/VisualStudio/Teyjus.sln).
+    
+    To build the system, simply "Build All" (Ctrl + Alt + F7).
+    The result should be "6 succeeded, 1 skipped."  The linker is not yet
+    available for standalone use, and so is skipped. The produced binaries
+    will be written to /source/VisualStudio/Debug/. 
+
+    Alternatively, it should be possible to build projects indivually by
+    simply building a particular project using "Build Project" (Ctrl + Shift + B).
   
-  To build the system, simply "Build All" (Ctrl + Alt + F7).
+    Note that there is no support for building Teyjus using omake
+    on Windows as of yet.
 
-  Note that the testing harness does not work on Windows.
+  Testing:
+    Note that the testing harness does not work on Windows.
 
                             SYSTEM USAGE
                             ============
@@ -160,3 +180,16 @@
                           ---Windows---
 
   The testing harness does not currently work on Windows.
+
+                          DOCUMENTATION
+                          =============
+  See also:
+    /source/compiler/README
+    /source/front/README
+    /source/include/README
+    /source/linker/README
+    /source/loader/README
+    /source/simulator/README
+    /source/system/README
+    /source/tables/README
+    
