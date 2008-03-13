@@ -1,4 +1,5 @@
-This text describes the structure of the READTERM module.
+READTERM MODULE
+===============
 
 This module is used to create a term on the abstract machine heap
 from its abstract syntax produced by the parser in (interpretively) solving a 

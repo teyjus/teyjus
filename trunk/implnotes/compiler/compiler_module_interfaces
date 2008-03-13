@@ -1,3 +1,6 @@
+COMPILER MODULE INTERFACES
+==========================
+
 Compiler structure:
   The compiler is organized into a series of phases, with each phase
   consuming the result of the previous phase as input, and producing
