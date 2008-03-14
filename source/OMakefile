@@ -1,9 +1,3 @@
-if $(mem $(OSTYPE), Cygwin Win32)
-    YACC = bison -by
-    LEX = flex
-    export
-
-
 ############################################################
 # Define subdirectories
 #
@@ -150,6 +144,18 @@ INC_C[] =
 DIS_MAIN = $(FNT)/disassemblerfront
 CMP_MAIN = $(FNT)/compilerfront
 SIM_MAIN = $(FNT)/simulatorfront
+
+
+############################################################
+# Win32 / Cygwin specific changes
+#
+
+if $(mem $(OSTYPE), Cygwin Win32)
+    YACC = bison -by
+    LEX = flex
+    CFLAGS += -mno-cygwin
+    INC_C[] += $(INC)/byteswap $(INC)/search
+    export
 
 
 ############################################################
