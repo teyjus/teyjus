@@ -29,6 +29,8 @@
 #include <fcntl.h>
 #include "obstack.h"
 
+#define O_BINARY 0x0000
+
 #else
 // Win32 or Cygwin with -mno-cygwin flag
 
