@@ -18,17 +18,20 @@
 #define STANDARD_LIB_H
 
 #ifndef _WIN32
+// Non-win32
 
-#include <search.h>
+#include "search.h"
 #include <sys/types.h>
 #include <unistd.h>
 #include <endian.h>
 #include <bits/wordsize.h>
-#include <byteswap.h>
+#include "byteswap.h"
 #include <fcntl.h>
 #include "obstack.h"
 
 #else
+// Win32 or Cygwin with -mno-cygwin flag
+
 #include <fcntl.h>
 #include <io.h>
 
