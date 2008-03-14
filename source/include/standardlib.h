@@ -25,7 +25,7 @@
 #include <unistd.h>
 #include <endian.h>
 #include <bits/wordsize.h>
-#include "byteswap.h"
+#include <byteswap.h>
 #include <fcntl.h>
 #include "obstack.h"
 
