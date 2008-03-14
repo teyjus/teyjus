@@ -50,7 +50,7 @@ int LK_FILE_OpenOutput(char* modname, char* extension)
   char* buf=(char *)EM_malloc(strlen(modname)+strlen(extension)+1);
   sprintf(buf,"%s%s",modname,extension);
   
-  fd=open(buf,O_WRONLY|O_CREAT|O_TRUNC,0666);
+  fd=open(buf,O_WRONLY|O_CREAT|O_TRUNC|O_BINARY,0666);
   if(fd==-1)
   {
     bad("Couldn't open file %s for writing.\n",buf); 
