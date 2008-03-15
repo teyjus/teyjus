@@ -11,14 +11,18 @@
   bison
 
                           ---Windows---
-  The following dependencies must be in the path.  Listed is a place
-  to get either the actual dependency, or information on procuring it.
+  Cygwin:
+    See *nix.
 
-  OCaml                           http://caml.inria.fr/
-  Microsoft Visual Studio 2008    http://msdn.microsoft.com/vstudio/
-  ocamake                         /util/ocamake.ml  (included)
-  flex                            http://gnuwin32.sourceforge.net/
-  bison                           http://gnuwin32.sourceforge.net/
+  Microsoft Visual Studio 2008:
+    The following dependencies must be in the path.  Listed is a place
+    to get either the actual dependency, or information on procuring it.
+  
+    OCaml                           http://caml.inria.fr/
+    Microsoft Visual Studio 2008    http://msdn.microsoft.com/vstudio/
+    ocamake                         /util/ocamake.ml  (included)
+    flex                            http://gnuwin32.sourceforge.net/
+    bison                           http://gnuwin32.sourceforge.net/
 
                           BUILD SYSTEM
                           ============
