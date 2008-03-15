@@ -53,7 +53,12 @@
     To build the system in a Windows environment, use the provided
     Microsoft Visual Studio 2008 solution file, (/source/VisualStudio/Teyjus.sln).
     
-    To build the system, simply "Build All" (Ctrl + Alt + F7).
+    To build the system, first set the number of parallel build threads to 1, by
+    clicking Tools > Options, and then selecting Project Solutions > Build and Run,
+    and finally changing "maximum number of parallel project builds" to 1.
+
+    Then, simply "Build All" (Ctrl + Alt + F7).
+
     The result should be "6 succeeded, 1 skipped."  The linker is not yet
     available for standalone use, and so is skipped. The produced binaries
     will be written to /source/VisualStudio/Debug/. 
@@ -61,8 +66,12 @@
     Alternatively, it should be possible to build projects indivually by
     simply building a particular project using "Build Project" (Ctrl + Shift + B).
   
-    Note that there is no support for building Teyjus using omake
-    on Windows as of yet.
+    If you have trouble building the solution, try running the script
+    /source/VisualStudio/clean.bat.  It removes ocaml object files that Visual
+    Studio doesn't know about.
+
+    Note that there is no support for building Teyjus using omake on Windows as
+    of yet.
 
   Testing:
     Note that the testing harness does not work on Windows.
