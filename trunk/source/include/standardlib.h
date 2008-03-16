@@ -37,11 +37,14 @@
 #include <fcntl.h>
 #include <io.h>
 
+// One of these will provide memcpy
+#include <memory.h>
+#include <string.h>
+
 #include "search.h"
 
-#include <memory.h>
-#define memcpy
-
+// Let obstack know that we have memcpy
+#define HAVE_STRING_H
 #include "obstack.h"
 
 //unistd.h
