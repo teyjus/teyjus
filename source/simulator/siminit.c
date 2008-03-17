@@ -94,7 +94,7 @@ static MSG_Msg SIM_errorMessages[SIM_NUM_ERROR_MESSAGES] =
 /*************************************************************************/
 /*            SETTING UP SPECIAL CODE SEGMENTS                           */
 /*************************************************************************/
-static const int SINIT_initSize = 29;
+static const int SINIT_initSize = 30;
 
 static void SINIT_initCode()
 {
