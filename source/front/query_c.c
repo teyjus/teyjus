@@ -28,7 +28,6 @@
 #include "../simulator/printterm.h"
 
 #include <stdio.h>
-//#include "../simulator/print.h"
 
 /***************************************************************************/
 /* state variable for keeping track of the current query                   */
@@ -76,6 +75,7 @@ int QUERY_solveQuery()
         }
         return EM_CurrentExnType;
     }
+    return EM_NO_ERR;
 }
 
 /* show answers */
