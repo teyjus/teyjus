@@ -35,22 +35,22 @@ let inputName = ref ""
 
 let specList = dualArgs
   [("-p", "--path", Arg.String setPath, 
-	" Add PATH to the search path.") ;
+        " Add PATH to the search path.") ;
    ("-s", "--solve", Arg.String addQuery, 
-	" Solve the given query on startup. Several queries may be specified") ;
+        " Solve the given query on startup. Several queries may be specified") ;
    ("-e", "--expect", Arg.Set_int minSolutions,
-	" Expect at least this many solutions from each query;\n" ^
+        " Expect at least this many solutions from each query;\n" ^
       "\t\terror if fewer. Valid only in batch mode") ;
    ("-m", "--maximum", Arg.Set_int maxSolutions,
-	" Halt after this many solutions to the query have been found.\n" ^
+        " Halt after this many solutions to the query have been found.\n" ^
       "\t\tValid only in batch mode") ;
    ("-q", "--quiet", Arg.Set quiet, 
-	" Suppress all non-error output from the system,\n" ^
+        " Suppress all non-error output from the system,\n" ^
       "\t\texcept variable bindings on query success") ;
    ("-b", "--batch", Arg.Set batch,
-	" Suppress system interaction; send all output without stopping") ;
+        " Suppress system interaction; send all output without stopping") ;
    ("-k", "--heap", Arg.Set_int heapSize,
-	" Allocate a heap of the given size (K)") ;
+        " Allocate a heap of the given size (K)") ;
    versionspec]
 
 let anonFunc name =
@@ -66,53 +66,67 @@ let solveQueries () =
   let solveQueryBatch () =
     let rec solveQueryBatchAux numResults =
       if Query.solveQuery () && numResults < !maxSolutions then
-	(Query.showAnswers ();
-	 solveQueryBatchAux (numResults + 1))
+        (Query.showAnswers ();
+         solveQueryBatchAux (numResults + 1))
       else
-	 numResults
+         numResults
     in
 
     if Query.queryHasVars () then
       let numResults = solveQueryBatchAux 0 in
       if numResults < !minSolutions then
-	Parseargs.error "fewer answers than expected"
+        Parseargs.error "fewer answers than expected"
       else ()
     else (* query does not have free variables *)
       if Query.solveQuery () then 
-	if !minSolutions > 1 then 
-	  Parseargs.error "fewer answers than expected"
-	else ()
+        if !minSolutions > 1 then 
+          Parseargs.error "fewer answers than expected"
+        else ()
       else 
-	if !minSolutions > 0 then
-	  Parseargs.error "fewer answers than expected"
-	else ()
+        if !minSolutions > 0 then
+          Parseargs.error "fewer answers than expected"
+        else ()
   in
 
   let rec solveQueryInteract () =
 
-    let rec moreAnswers () =
-      print_string "\nMore solutions (y/n)? ";
-      let answer = read_line () in
-      if (answer = "y") then
-	true
-      else
-	if (answer = "n") then
-	  false
-	else
-	  (print_endline "\nSorry, only options are `y' or `n'.\nLet's try it again:";
-	   moreAnswers ())
-    in	    
+    let moreAnswers () =
+      let rec aux () =
+        print_string "\nMore solutions (y/n)? ";
+        flush stdout;
+        match input_char stdin with
+          | 'y' | ';' | '\n' -> true
+          | 'n' -> false
+          | _ ->
+              print_endline "\nSorry, only options are `y' or `n'.\nLet's try it again:";
+              aux ()
+      in
+      let term = Unix.tcgetattr Unix.stdin in
+        try
+          (* Change terminal to unbuffered input *)
+          Unix.tcsetattr Unix.stdin Unix.TCSANOW
+            {term with Unix.c_icanon = false;
+               Unix.c_echo = false;
+               Unix.c_vmin = 1};
+          let result = aux () in
+            (* Restore terminal settings *)
+            Unix.tcsetattr Unix.stdin Unix.TCSANOW term ;
+            print_newline () ;
+            result
+        with
+          | e -> Unix.tcsetattr Unix.stdin Unix.TCSANOW term; raise e
+    in            
 
 
     if (Query.solveQuery ()) then
       if (Query.queryHasVars ()) then
-	(Query.showAnswers ();
-	 if (moreAnswers ()) then
-	   solveQueryInteract ()
-	 else
-	   print_endline "\nyes\n")
+        (Query.showAnswers ();
+         if (moreAnswers ()) then
+           solveQueryInteract ()
+         else
+           print_endline "\nyes\n")
       else
-	print_endline "\nyes\n"
+        print_endline "\nyes\n"
     else
       print_endline "\nno (more) solutions\n"
 
@@ -125,7 +139,7 @@ let solveQueries () =
       if !batch then
         solveQueryBatch ()
       else
-	solveQueryInteract ()
+        solveQueryInteract ()
     else
      prerr_endline "";
     Front.simulatorReInit false ;
@@ -146,7 +160,7 @@ let solveQueries () =
 
       solveQuery query
       
-	
+        
     done
 
   in
@@ -163,18 +177,18 @@ let _ =
   Arg.parse (Arg.align specList) anonFunc usageMsg ;
 
   try 
-	Front.systemInit  !heapSize ;
+        Front.systemInit  !heapSize ;
         Module.setPath    !path;
-	Module.moduleLoad !inputName;
-	Front.simulatorInit () ;
-	Module.moduleInstall !inputName ;
-	Module.initModuleContext () ;
-	solveQueries()
+        Module.moduleLoad !inputName;
+        Front.simulatorInit () ;
+        Module.moduleInstall !inputName ;
+        Module.initModuleContext () ;
+        solveQueries()
   with
-	| Simerrors.Query    -> () (* query is done *)
-	| Simerrors.TopLevel -> () (* stop *)
-	| Simerrors.Exit     ->    (* halt *)
+        | Simerrors.Query    -> () (* query is done *)
+        | Simerrors.TopLevel -> () (* stop *)
+        | Simerrors.Exit     ->    (* halt *)
             exit 1
-	| exp                ->    (* other exceptions *)
-	    print_endline "Uncaught internal exception" ;
+        | exp                ->    (* other exceptions *)
+            print_endline "Uncaught internal exception" ;
             exit 2 
