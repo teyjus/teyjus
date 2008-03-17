@@ -69,7 +69,3 @@ let showAnswers () =
 
 let queryHasVars () =
   Ccode_stubs.queryHasVars ()
-
-
-let interactSolveQuery () =
-  print_endline "not implemented"
