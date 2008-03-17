@@ -127,7 +127,7 @@ let solveQueries () =
       else
 	solveQueryInteract ()
     else
-      Parseargs.error "" ;
+     prerr_endline "";
     Front.simulatorReInit false ;
     Module.initModuleContext ()
       
