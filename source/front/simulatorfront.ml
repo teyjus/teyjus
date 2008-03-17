@@ -90,33 +90,15 @@ let solveQueries () =
 
   let rec solveQueryInteract () =
 
-    let moreAnswers () =
-      let rec aux () =
-        print_string "\nMore solutions (y/n)? ";
-        flush stdout;
-        match input_char stdin with
-          | 'y' | ';' | '\n' -> true
-          | 'n' -> false
-          | _ ->
-              print_endline "\nSorry, only options are `y' or `n'.\nLet's try it again:";
-              aux ()
-      in
-      let term = Unix.tcgetattr Unix.stdin in
-        try
-          (* Change terminal to unbuffered input *)
-          Unix.tcsetattr Unix.stdin Unix.TCSANOW
-            {term with Unix.c_icanon = false;
-               Unix.c_echo = false;
-               Unix.c_vmin = 1};
-          let result = aux () in
-            (* Restore terminal settings *)
-            Unix.tcsetattr Unix.stdin Unix.TCSANOW term ;
-            print_newline () ;
-            result
-        with
-          | e -> Unix.tcsetattr Unix.stdin Unix.TCSANOW term; raise e
-    in            
-
+    let rec moreAnswers () =
+      print_string "\nMore solutions (y/n)? ";
+      match read_line () with
+        | "y" -> true
+        | "n" -> false
+        | _ ->
+            print_endline "\nSorry, only options are `y' or `n'.\nLet's try it again:";
+            moreAnswers ()
+    in
 
     if (Query.solveQuery ()) then
       if (Query.queryHasVars ()) then

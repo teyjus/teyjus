@@ -16,8 +16,6 @@ INC = $(dir include)
 
 OCAMLINCLUDES += $(CMP) $(DIS) $(SIM) $(LOD)
 
-OCAML_OTHER_LIBS = unix
-
 ############################################################
 # Compilation files
 #
