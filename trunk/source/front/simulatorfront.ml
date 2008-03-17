@@ -91,7 +91,7 @@ let solveQueries () =
   let rec solveQueryInteract () =
 
     let rec moreAnswers () =
-      print_endline "\nMore solutions (y/n)? \n";
+      print_string "\nMore solutions (y/n)? ";
       let answer = read_line () in
       if (answer = "y") then
 	true
