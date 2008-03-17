@@ -28,7 +28,7 @@ let buildQueryTerm query amod =
 
   (* parse the query to pre abstract syntax *)
   let preTerm = Compile.compileString query in
-  if (!Errormsg.anyErrors) then false
+  if (!Errormsg.anyErrors) then (Errormsg.anyErrors := false; false)
   else
 	(* parse to abstract syntax *)
 	let (term, tymol, fvars, tyfvars) = Parse.translateTerm preTerm amod in
