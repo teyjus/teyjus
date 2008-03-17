@@ -87,21 +87,76 @@ let solveQueries () =
 	  Parseargs.error "fewer answers than expected"
 	else ()
   in
+
+  let rec solveQueryInteract () =
+
+    let rec moreAnswers () =
+      print_endline "\nMore solutions (y/n)? \n";
+      let answer = read_line () in
+      if (answer = "y") then
+	true
+      else
+	if (answer = "n") then
+	  false
+	else
+	  (print_endline "\nSorry, only options are `y' or `n'.\nLet's try it again:";
+	   moreAnswers ())
+    in	    
+
+
+    if (Query.solveQuery ()) then
+      if (Query.queryHasVars ()) then
+	(Query.showAnswers ();
+	 if (moreAnswers ()) then
+	   solveQueryInteract ()
+	 else
+	   print_endline "\nyes\n")
+      else
+	print_endline "\nyes\n"
+    else
+      print_endline "\nno (more) solutions\n"
+
+   
+  in
   
   (* solve one query *)
   let rec solveQuery query =
-    if Query.buildQueryTerm query (Module.getCurrentModule ()) then
+   if Query.buildQueryTerm query (Module.getCurrentModule ()) then 
       if !batch then
         solveQueryBatch ()
       else
-        Query.interactSolveQuery ()
+	solveQueryInteract ()
     else
       Parseargs.error "" ;
     Front.simulatorReInit false ;
     Module.initModuleContext ()
       
   in
+
+  let rec interactSolveQuery queries modName =
+    (* first solve queries input through the command line *)
+    List.iter solveQuery queries;
+
+    print_endline "Welcome to Teyjus.\n[copy right info]"; 
+
+    (* enter interative mode *)
+    while true do   
+      print_string ("[" ^ modName ^"] ?- ");
+      let query = read_line () in
+
+      solveQuery query
+      
+	
+    done
+
+  in
+
+  if (!batch) then
     List.iter solveQuery !queryStrings
+  else
+    let modName = if (!inputName) = "" then "toplevel" else !inputName in
+    interactSolveQuery !queryStrings modName
+     
 
       
 let _ =
