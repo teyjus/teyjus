@@ -37,6 +37,9 @@ STRING [^*/]+
 
 %x COMMENT C_COMMENT
 
+/* Some versions of lex require an explicit positions argument */
+%p 10000
+
 %% 
 <INITIAL,COMMENT>"\n"      {continue;                                      }
 <INITIAL>"KIND"            {return KIND;                                   }
