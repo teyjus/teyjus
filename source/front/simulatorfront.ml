@@ -135,7 +135,7 @@ let solveQueries () =
 
     print_endline "Welcome to Teyjus.\n[copy right info]"; 
 
-    (* enter interative mode *)
+    (* enter interactive mode *)
     while true do   
       print_string ("[" ^ modName ^"] ?- ");
       let query = read_line () in
