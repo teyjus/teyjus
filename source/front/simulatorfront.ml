@@ -31,8 +31,6 @@ let addQuery str =
 let setPath p =
   path := p
 
-let inputName = ref ""
-
 let specList = dualArgs
   [("-p", "--path", Arg.String setPath, 
         " Add PATH to the search path.") ;
@@ -53,13 +51,9 @@ let specList = dualArgs
         " Allocate a heap of the given size (K)") ;
    versionspec]
 
-let anonFunc name =
-  inputName := getModName name
-
 let usageMsg =
   "Usage: tjsim <options> <module-name>\n" ^
     "options are:"
-
 
 let solveQueries () =
   (* solve a query in batch mode *)
@@ -146,22 +140,17 @@ let solveQueries () =
 
   in
 
-  if (!batch) then
+  if !batch then
     List.iter solveQuery !queryStrings
   else
-    let modName = if (!inputName) = "" then "toplevel" else !inputName in
+    let modName = if !inputName = "" then "toplevel" else !inputName in
+      if !queryStrings = [] then
+        print_endline "Welcome to Teyjus.\n[copyright info]" ;
+      interactSolveQuery !queryStrings modName
 
-    (if (!queryStrings = []) then
-      print_endline "Welcome to Teyjus.\n[copy right info]"
-    else
-      ());
 
-    interactSolveQuery !queryStrings modName
-     
-
-      
 let _ =
-  Arg.parse (Arg.align specList) anonFunc usageMsg ;
+  Arg.parse (Arg.align specList) setInputName usageMsg ;
 
   try 
         Front.systemInit  !heapSize ;
