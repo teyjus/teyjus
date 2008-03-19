@@ -73,9 +73,6 @@ let compile basename outfile =
 	Spitcode.writeByteCode cg ;
     abortOnError ()
 
-
-
-let inputName = ref ""
 let outputName = ref ""
 
 let setPath path =
@@ -86,27 +83,19 @@ let specList = dualArgs
     " Specifies the name of the output bytecode file") ;
    ("-p", "--path", Arg.String setPath,
     " Add PATH to the search path.") ;
-   ("--log", "--log", Arg.Set(Errormsg.loggingEnabled),
+   ("-l", "--log", Arg.Set(Errormsg.loggingEnabled),
     " Enable logging information.") ;
    versionspec]
-
-let anonFunc name = 
-  inputName := getModName name
 
 let usageMsg = 
   "Usage: tjcc <options> <files>\n" ^
   "options are:"
 
 let _ =    
-    Arg.parse (Arg.align specList) anonFunc usageMsg ;
+  Arg.parse (Arg.align specList) setInputName usageMsg ;
+  ensureInputName () ;
 
-    if !inputName = "" then
-      error "No input file specified." ;
-
-    if !outputName = "" then
-      outputName := Bytecode.makeByteCodeFileName !inputName ;
-        
-    compile !inputName !outputName
-
-
-
+  if !outputName = "" then
+    outputName := Bytecode.makeByteCodeFileName !inputName ;
+  
+  compile !inputName !outputName
