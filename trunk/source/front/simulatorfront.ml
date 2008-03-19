@@ -130,10 +130,9 @@ let solveQueries () =
   in
 
   let rec interactSolveQuery queries modName =
+
     (* first solve queries input through the command line *)
     List.iter solveQuery queries;
-
-    print_endline "Welcome to Teyjus.\n[copy right info]"; 
 
     (* enter interactive mode *)
     while true do   
@@ -151,6 +150,12 @@ let solveQueries () =
     List.iter solveQuery !queryStrings
   else
     let modName = if (!inputName) = "" then "toplevel" else !inputName in
+
+    (if (!queryStrings = []) then
+      print_endline "Welcome to Teyjus.\n[copy right info]"
+    else
+      ());
+
     interactSolveQuery !queryStrings modName
      
 
