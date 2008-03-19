@@ -21,7 +21,7 @@ let dualArgs dualSpecList =
     List.flatten (List.map seperate dualSpecList)
     
 let printVersion () =
-  print_string "version number:... \n"
+  print_endline "Teyjus, version 2.0"
 
 let versionspec =
   ("-v", "--version", Arg.Unit printVersion, " Return the system version")
@@ -33,5 +33,20 @@ let getModName name =
     | Invalid_argument _ -> name
 
 let error str =
-  prerr_endline ("Error : " ^ str) ;
+  prerr_endline ("Error: " ^ str) ;
   exit 1
+
+
+(* All of the frontend tools take a single input file *)
+
+let inputName = ref ""
+
+let setInputName name =
+  if !inputName = "" then
+    inputName := getModName name
+  else
+    error "More than one input file specificied."
+
+let ensureInputName () =
+  if !inputName = "" then
+    error "No input file specified."
