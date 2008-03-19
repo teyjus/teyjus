@@ -92,7 +92,7 @@ let usageMsg =
   "options are:"
 
 let _ =    
-  Arg.parse (Arg.align specList) setInputName usageMsg ;
+  Arg.parse (Arg.align specList) (setInputName ~filter:getModName) usageMsg ;
   ensureInputName () ;
 
   if !outputName = "" then

@@ -24,5 +24,5 @@ val getModName : string -> string
 val error : string -> 'a
 
 val inputName : string ref
-val setInputName : string -> unit
+val setInputName : ?filter:(string -> string) -> string -> unit
 val ensureInputName : unit -> unit
