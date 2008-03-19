@@ -10,7 +10,7 @@ LIB_FILES[] =
 
 LIB = liblinker
 
-StaticCLibrary($(LIB), $(LIB_FILES))
+StaticCLibrary($(LIB), $(LIB_FILES) $(INC_C))
 
 # Linker program
 
