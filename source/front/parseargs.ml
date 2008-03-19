@@ -21,7 +21,8 @@ let dualArgs dualSpecList =
     List.flatten (List.map seperate dualSpecList)
     
 let printVersion () =
-  print_endline "Teyjus, version 2.0"
+  print_endline "Teyjus, version 2.0" ;
+  exit 0
 
 let versionspec =
   ("-v", "--version", Arg.Unit printVersion, " Return the system version")
@@ -41,9 +42,9 @@ let error str =
 
 let inputName = ref ""
 
-let setInputName name =
+let setInputName ?(filter=(fun x -> x))  name =
   if !inputName = "" then
-    inputName := getModName name
+    inputName := filter name
   else
     error "More than one input file specificied."
 

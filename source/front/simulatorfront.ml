@@ -150,7 +150,7 @@ let solveQueries () =
 
 
 let _ =
-  Arg.parse (Arg.align specList) setInputName usageMsg ;
+  Arg.parse (Arg.align specList) (setInputName ~filter:getModName) usageMsg ;
 
   try 
         Front.systemInit  !heapSize ;

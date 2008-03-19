@@ -17,6 +17,8 @@
 #ifndef _LK_MESSAGE_H_
 #define _LK_MESSAGE_H_
 
+#include <stdio.h>
+
 extern int verbosity;
 
 #define debug(...) if(verbosity>2){fprintf(stderr,__VA_ARGS__);}
