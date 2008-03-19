@@ -143,8 +143,6 @@
     --table    Only print tables
     -i         Only print instructions
     --instr    Only print instructions
-    -l         Disassemble linked file
-    --link     Disassemble linked file
     -v         Return the system version
     --version  Return the system version
     -help      Display this list of options
