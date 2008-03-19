@@ -17,7 +17,7 @@ SUBDIRS = $(glob D, *)
         $(TJDIS) $(ROOT).lp > actual
 
     test: actual expected
-        diff expected actual
+        $(DIFF) expected actual
 
     # This target updates the tests so they pass
     .PHONY: update-test
@@ -31,7 +31,7 @@ SUBDIRS = $(glob D, *)
     .PHONY: compiler-test
     compiler-test: $(TJDIS) $(addsuffix .dis-actual, $(FILES))
         foreach(file, $(FILES))
-            diff $(file).dis $(file).dis-actual
+            $(DIFF) $(file).dis $(file).dis-actual
 
     # This target updates the compiler-tests so they pass
     .PHONY: update-compiler-test
