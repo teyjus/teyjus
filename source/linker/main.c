@@ -10,22 +10,20 @@ char* top_modname = NULL;
 const char *version_string = "tjlink 1.0";
 
 const char *help_string =
-"Usage: tjlink [OPTION...] MODULENAME\n"
-"The teyjus linker - combines compiled lambda-prolog modules into a single\n"
-"program\n"
-"\n"
-"  -q, --quiet                Don't produce any output\n"
-"  -v, --verbose              Produce verbose output\n"
-"  -h, --help                 Give this help list\n"
-"  -V, --version              Print program version\n"
-"\n"
-"Mandatory or optional arguments to long options are also mandatory or optional\n"
-"for any corresponding short options.\n"
-"\n"
-  "Report bugs to <SHolte@gmail.com>.";
+  "Usage: tjlink [OPTION...] MODULENAME\n"
+  "The teyjus linker - combines compiled lambda-prolog modules into a single\n"
+  "program\n"
+  "\n"
+  "  -q, --quiet                Don't produce any output\n"
+  "  -v, --verbose              Produce verbose output\n"
+  "  -h, --help                 Give this help list\n"
+  "  -V, --version              Print program version\n"
+  "\n"
+  "Mandatory or optional arguments to long options are also mandatory or optional\n"
+  "for any corresponding short options.";
 
 const char *usage_string = 
-"Usage: tjlink [OPTION...] MODULENAME\n"
+  "Usage: tjlink [OPTION...] MODULENAME\n"
   "Try `tjlink --help' for more information.";
 
 void help()
