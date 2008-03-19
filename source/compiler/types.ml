@@ -106,7 +106,8 @@ let rec getEnvironmentElement = fun env i ->
         e
       else
         (getEnvironmentElement es (i - 1))
-  | [] -> (Errormsg.impossible Errormsg.none "Types.getEnvironmentElement: invalid element index")
+  | [] -> (Errormsg.impossible Errormsg.none "Types.getEnvironmentElement:\
+                                                \ invalid element index")
 
 (**********************************************************************
 *dereferenceMolecule:
@@ -123,7 +124,12 @@ let dereferenceMolecule (Molecule(t, env)) =
     try
       List.nth env i
     with
-      Failure(s) -> (Errormsg.impossible Errormsg.none ("Types.dereferenceMolecule: invalid skeleton index: " ^ (string_of_int i) ^ (Errormsg.info ("type: " ^ (Absyn.string_of_type t)))))
+      Failure(s) -> (Errormsg.impossible Errormsg.none 
+                                         ("Types.dereferenceMolecule:\
+                                            \ invalid skeleton index: " ^ 
+                                          (string_of_int i) ^ 
+                                          (Errormsg.info ("type: " ^ 
+                                          (Absyn.string_of_type t)))))
   in
   
   (********************************************************************
@@ -147,19 +153,23 @@ let dereferenceMolecule (Molecule(t, env)) =
 * Generates a string representation of a type molecule.
 **********************************************************************)
 let rec string_of_typemolecule = fun mol ->
-  let (s, _) = string_of_typemolecule' mol [] in
+  let (s, _) = string_of_typemolecule' mol [] false in
   s
 
-and string_of_typemolecule' = fun mol bindings ->
+and string_of_typemolecule' = fun mol bindings printpar ->
   let Molecule(t,env) = (dereferenceMolecule mol) in
 
   let rec string_of_skelvar i =
     let rec get i env =
       try
         let e = (List.nth env i) in
-        string_of_typemolecule' (Molecule(Absyn.dereferenceType e, env)) bindings
+        string_of_typemolecule' (Molecule(Absyn.dereferenceType e, env)) 
+                                bindings printpar
       with
-        Failure(s) -> (Errormsg.impossible Errormsg.none ("Types.string_of_typemolecule': invalid skeleton index: " ^ (string_of_int i)))
+        Failure(s) -> (Errormsg.impossible Errormsg.none 
+                                           ("Types.string_of_typemolecule':\
+                                             \ invalid skeleton index: " ^ 
+                                            (string_of_int i)))
     in
     get i env
   
@@ -176,14 +186,17 @@ and string_of_typemolecule' = fun mol bindings ->
     match ts with
       Absyn.TypeSetType(d, t, _) ->
         (match !t with
-          [t] -> string_of_typemolecule' (Molecule(t, env)) bindings
-        | _ -> string_of_typemolecule' (Molecule(d, env)) bindings)
-    | _ -> (Errormsg.impossible Errormsg.none "Types.string_of_typeset: invalid typeset")
+          [t] -> string_of_typemolecule' (Molecule(t, env)) bindings printpar
+        | _ -> string_of_typemolecule' (Molecule(d, env)) bindings printpar)
+    | _ -> (Errormsg.impossible Errormsg.none "Types.string_of_typeset:\
+                                                  \ invalid typeset")
   
   and string_of_args = fun args bindings ->
     match args with
       arg::args' ->
-        let (arg', bindings') = string_of_typemolecule' (Molecule(arg, env)) bindings in
+        let (arg', bindings') = 
+                 string_of_typemolecule' (Molecule(arg, env)) bindings printpar
+        in
         let (args'', bindings'') = (string_of_args args' bindings') in
         (" " ^ arg' ^ args'', bindings'')
     | [] -> ("", bindings)
@@ -201,9 +214,15 @@ and string_of_typemolecule' = fun mol bindings ->
         else
           ("(" ^ s ^ args' ^ ")", bindings')
     | Absyn.ArrowType(l,r) ->
-        let (l', bindings') = string_of_typemolecule' (Molecule(l, env)) bindings in
-        let (r', bindings') = string_of_typemolecule' (Molecule(r, env)) bindings' in
-        ("(" ^ l' ^ " -> " ^ r' ^ ")", bindings')
+        let (l', bindings') = 
+               string_of_typemolecule' (Molecule(l, env)) bindings true
+        in
+        let (r', bindings') = 
+               string_of_typemolecule' (Molecule(r, env)) bindings' false 
+        in
+           if printpar 
+           then ("(" ^ l' ^ " -> " ^ r' ^ ")", bindings')
+           else (l' ^ " -> " ^ r', bindings')
     | Absyn.ErrorType -> ("error", bindings)
   in
   string_of_type t
@@ -246,7 +265,8 @@ let rec skeletonizeType ty =
     match args with
       [] -> ([], env, false, index)
     | a::aa ->
-        let _ = Errormsg.log Errormsg.none ("Types.skeletonizeArgs: " ^ (Absyn.string_of_type_ast a)) in
+        let _ = Errormsg.log Errormsg.none ("Types.skeletonizeArgs: " ^ 
+                                            (Absyn.string_of_type_ast a)) in
         let (a', newvars, index') = skeletonize a env index in
         let env' = getMoleculeEnvironment a' in
         
@@ -265,7 +285,9 @@ let rec skeletonizeType ty =
             else
               let index' = index + 1 in
               (Molecule(Absyn.SkeletonVarType(ref index), env @ [ty']), true, index')
-        | _ -> Errormsg.impossible Errormsg.none "Types.skeletonizeType: invalid type variable")
+        | _ -> Errormsg.impossible Errormsg.none 
+                                   "Types.skeletonizeType:\
+                                     \ invalid type variable")
     | Absyn.ApplicationType(k, args) ->
         let (argmols, env', newvars, index') = skeletonizeArgs args env index in
         let args' = getMoleculeListTypes argmols in
@@ -278,20 +300,25 @@ let rec skeletonizeType ty =
         let targty' = getMoleculeType targmol in
         let env' = getMoleculeEnvironment targmol in
         
-        let (argmols, env'', newvars', index'') = skeletonizeArgs argtys env' index' in
+        let (argmols, env'', newvars', index'') = 
+                        skeletonizeArgs argtys env' index' in
         let argtys' = getMoleculeListTypes argmols in
-        (Molecule(Absyn.makeArrowType targty' argtys', env''), newvars || newvars', index'')
+        (Molecule(Absyn.makeArrowType targty' argtys', env''), 
+         newvars || newvars', index'')
     | Absyn.TypeSetType(_) ->
-        (Errormsg.impossible Errormsg.none "Types.skeletonizeType: invalid type set")
+        (Errormsg.impossible Errormsg.none 
+                             "Types.skeletonizeType: invalid type set")
     | _ -> (Molecule(ty', env), false, index)
   in
 
-  let _ = Errormsg.log Errormsg.none ("Types.skeletonizeType: " ^ (Absyn.string_of_type_ast ty)) in
+  let _ = Errormsg.log Errormsg.none ("Types.skeletonizeType: " ^ 
+                                      (Absyn.string_of_type_ast ty)) in
   let (mol, newvars, index) = skeletonize ty [] 0 in
   
   if index > Pervasiveutils.maxSkeletonIndex then
     (Errormsg.error Errormsg.none
-      "Unable to skeletonize type: type contains too many free variables";
+                    "Unable to skeletonize type:\
+                     \ type contains too many free variables";
     errorMolecule)
   else
     mol
@@ -311,8 +338,8 @@ and occursCheck = fun var skel bindings ->
       else
         skel
   | Absyn.SkeletonVarType(i) ->
-      let skel' = (Absyn.dereferenceType (getEnvironmentElement bindings !i)) in
-      occursCheck var skel' []
+      let skel' = (Absyn.dereferenceType (getEnvironmentElement bindings !i)) 
+      in occursCheck var skel' []
   | Absyn.ApplicationType(k, args) ->
       (****************************************************************
       *occurs':
@@ -344,10 +371,12 @@ let rec unbindVariables = function
       Absyn.BindableTypeVar(tr) ->
         (tr := None;
         unbindVariables vs)
-    | _ -> Errormsg.impossible Errormsg.none "Types.unbindVariables: invalid type variable")
+    | _ -> Errormsg.impossible Errormsg.none 
+                               "Types.unbindVariables: invalid type variable")
 | v::vs ->
     (Errormsg.impossible Errormsg.none
-      "Types.unbindVariables: non-variable type encountered.")
+                         "Types.unbindVariables:\
+                              \ non-variable type encountered.")
     
 (**********************************************************************
 *bindVariable:
@@ -498,14 +527,20 @@ let rec unify (tm1 : typemolecule) (tm2 : typemolecule) =
               match (args1, args2) with
                 ([], []) -> bindings
               | (a1::a1s, a2::a2s) ->
-                  let bindings' = unify' (Molecule(a1, env1)) (Molecule(a2, env2)) bindings in
-                  (checkArgs a1s a2s bindings')
-              | _ -> (Errormsg.impossible Errormsg.none "Types.unify: invalid number of application arguments")
+                  let bindings' = unify' (Molecule(a1, env1)) 
+                                         (Molecule(a2, env2)) 
+                                         bindings 
+                  in (checkArgs a1s a2s bindings')
+              | _ -> (Errormsg.impossible Errormsg.none 
+                                          "Types.unify: invalid number\
+                                             \ of application arguments")
             in
             
             (*  Match the head. *)
             if f <> f' then
-              (Errormsg.log Errormsg.none ("Types.unify: unable to unify " ^ (Absyn.getKindName f) ^ " and " ^ (Absyn.getKindName f'));
+              (Errormsg.log Errormsg.none ("Types.unify: unable to unify " ^ 
+                                           (Absyn.getKindName f) ^ " and " ^ 
+                                           (Absyn.getKindName f'));
               unbindVariables bindings;
               raise (UnifyException ClashFailure))
             else
@@ -517,7 +552,9 @@ let rec unify (tm1 : typemolecule) (tm2 : typemolecule) =
             (checkArgs args1 args2 bindings)
             
         | _ ->
-            (Errormsg.log Errormsg.none ("Types.unify: error checking application: invalid type: " ^ (Absyn.string_of_type skel1));
+            (Errormsg.log Errormsg.none 
+                          ("Types.unify: error checking application:\
+                              \ invalid type: " ^ (Absyn.string_of_type skel1));
             unbindVariables bindings;
             raise (UnifyException ClashFailure)))
       
@@ -526,19 +563,28 @@ let rec unify (tm1 : typemolecule) (tm2 : typemolecule) =
     | Absyn.ArrowType(l, r) ->
         (match skel1 with
           Absyn.ArrowType(l', r') ->
-            let bindings' = (unify' (Molecule(l', env1)) (Molecule(l, env2)) bindings) in
-            (unify' (Molecule(r', env1)) (Molecule(r, env2)) bindings')
+            let bindings' = (unify' (Molecule(l', env1)) 
+                                    (Molecule(l, env2)) 
+                                    bindings) 
+            in (unify' (Molecule(r', env1)) (Molecule(r, env2)) bindings')
         | _ ->
-            (Errormsg.log Errormsg.none "Types.unify: error checking arrow: invalid type.";
+            (Errormsg.log Errormsg.none "Types.unify:\
+                                 \ error checking arrow: invalid type.";
             unbindVariables bindings;
             raise (UnifyException(ClashFailure))))
-    | Absyn.ErrorType -> (Errormsg.impossible (Errormsg.none) "Types.unify: Absyn.ErrorType encountered.")
+    | Absyn.ErrorType -> (Errormsg.impossible (Errormsg.none) 
+                                              "Types.unify:\
+                                               \ Absyn.ErrorType encountered.")
     | _ ->
-        (Errormsg.impossible (Errormsg.none) "Types.unify: Invalid type encountered.")
+        (Errormsg.impossible (Errormsg.none) 
+                             "Types.unify: Invalid type encountered.")
   in
   try
     (*  Only success or failure matters.  Discard the result. *)
-    (*  let _ = Errormsg.log Errormsg.none ("Unifying types: " ^ (string_of_typemolecule tm1) ^ "; " ^ (string_of_typemolecule tm2)) in *)
+    (*  let _ = Errormsg.log Errormsg.none
+                             ("Unifying types: " ^ 
+                              (string_of_typemolecule tm1) ^ 
+                              "; " ^ (string_of_typemolecule tm2)) in *)
 
     let _ = unify' tm1 tm2 [] in
     Success
@@ -549,8 +595,8 @@ let rec unify (tm1 : typemolecule) (tm2 : typemolecule) =
 * Records a clash error when type checking.
 **********************************************************************)
 let clashError = fun fargty argty term ->
-  let (expected, bindings) = string_of_typemolecule' fargty [] in
-  let (actual, _) = string_of_typemolecule' argty bindings in
+  let (expected, bindings) = string_of_typemolecule' fargty [] false in
+  let (actual, _) = string_of_typemolecule' argty bindings false in
   
   Errormsg.error (Absyn.getTermPos term) ("clash in operator and operand types" ^
     (Errormsg.info ("Expected operand type: " ^ expected)) ^
@@ -562,8 +608,8 @@ let clashError = fun fargty argty term ->
 * Records an occurs-check error when type checking.
 **********************************************************************)
 let occursCheckError = fun fargty argty term ->
-  let (operator, bindings) = string_of_typemolecule' fargty [] in
-  let (operand, _) = string_of_typemolecule' argty bindings in
+  let (operator, bindings) = string_of_typemolecule' fargty [] false in
+  let (operand, _) = string_of_typemolecule' argty bindings false in
   
   Errormsg.error (Absyn.getTermPos term) ("occurs-check failure" ^
     (Errormsg.info ("Operator type: " ^ operator)) ^
@@ -597,7 +643,7 @@ let checkApply = fun fty argty term ->
     (*  Check the function isn't an arrow type and isn't a type variable (and
         so cannot be instantiated to an arrow type).  *)
     if not ((Absyn.isVariableType fskel) || (Absyn.isArrowType fskel)) then
-      let (operator, _) = string_of_typemolecule' fty [] in
+      let (operator, _) = string_of_typemolecule' fty [] false in
       (Errormsg.error (Absyn.getTermPos term) ("operator is not a function" ^
         (Errormsg.info ("Operator type: " ^ operator)) ^
         (Errormsg.info ("in expression: " ^ (Absyn.string_of_term term) ^ ".")));
@@ -620,7 +666,10 @@ let checkApply = fun fty argty term ->
       let numargs = (List.length argskels) - 1 in
       
       if (numargs) > 0 then
-        (unify' fargty argty (Molecule((Absyn.makeArrowType targskel (List.tl argskels)), fenv)))
+        (unify' fargty 
+                argty 
+                (Molecule((Absyn.makeArrowType targskel (List.tl argskels)), 
+                          fenv)))
       else
         (unify' fargty argty (Molecule(targskel, fenv)))
 
@@ -645,7 +694,7 @@ let rec freeTypeVars tyexp tyfvs =
 		  else (* a type reference really *)
 			freeTypeVars (Option.get (!binding)) tyfvs
 	  | _ -> Errormsg.impossible Errormsg.none 
-			   "freeTypeVars: invalid type expression")
+			             "freeTypeVars: invalid type expression")
   | Absyn.ArrowType(arg, target) ->
 	  freeTypeVars target (freeTypeVars arg tyfvs)
   | Absyn.ApplicationType(kind, args) ->
@@ -658,7 +707,7 @@ let rec freeTypeVars tyexp tyfvs =
 	  freeTypeVarsInTyList args tyfvs
   | _ -> 
 	  Errormsg.impossible Errormsg.none 
-		"freeTypeVars: invalid type expression"
+		              "freeTypeVars: invalid type expression"
 			
 (**********************************************************************
 *equalMappedTypeSkels:
@@ -719,10 +768,11 @@ let equalMappedTypeSkels skel1 skel2 =
           let vl' = equalMappedTypeSkels' vl t1 t2 in
 		  if (List.length args1 = List.length args2) then
 			(List.fold_left2 equalMappedTypeSkels' vl' args1 args2)
-		  else raise (EqualMappedTypeSkelsFailure)			   
+		  else raise (EqualMappedTypeSkelsFailure)
         else
           raise (EqualMappedTypeSkelsFailure)
-    | _ -> Errormsg.impossible Errormsg.none "Types.equalMappedTypeSkels: invalid type."
+    | _ -> Errormsg.impossible Errormsg.none 
+                               "Types.equalMappedTypeSkels: invalid type."
   in
     let t1 = Absyn.getSkeletonType skel1 in
     let t2 = Absyn.getSkeletonType skel2 in
@@ -761,7 +811,8 @@ and getNewVarsInType ty ftyvars =
     | Absyn.ErrorType -> ftyvars
     | _ ->
         Errormsg.impossible Errormsg.none
-          "Types.getNewVarsInTypes: unexpected form encountered in type"
+                            "Types.getNewVarsInTypes:\
+                               \ unexpected form encountered in type"
 
 (**********************************************************************
 *getNewVarsInTypeMol:
@@ -788,8 +839,8 @@ let rec replaceTypeSetType t =
       (match set with
         [] ->
           Errormsg.impossible Errormsg.none
-            ("Types.replaceTypeSetType: invalid type set in " ^
-             "constant environment.")
+                              ("Types.replaceTypeSetType: invalid type set in "
+                               ^ "constant environment.")
       | [t''] -> replaceTypeSetType t''
       | _ -> replaceTypeSetType (Absyn.getTypeSetDefault t'))
   | Absyn.ApplicationType(k,l) ->
@@ -807,11 +858,15 @@ let rec replaceTypeSetType t =
 **********************************************************************)
 let unitTests () =
   let test tmol1 tmol2 =
-    let _ = Errormsg.log Errormsg.none ("Unifying " ^ (string_of_typemolecule tmol1) ^ " ; " ^ (string_of_typemolecule tmol2)) in
+    let _ = Errormsg.log Errormsg.none 
+                         ("Unifying " ^ (string_of_typemolecule tmol1) ^ 
+                          " ; " ^ (string_of_typemolecule tmol2)) in
     let _ =
       if (unify tmol1 tmol2) = Success then
         (Errormsg.log Errormsg.none ("Unification Succeeded.");
-        Errormsg.log Errormsg.none ("Unified " ^ (string_of_typemolecule tmol1) ^ " ; " ^ (string_of_typemolecule tmol2)))  
+        Errormsg.log Errormsg.none 
+                     ("Unified " ^ (string_of_typemolecule tmol1) ^ 
+                      " ; " ^ (string_of_typemolecule tmol2)))  
       else
         Errormsg.log Errormsg.none ("Unification Failed.")
     in
@@ -822,18 +877,22 @@ let unitTests () =
   
   (*  Skeletonization Tests:  *)
   let tv = Absyn.makeTypeVariable () in
-  let ty = Absyn.ApplicationType(Absyn.Kind(Symbol.symbol "test", Some 1, ref 0, Absyn.GlobalKind, Errormsg.none),
+  let ty = Absyn.ApplicationType(Absyn.Kind(Symbol.symbol "test", Some 1, ref 0,
+                                            Absyn.GlobalKind, Errormsg.none),
     [tv; Absyn.makeTypeVariable (); Absyn.makeTypeVariable (); tv]) in
   let tskel = skeletonizeType ty in
-  let _ = Errormsg.log Errormsg.none ("Test type: " ^ (Absyn.string_of_type ty)) in
-  let _ = Errormsg.log Errormsg.none ("Test skeleton: " ^ (string_of_typemolecule tskel)) in
+  let _ = Errormsg.log Errormsg.none ("Test type: " ^ 
+                                      (Absyn.string_of_type ty)) in
+  let _ = Errormsg.log Errormsg.none ("Test skeleton: " ^ 
+                                      (string_of_typemolecule tskel)) in
   
   (*  Unification Tests:  *)
   let tmol1 = Molecule(Absyn.ApplicationType(Pervasive.kint, []), []) in
   let tmol2 = Molecule(
     Absyn.makeTypeSetVariable
       (Absyn.ApplicationType(Pervasive.kint,[]))
-      [Absyn.ApplicationType(Pervasive.kint,[]); Absyn.ApplicationType(Pervasive.kreal,[])],
+      [Absyn.ApplicationType(Pervasive.kint,[]); 
+       Absyn.ApplicationType(Pervasive.kreal,[])],
     []) in
   let _ = test tmol1 tmol2 in
   
@@ -841,26 +900,30 @@ let unitTests () =
   let tmol2 = Molecule(
     Absyn.makeTypeSetVariable
       (Absyn.ApplicationType(Pervasive.kint,[]))
-      [Absyn.ApplicationType(Pervasive.kint,[]); Absyn.ApplicationType(Pervasive.kreal,[])],
+      [Absyn.ApplicationType(Pervasive.kint,[]); 
+       Absyn.ApplicationType(Pervasive.kreal,[])],
     []) in
   let _ = test tmol2 tmol1 in
   
   let tmol3 = Molecule(
     Absyn.makeTypeSetVariable
       (Absyn.ApplicationType(Pervasive.kint,[]))
-      [Absyn.ApplicationType(Pervasive.kint,[]); Absyn.ApplicationType(Pervasive.kreal,[])],
+      [Absyn.ApplicationType(Pervasive.kint,[]); 
+       Absyn.ApplicationType(Pervasive.kreal,[])],
     []) in
   let tmol4 = Molecule(
     Absyn.makeTypeSetVariable
       (Absyn.ApplicationType(Pervasive.kint,[]))
-      [Absyn.ApplicationType(Pervasive.kint,[]); Absyn.ApplicationType(Pervasive.kreal,[])],
+      [Absyn.ApplicationType(Pervasive.kint,[]); 
+       Absyn.ApplicationType(Pervasive.kreal,[])],
     []) in
   let _ = test tmol3 tmol4 in
   
   let tmol5 = Molecule(
     Absyn.makeTypeSetVariable
       (Absyn.ApplicationType(Pervasive.kint,[]))
-      [Absyn.ApplicationType(Pervasive.kint,[]); Absyn.ApplicationType(Pervasive.kreal,[])],
+      [Absyn.ApplicationType(Pervasive.kint,[]); 
+       Absyn.ApplicationType(Pervasive.kreal,[])],
     []) in
   let tmol6 = Molecule(
     Absyn.makeTypeSetVariable
@@ -872,9 +935,13 @@ let unitTests () =
   (*  Check Apply Tests *)
   let plus = makeConstantMolecule false Pervasive.overloadPlusConstant in
   let arg = Molecule(Absyn.ApplicationType(Pervasive.kint, []), []) in
-  let _ = Errormsg.log Errormsg.none ("Testing checkApply (" ^ (string_of_typemolecule plus) ^ ") (" ^ (string_of_typemolecule arg) ^ ")") in
+  let _ = Errormsg.log Errormsg.none 
+                       ("Testing checkApply (" ^ 
+                        (string_of_typemolecule plus) ^ 
+                        ") (" ^ (string_of_typemolecule arg) ^ ")") in
   let result = checkApply plus arg Absyn.errorTerm in
-  let _ = Errormsg.log Errormsg.none ("checkApply Result: " ^ (string_of_typemolecule result)) in
+  let _ = Errormsg.log Errormsg.none ("checkApply Result: " ^ 
+                                      (string_of_typemolecule result)) in
   
   let _ = Errormsg.log Errormsg.none ("Types Unit Tests Compete.\n") in
   ()
