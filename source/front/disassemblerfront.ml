@@ -2,13 +2,11 @@ open Parseargs
 
 let tablesOnly = ref false
 let instrOnly  = ref false
-let linkedFile = ref false
 let inputName = ref ""
   
 let specList = dualArgs
   [("-t", "--table", Arg.Set tablesOnly, " Only print tables") ;
    ("-i", "--instr", Arg.Set instrOnly, " Only print instructions") ;
-   ("-l", "--link", Arg.Set linkedFile, " Disassemble linked file") ;
    versionspec]
 
 let anonFunc name =
@@ -31,4 +29,4 @@ let _ =
   Bytecode.setWordSize () ;
   Pervasiveutils.pervasiveKindIndexMappingInit () ;
   Pervasiveutils.pervasiveConstantIndexMappingInit () ;
-  Disassembly.disassemble !inputName !tablesOnly !instrOnly !linkedFile
+  Disassembly.disassemble !inputName !tablesOnly !instrOnly
