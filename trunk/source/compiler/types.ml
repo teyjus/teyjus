@@ -758,6 +758,7 @@ and getNewVarsInType ty ftyvars =
           (ty::ftyvars)
     | Absyn.ArrowType(t1,t2) -> (getNewVarsInTypes [t1; t2] ftyvars) 
     | Absyn.ApplicationType(_,tyl) -> (getNewVarsInTypes tyl ftyvars)
+    | Absyn.ErrorType -> ftyvars
     | _ ->
         Errormsg.impossible Errormsg.none
           "Types.getNewVarsInTypes: unexpected form encountered in type"
