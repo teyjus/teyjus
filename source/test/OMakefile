@@ -1,3 +1,5 @@
+DIFF = diff --strip-trailing-cr
+
 ############################################################
 # Rules for compiling and linking Lambda Prolog code
 #
