@@ -14,7 +14,7 @@ SUBDIRS = $(glob D, *)
     LPProgram($(ROOT), $(FILES))
 
     actual: $(TJDIS) $(ROOT).lp
-        $(TJDIS) --link $(ROOT).lp > actual
+        $(TJDIS) $(ROOT).lp > actual
 
     test: actual expected
         diff expected actual

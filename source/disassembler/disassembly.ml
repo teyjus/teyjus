@@ -106,26 +106,12 @@ let disassembleHashTable gconsts lconsts hconsts =
 (***************************************************************************)
 (*                          HEADER INFORMATION                             *)
 (***************************************************************************)
-let disassembleHeaderInfo filename linkedCode =
-  (* check bytecode version number *)
-  let versionNumber = Bytecode.readWord() in
-  if (linkedCode) then
-	if (versionNumber = Bytecode.linkedByteCodeVersionNumber) then 
-	  let modName  = Bytecode.readString () in
-	  let codeSize = Bytecode.readWord () in
-	  (modName, codeSize)
-	else
-	  (Errormsg.error Errormsg.none 
-		 "Disassembler: inconsistent linked bytecode version";
-	   ("", 0))
-  else
-	if (versionNumber = Bytecode.byteCodeVersionNumber) then
-	  let modName = Bytecode.readString () in
-	  let codeSize = Bytecode.readWord () in
-	  (modName, codeSize)
-	else
-	  (Errormsg.error Errormsg.none "Disassembler: inconsistent bytecode version";
-	   ("", 0))
+let disassembleHeaderInfo () =
+  (* Extract the bytecode version number, mod name, and code size *)
+  let codeVer = Bytecode.readWord() in
+  let modName = Bytecode.readString () in
+  let codeSize = Bytecode.readWord () in
+    (codeVer, modName, codeSize)
 
 (***************************************************************************)
 (*                     GLOBAL/LOCAL KIND INFORMATION                       *)
@@ -323,27 +309,27 @@ let disassembleInstructions gkinds lkinds gconsts lconsts hconsts codeSize =
 (***************************************************************************)
 (*                        INTERFACE FUNCTION                               *)
 (***************************************************************************)
-let disassemble filename tableOnly instrOnly linkedCode =
+let disassemble filename tableOnly instrOnly =
   Bytecode.openInChannel filename;
-  let byteCodeVersionNumber = 
-	if linkedCode then Bytecode.linkedByteCodeVersionNumber
-	else Bytecode.byteCodeVersionNumber
+  let (codeVer, modName, codeSize) = disassembleHeaderInfo () in
+  let linkedCode =
+    if codeVer = Bytecode.linkedByteCodeVersionNumber then true
+    else if codeVer = Bytecode.byteCodeVersionNumber then false
+    else (Errormsg.error Errormsg.none
+		    ("Disassembler: unknown bytecode version <" ^
+               (string_of_int codeVer) ^ ">"); true)
   in
-	  
-  let (modName, codeSize) = disassembleHeaderInfo filename linkedCode in
   if !Errormsg.anyErrors then 1
   else
-	((if linkedCode then
-	  let _ = Bytecode.readTwoBytes () in ()
-	else ());
+	begin
+    let () = if linkedCode then ignore (Bytecode.readTwoBytes ()) in
 	let gKinds = disassembleKinds Bytecode.readGlobalKind     in
 	let lKinds = disassembleKinds Bytecode.readLocalKind      in
 	let tySkels = disassembleTypeSkeletons gKinds lKinds      in
 	if !Errormsg.anyErrors then 1
 	else
-	  ((if linkedCode then 
-		let _ = Bytecode.readTwoBytes () in ()
-	  else ());		
+      begin
+      let () = if linkedCode then ignore (Bytecode.readTwoBytes ()) in
 	  let gConsts = disassembleConstants Bytecode.readGlobalConstant in
 	  let lConsts = disassembleConstants Bytecode.readLocalConstant  in
 	  let hConsts = disassembleConstants Bytecode.readHiddenConstant in
@@ -367,12 +353,14 @@ let disassemble filename tableOnly instrOnly linkedCode =
 		disassembleInstructions gKinds lKinds gConsts lConsts hConsts codeSize
 	  in
 	  let context =
-		Context.ModContext(filename, byteCodeVersionNumber, modName,
+		Context.ModContext(filename, codeVer, modName,
 						   codeSize, gKinds, lKinds, tySkels, gConsts, lConsts,
 						   hConsts, strings, impltabs, hashtabs, moduletab,
 						   accRenamings, impRenamings, instructions)
 	  in
-	  (Context.displayModContext context tableOnly instrOnly;
-	   Bytecode.closeInChannel ();
-	   0)))
+	    Context.displayModContext context tableOnly instrOnly;
+	    Bytecode.closeInChannel ();
+	    0
+      end
+    end
 

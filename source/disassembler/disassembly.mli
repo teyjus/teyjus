@@ -14,4 +14,4 @@
 * You should have received a copy of the GNU General Public License
 * along with Teyjus.  If not, see <http://www.gnu.org/licenses/>.
 ****************************************************************************)
-val disassemble : string -> bool -> bool -> bool -> int
+val disassemble : string -> bool -> bool -> int
