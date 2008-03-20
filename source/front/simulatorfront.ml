@@ -162,8 +162,10 @@ let _ =
         solveQueries()
   with
         | Simerrors.Query    -> () (* query is done *)
-        | Simerrors.TopLevel -> () (* stop *)
-        | Simerrors.Exit     ->    (* halt *)
+        | Simerrors.TopLevel -> () (* stop  *)
+        | Simerrors.Exit     ->    (* halt  *)
+            exit 1
+        | Simerrors.Abort    ->    (* abort *)
             exit 1
         | exp                ->    (* other exceptions *)
             print_endline "Uncaught internal exception" ;
