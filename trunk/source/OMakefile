@@ -233,7 +233,7 @@ section
   OCamlProgram(tjsim, $(SIM_MAIN) $(LOD_ML) $(CMP_ML) $(FNT_ML) $(FNT_ML_TO_C))
 
 section
-  StaticCLibrary(liblink, $(SIM_C) $(SYS_C) $(TBL_C) $(LNK_C))
+  StaticCLibrary(liblink, $(SIM_C) $(SYS_C) $(TBL_C) $(LNK_C) $(INC_C))
   OCAML_CLIBS += liblink
   OCamlProgram(tjlink, $(LNK_MAIN) $(FNT_ML))
 
