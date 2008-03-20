@@ -44,12 +44,12 @@ let topModuleName = ""
 (* top module  *)
 let topModule = 
   ModuleTableEntry(topModuleName, 
-				   Absyn.Module(topModuleName, [], [],
-								ref Pervasive.pervasiveConstants,
-								ref Pervasive.pervasiveKinds, 
-								Pervasive.pervasiveTypeAbbrevs,
-								[], [], [], [], [], ref [], [], ref [], 
-								ref (Absyn.ClauseBlocks []))) 
+		   Absyn.Module(topModuleName, [], [],
+				ref Pervasive.pervasiveConstants,
+				ref Pervasive.pervasiveKinds, 
+				Pervasive.pervasiveTypeAbbrevs,
+				[], [], [], [], [], ref [], [], ref [], 
+				ref (Absyn.ClauseBlocks []))) 
 (* error module *)
 let errorModule = ModuleTableEntry("%empty", Absyn.ErrorModule)
 
@@ -144,8 +144,6 @@ let loadModule modName =
 	(print_endline "Module table has no space for more modules.";
 	 raise Simerrors.TopLevel)
   else
-    (* linking  *)	 
-    let _ = Simerrors.handleSimExceptions (Ccode_stubs.link modName) in
     (* loading  *)
     let _ = Simerrors.handleSimExceptions (Ccode_stubs.load modName index) in
     (* load ocaml (compiler) symbol tables.                              *)
