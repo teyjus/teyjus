@@ -11,7 +11,7 @@ let specList = dualArgs
     " Produce verbose output - use multiple times to increase verbosity");
    versionspec]
 
-let usageMsg = "Using: tjlink <module-name>"
+let usageMsg = "Usage: tjlink <module-name>"
 
 let _ =
   Arg.parse (Arg.align specList) setInputName usageMsg ;

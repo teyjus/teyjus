@@ -1,37 +1,56 @@
-                          DEPENDENCIES
-                          ============
+                             DEPENDENCIES
+                             ============
 
-                           ---*nix---
-  The following dependencies must be in the path:
+                              ---*nix---
+
+The following dependencies must be in the path:
 
   OCaml
-  omake
+  OMake
   diff
   flex
   bison
 
-                          ---Windows---
-  Cygwin:
-    See *nix.
+                            ---Windows---
 
-  Microsoft Visual Studio 2008:
-    The following dependencies must be in the path.  Listed is a place
-    to get either the actual dependency, or information on procuring it.
+Teyjus can be compiled with either the Cygwin toolchain or the MS
+toolchain.
+
+Cygwin:
+  The following software must be installed.
+
+    OCaml for the MinGW toolchain   http://caml.inria.fr/
+    OMake                           http://omake.metaprl.org/
+    Cygwin                          http://www.cygwin.com/
+
+  When installing Cygwin, you must select the following packages
+    Devel: bison
+    Devel: gcc
+    Devel: flex
+
+  After Cygwin is installed, you must put Cygwin's binary directory
+  in your path. For example, 'C:\cygwin\bin'
+
+
+Microsoft Visual Studio 2008:
+  The following dependencies must be in the path.  Listed is a place
+  to get either the actual dependency, or information on procuring it.
   
-    OCaml                           http://caml.inria.fr/
-    Microsoft Visual Studio 2008    http://msdn.microsoft.com/vstudio/
-    ocamake                         /util/ocamake.ml  (included)
-    flex                            http://gnuwin32.sourceforge.net/
-    bison                           http://gnuwin32.sourceforge.net/
+  OCaml                           http://caml.inria.fr/
+  Microsoft Visual Studio 2008    http://msdn.microsoft.com/vstudio/
+  ocamake                         /util/ocamake.ml  (included)
+  flex                            http://gnuwin32.sourceforge.net/
+  bison                           http://gnuwin32.sourceforge.net/
 
-                          BUILD SYSTEM
-                          ============
 
-                          ---*nix---
+                             BUILD SYSTEM
+                             ============
 
-  To build the system in a *nix environment, simply use omake:
+                        ---*nix and Cygwin---
 
-  component                   command                  path
+  To build the system in a *nix or Cygwin environment, use omake:
+
+  component                 command                    path
   -----------------------------------------------------------------
   compiler                  omake tjcc                 teyjus/source
   
@@ -39,11 +58,13 @@
   
   disassembler              omake tjdis                teyjus/source
   
-  linker (debug only)       omake tjlink               teyjus/source/linker
+  linker                    omake tjlink               teyjus/source
   
   all                       omake all                  teyjus/source
 
-                          ---Windows---
+
+             ---Windows: Microsoft Visual Studio 2008---
+
   Installing dependencies:
     Make sure that O'Caml is installed and in your path.
     Make sure that flex and bison are in your path.
@@ -80,8 +101,9 @@
   Testing:
     Note that the testing harness does not work on Windows.
 
-                            SYSTEM USAGE
-                            ============
+
+                             SYSTEM USAGE
+                             ============
 
   1. compiler (teyjus/source/tjcc)
   --------------------------------
@@ -149,20 +171,22 @@
     --help     Display this list of options
   
   
-  4. linker (teyjus/source/linker/tjlink) DEBUG ONLY
+  4. linker (teyjus/source/tjlink)
   --------------------------------------------------
-  Note that the linker is not generally intended for
-  stand-alone use.
   
-  Usage: tjlink <top-level module name>
-  
-  
+  Usage: tjlink <module-name>
+  -V         Produce verbose output - use multiple times to increase verbosity
+  --verbose  Produce verbose output - use multiple times to increase verbosity
+  -v         Return the system version
+  --version  Return the system version
+  -help      Display this list of options
+  --help     Display this list of options
 
 
-                            TESTING
-                            =======
+                               TESTING
+                               =======
 
-                       ---*nix---
+                        ---*nix and Cygwin---
 
   All tests reside in teyjus/source/test.
 
@@ -188,12 +212,14 @@
 
      use "omake system-test" under teyjus/source/test
 
-                          ---Windows---
 
-  The testing harness does not currently work on Windows.
+             ---Windows: Microsoft Visual Studio 2008---
 
-                          DOCUMENTATION
-                          =============
+  The testing harness does not currently work with the MS toolchain.
+
+
+                            DOCUMENTATION
+                            =============
   See also:
     /source/compiler/README
     /source/front/README
