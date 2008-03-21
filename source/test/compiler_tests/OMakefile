@@ -16,12 +16,13 @@ SUBDIRS = $(glob D, *)
     actual: $(TJDIS) $(ROOT).lp
         $(TJDIS) $(ROOT).lp > actual
 
-    test: actual expected
+    .PHONY: linker-test
+    linker-test: actual expected
         $(DIFF) expected actual
 
     # This target updates the tests so they pass
-    .PHONY: update-test
-    update-test: actual
+    .PHONY: update-linker-test
+    update-linker-test: actual
         cp actual expected
 
     # Tests for just the compiler - no linking step

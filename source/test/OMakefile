@@ -21,3 +21,4 @@ LPProgram(program, files) =
 #
 
 .SUBDIRS: linker_tests compiler_tests system_tests
+
