@@ -130,11 +130,8 @@ CODE
 $ans = <<'ANS';
 Error: solve: Ill-formed goal: uninstantiated variable as head.
 ANS
-SKIP: {
-	skip "Output to stderr not handled by this script", 1 unless 0;
-	
-same_answers( `$TJSIM -b $PATH --solve "$code" $MODULE\n`, $ans,"mappred");
-}
+# Note the 2>&1 which redirects STDERR to STDOUT
+same_answers( `$TJSIM -b $PATH --solve "$code" $MODULE 2>&1\n`, $ans,"mappred");
 
 ############################################
 ############################################
