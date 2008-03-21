@@ -294,7 +294,7 @@ int main(argc, argv)
     char * root = NULL;
     if(argc == 1)
     {
-      printf("No input file specified; using 'Pervasives.in'.\n");
+      //printf("No input file specified; using 'Pervasives.in'.\n");
       yyin = UTIL_fopenR("Pervasives.in");
     }
     else
@@ -308,11 +308,11 @@ int main(argc, argv)
     }
     else
     {
-      printf("Teyjus source root directory not specified; using '../../'.\n");
+      //printf("Teyjus source root directory not specified; using '../../'.\n");
       root = "../../";
     }
     
-    printf("Generating pervasive files...\n");
+    //printf("Generating pervasive files...\n");
 
     ret = yyparse();
     UTIL_fclose(yyin);
@@ -326,6 +326,6 @@ int main(argc, argv)
     spitCPervasivesC(root); 
     spitOCPervasiveMLI(root);
     spitOCPervasiveML(root); 
-    printf("Done.\n");
+    //printf("Done.\n");
     return 0;
 }
