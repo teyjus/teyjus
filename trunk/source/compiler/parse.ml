@@ -255,6 +255,7 @@ let popStack = function
 * preabsyn terms, generates a list of absyn clauses.
 **********************************************************************)
 let rec translateClause term amodule =
+  let previous = !Errormsg.anyErrors in
   let () = Errormsg.anyErrors := false in
   
   let (tty, _) = parseTerm false false term [] [] amodule in
@@ -283,11 +284,14 @@ let rec translateClause term amodule =
   in
   
   let term''' = (normalizeTerm term'') in
-  if !Errormsg.anyErrors then
-    (Errormsg.anyErrors := false;
-    None)
-  else
-    Some term'''
+  let result =
+    if !Errormsg.anyErrors then
+      None
+    else
+      Some term'''
+  in
+  (Errormsg.anyErrors := previous || (!Errormsg.anyErrors);
+  result)
 
 (**********************************************************************
 *translateTerm:
@@ -295,6 +299,7 @@ let rec translateClause term amodule =
 * term, generates a normalized absyn term.
 **********************************************************************)
 and translateTerm term amodule =
+  let previous = !Errormsg.anyErrors in
   let () = Errormsg.anyErrors := false in
   
   let () = Errormsg.log (Preabsyn.getTermPos term) 
@@ -322,12 +327,14 @@ and translateTerm term amodule =
   let mol'' = Types.Molecule(ty, List.map Types.replaceTypeSetType tys) in
 
   let newftyvars = Types.getNewVarsInTypeMol mol'' ftyvars in
-  if !Errormsg.anyErrors then
-    (Errormsg.anyErrors := false;
-    None)
-  else
-    (Some (fixedterm, mol'', fvars, newftyvars))
-
+  let result =
+    if !Errormsg.anyErrors then
+      (None)
+    else
+      (Some (fixedterm, mol'', fvars, newftyvars))
+  in
+  (Errormsg.anyErrors := previous || (!Errormsg.anyErrors);
+  result)
 (**********************************************************************
 *parseTerm:
 * Translate a preabstract syntax structure that is known to correspond to

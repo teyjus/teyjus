@@ -59,6 +59,17 @@ let compileSignature basename =
   compile Lpyacc.parseSignature (basename ^ ".sig")
 
 let compileString s =
+  let previous = !Errormsg.anyErrors in
+  let () = Errormsg.anyErrors := false in
   let lexbuf = Lexing.from_string s in
   let _ = Lplex.set_file_name lexbuf "" in
-  parseModClause Lplex.initial lexbuf
+  let cl = parseModClause Lplex.initial lexbuf in
+  let result =
+    if !Errormsg.anyErrors then
+      None
+    else
+      Some cl
+  in
+  (Errormsg.anyErrors := previous || (!Errormsg.anyErrors);
+  result)
+  
