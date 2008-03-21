@@ -233,12 +233,12 @@ int main(argc, argv)
     {
       if (sizeof(void*) == 8)
       {
-        printf("No input file specified; using 'instrformats_64.in'.\n");
+        //printf("No input file specified; using 'instrformats_64.in'.\n");
         yyin = UTIL_fopenR("instrformats_64.in");
       }
       else
       {
-        printf("No input file specified; using 'instrformats_32.in'.\n");
+        //printf("No input file specified; using 'instrformats_32.in'.\n");
         yyin = UTIL_fopenR("instrformats_32.in");
       }
     }
@@ -253,11 +253,11 @@ int main(argc, argv)
     }
     else
     {
-      printf("Teyjus source root directory not specified; using '../../'.\n");
+      //printf("Teyjus source root directory not specified; using '../../'.\n");
       root = "../../";
     }
     
-    printf("Generating instruction files...\n");
+    //printf("Generating instruction files...\n");
 
     ret = yyparse();
     UTIL_fclose(yyin);
@@ -272,7 +272,7 @@ int main(argc, argv)
     cspitSimDispatch(root);
     ocSpitInstructionMLI(root);
     ocSpitInstructionML(root);
-    printf("Done.\n");
+    //printf("Done.\n");
 
     return 0;
 }
