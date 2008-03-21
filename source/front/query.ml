@@ -28,8 +28,10 @@ let buildQueryTerm query amod =
 
   (* parse the query to pre abstract syntax *)
   let preTerm = Compile.compileString query in
-  if (!Errormsg.anyErrors) then (Errormsg.anyErrors := false; false)
+  if Option.isNone preTerm then
+    false
   else
+  let preTerm = Option.get preTerm in
 	(* parse to abstract syntax *)
 	let result = Parse.translateTerm preTerm amod in
 	if Option.isNone result then
