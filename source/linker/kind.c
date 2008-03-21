@@ -24,7 +24,7 @@
 #include "rename.h"
 #include "file.h"
 #include "VectorRW.h"
-#include "message.h"
+#include "linker_message.h"
 #include "../tables/pervasives.h"
 /*/////////////////////////////////////////////////////////////////////////////////////
 //This file defines the code for using GKinds and LKinds/////

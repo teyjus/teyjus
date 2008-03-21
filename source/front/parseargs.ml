@@ -46,7 +46,7 @@ let setInputName ?(filter=(fun x -> x))  name =
   if !inputName = "" then
     inputName := filter name
   else
-    error "More than one input file specificied."
+    error "More than one input file specified."
 
 let ensureInputName () =
   if !inputName = "" then

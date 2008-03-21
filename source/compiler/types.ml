@@ -590,6 +590,7 @@ let rec unify (tm1 : typemolecule) (tm2 : typemolecule) =
     Success
   with
     UnifyException(t) -> t
+
 (**********************************************************************
 *clashError:
 * Records a clash error when type checking.

@@ -26,7 +26,7 @@
 #include "file.h"
 #include "hashtab.h"
 #include "bvrtab.h"
-#include "message.h"
+#include "linker_message.h"
 #include "const.h"
 #include "kind.h"
 #include "../system/error.h"

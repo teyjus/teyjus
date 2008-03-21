@@ -84,15 +84,14 @@ Microsoft Visual Studio 2008:
 
     Then, simply "Build All" (Ctrl + Alt + F7).
 
-    The result should be "6 succeeded, 1 skipped."  The linker is not yet
-    available for standalone use, and so is skipped. The produced binaries
-    will be written to /source/VisualStudio/Debug/. 
+    The result should be "0 succeeded, 0 failed, 0 skipped."  The produced
+    binaries will be written to /source/VisualStudio/Debug, and to /bin. 
 
-    Alternatively, it should be possible to build projects indivually by
+    Alternatively, it should be possible to build projects individually by
     simply building a particular project using "Build Project" (Ctrl + Shift + B).
   
     If you have trouble building the solution, try running the script
-    /source/VisualStudio/clean.bat.  It removes ocaml object files that Visual
+    /source/VisualStudio/clean.bat.  It removes O'Caml object files that Visual
     Studio doesn't know about.
 
     Note that there is no support for building Teyjus using omake on Windows as
@@ -208,7 +207,7 @@ Microsoft Visual Studio 2008:
        use "omake test" under the directory containing a test case
 
 
-  3. system test
+  3. system test:
 
      use "omake system-test" under teyjus/source/test
 
