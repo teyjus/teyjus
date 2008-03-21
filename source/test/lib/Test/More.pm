@@ -330,6 +330,8 @@ sub same_answers($$;$) {
     my ($got, $exp, @rem) = @_;
     my %g;
     my %e;
+    $got =~ s/\r\n/\n/g;
+    $exp =~ s/\r\n/\n/g;
     for (split "The answer substitution:", $got) {
 	s/^\s*//g;
 	s/\s*$//g;
