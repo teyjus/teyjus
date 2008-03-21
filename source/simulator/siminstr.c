@@ -31,14 +31,13 @@
 #include "instraccess.h"
 #include "siminstrlocal.h"
 #include "builtins/builtins.h"
-#include "../system/error.h" //to be modified
-#include "../tables/pervasives.h"//to be modifed
-#include "../tables/instructions.h"//to be modifed
+#include "../system/error.h" 
+#include "../tables/pervasives.h"
+#include "../tables/instructions.h"
 #include "../loader/searchtab.h"
 
 
-//#include "print.h"
-#include <stdio.h>  //to be removed
+#include <stdio.h>  
 #include "printterm.h"
 #include "../system/stream.h"
 
@@ -136,8 +135,7 @@ void SINSTR_copy_value()                  //copy_value Yn,Ai -- E_R_X
 {
     INSACC_ERX(envY, regA);
     tmPtr = DF_termDeref((DF_TermPtr)envY);
-    if (AM_stackAddr((MemPtr)tmPtr)) {//needed? in fact, what if a fv?
-      printf("copy_value -- stack addr\n");
+    if (AM_stackAddr((MemPtr)tmPtr)) {
         *regA = *((AM_DataTypePtr)tmPtr); 
     } else DF_mkRef((MemPtr)regA, tmPtr);
 }
