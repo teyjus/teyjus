@@ -35,7 +35,7 @@ int LK_FILE_OpenInput(char* modname, char* extension)
   char* buf=(char *)EM_malloc(strlen(modname)+strlen(extension)+1);
   sprintf(buf,"%s%s",modname,extension);
   
-  fd=open(buf,O_RDONLY,0000);
+  fd=open(buf,O_RDONLY|O_BINARY,0000);
   if(fd==-1)
   {
     bad("Couldn't open file %s for reading.\n",buf); 
