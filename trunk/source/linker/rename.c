@@ -21,7 +21,7 @@
 #include "vector.h"
 #include "tree.h"
 #include "file.h"
-#include "message.h"
+#include "linker_message.h"
 
 void* ConstRNTree=NULL;
 

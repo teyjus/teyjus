@@ -1,5 +1,5 @@
 #include "../linker/module.h"
-#include "../linker/message.h"
+#include "../linker/linker_message.h"
 #include "caml/mlvalues.h"
 #include "caml/memory.h"
 #include "caml/alloc.h"
@@ -9,7 +9,7 @@ value FRONT_link(value mod_str, value verb)
 {
   CAMLparam2 (mod_str, verb);
 
-  verbosity = Int_val(verb);
+  linker_verbosity = Int_val(verb);
   
   EM_TRY
   {

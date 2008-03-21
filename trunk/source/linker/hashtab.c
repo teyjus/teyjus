@@ -24,7 +24,7 @@
 #include "hashtab.h"
 #include "code.h"
 #include "VectorRW.h"
-#include "message.h"
+#include "linker_message.h"
 #include "importtab.h"
 //////////////////////////////////////////////////////
 //HashTab Load and Write Code

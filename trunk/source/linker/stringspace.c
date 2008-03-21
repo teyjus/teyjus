@@ -19,7 +19,7 @@
 #include "vector.h"
 #include "file.h"
 #include "VectorRW.h"
-#include "message.h"
+#include "linker_message.h"
 #include "../include/standardlib.h"
 
 typedef struct{

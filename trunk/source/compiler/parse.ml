@@ -217,7 +217,7 @@ let makeType = fun term s ktable pos ->
       let ty = Types.makeKindMolecule k in
       Term(term, ty)
   | None -> (Errormsg.impossible (Absyn.getTermPos term) 
-                                 ("Parse.makeType: invalid kind " ^ s))
+                                 ("Parse.makeType: invalid pervasive kind " ^ s))
 
 let makeConstantTerm parsingtoplevel c pos =
   let ty = Types.makeConstantMolecule parsingtoplevel c in
@@ -255,6 +255,8 @@ let popStack = function
 * preabsyn terms, generates a list of absyn clauses.
 **********************************************************************)
 let rec translateClause term amodule =
+  let () = Errormsg.anyErrors := false in
+  
   let (tty, _) = parseTerm false false term [] [] amodule in
   let term' = getTermTerm tty in
   let type' = getTermMolecule tty in
@@ -266,38 +268,42 @@ let rec translateClause term amodule =
     ("Parse.translateClause: Removed overloads: " ^ (Absyn.string_of_term_ast term'')) in
   
   (*  Ensure that the term is valid and is of the correct type. *)                        
-  if term'' = Absyn.errorTerm then
-    Absyn.errorTerm
+  let () = if term'' <> Absyn.errorTerm then
+    (*  Make sure it is of type o.  *)
+    let boolkind = Pervasive.kbool in
+    let booltype = Types.makeKindMolecule boolkind in
+    if (Types.unify type' booltype) <> (Types.Success) then
+      (Errormsg.error (Absyn.getTermPos term') ("expecting term of type: o" ^ 
+        (Errormsg.info "encountered term:") ^
+        (Errormsg.info (Absyn.string_of_term term'')) ^
+        (Errormsg.info "of type:") ^
+        (Errormsg.info (Types.string_of_typemolecule type'))))
+    else
+      ()
+  in
+  
+  let term''' = (normalizeTerm term'') in
+  if !Errormsg.anyErrors then
+    (Errormsg.anyErrors := false;
+    None)
   else
-  
-  (*  Make sure it is of type o.  *)
-  let boolkind = Pervasive.kbool in
-  let booltype = Types.makeKindMolecule boolkind in
-  
-  if (Types.unify type' booltype) <> (Types.Success) then
-    (Errormsg.error (Absyn.getTermPos term') ("expecting term of type: o" ^ 
-      (Errormsg.info "encountered term:") ^
-      (Errormsg.info (Absyn.string_of_term term'')) ^
-      (Errormsg.info "of type:") ^
-      (Errormsg.info (Types.string_of_typemolecule type')));
-    Absyn.errorTerm)
-  else
-  
-  (normalizeTerm term'')
- 
+    Some term'''
+
 (**********************************************************************
 *translateTerm:
 * Given an abstract syntax representation of a module and a preabsyn
 * term, generates a normalized absyn term.
 **********************************************************************)
 and translateTerm term amodule =
-  let _ = Errormsg.log (Preabsyn.getTermPos term) 
+  let () = Errormsg.anyErrors := false in
+  
+  let () = Errormsg.log (Preabsyn.getTermPos term) 
                        ("unparsed preabsyn: " ^ 
                                  (Preabsyn.string_of_term term)) in
   let (tty,_) = parseTerm true false term [] [] amodule in
   let term' = getTermTerm tty in
   let mol' = getTermMolecule tty in
-  let _ = Errormsg.log 
+  let () = Errormsg.log 
             (Absyn.getTermPos term') 
             ("parsed term: " ^ (Absyn.string_of_term term') 
                              ^ " : " 
@@ -316,7 +322,11 @@ and translateTerm term amodule =
   let mol'' = Types.Molecule(ty, List.map Types.replaceTypeSetType tys) in
 
   let newftyvars = Types.getNewVarsInTypeMol mol'' ftyvars in
-  (fixedterm, mol'', fvars, newftyvars)
+  if !Errormsg.anyErrors then
+    (Errormsg.anyErrors := false;
+    None)
+  else
+    (Some (fixedterm, mol'', fvars, newftyvars))
 
 (**********************************************************************
 *parseTerm:
@@ -388,9 +398,7 @@ and parseTerm parsingtoplevel inlist term fvs bvs amodule =
       | StackTerm(t) -> (t, fvs')
       | StackError -> (errorTerm, []))
 
-  | Preabsyn.ErrorTerm -> (Errormsg.impossible 
-                                       Errormsg.none 
-                                       "Parse.parseTerm: error term encountered.")
+  | Preabsyn.ErrorTerm -> (errorTerm, [])
 
 (**********************************************************************
 *parseTerms:
@@ -1058,7 +1066,6 @@ and pushOperation o stack =
   let stackdata = o :: (getStackStack stack) in
   let prec = getStackOpPrec o in
   let fix = (getStackOpFixity o) in
-  let pos = getStackItemPos o in
   match fix with
     Absyn.Prefix -> Stack(stackdata, PrefixState, prec, fix)
   | Absyn.Prefixr -> Stack(stackdata, PrefixrState, prec, fix)
@@ -1068,7 +1075,7 @@ and pushOperation o stack =
   | Absyn.Postfix
   | Absyn.Postfixl -> Stack(stackdata, PostfixState, prec, fix)
   | Absyn.NoFixity ->
-      Errormsg.impossible pos "Parse.pushOperation: invalid fixity."
+      errorStack
 
 (**********************************************************************
 *newParseState:
@@ -1560,7 +1567,7 @@ let unitTests () =
   in
 
   let test t =
-    let (t',_,_,_) = translateTerm t absyn in
+    let (t',_,_,_) = Option.get (translateTerm t absyn) in
     let _ = Errormsg.log Errormsg.none 
       ("Preabsyn Term: " ^ (Preabsyn.string_of_term t)) in
     let _ = Errormsg.log Errormsg.none 

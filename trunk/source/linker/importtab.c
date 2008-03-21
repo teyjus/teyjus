@@ -25,7 +25,7 @@
 #include "code.h"
 #include "CallResolution.h"
 #include "VectorRW.h"
-#include "message.h"
+#include "linker_message.h"
 
 //////////////////////////////////////////////////////
 //ImportTab Load and Write Code

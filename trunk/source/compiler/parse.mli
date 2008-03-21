@@ -23,7 +23,11 @@ type symbol = Symbol.symbol
 * top-level interface), parses the term and returns an abstract syntax
 * term and associated information.  The resulting term has no overloaded
 * constants in it.  The resulting term has no nested abstractions in it.
+* When translateTerm is called, Errormsg.anyErrors is set to false, the
+* translation takes place, and Errormsg.anyErrors is once again reset.
+* The result is None if any errors occurred.
 *
+* during translation.
 * Arguments:
 *   a preabsyn term
 *   an absyn module with kind and constant tables filled in
@@ -35,14 +39,17 @@ type symbol = Symbol.symbol
 *
 **********************************************************************)
 val translateTerm : Preabsyn.pterm -> Absyn.amodule ->
-  (Absyn.aterm * Types.typemolecule * Absyn.atypesymbol list * Absyn.atype list)
+  (Absyn.aterm * Types.typemolecule * Absyn.atypesymbol list * Absyn.atype list) option
   
 (**********************************************************************
 *translateClause:
 * Given a preabstract syntax term representing a clause (assumed to
 * have been parsed while processing a file), parses the term and returns
 * an abstract syntax term.  The resulting clause has no overloaded
-* constants in it.
+* constants in it.  When translateClause is called, Errormsg.anyErrors
+* is set to false, the translation takes place, and Errormsg.anyErrors
+* is once again reset.  The result is None if any errors occurred
+* during translation.
 *
 * Arguments:
 *   a preabsyn term
@@ -51,7 +58,7 @@ val translateTerm : Preabsyn.pterm -> Absyn.amodule ->
 *   the translated absyn term
 *
 **********************************************************************)
-val translateClause : Preabsyn.pterm -> Absyn.amodule -> Absyn.aterm
+val translateClause : Preabsyn.pterm -> Absyn.amodule -> Absyn.aterm option
 
 (**********************************************************************
 *removeNestedAbstractions:

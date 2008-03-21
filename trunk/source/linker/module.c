@@ -32,7 +32,7 @@
 #include "file.h"
 #include "rename.h"
 #include "../system/error.h"
-#include "message.h"
+#include "linker_message.h"
 
 static char* LK_path = "./";
 void  LK_setPath(char* path) 

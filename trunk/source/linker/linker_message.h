@@ -14,60 +14,21 @@
 // You should have received a copy of the GNU General Public License        //
 // along with Teyjus.  If not, see <http://www.gnu.org/licenses/>.          //
 //////////////////////////////////////////////////////////////////////////////
-#include <stdlib.h>
+#ifndef _LK_MESSAGE_H_
+#define _LK_MESSAGE_H_
+
 #include <stdio.h>
-#include "vector.h"
-#include "datatypes.h"
-#include "../system/error.h"
-#include "linker_message.h"
 
-#define chunksize 256
+extern int linker_verbosity;
 
-Word LK_VECTOR_Size(struct Vector* vec)
-{
-  return vec->usesize;
-}
+#define debug(...) if(linker_verbosity>2){fprintf(stderr,__VA_ARGS__);}
 
-void LK_VECTOR_Init(struct Vector* vec, Word max, Word size)
-{
-  vec->data=NULL;
-  vec->usesize=0;
-  vec->maxsize=0;
-  vec->objSize=size;
-}
+#define detail(...) if(linker_verbosity>1){fprintf(stderr,__VA_ARGS__);}
 
-Word LK_VECTOR_Grow(struct Vector* vec, Word count)
-{
-  Word tmp=vec->usesize;
-  vec->usesize+=count;
-  if(vec->usesize>vec->maxsize)
-  {
-    vec->maxsize=(vec->usesize/chunksize +1)*chunksize;
-    vec->data=EM_realloc(vec->data,vec->objSize*vec->maxsize);
-  }
-  return tmp;
-}
+#define mutter(...) if(linker_verbosity>0){fprintf(stderr,__VA_ARGS__);}
 
-void* LK_VECTOR_GetPtr(struct Vector* vec, Word index)
-{
-  if(index<0||index>=LK_VECTOR_Size(vec))
-  {
-    if(LK_VECTOR_Size(vec)==0 && index==0)
-    {
-      mutter("Getting start of empty vector\n");
-      return NULL;
-    }
-    EM_THROW(LK_LinkError);
-  }
-  
-  return (char*)vec->data + index*vec->objSize;
-}
+#define bad(...) fprintf(stderr,__VA_ARGS__)
 
-void LK_VECTOR_Free(struct Vector* vec)
-{
-  free(vec->data);
-  vec->data=NULL;
-  vec->usesize=0;
-  vec->maxsize=0;
-}
+#define error bad
 
+#endif

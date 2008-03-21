@@ -14,20 +14,5 @@
 // You should have received a copy of the GNU General Public License        //
 // along with Teyjus.  If not, see <http://www.gnu.org/licenses/>.          //
 //////////////////////////////////////////////////////////////////////////////
-#ifndef _LK_MESSAGE_H_
-#define _LK_MESSAGE_H_
-
-#include <stdio.h>
-
-extern int verbosity;
-
-#define debug(...) if(verbosity>2){fprintf(stderr,__VA_ARGS__);}
-
-#define detail(...) if(verbosity>1){fprintf(stderr,__VA_ARGS__);}
-
-#define mutter(...) if(verbosity>0){fprintf(stderr,__VA_ARGS__);}
-
-#define bad(...) fprintf(stderr,__VA_ARGS__)
-#define error bad
-
-#endif
+#include "linker_message.h"
+int linker_verbosity = 0;

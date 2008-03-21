@@ -23,7 +23,7 @@
 #include "vector.h"
 #include "file.h"
 #include "VectorRW.h"
-#include "message.h"
+#include "linker_message.h"
 
 #define obstack_chunk_alloc EM_malloc
 #define obstack_chunk_free free
