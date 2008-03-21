@@ -32,9 +32,12 @@ CSpacePtr codeSpaceBeg;
 
 INSTR_Float LD_getFloat()
 {
-  int exponent = LD_FILE_GET4();
-  double fval = (double)LD_FILE_GET4();
-  return ldexp(fval, exponent);
+  double mantissa = (double)LD_FILE_GET4();
+  int    exponent = LD_FILE_GET4();
+  int    exp31; 
+  double significant = frexp(mantissa, &exp31);
+
+  return ldexp(significant, exponent);
 }
 
 int LD_CODE_LoadCode(MEM_GmtEnt* ent)
@@ -129,6 +132,7 @@ int LD_CODE_LoadCode(MEM_GmtEnt* ent)
         
           case INSTR_F:
     	      *(INSTR_Float*)(code+j)=LD_getFloat();
+	      fprintf(stderr, "float %f\n", *(INSTR_Float*)(code+j));
               //*(Word*)(code+j)=LD_FILE_GETWORD();
               j+=sizeof(Word);///\todo Check length of float encoding across arch types
               break;
