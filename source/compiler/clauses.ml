@@ -1036,15 +1036,17 @@ and translateClauses pmod amod =
     let clause =
       Parse.translateClause preterm amod in
 
+    if Option.isSome clause then
+      let clause = Option.get clause in
+      let () = Errormsg.log Errormsg.none ("Clauses.translateClause: " ^ (Absyn.string_of_term_ast clause)) in
+      let uvdefs = ref [] in
+      let clauses' = normalizeClause clause [] [] uvdefs false in
 
-    let _ = Errormsg.log Errormsg.none ("Clauses.translateClause: " ^ (Absyn.string_of_term_ast clause)) in
-    let uvdefs = ref [] in
-    let clauses' = normalizeClause clause [] [] uvdefs false in
-
-    let DeOrifyClauseResult(clauses', _, _, newclauses', hcs') = 
-	  (deOrifyClauses clauses' clauses [] newclauses hcs) 
-	in
-    (clauses', newclauses', hcs')
+      let DeOrifyClauseResult(clauses', _, _, newclauses', hcs') = 
+	      (deOrifyClauses clauses' clauses [] newclauses hcs) in
+      (clauses', newclauses', hcs')
+    else
+      (clauses, newclauses, hcs)
   in
   
   (********************************************************************

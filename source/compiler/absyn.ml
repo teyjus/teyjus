@@ -1106,22 +1106,22 @@ type atermcontext =
 * Determins whether or not to output parentheses based on the current
 * operator precedence and fixity.
 **********************************************************************)
-let rec needsParens = fun opfix opprec context fix prec ->
-  let checkLE = fun () -> opprec <= prec in
-  let checkL = fun () -> opprec < prec in
-  let checkLeft = fun () ->
+let rec needsParens opfix opprec context fix prec =
+  let checkLE () = opprec <= prec in
+  let checkL () = opprec < prec in
+  let checkLeft () =
     match opfix with
-      Infix -> checkL ()
-    | Infixl -> checkL ()
-    | Prefix -> checkL ()
-    | Postfix -> checkL ()
+      Infix
+    | Infixl
+    | Prefix
+    | Postfix
     | Postfixl -> checkL ()
     | _ -> checkLE ()
   in
   
-  let checkRight = fun () ->
+  let checkRight () =
     match opfix with
-      Infixl -> checkLE ()
+      Infixl
     | Postfixl -> checkLE ()
     | _ -> checkL ()
   in
@@ -1129,18 +1129,18 @@ let rec needsParens = fun opfix opprec context fix prec ->
   match context with
     LeftTermContext ->
       (match fix with
-        Infix -> checkLE ()
-      | Infixr -> checkLE ()
+        Infix
+      | Infixr
       | Postfix -> checkLE ()
       
-      | Infixl -> checkLeft ()
+      | Infixl
       | Postfixl -> checkLeft ()
       | _ -> (Errormsg.impossible Errormsg.none "Absyn.needsParens: invalid fixity"))
 
   | RightTermContext ->
       (match fix with
-        Infix -> checkLE ()
-      | Infixl -> checkLE ()
+        Infix
+      | Infixl
       | Prefix -> checkLE ()
       
       | Infixr -> checkRight ()
@@ -1277,8 +1277,8 @@ and string_of_term term =
     let rec string_of_args args =
       match args with
           [] -> ""
-        | a::[] -> (string_of_term' a WholeTermContext appFixity appPrec)
-        | a::aa -> (string_of_term' a WholeTermContext appFixity appPrec) 
+        | a::[] -> (string_of_term' a RightTermContext appFixity appPrec)
+        | a::aa -> (string_of_term' a RightTermContext appFixity appPrec) 
                              ^ " " ^ (string_of_args aa)
     in
     
@@ -1380,7 +1380,7 @@ and string_of_term term =
     else
       result
   
-  and string_of_term' = fun term context fix prec ->
+  and string_of_term' term context fix prec =
     match term with
       IntTerm(i,_,_) -> (string_of_int i)
     | RealTerm(r,_,_) -> (string_of_float r)

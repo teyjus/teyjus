@@ -25,7 +25,7 @@
 #include "tyskel.h"
 #include "const.h"
 #include "VectorRW.h"
-#include "message.h"
+#include "linker_message.h"
 
 /*/////////////////////////////////////////////////////////////////////////////////////
 //This file defines the code for using GConsts and LConsts/////

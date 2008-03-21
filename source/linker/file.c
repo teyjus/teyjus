@@ -21,7 +21,7 @@
 #include <string.h>
 #include "file.h"
 #include "../system/error.h"
-#include "message.h"
+#include "linker_message.h"
 
 #define DEBUG(x) printf("%s\n",x)
 #define SWAPENDIAN

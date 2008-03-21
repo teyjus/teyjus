@@ -31,9 +31,11 @@ let buildQueryTerm query amod =
   if (!Errormsg.anyErrors) then (Errormsg.anyErrors := false; false)
   else
 	(* parse to abstract syntax *)
-	let (term, tymol, fvars, tyfvars) = Parse.translateTerm preTerm amod in
-	if (!Errormsg.anyErrors) then (Errormsg.anyErrors := false; false)
+	let result = Parse.translateTerm preTerm amod in
+	if Option.isNone result then
+	  false
 	else
+	  let (term, tymol, fvars, tyfvars) = Option.get result in
 	  (* check whether the query has boolean type *)
 	  let ty = Types.getMoleculeType tymol in
 	  if (isBooleanType ty) then
