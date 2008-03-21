@@ -1,20 +1,20 @@
 SUBDIRS = $(glob D, *)
 
 .SUBDIRS: $(SUBDIRS)
-    # The default root file is the name of the test directory
-    ROOT = $(basename $(absname $(CWD)))
+    # The default main file is the name of the test directory
+    MAIN = $(basename $(absname $(CWD)))
 
-    # The default root file can be overriden if the test directory contains
-    # a file named root.om with a line "ROOT = xxxx"
-    if $(file-exists root.om)
-        include root.om
+    # The default main file can be overriden if the test directory contains
+    # a file named main.om with a line "MAIN = xxxx"
+    if $(file-exists main.om)
+        include main.om
         export
 
     FILES = $(rootname $(glob *.mod))
-    LPProgram($(ROOT), $(FILES))
+    LPProgram($(MAIN), $(FILES))
 
-    actual: $(TJDIS) $(ROOT).lp
-        $(TJDIS) $(ROOT).lp > actual
+    actual: $(TJDIS) $(MAIN).lp
+        $(TJDIS) $(MAIN).lp > actual
 
     .PHONY: linker-test
     linker-test: actual expected
