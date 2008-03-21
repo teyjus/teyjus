@@ -119,6 +119,14 @@ let rec writeNBytes out number numBytes =
    else ());
   output_byte out byte
 
+let rec writeNBytes2 out number numBytes =
+  let byte = Int32.to_int (Int32.logand number (Int32.of_int 0xff)) in
+   (if numBytes > 1 then 
+     writeNBytes2 out (Int32.shift_right_logical number 8) (numBytes - 1)
+   else ());
+   output_byte out byte
+
+  
 
 (* one byte     *)
 let writeint1 number = writeNBytes (getOutChannel ()) number 1
@@ -148,9 +156,9 @@ let writeWord number =
 (* the folloing being the exponent.                    *)
 let writefloat4 number =
   let (significant, exponent) = frexp number in
-  let mantissa = ldexp significant 31 in
+  let mantissa = Int32.of_float (ldexp significant 31) in
   let myOutChannel = getOutChannel () in
-  writeNBytes myOutChannel (int_of_float mantissa) 4;
+  writeNBytes2 myOutChannel mantissa 4;
   writeNBytes myOutChannel exponent 4
 
 (* write a string:                                     *)
@@ -205,6 +213,17 @@ let readNBytes input numBytes =
 	  readNBytesAux (numBytes - 1) ((number lsl 8) lor oneByte)
   in
   readNBytesAux numBytes 0
+
+let readNBytes2 input numBytes =
+  let rec readNBytesAux numBytes number =
+    if (numBytes = 0) then number
+    else
+      let oneByte = input_byte input in
+      readNBytesAux (numBytes - 1) 
+	(Int32.logor (Int32.shift_left number 8) (Int32.of_int oneByte))
+  in
+  readNBytesAux numBytes (Int32.of_int 0)
+
 
 (* read one byte  *)
 let readOneByte  () = readNBytes (getInChannel ()) 1
@@ -374,7 +393,7 @@ let readintref8 () =
 (* read float *)
 let readfloat4 () =
   let input = getInChannel () in
-  let mantissa = float_of_int (readNBytes input 4) in
+  let mantissa = Int32.to_float (readNBytes2 input 4) in
   let exponent = readNBytes input 4 in
   let (significant, _) = frexp mantissa in
   ldexp significant exponent

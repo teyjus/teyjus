@@ -99,10 +99,11 @@ val writeWord : int -> unit
 (* the folloing being the exponent.                    *)
 val writefloat4 : float -> unit
 
-(* write a string:                                     *)
-(* the leading byte contains the length of the string  *)
-(* and is followed by a sequence of characters.        *)
+(* write a string:                                        *)
+(* the leading 4 bytes contains the length of the string  *)
+(* and is followed by a sequence of characters.           *)
 val writeString : string -> unit
+
 
 (* write a kind index:                                 *)
 (* a one byte flag indicating the kind category        *)
@@ -125,6 +126,7 @@ val readOneByte  : unit -> int    (* read one byte  *)
 val readTwoBytes : unit -> int    (* read two bytes *)
 val readWord     : unit -> int    (* read a word    *)
 val readString   : unit -> string (* read a string  *)
+
 
 val skipNBytes : int -> unit (* skip n bytes   *)
 val skipNWords : int -> unit (* skip n words   *)
