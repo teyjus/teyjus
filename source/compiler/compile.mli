@@ -39,7 +39,7 @@ val compileSignature : string -> Preabsyn.pmodule
 * Given a string containing lambda prolog code, parses the file and
 * returns a preabsyn term.
 **********************************************************************)
-val compileString : string -> Preabsyn.pterm
+val compileString : string -> Preabsyn.pterm option
 
 (*  Flags indicating whether to print various stages of compilation;
     for testing.  *)
