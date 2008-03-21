@@ -39,7 +39,7 @@ void LD_FILE_Open(char* modname, char* extension)
   sprintf(buf,"%s%s",modname,extension);
   
   
-  fd=open(buf,O_RDONLY,0000);
+  fd=open(buf,O_RDONLY|O_BINARY,0000);
   if(fd==-1)
   {
     perror(buf);
