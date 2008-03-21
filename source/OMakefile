@@ -130,7 +130,7 @@ LNK_C[] =
     $(LNK)/importtab
     $(LNK)/kind
     $(LNK)/module
-    $(LNK)/message
+    $(LNK)/linker_message
     $(LNK)/rename
     $(LNK)/stringspace
     $(LNK)/tree
