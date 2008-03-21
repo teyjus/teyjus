@@ -201,15 +201,20 @@ Microsoft Visual Studio 2008:
   2. testing linker:
 
     a. all test cases:
-       use "omake test" under teyjus/source/test
+       use "omake linker-test" under teyjus/source/test
 
     b. individual test case:
-       use "omake test" under the directory containing a test case
+       use "omake linker-test" under the directory containing a test case
 
 
   3. system test:
 
      use "omake system-test" under teyjus/source/test
+
+     
+  4. all the above tests:
+
+     use "omake test" under teyjus/source/test
 
 
              ---Windows: Microsoft Visual Studio 2008---
