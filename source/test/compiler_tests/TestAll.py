@@ -10,7 +10,22 @@ def runTest(i):
 
     print "TEST: Running test %i: %s." % (i, rootName)
     os.chdir("./test%i/" % i)
-    os.system("tjc %s" % rootName)
+    if os.system("tjcc %s" % rootName) <> 0:
+        print "Error: test case %i failed to compile." % i
+        os.chdir("..")
+        return
+    if os.system("tjlink %s" % rootName) <> 0:
+        print "Error: test case %i failed to link." % i
+        os.chdir("..")
+        return
+    if os.system("tjdis %s.lp > actual" % rootName) <> 0:
+        print "Error: test case %i failed to disassemble." % i
+        os.chdir("..")
+        return
+    if os.system("diff expected actual") <> 0:
+        print "Error: test case %i produced incorrect disassembly." % i
+        os.chdir("..")
+        return
     os.chdir("..")
     return
 
