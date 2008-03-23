@@ -1410,83 +1410,83 @@ and genAStrTermArgsCode args chunk insts startLoc =
 (*************************************************************************)
 let genHeadTyVarsCode tyargs regNum neededness =
   let rec genHeadTyVarsCodeAux tyargs regNum insts size delayed index =	
-	(* for one type variable *)
-	let genHeadTyVarCode var =
-	  
-	  (* first occurrence of a permanent variable as a head argument *)
-	  let genHeadFirstPermTypeVar varData offset needed =
-		let (inst, size) =
-		  if (needed) then 
-			([Instr.Ins_get_type_variable_p(offset, regNum)],
-			 Instr.getSize_get_type_variable_p)
-		  else ([], 0)
-		in
-		Registers.markUnusedReg regNum;
-		(inst, size)
-	  in
-	  
-	  (* first occurrence of a temporary variable as a head argument *)
-	  let genHeadFirstTempTypeVar varData lastUse needed  =
-		(if lastUse then Registers.markUnusedReg regNum
-		 else Registers.assignRegToType varData needed regNum);
-		([], 0)
-	  in
-	  
-	  (* subsequent occurrence of a permanent variable as a head argument *)
-	  let genHeadSubPermTypeVar varData offset needed=
-		let (inst, size) =
-		  if (needed) then 
-			([Instr.Ins_get_type_value_p(offset, regNum)],
-			 Instr.getSize_get_type_value_p)
-		  else ([], 0)
-		in
-		Registers.markUnusedReg regNum;
-		(inst, size)
-	  in
-
-	   (* subsequent occurrence of a temporary variable as a head argument *)
-	  let genHeadSubTempTypeVar varData offset lastUse needed =
-		let (inst, size) =
-		  if (needed) then 
-			([Instr.Ins_get_type_value_t(offset, regNum)],
-			 Instr.getSize_get_type_value_t)
-		  else ([], 0)
-		in
-		Registers.markUnusedReg regNum;
-		if (lastUse) then (Registers.mkRegFree offset; (inst, size))
-		else (inst, size)
-	  in
-
-	  (* function body of genHeadTyVarCode *)
-   	  let varData = Absyn.getTypeFreeVariableVariableData var in
-	  let lastUse = (Absyn.getTypeVariableDataLastUse varData) == var in
-	  let needed  = (Array.get neededness index) in
-	    match (Absyn.getTypeFreeVariableFirst var), 
-	          (Absyn.getTypeVariableDataPerm varData) 
-		with
-		  true,   true  -> (* first occurrence of a permanent variable *)
-			genHeadFirstPermTypeVar varData 
-			  (Absyn.getTypeVariableDataOffset varData) needed
-		| true,   false -> (* first occurrence of a temporay variable *)
-			genHeadFirstTempTypeVar varData lastUse needed
-		| false,  true  -> (* subsequent occurrence of a permanent variable *)
-			genHeadSubPermTypeVar varData 
-			  (Absyn.getTypeVariableDataOffset varData) needed
-		| false,  false -> (* subsequent occurrence of a tempory variable *)
-			genHeadSubTempTypeVar varData 
-			  (Absyn.getTypeVariableDataOffset varData) lastUse needed	
+    (* for one type variable *)
+    let genHeadTyVarCode var =
+      
+      (* first occurrence of a permanent variable as a head argument *)
+      let genHeadFirstPermTypeVar varData offset needed =
+	let (inst, size) =
+	  if (needed) then 
+	    ([Instr.Ins_get_type_variable_p(offset, regNum)],
+	     Instr.getSize_get_type_variable_p)
+	  else ([], 0)
+	in
+	Registers.markUnusedReg regNum;
+	(inst, size)
+      in
+      
+      (* first occurrence of a temporary variable as a head argument *)
+      let genHeadFirstTempTypeVar varData lastUse needed  =
+	(if lastUse then Registers.markUnusedReg regNum
+	else Registers.assignRegToType varData needed regNum);
+	([], 0)
+      in
+      
+      (* subsequent occurrence of a permanent variable as a head argument *)
+      let genHeadSubPermTypeVar varData offset needed=
+	let (inst, size) =
+	  if (needed) then 
+	    ([Instr.Ins_get_type_value_p(offset, regNum)],
+	     Instr.getSize_get_type_value_p)
+	  else ([], 0)
+	in
+	Registers.markUnusedReg regNum;
+	(inst, size)
+      in
+      
+      (* subsequent occurrence of a temporary variable as a head argument *)
+      let genHeadSubTempTypeVar varData offset lastUse needed =
+	let (inst, size) =
+	  if (needed) then 
+	    ([Instr.Ins_get_type_value_t(offset, regNum)],
+	     Instr.getSize_get_type_value_t)
+	  else ([], 0)
+	in
+	Registers.markUnusedReg regNum;
+	if (lastUse) then (Registers.mkRegFree offset; (inst, size))
+	else (inst, size)
+      in
+      
+      (* function body of genHeadTyVarCode *)
+      let varData = Absyn.getTypeFreeVariableVariableData var in
+      let lastUse = (Absyn.getTypeVariableDataLastUse varData) == var in
+      let needed  = (Array.get neededness index) in
+      match (Absyn.getTypeFreeVariableFirst var), 
+	(Absyn.getTypeVariableDataPerm varData) 
+      with
+	true,   true  -> (* first occurrence of a permanent variable *)
+	  genHeadFirstPermTypeVar varData 
+	    (Absyn.getTypeVariableDataOffset varData) needed
+      | true,   false -> (* first occurrence of a temporay variable *)
+	  genHeadFirstTempTypeVar varData lastUse needed
+      | false,  true  -> (* subsequent occurrence of a permanent variable *)
+	  genHeadSubPermTypeVar varData 
+	    (Absyn.getTypeVariableDataOffset varData) needed
+      | false,  false -> (* subsequent occurrence of a tempory variable *)
+	  genHeadSubTempTypeVar varData 
+	    (Absyn.getTypeVariableDataOffset varData) lastUse needed	
     in	  
     (* function body of genHeadTyVarsCode *)
     match tyargs with
-	  [] -> (List.flatten (List.rev insts), size, List.rev delayed)
-	| (ty :: rest) ->
-		if (Absyn.isTypeFreeVariable ty) then
-		  let (inst, oneSize) = genHeadTyVarCode ty in
-		  genHeadTyVarsCodeAux rest (regNum + 1) (inst :: insts) (oneSize+size)
-			delayed (index + 1)
-		else
-		  genHeadTyVarsCodeAux rest (regNum + 1) insts size 
-			((regNum, ty)::delayed) (index + 1)
+      [] -> (List.flatten (List.rev insts), size, List.rev delayed)
+    | (ty :: rest) ->
+	if (Absyn.isTypeFreeVariable ty) then
+	  let (inst, oneSize) = genHeadTyVarCode ty in
+	  genHeadTyVarsCodeAux rest (regNum + 1) (inst :: insts) (oneSize+size)
+	    delayed (index + 1)
+	else
+	  genHeadTyVarsCodeAux rest (regNum + 1) insts size 
+	    ((regNum, ty)::delayed) (index + 1)
   in
   genHeadTyVarsCodeAux tyargs regNum [] 0 [] 0 
   
@@ -1655,55 +1655,58 @@ let genClauseHeadCode cl chunk insts startLoc isFact =
 let setUpGoalArgs goal chunk last hasenv =
   (* eagerly deal with register assignment for unneeded type variables *)
   let assignRegUnNeeded var =
-	let varData = Absyn.getTypeFreeVariableVariableData var in
-	let lastUse = (Absyn.getTypeVariableDataLastUse varData) == var in
-	if (Absyn.getTypeVariableDataPerm varData) then () (*nothing to do w perm*)
-	else 
-	  let mychunk = List.tl chunk in
-	  let mylowval = Registers.getNumGoalArgs () in
-	  if (Absyn.getTypeFreeVariableFirst var) then (* first appearence *)
-		if lastUse then ()
-		else let _ = Registers.assignTyReg varData false mychunk mylowval in ()
-	  else
-		if lastUse then Registers.mkRegFree 
-			(Absyn.getTypeVariableDataOffset varData)
-		else ()
+    let varData = Absyn.getTypeFreeVariableVariableData var in
+    let lastUse = (Absyn.getTypeVariableDataLastUse varData) == var in
+    if (Absyn.getTypeVariableDataPerm varData) then () (*nothing to do w perm*)
+    else 
+      let mychunk = List.tl chunk in
+      let mylowval = Registers.getNumGoalArgs () in
+      if (Absyn.getTypeFreeVariableFirst var) then (* first appearence *)
+	if lastUse then ()
+	else let _ = Registers.assignTyReg varData false mychunk mylowval in ()
+      else
+	if lastUse then  
+	  let regNum = Absyn.getTypeVariableDataOffset varData in
+	  Registers.mkRegFree regNum;
+	  Registers.markUnusedReg regNum
+	else ()
   in
+
   (* pair up the type arguments with registers, resolving conflicts if   *)
   (* needed                                                              *)
   let genRegTypePairs regNumStart regNumEnd tyargs neededness =
-   let rec genRegTypePairsAux regNum tyargs index insts size regTyPairs =
-	 if (regNum > regNumEnd) then 
-	   (List.rev regTyPairs, List.flatten (List.rev insts), size)
-	 else
-	   let ty  = List.hd tyargs in
-	   let needed = Array.get neededness index in
-	   let (myInst,mySize)=Registers.resolveRegTypeConflict ty regNum chunk in
-	   if (needed) then
-		 genRegTypePairsAux (regNum + 1) (List.tl tyargs) (index + 1)
-		   (myInst :: insts) (size + mySize) ((regNum, ty) :: regTyPairs)
-	   else
-		 ((if (Absyn.isVariableType ty) then assignRegUnNeeded ty
-		   else ());
-		  genRegTypePairsAux (regNum + 1) (List.tl tyargs) (index + 1)
-			(myInst :: insts) (size + mySize) regTyPairs)
-   in
-   genRegTypePairsAux regNumStart tyargs 0 [] 0 []
+    let rec genRegTypePairsAux regNum tyargs index insts size regTyPairs =
+      if (regNum > regNumEnd) then 
+	(List.rev regTyPairs, List.flatten (List.rev insts), size)
+      else
+	let ty  = List.hd tyargs in
+	let needed = Array.get neededness index in
+	let (myInst,mySize)=Registers.resolveRegTypeConflict ty regNum chunk in
+	if (needed) then
+	  genRegTypePairsAux (regNum + 1) (List.tl tyargs) (index + 1)
+	    (myInst :: insts) (size + mySize) ((regNum, ty) :: regTyPairs)
+	else
+	  ((if (Absyn.isTypeFreeVariable ty) then assignRegUnNeeded ty
+	  else ());
+	   genRegTypePairsAux (regNum + 1) (List.tl tyargs) (index + 1)
+	     (myInst :: insts) (size + mySize) regTyPairs)
+    in
+    genRegTypePairsAux regNumStart tyargs 0 [] 0 []
   in
 
   (* pair up the term arguments with registers, resolving conflicts if  *)
   (* needed                                                             *)
   let genRegTermPairs regNumEnd args =
-	let rec genRegTermPairsAux regNum args insts size regTmPairs =
-	  if (regNum > regNumEnd) then
-		(List.rev regTmPairs, List.flatten (List.rev insts), size)
-	  else
-		let tm = List.hd args in
-		let (myInst,mySize)=Registers.resolveRegTermConflict tm regNum chunk in
-		genRegTermPairsAux (regNum + 1) (List.tl args) (myInst :: insts)
-		  (size + mySize) ((regNum, tm)::regTmPairs)
-	in
-	genRegTermPairsAux 1 args [] 0 []
+    let rec genRegTermPairsAux regNum args insts size regTmPairs =
+      if (regNum > regNumEnd) then
+	(List.rev regTmPairs, List.flatten (List.rev insts), size)
+      else
+	let tm = List.hd args in
+	let (myInst,mySize)=Registers.resolveRegTermConflict tm regNum chunk in
+	genRegTermPairsAux (regNum + 1) (List.tl args) (myInst :: insts)
+	  (size + mySize) ((regNum, tm)::regTmPairs)
+    in
+    genRegTermPairsAux 1 args [] 0 []
   in
 
   (* function body of setUpGoalArgs *)
@@ -1713,20 +1716,20 @@ let setUpGoalArgs goal chunk last hasenv =
   in
   let numGoalArgs = Registers.getNumGoalArgs () in
   let (regTypePairs, typeConflictCode, typeConflictSize) =
-	genRegTypePairs (numTermArgs + 1) numGoalArgs 
-	  (Absyn.getAtomicGoalTypeArgs goal) neededness 
+    genRegTypePairs (numTermArgs + 1) numGoalArgs 
+      (Absyn.getAtomicGoalTypeArgs goal) neededness 
   in
   let (regTermPairs, termConflictCode, termConflictSize) =
-	genRegTermPairs numTermArgs (Absyn.getAtomicGoalTermArgs goal) 
+    genRegTermPairs numTermArgs (Absyn.getAtomicGoalTermArgs goal) 
   in
   let newChunk = List.tl chunk in   (* remove this goal from the chunk *)
   (* mark the argument registers *)
   Registers.markArgRegs (Absyn.getAtomicGoalNumberOfArgs goal);
   let (typesCode, typesSize) = (* set up (needed) type arguments *)
-	genSTypesCode regTypePairs newChunk numGoalArgs last
+    genSTypesCode regTypePairs newChunk numGoalArgs last
   in
   let (termsCode, termsSize) = (* set up term arguments *)
-	genSTermsCode regTermPairs newChunk numGoalArgs last hasenv 
+    genSTermsCode regTermPairs newChunk numGoalArgs last hasenv 
   in
   (* unmark argument registers if not occupied by a temporary *)
   Registers.cleanUpRegs (); 
