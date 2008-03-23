@@ -220,22 +220,27 @@ gen: $(INSTR_ML_FILES) $(PERV_ML_FILES) $(INSTR_C_FILES) $(PERV_C_FILES)
 # Build Targets
 #
 
-OCamlProgram(tjcc, $(CMP_MAIN) $(CMP_ML) $(LOD_ML) $(FNT_ML))
+# If the file "prebuilt" exists then assume the binaries are
+# already built by a 3rd party tool
 
-OCamlProgram(tjdis, $(DIS_MAIN) $(CMP_ML) $(LOD_ML) $(DIS_ML) $(FNT_ML))
+if $(not $(file-exists prebuilt))
+  OCamlProgram(tjcc, $(CMP_MAIN) $(CMP_ML) $(LOD_ML) $(FNT_ML))
 
-# The simulator and linker require linking with C code
+  OCamlProgram(tjdis, $(DIS_MAIN) $(CMP_ML) $(LOD_ML) $(DIS_ML) $(FNT_ML))
 
-section
-  StaticCLibrary(libsim, \
-    $(SIM_C) $(SYS_C) $(TBL_C) $(FNT_C) $(LOD_C) $(LNK_C) $(INC_C))
-  OCAML_CLIBS += libsim
-  OCamlProgram(tjsim, $(SIM_MAIN) $(LOD_ML) $(CMP_ML) $(FNT_ML) $(FNT_ML_TO_C))
+  # The simulator and linker require linking with C code
 
-section
-  StaticCLibrary(liblink, $(SIM_C) $(SYS_C) $(TBL_C) $(LNK_C) $(INC_C))
-  OCAML_CLIBS += liblink
-  OCamlProgram(tjlink, $(LNK_MAIN) $(FNT_ML))
+  section
+    StaticCLibrary(libsim, \
+      $(SIM_C) $(SYS_C) $(TBL_C) $(FNT_C) $(LOD_C) $(LNK_C) $(INC_C))
+    OCAML_CLIBS += libsim
+    OCamlProgram(tjsim, $(SIM_MAIN) $(LOD_ML) $(CMP_ML) $(FNT_ML) $(FNT_ML_TO_C))
+
+  section
+    StaticCLibrary(liblink, $(SIM_C) $(SYS_C) $(TBL_C) $(LNK_C) $(INC_C))
+    OCAML_CLIBS += liblink
+    OCamlProgram(tjlink, $(LNK_MAIN) $(FNT_ML))
+
 
 TJCC = $(CWD)/tjcc$(EXE)
 TJSIM = $(CWD)/tjsim$(EXE)
