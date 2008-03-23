@@ -108,7 +108,7 @@ let check_existence (ext,name) =
 	match ext with
 	| ML | MLI ->
 		if not (Sys.file_exists name) then
-			failwith ("No such file : "^(escape name))
+			failwith ("No such file : '"^(escape name)^"'")
 	| _ -> ()
 		(* Others files can be found in Ocaml stdlib or
 		   user -I paths *)
@@ -442,7 +442,7 @@ let vcproj_get_files vcp_file =
 		done;
 		let line = String.sub line !p (len - !p) in		
 		if String.length line > 13 && String.sub line 0 13 = "RelativePath=" then begin
-			let str = String.sub line 13 (String.length line - 14) in
+			let str = String.sub line 14 (String.length line - 15) in
 			Some (unescape str)
 		end else
 			None

@@ -67,12 +67,15 @@ Microsoft Visual Studio 2008:
 
   Installing dependencies:
     Make sure that O'Caml is installed and in your path.
+
     Make sure that flex and bison are in your path.
+
     Build ocamake and make sure it is in your path.  To build ocamake,
     run this command in the /util directory of the distribution:
       ocamlc unix.cma str.cma ocamake.ml -o ocamake.exe
     Then, copy that file into your ocaml/bin directory, or alternatively
-    modify your path.
+    modify your path.  Be sure to use the provided version of ocamake, as
+    it has been patched to work with Visual Studio 2008 project files.
 
   Building the System:
     To build the system in a Windows environment, use the provided
