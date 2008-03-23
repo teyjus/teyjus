@@ -86,7 +86,7 @@
 			<Tool
 				Name="VCPostBuildEventTool"
 				Description="Compiling..."
-				CommandLine="ocamake -opt -epp $(ProjectPath) $(ProjectPath) $(SolutionDir)$(ConfigurationName)\liblink.lib -o $(SolutionDir)$(ConfigurationName)\tjlink.exe&#x0D;&#x0A;xcopy $(SolutionDir)$(ConfigurationName)\tjlink.exe ..\..\bin\ /Y&#x0D;&#x0A;"
+				CommandLine="ocamake -opt -epp $(ProjectPath) $(ProjectPath) $(SolutionDir)$(ConfigurationName)\liblink.lib -o $(SolutionDir)$(ConfigurationName)\tjlink.exe&#x0D;&#x0A;xcopy $(SolutionDir)$(ConfigurationName)\tjlink.exe ..\..\bin\ /Y&#x0D;&#x0A;xcopy $(SolutionDir)$(ConfigurationName)\tjlink.exe ..\ /Y&#x0D;&#x0A;"
 			/>
 		</Configuration>
 		<Configuration
@@ -177,7 +177,7 @@
 					<Tool
 						Name="VCCustomBuildTool"
 						Description=""
-						CommandLine="echo Force Microsoft Visual Studio to perform build events. &gt; tjlink_force.txt"
+						CommandLine="echo Force Microsoft Visual Studio to perform build events. &gt; tjlink_force.txt&#x0D;&#x0A;"
 						Outputs="tjlink_force.txt"
 					/>
 				</FileConfiguration>

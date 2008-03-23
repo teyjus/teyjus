@@ -95,7 +95,7 @@
 			<Tool
 				Name="VCPostBuildEventTool"
 				Description="Compiling..."
-				CommandLine="ocamake $(ProjectPath) -opt -epp -o $(SolutionDir)$(ConfigurationName)\tjcc.exe&#x0D;&#x0A;xcopy $(SolutionDir)$(ConfigurationName)\tjcc.exe ..\..\bin\ /Y&#x0D;&#x0A;"
+				CommandLine="ocamake $(ProjectPath) -opt -epp -o $(SolutionDir)$(ConfigurationName)\tjcc.exe&#x0D;&#x0A;xcopy $(SolutionDir)$(ConfigurationName)\tjcc.exe ..\..\bin\ /Y&#x0D;&#x0A;xcopy $(SolutionDir)$(ConfigurationName)\tjcc.exe ..\ /Y&#x0D;&#x0A;&#x0D;&#x0A;rem Creating this file allows the test suite to be run.&#x0D;&#x0A;echo %date%, %time%: Teyjus binaries built using Microsoft Visual Studio 2008. &gt;&gt; ..\prebuilt&#x0D;&#x0A;"
 			/>
 		</Configuration>
 		<Configuration
