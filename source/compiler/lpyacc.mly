@@ -1,5 +1,9 @@
 %{
 (****************************************************************************
+*Copyright 2008
+*  Andrew Gacek, Steven Holte, Gopalan Nadathur, Xioachu Qi, Zach Snow
+****************************************************************************)
+(****************************************************************************
 * This file is part of Teyjus.
 *
 * Teyjus is free software: you can redistribute it and/or modify
