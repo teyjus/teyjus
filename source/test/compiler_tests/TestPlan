@@ -82,6 +82,7 @@ MISC
   (3) "not" predicate bug                       -- test31
   (4) a bug in removing overloads               -- test32, test33
   (5) max string length                         -- test34
+  (6) a bug in register assignment              -- test35
 
 
 Compiler front 
