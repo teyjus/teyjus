@@ -10,6 +10,8 @@ The following dependencies must be in the path:
   diff
   flex
   bison
+  diff
+  perl
 
                             ---Windows---
 
@@ -41,6 +43,8 @@ Microsoft Visual Studio 2008:
   ocamake                         /util/ocamake.ml  (included)
   flex                            http://gnuwin32.sourceforge.net/
   bison                           http://gnuwin32.sourceforge.net/
+  diff                            http://gnuwin32.sourceforge.net/
+  perl                            http://www.activestate.com/
 
 
                              BUILD SYSTEM
@@ -74,7 +78,7 @@ Microsoft Visual Studio 2008:
     run this command in the /util directory of the distribution:
       ocamlc unix.cma str.cma ocamake.ml -o ocamake.exe
     Then, copy that file into your ocaml/bin directory, or alternatively
-    modify your path.  Be sure to use the provided version of ocamake, as
+    modify your path.  Be sure to use the provided version of ocamake.ml, as
     it has been patched to work with Visual Studio 2008 project files.
 
   Building the System:
@@ -87,8 +91,10 @@ Microsoft Visual Studio 2008:
 
     Then, simply "Build All" (Ctrl + Alt + F7).
 
-    The result should be "0 succeeded, 0 failed, 0 skipped."  The produced
-    binaries will be written to /source/VisualStudio/Debug, and to /bin. 
+    The result should be "8 succeeded, 0 failed, 0 skipped."  The produced
+    binaries will be written to /source/VisualStudio/Debug, to /bin, and to
+    /source.  In addition, the file /source/prebuilt will be create; this will
+    allow the tests to run correctly.
 
     Alternatively, it should be possible to build projects individually by
     simply building a particular project using "Build Project" (Ctrl + Shift + B).
@@ -101,7 +107,8 @@ Microsoft Visual Studio 2008:
     of yet.
 
   Testing:
-    Note that the testing harness does not work on Windows.
+    The testing harness only partially works on Windows.  Several tests fail due
+    to ActivePerl's method of calling other programs through cmd.exe.
 
 
                              SYSTEM USAGE
@@ -222,8 +229,10 @@ Microsoft Visual Studio 2008:
 
              ---Windows: Microsoft Visual Studio 2008---
 
-  The testing harness does not currently work with the MS toolchain.
-
+  All of the above applies, however the file /source/prebuilt must exist in
+  order to run the tests.  The file can contain anything (or nothing) at all;
+  its existence is used by the build system to determine whether or not to
+  attempt to rebuild the Teyjus binaries.
 
                             DOCUMENTATION
                             =============
