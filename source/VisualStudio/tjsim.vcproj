@@ -86,7 +86,7 @@
 			<Tool
 				Name="VCPostBuildEventTool"
 				Description="Compiling..."
-				CommandLine="ocamake -opt -epp $(ProjectPath) $(SolutionDir)$(ConfigurationName)\libsim.lib -o $(SolutionDir)$(ConfigurationName)\tjsim.exe&#x0D;&#x0A;xcopy $(SolutionDir)$(ConfigurationName)\tjsim.exe ..\..\bin\ /Y&#x0D;&#x0A;"
+				CommandLine="ocamake -opt -epp $(ProjectPath) $(SolutionDir)$(ConfigurationName)\libsim.lib -o $(SolutionDir)$(ConfigurationName)\tjsim.exe&#x0D;&#x0A;xcopy $(SolutionDir)$(ConfigurationName)\tjsim.exe ..\..\bin\ /Y&#x0D;&#x0A;xcopy $(SolutionDir)$(ConfigurationName)\tjsim.exe ..\ /Y&#x0D;&#x0A;"
 			/>
 		</Configuration>
 		<Configuration
@@ -467,7 +467,7 @@
 					<Tool
 						Name="VCCustomBuildTool"
 						Description=""
-						CommandLine="echo Force Microsoft Visual Studio to perform build events. &gt; tjsim_force.txt"
+						CommandLine="echo Force Microsoft Visual Studio to perform build events. &gt; tjsim_force.txt&#x0D;&#x0A;"
 						Outputs="tjsim_force.txt"
 					/>
 				</FileConfiguration>

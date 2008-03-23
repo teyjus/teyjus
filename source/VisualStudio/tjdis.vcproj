@@ -94,7 +94,7 @@
 			<Tool
 				Name="VCPostBuildEventTool"
 				Description="Compiling..."
-				CommandLine="ocamake $(ProjectPath) -opt -epp -o $(SolutionDir)$(ConfigurationName)\tjdis.exe&#x0D;&#x0A;xcopy $(SolutionDir)$(ConfigurationName)\tjdis.exe ..\..\bin\ /Y&#x0D;&#x0A;"
+				CommandLine="ocamake $(ProjectPath) -opt -epp -o $(SolutionDir)$(ConfigurationName)\tjdis.exe&#x0D;&#x0A;xcopy $(SolutionDir)$(ConfigurationName)\tjdis.exe ..\..\bin\ /Y&#x0D;&#x0A;xcopy $(SolutionDir)$(ConfigurationName)\tjdis.exe ..\ /Y&#x0D;&#x0A;"
 				ExcludedFromBuild="false"
 			/>
 		</Configuration>
