@@ -109,10 +109,10 @@ let initRegsArray ()  = regsArray := Some(Array.make (maxRegNum+1) true)
 (* It is assumed that upon invocation of this function, regsArray must have *)
 (* been initialized and the given index must be within the array length     *)
 (* boundary.                                                                *)
-let setRegsArray ind data =
+let setRegsArray ind data =  
   match (!regsArray) with
-	None -> 
-	  Errormsg.impossible Errormsg.none "setRegsArray: regsArray uninitialized"
+    None -> 
+      Errormsg.impossible Errormsg.none "setRegsArray: regsArray uninitialized"
   | Some(array) -> Array.set array ind data 
 
 (* retrieve the value recorded in the nth element of the current regsArray. *)
@@ -120,19 +120,19 @@ let setRegsArray ind data =
 (* given index is within array length boundary.                             *)
 let getRegsArrayNth ind =
   match (!regsArray) with
-	None -> 
-	  Errormsg.impossible Errormsg.none "setRegsArray: regsArray uninitialized"
+    None -> 
+      Errormsg.impossible Errormsg.none "getRegsArrayNth: regsArray uninitialized"
   | Some(array) -> Array.get array ind 
 
 
 (* return the minimal free register with index larger than i *)
 let rec minimalFreeReg i =
   if (i > maxRegNum) then 
-	(Errormsg.error Errormsg.none "unable to perform register assignment";
-	 1)
+    (Errormsg.error Errormsg.none "unable to perform register assignment2";
+     1)
   else  
-	if (getRegsArrayNth i) then i
-	else minimalFreeReg (i + 1)
+    if (getRegsArrayNth i) then i
+    else minimalFreeReg (i + 1)
 
 (*****************************************************************************)
 (*                   VARIABLE REGISTER CORRESPONDENCE LIST                   *)
@@ -147,6 +147,9 @@ let regUseList : (regused list) ref = ref []
 let initRegUseList ()     = regUseList := []
 (* add a new reg-var/tyvar pair to the front of regUseList *)
 let addRegUseList  data   = regUseList := data :: (!regUseList)
+
+
+
 (* get the current value of the register usage list *)
 let getRegUseList  ()     = !regUseList
 (* set regUseList to hold the given list value *)
@@ -158,18 +161,19 @@ let setRegUseList myList = regUseList := myList
 (* regUseList.                                                         *)
 let getRegUseListRegNum regNum =
   let rec getRegUseListRegNumAux mylist =
-	match mylist with
-	  [] -> 
-		Errormsg.impossible Errormsg.none 
-		  "getRegUseListRegNum: unfound register number in reg use list"
-	| (regUsage :: rest) ->
-		match regUsage with
-		  RegVar(regNum', _) -> 
-			if regNum' = regNum then regUsage
-			else getRegUseListRegNumAux rest
-		| RegTyVar(regNum', _, _) ->
-			if regNum' = regNum then regUsage
-			else getRegUseListRegNumAux rest			
+    match mylist with
+      [] -> 
+	Errormsg.impossible Errormsg.none 
+	  ("getRegUseListRegNum: unfound register number " ^ 
+	   (string_of_int regNum) ^ " in reg use list")
+    | (regUsage :: rest) ->
+	match regUsage with
+	  RegVar(regNum', _) -> 
+	    if regNum' = regNum then regUsage
+	    else getRegUseListRegNumAux rest
+	| RegTyVar(regNum', _, _) ->
+	    if regNum' = regNum then regUsage
+	    else getRegUseListRegNumAux rest			
   in
   getRegUseListRegNumAux (getRegUseList ()) 
 
@@ -206,12 +210,12 @@ let markUnusedReg regNum = setRegsArray regNum true
 (* register is used for a purpose other than to hold a temporary variable   *)
 let getHighFreeReg () =
   let rec getHighFreeRegAux regNum =
-	if regNum = 0 then 
-	  (Errormsg.error Errormsg.none "unable to perform register assignment";
-	   1)
-	else
-	  if (getRegsArrayNth regNum) then (setRegsArray regNum false; regNum)
-	  else getHighFreeRegAux (regNum - 1)
+    if regNum = 0 then 
+      (Errormsg.error Errormsg.none "unable to perform register assignment1";
+       1)
+    else
+      if (getRegsArrayNth regNum) then (setRegsArray regNum false; regNum)
+      else getHighFreeRegAux (regNum - 1)
   in
   getHighFreeRegAux maxRegNum
 
@@ -310,31 +314,31 @@ let assignTyReg varData needed chunk lowval =
   (* try to decide the register number for this variable from the given  *)
   (* chunk.                                                              *)
   let rec assignTyRegFromChunk chunk lowval =
-	match chunk with
-	  [] -> (0, lowval)   (* fail to assign *) 
-	| (goal :: rest) ->
-		let numArgs = Absyn.getAtomicGoalNumberOfArgs goal in
-		if (numArgs > lowval) 
-		then
-		  let numTermArgs = Absyn.getAtomicGoalNumberOfTermArgs goal in
-		  let args = Absyn.getAtomicGoalTypeArgs goal in
-		  let (argsToTry, startRegNum) =
-			if (lowval > numTermArgs) 
-			then (subList args (lowval - numTermArgs), lowval + 1)
-			else (args, numTermArgs + 1)
-		  in
-		  let regNum = assignTyArgReg argsToTry startRegNum in
-		  if regNum = 0 then (* fail to assign in this goal; try next *)
-			assignTyRegFromChunk rest numArgs
-		  else (regNum, 0) (* success in assign *)
-		else (* fail to assign in this goal; try next in the chunk *)
-		  assignTyRegFromChunk rest lowval	
+    match chunk with
+      [] -> (0, lowval)   (* fail to assign *) 
+    | (goal :: rest) ->
+	let numArgs = Absyn.getAtomicGoalNumberOfArgs goal in
+	if (numArgs > lowval) 
+	then
+	  let numTermArgs = Absyn.getAtomicGoalNumberOfTermArgs goal in
+	  let args = Absyn.getAtomicGoalTypeArgs goal in
+	  let (argsToTry, startRegNum) =
+	    if (lowval > numTermArgs) 
+	    then (subList args (lowval - numTermArgs), lowval + 1)
+	    else (args, numTermArgs + 1)
+	  in
+	  let regNum = assignTyArgReg argsToTry startRegNum in
+	  if regNum = 0 then (* fail to assign in this goal; try next *)
+	    assignTyRegFromChunk rest numArgs
+	  else (regNum, 0) (* success in assign *)
+	else (* fail to assign in this goal; try next in the chunk *)
+	  assignTyRegFromChunk rest lowval	
   in
   let (regNum, newLowval) = assignTyRegFromChunk chunk lowval in
   if (regNum = 0) then (* fail to assign in previous steps *)
-	  let newRegNum = minimalFreeReg (newLowval + 1) in
-	  assignRegToType varData needed newRegNum;
-	  newRegNum
+    let newRegNum = minimalFreeReg (newLowval + 1) in
+    assignRegToType varData needed newRegNum;
+    newRegNum
   else regNum (* already find a suitable register *)
 	   
 
@@ -342,50 +346,50 @@ let assignTyReg varData needed chunk lowval =
 let resolveRegTermConflict term regNum chunk =
   if (getRegsArrayNth regNum) then ([], 0)
   else 
-	let regUsage = getRegUseListRegNum regNum in
-	match regUsage with
-	  RegTyVar(_, tyVarData, true) ->
-		removeRegUseListRegNum regNum;
-		([Instr.Ins_put_type_value_t(regNum, 
-									 assignTyReg tyVarData true chunk 0)],
-		 Instr.getSize_put_type_value_t)
-	| RegTyVar(_, tyVarData, false) ->
-		removeRegUseListRegNum regNum;
-		let _ = assignTyReg tyVarData false chunk 0 in
-		([], 0) (* no instruction is generated *)
-	| RegVar(_, varData) ->
-		if (Absyn.isTermFreeVariable term) &&
-		  ((Absyn.getTermFreeVariableVariableData term) == varData)
-		then ([], 0)
-		else
-		  (removeRegUseListRegNum regNum;
-		   ([Instr.Ins_put_value_t(regNum, assignTmReg varData chunk 0)],
-			Instr.getSize_put_value_t))
+    let regUsage = getRegUseListRegNum regNum in
+    match regUsage with
+      RegTyVar(_, tyVarData, true) ->
+	removeRegUseListRegNum regNum;
+	([Instr.Ins_put_type_value_t(regNum, 
+				     assignTyReg tyVarData true chunk 0)],
+	 Instr.getSize_put_type_value_t)
+    | RegTyVar(_, tyVarData, false) ->
+	removeRegUseListRegNum regNum;
+	let _ = assignTyReg tyVarData false chunk 0 in
+	([], 0) (* no instruction is generated *)
+    | RegVar(_, varData) ->
+	if (Absyn.isTermFreeVariable term) &&
+	  ((Absyn.getTermFreeVariableVariableData term) == varData)
+	then ([], 0)
+	else
+	  (removeRegUseListRegNum regNum;
+	   ([Instr.Ins_put_value_t(regNum, assignTmReg varData chunk 0)],
+	    Instr.getSize_put_value_t))
 			  
 
 (* resolving a potential conflict for a type argument register *)
 let resolveRegTypeConflict tyExp regNum chunk =
   if (getRegsArrayNth regNum) then ([], 0)
   else
-	let regUsage = getRegUseListRegNum regNum in
-	match regUsage with
-	  RegVar(_, varData) ->
-		removeRegUseListRegNum regNum;
-		([Instr.Ins_put_value_t(regNum, assignTmReg varData chunk 0)],
-		 Instr.getSize_put_value_t)
-	| RegTyVar(_, tyVarData, needed) ->
-		if (Absyn.isTypeFreeVariable tyExp) && 
-		  ((Absyn.getTypeFreeVariableVariableData tyExp) == tyVarData)
-		then ([], 0)
-		else
-		  (removeRegUseListRegNum regNum;
-		   let newRegNum = assignTyReg tyVarData true chunk 0 in
-		   if (needed) then
-			 ([Instr.Ins_put_type_value_t(regNum, newRegNum)],
-			  Instr.getSize_put_type_value_t)
-		   else 
-			 ([], 0))
-
+    let regUsage = getRegUseListRegNum regNum in
+    match regUsage with
+      RegVar(_, varData) ->
+	removeRegUseListRegNum regNum;
+	([Instr.Ins_put_value_t(regNum, assignTmReg varData chunk 0)],
+	 Instr.getSize_put_value_t)
+    | RegTyVar(_, tyVarData, needed) ->
+	if (Absyn.isTypeFreeVariable tyExp) && 
+	  ((Absyn.getTypeFreeVariableVariableData tyExp) == tyVarData)
+	then ([], 0)
+	else
+	  (removeRegUseListRegNum regNum;
+	   let newRegNum = assignTyReg tyVarData true chunk 0 in
+	   if (needed) then
+	     ([Instr.Ins_put_type_value_t(regNum, newRegNum)],
+	      Instr.getSize_put_type_value_t)
+	   else 
+	     ([], 0))
+	    
 (* Cleaning up goal register usage information; this is done after   *)
 (* generating code for putting the arguments for a goal              *)
 let cleanUpRegs () =
