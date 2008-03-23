@@ -449,10 +449,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\simulator\OMakefile"
-				>
-			</File>
-			<File
 				RelativePath="..\simulator\printterm.c"
 				>
 			</File>
