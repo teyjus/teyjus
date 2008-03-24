@@ -7,7 +7,6 @@ The following dependencies must be in the path:
 
   OCaml
   OMake
-  diff
   flex
   bison
   diff
