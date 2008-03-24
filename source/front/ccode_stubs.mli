@@ -19,15 +19,17 @@
 * along with Teyjus.  If not, see <http://www.gnu.org/licenses/>.
 ****************************************************************************)
 (* front *)
-external systemInit        : int    -> int = "c_systemInit"
-external simulatorInit     : unit   -> int = "c_simulatorInit"
-external simulatorReInit   : bool   -> int = "c_simulatorReInit"
-external link              : string -> int = "c_link"
+external systemInit        : int    -> int  = "c_systemInit"
+external simulatorInit     : unit   -> int  = "c_simulatorInit"
+external simulatorReInit   : bool   -> int  = "c_simulatorReInit"
+external link              : string -> int  = "c_link"
 external load              : string -> int -> int = "c_load"
-external topModuleInstall  : unit   -> int = "c_topModuleInstall"
-external moduleInstall     : int    -> int = "c_moduleInstall"
-external initModuleContext : unit   -> int = "c_initModuleContext"
-external setPath           : string -> int = "c_setPath"
+external topModuleInstall  : unit   -> int  = "c_topModuleInstall"
+external moduleInstall     : int    -> int  = "c_moduleInstall"
+external initModuleContext : unit   -> int  = "c_initModuleContext"
+external cleanModule       : unit   -> unit = "c_cleanModule"
+external setPath           : string -> int  = "c_setPath"
+
 
 (* query *)
 external setTypeAndTermLocation : unit -> unit = "c_setTypeAndTermLocation"
