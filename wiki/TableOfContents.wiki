@@ -1,3 +1,5 @@
+#summary An overview of the Teyjus documentation
+
 || LambdaProlog            ||      What is Lambda Prolog?                           ||
 || OverviewOfTeyjus        ||      What is Teyjus?                                  ||
 || SettingUp               ||      How to set up and install Teyjus                 ||
