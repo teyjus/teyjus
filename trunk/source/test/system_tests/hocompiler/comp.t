@@ -26,7 +26,7 @@ Parsing...
 Assembly code written to file.
 
 ANS
-same_answers( `$TJSIM -b $PATH --solve "$code" $MODULE\n $DIFF $PT/test3.s-exp $PT/test3.s-acc`, $ans,"tigcompile");
+same_answers( `$TJSIM -b $PATH --solve "$code" $MODULE` . `$DIFF $PT/test3.s-exp $PT/test3.s-acc`, $ans,"tigcompile");
 
 ############################################
 $code = <<'CODE';
@@ -43,7 +43,7 @@ Assembly code written to file.
 
 
 ANS
-same_answers( `$TJSIM -b $PATH --solve "$code" $MODULE\n $DIFF $PT/test4.s-exp $PT/test4.s-acc`, $ans,"tigcompile");
+same_answers( `$TJSIM -b $PATH --solve "$code" $MODULE` . `$DIFF $PT/test4.s-exp $PT/test4.s-acc`, $ans,"tigcompile");
 
 ############################################
 $code = <<'CODE';
@@ -60,7 +60,7 @@ Assembly code written to file.
 
 
 ANS
-same_answers( `$TJSIM -b $PATH --solve "$code" $MODULE\n $DIFF $PT/test5.s-exp $PT/test5.s-acc`, $ans,"tigcompile");
+same_answers( `$TJSIM -b $PATH --solve "$code" $MODULE` . `$DIFF $PT/test5.s-exp $PT/test5.s-acc`, $ans,"tigcompile");
 
 ############################################
 $code = <<'CODE';
@@ -77,7 +77,7 @@ Assembly code written to file.
 
 
 ANS
-same_answers( `$TJSIM -b $PATH --solve "$code" $MODULE\n $DIFF $PT/test6.s-exp $PT/test6.s-acc`, $ans,"tigcompile");
+same_answers( `$TJSIM -b $PATH --solve "$code" $MODULE` . `$DIFF $PT/test6.s-exp $PT/test6.s-acc`, $ans,"tigcompile");
 
 ############################################
 $code = <<'CODE';
@@ -94,4 +94,4 @@ Assembly code written to file.
 
 
 ANS
-same_answers( `$TJSIM -b $PATH --solve "$code" $MODULE\n $DIFF $PT/test7.s-exp $PT/test7.s-acc`, $ans,"tigcompile");
+same_answers( `$TJSIM -b $PATH --solve "$code" $MODULE` . `$DIFF $PT/test7.s-exp $PT/test7.s-acc`, $ans,"tigcompile");
