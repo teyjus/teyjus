@@ -1133,9 +1133,12 @@ let generateModuleCode amod =
   match amod with
 	Absyn.Module(modname, modimps, modaccs, _, _, _, modstr, gkinds, lkinds, 
 				 gconsts, lconsts, hconsts, skels, hskels, clauses) ->
+      let () = Errormsg.log Errormsg.none
+        "Codegen.generateModuleCode: generating module code..." in
       (* collect local constants appearing in acc modules for the use   *)
       (* generating instructions.                                       *)
-	 collectClosedConstsInAccs modaccs;
+      collectClosedConstsInAccs modaccs;
+      
       (* assign indexes to global and local kinds *)				   
       let (cgGKinds, cgLKinds) = assignKindIndex gkinds lkinds in
       (* 1) assign indexes to global, local and hidden constants;   *)
@@ -1145,9 +1148,9 @@ let generateModuleCode amod =
       (* 4) gather global export-def predicates                     *)
       (* 5) gather local predicates                                 *)
       let (cgGConsts, cgLConsts, cgHConsts, cgDefs, cgGNonExpDefs, 
-	   cgGExpDefs, cgLDefs) = 
-	assignConstIndex (List.rev gconsts) (List.rev lconsts) 
-	  (List.rev (!hconsts))
+        cgGExpDefs, cgLDefs) = 
+        assignConstIndex (List.rev gconsts) (List.rev lconsts)
+          (List.rev (!hconsts))
       in
       (* merge type skeletons and those of hidden constants; assign indexes *)
       let cgTySkels = assignSkelIndex skels !hskels in 
@@ -1169,9 +1172,10 @@ let generateModuleCode amod =
       let cgAccumulates = collectAccs modaccs in
       (* back patching "call" and "execute" instructions *)
       Clausegen.backPatch ();
+      let () = Errormsg.log Errormsg.none "Codegen.generateModuleCode: generated module code" in
       Module(modname, cgGKinds, cgLKinds, cgGConsts, cgLConsts, cgHConsts,
              cgDefs, cgGNonExpDefs, cgGExpDefs, cgLDefs, 
-	     cgTySkels, cgStrings, cgImports, cgAccumulates, cgInstructions,
-	     getHashTabs (), cgImpGoals)
+             cgTySkels, cgStrings, cgImports, cgAccumulates, cgInstructions,
+             getHashTabs (), cgImpGoals)
   | _ -> Errormsg.impossible Errormsg.none 
 	"genModuleCode: invalid input module"

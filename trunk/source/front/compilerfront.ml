@@ -54,7 +54,7 @@ let compile basename outfile =
   
   (* Process the clauses. *)
   let absyn = 
-	Processclauses.processClauses absyn clauses newclauses closeddefs in
+  	Processclauses.processClauses absyn clauses newclauses closeddefs in
   let _ = abortOnError () in
  
   (* Reduce predicate types *)
@@ -72,7 +72,7 @@ let compile basename outfile =
   (* Open the correct output file. *)
   let _ = Bytecode.openOutChannel outfile in
   let _ = abortOnError () in
-    
+
 	Bytecode.setWordSize () ;
 	Spitcode.writeByteCode cg ;
     abortOnError ()

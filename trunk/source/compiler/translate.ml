@@ -331,22 +331,17 @@ and translateFixities fixities constants =
         | Preabsyn.Postfixl(p) -> Absyn.Postfixl
       in
       
-      let getFixityArity k =
+      let checkFixityArity k ta =
         match k with
           Preabsyn.Infix(p)
         | Preabsyn.Infixl(p)
-        | Preabsyn.Infixr(p) -> 2
+        | Preabsyn.Infixr(p) -> ta >= 2
         | Preabsyn.Prefix(p)
         | Preabsyn.Prefixr(p)
         | Preabsyn.Postfix(p)
-        | Preabsyn.Postfixl(p) -> 1
+        | Preabsyn.Postfixl(p) -> ta = 1
       in
-      
-      let rec getTypeArity = function
-          Absyn.ArrowType(_,r) -> 1 + (getTypeArity r)
-        | _ -> 0
-      in
-      
+            
       match syms with
         [] -> ctable
       | Preabsyn.Symbol(sym,_,pos)::ss ->
@@ -359,7 +354,7 @@ and translateFixities fixities constants =
               
               if Option.isSome skel then
                 let t' = Absyn.getSkeletonType (Option.get skel) in
-                if (getFixityArity k) <> (getTypeArity t') then
+                if not (checkFixityArity k (Absyn.getArrowTypeArity t')) then
                   (Errormsg.error pos ("declared fixity is incompatible with declared type arity" ^
                     (Errormsg.see pos' "constant declaration"));
                   ctable)
