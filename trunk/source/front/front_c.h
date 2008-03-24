@@ -44,3 +44,5 @@ int FRONT_topModuleInstall();
 int FRONT_moduleInstall(int ind);
 int FRONT_initModuleContext();
 
+
+void FRONT_cleanModule();

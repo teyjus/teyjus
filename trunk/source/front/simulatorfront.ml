@@ -122,6 +122,7 @@ let solveQueries () =
         solveQueryInteract ()
     else
      prerr_endline "";
+    Module.cleanModule (); 
     Front.simulatorReInit false ;
     Module.initModuleContext ()
       

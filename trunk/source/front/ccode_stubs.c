@@ -76,11 +76,19 @@ int c_initModuleContext(value v)
     CAMLreturn (Val_int(FRONT_initModuleContext()));
 }
 
+void c_cleanModule(value v)
+{
+    CAMLparam1 (v);
+    FRONT_cleanModule();
+    CAMLreturn0;
+}
+
 int c_setPath(value v)
 {
     CAMLparam1 (v);
     CAMLreturn (Val_int(FRONT_setPath(String_val(v))));
 }
+
 
 /***************************************************************************/
 /*                               query                                     */

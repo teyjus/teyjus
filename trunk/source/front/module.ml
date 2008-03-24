@@ -198,7 +198,10 @@ let initModuleContext () =
   let amod = getCurrentModule () in
   if (Absyn.getModuleName amod) = topModuleName then ()
   else 
-	let _ = Simerrors.handleSimExceptions (Ccode_stubs.initModuleContext()) in
-	()
-	
+    let _ = Simerrors.handleSimExceptions (Ccode_stubs.initModuleContext()) in
+    ()
+      
+
+let cleanModule () =
+  Ccode_stubs.cleanModule()
   

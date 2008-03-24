@@ -34,3 +34,6 @@ val setPath    : string -> unit
 val moduleInstall     : string -> unit
 val initModuleContext : unit   -> unit
 val getCurrentModule  : unit   -> Absyn.amodule
+
+
+val cleanModule       : unit   -> unit
