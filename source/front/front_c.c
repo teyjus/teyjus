@@ -186,7 +186,6 @@ int FRONT_setPath(char* path)
 /*****************************************************************************/
 /*              install and open a module                                    */
 /*****************************************************************************/
-//needed?
 static MemPtr FRONT_ireg;
 static MemPtr FRONT_tosreg;
 
@@ -195,6 +194,12 @@ static void FRONT_saveRegs()
     FRONT_ireg = AM_ireg;
     FRONT_tosreg = AM_tosreg;
 }
+
+static void FRONT_resetRegs()
+{
+  AM_ireg   = FRONT_ireg;
+  AM_tosreg = FRONT_tosreg;
+} 
 
 /* record symbol table bases */
 static void FRONT_initSymbolTableBases()
@@ -290,14 +295,19 @@ int FRONT_initModuleContext()
         /* (re)initialize the backchained vector for the module */
         i = MEM_impNCSEG(addtable);
         if (i > 0) 
-            AM_initBCKVector(AM_ireg,AM_BCKV_ENTRY_SIZE * MEM_impLTS(addtable),
-                             i);
+	  AM_initBCKVector(AM_ireg,AM_BCKV_ENTRY_SIZE * MEM_impLTS(addtable),
+			   i);
         
         /* increment univ counter if there are hidden constants */
         i = MEM_impNLC(addtable);
         if (i > 0) AM_ucreg++;
     } EM_CATCH {
-        return EM_CurrentExnType;
+      return EM_CurrentExnType;
     }
     return EM_NO_ERR;
+}
+
+void FRONT_cleanModule()
+{
+  FRONT_resetRegs();
 }
