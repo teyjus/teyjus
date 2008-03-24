@@ -32,7 +32,3 @@ postfix inc_non 10.
 
 type preinc int -> int.
 prefixr preinc 10.
-
-% Long infix:
-type long_inc int -> int -> int -> int.
-infix long_inc 10.
