@@ -32,8 +32,7 @@
 #include "dataformats.h"
 #include "trail.h"
 
-//for debugging: to be removed
-#include <stdio.h>
+
 /**********************************************************************/
 /*      Register setting upon hnorm initiation or termination         */
 /**********************************************************************/
@@ -399,7 +398,7 @@ static void HNL_suspAsArg(DF_TermPtr skPtr, int ol, int nl, DF_EnvPtr env,
 {
   restart_suspAsArg:
     switch(DF_termTag(skPtr)){   
-    case DF_TM_TAG_VAR: { DF_mkRef(loc, skPtr); }
+    case DF_TM_TAG_VAR: { DF_mkRef(loc, skPtr); break; }
     case DF_TM_TAG_CONST:
     {
         if (DF_isTConst(skPtr)) DF_mkRef(loc, skPtr);
@@ -543,6 +542,7 @@ Boolean HNL_makeArgvec(DF_TermPtr argvec, int arity, int ol, int nl,
     Boolean  changed; //flag denoting if new argvec is made or the old is reused
     MemPtr   spLocPtr; //place where susps are to be created
     MemPtr   newArgvec = AM_hreg; 
+
 
     //unfold nested app first when necessary
     if (AM_numArgs == 0){  //no nested app
