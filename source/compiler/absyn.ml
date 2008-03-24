@@ -485,6 +485,12 @@ let rec getArrowTypeArguments ty =
   | t -> Errormsg.impossible Errormsg.none 
                              ("getArrowTypeArguments: invalid type: " ^ (string_of_type t))
 
+let rec getArrowTypeArity ty =
+  match ty with
+      ArrowType(_,r) -> 1 + (getArrowTypeArity r)
+    | _ -> 0
+
+
 let isArrowType = function
   ArrowType(_) -> true
 | _ -> false
@@ -548,7 +554,7 @@ let isVariableType = function
           Some(t) -> (Errormsg.impossible Errormsg.none 
                                           "Asyn.isVariableType: bound variable")
         | None -> true)
-    | _ -> (Errormsg.impossible Errormsg.none 
+    | _ ->  (Errormsg.impossible Errormsg.none 
                                 "Absyn.isVariableType: type variable info"))
 | _ -> false
 

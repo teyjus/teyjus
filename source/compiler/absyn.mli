@@ -311,6 +311,7 @@ val isErrorType : atype -> bool
 
 val getArrowTypeTarget : atype -> atype
 val getArrowTypeArguments : atype -> atype list
+val getArrowTypeArity : atype -> int
 val isArrowType : atype -> bool
 val makeArrowType : atype -> atype list -> atype
 

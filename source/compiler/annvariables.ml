@@ -872,7 +872,13 @@ let rec processTopLevelDefs clDefs =
 (** *********************************************************************** **)
 let processClauses amod =
   match (Absyn.getModuleClauses amod) with
-	Absyn.PreClauseBlocks(Absyn.Definitions(clauseDefs)) ->
-	  Absyn.setModuleClauses amod 
-		(Absyn.ClauseBlocks(processTopLevelDefs clauseDefs))
+	  Absyn.PreClauseBlocks(Absyn.Definitions(clauseDefs)) ->
+	    let () = Errormsg.log Errormsg.none
+	      "Annvariables.processClauses: processing clauses..." in
+	    let result =
+	      Absyn.setModuleClauses amod
+	        (Absyn.ClauseBlocks(processTopLevelDefs clauseDefs)) in
+      let () = Errormsg.log Errormsg.none
+        "Annvariables.processClauses: processed clauses" in
+      result
   | _ -> Errormsg.impossible Errormsg.none "processClauses: invalid clause rep"

@@ -870,6 +870,7 @@ let processClauses amod clTerms newClTerms closeddefs =
     Absyn.Module(modname, modimps, modaccs, ctable, ktable, atable, _,
 		 gkinds, lkinds, gconsts, lconsts, hconsts, skels, hskels, _)
     ->
+      let () = Errormsg.log Errormsg.none "Procesclauses.processClauses: processing clauses..." in
       setClosedDefs closeddefs;
       (* process anonymous clauses (those introduced for deorification), and*)
       (* increment them into the module definition list.                    *)
@@ -883,6 +884,7 @@ let processClauses amod clTerms newClTerms closeddefs =
       let newClDefs = processTopLevelClauses clTerms modimps clDefs false in
       (* Insert the clauses definitions and the string list into the module *)
       (* abstract syntax.                                                   *)
+      let () = Errormsg.log Errormsg.none "Procesclauses.processClauses: processed clauses" in
 	  Absyn.Module(modname, modimps, modaccs, ctable, ktable, atable, !modStr, 
                    gkinds, lkinds, gconsts, lconsts, hconsts, skels, hskels, 
 				   ref (Absyn.PreClauseBlocks(Absyn.Definitions(newClDefs))))
