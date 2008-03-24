@@ -1,6 +1,4 @@
-#summary description of the Lambda Prolog language
-
-=Lambda Prolog=
+#summary A description of the Lambda Prolog language
 
 Lambda Prolog is a logic programming language that is based on the
 intuitionistic theory of _higher-order hereditary Harrop
@@ -32,10 +30,7 @@ comprehensive introduction to Lambda Prolog or to its underlying
 theory. If you are interested learning more about these aspects, one
 place to look may be the paper 
 
-  * G. Nadathur and D. Miller, Higher-Order Logic Programming, in
-_Handbook of Logic in Artificial Intelligence and Logic Programming_,
-D. M. Gabbay, C. J. Hogger and J. A. Robinson (eds.), Oxford University
-Press, January 1998, pages 499--590.
+  * G. Nadathur and D. Miller, Higher-Order Logic Programming, in _Handbook of Logic in Artificial Intelligence and Logic Programming_, D. M. Gabbay, C. J. Hogger and J. A. Robinson (eds.), Oxford University Press, January 1998, pages 499--590.
 
 The distribution material also contains several examples of Lambda
 Prolog code with pointers to papers describing conceptual aspects of the
