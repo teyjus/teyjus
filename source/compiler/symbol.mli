@@ -22,21 +22,38 @@
 *Symbol Module:
 * Implements a simple module mapping strings to unique identifiers.
 * Uses the standard library Hashtbl module.
+* Associated a name for display with each entry, the default of which
+* is the same as the mapped string.
 **********************************************************************)
 type symbol
 
 (**********************************************************************
 *symbol:
 * Produces a new symbol from the given string.  The ID of symbols with
-* a given name will be the same across calls to this function.
+* a given name will be the same across calls to this function. The 
+* print name is the same as the given string.
 **********************************************************************)
 val symbol : string -> symbol
+
+(**********************************************************************
+*symbolAlias:
+* Produces a new symbol from the given string together with a given 
+* name for display.  The ID of symbols with
+* a given name will be the same across calls to this function. 
+**********************************************************************)
+val symbolAlias : string -> string -> symbol
 
 (**********************************************************************
 *name:
 * Returns the name of the given symbol.
 **********************************************************************)
 val name : symbol -> string
+
+(**********************************************************************
+*printName:
+* Returns the display name of the given symbol.
+**********************************************************************)
+val printName : symbol -> string
 
 (**********************************************************************
 *id:

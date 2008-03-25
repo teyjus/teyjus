@@ -50,8 +50,8 @@ and atypevar =
 *Type Var Information:
 *****************************************************************************)
 and atypevarinfo =
-	BindableTypeVar of atype option ref
-  |	FreeTypeVar of (atypevar option ref * bool option ref)
+    BindableTypeVar of atype option ref
+  | FreeTypeVar of (atypevar option ref * bool option ref)
 
 
 (*****************************************************************************
@@ -389,6 +389,7 @@ val getConstantNeededness : aconstant -> bool array option
 val getConstantNeedednessRef : aconstant -> bool array option ref
 val getConstantNeedednessValue : aconstant -> bool array
 val getConstantName : aconstant -> string
+val getConstantPrintName : aconstant -> string
 val getConstantType : aconstant -> aconstanttype
 val getConstantTypeRef : aconstant -> aconstanttype ref
 val getConstantCodeInfo : aconstant -> acodeinfo option ref
