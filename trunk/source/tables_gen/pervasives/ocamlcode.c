@@ -177,7 +177,8 @@ static char* OC_mkArrowType(char* ty1, char* ty2)
 #define VCTR_NULLPOS  "none"
 
 //symbol
-#define VCTR_SYMBOL   "symbol"
+#define VCTR_SYMBOL        "symbol"
+#define VCTR_SYMBOL_ALIAS  "symbolAlias"
 
 //table
 #define VCTR_EMPTYTAB "SymbolTable.empty"
@@ -228,6 +229,25 @@ static char* OC_mkSymbol(char* name)
   strcat(rtptr, symbolCtr);        free(symbolCtr);
   strcat(rtptr, " \"");
   strcat(rtptr, name);
+  strcat(rtptr, "\")");
+  return rtptr;
+}
+
+/*
+    (Symbol.symbolAlias "<name>" "<printName>")
+*/
+static char* OC_mkSymbolAlias(char *name, char *printName)
+{
+  char* symbolCtr = OC_mkDotStr(SYMBOL, VCTR_SYMBOL_ALIAS);
+  size_t length = strlen(symbolCtr) + strlen(name) + strlen(printName) + 10;
+  char* rtptr= UTIL_mallocStr(length + 1);
+
+  strcpy(rtptr, "(");
+  strcat(rtptr, symbolCtr);        free(symbolCtr);
+  strcat(rtptr, " \"");
+  strcat(rtptr, name);
+  strcat(rtptr, "\" \"");
+  strcat(rtptr, printName);
   strcat(rtptr, "\")");
   return rtptr;
 }
@@ -864,11 +884,12 @@ static char* OC_mkNeededness(int neededness, int tyenvsize)
 static char* OC_mkConstVarText(char* constName, char* fixity, char* prec,
 			       char* typrev, char* tyskel, char* tyenvsize,
 			       char* skelneededness, char* neededness, char* codeinfo,
-			       char* constcat, char* varname, char* offset)
+			       char* constcat, char* varname, char* offset, 
+			       char* printName)
 {
   char* constVar;
   char* ctr      =  OC_mkDotStr(ABSYN, VCTR_CONSTANT);
-  char* symbol   =  OC_mkSymbol(constName);
+  char* symbol   =  OC_mkSymbolAlias(constName, printName);
   char* refFalse =  OC_mkRef("false");
   char* index    =  OC_mkRef(offset);
   char* pos      = OC_mkDotStr(ERRORMSG, VCTR_NULLPOS);
@@ -921,17 +942,17 @@ static char* OC_mkConstVarText(char* constName, char* fixity, char* prec,
 }
 
 /* Constant variable definition :
-      let <varName> = Absyn.Constant(Symbol.symbol "<constName>", ref <fixity>,
-                         ref <prec>, ref false, ref false, ref false, ref false,
-			                    ref false,  ref <typrev>, ref false, ref <tySkel>,
-					                       ref <tyenvsize>, ref (Some <skelneededness>),
-							                          ref (Some <neededness>), ref <codeInfo>,
-										                     ref <constantCat>, ref 0, Errormsg.none)
+   let <varName> = Absyn.Constant(Symbol.symbolAlias "<constName>" "<printName>", 
+             ref <fixity>, ref <prec>, ref false, ref false, ref false, ref false,
+             ref false,  ref <typrev>, ref false, ref <tySkel>,
+	     ref <tyenvsize>, ref (Some <skelneededness>),	     
+             ref (Some <neededness>), ref <codeInfo>,
+	     ref <constantCat>, ref 0, Errormsg.none)
 */
 char* OC_mkConstVar(char* constName, OP_Fixity fixity, OP_Prec prec,
 		    UTIL_Bool typrev, char* tySkel, int tyenvsize,
 		    int neededness, OP_Code codeInfo, UTIL_Bool reDef,
-		    char* varName, char* offset)
+		    char* varName, char* offset, char* printName)
 {
   char* constVar;
   char* fixityText         = OC_mkFixity(fixity);
@@ -947,7 +968,7 @@ char* OC_mkConstVar(char* constName, OP_Fixity fixity, OP_Prec prec,
   constVar = OC_mkConstVarText(constName, fixityText, precText,
 			       typrevText, tySkelText, tyenvsizeText,
 			       skelneedednessText, needednessText, codeInfoText,
-			       constCatText, varName, offset);
+			       constCatText, varName, offset, printName);
 
   free(fixityText); free(precText); free(typrevText); free(tySkelText);
   free(tyenvsizeText); free(skelneedednessText); free(needednessText);
@@ -974,7 +995,7 @@ static char* OC_mkOverLoadConstVar(char* name, char* fixity, char* prec,
   constVar = OC_mkConstVarText(name, fixity, prec, "ref true", tyskel,
 			       "ref 0", "ref(Some(Array.make 0 true))", "ref None", "ref None",
 			       "ref(Absyn.PervasiveConstant(false))",
-			       varName, "0");
+			       varName, "0", name);
   return constVar;
 }
 
@@ -988,7 +1009,8 @@ char* OC_mkGenericConstVar(char* varList)
 			       "ref (Absyn.maxPrec + 2)", "ref false",
 			       "ref(Some(Absyn.Skeleton(Absyn.ErrorType, ref None, ref false)))",
 			       "ref 0", "ref(Some(Array.make 0 true))", "ref None", "ref None",
-			       "ref(Absyn.PervasiveConstant(false))", GENERICAPPLY, "0");
+			       "ref(Absyn.PervasiveConstant(false))", GENERICAPPLY, "0", 
+			       " apply");
   text = UTIL_appendStr(varList, constVar);   free(constVar);
   varList = UTIL_appendStr(text, "\n\n");       free(text);
 

@@ -176,7 +176,7 @@ static char* isConstFuncDefs = NULL;      //is constant function defs
 void ocamlGenConst(char* ind, char* name, char* cVarName,  OP_Fixity fixity, 
                    OP_Prec prec, UTIL_Bool tyPrev, UTIL_Bool redef, int tesize,
                    int tyskelInd, int neededness, OP_Code codeInfo, 
-                   char* offset)
+                   char* offset, char *printName)
 {
     char* constVarName = OC_mkCVarName(cVarName);
     char* funcName     = OC_mkIsConstFuncName(constVarName);
@@ -185,7 +185,7 @@ void ocamlGenConst(char* ind, char* name, char* cVarName,  OP_Fixity fixity,
     
     char* constVar     = OC_mkConstVar(name, fixity, prec, tyPrev, tyskelName,
                                        tesize, neededness, codeInfo, redef,
-                                       constVarName, offset);
+                                       constVarName, offset, printName);
     char* constTabEntry = OC_mkTabEntry(name, constVarName);
     char* constVarDec   = OC_mkConstVarDec(constVarName);
     char* funcDec       = OC_mkIsConstFuncDec(funcName);
