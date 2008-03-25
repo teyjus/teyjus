@@ -85,7 +85,7 @@ let getUniversalDefinitionTypeSymbol = function
 **********************************************************************)
 let illegalConstant c pos =
   if c == Pervasive.implConstant || c == Pervasive.colondashConstant then
-    (Errormsg.error pos ("symbol " ^ (Absyn.getConstantName c) ^
+    (Errormsg.error pos ("symbol " ^ (Absyn.getConstantPrintName c) ^
       " cannot be embedded in predicate arguments");
     true)
   else
@@ -979,12 +979,12 @@ and normalizeClause clauseterm clauses uvs uvdefs embedded =
 		
 		else if (Absyn.getConstantType c) = (Absyn.PervasiveConstant(false)) then
       (Errormsg.error (Absyn.getTermPos t) ("attempting to redefine predicate" ^
-									    (Errormsg.info (Absyn.getConstantName c)));
+									    (Errormsg.info (Absyn.getConstantPrintName c)));
        clauses)
 
 		else if (Absyn.getConstantNoDefs c) then
       (Errormsg.error (Absyn.getTermPos t) ("clauses for constant " ^
-									    (Absyn.getConstantName c) ^ " prohibited in this module");
+									    (Absyn.getConstantPrintName c) ^ " prohibited in this module");
        clauses)
 			
 		else 

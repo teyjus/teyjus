@@ -118,7 +118,7 @@ let getStackFixity = function Stack(_,_,_,fix) -> fix
 let printStack stack =
   let rec print' data =
     match data with
-      (StackOp(c,_,_))::ds -> "{" ^ (Absyn.getConstantName c) ^ "}" 
+      (StackOp(c,_,_))::ds -> "{" ^ (Absyn.getConstantPrintName c) ^ "}" 
                                   ^ (print' ds)
     | (StackTerm(t))::ds -> "{" ^ (Absyn.string_of_term (getTermTerm t)) 
                                 ^ "}" ^ (print' ds)
@@ -126,11 +126,6 @@ let printStack stack =
     | [] -> ""
   in
   
-  (*
-  let data = getStackStack stack in
-  let str = (print' data) in
-  Errormsg.log Errormsg.none ("Stack: " ^ str)
-  *)
   
   ()
 
@@ -1463,7 +1458,7 @@ and fixTerm term =
   (* checks appearances of :- and => embedded in terms *)
   let rec checkIllegalConstant c pos =
     if ((c = Pervasive.implConstant) || (c = Pervasive.colondashConstant)) then
-      Errormsg.error pos ("Symbol " ^ (Absyn.getConstantName c) ^
+      Errormsg.error pos ("Symbol " ^ (Absyn.getConstantPrintName c) ^
         " is not permitted within terms")
     else () 
 

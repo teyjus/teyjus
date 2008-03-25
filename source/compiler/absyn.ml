@@ -752,6 +752,9 @@ let getConstantSkeletonRef = function
 let getConstantName = fun c ->
   (Symbol.name (getConstantSymbol c))
 
+let getConstantPrintName = fun c ->
+  (Symbol.printName (getConstantSymbol c))
+
 let getConstantType = function
   Constant(_,_,_,_,_,_,_,_,_,_,_,_,_,_,ctype,_,_) ->
     !ctype
@@ -1213,16 +1216,16 @@ let rec string_of_term_ast term =
   | StringTerm(StringLiteral(s),_,_) -> "\"" ^ (s) ^ "\""
   | StringTerm(StringData(s,_,_),_,_) -> "\"" ^ (s) ^ "\""
   | ConstantTerm(c,tl,_,_) -> 
-    let tlstr = "[" ^ (String.concat "," (List.map string_of_type_ast tl)) ^ "]" in
-	  if (getConstantType c = HiddenConstant) then
-		"hc: " ^ (getConstantName c) ^ tlstr
-	  else (getConstantName c) ^ tlstr
+      let tlstr = "[" ^ (String.concat "," (List.map string_of_type_ast tl)) ^ "]" in
+      if (getConstantType c = HiddenConstant) then
+	"hc: " ^ (getConstantPrintName c) ^ tlstr
+      else (getConstantPrintName c) ^ tlstr
   | FreeVarTerm(NamedFreeVar(s),_,_) -> 
-	  "fv: " ^ 
-	  (Symbol.name (getTypeSymbolSymbol s))
+      "fv: " ^ 
+      (Symbol.name (getTypeSymbolSymbol s))
   | BoundVarTerm(NamedBoundVar(s),_,_) ->
-	  "bv: " ^
-	  (Symbol.name (getTypeSymbolSymbol s))
+      "bv: " ^
+      (Symbol.name (getTypeSymbolSymbol s))
   | BoundVarTerm(DBIndex(i),_,_) -> "#" ^ string_of_int i
   | AbstractionTerm(NestedAbstraction(_),_,_) ->
       let aterm = getTermAbstractionBody term in
@@ -1249,9 +1252,9 @@ and string_of_term term =
   let rec string_of_prefixterm = fun op opfix args context fix prec ->
     let opprec = getConstantPrec op in
     let paren = needsParens opfix opprec context fix prec in
-    let result = (getConstantName op) 
-                    ^ " " 
-                    ^ (string_of_term' (List.hd args) RightTermContext opfix opprec) in
+    let result = (getConstantPrintName op) 
+      ^ " " 
+      ^ (string_of_term' (List.hd args) RightTermContext opfix opprec) in
 
     if paren then
       "(" ^ result ^ ")"
@@ -1263,7 +1266,7 @@ and string_of_term term =
     let paren = needsParens opfix opprec context fix prec in
     let result =
       (string_of_term' (List.hd args) LeftTermContext opfix opprec) ^ 
-        " " ^ (getConstantName op) ^ " " ^
+        " " ^ (getConstantPrintName op) ^ " " ^
         (string_of_term' (List.hd (List.tl args)) RightTermContext opfix opprec)
     in
     
@@ -1276,7 +1279,7 @@ and string_of_term term =
     let opprec = getConstantPrec op in
     let paren = needsParens opfix opprec context fix prec in
     let result = (string_of_term' (List.hd args) LeftTermContext opfix opprec) 
-                      ^ " " ^ (getConstantName op) in
+                      ^ " " ^ (getConstantPrintName op) in
     
     if paren then
       "(" ^ result ^ ")"
@@ -1396,7 +1399,7 @@ and string_of_term term =
     | RealTerm(r,_,_) -> (string_of_float r)
     | StringTerm(StringLiteral(s),_,_) -> "\"" ^ s ^ "\""
     | StringTerm(StringData(s,_,_),_,_) -> "\"" ^ s ^ "\""
-    | ConstantTerm(c,_,_,_) -> (getConstantName c)
+    | ConstantTerm(c,_,_,_) -> (getConstantPrintName c)
     | FreeVarTerm(NamedFreeVar(s),_,_) -> Symbol.name (getTypeSymbolSymbol s)
     | BoundVarTerm(NamedBoundVar(s),_,_) -> Symbol.name (getTypeSymbolSymbol s)
     | ApplicationTerm(_) -> string_of_app term context fix prec

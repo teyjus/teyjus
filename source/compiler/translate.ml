@@ -804,7 +804,7 @@ and checkConstantBodies ctable =
   let result = ref true in
   let check s c =
     let p = (Absyn.getConstantPos c) in
-    let name = (Absyn.getConstantName c) in
+    let name = (Absyn.getConstantPrintName c) in
     match (Absyn.getConstantSkeleton c) with
       Some skel ->
         (*  Check that the type declared here is correct for
@@ -928,7 +928,7 @@ and failure = fun _ _ ctable -> ctable
 
 and error s = fun currentConstant newConstant ctable ->
   let p = Absyn.getConstantPos newConstant in
-  let s' = "constant '" ^ (Absyn.getConstantName newConstant) ^ "' " ^ s in
+  let s' = "constant '" ^ (Absyn.getConstantPrintName newConstant) ^ "' " ^ s in
   if Option.isSome currentConstant then
     let p' = Absyn.getConstantPos (Option.get currentConstant) in
     (Errormsg.error p
@@ -940,7 +940,7 @@ and error s = fun currentConstant newConstant ctable ->
 
 and log s = fun currentConstant newConstant ctable ->
   let p = Absyn.getConstantPos newConstant in
-  let s' = "constant '" ^ (Absyn.getConstantName newConstant) ^ "' " ^ s in
+  let s' = "constant '" ^ (Absyn.getConstantPrintName newConstant) ^ "' " ^ s in
   if Option.isSome currentConstant then
     let p' = Absyn.getConstantPos (Option.get currentConstant) in
     (Errormsg.log p
@@ -1032,7 +1032,7 @@ and setCurrentConstantUseonly v =
     if (Option.isSome currentConstant) then
       let cref = Absyn.getConstantUseOnlyRef (Option.get currentConstant) in
       (Errormsg.log Errormsg.none
-        ("setting useonly '" ^ (Absyn.getConstantName newConstant) ^
+        ("setting useonly '" ^ (Absyn.getConstantPrintName newConstant) ^
         "' to " ^ (string_of_bool v));
       cref := v;
       ctable)
@@ -1045,7 +1045,7 @@ and setCurrentConstantExportdef v =
     if (Option.isSome currentConstant) then
       let cref = Absyn.getConstantExportDefRef (Option.get currentConstant) in
       (Errormsg.log Errormsg.none
-        ("setting exportdef '" ^ (Absyn.getConstantName newConstant) ^
+        ("setting exportdef '" ^ (Absyn.getConstantPrintName newConstant) ^
         "' to " ^ (string_of_bool v));
       cref := v;
       ctable)
@@ -1076,7 +1076,7 @@ and copyConstant =
       let edref = Absyn.getConstantExportDefRef currentConstant in
       let closedref = Absyn.getConstantClosedRef currentConstant in
       (Errormsg.log Errormsg.none
-        ("set exportdef '" ^ (Absyn.getConstantName newConstant) ^ "' to " ^ (string_of_bool !edref));
+        ("set exportdef '" ^ (Absyn.getConstantPrintName newConstant) ^ "' to " ^ (string_of_bool !edref));
       tyref := Absyn.getConstantType newConstant;
       skelref := Absyn.getConstantSkeleton newConstant;
       uoref := Absyn.getConstantUseOnly newConstant;
@@ -1091,7 +1091,7 @@ and copyConstant =
 (*  Really merging should be handled as it is in translateModule, duh.  *)
 let copy currentConstant newConstant =
   let () = Errormsg.log Errormsg.none
-    ("copying constant '" ^ (Absyn.getConstantName newConstant) ^ "'") in
+    ("copying constant '" ^ (Absyn.getConstantPrintName newConstant) ^ "'") in
   let skelref = Absyn.getConstantSkeletonRef currentConstant in
   let sizeref = Absyn.getConstantTypeEnvSizeRef currentConstant in
   let tref = Absyn.getConstantTypeRef currentConstant in
@@ -1104,7 +1104,7 @@ let copy currentConstant newConstant =
 
 let copyAccum currentConstant newConstant =
   let () = Errormsg.log Errormsg.none
-    ("copying accum '" ^ (Absyn.getConstantName newConstant) ^ "'") in
+    ("copying accum '" ^ (Absyn.getConstantPrintName newConstant) ^ "'") in
 
   let currentType = Absyn.getConstantType currentConstant in
   let () = copy currentConstant newConstant in
@@ -1112,7 +1112,7 @@ let copyAccum currentConstant newConstant =
 
 let copyExportdef generalCopier owner currentConstant newConstant =
   let () = Errormsg.log Errormsg.none
-    ("copying exportdef '" ^ (Absyn.getConstantName newConstant) ^ "'") in
+    ("copying exportdef '" ^ (Absyn.getConstantPrintName newConstant) ^ "'") in
   let () = generalCopier currentConstant newConstant in
   
   if owner then
@@ -1125,7 +1125,7 @@ let copyExportdef generalCopier owner currentConstant newConstant =
 
 let copyUseonly generalCopier owner currentConstant newConstant =
   let () = Errormsg.log Errormsg.none
-    ("copying useonly '" ^ (Absyn.getConstantName newConstant) ^ "'") in
+    ("copying useonly '" ^ (Absyn.getConstantPrintName newConstant) ^ "'") in
   let () = generalCopier currentConstant newConstant in
   if owner then
     let uoref = Absyn.getConstantUseOnlyRef currentConstant in
@@ -1249,7 +1249,7 @@ and translateSignature s owner accumOrUse ktable ctable tabbrevtable
           else
             let () = copier c2 c in
             let () = Errormsg.log pos
-              ("copied constant: " ^ (Absyn.getConstantName c2) ^ ", " ^
+              ("copied constant: " ^ (Absyn.getConstantPrintName c2) ^ ", " ^
                 (if (Absyn.getConstantType c2) = Absyn.LocalConstant then
                   "local"
                 else
@@ -1266,7 +1266,7 @@ and translateSignature s owner accumOrUse ktable ctable tabbrevtable
       | None ->
           let () = copier c c in
           let () = Errormsg.log pos
-              ("self-copied constant: " ^ (Absyn.getConstantName c) ^ ", " ^
+              ("self-copied constant: " ^ (Absyn.getConstantPrintName c) ^ ", " ^
                 (if (Absyn.getConstantType c) = Absyn.LocalConstant then
                   "local"
                 else
