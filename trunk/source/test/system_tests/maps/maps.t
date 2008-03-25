@@ -194,7 +194,7 @@ CODE
 $ans = <<'ANS';
 
 The answer substitution:
-X = 1 %i+ (2 %i+ (3 %i+ (4 %i+ (5 %i+ 0))))
+X = 1 + (2 + (3 + (4 + (5 + 0))))
 
 
 ANS
