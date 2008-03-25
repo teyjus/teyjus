@@ -22,28 +22,46 @@
 *Symbol Module:
 * Implements a simple module mapping strings to unique identifiers.
 * Uses the standard library Hashtbl module.
+* Associated a name for display with each entry, the default of which
+* is the same as the mapped string.
 **********************************************************************)
-type symbol = string * int
+type symbol = string * string * int
 
 let hashtable = Hashtbl.create 1
 
 let nextsym = ref 0
 
-let equal (s,_) (s',_) = s == s'
+let equal (s,_,_) (s',_,_) = s == s'
 
-let name (s,n) = s
+let name (s,_,_) = s
+
+let printName (_,s,_) = s
+
 let symbol s =
   try
-    (s, (Hashtbl.find hashtable s))
+    (s, s, (Hashtbl.find hashtable s))
   with
     Not_found ->  let id : int = !nextsym
                   in
                     begin
                       nextsym := id + 1;
                       (Hashtbl.add hashtable s id);
-                      (s,id)
+                      (s, s, id)
                     end
-let id (s,n) = n
+
+let symbolAlias s s' =
+  try 
+    (s, s', (Hashtbl.find hashtable s))
+  with
+    Not_found ->  let id : int = !nextsym
+                  in
+                    begin
+                      nextsym := id + 1;
+                      (Hashtbl.add hashtable s id);
+                      (s, s', id)
+                    end
+
+let id (_, _, n) = n
 
 let currentId = ref 0
 let generateName s =
@@ -53,3 +71,5 @@ let generateName s =
 
 let generate () =
   generateName ""
+
+
