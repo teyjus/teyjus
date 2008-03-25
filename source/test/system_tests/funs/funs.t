@@ -110,7 +110,7 @@ The answer substitution:
 F = F
 
 The remaining disagreement pairs list:
-<F (F (F (F 5 4) 3) 2) 1, 5 %i+ 4 %i+ 3 %i+ 2 %i+ 1>
+<F (F (F (F 5 4) 3) 2) 1, 5 + 4 + 3 + 2 + 1>
 
 ANS
 same_answers( `$TJSIM -b $PATH --solve "$code" $MODULE\n`, $ans,"foldl");
