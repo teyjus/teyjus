@@ -76,9 +76,9 @@
       /* o (type of proposition)*/
       TYPE      6      bool   
         /* true proposition */  
-	    4  true            true  0 0  0  TRUE   FALSE  0   NOFIXITY NOCODE
-	    /* cut predicate */
-	    5  !               cut   0 0  0  TRUE   FALSE  0   NOFIXITY NOCODE
+	4  true            true  0 0  0  TRUE   FALSE  0   NOFIXITY NOCODE
+        /* cut predicate */
+	5  !               cut   0 0  0  TRUE   FALSE  0   NOFIXITY NOCODE
         /* fail predicate */
         6  fail            fail  0 0  0  TRUE   FALSE  0   NOFIXITY NOCODE
         /* halt the system */
@@ -90,21 +90,21 @@
       /* int -> int */
       TYPE      7      int -> int
         /* unary minus on integers */
-       56  %i~        intuminus  0 0  0  TRUE   FALSE  MAX PREFIX   NOCODE
+       56  %i~        intuminus  0 0  0  TRUE   FALSE  MAX PREFIX   NOCODE ~
         /* modulus */
-       61  mod        mod        0 0  0  TRUE   TRUE   160 INFIXL   NOCODE
+       61  mod        mod        0 0  0  TRUE   TRUE   160 INFIXL   NOCODE 
         /* integer abs */
-       63  %iabs      iabs       0 0  0  TRUE   TRUE   0   NOFIXITY NOCODE
+       63  %iabs      iabs       0 0  0  TRUE   TRUE   0   NOFIXITY NOCODE abs
       ;;
 
       /* int -> int -> int */
       TYPE      8      int -> int -> int
         /* addition on integers */
-       57  %i+        intplus    0 0  0  TRUE   FALSE  150 INFIXL   NOCODE
+       57  %i+        intplus    0 0  0  TRUE   FALSE  150 INFIXL   NOCODE +
         /* subtraction on integers */
-       58  %i-        intminus   0 0  0  TRUE   FALSE  150 INFIXL   NOCODE
+       58  %i-        intminus   0 0  0  TRUE   FALSE  150 INFIXL   NOCODE -
         /* mutiplication on integers */
-       59  %i*        intmult    0 0  0  TRUE   FALSE  160 INFIXL   NOCODE
+       59  %i*        intmult    0 0  0  TRUE   FALSE  160 INFIXL   NOCODE *
         /* integer division */
        60  div        intdiv     0 0  0  TRUE   FALSE  160 INFIXL   NOCODE
       ;;
@@ -112,13 +112,13 @@
       /* int -> int -> o */  
       TYPE      9      int -> int -> bool
         /* less than on integers */
-       19  %i<        intlss     0 0  0  TRUE   FALSE  130 INFIX    4
+       19  %i<        intlss     0 0  0  TRUE   FALSE  130 INFIX    4   <
         /* greater than on integers */
-       20  %i>        intgrt     0 0  0  TRUE   FALSE  130 INFIX    5
+       20  %i>        intgrt     0 0  0  TRUE   FALSE  130 INFIX    5   >
         /* less than or eq on integers */
-       21  %i<=       intleq     0 0  0  TRUE   FALSE  130 INFIX    6
+       21  %i<=       intleq     0 0  0  TRUE   FALSE  130 INFIX    6   <=
         /* greater than or eq on integers*/
-       22  %i>=       intgeq     0 0  0  TRUE   FALSE  130 INFIX    7
+       22  %i>=       intgeq     0 0  0  TRUE   FALSE  130 INFIX    7   >=
         /* time predicate */
        51  time       time       0 0  0  TRUE   TRUE   0   NOFIXITY 36
       ;;
@@ -142,7 +142,7 @@
       /* real -> real */
       TYPE      12     real -> real
         /* unary minus on real */
-       64  %r~        realuminus 0 0  0  TRUE   FALSE  MAX PREFIX   NOCODE
+       64  %r~        realuminus 0 0  0  TRUE   FALSE  MAX PREFIX   NOCODE ~
         /* square root */
        69  sqrt       sqrt       0 0  0  TRUE   TRUE   0   NOFIXITY NOCODE
         /* sine */
@@ -154,7 +154,7 @@
         /* natural log */
        73  ln         log        0 0  0  TRUE   TRUE   0   NOFIXITY NOCODE
         /* real abs */
-       77  %rabs      rabs       0 0  0  TRUE   TRUE   0   NOFIXITY NOCODE
+       77  %rabs      rabs       0 0  0  TRUE   TRUE   0   NOFIXITY NOCODE abs
       ;;
 
       /* real -> string */ 
@@ -166,11 +166,11 @@
       /* real -> real -> real */
       TYPE      14     real -> real -> real
         /* addition on reals */
-       65  %r+        realplus   0 0  0  TRUE   FALSE  150 INFIXL   NOCODE
+       65  %r+        realplus   0 0  0  TRUE   FALSE  150 INFIXL   NOCODE +
         /* subtraction on reals */
-       66  %r-        realminus  0 0  0  TRUE   FALSE  150 INFIXL   NOCODE
+       66  %r-        realminus  0 0  0  TRUE   FALSE  150 INFIXL   NOCODE -
         /* multiplication on reals */
-       67  %r*        realmult   0 0  0  TRUE   FALSE  160 INFIXL   NOCODE
+       67  %r*        realmult   0 0  0  TRUE   FALSE  160 INFIXL   NOCODE *
         /* division */
        68  /          realdiv    0 0  0  TRUE   FALSE  160 INFIXL   NOCODE
       ;;
@@ -178,13 +178,13 @@
       /* real -> real -> o */  
       TYPE      15     real -> real -> bool
         /* less than in reals */
-       23  %r<        reallss    0 0  0  TRUE   FALSE  130 INFIX    8
+       23  %r<        reallss    0 0  0  TRUE   FALSE  130 INFIX    8      <
         /* greater than on reals */
-       24  %r>        realgrt    0 0  0  TRUE   FALSE  130 INFIX    9
+       24  %r>        realgrt    0 0  0  TRUE   FALSE  130 INFIX    9      >
         /* less than or eq on reals */
-       25  %r<=       realleq    0 0  0  TRUE   FALSE  130 INFIX    10
+       25  %r<=       realleq    0 0  0  TRUE   FALSE  130 INFIX    10     <=
         /* greater than or eq on reals */
-       26  %r>=       realgeq    0 0  0  TRUE   FALSE  130 INFIX    11
+       26  %r>=       realgeq    0 0  0  TRUE   FALSE  130 INFIX    11     >=
       ;;
 
       /* string -> int */ 
@@ -212,13 +212,13 @@
       /* string -> string -> o */
       TYPE      19     string -> string -> bool
         /* less than on strings */
-       27  %s<        strlss     0 0  0  TRUE   TRUE   130 INFIX    12
+       27  %s<        strlss     0 0  0  TRUE   TRUE   130 INFIX    12  <
         /* greater than on strings */
-       28  %s>        strgrt     0 0  0  TRUE   TRUE   130 INFIX    13
+       28  %s>        strgrt     0 0  0  TRUE   TRUE   130 INFIX    13  >
         /* less than or eq on strings */
-       29  %s<=       strleq     0 0  0  TRUE   TRUE   130 INFIX    14
+       29  %s<=       strleq     0 0  0  TRUE   TRUE   130 INFIX    14  <=
         /* greater than or eq on strings */
-       30  %s>=       strgeq     0 0  0  TRUE   TRUE   130 INFIX    15 
+       30  %s>=       strgeq     0 0  0  TRUE   TRUE   130 INFIX    15  >=
         /* getenv predicate; needed? */
        49  getenv     getenv     0 0  0  TRUE   TRUE   0   NOFIXITY 34
       ;;

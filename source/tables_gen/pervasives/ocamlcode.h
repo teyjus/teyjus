@@ -90,7 +90,8 @@ char* OC_mkIsConstFuncName(char* name);
 char* OC_mkConstVarDec(char* constVarName);
 
 /* Constant variable definition :
-   let <varName> = Absyn.Constant(Symbol.symbol "<constName>", ref <fixity>,
+   let <varName> = Absyn.Constant(Symbol.symbolAlias "<constName>" "<printName>", 
+                   ref <fixity>,
                    ref <prec>, ref false, ref false, ref false, ref false, 
                    ref false,  ref <typrev>, ref false, ref <tySkel>, 
                    ref <tyenvsize>, ref (Some <neededness>), ref <codeInfo>, 
@@ -99,7 +100,7 @@ char* OC_mkConstVarDec(char* constVarName);
 char* OC_mkConstVar(char* constName, OP_Fixity fixity, OP_Prec prec, 
                     UTIL_Bool typrev, char* tySkel, int tyenvsize, 
                     int neededness, OP_Code codeInfo, UTIL_Bool reDef, 
-                    char* varName, char* offset);
+                    char* varName, char* offset, char* printName);
 
 /* val <funcName> : Absyn.aconstant -> bool */
 char* OC_mkIsConstFuncDec(char* funcName);

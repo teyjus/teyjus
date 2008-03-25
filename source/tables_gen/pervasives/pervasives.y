@@ -185,7 +185,16 @@ const_decl          : NUM const_name const_ind_name tesize tesize neededness
                                       $5.sval, NULL);
                         ocamlGenConst($1.sval, $2, $3, $10, $9, $7, $8, 
                                       $4.ival, tySkelInd, $6.ival, $11,
-                                      $1.sval);
+                                      $1.sval, $2);
+                      }
+                    | NUM const_name const_ind_name tesize tesize neededness
+                      typrev redef prec fixity code_info const_name
+                      { cgenConstIndex($1.ival, $3, $1.sval, NULL);
+                        cgenConstData($1.ival, $12, $4.sval, $9, $10, tySkelInd,
+                                      $5.sval, NULL);
+                        ocamlGenConst($1.sval, $2, $3, $10, $9, $7, $8, 
+                                      $4.ival, tySkelInd, $6.ival, $11,
+                                      $1.sval, $12);
                       }
                     | comments NUM const_name const_ind_name tesize tesize
                       neededness typrev redef prec fixity code_info
@@ -194,7 +203,16 @@ const_decl          : NUM const_name const_ind_name tesize tesize neededness
                                       tySkelInd, $7.sval, $1);
                         ocamlGenConst($2.sval, $3, $4, $11, $10, $8, $9, 
                                       $5.ival, tySkelInd, $7.ival, $12, 
-                                      $2.sval);
+                                      $2.sval, $3);
+                      }
+                    | comments NUM const_name const_ind_name tesize tesize
+                      neededness typrev redef prec fixity code_info const_name
+                      { cgenConstIndex($2.ival, $4, $2.sval, $1);
+                        cgenConstData($2.ival, $13, $5.sval, $10, $11, 
+                                      tySkelInd, $7.sval, $1);
+                        ocamlGenConst($2.sval, $3, $4, $11, $10, $8, $9, 
+                                      $5.ival, tySkelInd, $7.ival, $12, 
+                                      $2.sval, $13);
                       }
                     ;
 

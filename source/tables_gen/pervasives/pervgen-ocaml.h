@@ -41,7 +41,7 @@ void ocamlGenNumConsts(char* number);
 void ocamlGenConst(char* ind, char* name, char* cVarName, OP_Fixity fixity, 
                    OP_Prec prec, UTIL_Bool tyPrev, UTIL_Bool redef, int tesize,
                    int tyskelInd, int neededness, OP_Code codeInfo, 
-                   char* offset);
+                   char* offset, char* printName);
 
 void ocamlGenConsts();
 
