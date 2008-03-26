@@ -14,7 +14,12 @@ LNK = $(dir linker)
 TST = $(dir test)
 INC = $(dir include)
 
+############################################################
+# Compile flags
+#
+
 OCAMLINCLUDES += $(CMP) $(DIS) $(SIM) $(LOD)
+CFLAGS += -g
 
 ############################################################
 # Compilation files
