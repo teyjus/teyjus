@@ -25,18 +25,18 @@
  ****************************************************************************/
 #include <stdlib.h>
 #include <string.h>
-#include <stdio.h> //to be removed
+#include <stdio.h> 
 #include "builtins.h"
-#include "../abstmachine.h" //to be modified
-#include "../dataformats.h" //to be modified
-#include "../hnorm.h"       //to be modified
-#include "../mcstring.h"    //to be modified
-#include "../mctypes.h"     //to be modified
-#include "../trail.h"       //to be modified
-#include "../printterm.h"   //to be modified
-#include "../../tables/pervasives.h" //to be modified
-#include "../../system/error.h"      //to be modified
-#include "../../system/stream.h"     //to be modified
+#include "../abstmachine.h" 
+#include "../dataformats.h" 
+#include "../hnorm.h"       
+#include "../mcstring.h"    
+#include "../mctypes.h"     
+#include "../trail.h"       
+#include "../printterm.h"   
+#include "../../tables/pervasives.h" 
+#include "../../system/error.h"      
+#include "../../system/stream.h"     
 
 /* get string from an lpwam string term pointer */
 static char* BIIO_getStringFromTerm(DF_TermPtr tmPtr)
@@ -293,7 +293,6 @@ void BIIO_inputLine()
     AM_heapError(nhreg);
     DF_mkStrDataHead(strDataHead);
     MCSTR_toString((MCSTR_Str)strData, buffer, length);
-    free(buffer);
     AM_hreg = nhreg;
 
     DF_mkStr((MemPtr)AM_reg(1), (DF_StrDataPtr)strDataHead);
@@ -324,6 +323,7 @@ void BIIO_lookahead()
 
     c[1] = '\0'; /* terminating the string */
 
+    //    printf( "look ahead: %s\n", c);
     AM_heapError(nhreg);
     DF_mkStrDataHead(strDataHead);
     MCSTR_toString((MCSTR_Str)strData, c, length);
