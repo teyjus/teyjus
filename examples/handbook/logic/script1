@@ -1,0 +1,80 @@
+ *****************************************************************************
+ *                                                                           *
+ *           ILLUSTRATION OF FORMULA MANIPULATION USING TEYJUS               *
+ *                                                                           *
+ *  The script that follows shows the compilation and execution of the code  *
+ *  that implements an interpreter for Horn clause logic.                    *
+ *                                                                           *
+ *****************************************************************************
+
+(gopalan@Diligence 47)% teyjus -p examples/handbook/logic
+Welcome to Teyjus
+
+Copyright (C) 1999 Gopalan Nadathur
+Teyjus comes with ABSOLUTELY NO WARRANTY
+This is free software, and you are welcome to redistribute it
+under certain conditions.  Please view the accompanying file
+"COPYING" for more information.
+Teyjus> #compile hcinterp_examples.
+Reading module signature from file examples/handbook/logic/hcinterp_examples.sig
+Accumulating signature logic_types from file examples/handbook/logic/logic_types.sig
+Accumulating signature logic_vocab from file examples/handbook/logic/logic_vocab.sig
+Accumulating signature logic_types from file examples/handbook/logic/logic_types.sig
+Signature of module hcinterp_examples successfully processed
+Obtaining source for module hcinterp_examples from file examples/handbook/logic/hcinterp_examples.mod
+
+Accumulating signature logic_basic from file examples/handbook/logic/logic_basic.sig
+Accumulating signature logic_types from file examples/handbook/logic/logic_types.sig
+
+Processing declarations in source for module hcinterp_examples
+
+Attempting to accumulate module hc_interp
+Reading module signature from file examples/handbook/logic/hc_interp.sig
+Accumulating signature logic_types from file examples/handbook/logic/logic_types.sig
+Accumulating signature logic_basic from file examples/handbook/logic/logic_basic.sig
+Accumulating signature logic_types from file examples/handbook/logic/logic_types.sig
+Accumulating signature logic_vocab from file examples/handbook/logic/logic_vocab.sig
+Accumulating signature logic_types from file examples/handbook/logic/logic_types.sig
+Signature of module hc_interp successfully processed
+Obtaining source for module hc_interp from file examples/handbook/logic/hc_interp.mod
+
+Processing declarations in source for module hc_interp
+
+Attempting to accumulate module lists
+Reading module signature from file examples/handbook/logic/lists.sig
+Obtaining source for module lists from file examples/handbook/logic/lists.mod
+Accumulated module lists successfully processed
+
+Checking compatibility of accumulates and imports into module hc_interp
+No (outward) compatibility errors found
+
+Accumulated module hc_interp successfully processed
+
+Checking compatibility of accumulates and imports into module hcinterp_examples
+No (outward) compatibility errors found
+
+Writing bytecode to file examples/handbook/logic/hcinterp_examples.lp
+Teyjus> #load hcinterp_examples.
+Teyjus> #query hcinterp_examples.
+
+[hcinterp_examples] ?- pathfroma X.
+
+The answer substitution:
+X = b
+
+More solutions (y/n)? y
+
+The answer substitution:
+X = c
+
+More solutions (y/n)? y
+
+The answer substitution:
+X = f c
+
+More solutions (y/n)? y
+
+no (more) solutions
+
+[hcinterp_examples] ?- halt.
+(gopalan@Diligence 48)%

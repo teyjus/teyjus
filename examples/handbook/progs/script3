@@ -1,0 +1,37 @@
+ *****************************************************************************
+ *                                                                           *
+ *           ILLUSTRATION OF PROGRAM MANIPULATION USING TEYJUS               *
+ *                                                                           *
+ *  The script that follows shows the execution of the code that implements  *
+ *  tail recursion recognition for two argument functional programs. The     *
+ *  script is a little cryptic. Looking at the relevant module will reveal   *
+ *  that the (tail recursive) factorial and gcd programs are deemed to be    *
+ *  tail recursive as expected but the append program is not so recognized.  *
+ *  This code demonstrates the power/usefulness of higher-order unification. *
+ *                                                                           *
+ *  The module tr1_test is assumed to be precompiled in this script.         *
+ *                                                                           *
+ *****************************************************************************
+
+(gopalan@Diligence 35)% tjsim -p examples/handbook/progs/ tr1_test
+Welcome to Teyjus
+
+Copyright (C) 1999 Gopalan Nadathur
+Teyjus comes with ABSOLUTELY NO WARRANTY
+This is free software, and you are welcome to redistribute it
+under certain conditions.  Please view the accompanying file
+"COPYING" for more information.
+[tr1_test] ?- test 1.
+
+yes
+
+[tr1_test] ?- test 2.
+
+yes
+
+[tr1_test] ?- test 3.
+
+no (more) solutions
+
+[tr1_test] ?- stop.
+(gopalan@Diligence 36)% 
