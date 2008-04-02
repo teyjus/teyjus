@@ -4,9 +4,7 @@
 # Distribution
 #
 
-# The dist target will package up teyjus into a tarball. It should be
-# execute on *nix since it uses many shell commands to select the
-# proper files for the tarball.
+# The dist target will package up teyjus into a tarball.
 
 # Here are the main steps in building the tarball
 #  1. Run all tests
@@ -25,14 +23,16 @@ BuildDist() =
     cp OMakefile dist
     cp OMakeroot dist
 
+    cp -r util dist/util
     cp -r source dist/source
-    rm -r dist/source/test
-    find dist/source -name .svn | xargs rm -r
-    find dist/source -name \*.omc | xargs rm
+    rm -rf dist/source/test
+    rm -rf $(find dist/source -name .svn)
+    rm -f $(find dist/source -name *.omc)
 
 teyjus.tar.gz: test
     BuildDist()
     cd dist && omake all
+    BuildDist()
     rm -f teyjus.tar.gz
     mv dist teyjus
     bash -c "/usr/bin/find teyjus -type d | xargs chmod 755"
