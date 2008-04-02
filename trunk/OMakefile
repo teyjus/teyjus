@@ -18,16 +18,17 @@ BuildDist() =
     rm $(filter-proper-targets $(ls R, .))
 
     mkdir dist
-    cp README dist
-    cp COPYING dist
-    cp OMakefile dist
-    cp OMakeroot dist
+    cp README dist/
+    cp COPYING dist/
+    cp OMakefile dist/
+    cp OMakeroot dist/
 
-    cp -r util dist/util
-    cp -r source dist/source
+    cp -r util dist/
+    cp -r examples dist/
+    cp -r source dist/
     rm -rf dist/source/test
-    rm -rf $(find dist/source -name .svn)
-    rm -f $(find dist/source -name *.omc)
+    rm -rf $(find dist -name .svn)
+    rm -f $(find dist -name *.omc)
 
 teyjus.tar.gz: test
     BuildDist()
