@@ -1,0 +1,123 @@
+ *****************************************************************************
+ *                                                                           *
+ *           ILLUSTRATION OF FORMULA MANIPULATION USING TEYJUS               *
+ *                                                                           *
+ *  The script that follows shows the compilation and execution of the code  *
+ *  for transforming first-order formulas into their prenex normal form      *
+ *  using equivalences in classical logic.                                   *
+ *                                                                           *
+ *****************************************************************************
+
+(gopalan@Diligence 50)% teyjus -p examples/handbook/logic/
+Welcome to Teyjus
+
+Copyright (C) 1999 Gopalan Nadathur
+Teyjus comes with ABSOLUTELY NO WARRANTY
+This is free software, and you are welcome to redistribute it
+under certain conditions.  Please view the accompanying file
+"COPYING" for more information.
+Teyjus> #compile pnf_examples.
+Reading module signature from file examples/handbook/logic/pnf_examples.sig
+Accumulating signature logic_types from file examples/handbook/logic/logic_types.sig
+Accumulating signature logic_basic from file examples/handbook/logic/logic_basic.sig
+Accumulating signature logic_types from file examples/handbook/logic/logic_types.sig
+Accumulating signature logic_vocab from file examples/handbook/logic/logic_vocab.sig
+Accumulating signature logic_types from file examples/handbook/logic/logic_types.sig
+Signature of module pnf_examples successfully processed
+Obtaining source for module pnf_examples from file examples/handbook/logic/pnf_examples.mod
+
+Processing declarations in source for module pnf_examples
+
+Attempting to accumulate module refl_syntax
+Reading module signature from file examples/handbook/logic/refl_syntax.sig
+Accumulating signature logic_types from file examples/handbook/logic/logic_types.sig
+Accumulating signature logic_basic from file examples/handbook/logic/logic_basic.sig
+Accumulating signature logic_types from file examples/handbook/logic/logic_types.sig
+Accumulating signature logic_vocab from file examples/handbook/logic/logic_vocab.sig
+Accumulating signature logic_types from file examples/handbook/logic/logic_types.sig
+Signature of module refl_syntax successfully processed
+Obtaining source for module refl_syntax from file examples/handbook/logic/refl_syntax.mod
+
+Accumulating signature logic_types from file examples/handbook/logic/logic_types.sig
+
+Accumulating signature logic_basic from file examples/handbook/logic/logic_basic.sig
+Accumulating signature logic_types from file examples/handbook/logic/logic_types.sig
+
+Accumulating signature logic_vocab from file examples/handbook/logic/logic_vocab.sig
+Accumulating signature logic_types from file examples/handbook/logic/logic_types.sig
+
+Processing declarations in source for module refl_syntax
+
+Accumulated module refl_syntax successfully processed
+
+Attempting to accumulate module pnf
+Reading module signature from file examples/handbook/logic/pnf.sig
+Accumulating signature logic_types from file examples/handbook/logic/logic_types.sig
+Accumulating signature logic_basic from file examples/handbook/logic/logic_basic.sig
+Accumulating signature logic_types from file examples/handbook/logic/logic_types.sig
+Signature of module pnf successfully processed
+Obtaining source for module pnf from file examples/handbook/logic/pnf.mod
+Accumulated module pnf successfully processed
+
+Checking compatibility of accumulates and imports into module pnf_examples
+No (outward) compatibility errors found
+
+Writing bytecode to file examples/handbook/logic/pnf_examples.lp
+Teyjus> #load pnf_examples.
+Teyjus> #query pnf_examples.
+
+[pnf_examples] ?- test 1 F.
+
+The answer substitution:
+F = some (W1\ path a W1 imp tru)
+
+More solutions (y/n)? y
+
+no (more) solutions
+
+[pnf_examples] ?- test 2 F.
+
+The answer substitution:
+F = all (W1\ path a W1 imp tru)
+
+More solutions (y/n)? y
+
+no (more) solutions
+
+[pnf_examples] ?- test 3 F.
+
+The answer substitution:
+F = all (W1\ path a W1 and path W1 a)
+
+More solutions (y/n)? y
+
+The answer substitution:
+F = all (W1\ all (W2\ path a W1 and path W2 a))
+
+More solutions (y/n)? y
+
+The answer substitution:
+F = all (W1\ all (W2\ path a W2 and path W1 a))
+
+More solutions (y/n)? y
+
+no (more) solutions
+
+[pnf_examples] ?- test 4 F.
+
+The answer substitution:
+F = all (W1\ all (W2\ path a W1 imp path a W2))
+
+More solutions (y/n)? y
+
+The answer substitution:
+F = all (W1\ all (W2\ path a W2 imp path a W1))
+
+More solutions (y/n)? y
+
+no (more) solutions
+
+[pnf_examples] ?- stop.
+Teyjus> #quit.
+
+(gopalan@Diligence 51)% 

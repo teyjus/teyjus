@@ -1,0 +1,52 @@
+*****************************************************************************
+*  Execution trace of the tail recursion recognition procedure. Files are   *
+*  assumed to be precompiled. Look at the files tr_test.mod and             *
+*  examples.mod to figure out what code is being checked in each case.      *
+*****************************************************************************
+
+(gopalan@Diligence 92)% tjsim -p examples/pcf tr_test
+Welcome to Teyjus
+
+Copyright (C) 1999 Gopalan Nadathur
+Teyjus comes with ABSOLUTELY NO WARRANTY
+This is free software, and you are welcome to redistribute it
+under certain conditions.  Please view the accompanying file
+"COPYING" for more information.
+[tr_test] ?- tr_test "successor".
+
+yes
+
+[tr_test] ?- tr_test "onep".
+
+yes
+
+[tr_test] ?- tr_test "is_sym".
+
+yes
+
+[tr_test] ?- tr_test "fib".
+
+no (more) solutions
+
+[tr_test] ?- tr_test "map".
+
+no (more) solutions
+
+[tr_test] ?- tr_test "mem".
+
+yes
+
+[tr_test] ?- tr_test "fact".
+
+yes
+
+[tr_test] ?- tr_test "app".
+
+no (more) solutions
+
+[tr_test] ?- tr_test "gcd".
+
+yes
+
+[tr_test] ?- halt.
+(gopalan@Diligence 93)% 

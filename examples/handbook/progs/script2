@@ -1,0 +1,34 @@
+ *****************************************************************************
+ *                                                                           *
+ *           ILLUSTRATION OF PROGRAM MANIPULATION USING TEYJUS               *
+ *                                                                           *
+ *  The script that follows shows the execution of code that implements      *
+ *  the `currying' transform. The example essentially transforms a           *
+ *  tail recursive version of the factorial function that takes a pair as    *
+ *  argument into an equivalent function that takes two arguments.           *
+ *  This script/code demonstrates the power/usefulness of higher-order       *
+ *  unification.                                                             *
+ *                                                                           *
+ *  The module curry_test is assumed to be precompiled in this script.       *
+ *                                                                           *
+ *****************************************************************************
+
+(gopalan@Diligence 34)% tjsim -p examples/handbook/progs/ curry_test
+Welcome to Teyjus
+
+Copyright (C) 1999 Gopalan Nadathur
+Teyjus comes with ABSOLUTELY NO WARRANTY
+This is free software, and you are welcome to redistribute it
+under certain conditions.  Please view the accompanying file
+"COPYING" for more information.
+[curry_test] ?- test 1 F.
+
+The answer substitution:
+F = fix (F1\ abs (Y\ abs (Z\ cond (&& truth (eq Y (c 0))) Z (cond truth (app (app F1 (minus Y (c 1))) (times Y Z)) err))))
+
+More solutions (y/n)? y
+
+no (more) solutions
+
+[curry_test] ?- stop.
+(gopalan@Diligence 35)% 
