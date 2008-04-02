@@ -1,0 +1,429 @@
+ *****************************************************************************
+ *                                                                           *
+ *    ILLUSTRATION OF AN INTERACTIVE THEOREM PROVER IMPLEMENTED IN TEYJUS    *
+ *                                                                           *
+ *  The script that follows shows the compilation and execution of the code  *
+ *  that implements an interactive theorem prover for a fragment of          *
+ *  first-order logic.                                                       *
+ *                                                                           *
+ *****************************************************************************
+
+(gopalan@Diligence 31)% teyjus -p examples/ndprover
+Welcome to Teyjus
+
+Copyright (C) 1999 Gopalan Nadathur
+Teyjus comes with ABSOLUTELY NO WARRANTY
+This is free software, and you are welcome to redistribute it
+under certain conditions.  Please view the accompanying file
+"COPYING" for more information.
+Teyjus> #compile inter.
+Reading module signature from file examples/ndprover/inter.sig
+Accumulating signature logic from file examples/ndprover/logic.sig
+Accumulating signature nonlogical from file examples/ndprover/nonlogical.sig
+Accumulating signature logic from file examples/ndprover/logic.sig
+Accumulating signature formulas from file examples/ndprover/formulas.sig
+Accumulating signature logic from file examples/ndprover/logic.sig
+Accumulating signature nonlogical from file examples/ndprover/nonlogical.sig
+Accumulating signature logic from file examples/ndprover/logic.sig
+Accumulating signature ndproofs from file examples/ndprover/ndproofs.sig
+Accumulating signature logic from file examples/ndprover/logic.sig
+Accumulating signature ndtac from file examples/ndprover/ndtac.sig
+Accumulating signature goaltypes from file examples/ndprover/goaltypes.sig
+Accumulating signature ndproofs from file examples/ndprover/ndproofs.sig
+Accumulating signature logic from file examples/ndprover/logic.sig
+Accumulating signature logic from file examples/ndprover/logic.sig
+Accumulating signature tacticals from file examples/ndprover/tacticals.sig
+Accumulating signature goaltypes from file examples/ndprover/goaltypes.sig
+Signature of module inter successfully processed
+Obtaining source for module inter from file examples/ndprover/inter.mod
+
+Accumulating signature formulas from file examples/ndprover/formulas.sig
+Accumulating signature logic from file examples/ndprover/logic.sig
+Accumulating signature nonlogical from file examples/ndprover/nonlogical.sig
+Accumulating signature logic from file examples/ndprover/logic.sig
+
+Accumulating signature logic from file examples/ndprover/logic.sig
+
+Accumulating signature nonlogical from file examples/ndprover/nonlogical.sig
+Accumulating signature logic from file examples/ndprover/logic.sig
+
+Accumulating signature formulas from file examples/ndprover/formulas.sig
+Accumulating signature logic from file examples/ndprover/logic.sig
+Accumulating signature nonlogical from file examples/ndprover/nonlogical.sig
+Accumulating signature logic from file examples/ndprover/logic.sig
+
+Accumulating signature ndproofs from file examples/ndprover/ndproofs.sig
+Accumulating signature logic from file examples/ndprover/logic.sig
+
+Accumulating signature ndtac from file examples/ndprover/ndtac.sig
+Accumulating signature goaltypes from file examples/ndprover/goaltypes.sig
+Accumulating signature ndproofs from file examples/ndprover/ndproofs.sig
+Accumulating signature logic from file examples/ndprover/logic.sig
+Accumulating signature logic from file examples/ndprover/logic.sig
+
+Processing declarations in source for module inter
+
+Attempting to accumulate module ndtac
+Reading module signature from file examples/ndprover/ndtac.sig
+Accumulating signature goaltypes from file examples/ndprover/goaltypes.sig
+Accumulating signature ndproofs from file examples/ndprover/ndproofs.sig
+Accumulating signature logic from file examples/ndprover/logic.sig
+Accumulating signature logic from file examples/ndprover/logic.sig
+Signature of module ndtac successfully processed
+Obtaining source for module ndtac from file examples/ndprover/ndtac.mod
+
+Accumulating signature goaltypes from file examples/ndprover/goaltypes.sig
+
+Accumulating signature ndproofs from file examples/ndprover/ndproofs.sig
+Accumulating signature logic from file examples/ndprover/logic.sig
+
+Accumulating signature logic from file examples/ndprover/logic.sig
+
+Processing declarations in source for module ndtac
+
+Attempting to accumulate module listmanip
+Reading module signature from file examples/ndprover/listmanip.sig
+Obtaining source for module listmanip from file examples/ndprover/listmanip.mod
+
+Accumulated module listmanip successfully processed
+
+Checking compatibility of accumulates and imports into module ndtac
+No (outward) compatibility errors found
+
+
+Accumulated module ndtac successfully processed
+
+Attempting to accumulate module tacticals
+Reading module signature from file examples/ndprover/tacticals.sig
+Accumulating signature goaltypes from file examples/ndprover/goaltypes.sig
+Signature of module tacticals successfully processed
+Obtaining source for module tacticals from file examples/ndprover/tacticals.mod
+
+Processing declarations in source for module tacticals
+
+Attempting to accumulate module goalred
+Reading module signature from file examples/ndprover/goalred.sig
+Accumulating signature goaltypes from file examples/ndprover/goaltypes.sig
+Signature of module goalred successfully processed
+Obtaining source for module goalred from file examples/ndprover/goalred.mod
+
+Accumulating signature goaltypes from file examples/ndprover/goaltypes.sig
+
+Processing declarations in source for module goalred
+
+
+Accumulated module goalred successfully processed
+
+Checking compatibility of accumulates and imports into module tacticals
+No (outward) compatibility errors found
+
+
+Accumulated module tacticals successfully processed
+
+Attempting to accumulate module formulas
+Reading module signature from file examples/ndprover/formulas.sig
+Accumulating signature logic from file examples/ndprover/logic.sig
+Accumulating signature nonlogical from file examples/ndprover/nonlogical.sig
+Accumulating signature logic from file examples/ndprover/logic.sig
+Signature of module formulas successfully processed
+Obtaining source for module formulas from file examples/ndprover/formulas.mod
+
+Accumulating signature logic from file examples/ndprover/logic.sig
+
+Accumulating signature nonlogical from file examples/ndprover/nonlogical.sig
+Accumulating signature logic from file examples/ndprover/logic.sig
+
+Processing declarations in source for module formulas
+
+
+Accumulated module formulas successfully processed
+
+Checking compatibility of accumulates and imports into module inter
+No (outward) compatibility errors found
+
+
+Writing bytecode to file examples/ndprover/inter.lp
+Teyjus> #load inter.
+Teyjus> #query inter.
+
+[inter] ?- inter_top cases1 Proof Outgoal.
+
+Assumptions: 
+
+Conclusion: 
+q a or q b imp some (X\ q X)
+Enter tactic: imp_i_tac.
+
+Assumptions: 
+1 q a or q b
+
+Conclusion: 
+some (X\ q X)
+Enter tactic: exists_i_tac.
+
+Assumptions: 
+1 q a or q b
+
+Conclusion: 
+q (_152 <lc-0-2>)
+Enter tactic: or_e_tac 1.
+
+Assumptions: 
+1 q a
+
+Conclusion: 
+q (_152 <lc-0-2>)
+Enter tactic: close_tac.
+
+Assumptions: 
+1 q b
+
+Conclusion: 
+q a
+Enter tactic: backup.
+
+Assumptions: 
+1 q a
+
+Conclusion: 
+q (_152 <lc-0-2>)
+Enter tactic: backup.
+
+Assumptions: 
+1 q a or q b
+
+Conclusion: 
+q (_152 <lc-0-2>)
+Enter tactic: backup.
+
+Assumptions: 
+1 q a or q b
+
+Conclusion: 
+some (X\ q X)
+Enter tactic: or_e_tac 1.
+
+Assumptions: 
+1 q a
+
+Conclusion: 
+some (X\ q X)
+Enter tactic: exists_i_tac.
+
+Assumptions: 
+1 q a
+
+Conclusion: 
+q (_255 <lc-0-2> <lc-0-3>)
+Enter tactic: close_tac.
+
+Assumptions: 
+1 q b
+
+Conclusion: 
+some (X\ q X)
+Enter tactic: exists_i_tac.
+
+Assumptions: 
+1 q b
+
+Conclusion: 
+q (_370 <lc-0-2> <lc-0-3>)
+Enter tactic: close_tac.
+
+The answer substitution:
+Outgoal = truegoal
+Proof = imp_i (W1\ or_e W1 (W2\ exists_i a W2) (W2\ exists_i b W2))
+
+More solutions (y/n)? n
+
+yes
+
+[inter] ?- inter_top bugs Proof Outgoal.
+
+Assumptions: 
+
+Conclusion: 
+heated jar and forall (X\ bug X imp animal X) and forall (X\ forall (Y\ heated Y and in X Y and animal X imp dead X)) and forall (Y\ forall (X\ in X Y and bug X imp dead X) imp sterile Y) imp sterile jar
+Enter tactic: imp_i_tac.
+
+Assumptions: 
+1 heated jar and forall (X\ bug X imp animal X) and forall (X\ forall (Y\ heated Y and in X Y and animal X imp dead X)) and forall (Y\ forall (X\ in X Y and bug X imp dead X) imp sterile Y)
+
+Conclusion: 
+sterile jar
+Enter tactic: and_e_tac 1.
+
+Assumptions: 
+1 heated jar
+2 forall (X\ bug X imp animal X) and forall (X\ forall (Y\ heated Y and in X Y and animal X imp dead X)) and forall (Y\ forall (X\ in X Y and bug X imp dead X) imp sterile Y)
+
+Conclusion: 
+sterile jar
+Enter tactic: and_e_tac 2.
+
+Assumptions: 
+1 forall (X\ bug X imp animal X)
+2 forall (X\ forall (Y\ heated Y and in X Y and animal X imp dead X)) and forall (Y\ forall (X\ in X Y and bug X imp dead X) imp sterile Y)
+3 heated jar
+
+Conclusion: 
+sterile jar
+Enter tactic: and_e_tac 2.
+
+Assumptions: 
+1 forall (X\ forall (Y\ heated Y and in X Y and animal X imp dead X))
+2 forall (Y\ forall (X\ in X Y and bug X imp dead X) imp sterile Y)
+3 forall (X\ bug X imp animal X)
+4 heated jar
+
+Conclusion: 
+sterile jar
+Enter tactic: forall_e_tac 2.
+
+Assumptions: 
+1 forall (X\ in X _379 and bug X imp dead X) imp sterile _379
+2 forall (X\ forall (Y\ heated Y and in X Y and animal X imp dead X))
+3 forall (X\ bug X imp animal X)
+4 heated jar
+
+Conclusion: 
+sterile jar
+Enter tactic: bchain_tac 1.
+
+Assumptions: 
+1 forall (X\ forall (Y\ heated Y and in X Y and animal X imp dead X))
+2 forall (X\ bug X imp animal X)
+3 heated jar
+
+Conclusion: 
+forall (X\ in X jar and bug X imp dead X)
+Enter tactic: forall_i_tac.
+
+Assumptions: 
+1 forall (X\ forall (Y\ heated Y and in X Y and animal X imp dead X))
+2 forall (X\ bug X imp animal X)
+3 heated jar
+
+Conclusion: 
+in <lc-0-2> jar and bug <lc-0-2> imp dead <lc-0-2>
+Enter tactic: imp_i_tac.
+
+Assumptions: 
+1 in <lc-0-2> jar and bug <lc-0-2>
+2 forall (X\ forall (Y\ heated Y and in X Y and animal X imp dead X))
+3 forall (X\ bug X imp animal X)
+4 heated jar
+
+Conclusion: 
+dead <lc-0-2>
+Enter tactic: forall_e_tac 2.
+
+Assumptions: 
+1 forall (Y\ heated Y and in _730 Y and animal _730 imp dead _730)
+2 in <lc-0-2> jar and bug <lc-0-2>
+3 forall (X\ bug X imp animal X)
+4 heated jar
+
+Conclusion: 
+dead <lc-0-2>
+Enter tactic: forall_e_tac 1.
+
+Assumptions: 
+1 heated _808 and in _730 _808 and animal _730 imp dead _730
+2 in <lc-0-2> jar and bug <lc-0-2>
+3 forall (X\ bug X imp animal X)
+4 heated jar
+
+Conclusion: 
+dead <lc-0-2>
+Enter tactic: bchain_tac 1.
+
+Assumptions: 
+1 in <lc-0-2> jar and bug <lc-0-2>
+2 forall (X\ bug X imp animal X)
+3 heated jar
+
+Conclusion: 
+heated (_907 <lc-0-1> <lc-0-2> <lc-0-3>) and in <lc-0-2> (_907 <lc-0-1> <lc-0-2> <lc-0-3>) and animal <lc-0-2>
+Enter tactic: and_i_tac.
+
+Assumptions: 
+1 in <lc-0-2> jar and bug <lc-0-2>
+2 forall (X\ bug X imp animal X)
+3 heated jar
+
+Conclusion: 
+heated (_907 <lc-0-1> <lc-0-2> <lc-0-3>)
+Enter tactic: close_tacn 3.
+
+Assumptions: 
+1 in <lc-0-2> jar and bug <lc-0-2>
+2 forall (X\ bug X imp animal X)
+3 heated jar
+
+Conclusion: 
+in <lc-0-2> jar and animal <lc-0-2>
+Enter tactic: and_e_tac 1.
+
+Assumptions: 
+1 in <lc-0-2> jar
+2 bug <lc-0-2>
+3 forall (X\ bug X imp animal X)
+4 heated jar
+
+Conclusion: 
+in <lc-0-2> jar and animal <lc-0-2>
+Enter tactic: and_i_tac.
+
+Assumptions: 
+1 in <lc-0-2> jar
+2 bug <lc-0-2>
+3 forall (X\ bug X imp animal X)
+4 heated jar
+
+Conclusion: 
+in <lc-0-2> jar
+Enter tactic: close_tacn 1.
+
+Assumptions: 
+1 in <lc-0-2> jar
+2 bug <lc-0-2>
+3 forall (X\ bug X imp animal X)
+4 heated jar
+
+Conclusion: 
+animal <lc-0-2>
+Enter tactic: forall_e_tac 3.
+
+Assumptions: 
+1 bug _1429 imp animal _1429
+2 in <lc-0-2> jar
+3 bug <lc-0-2>
+4 heated jar
+
+Conclusion: 
+animal <lc-0-2>
+Enter tactic: bchain_tac 1.
+
+Assumptions: 
+1 in <lc-0-2> jar
+2 bug <lc-0-2>
+3 heated jar
+
+Conclusion: 
+bug <lc-0-2>
+Enter tactic: close_tacn 2.
+
+The answer substitution:
+Outgoal = truegoal
+Proof = imp_i (W1\ imp_e (forall_i (W2\ imp_i (W3\ imp_e (and_i (and_e1 W1) (and_i (and_e1 W3) (imp_e (and_e2 W3) (forall_e W2 (and_e1 (and_e2 W1)))))) (forall_e jar (forall_e W2 (and_e1 (and_e2 (and_e2 W1)))))))) (forall_e jar (and_e2 (and_e2 (and_e2 W1)))))
+
+More solutions (y/n)? n
+
+yes
+
+[inter] ?- stop.
+Teyjus> #quit.
+
+(gopalan@Diligence 32)% 
