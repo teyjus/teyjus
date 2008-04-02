@@ -1,5 +1,53 @@
 .SUBDIRS: source
 
+################################################
+# Distribution
+#
+
+# The dist target will package up teyjus into a tarball. It should be
+# execute on *nix since it uses many shell commands to select the
+# proper files for the tarball.
+
+# Here are the main steps in building the tarball
+#  1. Run all tests
+#  2. Create a distribution directory
+#  3. Confirm that 'omake all' works within that directory
+#  4. Re-create the distribution directory
+#  5. Set permissions and package up the distribution directory 
+
+BuildDist() =
+    rm -rf dist
+    rm $(filter-proper-targets $(ls R, .))
+
+    mkdir dist
+    cp README dist
+    cp COPYING dist
+    cp OMakefile dist
+    cp OMakeroot dist
+
+    cp -r source dist/source
+    rm -r dist/source/test
+    find dist/source -name .svn | xargs rm -r
+    find dist/source -name \*.omc | xargs rm
+
+teyjus.tar.gz: test
+    BuildDist()
+    cd dist && omake all
+    rm -f teyjus.tar.gz
+    mv dist teyjus
+    bash -c "/usr/bin/find teyjus -type d | xargs chmod 755"
+    bash -c "/usr/bin/find teyjus -type f | xargs chmod 644"
+    tar c teyjus | gzip - > teyjus.tar.gz
+    bash -c "chmod 664 teyjus.tar.gz"
+    rm -rf teyjus
+
+.PHONY: dist
+dist: teyjus.tar.gz
+
+################################################
+# Utilites
+#
+
 .PHONY: clean
 clean:
     rm $(filter-proper-targets $(ls R, .))
