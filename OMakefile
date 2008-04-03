@@ -1,6 +1,16 @@
 .SUBDIRS: source
 
 ################################################
+# Default target build programs and moves them to toplevel
+#
+
+OCamlProgramCopy(all, ., source/tjcc$(EXE))
+OCamlProgramCopy(all, ., source/tjsim$(EXE))
+OCamlProgramCopy(all, ., source/tjlink$(EXE))
+OCamlProgramCopy(all, ., source/tjdis$(EXE))
+.DEFAULT: all
+
+################################################
 # Distribution
 #
 
