@@ -4,10 +4,10 @@
 # Default target build programs and moves them to toplevel
 #
 
-OCamlProgramCopy(all, ., source/tjcc$(EXE))
-OCamlProgramCopy(all, ., source/tjsim$(EXE))
-OCamlProgramCopy(all, ., source/tjlink$(EXE))
-OCamlProgramCopy(all, ., source/tjdis$(EXE))
+OCamlProgramCopy(all, ., source/tjcc)
+OCamlProgramCopy(all, ., source/tjsim)
+OCamlProgramCopy(all, ., source/tjlink)
+OCamlProgramCopy(all, ., source/tjdis)
 .DEFAULT: all
 
 ################################################
