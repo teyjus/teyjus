@@ -17,24 +17,24 @@ type    -->		(list judgment) -> judgment -> goal.
 
 type	yes		answer.
 
-type	exists_e_tac	int -> goal -> goal -> o.
-type	or_e_tac	int -> goal -> goal -> o.
-type	forall_e_query	int -> goal -> goal -> o.
-type	forall_e_tac	int -> goal -> goal -> o.
-type	fchain_tac	int -> goal -> goal -> o.
-type	bchain_tac	int -> goal -> goal -> o.
-type	imp_e_retain	int -> goal -> goal -> o.
-type	imp_e_tac	int -> goal -> goal -> o.
-type	and_e_tac	int -> goal -> goal -> o.
-type	exists_i_query	goal -> goal -> o.
-type	exists_i_tac	goal -> goal -> o.
-type	forall_i_tac	goal -> goal -> o.
-type	imp_i_tac	goal -> goal -> o.
-type	or_i2_tac	goal -> goal -> o.
-type	or_i1_tac	goal -> goal -> o.
-type	and_i_tac	goal -> goal -> o.
-type	close_tacn	int -> goal -> goal -> o.
-type	close_tac	goal -> goal -> o.
+exportdef	exists_e_tac	int -> goal -> goal -> o.
+exportdef	or_e_tac	int -> goal -> goal -> o.
+exportdef	forall_e_query	int -> goal -> goal -> o.
+exportdef	forall_e_tac	int -> goal -> goal -> o.
+exportdef	fchain_tac	int -> goal -> goal -> o.
+exportdef	bchain_tac	int -> goal -> goal -> o.
+exportdef	imp_e_retain	int -> goal -> goal -> o.
+exportdef	imp_e_tac	int -> goal -> goal -> o.
+exportdef	and_e_tac	int -> goal -> goal -> o.
+exportdef	exists_i_query	goal -> goal -> o.
+exportdef	exists_i_tac	goal -> goal -> o.
+exportdef	forall_i_tac	goal -> goal -> o.
+exportdef	imp_i_tac	goal -> goal -> o.
+exportdef	or_i2_tac	goal -> goal -> o.
+exportdef	or_i1_tac	goal -> goal -> o.
+exportdef	and_i_tac	goal -> goal -> o.
+exportdef	close_tacn	int -> goal -> goal -> o.
+exportdef	close_tac	goal -> goal -> o.
 
 infix   of_type 120.
 infix   --> 110.

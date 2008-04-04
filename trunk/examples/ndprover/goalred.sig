@@ -7,4 +7,4 @@ sig  goalred.
 
 accum_sig   goaltypes. 
 
-type    goalreduce      goal -> goal -> o.
+exportdef    goalreduce      goal -> goal -> o.

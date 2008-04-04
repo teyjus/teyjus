@@ -5,9 +5,8 @@
 
 module inter.
 
-accum_sig  formulas.
-
-accum_sig  logic, nonlogical, formulas, ndproofs, ndtac.
+accum_sig  logic, nonlogical, formulas, ndproofs.
+use_sig  ndtac, tacticals.
 
 accumulate ndtac, tacticals, formulas.
 
@@ -19,7 +18,7 @@ type	backup		goal -> goal -> o.
 type	print_form_list	list judgment -> int -> o.
 type    nl              o.
 type    write           A -> o.
-type  process_input    (goal -> goal -> o) -> goal -> goal -> o.
+type    process_input   (goal -> goal -> o) -> goal -> goal -> o.
 
 inter_top Name P OutGoal :- formula Name Formula,
   inter (nil --> P of_type Formula) OutGoal.
