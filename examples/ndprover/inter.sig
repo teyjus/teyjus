@@ -4,8 +4,7 @@
 
 sig  inter.
 
-accum_sig  logic, nonlogical, formulas, ndproofs.
-use_sig  ndtac, tacticals.
+accum_sig  logic, nonlogical, formulas, ndproofs, ndtac, tacticals.
 
 exportdef   inter_top	        name -> proof_object -> goal -> o.
 exportdef   inter	        goal -> goal -> o.

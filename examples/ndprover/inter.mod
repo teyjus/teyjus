@@ -5,8 +5,7 @@
 
 module inter.
 
-accum_sig  logic, nonlogical, formulas, ndproofs.
-use_sig  ndtac, tacticals.
+accum_sig  logic, nonlogical, formulas, ndproofs, ndtac, tacticals.
 
 accumulate ndtac, tacticals, formulas.
 
