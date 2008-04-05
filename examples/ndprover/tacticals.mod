@@ -5,6 +5,8 @@
 
 module tacticals.
 
+accum_sig  goaltypes.
+
 accumulate  goalred.
 
 type    maptac          (goal -> goal -> o) -> goal -> goal -> o.

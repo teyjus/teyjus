@@ -1,5 +1,5 @@
 # Modify the path to the Teyjus executables as needed
-TEYJUS= /home/fac18/gopalan/projects/teyjus/source
+TEYJUS= ../../source
 TJCC= $(TEYJUS)/tjcc
 TJLINK= $(TEYJUS)/tjlink
 

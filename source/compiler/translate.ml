@@ -815,13 +815,10 @@ and checkConstantBodies ctable =
             ("constant '" ^ name ^ "' declared as both exportdef and useonly");
           result := false)
         else if (Absyn.getConstantUseOnly c) || (Absyn.getConstantExportDef c) then
-          let sort = if (Absyn.getConstantUseOnly c) then "useonly" else "exportdef" in
-          if not (Absyn.isArrowType ty) then
-            (Errormsg.error p
-              ("constant '" ^ name ^ "' declared as " ^ sort ^ " without target type 'o'");
-            result := false)
-          else
-            let targ = Absyn.getArrowTypeTarget ty in
+          let sort = if (Absyn.getConstantUseOnly c) 
+                     then "useonly" 
+                     else "exportdef" in
+          let targ = Absyn.getArrowTypeTarget ty in
             if (Absyn.isConstantType targ) &&
               (Pervasive.iskbool (Absyn.getTypeKind targ)) then
               ()
