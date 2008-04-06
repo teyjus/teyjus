@@ -4,7 +4,7 @@
 
 sig control.
 
-type announce    o -> o.                % for displaying goals
-type spi         o -> o.                % display entry and exit from goal
-type if          o -> o -> o -> o.      % if then else
-type once        o -> o.                % once only predicate
+exportdef announce    o -> o.                % for displaying goals
+exportdef spi         o -> o.                % display entry and exit from goal
+exportdef if          o -> o -> o -> o.      % if then else
+exportdef once        o -> o.                % once only predicate

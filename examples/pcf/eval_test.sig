@@ -6,5 +6,5 @@ sig eval_test.
 
 accum_sig eval.
 
-type eval_test   int -> tm -> o.
+exportdef  eval_test   int -> tm -> o.
 
