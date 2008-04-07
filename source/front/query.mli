@@ -24,3 +24,5 @@ val showAnswers    : unit -> unit
 
 
 val queryHasVars : unit -> bool
+
+val readTerm     : string -> Absyn.amodule -> int
