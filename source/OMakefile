@@ -155,7 +155,7 @@ SIM_MAIN = $(FNT)/simulatorfront
 LNK_MAIN = $(FNT)/linkerfront
 
 ############################################################
-# Win32 / Cygwin specific changes
+# Platform specific changes
 #
 
 if $(mem $(OSTYPE), Cygwin Win32)
@@ -165,6 +165,9 @@ if $(mem $(OSTYPE), Cygwin Win32)
     INC_C[] += $(INC)/byteswap $(INC)/search
     export
 
+if $(mem $(SYSNAME), Darwin)
+    INC_C[] += $(INC)/byteswap $(INC)/search
+    export
 
 ############################################################
 # Generated Files

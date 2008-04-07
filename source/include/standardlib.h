@@ -20,27 +20,21 @@
 #ifndef STANDARD_LIB_H
 #define STANDARD_LIB_H
 
-#ifdef _WIN32
-// Win32 or Cygwin with -mno-cygwin flag
+#if defined(_WIN32) || defined(_WIN64)
+// Windows or Cygwin with -mno-cygwin flag
 
-#include <fcntl.h>
 #include <io.h>
 
-// One of these will provide memcpy
-#include <memory.h>
-#include <string.h>
-
-#include "search.h"
-
-// Let obstack know that we have memcpy
-#define HAVE_STRING_H
-#include "obstack.h"
-
-//unistd.h
+// unistd.h replacement
 #define pipe(i) (_pipe(i, 1024, _O_TEXT))
 
-//endian.h replacement
-#define __WORDSIZE            32
+// endian.h replacement
+
+#if defined(_WIN32)
+# define __WORDSIZE            32
+#elif defined(_WIN64)
+# define __WORDSIZE            64
+#endif
 
 #define	__LITTLE_ENDIAN	      1234
 #define	__BIG_ENDIAN          4321
@@ -51,70 +45,47 @@
 #define BIG_ENDIAN          __BIG_ENDIAN
 #define BYTE_ORDER          __BYTE_ORDER
 
-//sys/types.h replacement
+// sys/types.h replacement
 typedef unsigned __int8 u_int8_t;
 typedef unsigned __int16 u_int16_t;
 typedef unsigned __int32 u_int32_t;
 typedef unsigned __int64 u_int64_t;
 
-//byteswap.h replacement
 #include "byteswap.h"
 
-#else
-#ifdef _WIN64
-//Win64
+#elif defined(__APPLE__)
+// Apple Darwin
 
-#include <fcntl.h>
-#include <io.h>
-
-// One of these will provide memcpy
-#include <memory.h>
-#include <string.h>
-
-#include "search.h"
-
-// Let obstack know that we have memcpy
-#define HAVE_STRING_H
-#include "obstack.h"
-
-//unistd.h
-#define pipe(i) (_pipe(i, 1024, _O_TEXT))
-
-//endian.h replacement
-#define __WORDSIZE            64
-
-#define	__LITTLE_ENDIAN	      1234
-#define	__BIG_ENDIAN          4321
-#define __BYTE_ORDER          __LITTLE_ENDIAN
-#define __FLOAT_WORD_ORDER    __BYTE_ORDER
-
-#define LITTLE_ENDIAN       __LITTLE_ENDIAN
-#define BIG_ENDIAN          __BIG_ENDIAN
-#define BYTE_ORDER          __BYTE_ORDER
-
-//sys/types.h replacement
-typedef unsigned __int8 u_int8_t;
-typedef unsigned __int16 u_int16_t;
-typedef unsigned __int32 u_int32_t;
-typedef unsigned __int64 u_int64_t;
-
-//byteswap.h replacement
+#include <unistd.h>
+#include <machine/endian.h>
+#include <sys/types.h>
 #include "byteswap.h"
+#include <stdint.h>                       // Defines __WORDSIZE
 
 #else
-// Non-win32
+// Other (linux, ...)
 
-#include "search.h"
 #include <sys/types.h>
 #include <unistd.h>
 #include <endian.h>
 #include <bits/wordsize.h>
 #include <byteswap.h>
+
+#endif  // End platform check
+
+
+// General includes
+
 #include <fcntl.h>
+#include "search.h"
+
+#include <string.h>        // Provides memcpy
+#define HAVE_STRING_H      // Let obstack know that we have memcpy
 #include "obstack.h"
 
-#define O_BINARY 0x0000
+// Only Cygwin has or cares about the O_BINARY flag
+#ifndef O_BINARY
+# define O_BINARY 0x0000
+#endif
 
-#endif
-#endif
 #endif  //STANDARD_LIB_H
