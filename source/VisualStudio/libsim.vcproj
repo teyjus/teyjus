@@ -492,11 +492,27 @@
 				>
 			</File>
 			<File
+				RelativePath="..\front\ocaml_wrap.c"
+				>
+			</File>
+			<File
+				RelativePath="..\front\ocaml_wrap.h"
+				>
+			</File>
+			<File
 				RelativePath="..\front\query_c.c"
 				>
 			</File>
 			<File
 				RelativePath="..\front\query_c.h"
+				>
+			</File>
+			<File
+				RelativePath="..\front\readterm_c.c"
+				>
+			</File>
+			<File
+				RelativePath="..\front\readterm_c.h"
 				>
 			</File>
 		</Filter>

@@ -27,6 +27,7 @@
 #include <string.h>
 #include <stdio.h> 
 #include "builtins.h"
+#include "readterm.h"
 #include "../abstmachine.h" 
 #include "../dataformats.h" 
 #include "../hnorm.h"       
