@@ -65,7 +65,6 @@ FNT_C[] =
     $(FNT)/query_c
     $(FNT)/readterm_c
     $(FNT)/ocaml_wrap
-    $(FNT)/simulatorfront_c
 
 FNT_ML_TO_C[] =
     $(FNT)/module
