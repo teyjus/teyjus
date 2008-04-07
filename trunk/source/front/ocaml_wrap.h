@@ -18,10 +18,5 @@
 // along with Teyjus.  If not, see <http://www.gnu.org/licenses/>.          //
 //////////////////////////////////////////////////////////////////////////////
 
-#include "readterm_c.h"
-#include "ocaml_wrap.h"
-
-int FRONT_RT_readTermAndType(char *str)
-{
-  return ocaml_read_term(str);
-}
+void ocaml_simulator_main();
+int ocaml_read_term(char *str);
