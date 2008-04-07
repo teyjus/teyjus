@@ -315,10 +315,19 @@ and translateFixities fixities constants =
   * table.
   ********************************************************************)
   let translate' f ctable =
+    (******************************************************************
+    *addFixities:
+    * Given a list of symbols, a fixity, a precedence, a position, and
+    * a constant table, updates the information in the table for each
+    * symbol.  Simply recurses over the list of symbols and adds the
+    * information to each element in the table with the given symbol.
+    *
+    * TODO: Convert to a fold for clarity.
+    ******************************************************************)
     let rec addFixities syms k prec pos ctable =
       (****************************************************************
       *getFixity:
-      * Convert preabsyn fixity to absyn fixity.
+      * Straightforward preabsyn fixity to absyn fixity conversion.
       ****************************************************************)
       let getFixity k =
         match k with
@@ -331,6 +340,13 @@ and translateFixities fixities constants =
         | Preabsyn.Postfixl(p) -> Absyn.Postfixl
       in
       
+      (****************************************************************
+      *checkFixityArity:
+      * Ensure that the arity of the constant is correct with respect
+      * to the fixity it is being declared with.  Specifically, pre-
+      * and postfix constants must have arity equal to 1, and infix
+      * constants must have arity greater than or equal to 2.
+      ****************************************************************)
       let checkFixityArity k ta =
         match k with
           Preabsyn.Infix(p)
@@ -344,7 +360,7 @@ and translateFixities fixities constants =
             
       match syms with
         [] -> ctable
-      | Preabsyn.Symbol(sym,_,pos)::ss ->
+      | Preabsyn.Symbol(sym,_,pos)::syms' ->
           (match Table.find sym ctable with
             Some c ->
               let skel = (Absyn.getConstantSkeleton c) in
@@ -357,30 +373,30 @@ and translateFixities fixities constants =
                 if not (checkFixityArity k (Absyn.getArrowTypeArity t')) then
                   (Errormsg.error pos ("declared fixity is incompatible with declared type arity" ^
                     (Errormsg.see pos' "constant declaration"));
-                  ctable)
+                  addFixities syms' k prec pos ctable)
                 else if not (checkPrec !prec' prec) then
                   (Errormsg.error pos
                     ("constant " ^ (Symbol.name sym) ^ " already declared with precedence " ^
                     (string_of_int !prec') ^
                     (Errormsg.see pos' "constant declaration"));
-                  ctable)
+                  addFixities syms' k prec pos ctable)
                 else if not (checkFixity !fix (getFixity k)) then
                   (Errormsg.error pos
                     ("constant " ^ (Symbol.name sym) ^ " already declared with fixity " ^
                     (Absyn.string_of_fixity !fix) ^
                     (Errormsg.see pos' "constant declaration"));
-                  ctable)
+                  addFixities syms' k prec pos ctable)
                 else
                   (fix := (getFixity k);
                   prec' := prec;
-                  ctable)
+                  addFixities syms' k prec pos ctable)
               else
                 if not (checkPrec !prec' prec) then
                   (Errormsg.error pos
                     ("constant " ^ (Symbol.name sym) ^ " already declared with precedence " ^
                     (string_of_int !prec') ^
                     (Errormsg.see pos' "constant declaration"));
-                  ctable)
+                  addFixities syms' k prec pos ctable)
                 else if not (checkFixity !fix (getFixity k)) then
                   (Errormsg.error pos
                     ("constant " ^ (Symbol.name sym) ^ " already declared with fixity " ^
@@ -390,11 +406,11 @@ and translateFixities fixities constants =
                 else
                   (fix := (getFixity k);
                   prec' := prec;
-                  ctable)
+                  addFixities syms' k prec pos ctable)
           | None ->
               (Errormsg.error pos ("fixity declaration: undeclared constant " ^
                 (Symbol.name sym));
-              ctable))
+              addFixities syms' k prec pos ctable))
     in
     match f with
       Preabsyn.Fixity(syms, k, prec, pos) -> addFixities syms k prec pos ctable
