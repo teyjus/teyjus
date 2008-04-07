@@ -262,18 +262,20 @@ and comment1 = parse
                    comment1 lexbuf}
 
 and comment2 = parse
-| [^ '*' '/']+   {comment2 lexbuf}
-| "/*"        {commentLev := !commentLev + 1; comment2 lexbuf}
-| "*/"        {commentLev := !commentLev - 1;
-               if !commentLev = 0 then
-                 initial lexbuf
-               else
-                 comment2 lexbuf}
-| "*"         {comment2 lexbuf}
-| "/"         {comment2 lexbuf}
-| eof         {Errormsg.warning lexbuf.lex_curr_p
-                 "Comment not closed at end-of-file";
-               initial lexbuf}
-| _ as text   {Errormsg.error lexbuf.lex_curr_p
-                 ("Illegal character " ^ (string_of_char text) ^ " in input");
-               comment2 lexbuf}
+| [^ '*' '/' '\n']+   {comment2 lexbuf}
+| "/*"                {incr commentLev ; comment2 lexbuf}
+| "*/"                {decr commentLev ;
+                       if !commentLev = 0 then
+                         initial lexbuf
+                       else
+                         comment2 lexbuf}
+| "*"                 {comment2 lexbuf}
+| "/"                 {comment2 lexbuf}
+| "\n"                {incrline lexbuf; comment2 lexbuf}
+| eof                 {Errormsg.warning lexbuf.lex_curr_p
+                         "Comment not closed at end-of-file";
+                       initial lexbuf}
+| _ as text           {Errormsg.error lexbuf.lex_curr_p
+                         ("Illegal character " ^
+                            (string_of_char text) ^ " in input");
+                       comment2 lexbuf}
