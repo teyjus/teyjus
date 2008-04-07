@@ -241,7 +241,6 @@ if $(not $(file-exists prebuilt))
     StaticCLibrary(libsim, \
       $(SIM_C) $(SYS_C) $(TBL_C) $(FNT_C) $(LOD_C) $(LNK_C) $(INC_C))
     OCAML_CLIBS += libsim
-    OCAML_CLIBS += libasmrun
     OCamlProgram(tjsim, $(SIM_MAIN) $(LOD_ML) $(CMP_ML) $(FNT_ML) $(FNT_ML_TO_C))
 
   section
