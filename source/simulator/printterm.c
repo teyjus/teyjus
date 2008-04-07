@@ -773,6 +773,15 @@ void PRINT_setQueryFreeVariables()
     PRINT_numQueryVars = IO_freeVarTabTop;
 }
 
+/* Use this function to reset the top of the free variable table
+after a read; this is logical and also needed to avoid trying 
+to release print name space accidentally at some other point. */
+void PRINT_resetFreeVarTab()
+{
+  IO_freeVarTabTop = PRINT_numQueryVars;
+}
+
+
 void PRINT_resetPrintState()
 {
     /* release space for term variables created during printing */

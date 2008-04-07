@@ -166,7 +166,7 @@ let solveQueries () =
       interactSolveQuery !queryStrings modName
 
 
-let _ =
+let main () =
   Arg.parse (Arg.align specList) (setInputName ~filter:getModName) usageMsg ;
 
   try 
@@ -187,3 +187,11 @@ let _ =
         | exp                ->    (* other exceptions *)
             print_endline "Uncaught internal exception" ;
             exit 2 
+
+
+let readTerm term =
+  Query.readTerm term (Module.getCurrentModule ())
+
+
+let _ = Callback.register "ocaml_simulator_main" main
+let _ = Callback.register "ocaml_read_term" readTerm
