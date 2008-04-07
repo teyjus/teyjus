@@ -45,7 +45,7 @@ let buildQueryTerm query amod =
 	  (* check whether the query has boolean type *)
 	  let ty = Types.getMoleculeType tymol in
 	  if (isBooleanType ty) then
-    (* create the term and type onto simulator heap top *)
+	    (* create the term and type onto simulator heap top *)
 		  (Ccode_stubs.setTypeAndTermLocation ();
 		   Readterm.readTermAndType term tymol fvars tyfvars;
 		   true)
@@ -77,3 +77,26 @@ let showAnswers () =
 
 let queryHasVars () =
   Ccode_stubs.queryHasVars ()
+
+(***************************************************************************)
+(*                      read term                                          *)
+(*  parse a term and create relevant structures onto simulator heap        *)
+(***************************************************************************)
+
+let readTerm term amod =
+ 
+  (* parse the term to pre abstract syntax *)
+  let preTerm = Compile.compileString term in
+  if Option.isNone preTerm then
+    0
+  else
+    let preTerm = Option.get preTerm in
+    (* parse to abstract syntax *)
+    let result = Parse.translateTerm preTerm amod in
+    if Option.isNone result then
+      0
+    else
+      let (term, tymol, fvars, tyfvars) = Option.get result in
+      Readterm.readTermAndType term tymol fvars tyfvars;
+      1
+	

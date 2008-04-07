@@ -34,9 +34,22 @@
 #include "../mctypes.h"     
 #include "../trail.h"       
 #include "../printterm.h"   
+#include "../types.h"
 #include "../../tables/pervasives.h" 
 #include "../../system/error.h"      
-#include "../../system/stream.h"     
+#include "../../system/stream.h"    
+#include "../../front/readterm_c.h" 
+
+
+/* unify types */
+static void BIIO_typesUnify(DF_TypePtr typ1, DF_TypePtr typ2)
+{
+    AM_pdlError(2);
+    AM_initTypesPDL();
+    TY_pushPairsToPDL((MemPtr)typ1, (MemPtr)typ2, 1);
+    TY_typesUnify();
+}
+
 
 /* get string from an lpwam string term pointer */
 static char* BIIO_getStringFromTerm(DF_TermPtr tmPtr)
@@ -323,7 +336,6 @@ void BIIO_lookahead()
 
     c[1] = '\0'; /* terminating the string */
 
-    //    printf( "look ahead: %s\n", c);
     AM_heapError(nhreg);
     DF_mkStrDataHead(strDataHead);
     MCSTR_toString((MCSTR_Str)strData, c, length);
@@ -400,17 +412,76 @@ void BIIO_printTerm()
     parse the period-terminated string str to obtain an lpwam term
     and bind it to X */
 void BIIO_strToTerm()
-{   //to be filled in
-    EM_error(BI_ERROR_NOT_IMPLEMENTED);
+{   
+
+  WordPtr     stream;
+  char       *str;
+  DF_TermPtr  tp;
+  DF_TypePtr  typ;
+
+  str = BIIO_getStringFromTerm((DF_TermPtr)AM_reg(1));
+  if (!str)
+    EM_error(BI_ERROR_UNBOUND_VARIABLE);
+    
+  typ  = (DF_TypePtr)(AM_hreg);
+  RT_setTypeStart(AM_hreg);
+  AM_hreg += DF_TY_ATOMIC_SIZE;
+    
+  tp   = (DF_TermPtr)(AM_hreg);  
+  RT_setTermStart(AM_hreg);
+  AM_hreg += DF_TM_ATOMIC_SIZE;
+  
+  if (FRONT_RT_readTermAndType(str)) {
+    PRINT_resetFreeVarTab();
+  } else {
+    EM_THROW(EM_FAIL);
+  }
+  
+  
+  BIIO_typesUnify(typ, (DF_TypePtr)(AM_reg(3)));
+  
+  DF_mkRef((MemPtr)AM_reg(1), tp);
+  AM_preg = AM_eqCode;    
+
 }
 
 /*  type  readterm  in_stream -> A -> o
           readterm  strm X.
-    read in a period-terminated string from strm, parse it to get
+    read in a newline-terminated string from strm, parse it to get
     an lpwam term and unify it with X. */
 void BIIO_readTerm()
-{   //to be filled in
-    EM_error(BI_ERROR_NOT_IMPLEMENTED);
+{
+#define  MAX_LINE_LENGTH 1024
+  char        buffer[MAX_LINE_LENGTH];
+  WordPtr     stream;
+
+  DF_TermPtr  tp;
+  DF_TypePtr  typ;
+    
+  stream = BIIO_getStreamFromTerm((DF_TermPtr)AM_reg(1));
+  if (STREAM_readCharacters(stream, MAX_LINE_LENGTH, buffer, TRUE) == -1)
+    EM_error(BI_ERROR_READING_STREAM);
+
+
+  typ  = (DF_TypePtr)(AM_hreg);
+  RT_setTypeStart(AM_hreg);
+  AM_hreg += DF_TY_ATOMIC_SIZE;
+
+  tp   = (DF_TermPtr)(AM_hreg);  
+  RT_setTermStart(AM_hreg);
+  AM_hreg += DF_TM_ATOMIC_SIZE;
+  
+  if (FRONT_RT_readTermAndType(buffer)) {
+    PRINT_resetFreeVarTab();
+  } else {
+    EM_THROW(EM_FAIL);
+  }
+  
+
+  BIIO_typesUnify(typ, (DF_TypePtr)(AM_reg(3)));
+  
+  DF_mkRef((MemPtr)AM_reg(1), tp);
+  AM_preg = AM_eqCode;      
 }
 
 
@@ -419,9 +490,40 @@ void BIIO_readTerm()
     Universal reading. Read in a term from standard input.
     This is precisely what we have been calling "readterm" */
 void BIIO_read() 
-{   //to be filled in
-    EM_error(BI_ERROR_NOT_IMPLEMENTED);
+{
+#define  MAX_LINE_LENGTH 1024
+  char        buffer[MAX_LINE_LENGTH];
+  WordPtr     stream = STREAM_stdin;
+  DF_TermPtr  tp;
+  DF_TypePtr  typ;   
+    
+  if (STREAM_readCharacters(stream, MAX_LINE_LENGTH, buffer, TRUE) == -1)
+    EM_error(BI_ERROR_READING_STREAM);
+    
+
+  typ  = (DF_TypePtr)(AM_hreg);
+  RT_setTypeStart(AM_hreg);
+  AM_hreg += DF_TY_ATOMIC_SIZE;
+
+  tp   = (DF_TermPtr)(AM_hreg);  
+  RT_setTermStart(AM_hreg);
+  AM_hreg += DF_TM_ATOMIC_SIZE;
+
+
+  if (FRONT_RT_readTermAndType(buffer)) {
+    PRINT_resetFreeVarTab();
+  } else {
+    EM_THROW(EM_FAIL);
+  }
+  
+
+  BIIO_typesUnify(typ, (DF_TypePtr)(AM_reg(2)));
+  
+  DF_mkRef((MemPtr)AM_reg(2), tp);
+  AM_preg = AM_eqCode;  
+  
 }
+
 
 
 /*  type  term_to_string  A -> string -> o
@@ -495,8 +597,7 @@ void BIIO_getEnv()
 */
 void BIIO_openSocket()
 {
-    //to be filled in
-    EM_error(BI_ERROR_NOT_IMPLEMENTED);
+  EM_error(BI_ERROR_NOT_IMPLEMENTED);
 }
 
 /* type  time  int -> int -> o
