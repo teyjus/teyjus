@@ -40,7 +40,9 @@ Section "Teyjus (required)"
   File "..\tjsim.exe"
   File "..\tjlink.exe"
   File "..\tjdis.exe"
-
+  
+  File "..\..\emacs\teyjus.el"
+  
   ; Add to user's $PATH
   Push $INSTDIR
   Call AddToPath
@@ -72,6 +74,7 @@ Section "Uninstall"
   Delete $INSTDIR\tjsim.exe
   Delete $INSTDIR\tjlink.exe
   Delete $INSTDIR\tjdis.exe
+  Delete $INSTDIR\teyjus.el
   Delete $INSTDIR\uninstall.exe
 
   ; Remove from user's $PATH
