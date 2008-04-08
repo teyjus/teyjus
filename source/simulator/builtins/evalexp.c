@@ -141,8 +141,6 @@ int BIEVAL_evalInt(DF_TermPtr tmPtr)
             } //switch
         } else EM_error(BI_ERROR_ILLEGAL_ARG, mytmPtr);
     } //non atomic
-    // Impossible to reach this point.
-    return 0;
 }
 
 /*************************************************************************
@@ -210,8 +208,6 @@ float BIEVAL_evalFloat(DF_TermPtr tmPtr)
             } //switch
         } else EM_error(BI_ERROR_ILLEGAL_ARG, mytmPtr);  //not atomic or app
     } //non atomic
-    //Impossible to reach this point.
-    return 0.0f;
 }
 
 /***********************************************************************/
@@ -332,36 +328,33 @@ DF_StrDataPtr BIEVAL_evalStr(DF_TermPtr tmPtr)
         }
     } else { //non atomic term
       if (DF_isApp(mytmPtr)) {
-	      DF_TermPtr argVec = AM_argVec;
-	      int        cstInd;
-      	
-	      if (!AM_rigFlag) EM_error(BI_ERROR_FLEX_HEAD, mytmPtr); //non cst hd
-                  
-	      cstInd = DF_constTabIndex(AM_head);
-	        switch(cstInd) {
-	          case PERV_SCAT_INDEX:
-	            return BIEVAL_strConcat(DF_strDataValue(BIEVAL_evalStr(argVec)),
-				            DF_strDataValue(BIEVAL_evalStr(argVec+1)));
-	          case PERV_SUBSTR_INDEX:
-	            {
-	              DF_StrDataPtr str  = BIEVAL_evalStr(argVec);
-	              int           ival = BIEVAL_evalInt(argVec+1);
-	              return BIEVAL_subString(DF_strDataValue(str), ival,
-				              ival+BIEVAL_evalInt(argVec+2));
-	            }
-	          case PERV_ITOCHR_INDEX:
-	            return BIEVAL_chr(BIEVAL_evalInt(argVec));
-	          case PERV_ITOSTR_INDEX:
-	            return BIEVAL_intToStr(BIEVAL_evalInt(argVec));
-	          case PERV_RTOS_INDEX:
-	            return BIEVAL_floatToStr(BIEVAL_evalFloat(argVec));
-	          default:   EM_error(BI_ERROR_CONST_IND, cstInd);
-	        } //switch
+	DF_TermPtr argVec = AM_argVec;
+	int        cstInd;
+	
+	if (!AM_rigFlag) EM_error(BI_ERROR_FLEX_HEAD, mytmPtr); //non cst hd
+            
+	cstInd = DF_constTabIndex(AM_head);
+	switch(cstInd) {
+	case PERV_SCAT_INDEX:
+	  return BIEVAL_strConcat(DF_strDataValue(BIEVAL_evalStr(argVec)),
+				  DF_strDataValue(BIEVAL_evalStr(argVec+1)));
+	case PERV_SUBSTR_INDEX:
+	  {
+	    DF_StrDataPtr str  = BIEVAL_evalStr(argVec);
+	    int           ival = BIEVAL_evalInt(argVec+1);
+	    return BIEVAL_subString(DF_strDataValue(str), ival,
+				    ival+BIEVAL_evalInt(argVec+2));
+	  }
+	case PERV_ITOCHR_INDEX:
+	  return BIEVAL_chr(BIEVAL_evalInt(argVec));
+	case PERV_ITOSTR_INDEX:
+	  return BIEVAL_intToStr(BIEVAL_evalInt(argVec));
+	case PERV_RTOS_INDEX:
+	  return BIEVAL_floatToStr(BIEVAL_evalFloat(argVec));
+	default:   EM_error(BI_ERROR_CONST_IND, cstInd);
+	} //switch
       } else EM_error(BI_ERROR_ILLEGAL_ARG, mytmPtr);//non-atomic and non-app
-    } //non atomic
-
-    //Impossible to reach this point.
-    return NULL;
+    } //non atomic       
 }
 
     
