@@ -79,6 +79,8 @@ Microsoft Visual Studio 2008:
   
   linker                    omake tjlink               teyjus/source
   
+  dependency analyzer       omake tjdepend             teyjus/source
+  
   all                       omake all                  teyjus/source
 
 
@@ -196,7 +198,7 @@ Microsoft Visual Studio 2008:
   
   
   4. linker (teyjus/source/tjlink)
-  --------------------------------------------------
+  --------------------------------
   
   Usage: tjlink <module-name>
   -V         Produce verbose output - use multiple times to increase verbosity
@@ -205,3 +207,14 @@ Microsoft Visual Studio 2008:
   --version  Return the system version
   -help      Display this list of options
   --help     Display this list of options
+
+
+  5. dependency analyzer (teyjus/source/tjdepend)
+  -----------------------------------------------
+  
+  Usage: tjdepend <options> <module-files>
+  options are:
+    -v         Return the system version
+    --version  Return the system version
+    -help      Display this list of options
+    --help     Display this list of options
