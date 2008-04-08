@@ -308,6 +308,7 @@ int STREAM_string_lookahead(STREAML_Stream *inStream, char *outChar)
 {
     *outChar = inStream->mUnion.mString.mData[inStream->mUnion.mString.mOffset];
     if (*outChar == '\0') return -1;
+    return 0;
 }
 
 int STREAM_file_flush(STREAML_Stream *inStream)

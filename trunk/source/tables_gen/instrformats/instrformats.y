@@ -24,6 +24,7 @@
 #include "instrgen-ocaml.h"
 #include "../util/util.h"
 
+extern int yylex();
 int yywrap() {return 1;}
 
 void yyerror(const char* str)

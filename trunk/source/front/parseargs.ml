@@ -55,3 +55,5 @@ let setInputName ?(filter=(fun x -> x))  name =
 let ensureInputName () =
   if !inputName = "" then
     error "No input file specified."
+  else
+    ()
