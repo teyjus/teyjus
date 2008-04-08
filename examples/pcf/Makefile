@@ -12,7 +12,7 @@ examples.lpo: examples.sig examples.mod pcf.sig
 control.lpo: control.mod control.sig
 	$(TJCC) control
 
-eval: eval_test.lpo eval.lpo examples.lpo
+eval: eval_test.lpo eval.lpo examples.lpo control.lpo
 	$(TJLINK) eval_test
 
 eval_test.lpo: eval_test.mod eval_test.sig eval.sig examples.sig pcf.sig
@@ -24,7 +24,7 @@ eval.lpo: eval.mod eval.sig control.sig pcf.sig
 monotyping: mono_test.lpo monoinfer.lpo examples.lpo
 	$(TJLINK) mono_test
 
-mono_test.lpo: mono_test.mod mono_test.sig monoinfer.sig pcf.sig monotypes.sig exampes.sig
+mono_test.lpo: mono_test.mod mono_test.sig monoinfer.sig pcf.sig monotypes.sig examples.sig
 	$(TJCC) mono_test
 
 monoinfer.lpo: monoinfer.mod monoinfer.sig pcf.sig monotypes.sig
@@ -42,11 +42,11 @@ polyinfer.lpo: polyinfer.mod polyinfer.sig polytypes.sig monotypes.sig pcf.sig u
 poly_test.lpo: poly_test.mod poly_test.sig polyinfer.sig pcf.sig polytypes.sig monotypes.sig examples.sig 
 	$(TJCC) poly_test
 
-tailrecursion: tr_test.lpo tailrec.lpo reflsyntax.lpo
+tailrecursion: tr_test.lpo tailrec.lpo refl_syntax.lpo examples.lpo
 	$(TJLINK) tr_test
 
 tr_test.lpo: tr_test.sig tr_test.mod tailrec.sig pcf.sig examples.sig
-	$(TJCC) tr_test.mod
+	$(TJCC) tr_test
 
 tailrec.lpo: tailrec.mod tailrec.sig pcf.sig refl_syntax.sig
 	$(TJCC) tailrec

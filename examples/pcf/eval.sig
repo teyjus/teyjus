@@ -6,6 +6,6 @@ sig eval.
 
 accum_sig  pcf.
 
-type special       tm -> int -> list tm -> tm.
+%type special       tm -> int -> list tm -> tm.
 
 type eval          tm -> tm -> o.
