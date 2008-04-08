@@ -49,7 +49,7 @@
 				RuntimeTypeInfo="false"
 				WarningLevel="2"
 				Detect64BitPortabilityProblems="false"
-				DebugInformationFormat="3"
+				DebugInformationFormat="4"
 				CompileAs="1"
 				DisableSpecificWarnings="4996"
 			/>

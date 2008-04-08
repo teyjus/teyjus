@@ -25,8 +25,6 @@
 #include "pervgen-ocaml.h"
 //#include "ops.h"
 
-extern int yylex();
-
 int yywrap() {return 1;}
 
 void yyerror(const char* str)

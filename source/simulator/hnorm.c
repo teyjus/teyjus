@@ -418,7 +418,6 @@ static DF_TermPtr HN_hnormDispatch(DF_TermPtr tmPtr, Boolean whnf)
     case DF_TM_TAG_SUSP:     { return HN_hnormSusp(tmPtr, whnf);         }
     case DF_TM_TAG_REF:      { tmPtr = DF_termDeref(tmPtr); goto restart;}
     }
-    return NULL;
 }
 
 /****************************************************************************/  
@@ -681,7 +680,6 @@ static DF_TermPtr HN_hnormDispatchOcc(DF_TermPtr tmPtr, Boolean whnf)
     case DF_TM_TAG_SUSP:     { return HN_hnormSuspOcc(tmPtr, whnf);         }
     case DF_TM_TAG_REF:      {tmPtr=DF_termDeref(tmPtr); goto restart_hnormOcc;}
     }
-    return NULL;
 }
 
 /****************************************************************************/  
@@ -1085,7 +1083,6 @@ static DF_TermPtr HN_lnormDispatch(DF_TermPtr tmPtr, Boolean whnf)
     case DF_TM_TAG_SUSP:     { return HN_lnormSusp(tmPtr, whnf);         }
     case DF_TM_TAG_REF:      { tmPtr = DF_termDeref(tmPtr); goto restart_lnorm;}
     }
-    return NULL;
 }
 
 /****************************************************************************/  
