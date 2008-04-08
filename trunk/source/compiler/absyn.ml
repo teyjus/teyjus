@@ -457,7 +457,7 @@ and string_of_type ty =
           "(" ^ (string_of_kind kind) ^ " " ^ (print' tlist) ^ ")"
         else
           (string_of_kind kind)
-    | SkeletonVarType(i) -> "'" ^ (string_of_int !i)
+    | SkeletonVarType(i) -> "SkeletonVarType(" ^ (string_of_int !i) ^ ")"
     | TypeSetType(d, tl, _) ->
         (match !tl with
           [t] -> string_of_type t
