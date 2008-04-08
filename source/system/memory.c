@@ -181,8 +181,9 @@ MEM_GmtEnt *MEM_findInModTable(char* name)
         if (myname = MEM_modTable[i].modname) 
             if (strcmp(myname, name) == 0) return (MEM_modTable + i);
     } 
-    // module must have been founded: failure must have been caught by the OCaml 
+    // module must have been found: failure must have been caught by the OCaml 
     // find module function
+    return NULL;
 }
 
 MEM_GmtEnt *MEM_findFreeModTableEntry()
@@ -193,6 +194,7 @@ MEM_GmtEnt *MEM_findFreeModTableEntry()
     }
     // impossible to fail: failure must have been caught by the OCaml 
     // find module function
+    return NULL;
 }
 
 void MEM_removeModTableEntry(char* name)

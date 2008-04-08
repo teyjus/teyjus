@@ -25,6 +25,8 @@
 			>
 			<Tool
 				Name="VCPreBuildEventTool"
+				Description="Cleaning..."
+				CommandLine="clean.bat"
 			/>
 			<Tool
 				Name="VCCustomBuildTool"
