@@ -36,6 +36,7 @@ BuildDist() =
     cp -r util dist/
     cp -r examples dist/
     cp -r source dist/
+    cp -r emacs dist/
     rm -rf dist/source/test
     rm -rf $(find dist -name .svn)
     rm -f $(find dist -name *.omc)
