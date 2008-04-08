@@ -53,7 +53,7 @@ Local kind table:
 Type skeleton table:
 0: (i -> o)
 1: i
-2: SkeletonVarType(0)
+2: '0
 
 Global constant table: 
 0: foo (No Fixity, precedence 0)

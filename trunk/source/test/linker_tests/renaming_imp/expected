@@ -14,13 +14,13 @@ Local kind table:
 2: /3
 
 Type skeleton table:
-0: (SkeletonVarType(0) -> SkeletonVarType(0))
-1: (SkeletonVarType(0) -> (SkeletonVarType(0) -> SkeletonVarType(0)))
-2: SkeletonVarType(0)
-3: (SkeletonVarType(0) -> (SkeletonVarType(0) -> (SkeletonVarType(0) -> SkeletonVarType(0))))
-4: SkeletonVarType(0)
-5: (SkeletonVarType(0) -> SkeletonVarType(0))
-6: (SkeletonVarType(0) -> (SkeletonVarType(0) -> SkeletonVarType(0)))
+0: ('0 -> '0)
+1: ('0 -> ('0 -> '0))
+2: '0
+3: ('0 -> ('0 -> ('0 -> '0)))
+4: '0
+5: ('0 -> '0)
+6: ('0 -> ('0 -> '0))
 
 Global constant table: 
 0: a (No Fixity, precedence 0)

@@ -445,8 +445,8 @@ and translateGlobalKinds kinds =
 * Translate a list of kinds in preabstract syntax to a list of kinds
 * in abstract syntax.
 **********************************************************************)
-and translateKinds = fun klist buildkind -> 
-  let rec translate' = fun klist result ->
+and translateKinds klist buildkind =
+  let rec translate'  klist result =
     match klist with
       [] -> result
     | k::ks ->
@@ -495,7 +495,7 @@ and translateGlobalConstants clist kindtable typeabbrevtable =
 (**********************************************************************
 *translateLocalConstants:
 **********************************************************************)
-and buildLocalConstant = fun sym ty tyskel esize pos ->
+and buildLocalConstant sym ty tyskel esize pos =
   Absyn.Constant(sym, ref Absyn.NoFixity, ref (-1), ref false, ref false,
     ref false, ref true, ref false, ref false, tyskel,
     ref esize, ref (Some(Array.make esize true)), ref (Some(Array.make esize true)),
@@ -814,7 +814,9 @@ and checkKindArities ktable =
 
 (**********************************************************************
 *checkConstantBodies:
-* Ensures that all constants have skeletons.
+* Ensures that all constants in the given constant table have skeletons;
+* used to ensure that the user didn't only provide constant declarations
+* that don't require skeletons.
 **********************************************************************)
 and checkConstantBodies ctable =
   let result = ref true in
@@ -864,7 +866,8 @@ and checkFixity f1 f2 =
 
 (**********************************************************************
 *checkPrec:
-* Checks whether two precedences are compatible.
+* Checks whether two precedences are compatible, using -1 as a value
+* indicating that no precedence has been defined.
 **********************************************************************)
 and checkPrec = fun f1 f2 ->
   (f1 = f2 || (f1 = -1 || f2 = -1))
@@ -1100,8 +1103,15 @@ and copyConstant =
       Errormsg.impossible Errormsg.none
         "Translate.copyConstant: invalid current constant"
         
-(*  Copiers: they need an explanation.   *)
-(*  Really merging should be handled as it is in translateModule, duh.  *)
+(**********************************************************************
+*Copiers:
+* Copiers are used when merging constants while translating a signature.
+* They handle moving information from a newly translated constant back
+* into the symbol table if the constant already exists therein.
+*
+* This merging should probably be handled in the same way that it is
+* in translateModule.
+**********************************************************************)
 let copy currentConstant newConstant =
   let () = Errormsg.log Errormsg.none
     ("copying constant '" ^ (Absyn.getConstantPrintName newConstant) ^ "'") in
@@ -1151,13 +1161,14 @@ let copyUseonly generalCopier owner currentConstant newConstant =
 
 (**********************************************************************
 *translate:
-* Convert from a preabsyn module to an absyn module.
+* Convert from a preabsyn module to an absyn module by translating the
+* module signature and then using the generated kind, constant, and
+* abbreviation tables to translate the module itself.
 **********************************************************************)
 let rec translate mod' sig' =
     let (asig, (ktable, ctable, atable)) =
       translateSignature sig' true true Pervasive.pervasiveKinds
-        Pervasive.pervasiveConstants Pervasive.pervasiveTypeAbbrevs
-        buildGlobalKind buildGlobalConstant copy in
+        Pervasive.pervasiveConstants Pervasive.pervasiveTypeAbbrevs copy in
     let amod = translateModule mod' ktable ctable atable in
     (amod, asig)
 
@@ -1165,18 +1176,27 @@ let rec translate mod' sig' =
 *translateSignature:
 * Translates a signature from preabsyn to a set of tables corresponding
 * to constants, kinds, and type abbreviations.
+*
 * Arguments:
 *   s: the signature to parse
 *   owner: is this signature the current module's or is it an
 *     an accumulated module's signature
+*   accumOrUse: whether the signature is peing translated due to an
+*     accum_sig or a use_sig.  If true, the signature is being translated
+*     due to an accum_sig, and so is treated normally.  If false, the
+*     signature is being parsed due to a use_sig, and so exportdef
+*     constants should be marked as useonly instead of exportdef.
 *   ktable: the kind table
 *   ctabls: the constant table
 *   tabbrevtable: the type abbreviation table
-*   kbuilder: the kind builder to use
-*   cbuilder: the constant builder to use
+*   generalCopier: the copier to use to move information back into
+*     the symbol table when translating a constant that already
+*     exists therein.
+* Return:
+*   an absyn signature
+*   a tuple of the updated constant, kind and abbreviation tables.
 **********************************************************************)
-and translateSignature s owner accumOrUse ktable ctable tabbrevtable
-  kbuilder cbuilder generalCopier =
+and translateSignature s owner accumOrUse ktable ctable tabbrevtable generalCopier =
   match s with
     Preabsyn.Module(_) ->
       (Errormsg.impossible
@@ -1184,52 +1204,63 @@ and translateSignature s owner accumOrUse ktable ctable tabbrevtable
         "Translate.translateSignature: expected Preabsyn.Signature.")
   | Preabsyn.Signature(name, gconsts, uconsts, econsts, gkinds, tabbrevs,
       fixities,accumsigs,usesigs) ->
-
+  
+  (*  If the signature is being parsed is the top-level signature or
+      one of its accumulated signatures, then kinds and constants should
+      be constructed as global.  Otherwise, they should be local, and
+      in mergeKind and mergeConstant they may be promoted to global.  *)
+  let kbuilder = if owner then buildGlobalKind else buildLocalKind in
+  let cbuilder = if owner then buildGlobalConstant else buildLocalConstant in
+  
+  let () = Errormsg.log Errormsg.none ("translating signature '" ^ name ^ "'") in
+  
   (******************************************************************
   *mergeKinds:
-  * Adds the kinds from one signature into the kinds
-  * of all signatures.
+  * Adds the kinds from one signature into the kinds of all signatures.
+  * 
   ******************************************************************)
-  let mergeKinds = fun klist kt ->
+  let mergeKinds klist kt =
     let merge = fun (ktable, renamingList) kind ->
       match kind with
         Absyn.Kind(s, Some a, _, Absyn.GlobalKind, p) ->
           (*  If the kind is already in the table, match the arity.
               Otherwise, add it to the table. *)
-	  let kindInTab = Table.find s ktable in
+	        let kindInTab = Table.find s ktable in
           (match kindInTab with
-           (* Some Absyn.Kind(s', Some a', _, Absyn.GlobalKind, p') ->
-              if a <> a' then
-                (Errormsg.error p ("kind already declared with arity " ^
-				   (string_of_int a') ^ (Errormsg.see p' "kind declaration"));
-                 (ktable, renamingList))
-              else
-                (ktable, (Option.get kindInTab) :: renamingList)
-          | *)Some Absyn.Kind(s', Some a', _, Absyn.PervasiveKind, p') ->
+            Some (Absyn.Kind(s', Some a', _, Absyn.PervasiveKind, p')) ->
               ((Table.add s kind ktable), kind::renamingList)
-	  | Some Absyn.Kind(s', Some a', _, _, p') -> (* global or local kinds *) 
-	      if a <> a' then
+	        | Some (Absyn.Kind(s', Some a', _, kt, p')) -> (* global or local kinds *) 
+	            if a <> a' then
                 (Errormsg.error p ("kind already declared with arity " ^
-				   (string_of_int a') ^ (Errormsg.see p' "kind declaration"));
-                 (ktable, renamingList))
+				            (string_of_int a') ^ (Errormsg.see p' "kind declaration"));
+                (ktable, renamingList))
+              else if kt = Absyn.LocalKind then
+                (*  Overwrite an existing local kind. *)
+                (Table.add s kind ktable, (Option.get kindInTab) :: renamingList)
               else
+                (*  Leave the existing global kind. *)
                 (ktable, (Option.get kindInTab) :: renamingList)
-          | Some k -> (Errormsg.impossible (Absyn.getKindPos k) ("invalid kind type " ^ (Absyn.string_of_kind k)))
-          | None -> (Table.add s kind ktable, kind::renamingList))
+          | Some k ->
+              Errormsg.impossible (Absyn.getKindPos k)
+                ("invalid kind type " ^ (Absyn.string_of_kind k))
+          | None ->
+              (*  Isn't in the table, so just add it. *)
+              (Table.add s kind ktable, kind::renamingList))
+      
       | Absyn.Kind(s, Some a, _, Absyn.LocalKind, p) ->
-	  let kindInTab = Table.find s ktable in
-	  (match kindInTab with
-	    Some Absyn.Kind(s', Some a', _, Absyn.GlobalKind, p') ->
-	      if a <> a' then
+	        let kindInTab = Table.find s ktable in
+	        (match kindInTab with
+	          Some (Absyn.Kind(s', Some a', _, Absyn.GlobalKind, p')) ->
+	            if a <> a' then
                 (Errormsg.error p ("kind already declared with arity " ^
-				   (string_of_int a') ^ (Errormsg.see p' "kind declaration"));
-                 (ktable, renamingList))
+				          (string_of_int a') ^ (Errormsg.see p' "kind declaration"));
+                (ktable, renamingList))
               else
                 (ktable, (Option.get kindInTab) :: renamingList)
           | Some Absyn.Kind(s', Some a', _, Absyn.LocalKind, p') ->
               if a <> a' then
                 (Errormsg.error p ("kind already declared with arity " ^
-				   (string_of_int a') ^ (Errormsg.see p' "kind declaration"));
+	         (string_of_int a') ^ (Errormsg.see p' "kind declaration"));
                  (ktable, renamingList))
               else
                 (ktable, (Option.get kindInTab) :: renamingList)
@@ -1245,53 +1276,55 @@ and translateSignature s owner accumOrUse ktable ctable tabbrevtable
   (******************************************************************
   *mergeConstants:
   * Adds the constants from one signature into the constants from
-  * all accumulated signatures.
+  * all accumulated signatures.  To merge constants first it must
+  * be verified that they compare (same fixity, precedence, type,
+  * etc.)  
   ******************************************************************)
   let mergeConstants clist ctable rename copier =
     let merge (ctable, renamingList) c =
       let s = Absyn.getConstantSymbol c in
       let pos = Absyn.getConstantPos c in
       match (Table.find s ctable) with
-        Some c2 ->
+        Some c2 ->  (*  Already in the table. *)
           if Absyn.getConstantRedefinable c2 then
             ((Table.add s c ctable), c::renamingList)
-          else if owner && not (compareConstants c c2) then
-            (ctable, renamingList)
-          else if (not owner) && not (compareConstants c c2) then
+          else if not (compareConstants c c2) then
             (ctable, renamingList)
           else
             let () = copier c2 c in
-            let () = Errormsg.log pos
-              ("copied constant: " ^ (Absyn.getConstantPrintName c2) ^ ", " ^
-                (if (Absyn.getConstantType c2) = Absyn.LocalConstant then
-                  "local"
-                else
-                  "global")) in
             if Absyn.isGlobalConstant c then
 	            if Absyn.isGlobalConstant c2 then
-	              (ctable, c2::renamingList)
+	              (ctable, c2::renamingList)  (*  Leave the original global.  *)
+	            else if Absyn.isPervasiveConstant c2 then
+	              (ctable, c::renamingList) (*  Overwrite the pervasive.  *)
 	            else
-	              (ctable, c::renamingList) (* c2 must be perv then *)
-	          else if Absyn.isPervasiveConstant c2 then
-              (ctable, c::renamingList)
-	          else (* c2 local or global *)
-		          (ctable, c2::renamingList)
-      | None ->
+                (Errormsg.impossible Errormsg.none
+                  "Translate.translateSignatures: invalid \
+                  constant encountered when merging")
+            else if Absyn.isLocalConstant c then
+              if Absyn.isGlobalConstant c2 then 
+                (ctable, c2::renamingList)  (*  Leave the global. *)
+              else if Absyn.isPervasiveConstant c2 then
+                (ctable, c::renamingList) (*  Overwrite the pervasive *)
+              else
+  		          (ctable, c2::renamingList)  (*  Leave the local.  *)
+  		      else
+  		        (Errormsg.impossible Errormsg.none
+  		          "Translate.translateSignatures: invalid \
+                  constant encountered when merging")
+
+      | None -> (*  Not in the table, so put it in. *)
           let () = copier c c in
-          let () = Errormsg.log pos
-              ("self-copied constant: " ^ (Absyn.getConstantPrintName c) ^ ", " ^
-                (if (Absyn.getConstantType c) = Absyn.LocalConstant then
-                  "local"
-                else
-                  "global")) in
+          let t = if Absyn.isLocalConstant c then "local" else "global" in
+          let () = Errormsg.log pos (t ^" constant '" ^ (Symbol.name s) ^  "' not in table") in
           ((Table.add s c ctable), c::renamingList)
     in
     (List.fold_left merge (ctable, rename) clist)
   in    
 
-  (******************************************************************)
-  (*union lists:                                                    *)
-  (******************************************************************)
+  (******************************************************************
+  *union lists:
+  ******************************************************************)
   let union list1 list2 =
     let rec union_aux list2 result =
       match list2 with
@@ -1322,8 +1355,8 @@ and translateSignature s owner accumOrUse ktable ctable tabbrevtable
     match sigs with
       s::rest ->	
         let (asig, (ktable', ctable', atable')) =
-          translateSignature s true accum ktable ctable atable
-            buildGlobalKind buildGlobalConstant copy in
+          translateSignature s owner accum ktable ctable atable generalCopier
+        in
         (translateSigs accum rest 
 	        (union kindRenaming (Absyn.getSignatureGlobalKindsList asig))
 	        (union constRenaming (Absyn.getSignatureGlobalConstantsList asig))
@@ -1399,7 +1432,14 @@ and translateSignature s owner accumOrUse ktable ctable tabbrevtable
 
 (**********************************************************************
 *translateModule:
-* Translates a module from preabsyn to absyn.
+* Translates a module from preabsyn to absyn.  To do so it parses and
+* translates all of the accumulated or imported module signatures,
+* updating the passed kind, constant, and abbreviation tables.  It
+* then translates all kinds, constants, and abbreviations in the module
+* itself, and merges them into the kind, constant, and abbreviation
+* tables.  Next it translates fixities and precedences.  It then
+* accumulates lists of global and local kinds and constants (for use
+* during renaming).  Finally, it verifies that constants have bodies.
 **********************************************************************)
 and translateModule mod' ktable ctable atable =
   let _ = Errormsg.log Errormsg.none "Translate.translateModule: Translating module..." in
@@ -1453,7 +1493,6 @@ and translateModule mod' ktable ctable atable =
   * kind without an associated arity must be declared already.
   ********************************************************************)
   let mergeLocalKinds = fun klist kt ->
-
     let merge = fun ktable kind ->
       match kind with
         Absyn.Kind(s, Some a, _, Absyn.LocalKind, p) ->
@@ -1662,8 +1701,7 @@ and translateModule mod' ktable ctable atable =
     match accums with
       s::rest ->
         let (asig, (ktable', ctable', atable')) =
-          translateSignature s false true ktable ctable atable
-            buildLocalKind buildLocalConstant copyAccum in
+          translateSignature s false true ktable ctable atable copyAccum in
         let a = Absyn.AccumulatedModule(Absyn.getSignatureName asig, asig) in
         (translateAccumMods rest ktable' ctable' atable' (a::sigs))
     | [] ->
@@ -1679,8 +1717,7 @@ and translateModule mod' ktable ctable atable =
     match imps with
       s::rest ->
         let (asig, (ktable', ctable', atable')) =
-          translateSignature s false true ktable ctable atable
-          buildLocalKind buildLocalConstant copyAccum in
+          translateSignature s false true ktable ctable atable copyAccum in
 	      let i = Absyn.ImportedModule(Absyn.getSignatureName asig, asig) in
         (translateImpMods rest ktable' ctable' atable' (i::sigs))
     | [] ->
@@ -1693,11 +1730,13 @@ and translateModule mod' ktable ctable atable =
                     accumsigs, usesigs, impmods) ->
       (*  Translate the accumulated modules *)
       let accummods' = processAccumMods accummods in
-      let (accums, (ktable, ctable, atable)) = translateAccumMods accummods' ktable ctable atable [] in
+      let (accums, (ktable, ctable, atable)) =
+        translateAccumMods accummods' ktable ctable atable [] in
       
       (*  Translate the imported modules  *)
       let impmods' = processImpMods impmods in
-      let (imps, (ktable, ctable, atable)) = translateImpMods impmods' ktable ctable atable [] in
+      let (imps, (ktable, ctable, atable)) =
+        translateImpMods impmods' ktable ctable atable [] in
       
       (*  Translate local and global kinds, and get associated tables *)
       let gkindlist = translateGlobalKinds gkinds in

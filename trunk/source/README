@@ -95,19 +95,12 @@ Microsoft Visual Studio 2008:
     /source.  In addition, the file /source/prebuilt will be create; this will
     allow the tests to run correctly.
 
-    Alternatively, it should be possible to build projects individually by
-    simply building a particular project using "Build Project" (Ctrl + Shift + B).
-  
-    If you have trouble building the solution, try running the script
-    /source/VisualStudio/clean.bat.  It removes O'Caml object files that Visual
-    Studio doesn't know about.
-
     Note that there is no support for building Teyjus using omake on Windows as
     of yet.
 
   Testing:
-    The testing harness only partially works on Windows.  Several tests fail due
-    to ActivePerl's method of calling other programs through cmd.exe.
+    The testing harness only partially works on Windows.  The test "maps" fails
+    due to ActivePerl's method of calling other programs through cmd.exe.
 
 
                              SYSTEM USAGE

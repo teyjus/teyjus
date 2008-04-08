@@ -88,9 +88,9 @@ Global kind table:
 Local kind table:
 
 Type skeleton table:
-0: (SkeletonVarType(0) -> o)
-1: (SkeletonVarType(1) -> SkeletonVarType(0))
-2: (pair SkeletonVarType(0) SkeletonVarType(1))
+0: ('0 -> o)
+1: ('1 -> '0)
+2: (pair '0 '1)
 
 Global constant table: 
 0: foo (No Fixity, precedence 0)

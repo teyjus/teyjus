@@ -82,6 +82,9 @@ static WordPtr BIIO_getStreamFromTerm(DF_TermPtr tmPtr)
         if (stream == STREAM_ILLEGAL) EM_error(BI_ERROR_ILLEGAL_STREAM);
         else return stream;
     }
+
+    //Impossible to reach this point.
+    return NULL;
 }
 
 /* get value of an lpwam integer term pointer */
@@ -92,6 +95,9 @@ static int BIIO_getIntegerFromTerm(DF_TermPtr tmPtr)
     if (DF_isInt(tmPtr)) return DF_intValue(tmPtr);
 
     EM_error(BI_ERROR_INTEGER_EXPECTED);
+
+    //Impossible to reach this point.
+    return 0;
 }
 
 /* Given an lpwam VAR term pointer, and a stream index,
