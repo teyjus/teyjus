@@ -87,8 +87,11 @@ let getOutChannel ()      = !outChannel
 let setOutChannel output  = outChannel := output
 
 let openOutChannel name =
-  let outFile = open_out_bin name in
-  setOutChannel outFile
+  try
+    let outFile = open_out_bin name in
+    setOutChannel outFile
+  with
+    Sys_error(s) -> (print_endline ("Error: " ^ s); exit (-1))
 
 let closeOutChannel () =
   close_out (getOutChannel ());
@@ -102,8 +105,11 @@ let getInChannel ()     = !inChannel
 let setInChannel input  = inChannel := input
 
 let openInChannel name = 
-  let inFile = open_in_bin name in
-  setInChannel inFile
+  try
+    let inFile = open_in_bin name in
+    setInChannel inFile
+  with
+    Sys_error(s) -> (print_endline ("Error: " ^ s); exit (-1))
 
 let closeInChannel () =
   close_in (getInChannel ());

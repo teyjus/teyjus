@@ -1,6 +1,5 @@
 @echo off
 echo Deleting all temporary files...
-del Debug\*.* /Q
 del *_force.txt /Q
 
 rem Delete compiler temporary files.
@@ -21,4 +20,3 @@ del ..\loader\*.obj /Q
 del ..\loader\*.cm* /Q
 
 echo Done.
-pause
