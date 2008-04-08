@@ -7,4 +7,4 @@ sig examples.
 
 accum_sig   pcf.
 
-type prog     string -> tm -> o.
+exportdef prog     string -> tm -> o.
