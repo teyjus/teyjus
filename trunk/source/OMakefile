@@ -51,6 +51,15 @@ CMP_ML[] =
     $(CMP)/typereduction
     $(CMP)/types
 
+DEP_ML[] =
+    $(CMP)/compile
+    $(CMP)/lplex
+    $(CMP)/lpyacc
+    $(CMP)/errormsg
+    $(CMP)/symbol
+    $(CMP)/preabsyn
+    $(CMP)/table
+
 DIS_ML[] =
     $(DIS)/context
     $(DIS)/disassembly
@@ -152,6 +161,7 @@ DIS_MAIN = $(FNT)/disassemblerfront
 CMP_MAIN = $(FNT)/compilerfront
 SIM_MAIN = $(FNT)/simulatorfront
 LNK_MAIN = $(FNT)/linkerfront
+DEP_MAIN = $(FNT)/dependfront
 
 ############################################################
 # Platform specific changes
@@ -237,13 +247,16 @@ if $(not $(file-exists prebuilt))
 
   OCamlProgram(tjdis, $(DIS_MAIN) $(CMP_ML) $(LOD_ML) $(DIS_ML) $(FNT_ML))
 
+  OCamlProgram(tjdepend, $(DEP_MAIN) $(DEP_ML) $(FNT_ML))
+
   # The simulator and linker require linking with C code
 
   section
     StaticCLibrary(libsim, \
       $(SIM_C) $(SYS_C) $(TBL_C) $(FNT_C) $(LOD_C) $(LNK_C) $(INC_C))
     OCAML_CLIBS += libsim
-    OCamlProgram(tjsim, $(SIM_MAIN) $(LOD_ML) $(CMP_ML) $(FNT_ML) $(FNT_ML_TO_C))
+    OCamlProgram(tjsim, \
+      $(SIM_MAIN) $(LOD_ML) $(CMP_ML) $(FNT_ML) $(FNT_ML_TO_C))
 
   section
     StaticCLibrary(liblink, $(SIM_C) $(SYS_C) $(TBL_C) $(LNK_C) $(INC_C))
@@ -255,9 +268,10 @@ TJCC = $(CWD)/tjcc$(EXE)
 TJSIM = $(CWD)/tjsim$(EXE)
 TJDIS = $(CWD)/tjdis$(EXE)
 TJLINK = $(CWD)/tjlink$(EXE)
+TJDEPEND = $(CWD)/tjdepend$(EXE)
 
 .PHONY: all
-all: $(TJCC) $(TJSIM) $(TJDIS) $(TJLINK)
+all: $(TJCC) $(TJSIM) $(TJDIS) $(TJLINK) $(TJDEPEND)
 
 ############################################################
 # Testing Targets

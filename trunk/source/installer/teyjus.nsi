@@ -40,6 +40,7 @@ Section "Teyjus (required)"
   File "..\tjsim.exe"
   File "..\tjlink.exe"
   File "..\tjdis.exe"
+  File "..\tjdepend.exe"
   
   File "..\..\emacs\teyjus.el"
   
@@ -74,6 +75,7 @@ Section "Uninstall"
   Delete $INSTDIR\tjsim.exe
   Delete $INSTDIR\tjlink.exe
   Delete $INSTDIR\tjdis.exe
+  Delete $INSTDIR\tjdepend.exe
   Delete $INSTDIR\teyjus.el
   Delete $INSTDIR\uninstall.exe
 
