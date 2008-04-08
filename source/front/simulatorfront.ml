@@ -147,12 +147,12 @@ let solveQueries () =
 
   let print_banner () =
        print_endline "Welcome to Teyjus";
-       print_endline "Copyright (C) 2008 A. Gacek, S. Holte,\
+       print_endline "Copyright (C) 2008 A. Gacek, S. Holte, \
                       G. Nadathur, X. Qi, Z. Snow";
        print_endline "Teyjus comes with ABSOLUTELY NO WARRANTY";
-       print_endline "This is free software, and you are\
+       print_endline "This is free software, and you are \
                       welcome to redistribute it";
-       print_endline "under certain conditions.\
+       print_endline "under certain conditions. \
                       Please view the accompanying file";
        print_endline "COPYING for more information"
 
