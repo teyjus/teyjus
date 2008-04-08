@@ -3,56 +3,54 @@ TEYJUS= ../../source
 TJCC= $(TEYJUS)/tjcc
 TJLINK= $(TEYJUS)/tjlink
 
+.PHONY: all eval monotyping polytyping tailrecursion
 all: eval monotyping polytyping tailrecursion
-	
 
-examples.lpo: examples.sig examples.mod pcf.sig
-	$(TJCC) examples
+eval: eval_test.lp
+monotyping: mono_test.lp
+polytyping: poly_test.lp
+tailrecursion: tr_test.lp
 
-control.lpo: control.mod control.sig
-	$(TJCC) control
+# Implicit rules for compiling teyjus code
+# The variable $* refers to name matched by %
 
-eval: eval_test.lpo eval.lpo examples.lpo control.lpo
-	$(TJLINK) eval_test
+%.lpo : %.mod %.sig
+	$(TJCC) $*
 
-eval_test.lpo: eval_test.mod eval_test.sig eval.sig examples.sig pcf.sig
-	$(TJCC) eval_test
+%.lp : %.lpo
+	$(TJLINK) $*
 
-eval.lpo: eval.mod eval.sig control.sig pcf.sig
-	$(TJCC) eval
 
-monotyping: mono_test.lpo monoinfer.lpo examples.lpo
-	$(TJLINK) mono_test
+# Dependencies must be listed explicitly
 
-mono_test.lpo: mono_test.mod mono_test.sig monoinfer.sig pcf.sig monotypes.sig examples.sig
-	$(TJCC) mono_test
+eval_test.lp: eval_test.lpo eval.lpo examples.lpo control.lpo
 
-monoinfer.lpo: monoinfer.mod monoinfer.sig pcf.sig monotypes.sig
-	$(TJCC) monoinfer
+eval_test.lpo: eval.sig examples.sig pcf.sig
+eval.lpo: control.sig pcf.sig
+examples.lpo: pcf.sig
+control.lpo:
 
-polytyping: poly_test.lpo polyinfer.lpo examples.lpo unifytypes.lpo control.lpo 
-	$(TJLINK) poly_test
 
-unifytypes.lpo: unifytypes.mod unifytypes.sig monotypes.sig control.sig
-	$(TJCC) unifytypes
+mono_test.lp: mono_test.lpo monoinfer.lpo examples.lpo
 
-polyinfer.lpo: polyinfer.mod polyinfer.sig polytypes.sig monotypes.sig pcf.sig unifytypes.sig
-	$(TJCC) polyinfer
+mono_test.lpo: monoinfer.sig pcf.sig monotypes.sig examples.sig
+monoinfer.lpo: pcf.sig monotypes.sig
 
-poly_test.lpo: poly_test.mod poly_test.sig polyinfer.sig pcf.sig polytypes.sig monotypes.sig examples.sig 
-	$(TJCC) poly_test
 
-tailrecursion: tr_test.lpo tailrec.lpo refl_syntax.lpo examples.lpo
-	$(TJLINK) tr_test
+poly_test.lp: poly_test.lpo polyinfer.lpo examples.lpo unifytypes.lpo control.lpo
 
-tr_test.lpo: tr_test.sig tr_test.mod tailrec.sig pcf.sig examples.sig
-	$(TJCC) tr_test
+unifytypes.lpo: monotypes.sig control.sig
+polyinfer.lpo: polytypes.sig monotypes.sig pcf.sig unifytypes.sig
+poly_test.lpo: polyinfer.sig pcf.sig polytypes.sig monotypes.sig examples.sig
 
-tailrec.lpo: tailrec.mod tailrec.sig pcf.sig refl_syntax.sig
-	$(TJCC) tailrec
+tr_test.lp: tr_test.lpo tailrec.lpo refl_syntax.lpo examples.lpo
 
-refl_syntax.lpo: refl_syntax.mod refl_syntax.sig pcf.sig
-	$(TJCC) refl_syntax
+tr_test.lpo: tailrec.sig pcf.sig examples.sig
+tailrec.lpo: pcf.sig refl_syntax.sig
+refl_syntax.lpo: pcf.sig
+
+
+# Utilities
 
 clean:
 	rm -f *.lpo *.lp
