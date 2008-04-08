@@ -98,7 +98,7 @@ Local kind table:
 
 Type skeleton table:
 0: (i -> o)
-1: SkeletonVarType(0)
+1: '0
 2: i
 
 Global constant table: 

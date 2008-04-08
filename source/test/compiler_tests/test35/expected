@@ -18,7 +18,7 @@ Global kind table:
 Local kind table:
 
 Type skeleton table:
-0: (SkeletonVarType(0) -> o)
+0: ('0 -> o)
 
 Global constant table: 
 0: value (No Fixity, precedence 0)
