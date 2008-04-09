@@ -91,7 +91,7 @@ let openOutChannel name =
     let outFile = open_out_bin name in
     setOutChannel outFile
   with
-    Sys_error(s) -> (print_endline ("Error: " ^ s); exit (-1))
+    Sys_error(s) -> (prerr_endline ("Error: " ^ s); exit (-1))
 
 let closeOutChannel () =
   close_out (getOutChannel ());
@@ -109,7 +109,7 @@ let openInChannel name =
     let inFile = open_in_bin name in
     setInChannel inFile
   with
-    Sys_error(s) -> (print_endline ("Error: " ^ s); exit (-1))
+    Sys_error(s) -> (prerr_endline ("Error: " ^ s); exit (-1))
 
 let closeInChannel () =
   close_in (getInChannel ());
