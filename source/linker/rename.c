@@ -52,12 +52,14 @@ void LK_RENAME_LoadConstRNTable(int fd ,struct Module_st* CMData)
 
 ConstInd LK_RENAME_RenameConst(char* name)
 {
+  ConstInd result;
   EM_TRY{
-    return LK_TREE_Retrieve(&ConstRNTree,name);
+    result = LK_TREE_Retrieve(&ConstRNTree,name);
   } EM_CATCH {
     bad("Error renaming const \"%s\"\n",name);
     EM_RETHROW();
   }
+  return result;
 }
 
 void* KindRNTree=NULL;
@@ -84,10 +86,13 @@ void LK_RENAME_LoadKindRNTable(int fd ,struct Module_st* CMData)
 }
 
 KindInd LK_RENAME_RenameKind(char* name)
-{EM_TRY{
-  return LK_TREE_Retrieve(&KindRNTree,name);
-} EM_CATCH {
-  bad("Error renaming const \"%s\"\n",name);
-  EM_RETHROW();
-}
+{
+  KindInd result;
+  EM_TRY{
+    result = LK_TREE_Retrieve(&KindRNTree,name);
+  } EM_CATCH {
+    bad("Error renaming const \"%s\"\n",name);
+    EM_RETHROW();
+  }
+  return result;
 }
