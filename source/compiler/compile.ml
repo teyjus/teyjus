@@ -39,7 +39,7 @@ let openFile = fun fname f ->
   try 
     let inchannel = f fname in
     inchannel
-  with Sys_error(s) -> (print_endline s; exit 1)
+  with Sys_error(s) -> (prerr_endline s; exit 1)
 
 (******************************************************************
 *closeFile:
