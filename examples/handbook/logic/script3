@@ -8,64 +8,26 @@
  *                                                                           *
  *****************************************************************************
 
-(gopalan@Diligence 50)% teyjus -p examples/handbook/logic/
-Welcome to Teyjus
+/* Setting up. */
 
-Copyright (C) 1999 Gopalan Nadathur
+% make pnf
+../../../source/tjdepend *.mod > depend
+../../../source/tjcc pnf_examples
+../../../source/tjcc refl_syntax
+../../../source/tjcc pnf
+../../../source/tjlink pnf_examples
+% alias tjsim ../../../source/tjsim
+
+/* Trying out some pnf coversions */
+
+
+% tjsim pnf_examples
+Welcome to Teyjus
+Copyright (C) 2008 A. Gacek, S. Holte, G. Nadathur, X. Qi, Z. Snow
 Teyjus comes with ABSOLUTELY NO WARRANTY
 This is free software, and you are welcome to redistribute it
-under certain conditions.  Please view the accompanying file
-"COPYING" for more information.
-Teyjus> #compile pnf_examples.
-Reading module signature from file examples/handbook/logic/pnf_examples.sig
-Accumulating signature logic_types from file examples/handbook/logic/logic_types.sig
-Accumulating signature logic_basic from file examples/handbook/logic/logic_basic.sig
-Accumulating signature logic_types from file examples/handbook/logic/logic_types.sig
-Accumulating signature logic_vocab from file examples/handbook/logic/logic_vocab.sig
-Accumulating signature logic_types from file examples/handbook/logic/logic_types.sig
-Signature of module pnf_examples successfully processed
-Obtaining source for module pnf_examples from file examples/handbook/logic/pnf_examples.mod
-
-Processing declarations in source for module pnf_examples
-
-Attempting to accumulate module refl_syntax
-Reading module signature from file examples/handbook/logic/refl_syntax.sig
-Accumulating signature logic_types from file examples/handbook/logic/logic_types.sig
-Accumulating signature logic_basic from file examples/handbook/logic/logic_basic.sig
-Accumulating signature logic_types from file examples/handbook/logic/logic_types.sig
-Accumulating signature logic_vocab from file examples/handbook/logic/logic_vocab.sig
-Accumulating signature logic_types from file examples/handbook/logic/logic_types.sig
-Signature of module refl_syntax successfully processed
-Obtaining source for module refl_syntax from file examples/handbook/logic/refl_syntax.mod
-
-Accumulating signature logic_types from file examples/handbook/logic/logic_types.sig
-
-Accumulating signature logic_basic from file examples/handbook/logic/logic_basic.sig
-Accumulating signature logic_types from file examples/handbook/logic/logic_types.sig
-
-Accumulating signature logic_vocab from file examples/handbook/logic/logic_vocab.sig
-Accumulating signature logic_types from file examples/handbook/logic/logic_types.sig
-
-Processing declarations in source for module refl_syntax
-
-Accumulated module refl_syntax successfully processed
-
-Attempting to accumulate module pnf
-Reading module signature from file examples/handbook/logic/pnf.sig
-Accumulating signature logic_types from file examples/handbook/logic/logic_types.sig
-Accumulating signature logic_basic from file examples/handbook/logic/logic_basic.sig
-Accumulating signature logic_types from file examples/handbook/logic/logic_types.sig
-Signature of module pnf successfully processed
-Obtaining source for module pnf from file examples/handbook/logic/pnf.mod
-Accumulated module pnf successfully processed
-
-Checking compatibility of accumulates and imports into module pnf_examples
-No (outward) compatibility errors found
-
-Writing bytecode to file examples/handbook/logic/pnf_examples.lp
-Teyjus> #load pnf_examples.
-Teyjus> #query pnf_examples.
-
+under certain conditions. Please view the accompanying file
+COPYING for more information
 [pnf_examples] ?- test 1 F.
 
 The answer substitution:
@@ -117,7 +79,5 @@ More solutions (y/n)? y
 
 no (more) solutions
 
-[pnf_examples] ?- stop.
-Teyjus> #quit.
-
-(gopalan@Diligence 51)% 
+[pnf_examples] ?- halt.
+%

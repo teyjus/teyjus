@@ -8,64 +8,24 @@
  *                                                                           *
  *****************************************************************************
 
-(gopalan@Diligence 49)% teyjus -p examples/handbook/logic 
-Welcome to Teyjus
+/* Setting up */
 
-Copyright (C) 1999 Gopalan Nadathur
+% make hcsyntax
+../../../source/tjdepend *.mod > depend
+../../../source/tjcc hcsyntax_examples
+../../../source/tjcc hc_syntax
+../../../source/tjcc refl_syntax
+../../../source/tjlink hcsyntax_examples
+% alias tjsim ../../../source/tjsim
+
+/* Checking goals and definite clauses */
+% tjsim hcsyntax_examples
+Welcome to Teyjus
+Copyright (C) 2008 A. Gacek, S. Holte, G. Nadathur, X. Qi, Z. Snow
 Teyjus comes with ABSOLUTELY NO WARRANTY
 This is free software, and you are welcome to redistribute it
-under certain conditions.  Please view the accompanying file
-"COPYING" for more information.
-Teyjus> #compile hcsyntax_examples.
-Reading module signature from file examples/handbook/logic/hcsyntax_examples.sig
-Accumulating signature logic_types from file examples/handbook/logic/logic_types.sig
-Accumulating signature logic_basic from file examples/handbook/logic/logic_basic.sig
-Accumulating signature logic_types from file examples/handbook/logic/logic_types.sig
-Accumulating signature logic_vocab from file examples/handbook/logic/logic_vocab.sig
-Accumulating signature logic_types from file examples/handbook/logic/logic_types.sig
-Signature of module hcsyntax_examples successfully processed
-Obtaining source for module hcsyntax_examples from file examples/handbook/logic/hcsyntax_examples.mod
-
-Processing declarations in source for module hcsyntax_examples
-
-Attempting to accumulate module hc_syntax
-Reading module signature from file examples/handbook/logic/hc_syntax.sig
-Accumulating signature logic_types from file examples/handbook/logic/logic_types.sig
-Accumulating signature logic_basic from file examples/handbook/logic/logic_basic.sig
-Accumulating signature logic_types from file examples/handbook/logic/logic_types.sig
-Signature of module hc_syntax successfully processed
-Obtaining source for module hc_syntax from file examples/handbook/logic/hc_syntax.mod
-Accumulated module hc_syntax successfully processed
-
-Attempting to accumulate module refl_syntax
-Reading module signature from file examples/handbook/logic/refl_syntax.sig
-Accumulating signature logic_types from file examples/handbook/logic/logic_types.sig
-Accumulating signature logic_basic from file examples/handbook/logic/logic_basic.sig
-Accumulating signature logic_types from file examples/handbook/logic/logic_types.sig
-Accumulating signature logic_vocab from file examples/handbook/logic/logic_vocab.sig
-Accumulating signature logic_types from file examples/handbook/logic/logic_types.sig
-Signature of module refl_syntax successfully processed
-Obtaining source for module refl_syntax from file examples/handbook/logic/refl_syntax.mod
-
-Accumulating signature logic_types from file examples/handbook/logic/logic_types.sig
-
-Accumulating signature logic_basic from file examples/handbook/logic/logic_basic.sig
-Accumulating signature logic_types from file examples/handbook/logic/logic_types.sig
-
-Accumulating signature logic_vocab from file examples/handbook/logic/logic_vocab.sig
-Accumulating signature logic_types from file examples/handbook/logic/logic_types.sig
-
-Processing declarations in source for module refl_syntax
-
-Accumulated module refl_syntax successfully processed
-
-Checking compatibility of accumulates and imports into module hcsyntax_examples
-No (outward) compatibility errors found
-
-Writing bytecode to file examples/handbook/logic/hcsyntax_examples.lp
-Teyjus> #load hcsyntax_examples.
-Teyjus> #query hcsyntax_examples.
-
+under certain conditions. Please view the accompanying file
+COPYING for more information
 [hcsyntax_examples] ?- test_goal 1.
 
 yes
@@ -98,5 +58,5 @@ yes
 
 no (more) solutions
 
-[hcsyntax_examples] ?- stop.
-Teyjus> 
+[hcsyntax_examples] ?- halt.
+% 
