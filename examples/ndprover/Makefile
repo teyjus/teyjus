@@ -1,31 +1,23 @@
 # Modify the path to the Teyjus executables as needed
 TEYJUS= ../../source
-TJCC= $(TEYJUS)/tjcc
-TJLINK= $(TEYJUS)/tjlink
 
+.PHONY: inter
 inter: inter.lp
-	
 
-inter.lp: inter.lpo ndtac.lpo tacticals.lpo formulas.lpo goalred.lpo listmanip.lpo
-	$(TJLINK) inter
+# Everything after this point is generic and should be duplicated
+# in user's makefiles
 
-inter.lpo: inter.mod inter.sig logic.sig nonlogical.sig formulas.sig ndtac.sig ndproofs.sig goaltypes.sig tacticals.sig
-	$(TJCC) inter
+%.lpo : %.mod %.sig
+	$(TEYJUS)/tjcc $*
 
-ndtac.lpo: ndtac.mod ndtac.sig goaltypes.sig ndproofs.sig logic.sig listmanip.sig
-	$(TJCC) ndtac
+%.lp : %.lpo
+	$(TEYJUS)/tjlink $*
 
-tacticals.lpo: tacticals.mod tacticals.sig goalred.sig goaltypes.sig
-	$(TJCC) tacticals
+-include depend
+depend: *.mod *.sig
+	$(TEYJUS)/tjdepend *.mod > depend
 
-formulas.lpo: formulas.mod formulas.sig logic.sig nonlogical.sig
-	$(TJCC) formulas
-
-goalred.lpo: goalred.mod goalred.sig goaltypes.sig
-	$(TJCC) goalred
-
-listmanip.lpo: listmanip.mod listmanip.sig 
-	$(TJCC) listmanip
-
+.PHONY: clean
 clean:
-	rm -f *.lpo *.lp
+	rm -f *.lpo *.lp depend
+

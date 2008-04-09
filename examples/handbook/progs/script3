@@ -13,14 +13,26 @@
  *                                                                           *
  *****************************************************************************
 
-(gopalan@Diligence 35)% tjsim -p examples/handbook/progs/ tr1_test
-Welcome to Teyjus
+/* Setting up */
 
-Copyright (C) 1999 Gopalan Nadathur
+% make tr1
+../../../source/tjdepend *.mod > depend
+../../../source/tjcc tr1_test
+../../../source/tjcc terms
+../../../source/tjcc tr_recognizer
+../../../source/tjlink tr1_test
+% alias tjsim ../../../source/tjsim
+%
+
+/* Checking tail recursiveness of some example programs */
+
+% tjsim tr1_test
+Welcome to Teyjus
+Copyright (C) 2008 A. Gacek, S. Holte, G. Nadathur, X. Qi, Z. Snow
 Teyjus comes with ABSOLUTELY NO WARRANTY
 This is free software, and you are welcome to redistribute it
-under certain conditions.  Please view the accompanying file
-"COPYING" for more information.
+under certain conditions. Please view the accompanying file
+COPYING for more information
 [tr1_test] ?- test 1.
 
 yes
@@ -33,5 +45,5 @@ yes
 
 no (more) solutions
 
-[tr1_test] ?- stop.
-(gopalan@Diligence 36)% 
+[tr1_test] ?- halt.
+% 
