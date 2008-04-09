@@ -9,26 +9,29 @@
  *                                                                           *
  *****************************************************************************
 
+/* Setting up steps */
+% make eval
+../../../source/tjdepend *.mod > depend
+../../../source/tjcc eval_examples
+../../../source/tjcc eval
+../../../source/tjcc terms
+../../../source/tjcc eval_basic
+../../../source/tjlink eval_examples
+% alias tjsim ../../../source/tjsim
 
-/* The module tested is eval_examples.mod. It is assumed to have been 
-compiled at the outset. */
+/* trying out the eval predicate with example programs */
 
-(gopalan@Diligence 32)% tjsim -p examples/handbook/progs/ eval_examples
+% tjsim eval_examples
 Welcome to Teyjus
-
-Copyright (C) 1999 Gopalan Nadathur
+Copyright (C) 2008 A. Gacek, S. Holte, G. Nadathur, X. Qi, Z. Snow
 Teyjus comes with ABSOLUTELY NO WARRANTY
 This is free software, and you are welcome to redistribute it
-under certain conditions.  Please view the accompanying file
-"COPYING" for more information.
-
-/* The next three queries illustrate call by value evaluation for untyped 
-lambda terms */
-
+under certain conditions. Please view the accompanying file
+COPYING for more information
 [eval_examples] ?- eval (app (abs f\ (abs x\ (abs y\ (app (app f x) y)))) (abs u\ (abs v\ u))) R.
 
 The answer substitution:
-R = abs (x\ abs (y\ app (app (abs (u\ abs (v\ u))) x) y))
+R = abs (W1\ abs (W2\ app (app (abs (W3\ abs (W4\ W3))) W1) W2))
 
 More solutions (y/n)? y
 
@@ -37,7 +40,7 @@ no (more) solutions
 [eval_examples] ?- eval (app (abs f\ (app (app f (abs x\ x)) (abs x\ (abs y\ y)))) (abs u\ (abs v\ u))) R.
 
 The answer substitution:
-R = abs (x\ x)
+R = abs (W1\ W1)
 
 More solutions (y/n)? y
 
@@ -46,11 +49,22 @@ no (more) solutions
 [eval_examples] ?- eval (app (abs f\ (app (app f (abs x\ x)) (abs x\ (abs y\ y)))) (abs u\ (abs v\ v))) R.
 
 The answer substitution:
-R = abs (x\ abs (y\ y))
+R = abs (W1\ abs (W2\ W2))
 
 More solutions (y/n)? y
 
 no (more) solutions
+
+[eval_examples] ?- eval (eq (c 5) (c 0)) R.
+
+The answer substitution:
+R = false
+
+More solutions (y/n)? y
+
+no (more) solutions
+
+[eval_examples] ?- 
 
 /* The next set of queries provide simple illustrations of the evaluation
 rules for some of the programming language primitives */
@@ -91,8 +105,11 @@ More solutions (y/n)? y
 
 no (more) solutions
 
+[eval_examples] ?-
+
 /* The remaining queries illustrate the evaluation of programs constructed
 using the vocabulary of the functional programming language */
+
 
 [eval_examples] ?- test 1 F.
 
@@ -140,4 +157,4 @@ More solutions (y/n)? y
 no (more) solutions
 
 [eval_examples] ?- halt.
-(gopalan@Diligence 33)% 
+% 
