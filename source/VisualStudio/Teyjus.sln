@@ -43,6 +43,11 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "liblink", "liblink.vcproj",
 		{7AF031BC-DDAD-4700-91A3-05EAFAA90DFE} = {7AF031BC-DDAD-4700-91A3-05EAFAA90DFE}
 	EndProjectSection
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "tjdepend", "tjdepend.vcproj", "{4C713370-5F48-4F39-9431-F2E85A608836}"
+	ProjectSection(ProjectDependencies) = postProject
+		{D01EFDC6-3E9E-4A67-8AC2-09FEF32CB316} = {D01EFDC6-3E9E-4A67-8AC2-09FEF32CB316}
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -81,6 +86,10 @@ Global
 		{41CA1DC9-B57F-4A24-8436-19C2127B8139}.Debug|Win32.Build.0 = Debug|Win32
 		{41CA1DC9-B57F-4A24-8436-19C2127B8139}.Release|Win32.ActiveCfg = Release|Win32
 		{41CA1DC9-B57F-4A24-8436-19C2127B8139}.Release|Win32.Build.0 = Release|Win32
+		{4C713370-5F48-4F39-9431-F2E85A608836}.Debug|Win32.ActiveCfg = Debug|Win32
+		{4C713370-5F48-4F39-9431-F2E85A608836}.Debug|Win32.Build.0 = Debug|Win32
+		{4C713370-5F48-4F39-9431-F2E85A608836}.Release|Win32.ActiveCfg = Release|Win32
+		{4C713370-5F48-4F39-9431-F2E85A608836}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
