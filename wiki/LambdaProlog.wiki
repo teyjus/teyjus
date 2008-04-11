@@ -19,7 +19,7 @@ embodied in Lambda Prolog.  Two aspects that have received special
 attention are the availability of lambda terms for representing
 objects and of a suitable set of primitives for manipulating such
 representations.  These features enable Lambda Prolog to support the
-notion of @i{higher-order abstract syntax}, a profitable way to
+notion of _higher-order abstract syntax_, a profitable way to
 view the syntax of objects whose structures involve binding. Several
 detailed studies have, in fact, indicated the utility of this language
 in building symbolic systems that manipulate objects such as formulas,
