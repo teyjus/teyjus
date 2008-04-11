@@ -9,13 +9,14 @@ You must have the following software installed
 These standard tools are also required: a C compiler, lex, and yacc.
 
 To build teyjus, execute 'omake' from the teyjus directory. This will
-create tjcc, tjlink, tjsim, and tjdis. These can be copied anywhere
-for installation, e.g. 'cp tj* /usr/local/bin/'.
+create tjcc, tjlink, tjsim, tjdepend, and tjdis. These can be copied
+anywhere for installation, e.g. 'cp tj* /usr/local/bin/'.
 
 Documentation for Teyjus can be found at http://teyjus.cs.umn.edu/
 
 The rest of this file gives detailed instructions for compiling teyjus
-on various platforms.
+on various platforms. The instructions for *nix apply to both Linux
+and Mac OS X.
 
 
                              DEPENDENCIES
