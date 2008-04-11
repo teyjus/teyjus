@@ -24,6 +24,7 @@ tjcc lyaccshares
 tjcc maps
 tjcc string
 tjcc tokenizer
+tjcc parser
 
 
 # Test for proper arguments
@@ -37,17 +38,14 @@ if [ -z "$2" ]; then
 fi
 
 if [ "$3" = '-fc' ]; then
+    cp $1.mod $1.mod.b
+    
+    tjcc $1
+    tjlink $1
 
-cp $1.mod $1.mod.b
-
-tjcc $1
-tjlink $1
-
-if [ $? = 0 ]; then
-
-tjsim --solve "generate_fc $1,halt." $1
-
-fi
+    if [ $? = 0 ]; then
+        tjsim --solve "generate_fc $1,halt." $1
+    fi
 fi
 
 # Compile grammar file
@@ -56,9 +54,8 @@ cat $1.sig | grep "type $2 o." > /dev/null
 if [ $? != 0 ]; then
     echo "type $2 o." >> $1.sig
 fi
-tjcc $1
 
-echo "Executing 'tjlink $1'"
+tjcc $1
 tjlink $1
 
 if [ $? = 0 ]; then
@@ -69,28 +66,28 @@ if [ $? = 0 ]; then
     # Execute grammar code, create parser
     rm -f $2.mod
     rm -f $2.sig
-if [ "$3" = '-fc' ]; then
-    mv $1.mod $1.mod.b2
-    mv $1.mod.b $1.mod
-fi
-    tjsim --solve "genparser $1 $2,!." $1
+    if [ "$3" = '-fc' ]; then
+        mv $1.mod $1.mod.b2
+        mv $1.mod.b $1.mod
+    fi
+    tjsim --batch --solve "genparser \"$1\" \"$2\",!." $1
 
     echo "Parser written to $2.mod.  Compiling"
     if [ $? = 0 ]; then
 	# Compile parser
-if [ "$3" = '-fc' ]; then
-	mv $1.mod $1.mod.b
-	mv $1.mod.b2 $1.mod
-fi
-	tjcc $2
-    tjlink $2
+        if [ "$3" = '-fc' ]; then
+            mv $1.mod $1.mod.b
+            mv $1.mod.b2 $1.mod
+        fi
+        tjcc $2
+        tjlink $2
 
-	if [ $? = 0 ]; then
-	    echo Parser compiled.  Use \"tjsim $2\" to run
-	fi
-	if [ "$3" = '-fc' ]; then
-	    mv $1.mod.b $1.mod
-	fi
+        if [ $? = 0 ]; then
+            echo Parser compiled.  Use \"tjsim $2\" to run
+        fi
+        if [ "$3" = '-fc' ]; then
+            mv $1.mod.b $1.mod
+        fi
     fi
 fi
 
