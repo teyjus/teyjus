@@ -28,6 +28,8 @@ clean:
 
 To customize this Makefile for your project, adjust the `TJROOT` path as necessary and change `main.lp` to be the top-level module of your system. Multiple such top-level files can be specified. All other aspects of compilation-order and dependencies are managed by the generic portions of the Makefile.
 
+*Note:* `make` requires that the indented lines above use a literal tab character and not simply spaces.
+
 = Issues for Larger Developments =
 
 If your Teyjus project becomes so large that dependency scanning is costly, it is possible to modify the Makefile so that dependencies are generated only when you request it. To do this, change the following line
