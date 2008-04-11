@@ -50,8 +50,8 @@ teyjus.tar.gz: test
     mv dist teyjus
     bash -c "/usr/bin/find teyjus -type d | xargs chmod 755"
     bash -c "/usr/bin/find teyjus -type f | xargs chmod 644"
-    tar c teyjus | gzip - > teyjus.tar.gz
-    bash -c "chmod 664 teyjus.tar.gz"
+    tar c teyjus | gzip - > teyjus-source.tar.gz
+    bash -c "chmod 664 teyjus-source.tar.gz"
     rm -rf teyjus
 
 .PHONY: dist
