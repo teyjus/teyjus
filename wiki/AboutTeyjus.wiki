@@ -7,7 +7,7 @@ The name "Teyjus" is used interchangeably for a family of systems and a project 
 The various links below provide more information about different aspects of Teyjus as a system and as a project.
 
 || LambdaProlog || A Brief Description of Lambda Prolog ||
-|| TheName || About the Name "Teyjus" ||
 || AbstractMachine || An Overview of the Lambda Prolog Abstract Machine ||
 || SystemOverview || Overview of the Teyjus System ||
 || PeopleInvolved || The People Involved in the Project ||
+|| TheName || About the Name "Teyjus" ||
