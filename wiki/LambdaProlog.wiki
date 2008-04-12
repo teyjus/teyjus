@@ -13,7 +13,7 @@ capabilities such as higher-order programming, polymorphic typing,
 scoping over names and procedures, modular programming, abstract data
 types and the use of lambda terms as data structures.
 
-Much research has been conducted in recent years towards fully
+Much research has been conducted towards fully
 understanding the usefulness of the additions to logic programming
 embodied in Lambda Prolog.  Two aspects that have received special
 attention are the availability of lambda terms for representing
