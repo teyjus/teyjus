@@ -305,6 +305,10 @@ signdecl:
           TypeAbbrev(makeSymbol $3, (List.map makeSymbol $4), $6, getPos 1) ::
             !globalTypeAbbrevs }
 
+ | TYPEABBREV LPAREN tok RPAREN type PERIOD
+      { globalTypeAbbrevs :=
+          TypeAbbrev(makeSymbol $3, [], $5, getPos 1) :: !globalTypeAbbrevs }
+
   | TYPEABBREV tok type PERIOD
       { globalTypeAbbrevs :=
           TypeAbbrev(makeSymbol $2, [], $3, getPos 1) :: !globalTypeAbbrevs }

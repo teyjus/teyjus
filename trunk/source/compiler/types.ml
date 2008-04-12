@@ -178,13 +178,19 @@ and string_of_typemolecule' = fun mol bindings printpar ->
     get i env
   
   and string_of_var = fun bindings ->
+    let character i =
+      if i>= 26 then
+        (string_of_int i)
+      else
+        (String.make 1 (Char.chr ((Char.code 'A') + i)))
+    in
     try
       let i = List.assq t bindings in
-      ("_" ^ (string_of_int i), bindings)
+      ("'" ^ (character i), bindings)
     with
       Not_found ->
         let i = List.length bindings in
-        ("_" ^ (string_of_int i), (t, i)::bindings)
+        ("'" ^ (character i), (t, i)::bindings)
   
   and string_of_typeset ts bindings =
     match ts with
@@ -420,7 +426,7 @@ let rec unify (tm1 : typemolecule) (tm2 : typemolecule) =
   | _ -> false
   in
   
-  let rec inSet = fun s set ->
+  let rec inSet s set =
     match set with
       s'::set' -> if s = s' then true else inSet s set'
     | [] -> false
@@ -604,8 +610,8 @@ let clashError = fun fargty argty term ->
   let (actual, _) = string_of_typemolecule' argty bindings false in
   
   Errormsg.error (Absyn.getTermPos term) ("clash in operator and operand types" ^
-    (Errormsg.info ("Expected operand type: " ^ expected)) ^
-    (Errormsg.info ("Actual operand type: " ^ actual)) ^
+    (Errormsg.info ("expected operand type: " ^ expected)) ^
+    (Errormsg.info ("actual operand type: " ^ actual)) ^
     (Errormsg.info ("in expression: " ^ (Absyn.string_of_term term))))
 
 (**********************************************************************
@@ -617,8 +623,8 @@ let occursCheckError = fun fargty argty term ->
   let (operand, _) = string_of_typemolecule' argty bindings false in
   
   Errormsg.error (Absyn.getTermPos term) ("occurs-check failure" ^
-    (Errormsg.info ("Operator type: " ^ operator)) ^
-    (Errormsg.info ("Operand type: " ^ operand)) ^
+    (Errormsg.info ("operator type: " ^ operator)) ^
+    (Errormsg.info ("operand type: " ^ operand)) ^
     (Errormsg.info ("in expression: " ^ (Absyn.string_of_term term))))
 
 (**********************************************************************
@@ -650,7 +656,7 @@ let checkApply = fun fty argty term ->
     if not ((Absyn.isVariableType fskel) || (Absyn.isArrowType fskel)) then
       let (operator, _) = string_of_typemolecule' fty [] false in
       (Errormsg.error (Absyn.getTermPos term) ("operator is not a function" ^
-        (Errormsg.info ("Operator type: " ^ operator)) ^
+        (Errormsg.info ("operator type: " ^ operator)) ^
         (Errormsg.info ("in expression: " ^ (Absyn.string_of_term term) ^ ".")));
       errorMolecule)
     
