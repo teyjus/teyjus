@@ -2,7 +2,7 @@
 
 = Teyjus - An Implementation of Lambda Prolog =
 
-Some dithering just to understand layout.
+The name "Teyjus" is used simultaneously for a family of systems and a project that are both about providing an efficient and (eventually) robust implementation of the language Lambda Prolog
 
 
 = Details =
