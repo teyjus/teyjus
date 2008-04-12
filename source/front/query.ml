@@ -50,9 +50,10 @@ let buildQueryTerm query amod =
 		   Readterm.readTermAndType term tymol fvars tyfvars;
 		   true)
 	  else 
-		  (print_endline ("Error: query has type " ^
-		    (Absyn.string_of_type ty) ^ " (expected type o).");
-		   false)
+		  (prerr_endline ("Error: expecting query term of type: o" ^
+		    (Errormsg.info ("encountered term: " ^ (Absyn.string_of_term term))) ^
+        (Errormsg.info ("of type: " ^ (Types.string_of_typemolecule tymol))));
+		  false)
 	  
 (***************************************************************************)
 (*    invoke the simulator to solve a query                                *)

@@ -135,12 +135,12 @@ let contains env v =
   in
   (List.exists find env)
 
-let findVar = fun env v ->
+let findVar env v =
   let find tsym = (Absyn.getTypeSymbolSymbol tsym) = v  in
      try Some (List.find find env)
      with Not_found -> None
 
-let add = fun env sym tsym ->
+let add env sym tsym =
   if (contains env sym) then
     env
   else
@@ -165,7 +165,7 @@ and environmentcell =
 (**********************************************************************
 *Error functions.
 **********************************************************************)
-let idTypeError = fun tmol result pos ->
+let idTypeError tmol result pos =
   let info =
     Errormsg.info ("Type previously determined for variable: " 
                            ^ (Types.string_of_typemolecule tmol))
@@ -185,7 +185,7 @@ let idTypeError = fun tmol result pos ->
                          ("incompatibility discovered during type matching" 
                               ^ info)
 
-let constantTypeError = fun tmol result pos ->
+let constantTypeError tmol result pos =
   let info =
     Errormsg.info ("Type previously defined or determined for constant: " 
                               ^ (Types.string_of_typemolecule tmol))
@@ -210,7 +210,7 @@ let constantTypeError = fun tmol result pos ->
 * Build a term and type representation of a term with a given (named
 * pervasive) type.
 **********************************************************************)
-let makeType = fun term s ktable pos ->
+let makeType term s ktable pos =
   match (Table.find (Symbol.symbol s) ktable) with
     Some(k) ->
       let ty = Types.makeKindMolecule k in
@@ -274,14 +274,12 @@ let rec translateClause term amodule =
     let booltype = Types.makeKindMolecule boolkind in
     if (Types.unify type' booltype) <> (Types.Success) then
       (Errormsg.error (Absyn.getTermPos term') ("expecting term of type: o" ^ 
-        (Errormsg.info "encountered term:") ^
-        (Errormsg.info (Absyn.string_of_term term'')) ^
-        (Errormsg.info "of type:") ^
-        (Errormsg.info (Types.string_of_typemolecule type'))))
+        (Errormsg.info ("encountered term: " ^ (Absyn.string_of_term term''))) ^
+        (Errormsg.info ("of type: " ^ (Types.string_of_typemolecule type')))))
     else
       ()
   in
-  
+
   let term''' = (normalizeTerm term'') in
   let result =
     if !Errormsg.anyErrors then
@@ -600,7 +598,7 @@ and makeBoundTypeSymbol c sym ty =
 and makeAnonymousTypeSymbol c sym ty =
   Absyn.AnonymousImplicitVar(sym, ref c, ref false, ref (Some ty))
 
-and makeVarToOpTerm = fun term fvs bvs amodule makeSymFunc ->
+and makeVarToOpTerm term fvs bvs amodule makeSymFunc =
   match term with
     Preabsyn.IdTerm(sym, Some(ty), k, pos) ->
       let skel = Translate.translateType ty amodule in
@@ -722,7 +720,7 @@ and reduceOperation parsingtoplevel amodule stack =
     let prev = List.hd (List.tl (getStackStack stack)) in
     let rest = List.tl (List.tl (getStackStack stack)) in
 
-    let reducePrefix = fun () ->
+    let reducePrefix () =
       let c = (makeConstantTerm parsingtoplevel (getStackOpConstant prev) 
                                 (getStackItemPos prev)) in
       let newTop = StackTerm(makeApply c (getStackTermTerm top)) in
@@ -730,7 +728,7 @@ and reduceOperation parsingtoplevel amodule stack =
       newParseState stack'
     in
     
-    let reduceInfix = fun () ->
+    let reduceInfix () =
       let r = List.hd rest in
       let rest' = List.tl rest in
       
@@ -951,7 +949,7 @@ and stackOperation parsingtoplevel o amodule stack =
     * Handles case where state is PrefixrWithArgState or
     * InfixrWithArgState.
     ******************************************************************)
-    let preOrInfrWithArg = fun stack ->            
+    let preOrInfrWithArg stack =
       match fixity with
         Absyn.Prefix
       | Absyn.Prefixr ->
@@ -1149,14 +1147,14 @@ and makeAbstraction termmol bvs pos =
 * Create a generic application operator that should go between terms
 * when two terms are encountered directly next to each other.
 **********************************************************************)
-and makeApplyOp = fun pos ->
+and makeApplyOp pos =
   StackOp(Pervasive.genericApplyConstant, [], pos)
   
 (**********************************************************************
 *makeApply:
 * Makes an application term, performing type checking.
 **********************************************************************)
-and makeApply = fun f arg ->
+and makeApply f arg =
   let term = Absyn.ApplicationTerm(
     Absyn.CurriedApplication(getTermTerm f, getTermTerm arg),
     false,
@@ -1173,7 +1171,7 @@ and makeApply = fun f arg ->
 * Make an application term, performing type checking.  Special case
 * of makeApply, used to display better error information.
 **********************************************************************)
-and makeBinaryApply = fun f (arg1 : ptterm) (arg2 : ptterm) ->
+and makeBinaryApply f (arg1 : ptterm) (arg2 : ptterm) =
   let term = Absyn.ApplicationTerm(
     Absyn.CurriedApplication(
       Absyn.ApplicationTerm(
@@ -1344,12 +1342,12 @@ and getCellEntry = function
 * This is the main routine for beta-normalizing an abstract syntax
 * term.
 **********************************************************************)
-and normalizeTerm = fun term ->
-  let makeSuspension = fun tsym term env tail ->
+and normalizeTerm term =
+  let makeSuspension tsym term env tail =
     EnvironmentCell(tsym, ref (SuspensionEntry(term, env))) :: tail
   in
   
-  let makeTerm = fun tsym term tail ->
+  let makeTerm tsym term tail =
     EnvironmentCell(tsym, ref (TermEntry(term))) :: tail
   in
   
@@ -1357,11 +1355,11 @@ and normalizeTerm = fun term ->
   let emptyEnvironment = [] in
   
   (*  Find an entry in an environment, if it exists.  *)
-  let findEntry = fun env tsym ->
-    let rec find' = fun env ->
+  let findEntry env tsym =
+    let rec find' env =
       match env with
         EnvironmentCell(sym,entry)::es ->
-          if sym = tsym then
+          if (sym = tsym) then
             Some(entry)
           else
             find' es
@@ -1370,7 +1368,7 @@ and normalizeTerm = fun term ->
     (find' env)
   in
   
-  let rec normalize = fun term env whnf ->
+  let rec normalize term env whnf =
     match term with
       Absyn.IntTerm(_)
     | Absyn.RealTerm(_)

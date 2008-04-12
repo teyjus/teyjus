@@ -62,7 +62,7 @@ val printName : symbol -> string
 val id : symbol -> int
 
 (**********************************************************************
-*equal:
+*compare:
 * Compares the ids of two symbols to see if the symbols are equal.
 **********************************************************************)
 val equal : symbol -> symbol -> bool
