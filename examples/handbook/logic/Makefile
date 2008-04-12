@@ -18,7 +18,8 @@ pnf: pnf_examples.lp
 
 -include depend
 depend: *.mod *.sig
-	$(TEYJUS)/tjdepend *.mod > depend
+	$(TEYJUS)/tjdepend *.mod > depend-stage
+	mv depend-stage depend
 
 .PHONY: clean
 clean:
