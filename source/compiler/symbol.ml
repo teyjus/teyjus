@@ -31,8 +31,6 @@ let hashtable = Hashtbl.create 1
 
 let nextsym = ref 0
 
-let equal (s,_,_) (s',_,_) = s == s'
-
 let name (s,_,_) = s
 
 let printName (_,s,_) = s
@@ -73,3 +71,4 @@ let generate () =
   generateName ""
 
 
+let equal s1 s2 = (id s1) = (id s2)
