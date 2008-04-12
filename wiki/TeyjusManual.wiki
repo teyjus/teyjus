@@ -2,6 +2,8 @@
 
 = A Manual for the Teyjus Implementation of Lambda Prolog =
 
+The following table of contents provides you a path to the different kinds of information you might be seeking.
+
 || LambdaProlog            ||      What is Lambda Prolog?                           ||
 || OverviewOfTeyjus        ||      What is Teyjus?                                  ||
 || SettingUp               ||      How to set up and install Teyjus                 ||
