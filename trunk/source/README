@@ -85,16 +85,12 @@ Microsoft Visual Studio 2008:
   Building the System:
     To build the system in a Windows environment, use the provided
     Microsoft Visual Studio 2008 solution file, (/source/VisualStudio/Teyjus.sln).
-    
-    To build the system, first set the number of parallel build threads to 1, by
-    clicking Tools > Options, and then selecting Project Solutions > Build and Run,
-    and finally changing "maximum number of parallel project builds" to 1.
 
-    Then, simply "Build All" (Ctrl + Alt + F7).
+    Then, simply click "Build\Rebuild Solution", or type Ctrl + Alt + F7.
 
-    The result should be "8 succeeded, 0 failed, 0 skipped."  The produced
+    The result should be "9 succeeded, 0 failed, 0 skipped."  The produced
     binaries will be written to /source/VisualStudio/Debug, to /bin, and to
-    /source.  In addition, the file /source/prebuilt will be create; this will
+    /source.  In addition, the file /source/prebuilt will be created; this will
     allow the tests to run correctly.
 
     Note that there is no support for building Teyjus using omake on Windows as
