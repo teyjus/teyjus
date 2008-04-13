@@ -12,7 +12,7 @@
 
   All of the above should be installed and in your PATH.
 
-= Installing additional dependencies
+= Installing additional dependencies =
   * Ocamake
   Ocamake is a useful utility for compiling O'Caml programs.  It is available from [http://tech.motion-twin.com/ocamake.html Motion-Twin], however you should use the version included in the Teyjus distribution (located at /util/ocamake.ml), as it has been patched to allow it to parse Microsoft Visual Studio 2008 project files.  To build ocamake, run the following command from the command line in the /util directory:
 
