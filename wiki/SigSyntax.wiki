@@ -110,7 +110,7 @@ The declarations in a signature file must satisfy certain properties in addition
 
     * All sorts and type constructors that appear in type expressions must be either built-in or defined in the signature or defined in an accumulated signature and should have the arity required of them at the point of use. A sort or type constructor that is used in an accumulated signature and that is not defined there but is defined in a sibling accumulated signature may or may not be flagged as an error; the precise behavior is depended on the order of accumulation that is undefined at the language description level.
 
-    * A requirement for a type expression to be well-formed is that every type constructor and every identifier that names an abbreviation that appears in it must be supplied with a full complement of argument types, i.e. the usage of type constants must be consistent with their declaration. A well-formed type expression then denotes the type that is obtained by replacing each type abbreviation with the expression corresponding to it as described above.
+    * A requirement for a type expression to be well-formed is that every type constructor and every identifier that names an abbreviation that appears in it must be supplied with a full complement of argument types, i.e. the usage of a type constant must be consistent with its declaration. A well-formed type expression then denotes the type that is obtained by replacing each type abbreviation with the expression corresponding to it as described above.
 
     * Operator declarations are those expressions in the category <Sign-Decl> that are further characterized by the form
 
