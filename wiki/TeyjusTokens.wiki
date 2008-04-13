@@ -54,7 +54,7 @@ A sequence of digits followed by a period and then a sequence of digits is recog
 These are character sequences enclosed within two double quotes. We permit a mix of SICSTUS and ML syntax for strings. In particular, a string constant is a sequence enclosed between quotes of zero or more printable characters numbered 33-126, spaces or escape sequences. All escape sequences barring one start with the character \ and stand for a character sequence. The escape sequences are:
  	
 
-    ||  \^c  ||    A control character whose encoding is C mod 32, where C is the 
+    ||  \^c  ||    A control character whose encoding is C mod 32, where C is the ||
               encoding of the character c, with C in the range [64,122]. ||
     || \ddd  ||   The character whose encoding is the number ddd, three decimal digits
               denoting an integer in the range [0,255]. ||
