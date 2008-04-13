@@ -73,3 +73,7 @@ These are character sequences enclosed within two double quotes. We permit a mix
 
 
 In the escape sequences involving decimal or hexadecimal digits, the sequence of digits is taken to be the longest sequence of such characters.
+
+== The Syntax for Comments ==
+
+Two styles for writing comments are supported. Multiline comments may be enclosed within a matched pair of /`*` and `*`/; nesting of comments is legal. Single line comments are preceded by % and extend to the end of the line.
