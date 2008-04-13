@@ -23,9 +23,11 @@ let dualArgs dualSpecList =
     [(key1, spec, doc) ; (key2, spec, doc)]
   in
     List.flatten (List.map seperate dualSpecList)
+
+let version = "2.0"
     
 let printVersion () =
-  print_endline "Teyjus, version 2.0" ;
+  print_endline ("Teyjus version " ^ version) ;
   exit 0
 
 let versionspec =
