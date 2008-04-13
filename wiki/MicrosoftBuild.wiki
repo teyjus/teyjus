@@ -15,8 +15,9 @@
 = Installing additional dependencies =
   * Ocamake
   Ocamake is a useful utility for compiling O'Caml programs.  It is available from [http://tech.motion-twin.com/ocamake.html Motion-Twin], however you should use the version included in the Teyjus distribution (located at /util/ocamake.ml), as it has been patched to allow it to parse Microsoft Visual Studio 2008 project files.  To build ocamake, run the following command from the command line in the /util directory:
-
-ocamlc unix.cma str.cma ocamake.ml -o ocamake.exe
+{{{
+  ocamlc unix.cma str.cma ocamake.ml -o ocamake.exe
+}}}
 
 Then, place ocamake.exe in your path; one option is to copy the binary to the O'Caml /bin directory.
 
@@ -33,7 +34,8 @@ If you want to work on the code of Teyjus will need a few more tools in order to
   * [http://gnuwin32.sourceforge.net/packages/diffutils.htm DiffUtils]
 
 You should also obtain the full source code of Teyjus from the [http://code.google.com/p/teyjus/source/checkout subversion repository]. You can then run the automated tests by running the following commands at the command line in the /source directory:
-
-omake test
-omake compiler-test
-omake linker-test
+{{{
+  omake test
+  omake compiler-test
+  omake linker-test
+}}}
