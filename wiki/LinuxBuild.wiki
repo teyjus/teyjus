@@ -16,6 +16,6 @@ From a command shell, navigate to the directory which contains the downloaded Te
 
 = For Teyjus Developers =
 
-If you want to work on the code of Teyjus will need a few more tools in order to run the automated tests. In particular, you need `perl` and `diff`, both of which are standard on most Linux distributions.
+If you want to work on the code of Teyjus, you will need a few more tools in order to run the automated tests. In particular, you need `perl` and `diff`, both of which are standard on most Linux distributions.
 
 You should also obtain the full source code of Teyjus from the [http://code.google.com/p/teyjus/source/checkout subversion repository]. You can then run the automated tests with the command `omake test`.
