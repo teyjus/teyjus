@@ -95,10 +95,10 @@ The declarations in a signature file must satisfy certain properties in addition
 
    with n+1 occurrences of type identifies foo as a type constructor of arity n. (If n is 0 the object identified is a sort.) Note that there are restrictions built into the grammar rules on the syntax of tokens that can be identified as sorts and type constructors.
 
-    * Type abbreviation declarations are those expressions in the category <Sign-Decl> that begin with the token typeabbrev. The purpose of these declarations is to identify names that can be used as shorthands in type expressions. These names can be parameterized, i.e., they can function in a manner similar to type constructors. For example, a declaration of the form 
-
-           typeabbrev   (bar A)   list A -> list A
-
+    * Type abbreviation declarations are those expressions in the category <Sign-Decl> that begin with the token typeabbrev. The purpose of these declarations is to identify names that can be used as shorthands in type expressions. These names can also be parameterized. For example, a declaration of the form 
+{{{
+          typeabbrev   (bar A)   list A -> list A
+}}}
       allows (bar int) to be used as an abbreviation for the expression list int -> list int in the type expressions described below. There is a restriction on the type expressions that figure in such a declaration: any variable that is used in them must have been identified as a "parameter" of the name that is being identified as an abbreviation. This explanation has a "forward reference" in that it assumes an understanding of type expressions that appears later and, thus, this block of bullets must be understood wholistically.
 
     * Tokens that are identified as the names of abbreviations have an appearance in syntax that is similar to that of type constants, i.e. they are like sorts and type constructors. We shall refer to them as such when this does not cause a confusion.
