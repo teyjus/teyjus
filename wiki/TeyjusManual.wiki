@@ -9,7 +9,7 @@ The following table of contents provides you a path to the different kinds of in
 || SettingUp               ||      How to set up and install Teyjus                 ||
 || [Invoking]              ||      How to run Teyjus                                ||
 || ProgramStructure        ||      The Structure of Programs in Teyjus              ||
-|| TeyjusPrograms          ||      The Syntax and Semantics of Teyjus Programs                     ||
+|| TeyjusPrograms          ||      The Syntax of Teyjus Programs                    ||
 || TeyjusBuiltins          ||      The Builtin Predicates Supported                 ||
 || SolvingQueries          ||      How to find the solution to a query              ||
 || Examples                ||      Experiment with the system                       ||
