@@ -51,7 +51,7 @@ A sequence of digits followed by a period and then a sequence of digits is recog
 
 == String Literals ==
 
-These are character sequences enclosed within two double quotes. We permit a mix of SICSTUS and ML syntax for strings. In particular, a string constant is a sequence enclosed between quotes of zero or more printable characters numbered 33-126, spaces or escape sequences. All escape sequences barring one start with the character \ and stand for a character sequence. The escape sequences are:
+These are character sequences enclosed within two double quotes. We permit a mix of SICSTUS and ML syntax for strings. In particular, a string constant is a sequence enclosed between double quotes of zero or more printable characters numbered 33-126, spaces or escape sequences. All escape sequences barring one start with the character \ and stand for a character sequence. The escape sequences are:
  	
 
 || \a    ||   Alert (ASCII 0x07)  ||
