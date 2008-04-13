@@ -8,6 +8,6 @@ The various links below provide more information about different aspects of Teyj
 
 || LambdaProlog || A Brief Description of Lambda Prolog ||
 || AbstractMachine || An Overview of the Lambda Prolog Abstract Machine ||
-|| SystemOverview || Overview of the Teyjus System ||
+|| SystemOverview || An Overview of the Teyjus System ||
 || PeopleInvolved || The People Involved in the Project ||
 || TheName || About the Name "Teyjus" ||
