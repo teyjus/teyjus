@@ -1,4 +1,4 @@
-##summary The Teyjus Manual
+#summary The Teyjus Manual
 
 = A Manual for the Teyjus Implementation of Lambda Prolog =
 
