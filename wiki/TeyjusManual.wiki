@@ -2,14 +2,14 @@
 
 = A Manual for the Teyjus Implementation of Lambda Prolog =
 
-The following table of contents provides you a path to the different kinds of information you might be seeking.
+The following table of contents provides you a path to the different kinds of information you might be seeking as a user of _Teyjus_.
 
 || LambdaProlog            ||      What is Lambda Prolog?                           ||
 || SystemOverview          ||      What is Teyjus?                                  ||
 || SettingUp               ||      How to set up and install Teyjus                 ||
 || [Invoking]              ||      How to run Teyjus                                ||
 || ProgramStructure        ||      The Structure of Programs in Teyjus              ||
-|| TeyjusSyntax            ||      The Syntax of Teyjus Programs                    ||
+|| TeyjusPrograms          ||      The Syntax and Semantics of Teyjus Programs                     ||
 || TeyjusBuiltins          ||      The Builtin Predicates Supported                 ||
 || SolvingQueries          ||      How to find the solution to a query              ||
 || Examples                ||      Experiment with the system                       ||
