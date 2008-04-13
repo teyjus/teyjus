@@ -133,9 +133,9 @@ The module declaration must satisfy certain properties in addition to adhering t
 
     * Local constant and local kind declarations are those in the category _<ModSignDecl>_ that begin with the tokens local and localkind respectively. These declarations identify constants and kinds whose scope is limited to the module in which they appear and to the code obtained from the modules imported and accumulated by that module. 
 
-    * Closed constant declarations are those in the category _<ModSignDecl>_ that begin with the token _closed_. Every closed constant must be of predicate type. From an outward perspective, these constants behave like _exportdef_ constants: their definitions are exported from the module in question and these cannot be changed in the importing or accumulating context. From an inward perspective, these constants are ones for which an assurance can be given of fixity of code. Thus, they should either be defined as useonly or they should not be globals in imported modules reachable through some chain of accumulates.
+    * Closed constant declarations are those in the category _<ModSignDecl>_ that begin with the token _closed_. Every closed constant must be of predicate type. From an outward perspective, these constants behave like _exportdef_ constants: their definitions are exported from the module in question and these cannot be changed in the importing or accumulating context. From an inward perspective, these constants are ones for which an assurance can be given of fixity of code. Thus, they should either be defined as _useonly_ or they should not be globals in imported modules reachable through some chain of accumulates.
 
-    * There is some redundancy in module syntax. In particular, _exportdef_, _useonly_, _local_ and _localkind_ declarations may be left out; the former two must also appear in the explicit signature file and locals can be taken to be the complement of the sorts, type constructors and constants defined in the explicit signature file. However, they are included in the syntax of modules to permit a preprocessing phase that calculates the explicit signature. This is not the preferred situation though and is not one used in the _Teyjus_ system; signature files are intended to be useful in the certification of module interactions and not an obstacle to be surmounted in whichever way possible and, for this reason, are required to be explicitly provided for every module.
+    * There is some redundancy in module syntax. In particular, _exportdef_, _useonly_, _local_ and _localkind_ declarations may be left out; the former two must also appear in the explicit signature file and locals can be taken to be the complement of the sorts, type constructors and constants defined in the explicit signature file. However, they are included in the syntax of modules to permit a preprocessing phase that calculates the explicit signature. This is not the preferred situation though and is not one used in the _Teyjus_ system; signature files are intended to be useful in the certification of module interactions and are not an obstacle to be surmounted in whichever way possible and, for this reason, are required to be explicitly provided for every module in the _Teyjus_ framework.
 
     * The name of a predicate defined by a clause that appears at the top level in the module or in the antecedent of an implication goal must not be identical to that of a logical symbol or a _useonly_ predicate. It must not also be identical to that of a built-in predicate unless the predicate name has been redefined through a type declaration.
 
@@ -168,17 +168,17 @@ The module declaration must satisfy certain properties in addition to adhering t
            [(p, q, r)]
 }}}
 
-      is a list that has exactly one item that is the conjunction of _p_, _q_ and _r_. Note that lists have an alternative, _ML_-like, syntax that is based on using the constants _::_ and _nil_.
+      is a list that has exactly one element that is the conjunction of _p_, _q_ and _r_. Note that lists have an alternative, _ML_-like, syntax that is based on using the constants _::_ and _nil_.
 
-    * The arithmetic operators like +, `*` and - and the comparison operators <, =<, > and >= are also overloaded. For these operators, the disambiguation rule is as follows: if the type of the operator can be determined from that of either of its arguments, then it is assumed to have that type, else it is assumed to expect integer arguments.
+    * The arithmetic operators like +, `*` and - and the comparison operators <, =<, > and >= are also overloaded. For these operators, the disambiguation rule is as follows: if the type of the operator can be determined from that of either of its arguments, then it is assumed to have that type, else it is assumed to take integer arguments.
 
     * There are the usual typing restrictions on well-formedness.
 
     * The constants representing implication are not permitted to appear embedded inside terms.
 
-    * Signature files should exist for accumulated and imported modules and accumulated and used signatures. Source code files should exist for accumulated modules.
+    * Signature files should exist for all accumulated and imported modules and accumulated and used signatures at the time of parsing and type-checking a module.
 
-    * We can calculate a signature from the source code for a module by taking the type, kind and fixity declarations in a module, adding to these the accumulated signatures and signatures of accumulated and imported modules and removing all the declarations corresponding to local constants and localkind types. The type association for all the constants and the arity association for all the kinds in this signature that are also defined in the signature file for the module must be identical. (All the objects in this calculated signature that do not also appear in the explicitly defined signature are interpreted as local or localkind objects.)
+    * We can calculate a signature from the source code for a module by taking the type, kind and fixity declarations in a module, adding to these the accumulated signatures and signatures of accumulated and imported modules and removing all the declarations corresponding to local constants and localkind types. The type association for all the constants and the arity association for all the kinds in this signature that are also defined in the signature file for the module must be identical. All the objects in this calculated signature that do not also appear in the explicitly defined signature are interpreted as local or localkind objects.
 
     * All _exportdef_ and _useonly_ declarations in the calculated signature must be for global constants and must also appear in the explicit signature. All fixity declarations for global constants in the calculated signature must also appear in the explicit signature. A global constant that is defined to be closed (in the module source) should be _exportdef_ in the explicit signature.
 
@@ -186,6 +186,6 @@ The module declaration must satisfy certain properties in addition to adhering t
 
     * In the rule for an _<Atom>_, the head is permitted to be an essentially universally quantified variable. In determining the interpretation of a quantifier, the assumption is that a top-level clause in a module appears in a negative context.
 
-    * Every sort and type constructor that is used in the type declarations and clauses in a module must be explicitly declared. Similarly, every constant that is used in the clauses that define predicates in a module must be explicitly declared. 
+    * Every sort and type constructor that is used in the type declarations and clauses in a module must be explicitly declared. Similarly, every constant that is used in the clauses that define predicates in a module must be explicitly declared. Queries in the _Teyjus_ system are posed relative to modules. All constants, sorts and type constructors that are used in such queries must be defined in the signature corresponding to the module. 
 
     * A chain of imports or accumulates from a given module must not lead back to the same module. A violation of this "syntactic" property cannot be detected at compile time without violating the philosophy of separate compilation. However it can be and is checked at linking time. 
