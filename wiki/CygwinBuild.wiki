@@ -1,0 +1,31 @@
+#summary Building Teyjus on Windows using the Cygwin toolchain
+
+= Required Software =
+
+  * [http://caml.inria.fr/download.en.html OCaml] based on the *MinGW toolchain*.
+  * [http://omake.metaprl.org/download.html OMake]
+  * [http://www.cygwin.com/ Cygwin]
+  * The Teyjus source distribution
+
+= Setting up Cygwin =
+
+When installing Cygwin you must select the following packages for installation.
+
+  * Devel: bison
+  * Devel: gcc
+  * Devel: flex
+
+After Cygwin is installed, you must put Cygwin's binary directory in your Window's path. For example, `C:\cygwin\bin`.
+
+= Building Teyjus =
+
+From a command shell, navigate to the directory which contains the downloaded Teyjus code and execute `omake all`. This will create the programs `tjcc`, `tjsim`, `tjlink`, `tjdepend`, and `tjdis`. You should add the directory with these files to your Window's path.
+
+= For Teyjus Developers =
+
+If you want to work on the code of Teyjus will need a few more tools in order to run the automated tests. First, you should install the following Cygwin packages.
+
+  * Devel: perl
+  * Utils: diffutils
+
+You should also obtain the full source code of Teyjus from the [http://code.google.com/p/teyjus/source/checkout subversion repository]. You can then run the automated tests with the command `omake test`.
