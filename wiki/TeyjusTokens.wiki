@@ -54,17 +54,17 @@ A sequence of digits followed by a period and then a sequence of digits is recog
 These are character sequences enclosed within two double quotes. We permit a mix of SICSTUS and ML syntax for strings. In particular, a string constant is a sequence enclosed between quotes of zero or more printable characters numbered 33-126, spaces or escape sequences. All escape sequences barring one start with the character \ and stand for a character sequence. The escape sequences are:
  	
 
-    ||  \^c  ||    A control character whose encoding is C mod 32, where C is the ||
-    ||       ||  encoding of the character c, with C in the range [64,122]. ||
-    || \ddd  ||   The character whose encoding is the number ddd, three decimal digits ||
-    ||        || denoting an integer in the range [0,255]. ||
-    || \xhh   ||  The character whose encoding is the number hh, two hexadecimal digits,||
-     ||       ||  with a-f (A-F) denoting the `digits' 10-15 respectively. ||
-    || \f...f\  ||This sequence is ignored, where f...f stands for a sequence of one ||
-    ||        || or more formatting characters (that are currently restricted to  ||
-    ||        || horizontal and vertical tab, whitespace, newline and carriage return). ||
-    || \c...  ||  where ... stands for a sequence of formatting characters, ending with ||
-    ||        ||  a non formatting character. This sequence is to be ignored.||
+||  \^c  ||    A control character whose encoding is C mod 32, where C is the ||
+||       ||  encoding of the character c, with C in the range [64,122]. ||
+|| \ddd  ||   The character whose encoding is the number ddd, three decimal digits ||
+||        || denoting an integer in the range [0,255]. ||
+|| \xhh   ||  The character whose encoding is the number hh, two hexadecimal digits,||
+||       ||  with a-f (A-F) denoting the `digits' 10-15 respectively. ||
+|| \f...f\  ||This sequence is ignored, where f...f stands for a sequence of one ||
+||        || or more formatting characters (that are currently restricted to  ||
+||        || horizontal and vertical tab, whitespace, newline and carriage return). ||
+|| \c...  ||  where ... stands for a sequence of formatting characters, ending with ||
+||        ||  a non formatting character. This sequence is to be ignored.||
 
 
 In the escape sequences involving decimal or hexadecimal digits, the sequence of digits is taken to be the longest sequence of such characters.
