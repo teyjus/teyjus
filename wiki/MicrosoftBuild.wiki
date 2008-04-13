@@ -26,6 +26,8 @@ Then, place ocamake.exe in your path; one option is to copy the binary to the O'
 
 Open the provided solution (located at /source/VisualStudio/Teyjus.sln) and select Build\Rebuild Solution, or type Ctrl + Alt + F7.  This will build all of the binaries, and place them in /bin.
 
+Note that building has only been tested on Microsoft Visual Studio 2008 Standard and Professional editions; while it is likely that the system will build on an Express edition of the software, this has _not_ been investigated.
+
 = For Teyjus Developers =
 
 If you want to work on the code of Teyjus will need a few more tools in order to run the automated tests.  First, you should install the following tools.
