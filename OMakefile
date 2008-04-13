@@ -42,20 +42,22 @@ BuildDist() =
     rm -rf $(find dist -name .svn)
     rm -f $(find dist -name *.omc)
 
-teyjus.tar.gz: test
-    BuildDist()
-    cd dist && omake all
-    BuildDist()
-    rm -f teyjus.tar.gz
-    mv dist teyjus
-    bash -c "/usr/bin/find teyjus -type d | xargs chmod 755"
-    bash -c "/usr/bin/find teyjus -type f | xargs chmod 644"
-    tar c teyjus | gzip - > teyjus-source.tar.gz
-    bash -c "chmod 664 teyjus-source.tar.gz"
-    rm -rf teyjus
-
 .PHONY: dist
-dist: teyjus.tar.gz
+dist: test
+    section
+        BuildDist()
+        cd dist && omake all
+        VERSION = $(shell dist/tjcc -v | perl -pe 's/Teyjus version//')
+        BuildDist()
+        rm -f dist.tar.gz
+        mv dist teyjus
+        bash -c "/usr/bin/find teyjus -type d | xargs chmod 755"
+        bash -c "/usr/bin/find teyjus -type f | xargs chmod 644"
+        tar c teyjus | gzip - > dist.tar.gz
+        bash -c "chmod 664 dist.tar.gz"
+        mv dist.tar.gz teyjus-source-$(VERSION).tar.gz
+        rm -rf teyjus
+
 
 ################################################
 # Utilites
