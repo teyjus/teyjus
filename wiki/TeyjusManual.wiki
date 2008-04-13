@@ -8,9 +8,12 @@ The following table of contents provides you a path to the different kinds of in
 || SystemOverview          ||      What is Teyjus?                                  ||
 || SettingUp               ||      How to set up and install Teyjus                 ||
 || [Invoking]              ||      How to run Teyjus                                ||
+|| ProgramStructure        ||      The Structure of Programs in Teyjus              ||
+|| TeyjusSyntax            ||      The Syntax of Teyjus Programs                    ||
+|| TeyjusBuiltins          ||      The Builtin Predicates Supported                 ||
 || SolvingQueries          ||      How to find the solution to a query              ||
-|| ProgrammingInTeyjus     ||      Teyjus Syntax, Builtins and Program Structure    ||
-|| [Examples]              ||      Experiment with the system                       ||
+|| Examples                ||      Experiment with the system                       ||
 || ContactingTheAuthors    ||      How to get in touch with the authors             ||
-|| TeyjusAcknowledgments   ||      The people behind the system                     ||
+|| PeopleInvolved          ||      The people behind the system                     ||
+|| ProjectSupport          ||      Acknowledgements of Grant Support                ||
 || ConceptIndex            ||      Index of related concepts                        || 
