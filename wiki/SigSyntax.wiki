@@ -68,6 +68,7 @@ The Teyjus parser for signatures is a combination of a "pre-parser" automaticall
 }}}
 
 
+
 == Commentary on Signature Syntax ==
 
 The declarations in a signature file must satisfy certain properties in addition to being derivable from the grammar rules:
