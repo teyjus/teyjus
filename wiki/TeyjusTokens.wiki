@@ -9,9 +9,9 @@ We describe below the rules for recognizing tokens in the different relevant cat
 The following sequences of characters are recognized as tokens with a special meaning within Teyjus.
  	
 {{{
-module     end          import     accumulate     accum_sig   
-local      localkind    closed     sig            use_sig
-kind       type         exportdef  useonly        infixl 
-infixr     infix        prefix     prefixr        postfix 
-postfixl   :-           \          ->             !
+module     end          import     accumulate     accum_sig     local
+type       closed       sig        use_sig        exportdef     infix         
+kind       useonly      infixl     typeabbrev     infixr        prefix      
+prefixr    postfix    localkind    postfixl       :-            \          
+->         !
 }}}
