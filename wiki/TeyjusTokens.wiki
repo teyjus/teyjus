@@ -43,11 +43,11 @@ Three points should be noted with regard to this definition. First, as already o
 
 == Integer Literals ==
 
-A sequence of digits is recognized as an integer constant. As usual, there are size limitations on integers. In the present implementation, the limitation is that the integer should fit in 25 bits.
+A sequence of digits is recognized as an integer constant. As usual, there are size limitations on integers. In the present implementation, the limitation is that the integer should fit in 32 bits.
 
 == Real Literals ==
 
-A sequence of digits followed by a period and then a sequence of digits is recognized as a real constant. The sequence before the period may be empty but the sequence after the period must be nonempty. There are size and precision restrictions that arise in the present implementation first from the limitations of the implementation language (double in C) and then from those of the abstract machine. The latter are likely to be dominant and are the following: the exponent must fit in 7 bits and the mantissa in 15 bits.
+A sequence of digits followed by a period and then a sequence of digits is recognized as a real constant. The sequence before the period may be empty but the sequence after the period must be nonempty. The are size and precision restrictions are the same as those for doubles in C.
 
 == String Literals ==
 
