@@ -160,7 +160,6 @@ The module declaration must satisfy certain properties in addition to adhering t
       the identifier should have been declared as a prefix operator. The rule for <Term> is obviously ambiguous as written. Disambiguation is to be affected using the precedence and associativity of the relevant operators. In this context, it is also to be noted that abstraction and application are treated like (infix) operators, that application is left associative and has higher precedence than all other operators and abstraction is right associative and has lower precedence than all other operators.
 
     * The comma (',') token is overloaded in many different ways. One place where this overloading causes ambiguity is in terms embedded within Prolog style lists: here it can either be interpreted as the (infix) conjunction operator or as a list separator. The intended disambiguation device in this context is the following: if both the left and the right hand side of the comma operator has the ground type o, then this is interpreted as the symbol for conjunction, otherwise it is understood to be the list separator. Of course, the reading of comma as the conjunction operator can be forced by surrounding the expression within parentheses. For example, in
-       	
 {{{
            [ p,(q,r),s]
 }}}
