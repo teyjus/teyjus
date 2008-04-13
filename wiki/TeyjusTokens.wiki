@@ -53,7 +53,7 @@ A sequence of digits followed by a period and then a sequence of digits is recog
 
 These are character sequences enclosed within two double quotes. We permit a mix of SICSTUS and ML syntax for strings. In particular, a string constant is a sequence enclosed between quotes of zero or more printable characters numbered 33-126, spaces or escape sequences. All escape sequences barring one start with the character \ and stand for a character sequence. The escape sequences are:
  	
-
+{{{
      \a       Alert (ASCII 0x07)
      \b       Backspace (ASCII 0x08)
      \t       Horizontal tab (ASCII 0x09)
@@ -77,5 +77,6 @@ These are character sequences enclosed within two double quotes. We permit a mix
      \c...    where ... stands for a sequence of formatting characters, ending with
               a non formatting character. 
               This sequence is to be ignored.
+}}}
 
 In the escape sequences involving decimal or hexadecimal digits, the sequence of digits is taken to be the longest sequence of such characters.
