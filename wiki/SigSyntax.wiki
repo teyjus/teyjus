@@ -113,8 +113,9 @@ The declarations in a signature file must satisfy certain properties in addition
     * A requirement for a type expression to be well-formed is that every type constructor and every identifier that names an abbreviation that appears in it must be supplied with a full complement of argument types, i.e. the usage of a type constant must be consistent with its declaration. A well-formed type expression then denotes the type that is obtained by replacing each type abbreviation with the expression corresponding to it as described above.
 
     * Operator declarations are those expressions in the category <Sign-Decl> that are further characterized by the form
-
-       	<Fixity> <Ids> <SmallInt> '.' 
+{{{
+       	 <Fixity> <Ids> <SmallInt> '.' 
+}}}
 
       Such declarations identify relevant (term) constants as being infix, prefix or postfix operators that are not associative, left associative or right associative and having a specified precedence. Types of constants that are defined as operators must be consistent with their interpretation as such.
 
