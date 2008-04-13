@@ -18,7 +18,7 @@ prefixr    postfix    localkind    postfixl       :-            \
 
 == Other Special Tokens in Teyjus ==
 
-The following tokens are ones that, in addition to the keywords and punctuation symbols, cannot be redefined by user programs. Some of these symbols---in particular, the symbols `pi`, sigma, ;, &, =>, =, :: and nil--are constants and are like other identifiers except for the `no redefinition' clause. The remaining symbols are overloaded and so are treated in a special way by the parser. Finally, some symbols, in particular :: and nil, receive a special treatment at the abstract machine level.
+The following tokens are ones that, in addition to the keywords and punctuation symbols, cannot be redefined by user programs. Some of these symbols---in particular, the symbols _pi_, _sigma_, _;_, _&_, _=>_, _=_, _::_ and _nil_--are constants and are like other identifiers except for the `no redefinition' clause. The remaining symbols are overloaded and so are treated in a special way by the parser. Finally, some symbols, in particular _::_ and _nil_, receive a special treatment at the abstract machine level.
  	
 {{{
 pi         sigma        ,          ;              &
