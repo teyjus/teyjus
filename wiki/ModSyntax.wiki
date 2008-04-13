@@ -8,7 +8,7 @@ The Teyjus parser for the source code file consists of a part automatically gene
 
 == A BNF Specification of Module Syntax ==
 
-_The rules below describe the syntax of the declarations that may appear in a module file. These grammar rules build on the ones already presented while explaining the syntax of signatures in [SigSyntax A BNF Specification of Signature Syntax]. Thus, to understand this grammar, it may be necessary to consult also the grammar for signatures.
+The rules below describe the syntax of the declarations that may appear in a module file. These grammar rules build on the ones already presented while explaining the syntax of signatures in [SigSyntax A BNF Specification of Signature Syntax]. Thus, to understand this grammar, it may be necessary to consult also the grammar for signatures.
  	
 {{{
 <Module>        ::=  <ModHeader> <ModPreamble> <ModBody> <ModEnd>
