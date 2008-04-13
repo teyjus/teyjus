@@ -1,0 +1,21 @@
+#summary Building Teyjus on Linux or similar operating system
+
+The instructions describe how to build and install Teyjus on a Linux or similar operating system. This includes 32-bit and 64-bit versions of Linux as well as Mac OS X.
+
+= Required Software =
+
+  * [http://caml.inria.fr/download.en.html OCaml]
+  * [http://omake.metaprl.org/download.html OMake]
+  * The Teyjus source distribution
+
+You will also need the programs `gcc`, `flex`, and `bison` which are standard on most Linux distributions.
+
+= Building Teyjus =
+
+From a command shell, navigate to the directory which contains the downloaded Teyjus code and execute `omake all`. This will create the programs `tjcc`, `tjsim`, `tjlink`, `tjdepend`, and `tjdis`. You should add the directory with these files to your path. Alternatively you can install Teyjus simply by copying these programs to your preferred installation directory. For example, `cp tj* /usr/bin/local`.
+
+= For Teyjus Developers =
+
+If you want to work on the code of Teyjus will need a few more tools in order to run the automated tests. In particular, you need `perl` and `diff`, both of which are standard on most Linux distributions.
+
+You should also obtain the full source code of Teyjus from the [http://code.google.com/p/teyjus/source/checkout subversion repository]. You can then run the automated tests with the command `omake test`.
