@@ -140,19 +140,16 @@ The module declaration must satisfy certain properties in addition to adhering t
     * There must be at most one arity and type associated with any given Id. There might be multiple declarations for this Id but all must agree eventually.
 
     * In the form
-       	
 {{{
              <Term> <TypedCIdent> <Term> 
 }}}
 
-      that appears in the rules for <Term>, the identifier must have been declared as an infix operator. Similarly, in the form
-       	
+      that appears in the rules for <Term>, the identifier must have been declared as an infix operator. Similarly, in the form     	
 {{{
              <Term> <TypedCIdent>
 }}}
 
-      that appears in the rule for <Term>, the identifier must have been declared as a postfix operator and in the form
-       	
+      that appears in the rule for <Term>, the identifier must have been declared as a postfix operator and in the form    	
 {{{
              <TypedCIdent> <Term>
 }}}
@@ -164,8 +161,7 @@ The module declaration must satisfy certain properties in addition to adhering t
            [ p,(q,r),s]
 }}}
 
-      the middle comma is forced to be interpreted as conjunction. In the other direction, if p, q and r are of predicate type, we may want to construct a list that has these three as elements. This cannot be forced using the Prolog-style list notation; the list
-       	
+      the middle comma is forced to be interpreted as conjunction. In the other direction, if p, q and r are of predicate type, we may want to construct a list that has these three as elements. This cannot be forced using the Prolog-style list notation; the list  	
 {{{
            [p, q, r]
 }}}
