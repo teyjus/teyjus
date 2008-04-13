@@ -82,7 +82,7 @@ The rules below describe the syntax of the declarations that may appear in a mod
                    | <Term> <Term>
                    | <TypedId> '\' <Term>
                    | '[' ']'                    % Prolog list notation
-                   | '[' TermList ']'            % Prolog list notation
+                   | '[' TermList ']'           % Prolog list notation
                    | '[' TermList '|' Term ']'  % Prolog list notation
                    | <TypedCIdent>
                    | <TypedVar> 
