@@ -98,7 +98,7 @@ The declarations in a signature file must satisfy certain properties in addition
 
            typeabbrev   (bar A)   list A -> list A
 
-allows (bar int) to be used as an abbreviation for the expression list int -> list int in the type expressions described below. There is a restriction on the type expressions that figure in such a declaration: any variable that is used in them must have been identified as a "parameter" of the name that is being identified as an abbreviation. This explanation has a "forward reference" in that it assumes an understanding of type expressions that appears later and, thus, this block of bullets must be understood wholistically.
+      allows (bar int) to be used as an abbreviation for the expression list int -> list int in the type expressions described below. There is a restriction on the type expressions that figure in such a declaration: any variable that is used in them must have been identified as a "parameter" of the name that is being identified as an abbreviation. This explanation has a "forward reference" in that it assumes an understanding of type expressions that appears later and, thus, this block of bullets must be understood wholistically.
 
     * Tokens that are identified as the names of abbreviations have an appearance in syntax that is similar to that of type constants, i.e. they are like sorts and type constructors. We shall refer to them as such when this does not cause a confusion.
 
