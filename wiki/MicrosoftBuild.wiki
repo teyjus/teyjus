@@ -30,7 +30,7 @@ Building has been tested on Microsoft Visual Studio 2008 Express, Standard and P
 
 = For Teyjus Developers =
 
-If you want to work on the code of Teyjus will need a few more tools in order to run the automated tests.  First, you should install the following tools.
+If you want to work on the code of Teyjus, you will need a few more tools in order to run the automated tests.  First, you should install the following tools.
 
   * [http://http://www.activestate.com/store/activeperl Perl]
   * [http://gnuwin32.sourceforge.net/packages/diffutils.htm DiffUtils]
