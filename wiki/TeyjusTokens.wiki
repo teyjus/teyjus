@@ -25,3 +25,12 @@ pi         sigma        ,          ;           &          =>
 +          -            *          /           ::         =
 ~          <            >          =<          >=         nil
 }}}
+
+== Punctuations ==
+
+The following symbols serve as delimiters, grouping symbols, etc. Notice that comma appears in the list of pseudo keywords as well; usage is determined by context.
+ 	
+{{{
+.          ,            (          )          :         [          
+]          | 
+}}}
