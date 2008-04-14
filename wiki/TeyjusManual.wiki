@@ -9,10 +9,10 @@ The following table of contents provides you a path to the different kinds of in
 || SystemOverview          ||      What is Teyjus?                                  ||
 || BuildOverview           ||      How to build and install Teyjus                  ||
 || [Invoking]              ||      How to run Teyjus                                ||
+|| [QuickStart]            ||      A Tutorial Introduction to Teyjus Programming    ||
 || ProgramStructure        ||      The Structure of Programs in Teyjus              ||
 || TeyjusPrograms          ||      The Syntax of Teyjus Programs                    ||
 || TeyjusBuiltins          ||      The Builtin Predicates Supported                 ||
-|| SolvingQueries          ||      How to find the solution to a query              ||
 || [Examples]              ||      Experiment with the system                       ||
 || ContactingTheAuthors    ||      How to get in touch with the authors             ||
 || PeopleInvolved          ||      The people behind the system                     ||
