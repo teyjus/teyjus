@@ -10,6 +10,6 @@ The builtin notions supported by Teyjus are sub-categorized below and are descri
 
    * [PervasiveConstants Prevasive Constants]
 
-   * [ComparisonPreds Builtin Pervasive Constants]
+   * [ComparisonPreds Builtin Comparison Predicates]
 
    * [IoPreds Input/Output and other Side Effecting Predicates]
