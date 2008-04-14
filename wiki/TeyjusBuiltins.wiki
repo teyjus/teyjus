@@ -1,0 +1,15 @@
+#summary A catalogue of the Teyjus builtins
+
+= Builtin Sorts and Type Constructors, Constants and Predicates =
+
+The builtin notions supported by Teyjus are sub-categorized below and are described by the wikis reached by the corresponding links
+
+   * [SortsAndTypeConstructors Builtin Sorts and Type Constructors]
+
+   * [LogicalConsts Logical Constants and Primitive Goals]
+
+   * [PervasiveConstants Prevasive Constants]
+
+   * [ComparisonPreds Builtin Pervasive Constants]
+
+   * [IoPreds Input/Output and other Side Effecting Predicates]
