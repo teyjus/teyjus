@@ -2,7 +2,7 @@
 
 = Builtin Sorts and Type Constructors, Constants and Predicates =
 
-The builtin notions supported by Teyjus are sub-categorized below and are described by the wikis reached by the corresponding links
+The builtin notions supported by Teyjus are sub-categorized below and are described by the wikis reached by the corresponding links:
 
    * [SortsAndTypeConstructors Builtin Sorts and Type Constructors]
 
