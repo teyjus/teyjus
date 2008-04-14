@@ -94,4 +94,4 @@ nil
     of type (list A), representing the (polymorphic) nil list
 ::
 
-    of type (A -> (list A) -> (list A)) representing the usual list constructor. 
+    representing the usual list constructor; infix right associative with precedence level 140 and type (A -> (list A) -> (list A)).
