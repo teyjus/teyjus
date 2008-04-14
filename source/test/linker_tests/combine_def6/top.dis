@@ -41,7 +41,7 @@ Accumulated tables:
     Kind renamings:
     i -> i
     Constant renamings:
-    foo1 -> <local const #0>
     foo2 -> <local const #1>
+    foo1 -> <local const #0>
 
 Imported tables:

@@ -1,4 +1,4 @@
-sig exportdef.
+sig expdef.
 
 kind i type.
 

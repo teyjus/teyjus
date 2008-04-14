@@ -1,4 +1,4 @@
-module exportdef.
+module expdef.
 
 exportdef foo1.
 foo1 X.

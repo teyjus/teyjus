@@ -70,10 +70,10 @@ Accumulated tables:
     Kind renamings:
     i -> i
     Constant renamings:
-    foo -> foo
-    a -> a
-    b -> b
-    c -> c
     d -> d
+    c -> c
+    b -> b
+    a -> a
+    foo -> foo
 
 Imported tables:

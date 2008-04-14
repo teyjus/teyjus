@@ -63,5 +63,5 @@ Imported tables:
     Kind renamings:
     i -> i
     Constant renamings:
-    a -> a
     c -> <local const #1>
+    a -> a
