@@ -68,9 +68,9 @@ Accumulated tables:
     Kind renamings:
     i -> i
     Constant renamings:
-    foo1 -> foo1
-    foo2 -> foo2
-    foo3 -> foo3
     foo4 -> foo4
+    foo3 -> foo3
+    foo2 -> foo2
+    foo1 -> foo1
 
 Imported tables:

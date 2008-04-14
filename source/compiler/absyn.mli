@@ -99,7 +99,7 @@ and atypeabbrev =
 ***************************************************************************)
 and aconstant = 
   Constant of (symbol * afixity ref * int ref * bool ref * bool ref *
-	bool ref * bool ref * bool ref * bool ref * askeleton option ref * 
+	  bool ref * bool ref * bool ref * bool ref * askeleton option ref * 
     int ref * bool array option ref * bool array option ref *
     acodeinfo option ref * aconstanttype ref * int ref * pos)
 
@@ -271,6 +271,7 @@ val printAbsyn : amodule -> out_channel -> unit
 (*  akind:                                                               *)
 (*************************************************************************)
 val makeKindType : akind -> atype
+val kinds_equal : akind -> akind -> bool
 val getKindType : akind -> akindtype
 val getKindArity : akind -> int
 val getKindArityOption : akind -> int option
@@ -281,6 +282,7 @@ val getKindIndex : akind -> int
 val setKindIndex : akind -> int -> unit
 val isGlobalKind : akind -> bool
 val isLocalKind : akind -> bool
+val isPervasiveKind : akind -> bool
 val string_of_kind : akind -> string
 val string_of_kind' : akind -> string
 
@@ -349,7 +351,7 @@ val makeTypeEnvironment : int -> atype list
 
 val string_of_type : atype -> string
 val string_of_type_ast : atype -> string
-
+val types_equal : atype -> atype -> bool
 (*************************************************************************)
 (*  askeleton:                                                           *)
 (*************************************************************************)
@@ -361,6 +363,7 @@ val getSkeletonNew : askeleton -> bool
 val setSkeletonNew : askeleton -> bool -> unit
 
 val string_of_skeleton : askeleton -> string
+val string_of_skeleton_ast : askeleton -> string
 
 (*************************************************************************)
 (*  afixity:                                                             *)
