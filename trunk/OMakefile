@@ -41,6 +41,9 @@ BuildDist() =
     rm -rf dist/source/test
     rm -rf $(find dist -name .svn)
     rm -f $(find dist -name *.omc)
+    rm -f $(find dist/examples -name *.lp)
+    rm -f $(find dist/examples -name *.lpo)
+    rm -f $(find dist/examples -name depend)
 
 .PHONY: dist
 dist: test
