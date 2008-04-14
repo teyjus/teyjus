@@ -18,3 +18,5 @@ The following table of contents provides you a path to the different kinds of in
 || ContactingTheAuthors    ||      How to get in touch with the authors             ||
 || ProjectSupport          ||      Acknowledgements of Grant Support                ||
 || ConceptIndex            ||      Index of related concepts                        || 
+
+A complete listing of documentation pages including a search option is available [http://code.google.com/p/teyjus/w/list here].
