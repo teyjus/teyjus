@@ -44,7 +44,6 @@ and atypevar =
   TypeVar of (atype option ref * atype option ref * bool ref * bool ref * 
 				bool ref * int option ref * int ref * int ref)
 
-
 (****************************************************************************
 *Type Var Information:
      Bindable seems to correspond to a type cell whose actual contents is given by a 
@@ -279,11 +278,6 @@ let string_of_kind' (Kind(n,_,_,cat,_))=
   | LocalKind -> "LK:" ^ (Symbol.name n) 
   | PervasiveKind -> "PK:" ^ (Symbol.name n) 
 
-
-(* makeKindType                          *)
-let makeKindType kind =
-  ApplicationType(kind, [])
-
 (* getKindType:                                   *)
 (*  Get a kind's type (Local, Global, Pervasive)  *)
 let getKindType (Kind(_,_,_,k,_)) = k
@@ -320,14 +314,26 @@ let getKindIndex kind = !(getKindIndexRef kind)
 let setKindIndex kind index = (getKindIndexRef kind) :=  index
 
 (* isGlobalKind:                         *)
-let isGlobalKind (Kind(_,_,_,k,_)) = (k == GlobalKind)
-let isLocalKind (Kind(_,_,_,k,_)) = (k == LocalKind)
+let isGlobalKind (Kind(_,_,_,k,_)) = (k = GlobalKind)
+let isLocalKind (Kind(_,_,_,k,_)) = (k = LocalKind)
+let isPervasiveKind (Kind(_,_,_,k,_)) = (k = PervasiveKind)
+
+(* makeKindType                          *)
+let makeKindType kind =
+  ApplicationType(kind, [])
 
 let makeGlobalKind symbol arity index =
   Kind(symbol, Some arity, ref index, GlobalKind, Errormsg.none)
 
 let makeLocalKind symbol arity index =
   Kind(symbol, Some arity, ref index, LocalKind, Errormsg.none)
+
+let kinds_equal k1 k2 =
+  let n1 = getKindSymbol k1 in
+  let n2 = getKindSymbol k2 in
+  let a1 = getKindSymbol k1 in
+  let a2 = getKindSymbol k2 in
+  (Symbol.equal n1 n2) && (a1 = a2)
 
 (*************************************************************************)
 (*  atypevar:                                                            *)
@@ -414,6 +420,20 @@ let rec dereferenceType ty =
         Some(ty') -> dereferenceType ty'
       | None -> ty)
   | _ -> ty
+
+and types_equal t1 t2 =
+  let t1 = dereferenceType t1 in
+  let t2 = dereferenceType t2 in
+  match (t1,t2) with
+      ArrowType(l1,r1), ArrowType(l2,r2) -> (types_equal l1 l2) && (types_equal r1 r2)
+    | TypeVarType(_), TypeVarType(_) -> true
+    | ApplicationType(k1,args1), ApplicationType(k2,args2) ->
+        (kinds_equal k1 k2) && (List.for_all2 types_equal args1 args2)
+    | SkeletonVarType(i1), SkeletonVarType(i2) -> i1 = i2
+    | TypeSetType(_),TypeSetType(_) -> t1 = t2
+    | ErrorType, _ -> true
+    | _, ErrorType -> true
+    | _ -> false
 
 (* string_of_type                    *)
 and string_of_type_ast ty =
@@ -674,6 +694,9 @@ let setSkeletonNew skeleton isNew =
 let string_of_skeleton (Skeleton(ty,_,_)) =
   string_of_type ty
 
+let string_of_skeleton_ast (Skeleton(ty,_,_)) =
+  string_of_type_ast ty
+
 (*************************************************************************)
 (*  afixity:                                                             *)
 (*************************************************************************)
@@ -784,15 +807,16 @@ let getConstantCodeInfo = function
 let setConstantCodeInfo c codeInfo = (getConstantCodeInfo c) := codeInfo
 
 let getConstantCodeInfoBuiltinIndex = function
-  Constant(_,_,_,_,_,_,_,_,_,_,_,_,_,ci,_,_,_) ->
+  Constant(sym,_,_,_,_,_,_,_,_,_,_,_,_,ci,_,_,_) ->
    match (!ci) with
      Some(Builtin(index)) -> index
    | Some(_) -> 
       (Errormsg.impossible Errormsg.none
-         "getConstantCodeInfoBuiltinIndex: not a builtin pred")
+         "Absyn.getConstantCodeInfoBuiltinIndex: not a builtin pred")
    | None -> 
       (Errormsg.impossible Errormsg.none
-         "getConstantCodeInfoBuiltinIndex: no definition")      
+         ("Absyn.getConstantCodeInfoBuiltinIndex: no definition for '" ^
+         (Symbol.name sym) ^ "'"))      
 
 (* retrieve the offset field in the clausesBlock of the pred *)
 let getConstantCodeInfoClausesIndex = function
@@ -1980,7 +2004,7 @@ let printAbsyn = fun m out ->
       in
       
       (output "App(";
-      printKind f;
+      output (string_of_kind f);
       output ", ";
       print' t;
       output ")")

@@ -53,7 +53,7 @@ Accumulated tables:
     Kind renamings:
     i -> i
     Constant renamings:
-    foo -> foo
     a -> a
+    foo -> foo
 
 Imported tables:

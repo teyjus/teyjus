@@ -228,12 +228,14 @@ let assignConstIndex gconsts lconsts hconsts =
 		Absyn.setConstantIndex const index; (*set index*)
 		let (newDefs, newNumDefs) =
 		  match (!(Absyn.getConstantCodeInfo const)) with
-			None -> (defs, numDefs)         (* not have def in this module *)
+			  None -> (defs, numDefs)         (* not have def in this module *)
 		  | Some(Absyn.Clauses(clauseBlock)) ->
-			  Absyn.setClauseBlockClose clauseBlock true;
-			  (const :: defs, numDefs + 1)
-		  | _ -> Errormsg.impossible Errormsg.none 
-				   "assignConstIndex: invalid constant codeInfo"
+			    Absyn.setClauseBlockClose clauseBlock true;
+			    (const :: defs, numDefs + 1)
+		  | _ ->
+		      Errormsg.impossible Errormsg.none 
+			      ("Codegen.assignConstIndex: invalid constant codeInfo on constant '" ^
+			      (Absyn.getConstantName const) ^ "'")
 		in
 		assignLocalConstIndex rest (index + 1) newDefs newNumDefs
   in

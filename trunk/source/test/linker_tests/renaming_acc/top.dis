@@ -45,12 +45,12 @@ Module table:
 Accumulated tables:
 0: acc
     Kind renamings:
+    k -> <local kind #0>
     i -> i
     j -> <local kind #1>
-    k -> <local kind #0>
     Constant renamings:
+    c -> <local const #1>
     a -> a
     b -> <local const #0>
-    c -> <local const #1>
 
 Imported tables:

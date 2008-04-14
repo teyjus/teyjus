@@ -8,5 +8,5 @@ useonly foo1.
 
 % Tests useonly mod, exportdef sig.
 type foo2 i -> o.
-expdef foo2.
+exportdef foo2.
 
