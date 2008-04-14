@@ -14,7 +14,7 @@ The following table of contents provides you a path to the different kinds of in
 || TeyjusPrograms          ||      The Syntax of Teyjus Programs                    ||
 || TeyjusBuiltins          ||      The Builtin Predicates Supported                 ||
 || [Examples]              ||      Experiment with the system                       ||
-|| ContactingTheAuthors    ||      How to get in touch with the authors             ||
 || PeopleInvolved          ||      The people behind the system                     ||
+|| ContactingTheAuthors    ||      How to get in touch with the authors             ||
 || ProjectSupport          ||      Acknowledgements of Grant Support                ||
 || ConceptIndex            ||      Index of related concepts                        || 
