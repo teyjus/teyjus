@@ -16,7 +16,7 @@ The following symbols are recognized as constants with the associated attributes
 
     overloaded infix left associative operator with precedence level 150 and type either (int -> int -> int) or (real -> real -> real).
 
-*
+`*`
    overloaded infix left associative operator with precedence level 160 and type either (int -> int -> int) or (real -> real -> real).
 div
 
