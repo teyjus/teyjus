@@ -11,7 +11,7 @@ The code accessible from this page illustrates the use of higher-order abstract 
 
  * Implementing a Horn clause logic interpreter
     * [http://teyjus.googlecode.com/svn/trunk/examples/handbook/logic/hc_interp.sig Signature] and [http://teyjus.googlecode.com/svn/trunk/examples/handbook/logic/hc_interp.mod code] for the interpreter
-    * [http://teyjus.googlecode.com/svn/trunk/examples/handbook/logic/hcinterp_examples.sig Signature] and [http://teyjus.googlecode.com/svn/trunk/examples/handbook/logic/hcinterp_examples.sig  code] for a testing harness
+    * [http://teyjus.googlecode.com/svn/trunk/examples/handbook/logic/hcinterp_examples.sig Signature] and [http://teyjus.googlecode.com/svn/trunk/examples/handbook/logic/hcinterp_examples.mod code] for a testing harness
 
  * Analyzing formula structure
     * [http://teyjus.googlecode.com/svn/trunk/examples/handbook/logic/refl_syntax.sig Signature] and [http://teyjus.googlecode.com/svn/trunk/examples/handbook/logic/refl_syntax.mod code] for recognizing terms and quantifier free formulas
@@ -19,7 +19,7 @@ The code accessible from this page illustrates the use of higher-order abstract 
     * [http://teyjus.googlecode.com/svn/trunk/examples/handbook/logic/hcsyntax_examples.sig Signature] and [http://teyjus.googlecode.com/svn/trunk/examples/handbook/logic/hcsyntax_examples.mod code] for a testing harness
 
  * Analysis and synthesis of formula structure
-    * [http://teyjus.googlecode.com/svn/trunk/examples/handbook/logic/pnf.sig Signature] and [http://teyjus.googlecode.com/svn/trunk/examples/handbook/logic/pcf.mod code] for a transformer to prenex normal form
+    * [http://teyjus.googlecode.com/svn/trunk/examples/handbook/logic/pnf.sig Signature] and [http://teyjus.googlecode.com/svn/trunk/examples/handbook/logic/pnf.mod code] for a transformer to prenex normal form
     * [http://teyjus.googlecode.com/svn/trunk/examples/handbook/logic/pnf_examples.sig Signature] and [http://teyjus.googlecode.com/svn/trunk/examples/handbook/logic/pnf_examples.mod code] for a testing harness
 
  *  Scripts illustrating the use of the code
