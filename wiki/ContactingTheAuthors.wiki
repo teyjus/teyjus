@@ -16,7 +16,7 @@ _Gopalan Nadathur_  `[`gopalan atsign cs dot umn dot edu`]`
    if you are interested in finding out about ongoing developments and possible projects or if you want to discuss new ideas that you have related to _Teyjus_-like languages and systems
 
 _Xiaochu Qi_ `[`xqi atsign cs dot umn dot edu`]`
-   if you want the low-down on the virtual machine, the compiler, the treatment of portability issues and the code that realizes these various aspects
+   if you want the low-down on the virtual machine, the compiler, the treatment of portability issues and the code that realizes these various aspects; in short about the real heart of the _Teyjus_ system
 
 _Zachary Snow_ `[`zacharysnow atsign gmail dot com`]`
    for questions about the front-end of the compiler, the treatment of types or if you would like to hear about the ongoing project aimed at implementing _Twelf_ using the _Lambda Prolog_ machine
