@@ -12,4 +12,4 @@ The builtin notions supported by Teyjus are sub-categorized below and are descri
 
    * [ComparisonPreds Builtin Comparison Predicates]
 
-   * [IoPreds Input/Output and other Side Effecting Predicates]
+   * [IoPreds Input/Output and Other Side-Effecting Predicates]
