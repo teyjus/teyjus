@@ -40,5 +40,4 @@ programs. There is some divergence in the language treated between
 different implementations of Lambda Prolog, so you 
 may want also to pay attention to the particular rendition of these
 examples into code for the Teyjus system. If you are already familiar
-with Lambda Prolog but want to understand the structure of programs in
-Teyjus, see ProgrammingInTeyjus, ProgramStructureAndSyntaxInTeyjus.
+with Lambda Prolog but want to understand how to program using the _Teyjus_ system, you might want to proceed to the page that describes [ProgramStructure the general structure of programs in Teyjus] and, subsequently to the page that specifies [TeyjusPrograms the syntax supported by Teyjus]. 
