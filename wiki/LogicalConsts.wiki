@@ -34,4 +34,4 @@ The following constants are recognized by the Teyjus parser as logical constants
    =          of type A -> A -> o, representing (Lambda Prolog) equality.
 }}}
 
-The predicates , (comma), &, ; (semicolon), :- and => are all actually recognized as infix operators with the following characteristics: comma is left associative with precedence level 110, & is right associative with precedence level 120, semicolon is left associative with precedence level 100, :- is non associative with precedence level 0 and => is right associative with precedence level 130. 
+The predicates _,_ (comma), _&_, _;_ (semicolon), _:-_ and _=>_ are all actually recognized as infix operators with the following characteristics: comma is left associative with precedence level 110, _&_ is right associative with precedence level 120, semicolon is left associative with precedence level 100, _:-_ is non associative with precedence level 0 and _=>_ is right associative with precedence level 130. 
