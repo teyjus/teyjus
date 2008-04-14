@@ -1,0 +1,96 @@
+#summary Pervasive constants
+
+= Pervasive Constants in Teyjus =
+
+The following symbols are recognized as constants with the associated attributes. Those of these symbols that are not categorized as keywords (see section Characterization of Tokens in Teyjus) can be redefined by the user.
+
+~
+
+    overloaded prefix operator of type (int -> int) and (real -> real). Nonassociative and with higher precedence than everything else except application.
++
+
+    overloaded infix left associative operator with precedence level 150 and type either (int -> int -> int) or (real -> real -> real).
+-
+
+    overloaded infix left associative operator with precedence level 150 and type either (int -> int -> int) or (real -> real -> real).
+*
+
+    overloaded infix left associative operator with precedence level 160 and type either (int -> int -> int) or (real -> real -> real).
+div
+
+    infix left associative operator with precedence level 160 and type int -> int -> int.
+/
+
+    infix left associative operator with precedence level 160 and type real -> real -> real.
+mod
+
+    infix left associative operator with precedence level 160 and type int -> int -> int.
+int_to_real
+
+    of type int -> real.
+abs
+
+    of type int -> int.
+sqrt
+
+    of type real -> real.
+sin
+
+    of type real -> real. Argument is in radians.
+cos
+
+    of type real -> real. Argument is in radians.
+arctan
+
+    of type real -> real. Result (when evaluation is forced) is in radians.
+ln
+
+    of type real -> real.
+floor
+
+    of type real -> int.
+ceil
+
+    of type real -> int.
+truncate
+
+    of type real -> int.
+rabs
+
+    of type real -> real.
+^
+
+    of type string -> string -> string, representing string concatenation.
+size
+
+    of type string -> int, representing the length function on strings.
+chr
+
+    of type int -> string.
+string_to_int
+
+    of type string -> int representing the usual ord function on characters (encoded as single character strings).
+substring
+
+    of type string -> int -> int -> string. When evaluated, (substring s i j) returns the string starting at position i (zero indexed) in the string and ending at position (i + j). The result is undefined if i < 0 or the length of s is less than i + j.
+int_to_string
+
+    of type int -> string. When evaluated, the result returned is a string rendition of the integer value of the first argument.
+real_to_string
+
+    of type real -> string. When evaluated, the result returned is a string rendition of the real value of the first argument.
+std_in
+
+    of type in_stream, representing the standard input stream
+std_out
+
+    of type out_stream, representing the standard output stream
+std_err
+
+    of type in_stream, representing the standard error stream
+nil
+
+    of type (list A), representing the (polymorphic) nil list
+::
+
+    of type (A -> (list A) -> (list A)) representing the usual list constructor. 
