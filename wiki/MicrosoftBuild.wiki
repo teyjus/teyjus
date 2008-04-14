@@ -40,4 +40,7 @@ If you want to work on the code of Teyjus, you will need a few more tools in ord
 You should also obtain the full source code of Teyjus from the [http://code.google.com/p/teyjus/source/checkout subversion repository]. You can then run the automated tests by running the following command at the command line in the /source directory:
 {{{
   omake test
+  omake compiler-test
+  omake linker-test
 }}}
+Note that, due to the way ActivePerl executes programs from the command line, the test 'maps' (run when 'omake test' is invoked) will fail.
