@@ -2,21 +2,21 @@
 
 = An Interactive Theorem Prover Implemented in Teyjus =
 
-The code accessible from this page shows the implementation of an interactive theorem prover based on tactics and tacticals in Teyjus. This code brings out many of the good features of Lambda Prolog: lambda terms as a means for capturing the higher-order abstract syntax of formulas and proofs, beta conversion as a means for realizing substitution correctly, benefits of higher-order programming and the support for search in logic programming as a natural basis for realizing tactics and tacticals. The menu below provides some help in understanding the structure of the code. All of the code listed here is available in the distribution of Teyjus under `examples/handbook/ndprover`.
+The code accessible from this page shows the implementation of an interactive theorem prover based on tactics and tacticals in Teyjus. This code brings out many of the good features of Lambda Prolog: lambda terms as a means for capturing the higher-order abstract syntax of formulas and proofs, beta conversion as a means for realizing substitution correctly, benefits of higher-order programming and the support for search in logic programming as a natural basis for realizing tactics and tacticals. The menu below provides some help in understanding the structure of the code. All of the code listed here is available in the distribution of Teyjus under `examples/ndprover`.
 
   * Encodings for formulas and proofs in a first order logic
-      * Sorts and contants encoding the [http://teyjus.googlecode.com/svn/trunk/examples/handbook/ndprover/logic.sig logical] and [http://teyjus.googlecode.com/svn/trunk/examples/handbook/ndprover/nonlogical.sig nonlogical] vocabulary of a first-order logic. 
-      * [http://teyjus.googlecode.com/svn/trunk/examples/handbook/ndprover/formulas.mod Illustrations of the encodings of formulas]
-      * [http://teyjus.googlecode.com/svn/trunk/examples/handbook/ndprover/ndproofs.sig Encodings of proofs in a natural deduction calculus] 
+      * Sorts and contants encoding the [http://teyjus.googlecode.com/svn/trunk/examples/ndprover/logic.sig logical] and [http://teyjus.googlecode.com/svn/trunk/examples/ndprover/nonlogical.sig nonlogical] vocabulary of a first-order logic. 
+      * [http://teyjus.googlecode.com/svn/trunk/examples/ndprover/formulas.mod Illustrations of the encodings of formulas]
+      * [http://teyjus.googlecode.com/svn/trunk/examples/ndprover/ndproofs.sig Encodings of proofs in a natural deduction calculus] 
 
   * Implementation of tactics and tacticals
-      * [http://teyjus.googlecode.com/svn/trunk/examples/handbook/ndprover/goaltypes.sig Encodings of goals in theorem proving]
-      * [http://teyjus.googlecode.com/svn/trunk/examples/handbook/ndprover/ndtac.sig Signature] and [http://teyjus.googlecode.com/svn/trunk/examples/handbook/ndprover/ndtac.mod code] realizing some primitive tactics ([http://teyjus.googlecode.com/svn/trunk/examples/handbook/ndprover/listmanip.sig Signature] and [http://teyjus.googlecode.com/svn/trunk/examples/handbook/ndprover/listmanip.mod code] for list manipulation routines used in this code)
-      * [http://teyjus.googlecode.com/svn/trunk/examples/handbook/ndprover/goalred.sig Signature] and [http://teyjus.googlecode.com/svn/trunk/examples/handbook/ndprover/goalred.mod code] for goal simplification code
-      * [http://teyjus.googlecode.com/svn/trunk/examples/handbook/ndprover/tacticals.sig Signature] and [http://teyjus.googlecode.com/svn/trunk/examples/handbook/ndprover/tacticals.mod code] for some tacticals
+      * [http://teyjus.googlecode.com/svn/trunk/examples/ndprover/goaltypes.sig Encodings of goals in theorem proving]
+      * [http://teyjus.googlecode.com/svn/trunk/examples/ndprover/ndtac.sig Signature] and [http://teyjus.googlecode.com/svn/trunk/examples/ndprover/ndtac.mod code] realizing some primitive tactics ([http://teyjus.googlecode.com/svn/trunk/examples/ndprover/listmanip.sig Signature] and [http://teyjus.googlecode.com/svn/trunk/examples/ndprover/listmanip.mod code] for list manipulation routines used in this code)
+      * [http://teyjus.googlecode.com/svn/trunk/examples/ndprover/goalred.sig Signature] and [http://teyjus.googlecode.com/svn/trunk/examples/ndprover/goalred.mod code] for goal simplification code
+      * [http://teyjus.googlecode.com/svn/trunk/examples/ndprover/tacticals.sig Signature] and [http://teyjus.googlecode.com/svn/trunk/examples/ndprover/tacticals.mod code] for some tacticals
   
-  * [http://teyjus.googlecode.com/svn/trunk/examples/handbook/ndprover/inter.sig Signature] and [http://teyjus.googlecode.com/svn/trunk/examples/handbook/ndprover/inter.mod code] for the interactive theorem prover
+  * [http://teyjus.googlecode.com/svn/trunk/examples/ndprover/inter.sig Signature] and [http://teyjus.googlecode.com/svn/trunk/examples/ndprover/inter.mod code] for the interactive theorem prover
 
-  * [http://teyjus.googlecode.com/svn/trunk/examples/handbook/ndprover/script Script] illustrating the use of the code
+  * [http://teyjus.googlecode.com/svn/trunk/examples/ndprover/script Script] illustrating the use of the code
   
 The code in this directory is based on work in the doctoral dissertation of Amy Felty and has been adapted to Teyjus from an demo of the first implementation of Lambda Prolog.
