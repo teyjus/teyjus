@@ -18,7 +18,7 @@ OCamlProgramCopy(all, ., source/tjdepend)
 # The dist target will package up teyjus into a tarball.
 
 # Here are the main steps in building the tarball
-#  1. Run all tests
+#  1. Run all tests (temporarily disabled)
 #  2. Create a distribution directory
 #  3. Confirm that 'omake all' works within that directory
 #  4. Re-create the distribution directory
@@ -46,7 +46,7 @@ BuildDist() =
     rm -f $(find dist/examples -name depend)
 
 .PHONY: dist
-dist: test
+dist:
     section
         BuildDist()
         cd dist && omake all
