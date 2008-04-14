@@ -6,23 +6,22 @@ Teyjus embodies an understanding of the following primitive types
  	
 {{{
    int          for integers in an implementation determined range. Teyjus supports
-                integers in the range (-2**25,2**25).
+                32 bit integers similar to those provided by the int type in C.
 
-   real         for reals in an implementation determined range. Teyjus currently 
-                supports a representation based on a 15 bit mantissa and 7 bit 
-                exponent representation.
+   real         for reals in an implementation determined range. Teyjus supports reals 
+                with the same precision and size restrictions as doubles in C.
 
-   string       for the type of strings
+   string       for the type of strings.
 
-   in_stream    for input streams
+   in_stream    for input streams.
 
-   out_stream   for output streams
+   out_stream   for output streams.
 
-   o            for the type of propositions
+   o            for the type of propositions.
 }}}
 
 Teyjus also supports the following type constructors
  	
 {{{
-   list         the unary type constructor for lists
+   list         the unary type constructor for lists.
 }}}
