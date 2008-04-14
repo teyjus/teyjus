@@ -1,13 +1,35 @@
-#summary One-sentence summary of this page.
+#summary Some program manipulating programs in Teyjus
 
-= Introduction =
+= Some Program Manipulating Programs in Teyjus =
 
-Add your content here.
+The code accessible from this page illustrates the use of higher-order abstract syntax as it is supported in Lambda Prolog in representing and manipulating programs in a simple (functional) programming language. One component to understand here is the way programs are represented. Four manipulation tasks are also considered and these illustrate the benefits of beta reduction in realizing substitution into formulas, of higher-order unification in probing formula structure and of the new scoping primitives in Lambda Prolog in carrying out computations over abstraction structure. The menu below provides some help in understanding the structure of the code. All of the code listed here is available in the distribution of Teyjus under `examples/handbook/progs`.
 
 
-= Details =
+  * Term encodings for programs in a functional programming language
+      * [http://teyjus.googlecode.com/svn/trunk/examples/handbook/progs/fp_types.sig Kinds and constants for encoding function structure (abstraction and application)]
+      * [http://teyjus.googlecode.com/svn/trunk/examples/handbook/progs/fp_vocab.sig Constants representing programming language primitives]
+      * [http://teyjus.googlecode.com/svn/trunk/examples/handbook/progs/terms.mod Encodings of some simple programs]
+      * [http://teyjus.googlecode.com/svn/trunk/examples/handbook/progs/refl_syntax.sig Signature] and [http://teyjus.googlecode.com/svn/trunk/examples/handbook/progs/refl_syntax.mod code] for a recognizer for valid program terms 
 
-Add your content here.  Format your content with:
-  * Text in *bold* or _italic_
-  * Headings, paragraphs, and lists
-  * Automatic links to other wiki pages
+  * Implementing an interpreter for the programming language
+      * [http://teyjus.googlecode.com/svn/trunk/examples/handbook/progs/eval_basic.sig Signature] and [http://teyjus.googlecode.com/svn/trunk/examples/handbook/progs/eval_basic.mod code] for an evaluator for the `pure' terms
+      * [http://teyjus.googlecode.com/svn/trunk/examples/handbook/progs/eval.sig Signature] and [http://teyjus.googlecode.com/svn/trunk/examples/handbook/progs/eval.mod code] for an evaluator for the full programming language
+      * [http://teyjus.googlecode.com/svn/trunk/examples/handbook/progs/eval_examples.sig Signature] and [http://teyjus.googlecode.com/svn/trunk/examples/handbook/progs/eval_examples.mod code] for a testing harness
+      * [http://teyjus.googlecode.com/svn/trunk/examples/handbook/progs/script1 Script] depicting a run of the code
+  
+  * An example of program analysis using higher-order unification
+      * [http://teyjus.googlecode.com/svn/trunk/examples/handbook/progs/curry_transform.sig Signature] and [http://teyjus.googlecode.com/svn/trunk/examples/handbook/progs/curry_transform.mod code] for performing a currying transformation on binary functions
+      * [http://teyjus.googlecode.com/svn/trunk/examples/handbook/progs/curry_test.sig Signature] and [http://teyjus.googlecode.com/svn/trunk/examples/handbook/progs/curry_test.mod code] for a testing harness
+      * [http://teyjus.googlecode.com/svn/trunk/examples/handbook/progs/script2 Script] depicting a run of the code
+      
+  * Another example of program analysis using higher-order unification
+      * [http://teyjus.googlecode.com/svn/trunk/examples/handbook/progs/tr_recognizer.sig Signature] and [http://teyjus.googlecode.com/svn/trunk/examples/handbook/progs/tr_recognizer.mod code] for recognizing tail recursiveness of binary functions
+      * [http://teyjus.googlecode.com/svn/trunk/examples/handbook/progs/tr1_test.sig Signature] and [http://teyjus.googlecode.com/svn/trunk/examples/handbook/progs/tr1_test.mod code] for a testing harness
+      * [http://teyjus.googlecode.com/svn/trunk/examples/handbook/progs/script3 Script] depicting a run of the code
+  
+  * A final example of program analysis, this time using scoping primitives for recursion over abstraction structure
+      * [http://teyjus.googlecode.com/svn/trunk/examples/handbook/progs/general_tr.sig Signature] and [http://teyjus.googlecode.com/svn/trunk/examples/handbook/progs/general_tr.mod code] for a tail recursion recognizer for arbitrary arity functions
+      * [http://teyjus.googlecode.com/svn/trunk/examples/handbook/progs/tr2_test.sig Signature] and [http://teyjus.googlecode.com/svn/trunk/examples/handbook/progs/tr2_test.mod code] for a testing harness
+      * [http://teyjus.googlecode.com/svn/trunk/examples/handbook/progs/script4 Script] illustrating the use of the code * [http://teyjus.googlecode.com/svn/trunk/examples/handbook/progs/handbook-progs.tar.gz Download] a tarred version of all the code
+
+The code in this directory is based on the paper "Higher-Order Logic Programming" by Gopalan Nadathur and Dale Miller
