@@ -12,7 +12,7 @@ time
 
     Predicate type: int -> int -> o. Calls the Unix 'gettimeofday' function. Instantiates the first and second arguments to the number of seconds and microseconds respectively, since 00:00 Universal Coordinated Time, Janurary 1, 1970. The arguments must be uninstantiated variables.
 
-_`[`Not yet implemented`]`_
+   _`[`Not yet implemented`]`_
 
 getenv
 
