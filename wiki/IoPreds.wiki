@@ -8,9 +8,11 @@ is
 
     This is the evaluation predicate familiar from Prolog. It is actually defined as an infix, non associative operator with precedence level 130. This predicate is overloaded in an ad hoc way: it can be used at the types int -> int -> o, real -> real -> o and string -> string -> o. The determination of specific type can be delayed to run-time and an illegal usage may result in a run-time type error.
 
-time   _`[`Not yet implemented`]`_
+time   
 
     Predicate type: int -> int -> o. Calls the Unix 'gettimeofday' function. Instantiates the first and second arguments to the number of seconds and microseconds respectively, since 00:00 Universal Coordinated Time, Janurary 1, 1970. The arguments must be uninstantiated variables.
+
+_`[`Not yet implemented`]`_
 
 getenv
 
