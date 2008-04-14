@@ -1,4 +1,9 @@
-#summary How to build Teyjus
+#summary Downloading and building Teyjus
+
+= Downloading Teyjus =
+
+The latest source distribution and Windows installer are available as
+[http://code.google.com/p/teyjus/downloads/list?q=label:Featured featured downloads]. [http://code.google.com/p/teyjus/downloads/list Older versions] are also available.
 
 = How to Build Teyjus =
 
