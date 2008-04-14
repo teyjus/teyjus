@@ -18,6 +18,7 @@ tr2: tr2_test.lp
 %.lp : %.lpo
 	$(TEYJUS)/tjlink $*
 
+-include depend
 depend: *.mod *.sig
 	$(TEYJUS)/tjdepend *.mod > depend-stage
 	mv depend-stage depend

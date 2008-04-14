@@ -1,7 +1,7 @@
 # Modify the path to the Teyjus executables as needed
 TEYJUS= ../../source
 
-.PHONY: all lists lists2 polytyping tailrecursion
+.PHONY: all lists lists2 assoc reverse funs maps
 all: lists lists2 assoc reverse funs maps
 lists: lists.lp
 lists2: lists2.lp
