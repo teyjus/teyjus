@@ -1,4 +1,5 @@
 #summary A Brief Description of the Teyjus System and Project
+#labels Featured
 
 = Teyjus - An Implementation of Lambda Prolog =
 
