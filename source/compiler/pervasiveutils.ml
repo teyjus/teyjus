@@ -20,7 +20,7 @@
 ****************************************************************************)
 let isOverloaded c =
   (Pervasive.isoverloadUMinusConstant c) ||
-  (Pervasive.isoverloadAbsConstant c) ||
+  (Pervasive.isoverloadAbsConstant c) || 
   (Pervasive.isoverloadPlusConstant c) ||
   (Pervasive.isoverloadMinusConstant c) ||
   (Pervasive.isoverloadTimeConstant c) ||
@@ -39,7 +39,7 @@ let getIntOverload c =
   else if Pervasive.isoverloadTimeConstant c then
     Pervasive.intmultConstant
   else if Pervasive.isoverloadAbsConstant c then
-    Pervasive.iabsConstant
+    Pervasive.iabsConstant 
   else if Pervasive.isoverloadLTConstant c then
     Pervasive.intlssConstant
   else if Pervasive.isoverloadGTConstant c then
@@ -61,7 +61,7 @@ let getRealOverload c =
   else if Pervasive.isoverloadTimeConstant c then
     Pervasive.realmultConstant
   else if Pervasive.isoverloadAbsConstant c then
-    Pervasive.iabsConstant
+    Pervasive.rabsConstant 
   else if Pervasive.isoverloadLTConstant c then
     Pervasive.reallssConstant
   else if Pervasive.isoverloadGTConstant c then
