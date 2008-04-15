@@ -5,7 +5,7 @@
 The following symbols are recognized as constants with the associated attributes. Those of these symbols that are not categorized as keywords (see section Characterization of Tokens in Teyjus) can be redefined by the user.
 
 ~
-    overloaded prefix operator of type (int -> int) and (real -> real). Nonassociative and with higher precedence than everything else except application.
+    overloaded prefix operator of type (int -> int) or (real -> real). Nonassociative and with higher precedence than everything else except application.
 
 +
 
@@ -19,7 +19,7 @@ The following symbols are recognized as constants with the associated attributes
    overloaded infix left associative operator with precedence level 160 and type either (int -> int -> int) or (real -> real -> real).
 abs
 
-   overloaded prefix operator of type (int -> int) and (real -> real). 
+   overloaded prefix operator of type (int -> int) or (real -> real). 
 div
 
     infix left associative operator with precedence level 160 and type int -> int -> int.
