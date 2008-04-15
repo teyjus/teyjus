@@ -1020,10 +1020,18 @@ char* OC_mkGenericConstVar(char* varList)
   text = UTIL_appendStr(varList, constVar);   free(constVar);
   varList = UTIL_appendStr(text, "\n\n");       free(text);
 
-  constVar = OC_mkOverLoadConstVar("aabs", "ref Absyn.NoFixity", "ref 0",
-				   OVERLOADTYSKEL1, OVERLOADABS);
+  
+  constVar =  OC_mkConstVarText("abs", "ref Absyn.NoFixity", 
+				"ref 0", "ref true", 
+				OVERLOADTYSKEL1,
+				"ref 0", "ref(Some(Array.make 0 true))", 
+				"ref None", "ref None",
+				"ref(Absyn.PervasiveConstant(true))",
+				OVERLOADABS, "0", "abs");
+
   text = UTIL_appendStr(varList, constVar);   free(constVar);
   varList = UTIL_appendStr(text, "\n\n");       free(text);
+  
 
   constVar = OC_mkOverLoadConstVar("+", "ref Absyn.Infixl", "ref 150",
 				   OVERLOADTYSKEL2, OVERLOADPLUS);
@@ -1076,9 +1084,11 @@ char* OC_mkGenericConstVarDec(char* decList)
   text = UTIL_appendStr(decList, dec);   free(decList); free(dec);
   decList = text;
 
+  
   dec = OC_mkConstVarDec(OVERLOADABS);
   text = UTIL_appendStr(decList, dec);   free(decList); free(dec);
   decList = text;
+  
 
   dec = OC_mkConstVarDec(OVERLOADPLUS);
   text = UTIL_appendStr(decList, dec);   free(decList); free(dec);
@@ -1123,10 +1133,12 @@ char* OC_mkGenericConstTabEntry(char* entries)
   free(tabEntry); free(entries);
   entries = text;
 
-  tabEntry = OC_mkTabEntry("aabs", OVERLOADABS);
+  
+  tabEntry = OC_mkTabEntry("abs", OVERLOADABS);
   text = UTIL_appendStr(entries, tabEntry);
   free(tabEntry); free(entries);
   entries = text;
+  
 
   tabEntry = OC_mkTabEntry("+", OVERLOADPLUS);
   text = UTIL_appendStr(entries, tabEntry);
@@ -1190,10 +1202,12 @@ char* OC_mkGenericConstFuncDecs(char* funcDefs)
   text = UTIL_appendStr(funcDefs, def);  free(def); free(funcDefs);
   funcDefs = text;
 
+  
   funcName = OC_mkIsConstFuncName(OVERLOADABS);
   def = OC_mkIsConstFuncDec(funcName);   free(funcName);
   text = UTIL_appendStr(funcDefs, def);  free(def); free(funcDefs);
   funcDefs = text;
+  
 
   funcName = OC_mkIsConstFuncName(OVERLOADPLUS);
   def = OC_mkIsConstFuncDec(funcName);   free(funcName);
@@ -1252,10 +1266,12 @@ char* OC_mkGenericConstFuncDefs(char* funcDefs)
   text = UTIL_appendStr(funcDefs, def);  free(def); free(funcDefs);
   funcDefs = UTIL_appendStr(text, "\n\n"); free(text);
 
+  
   funcName = OC_mkIsConstFuncName(OVERLOADABS);
   def = OC_mkIsConstFuncDef(funcName, OVERLOADABS);   free(funcName);
   text = UTIL_appendStr(funcDefs, def);  free(def); free(funcDefs);
   funcDefs = UTIL_appendStr(text, "\n\n"); free(text);
+  
 
   funcName = OC_mkIsConstFuncName(OVERLOADPLUS);
   def = OC_mkIsConstFuncDef(funcName, OVERLOADPLUS);   free(funcName);
