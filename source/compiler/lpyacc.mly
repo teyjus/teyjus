@@ -444,7 +444,7 @@ constvar:
   | LEQ                      { makeConst "<=" }
   | GTR                      { makeConst ">" }
   | GEQ                      { makeConst ">=" }
-  | UMINUS                   { makeConst "-" }
+  | UMINUS                   { makeConst "~" }
   | COLONDASH                { makeConst ":-" }
   | IMPLIES                  { makeConst "=>" }
 
