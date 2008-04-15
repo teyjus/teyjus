@@ -50,7 +50,7 @@ dist:
     section
         BuildDist()
         cd dist && omake all
-        VERSION = $(shell dist/tjcc -v | perl -pe 's/Teyjus version//')
+        VERSION = $(shell dist/tjcc -v | perl -pe 's/Teyjus version //')
         BuildDist()
         rm -f dist.tar.gz
         mv dist teyjus
