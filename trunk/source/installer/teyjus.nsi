@@ -1,10 +1,16 @@
+!include "MUI2.nsh"
 !include "path.nsh"
+
+!system 'cd ..\.. && svn up' = 0
+!system 'cd .. && omake all' = 0
+!system '..\tjcc -v | perl -pe "s/Teyjus version/!define VERSION/" > version.nsh'
+!include version.nsh
 
 ; The name of the installer
 Name "Teyjus"
 
 ; The file to write
-OutFile "teyjus-installer.exe"
+OutFile "teyjus-installer-${VERSION}.exe"
 
 ; The default installation directory
 InstallDir $PROGRAMFILES\Teyjus
@@ -17,35 +23,43 @@ InstallDirRegKey HKLM "Software\Teyjus" "Install_Dir"
 RequestExecutionLevel admin
 
 ;--------------------------------
-
 ; Pages
 
-;Page components
-Page directory
-Page instfiles
+!insertmacro MUI_PAGE_DIRECTORY
+!insertmacro MUI_PAGE_INSTFILES
+!define MUI_FINISHPAGE_TEXT "Teyjus has been installed successfully. The directory '$INSTDIR\bin' has been added to your path."
+!insertmacro MUI_PAGE_FINISH
 
-UninstPage uninstConfirm
-UninstPage instfiles
+
+!insertmacro MUI_UNPAGE_CONFIRM
+!insertmacro MUI_UNPAGE_INSTFILES
+
 
 ;--------------------------------
+;Languages
+ 
+!insertmacro MUI_LANGUAGE "English"
 
+
+;--------------------------------
 ; The stuff to install
+
 Section "Teyjus (required)"
 
-  ; Set output path to the installation directory.
-  SetOutPath $INSTDIR
-  
-  ; Files to install
+  SetOutPath $INSTDIR\bin
   File "..\tjcc.exe"
   File "..\tjsim.exe"
   File "..\tjlink.exe"
   File "..\tjdis.exe"
   File "..\tjdepend.exe"
-  
-  File "..\..\emacs\teyjus.el"
+
+  SetOutPath $INSTDIR
+  File /r /x .svn "..\..\emacs"
+
+  File /r /x .svn /x depend /x *.lp /x *.lpo "..\..\examples"
   
   ; Add to user's $PATH
-  Push $INSTDIR
+  Push $INSTDIR\bin
   Call AddToPath
     
   ; Write the installation path into the registry
@@ -71,12 +85,9 @@ Section "Uninstall"
   DeleteRegKey HKLM SOFTWARE\Teyjus
 
   ; Remove files and uninstaller
-  Delete $INSTDIR\tjcc.exe
-  Delete $INSTDIR\tjsim.exe
-  Delete $INSTDIR\tjlink.exe
-  Delete $INSTDIR\tjdis.exe
-  Delete $INSTDIR\tjdepend.exe
-  Delete $INSTDIR\teyjus.el
+  RMDir /r $INSTDIR\bin
+  RMDir /r $INSTDIR\emacs
+  RMDir /r $INSTDIR\examples
   Delete $INSTDIR\uninstall.exe
 
   ; Remove from user's $PATH
@@ -84,7 +95,6 @@ Section "Uninstall"
   Call un.RemoveFromPath
 
   ; Remove directories used
-  RMDir "$SMPROGRAMS\Teyjus"
   RMDir "$INSTDIR"
 
 SectionEnd
