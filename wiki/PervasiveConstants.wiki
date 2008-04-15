@@ -17,6 +17,9 @@ The following symbols are recognized as constants with the associated attributes
 
 `*`
    overloaded infix left associative operator with precedence level 160 and type either (int -> int -> int) or (real -> real -> real).
+abs
+
+   overload prefix operator of type (int -> int) and (real -> real). 
 div
 
     infix left associative operator with precedence level 160 and type int -> int -> int.
@@ -29,9 +32,6 @@ mod
 int_to_real
 
     of type int -> real.
-abs
-
-    of type int -> int.
 sqrt
 
     of type real -> real.
@@ -56,9 +56,6 @@ ceil
 truncate
 
     of type real -> int.
-rabs
-
-    of type real -> real.
 ^
 
     of type string -> string -> string, representing string concatenation.
