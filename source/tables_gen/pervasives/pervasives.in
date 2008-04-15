@@ -90,11 +90,11 @@
       /* int -> int */
       TYPE      7      int -> int
         /* unary minus on integers */
-       56  %i~        intuminus  0 0  0  TRUE   FALSE  MAX PREFIX   NOCODE ~
+       56  %i~        intuminus  0 0  0  TRUE   FALSE  MAX PREFIX   NOCODE -
         /* modulus */
        61  mod        mod        0 0  0  TRUE   TRUE   160 INFIXL   NOCODE 
         /* integer abs */
-       63  %iabs      iabs       0 0  0  TRUE   TRUE   0   NOFIXITY NOCODE abs
+       63  %iabs        iabs       0 0  0  TRUE   TRUE   0   NOFIXITY NOCODE abs
       ;;
 
       /* int -> int -> int */
@@ -142,7 +142,7 @@
       /* real -> real */
       TYPE      12     real -> real
         /* unary minus on real */
-       64  %r~        realuminus 0 0  0  TRUE   FALSE  MAX PREFIX   NOCODE ~
+       64  %r~        realuminus 0 0  0  TRUE   FALSE  MAX PREFIX   NOCODE -
         /* square root */
        69  sqrt       sqrt       0 0  0  TRUE   TRUE   0   NOFIXITY NOCODE
         /* sine */
@@ -154,7 +154,7 @@
         /* natural log */
        73  ln         log        0 0  0  TRUE   TRUE   0   NOFIXITY NOCODE
         /* real abs */
-       77  %rabs      rabs       0 0  0  TRUE   TRUE   0   NOFIXITY NOCODE abs
+       77  %rabs      rabs       0 0  0  TRUE   TRUE   0   NOFIXITY NOCODE rabs
       ;;
 
       /* real -> string */ 
