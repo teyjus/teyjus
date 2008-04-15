@@ -2,7 +2,7 @@
 
 = Some Formula Manipulating Programs in Teyjus =
 
-The code accessible from this page illustrates the use of higher-order abstract syntax as it is supported in Lambda Prolog in representing and manipulating formulas in quantificational logic. One component to understand here is the way formulas are encoded. Three manipulation tasks are also considered and these illustrate the benefits of beta reduction in realizing substitution into formulas, of higher-order unification in probing formula structure and of the new scoping primitives in Lambda Prolog in carrying out computations over abstraction structure. The menu below provides some help in understanding the structure of the code. All of the code listed here is available in the distribution of Teyjus under `examples/handbook/logic`.
+The code accessible from this page illustrates the use of higher-order abstract syntax as it is supported in Lambda Prolog in representing and manipulating formulas in quantificational logic. One component to understand here is the way formulas are encoded. Three manipulation tasks are also considered and these illustrate the benefits of beta reduction in realizing substitution into formulas, of higher-order unification in probing formula structure and of the new scoping primitives in Lambda Prolog in carrying out computations over abstraction structure. The menu below provides some help in understanding the structure of the code. All of the code listed here is available in the distribution of Teyjus under _examples/handbook/logic_.
 
  * Term encodings for formulas in a first order logic
     * [http://teyjus.googlecode.com/svn/trunk/examples/handbook/logic/logic_types.sig     Types for basic categories of expressions]
@@ -21,6 +21,8 @@ The code accessible from this page illustrates the use of higher-order abstract 
  * Analysis and synthesis of formula structure
     * [http://teyjus.googlecode.com/svn/trunk/examples/handbook/logic/pnf.sig Signature] and [http://teyjus.googlecode.com/svn/trunk/examples/handbook/logic/pnf.mod code] for a transformer to prenex normal form
     * [http://teyjus.googlecode.com/svn/trunk/examples/handbook/logic/pnf_examples.sig Signature] and [http://teyjus.googlecode.com/svn/trunk/examples/handbook/logic/pnf_examples.mod code] for a testing harness
+
+ * A [http://teyjus.googlecode.com/svn/trunk/examples/handbook/logic/Makefile Makefile] for creating linked images of relevant formula processing modules
 
  *  Scripts illustrating the use of the code
     * [http://teyjus.googlecode.com/svn/trunk/examples/handbook/logic/script1 Horn clause interpreter]
