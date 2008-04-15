@@ -47,7 +47,7 @@ A sequence of digits is recognized as an integer constant. As usual, there are s
 
 == Real Literals ==
 
-A sequence of digits followed by a period and then a sequence of digits is recognized as a real constant. The sequence before the period may be empty but the sequence after the period must be nonempty. The are size and precision restrictions are the same as those for doubles in C.
+A sequence of digits followed by a period and then a sequence of digits is recognized as a real constant. The sequence before the period may be empty but the sequence after the period must be nonempty. The representation is based on 8 bit exponent and 23 bit fraction. 
 
 == String Literals ==
 
