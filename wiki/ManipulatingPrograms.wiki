@@ -2,7 +2,7 @@
 
 = Some Program Manipulating Programs in Teyjus =
 
-The code accessible from this page illustrates the use of higher-order abstract syntax as it is supported in Lambda Prolog in representing and manipulating programs in a simple (functional) programming language. One component to understand here is the way programs are represented. Four manipulation tasks are also considered and these illustrate the benefits of beta reduction in realizing substitution into formulas, of higher-order unification in probing formula structure and of the new scoping primitives in Lambda Prolog in carrying out computations over abstraction structure. The menu below provides some help in understanding the structure of the code. All of the code listed here is available in the distribution of Teyjus under `examples/handbook/progs`.
+The code accessible from this page illustrates the use of higher-order abstract syntax as it is supported in Lambda Prolog in representing and manipulating programs in a simple (functional) programming language. One component to understand here is the way programs are represented. Four manipulation tasks are also considered and these illustrate the benefits of beta reduction in realizing substitution into formulas, of higher-order unification in probing formula structure and of the new scoping primitives in Lambda Prolog in carrying out computations over abstraction structure. The menu below provides some help in understanding the structure of the code. All of the code listed here is available in the distribution of Teyjus under _examples/handbook/progs_.
 
 
   * Term encodings for programs in a functional programming language
