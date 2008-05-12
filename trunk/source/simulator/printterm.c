@@ -744,14 +744,14 @@ static void PRINT_printDPair(WordPtr outStream, DF_DisPairPtr dpair)
     PRINT_writeDPairStart(outStream);
     
     tmPtr = DF_disPairFirstTerm(dpair);
-    HN_hnorm(tmPtr);
+    HN_lnorm(tmPtr);
     PRINT_writeTerm(outStream, tmPtr, OP_NONE, 0, OP_WHOLE_TERM);
     
     PRINT_writeComma(outStream);
     PRINT_writeSpace(outStream, 1);
     
     tmPtr = DF_disPairSecondTerm(dpair);
-    HN_hnorm(tmPtr);
+    HN_lnorm(tmPtr);    
     PRINT_writeTerm(outStream, tmPtr, OP_NONE, 0, OP_WHOLE_TERM);
 
     PRINT_writeDPairEnd(outStream);
