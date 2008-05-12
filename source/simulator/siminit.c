@@ -97,7 +97,7 @@ static MSG_Msg SIM_errorMessages[SIM_NUM_ERROR_MESSAGES] =
 /*************************************************************************/
 /*            SETTING UP SPECIAL CODE SEGMENTS                           */
 /*************************************************************************/
-static const int SINIT_initSize = 30;
+static const int SINIT_initSize = 31;
 
 static void SINIT_initCode()
 {
@@ -117,6 +117,8 @@ static void SINIT_initCode()
     *((INSTR_RegInd*)(myhreg + INSTR_RRX_R1)) = 1;
     *((INSTR_RegInd*)(myhreg + INSTR_RRX_R2)) = 2;
     myhreg += INSTR_RRX_LEN;
+    *((INSTR_OpCode*)myhreg) = finish_unify;    //finish_unify
+    myhreg += INSTR_X_LEN;
     *((INSTR_OpCode*)myhreg) = proceed;         //proceed
     myhreg += INSTR_X_LEN;
     
