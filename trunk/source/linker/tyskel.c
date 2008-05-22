@@ -75,9 +75,9 @@ void LoadTySkel(int fd, struct Module_st* CMData)
       obstack_1grow(&TySkelStack,KTMP.gl_flag);
 #if BYTE_ORDER == LITTLE_ENDIAN
       KTMP.index = bswap_16(KTMP.index);
-#elif 
+#elif BYTE_ORDER == BIG_ENDIAN
 #else
-#assert BYTE_ORDER == BIG_ENDIAN
+#error Unknown BYTE_ORDER
 #endif
       obstack_grow(&TySkelStack,&(KTMP.index),sizeof(TwoBytes));
       arity=LK_FILE_GET1(fd);
