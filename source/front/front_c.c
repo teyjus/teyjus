@@ -60,8 +60,9 @@ static MSG_Msg FRONT_ErrorMessages[FRONT_NUM_ERROR_MESSAGES] =
 /***************************************************************************/
 /*                       system initialization                             */
 /***************************************************************************/
-// default heap size (in word)
-#define FRONT_DEFAULT_SYS_SIZE      8192 * 1024
+// default heap size (in words)
+// this defaults to 256MB on 32bit machines, 512MB on 64bit machines.
+#define FRONT_DEFAULT_SYS_SIZE      64 * 1024 * 1024
 
 // variables recording the sizes of the different system components 
 static int FRONT_heapSize;
