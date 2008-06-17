@@ -211,7 +211,11 @@ static MSG_Msg BI_errorMessages[BI_NUM_ERROR_MESSAGES] =
    { BI_ERROR_INTEGER_EXPECTED,
      BI_ERROR,
      "Integer expected:",
-     BI_ERROR_TERM, EM_QUERY, 0 }
+     BI_ERROR_TERM, EM_QUERY, 0 },
+   { BI_ERROR_SUBSTRING,
+     BI_ERROR,
+     "Substring indexing out of bound.",
+     EM_NEWLINE, EM_QUERY, 0 },
 };
 
 /* handle the %B switch -- takes no arguments */
