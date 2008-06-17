@@ -28,13 +28,13 @@
 
 #include "evalexp.h"
 #include "builtins.h"
-#include "../mctypes.h"     //to be modified
-#include "../mcstring.h"    //to be modified
-#include "../dataformats.h" //to be modified
-#include "../hnorm.h"       //to be modified
-#include "../abstmachine.h" //to be modified
-#include "../../tables/pervasives.h" //to be modified
-#include "../../system/error.h"      //to be modified
+#include "../mctypes.h"     
+#include "../mcstring.h"    
+#include "../dataformats.h" 
+#include "../hnorm.h"       
+#include "../abstmachine.h" 
+#include "../../tables/pervasives.h" 
+#include "../../system/error.h"      
 
 
 /************************************************************************
@@ -243,17 +243,20 @@ static DF_StrDataPtr BIEVAL_subString(MCSTR_Str str, int startPos, int endPos)
     MemPtr strDataHead = AM_hreg;
     MemPtr strData     = strDataHead + DF_STRDATA_HEAD_SIZE;
     MemPtr nhreg;
-    
-    if (startPos < 0) startPos = 0;
+      
+
     if (endPos < startPos) endPos = startPos;
-    if (endPos >= length) endPos = length - 1; 
-    if (startPos > length) startPos = length;
-    length = endPos - startPos + 1;
+
+    if (startPos < 0 || endPos > length) {
+      EM_error(BI_ERROR_SUBSTRING);
+    }
+
+    length = endPos - startPos;
     
     nhreg = strData + size;
     AM_heapError(nhreg);
     DF_mkStrDataHead(strDataHead);
-    MCSTR_subString((MCSTR_Str)strData, str, startPos, endPos - startPos + 1);
+    MCSTR_subString((MCSTR_Str)strData, str, startPos, length);
     AM_hreg = nhreg;
     return (DF_StrDataPtr)strDataHead;
 }
