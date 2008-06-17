@@ -88,7 +88,7 @@ extern BI_BuiltinTabIndex BI_number;
  *                          ERROR INFORMATION
  *********************************######**************************************/
 
-#define BI_NUM_ERROR_MESSAGES 27
+#define BI_NUM_ERROR_MESSAGES 28
 enum
 {
    BI_ERROR = BI_FIRST_ERR_INDEX,
@@ -117,7 +117,8 @@ enum
    BI_ERROR_WRITING_STREAM,	/* takes term (stream) */
    BI_ERROR_FLUSHING_STREAM,	/* takes term (stream) */
    BI_ERROR_OPENING_STRING,	/* takes string */
-   BI_ERROR_INTEGER_EXPECTED	/* takes term */
+   BI_ERROR_INTEGER_EXPECTED,	/* takes term */
+   BI_ERROR_SUBSTRING
 };
 
 
