@@ -245,9 +245,7 @@ static DF_StrDataPtr BIEVAL_subString(MCSTR_Str str, int startPos, int endPos)
     MemPtr nhreg;
       
 
-    if (endPos < startPos) endPos = startPos;
-
-    if (startPos < 0 || endPos > length) {
+    if (startPos < 0 || endPos > length || endPos < startPos) {
       EM_error(BI_ERROR_SUBSTRING);
     }
 
