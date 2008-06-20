@@ -70,7 +70,7 @@ string_to_int
     of type string -> int representing the usual ord function on characters (encoded as single character strings).
 substring
 
-    of type string -> int -> int -> string. When evaluated, (substring s i j) returns the string of length j that starts at position i (zero indexed) in s. The result is undefined if i < 0, j < 0 or the length of s is less than i + j.
+    of type string -> int -> int -> string. When evaluated, (substring s i j) returns the string of length j that starts at position i (zero indexed) in s; it is a runtime error if i < 0, j < 0 or the length of s is less than i + j.
 int_to_string
 
     of type int -> string. When evaluated, the result returned is a string rendition of the integer value of the first argument.
