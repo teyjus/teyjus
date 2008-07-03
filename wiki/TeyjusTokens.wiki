@@ -67,7 +67,7 @@ These are character sequences enclosed within two double quotes. We permit a mix
 || \"    ||  Double quote ||
 ||  \^c  ||    A control character whose encoding is C mod 32, where C is the encoding of the character c, with C in the range [64,122]. ||
 || \ddd  ||   The character whose encoding is the number ddd, three decimal digits denoting an integer in the range [0,255]. ||
-|| \xhh   ||  The character whose encoding is the number hh, two hexadecimal digits, with a-f (A-F) denoting the `digits' 10-15 respectively. ||
+|| \xhh   ||  The character whose encoding is the number hh, two hexadecimal digits, with a-f (A-F) denoting the 'digits' 10-15 respectively. ||
 || \f...f\  ||This sequence is ignored, where f...f stands for a sequence of one or more formatting characters (that are currently restricted to horizontal and vertical tab, whitespace, newline and carriage return). ||
 || \c...  ||  where ... stands for a sequence of formatting characters, ending with a non formatting character. This sequence is to be ignored.||
 
