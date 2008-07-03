@@ -12,7 +12,7 @@ The code accessible from this page illustrates the use of higher-order abstract 
       * [http://teyjus.googlecode.com/svn/trunk/examples/handbook/progs/refl_syntax.sig Signature] and [http://teyjus.googlecode.com/svn/trunk/examples/handbook/progs/refl_syntax.mod code] for a recognizer for valid program terms 
 
   * Implementing an interpreter for the programming language
-      * [http://teyjus.googlecode.com/svn/trunk/examples/handbook/progs/eval_basic.sig Signature] and [http://teyjus.googlecode.com/svn/trunk/examples/handbook/progs/eval_basic.mod code] for an evaluator for the `pure' terms
+      * [http://teyjus.googlecode.com/svn/trunk/examples/handbook/progs/eval_basic.sig Signature] and [http://teyjus.googlecode.com/svn/trunk/examples/handbook/progs/eval_basic.mod code] for an evaluator for the 'pure' terms
       * [http://teyjus.googlecode.com/svn/trunk/examples/handbook/progs/eval.sig Signature] and [http://teyjus.googlecode.com/svn/trunk/examples/handbook/progs/eval.mod code] for an evaluator for the full programming language
       * [http://teyjus.googlecode.com/svn/trunk/examples/handbook/progs/eval_examples.sig Signature] and [http://teyjus.googlecode.com/svn/trunk/examples/handbook/progs/eval_examples.mod code] for a testing harness
       * [http://teyjus.googlecode.com/svn/trunk/examples/handbook/progs/script1 Script] depicting a run of the code
