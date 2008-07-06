@@ -1,4 +1,4 @@
-NAME= `date +wiki-%Y-%m-%d.zip`
+NAME= `date +teyjus-wiki-%Y-%m-%d.zip`
 
 .PHONY: all
 all: *.wiki wikify.py
