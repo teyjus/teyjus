@@ -1,5 +1,9 @@
-wiki.zip: *.wiki wikify.py
+NAME= `date +wiki-%Y-%m-%d.zip`
+
+.PHONY: all
+all: *.wiki wikify.py
 	python wikify.py -e
-	rm -f wiki.zip
-	zip wiki.zip *.html
+	rm -f $(NAME)
+	zip $(NAME) *.html
 	rm -f *.html
+	@echo $(NAME) has been created
