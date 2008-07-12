@@ -78,7 +78,27 @@
 
 ;; Regular expression for errors/Warnings
 (defvar teyjus-error-regexp
-  "^\\(.+\\)(\\([0-9]+\\),\\([0-9]+\\)).*\\(Error\\|Warning\\).*")
+  "^\\(.+\\)(\\([0-9]+\\),\\([0-9]+\\)).*\\(?:Error\\|\\(Warning\\)\\)")
+
+;; Create a regexp for use with compilation mode (M-x compile)
+(require 'compile)
+(cond
+ ((boundp 'compilation-error-regexp-systems-list)
+  ;; xemacs21
+  (add-to-list 'compilation-error-regexp-alist-alist
+               (list 'teyjus (list teyjus-error-regexp 1 2 3)))
+  (compilation-build-compilation-error-regexp-alist))
+
+ ((boundp 'compilation-error-regexp-alist-alist)
+  ;; emacs22
+  (add-to-list 'compilation-error-regexp-alist-alist
+               (list 'teyjus teyjus-error-regexp 1 2 3 '(4)))
+  (add-to-list 'compilation-error-regexp-alist 'teyjus))
+ 
+ (t
+  ;; emacs21
+  (add-to-list 'compilation-error-regexp-alist
+               (list teyjus-error-regexp 1 2 3))))
 
 ;; Function to find the next error in the *tjcc* buffer,
 ;; split the window, and goto the line in the program with
