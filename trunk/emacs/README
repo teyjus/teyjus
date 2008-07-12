@@ -1,6 +1,7 @@
 This package handles the following features:
   - Syntax highlighting for .mod and .sig files
   - Running an inferior tjcc process within Emacs
+  - Teyjus support for emacs compilation mode (M-x compile)
 
 Commands have been added to make easier the use of Teyjus:
 
