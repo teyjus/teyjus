@@ -1208,36 +1208,36 @@ let rec genATermsCode delayed chunk insts startLoc =
 
   (* structure (first order application) *)
   let genATermCodeStructure func args arity regNum =
-	let funcConst = Absyn.getTermConstant func in
-	let (funcCode, funcCodeNext) =
-	  if (Pervasive.isconsConstant funcConst) then 
-		(insts@[Instr.Ins_get_list(regNum)], startLoc + Instr.getSize_get_list)
-	  else
-		let tyenv    = Absyn.getTermConstantTypeEnv func in
-		if (tyenv = []) then 
-		  (insts @ [Instr.Ins_get_m_structure(regNum, funcConst, arity)],
-		   startLoc + Instr.getSize_get_m_structure)
-		else
-		  let (tyenvCode, tyenvSize) = genATypeArgsCode tyenv chunk true in
-		  (insts @ 
-		   (Instr.Ins_get_p_structure(regNum, funcConst, arity) :: tyenvCode),
-		   startLoc + Instr.getSize_get_p_structure + tyenvSize)
-	in
-	Registers.markUnusedReg regNum;
-	genAStrTermArgsCode args chunk funcCode funcCodeNext
+	  let funcConst = Absyn.getTermConstant func in
+	  let (funcCode, funcCodeNext) =
+	    if (Pervasive.isconsConstant funcConst) then 
+		  (insts@[Instr.Ins_get_list(regNum)], startLoc + Instr.getSize_get_list)
+	    else
+		  let tyenv    = Absyn.getTermConstantTypeEnv func in
+		  if (tyenv = []) then 
+		    (insts @ [Instr.Ins_get_m_structure(regNum, funcConst, arity)],
+		     startLoc + Instr.getSize_get_m_structure)
+		  else
+		    let (tyenvCode, tyenvSize) = genATypeArgsCode tyenv chunk true in
+		    (insts @ 
+		     (Instr.Ins_get_p_structure(regNum, funcConst, arity) :: tyenvCode),
+		     startLoc + Instr.getSize_get_p_structure + tyenvSize)
+	  in
+	  Registers.markUnusedReg regNum;
+	  genAStrTermArgsCode args chunk funcCode funcCodeNext
   in
 
   (* higher-order structure: flexible application or abstraction *)
   let genATermCodeHigherOrder term regNum =
-	let (termCode, termCodeSize, regTermList) =
-	  genSTermArgsCode [term] chunk 0 false 
-	in
-	let newRegNum = getRegTermReg (List.hd regTermList) in
-	Registers.markUnusedReg(newRegNum); 
-	Registers.markUnusedReg(regNum);
-	(insts @ termCode @ [Instr.Ins_pattern_unify_t(newRegNum, regNum)],
-     startLoc + termCodeSize + Instr.getSize_pattern_unify_t)
-  in  
+	  let (termCode, termCodeSize, regTermList) =
+	    genSTermArgsCode [term] chunk 0 false 
+	  in
+	  let newRegNum = getRegTermReg (List.hd regTermList) in
+	  Registers.markUnusedReg(newRegNum); 
+	  Registers.markUnusedReg(regNum);
+	  (insts @ termCode @ [Instr.Ins_pattern_unify_t(newRegNum, regNum)],
+       startLoc + termCodeSize + Instr.getSize_pattern_unify_t)
+    in  
 
   (* for each pair in the delayed list *)
   let genATermCode regNum term =
@@ -1258,13 +1258,15 @@ let rec genATermsCode delayed chunk insts startLoc =
 	| Absyn.ConstantTerm(c, [], _, _)  -> genATermCodeMConst c regNum
 	| Absyn.ConstantTerm(c, tys, _, _) -> 
 		genATermCodePConst c tys regNum
-	| Absyn.ApplicationTerm(_, _, _)   ->
+	| Absyn.ApplicationTerm(_, _, pos)   ->
 		let func = Absyn.getTermApplicationHead term in
 		if (Absyn.isTermFreeVariable func) then
 		  genATermCodeHigherOrder term regNum 
-		else 
+		else if Absyn.isTermConstant func then
 		  genATermCodeStructure func (Absyn.getTermApplicationArguments term) 
-			(Absyn.getTermApplicationArity term) regNum
+  			(Absyn.getTermApplicationArity term) regNum
+    else
+      Errormsg.impossible pos "Clausegen.genATermCode: invalid application head."
 	| _ -> genATermCodeHigherOrder term regNum (* must be an abstraction then*)
   in
 
@@ -2210,11 +2212,11 @@ let genClauseCode cl insts startLoc =
   
   (* generate code for body *)
   let genClauseBody insts startLoc =
-	if isFact then (insts, startLoc)
-	else genClauseBodyCode cl chunks insts startLoc
-  in
-  let (instsHead, instsHeadNext) = genClauseHead insts startLoc          in
-  let (instsCut,  instsCutNext)  = genClauseCut  instsHead instsHeadNext in
-  let (instsBody, instsBodyNext) = genClauseBody instsCut instsCutNext   in
-  (instsBody, instsBodyNext)
+	  if isFact then (insts, startLoc)
+	  else genClauseBodyCode cl chunks insts startLoc
+    in
+    let (instsHead, instsHeadNext) = genClauseHead insts startLoc          in
+    let (instsCut,  instsCutNext)  = genClauseCut  instsHead instsHeadNext in
+    let (instsBody, instsBodyNext) = genClauseBody instsCut instsCutNext   in
+    (instsBody, instsBodyNext)
 
