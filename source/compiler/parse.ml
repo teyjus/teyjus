@@ -541,25 +541,25 @@ and translateId parsingtoplevel inlist term fvs bvs amodule =
 
             | None ->          (* Check next if declared constant *)
                 let o = (Table.find sym (Absyn.getModuleConstantTable amodule)) in
-                  match o with
-                    Some c ->  (* Is a constant; commas may be list separators *)
-                      if c == Pervasive.andConstant && inlist then
-                        (constantToOpTerm parsingtoplevel term
-                                          Pervasiveutils.listSeparatorConstant 
-                                          fvs amodule)
-                      else (constantToOpTerm parsingtoplevel term c fvs amodule)
-                  | None -> (* Not a constant; is an fv if it starts right *)
-                      if k = Preabsyn.CVID then
-                        let var = (findVar fvs sym) in
-                           match var with 
-                             Some var' -> (varToOpTerm term var' fvs bvs amodule 
-                                                       Absyn.makeFreeVarTerm)
-                           | None -> (makeVarToOpTerm term fvs bvs amodule
-                                                      makeImplicitTypeSymbol)
-                      else (* only remaining case is that of an unknown const *)
-		                    (Errormsg.error pos
-		                      ("undeclared constant '" ^ (Symbol.name sym) ^ "'");
-		                    (StackError, fvs)))
+                match o with
+                  Some c ->  (* Is a constant; commas may be list separators *)
+                    if c == Pervasive.andConstant && inlist then
+                      (constantToOpTerm parsingtoplevel term
+                                        Pervasiveutils.listSeparatorConstant 
+                                        fvs amodule)
+                    else (constantToOpTerm parsingtoplevel term c fvs amodule)
+                | None -> (* Not a constant; is an fv if it starts right *)
+                    if k = Preabsyn.CVID then
+                      let var = (findVar fvs sym) in
+                         match var with 
+                           Some var' -> (varToOpTerm term var' fvs bvs amodule 
+                                                     Absyn.makeFreeVarTerm)
+                         | None -> (makeVarToOpTerm term fvs bvs amodule
+                                                    makeImplicitTypeSymbol)
+                    else (* only remaining case is that of an unknown const *)
+	                    (Errormsg.error pos
+	                      ("undeclared constant '" ^ (Symbol.name sym) ^ "'");
+	                    (StackError, fvs)))
   | _ -> (Errormsg.impossible (Preabsyn.getTermPos term) 
                               "Parse.translateId: invalid term")
 
