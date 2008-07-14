@@ -221,7 +221,7 @@ modheader:
       { if getIDName $2 <> basename () then
           Errormsg.error (getPos 2)
             ("Expected module name '" ^ basename () ^
-            "', found moodule name '" ^ (getIDName $2) ^ "'.") }
+            "', found module name '" ^ (getIDName $2) ^ "'.") }
 
   | error PERIOD              { genericError "header" }
 
