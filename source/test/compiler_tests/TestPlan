@@ -30,6 +30,7 @@ Clause structures:
   (3) augmented goals        --  test6     
 
   (4) flexible goals         --  test7
+                             --  test36
 
   (5) disjunction goals      --  test8
 
