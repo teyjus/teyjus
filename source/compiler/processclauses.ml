@@ -596,26 +596,22 @@ and processAllGoal goalBody =
       Absyn.ApplicationTerm(_) ->
         let head = Absyn.getTermApplicationHead goal in
         let args = Absyn.getTermApplicationArguments goal in
-        if Absyn.isTermConstant head then
-          if Pervasive.isallConstant (Absyn.getTermConstant head) then
-                (*all goal*)
-            let arg = List.hd args in
-            let tysy = List.hd (Absyn.getTermAbstractionVars arg) in
-            processAllGoalAux (Absyn.getTermAbstractionBody arg) 
-            ((collectHCpair tysy)::hcPairs)
-          else (* other than all goal *)
+        if (Absyn.isTermConstant head) && 
+           (Pervasive.isallConstant (Absyn.getTermConstant head)) then
+          (*all goal*)
+          let arg = List.hd args in
+          let tysy = List.hd (Absyn.getTermAbstractionVars arg) in
+          processAllGoalAux (Absyn.getTermAbstractionBody arg) 
+                            ((collectHCpair tysy)::hcPairs)
+        else (* other than all goal *)
             Absyn.AllGoal(Absyn.HCVarAssocs(List.rev hcPairs), processGoal goal)
-        else
-          Errormsg.impossible
-            (Absyn.getTermPos head)
-            "Processclauses.processAllGoalAux: invalid application head."
     | _ -> (* other than all goal *)
-    Absyn.AllGoal(Absyn.HCVarAssocs(List.rev hcPairs), processGoal goal)
+      Absyn.AllGoal(Absyn.HCVarAssocs(List.rev hcPairs), processGoal goal)
   in
 
   let tysy = List.hd (Absyn.getTermAbstractionVars goalBody) in
   processAllGoalAux (Absyn.getTermAbstractionBody goalBody) 
-  [collectHCpair tysy]
+                    [collectHCpair tysy]
 
 
 (****************************************************************************)
@@ -634,21 +630,21 @@ and processImpGoal clauseTerm goalTerm impGoal =
   let rec processImpClauses clauseTerm clauseDefs varInits tyVarInits =
     match clauseTerm with 
       Absyn.ApplicationTerm(_) -> 
-      let args = Absyn.getTermApplicationArguments clauseTerm in
-      let head = Absyn.getTermApplicationHead clauseTerm in
-      if Absyn.isTermConstant head then
-        if Pervasive.isandConstant (Absyn.getTermConstant head) then
-          let (newClDefs, newVarInits, newTyVarInits) = 
-          processImpClauses (List.hd args) clauseDefs varInits tyVarInits
-          in
-          processImpClauses (List.hd (List.tl args)) newClDefs newVarInits
-          newTyVarInits
+        let args = Absyn.getTermApplicationArguments clauseTerm in
+        let head = Absyn.getTermApplicationHead clauseTerm in
+        if Absyn.isTermConstant head then
+          if Pervasive.isandConstant (Absyn.getTermConstant head) then
+            let (newClDefs, newVarInits, newTyVarInits) = 
+            processImpClauses (List.hd args) clauseDefs varInits tyVarInits
+            in
+            processImpClauses (List.hd (List.tl args)) newClDefs newVarInits
+                              newTyVarInits
+          else
+            processImpClause clauseTerm clauseDefs varInits tyVarInits impGoal
         else
-          processImpClause clauseTerm clauseDefs varInits tyVarInits impGoal
-      else
-        Errormsg.impossible
-          (Absyn.getTermPos clauseTerm)
-          "Processclauses.processImpGoal: invalid application head."
+          Errormsg.impossible
+            (Absyn.getTermPos clauseTerm)
+            "Processclauses.processImpGoal: invalid (flexible) clause head."
     | _ -> processImpClause clauseTerm clauseDefs varInits tyVarInits impGoal
   in
 
@@ -656,9 +652,9 @@ and processImpGoal clauseTerm goalTerm impGoal =
     processImpClauses clauseTerm [] [] [] 
   in
   Absyn.ImpGoal(Absyn.Definitions(clauseDefs), 
-    Absyn.VarInits(List.rev varInits),
-    Absyn.TypeVarInits(List.rev tyVarInits),
-    processGoal goalTerm)
+                Absyn.VarInits(List.rev varInits),
+                Absyn.TypeVarInits(List.rev tyVarInits),
+                processGoal goalTerm)
 
 (********************************************************************)
 (* processImpClause:                                                *)
