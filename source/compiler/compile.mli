@@ -22,7 +22,6 @@
 *Compile:
 * An interface to the lexer and parser.
 **********************************************************************)
-val typeAbbrevTable : Preabsyn.ptypeabbrev Table.SymbolTable.t
 
 (**********************************************************************
 *compileModule:

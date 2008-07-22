@@ -25,8 +25,6 @@ exception Exception
 open Lexing
 open Lpyacc
 
-let typeAbbrevTable = Table.SymbolTable.empty
-
 let printPreAbsyn = ref false
 let printAbsyn = ref false
 let printClauses = ref false
@@ -35,7 +33,7 @@ let printClauses = ref false
 *openFile:
 * Open a file and exit if there is an error.
 ******************************************************************)
-let openFile = fun fname f ->
+let openFile fname f =
   try 
     let inchannel = f fname in
     inchannel
@@ -51,11 +49,11 @@ let closeFile fname f =
 let compile parse fname =
   let inchannel = openFile fname open_in in
   let lexbuf = Lexing.from_channel inchannel in
-  let _ = Lplex.set_file_name lexbuf fname in
+  let _ = Lplex.setFileName lexbuf fname in
   let result = parse Lplex.initial lexbuf in
   let _ = closeFile inchannel close_in in
-    result
-      
+  result
+
 let compileModule basename =
   compile Lpyacc.parseModule (basename ^ ".mod")
 
@@ -66,7 +64,7 @@ let compileString s =
   let previous = !Errormsg.anyErrors in
   let () = Errormsg.anyErrors := false in
   let lexbuf = Lexing.from_string s in
-  let _ = Lplex.set_file_name lexbuf "" in
+  let _ = Lplex.setFileName lexbuf "" in
   let cl = parseModClause Lplex.initial lexbuf in
   let result =
     if !Errormsg.anyErrors then

@@ -154,6 +154,13 @@ let makeSignature () =
     clearResults ();
     s
 
+let parse_error s =
+  if s = "syntax error" then
+    let pos = Parsing.symbol_start_pos () in
+    Errormsg.error pos "syntax error"
+  else
+    ()
+
 %}
 
 
@@ -223,7 +230,7 @@ modheader:
             ("Expected module name '" ^ basename () ^
             "', found module name '" ^ (getIDName $2) ^ "'.") }
 
-  | error PERIOD              { genericError "header" }
+  | error PERIOD              { genericError "module header" }
 
 sigheader:
   | SIG tok PERIOD
@@ -231,7 +238,7 @@ sigheader:
           Errormsg.error (getPos 2)
             ("Expected signature name '" ^ basename () ^ "'.") }
 
-  | error PERIOD              { genericError "header" }
+  | error PERIOD              { genericError "signature header" }
 
 modend:
   |                           {  }
@@ -354,8 +361,16 @@ modsigndecl:
       { closedConstants := Constant($2, Some $3, getPos 1) :: !closedConstants }
 
 kind:
-  | TYPE                     { 1 }
-  | kind TYARROW TYPE        { $1 + 1 }
+  | kind_arrow                { $1 }
+  | paren_type                { 1 }
+
+kind_arrow:
+  | LPAREN kind_arrow RPAREN      { $2 }
+  | paren_type TYARROW kind   { $3 + 1 }
+
+paren_type:
+  | TYPE                      {()}
+  | LPAREN paren_type RPAREN  {()}
 
 type:
   | ctype TYARROW type       { Arrow($1, $3, getPos 1) }
