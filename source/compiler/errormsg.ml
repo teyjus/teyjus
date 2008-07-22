@@ -20,7 +20,7 @@
 ****************************************************************************)
 
 (**********************************************************************
-*ErrorMsg
+*ErrorMsg:
 **********************************************************************)
 exception InternalError
 open Lexing
@@ -49,7 +49,7 @@ let none = { pos_fname = "none" ;
 *string_of_pos:
 *	Convert a pos to a string.
 ********************************************************************)
-let string_of_pos = function pos ->
+let string_of_pos pos =
   let file = pos.pos_fname in
   let line = pos.pos_lnum in
   let char = pos.pos_cnum - pos.pos_bol in
@@ -66,27 +66,27 @@ let rec printPosition = fun p ->
 *reset:
 * Just resets the error message module.
 ********************************************************************)
-let reset = fun () -> anyErrors := false
+let reset () = anyErrors := false
 
 (********************************************************************
 *info:
 * Formats information for output using error or warning.
 ********************************************************************)
-let info = fun msg ->
+let info msg =
   "\n\t" ^ msg
 
 (********************************************************************
 *see:
 * Annotates a message with a file location.
 ********************************************************************)
-let see = fun pos msg ->
+let see pos msg =
 	(info "See " ^ msg ^ " at " ^ (string_of_pos pos))
 
 (********************************************************************
 *error:
 * Prints an error, along with the line and character position.
 ********************************************************************)
-let error = fun pos (msg:string) ->
+let error pos msg =
   if !errorsEnabled then
 		(anyErrors := true;
 		printPosition pos;
@@ -95,11 +95,12 @@ let error = fun pos (msg:string) ->
         prerr_newline ())
   else
     ()
+
 (********************************************************************
 *warning:
 * Prints a warning, along with the line and character position.
 ********************************************************************)
-let warning = fun pos (msg:string) ->
+let warning pos msg =
   if !warningsEnabled && !errorsEnabled then
 	  (if !warningsAsErrors then
 	    anyErrors := true
@@ -111,11 +112,12 @@ let warning = fun pos (msg:string) ->
       prerr_newline ())
   else
     ()		
+
 (********************************************************************
 *log:
 *	Outputs logging information.
 ********************************************************************)
-let log = fun pos msg ->
+let log pos msg =
   if !loggingEnabled then
 	  (printPosition pos;
 	  prerr_string " : Log : ";
@@ -123,12 +125,13 @@ let log = fun pos msg ->
       prerr_newline ())
   else
     ()
+
 (********************************************************************
 *impossible:
 * Prints an internal compiler error, then throws an exception
 * InternalError.
 ********************************************************************)
-let impossible = fun pos msg ->
+let impossible pos msg =
 		(anyErrors := true;
 		printPosition pos;
 		prerr_string " : Internal Error : ";

@@ -23,7 +23,7 @@ open Lexing
 open Errormsg
 open Lpyacc
 
-let set_file_name = fun lexbuf name ->
+let setFileName lexbuf name =
   lexbuf.lex_curr_p <- { lexbuf.lex_curr_p with pos_fname = name }
 
 let incrline lexbuf =
@@ -42,7 +42,6 @@ let strErr = ref false
 let quotedid = ref false
 
 let stringBuffer = Buffer.create 16
-
 let string_of_char = String.make 1
 
 (**********************************************************************
@@ -64,9 +63,9 @@ let truncateString s pos =
 let extractCurrentString pos =
   let str = Buffer.contents stringBuffer in
   let trim_str = truncateString str pos in
-    Buffer.reset stringBuffer ;
-    trim_str
-      
+  Buffer.reset stringBuffer ;
+  trim_str
+
 (**********************************************************************
 *addString:
 * Add a string to the current string.
