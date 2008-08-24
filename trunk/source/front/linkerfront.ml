@@ -34,6 +34,6 @@ let specList = dualArgs
 let usageMsg = "Usage: tjlink <module-name>"
 
 let _ =
-  (Arg.parse (Arg.align specList) setInputName usageMsg ;
+  (Arg.parse (Arg.align specList) (setInputName ~filter:getModName) usageMsg ;
   ensureInputName () ;
   exit (link !inputName !verbosity))
