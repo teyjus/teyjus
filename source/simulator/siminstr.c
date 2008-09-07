@@ -103,6 +103,7 @@ void SINSTR_put_value_p()                 //put_value Yn,Ai -- E_R_X
 void SINSTR_put_unsafe_value()           //put_unsafe_value Yn,Ai -- E_R_X
 {
     INSACC_ERX(envY, regA);
+
     tmPtr = DF_termDeref((DF_TermPtr)envY);
     switch (DF_termTag(tmPtr)) {
     case DF_TM_TAG_NIL:
@@ -110,6 +111,7 @@ void SINSTR_put_unsafe_value()           //put_unsafe_value Yn,Ai -- E_R_X
     case DF_TM_TAG_INT:
     case DF_TM_TAG_FLOAT:
     case DF_TM_TAG_STR:
+    case DF_TM_TAG_STREAM:
     {*regA = *((AM_DataTypePtr)tmPtr);  break; }
     case DF_TM_TAG_CONST:
     {
