@@ -255,6 +255,14 @@
 				>
 			</File>
 		</Filter>
+		<File
+			RelativePath="..\tables_gen\instrformats\instrformats_32.in"
+			>
+		</File>
+		<File
+			RelativePath="..\tables_gen\instrformats\instrformats_64.in"
+			>
+		</File>
 	</Files>
 	<Globals>
 	</Globals>

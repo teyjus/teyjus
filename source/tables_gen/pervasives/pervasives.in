@@ -26,7 +26,7 @@
    /% number of pervasive constants %/
    CONST                   94
    /% number of type skeletons      %/
-   TYPE SKEL               41 
+   TYPE SKEL               42 
 
    /% type skeleton and constant data table %/
    /% type skeleton format:                       
@@ -373,7 +373,12 @@
       TYPE      40     string -> int -> instream -> outstream -> bool
         /* open_socket predicate */
        50 open_socket opensocket 0 0  0  FALSE  TRUE   0   NOFIXITY 35
+      ;;
 
+      /* string -> int -> o */
+      TYPE      41     string -> int -> bool
+       /* system predicate  */
+       52 system system 0 0 0 FALSE TRUE 0 NOFIXITY 37
 
    /% pervasive constant classification %/
    LOGIC SYMBOL 11
@@ -392,7 +397,7 @@
                 10       stop
 			  	
    PRED SYMBOL  37
-                PRED_START solve  PRED_END time
+                PRED_START solve  PRED_END system
              
    REGCL  solve not getenv strtoterm readterm read is lookahead input inputline
    
