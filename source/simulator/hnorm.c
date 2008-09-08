@@ -42,7 +42,6 @@
 //for debugging: to be removed
 #include <stdio.h>
 #include "printterm.h"
-//#include "print.h"
 #include "../system/stream.h"
 
 /*****************************************************************************/
@@ -184,6 +183,7 @@ static DF_TermPtr HN_hnormDispatch(DF_TermPtr tmPtr, Boolean whnf);
    bound variable as term skeleton. */
 static DF_TermPtr HN_hnormBV(DF_TermPtr bvPtr, Boolean whnf)
 {
+							
     DF_TermPtr rtPtr; //term pointer to be returned
     if (HN_isEmptyEnv()){                        //[|#i, 0, 0, nil|] -> #i
         rtPtr = bvPtr;
@@ -222,7 +222,8 @@ static DF_TermPtr HN_hnormBV(DF_TermPtr bvPtr, Boolean whnf)
             }         //pair env  
         }        // i<= ol    
     }        //non-empty env
-    return rtPtr;
+
+    return rtPtr;    
 }
 
 
@@ -294,11 +295,12 @@ static DF_TermPtr HN_hnormApp(DF_TermPtr appPtr, Boolean whnf)
 {
     DF_TermPtr funPtr = DF_appFunc(appPtr), argvec = DF_appArgs(appPtr),
                rtPtr; // term pointer to be returned
+    DF_TermPtr oldFunPtr = funPtr;
     int        arity = DF_appArity(appPtr);
     Boolean    emptyTopEnv = HN_isEmptyEnv();
     int        myol, mynl;       //for book keeping the implicit suspension env
     DF_EnvPtr  myenvlist;        //for book keeping the implicit suspension env
-    int        myarity = arity;  //book keeping the arity before contraction
+    int        myarity = arity;  //book keeping the arity before contraction    
 
     if (!emptyTopEnv) {          //book keeping the current environment
         myol = ol; mynl = nl; myenvlist = envlist; 
@@ -317,7 +319,7 @@ static DF_TermPtr HN_hnormApp(DF_TermPtr appPtr, Boolean whnf)
         else newenv = HN_addNPair(argvec, myol, mynl, myenvlist, numContract);
         HN_setEnv(newol, nl, newenv);
 
-        if (arity == numAbsInFun){            
+        if (arity == numAbsInFun){    	  
             funPtr = HN_hnormDispatch(lamBody, whnf);
             arity = 0;
         } else if (arity > numAbsInFun) {
@@ -333,15 +335,17 @@ static DF_TermPtr HN_hnormApp(DF_TermPtr appPtr, Boolean whnf)
     }// while ((arity >0) && (DF_IsLam(fun)))
     
     //update or create application
-    if (arity == 0) {  //app disappears
+    if (arity == 0) {  //app disappears   
         rtPtr = funPtr;
         if (emptyTopEnv && HN_isEmptyEnv()) HNL_updateToRef(appPtr, funPtr);
     } else {           //app persists; Note: now HN_isEmptyEnv must be TRUE
         Boolean changed;
         if (emptyTopEnv) changed = HNL_makeArgvecEmpEnv(argvec, arity);
         else changed = HNL_makeArgvec(argvec,arity,myol,mynl,myenvlist);
-        if ((!changed) && (arity == myarity)) rtPtr = appPtr;
-        else {// create new app and in place update the old if empty top env
+
+        if ((!changed) && (arity == myarity) && (funPtr == oldFunPtr)) {
+	  rtPtr = appPtr;
+        } else {// create new app and in place update the old if empty top env
             rtPtr = (DF_TermPtr)AM_hreg;
             HNL_pushApp(AM_head, AM_argVec, AM_numArgs);
             if (emptyTopEnv) HNL_updateToRef(appPtr, rtPtr);
@@ -561,6 +565,7 @@ static DF_TermPtr HN_hnormAppOcc(DF_TermPtr appPtr, Boolean whnf)
 {
     DF_TermPtr funPtr = DF_appFunc(appPtr), argvec = DF_appArgs(appPtr),
                rtPtr; // term pointer to be returned
+    DF_TermPtr oldFunPtr = funPtr;
     int        arity = DF_appArity(appPtr);
     Boolean    emptyTopEnv = HN_isEmptyEnv();
     int        myol, mynl;       //for book keeping the implicit suspension env
@@ -607,8 +612,10 @@ static DF_TermPtr HN_hnormAppOcc(DF_TermPtr appPtr, Boolean whnf)
         Boolean changed;
         if (emptyTopEnv) changed = HNL_makeArgvecEmpEnv(argvec, arity);
         else changed = HNL_makeArgvec(argvec,arity,myol,mynl,myenvlist);
-        if ((!changed) && (arity == myarity)) rtPtr = appPtr;
-        else {// create new app and in place update the old if empty top env
+
+        if ((!changed) && (arity == myarity) && (oldFunPtr == funPtr)) {
+	  rtPtr = appPtr;
+        } else {// create new app and in place update the old if empty top env
             rtPtr = (DF_TermPtr)AM_hreg;
             HNL_pushApp(AM_head, AM_argVec, AM_numArgs);
             if (emptyTopEnv) HNL_updateToRef(appPtr, rtPtr);
@@ -963,6 +970,7 @@ static DF_TermPtr HN_lnormApp(DF_TermPtr appPtr, Boolean whnf)
 {
     DF_TermPtr funPtr = DF_appFunc(appPtr), argvec = DF_appArgs(appPtr),
                rtPtr; // term pointer to be returned
+    DF_TermPtr oldFunPtr = funPtr;
     int        arity = DF_appArity(appPtr);
     Boolean    emptyTopEnv = HN_isEmptyEnv();
     int        myol, mynl;       //for book keeping the implicit suspension env
@@ -1009,8 +1017,10 @@ static DF_TermPtr HN_lnormApp(DF_TermPtr appPtr, Boolean whnf)
         Boolean changed;
         if (emptyTopEnv) changed = HN_makeArgvecEmpEnvLnorm(argvec, arity);
         else changed = HN_makeArgvecLnorm(argvec,arity,myol,mynl,myenvlist);
-        if ((!changed) && (arity == myarity)) rtPtr = appPtr;
-        else {// create new app and in place update the old if empty top env
+
+        if ((!changed) && (arity == myarity) && (oldFunPtr == funPtr)) { 
+	  rtPtr = appPtr;
+        } else {// create new app and in place update the old if empty top env
             rtPtr = (DF_TermPtr)AM_hreg;
             HNL_pushApp(AM_head, AM_argVec, AM_numArgs);
             if (emptyTopEnv) HNL_updateToRef(appPtr, rtPtr);
