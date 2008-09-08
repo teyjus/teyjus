@@ -47,6 +47,6 @@ void BIIO_readTerm();
 void BIIO_getEnv();
 void BIIO_openSocket();
 void BIIO_unixTime();
-
+void BIIO_system();
 
 #endif  //IO_H
