@@ -33,12 +33,10 @@
 #include "abstmachine.h"
 #include "types.h"
 #include "trail.h"
-#include "../system/error.h"  //to be changed
-#include "../system/memory.h" //to be changed
+#include "../system/error.h"  
+#include "../system/memory.h" 
 
-//to be removed
 #include <stdio.h>
-//#include "print.h"
 
 /* Unify types associated with constants.                                 */
 static void HOPU_typesUnify(DF_TypePtr tyEnv1, DF_TypePtr tyEnv2, int n)
@@ -880,7 +878,7 @@ static DF_TermPtr HOPU_flexNestedSubst(DF_TermPtr args1, int nargs1,
         DF_TermPtr newVar;
         DF_TermPtr newTerm;
 	Boolean    found = FALSE;
-        if (fhPtr != AM_vbbreg) {
+        if ((fhPtr != AM_vbbreg) && (nargs1 == 0)) {
             EM_TRY{ 
                 HOPU_bndVarNestedFlex(fhPtr, args2, nargs2, emblev);
                 bnd = tmPtr;
