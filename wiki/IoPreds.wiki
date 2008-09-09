@@ -92,3 +92,6 @@ open_socket
     Predicate type: string -> int -> in_stream -> out_stream -> o. Establishes a TCP socket. The first argument should be instantiated to a host name such as 'tulip.cs.umn.edu' or an IP address such as '128.101.35.21'. The second argument should be instantiated to the port number of the service. The third and fourth arguments should be uninstantiated variables that will be instantiated respectively to input and output streams associated with the socket. This predicate only works under Unix/Linux platforms.
 
    _`[`Not yet implemented`]`_ 
+
+system
+    Predicate type: string -> int -> o.  Calls an external program.  The first argument should be instantiated to a command to be executed at the shell.  The second argument should be a variable; it will be bound to the return code of the called program.  This function is a wrapper around the Standard C function of the same name.
