@@ -87,8 +87,7 @@ Local kind table:
 
 Type skeleton table:
 0: ((n -> o) -> o)
-1: '0
-2: n
+1: n
 
 Global constant table: 
 0: nabla (No Fixity, precedence 0)
@@ -97,7 +96,7 @@ Global constant table:
 Local constant table: 
 
 Hidden constant table: 
-0:  Type Skeleton: #2
+0:  Type Skeleton: #1
 1:  Type Skeleton: #1
 2:  Type Skeleton: #1
 3:  Type Skeleton: #1

@@ -631,13 +631,13 @@ let occursCheckError = fun fargty argty term ->
 *checkApply:
 * Check an application between a function and an argument.
 **********************************************************************)
-let checkApply = fun fty argty term ->
+let checkApply fty argty term =
   (********************************************************************
   *unify':
   * Attempt to unify the first argument of an application with the first
   * expected argument.  Calls necessary error functions.
   ********************************************************************)
-  let unify' = fun farg arg result ->
+  let unify' farg arg result =
     match (unify farg arg) with
       Success -> result
     | OccursCheckFailure -> (occursCheckError farg arg term; errorMolecule)
@@ -664,9 +664,11 @@ let checkApply = fun fty argty term ->
     else if (Absyn.isVariableType fskel) then
       let fargskel = Absyn.makeTypeVariable () in
       let fargty = Molecule(fargskel, []) in
-      let targty = Molecule(Absyn.makeTypeVariable (), []) in
-      
-      (unify' fargty argty targty)
+      let targskel = Absyn.makeTypeVariable () in
+      let targty = Molecule(targskel, []) in
+      let fty = (Absyn.makeArrowType targskel [fargskel]) in
+      ((Absyn.getTypeVariableReference fskel) := (Some(fty));
+      (unify' fargty argty targty))
 
     (*  Otherwise just check like normal. Function is an arrow type.*)
     else
