@@ -131,21 +131,22 @@ let printStack stack =
 
 let contains env v =
   let find tsym =
-    (Absyn.getTypeSymbolSymbol tsym) = v
+    (Symbol.equal (Absyn.getTypeSymbolSymbol tsym) v)
   in
   (List.exists find env)
 
 let findVar env v =
-  let find tsym = (Absyn.getTypeSymbolSymbol tsym) = v  in
-     try Some (List.find find env)
-     with Not_found -> None
+  let find tsym =
+    (Symbol.equal (Absyn.getTypeSymbolSymbol tsym) v)  in
+  try
+    Some (List.find find env)
+  with Not_found -> None
 
 let add env sym tsym =
   if (contains env sym) then
     env
   else
     tsym::env
-
 
 let newStack = Stack([], NoneState, 0, Absyn.NoFixity)
 let errorStack = Stack([], ErrorState, 0, Absyn.NoFixity)
@@ -332,6 +333,7 @@ and translateTerm term amodule =
   in
   (Errormsg.anyErrors := previous || (!Errormsg.anyErrors);
   result)
+
 (**********************************************************************
 *parseTerm:
 * Translate a preabstract syntax structure that is known to correspond to
@@ -372,11 +374,11 @@ and parseTerm parsingtoplevel inlist term fvs bvs amodule =
       (parseTerms parsingtoplevel true terms' fvs bvs amodule newStack)
 
   | Preabsyn.LambdaTerm(b, t, pos) ->
-      (* Corresponds to X\ t. Mode should switch to non-list in parsing t *)
+      (* Corresponds to x\ t. Mode should switch to non-list in parsing t *)
       let bbvs = parseTypeSymbols b amodule in
       let (tty, fvs') = 
-                 parseTerms parsingtoplevel false t fvs (bbvs @ bvs)
-                            amodule newStack 
+        parseTerms parsingtoplevel false t fvs (bbvs @ bvs)
+                   amodule newStack 
       in (makeAbstraction tty bbvs pos, fvs')
   
   | Preabsyn.IntTerm(i, pos) -> 
@@ -451,7 +453,8 @@ and parseTerms parsingtoplevel inlist terms fvs bvs amodule stack =
         with
           TermException -> (errorStack,fvs))
     | Preabsyn.IdTerm(_) ->
-        let (ot, fvs') = (translateId parsingtoplevel inlist t fvs bvs amodule) 
+        let (ot, fvs') =
+          (translateId parsingtoplevel inlist t fvs bvs amodule) 
         in
         (try
           (match ot with
@@ -528,9 +531,10 @@ and translateId parsingtoplevel inlist term fvs bvs amodule =
           (let var = (findVar fvs sym) in
              match var with
                Some var' -> 
-                 (varToOpTerm term var' fvs bvs amodule (Absyn.makeFreeVarTerm))
-             | None -> (makeVarToOpTerm term fvs bvs amodule 
-                                        makeAnonymousTypeSymbol))
+                (varToOpTerm term var' fvs bvs amodule (Absyn.makeFreeVarTerm))
+             | None ->
+                (makeVarToOpTerm term fvs bvs amodule 
+                                 makeImplicitTypeSymbol))
 
       | _ ->  (* begins with a letter; check for bound variable, defined 
                  constant and free variable in that order *)
