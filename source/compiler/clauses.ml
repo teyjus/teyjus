@@ -454,7 +454,7 @@ and deOrifyGoal goal uvs uvdefs andgoal wholegoal newclauses hcs =
         let arg1 = List.hd args in
         let arg2 = List.hd (List.tl args) in
         (deOrifyOrGoal arg1 arg2 uvs uvdefs andgoal wholegoal newclauses hcs)
-      else if c = Pervasive.andConstant then
+      else if c = Pervasive.andConstant || c = Pervasive.ampandConstant then
         let arg1 = List.hd args in
         let arg2 = List.hd (List.tl args) in
         (deOrifyAndGoal arg1 arg2 uvs uvdefs andgoal wholegoal newclauses hcs)

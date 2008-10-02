@@ -1420,7 +1420,7 @@ and normalizeTerm term =
                                      ref false, 
                                      ref(Some(Absyn.getTypeSymbolType tsym))) in
           let t = Absyn.makeBoundVarTerm tsym' pos in
-          let t' = makeTerm tsym' t env in
+          let t' = makeTerm tsym t env in
           let aterm' = (getEntryTerm (normalize aterm t' false)) in
           if aterm <> aterm' then
             TermEntry(Absyn.AbstractionTerm(Absyn.NestedAbstraction(tsym', aterm'), 
