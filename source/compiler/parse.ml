@@ -321,6 +321,7 @@ and translateTerm term amodule =
       ("parsed, normalized, fixed term: " ^ (Absyn.string_of_term_ast fixedterm))
   in 
 
+  let mol' = Types.skeletonizeMolecule mol' in
   let Types.Molecule(ty, tys) = mol' in
   let mol'' = Types.Molecule(ty, List.map Types.replaceTypeSetType tys) in
 
@@ -1540,7 +1541,7 @@ and fixTerm term =
                   fixTerm' body ((List.rev tysyl) @ bvars) fvars ftyvars
                 in
                 let ind' = (if (ind > 0) then (ind - 1) else 0) in
-                (Absyn.AbstractionTerm(Absyn.UNestedAbstraction([],i,nbody),
+                (Absyn.AbstractionTerm(Absyn.UNestedAbstraction(tysyl,i,nbody),
                   (ind > 1),p),
                   nfvars,nftyvars,ind')
           | _ -> Errormsg.impossible Errormsg.none 
