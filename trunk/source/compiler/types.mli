@@ -101,6 +101,7 @@ val makeKindMolecule : Absyn.akind -> typemolecule
 * types of the replaced variables.
 **********************************************************************)
 val skeletonizeType : Absyn.atype -> typemolecule
+val skeletonizeMolecule : typemolecule -> typemolecule
 
 (**********************************************************************
 *equalMappedTypeSkels:
@@ -136,7 +137,7 @@ val getNewVarsInTypeMol : typemolecule -> Absyn.atype list -> Absyn.atype list
 (**********************************************************************
 *replaceTypeSetType:
 * Given a type set type, returns the corresponding normal type.  The
-* type returned depends on
+* type returned depends on the type set and its default.
 **********************************************************************)
 val replaceTypeSetType : Absyn.atype -> Absyn.atype
 

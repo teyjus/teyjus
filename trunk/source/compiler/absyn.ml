@@ -1273,25 +1273,26 @@ let rec string_of_term_ast term =
   
 
 and string_of_term term =
-  let rec string_of_prefixterm = fun op opfix args context fix prec ->
+  let rec string_of_prefixterm op opfix args context fix prec bindings =
     let opprec = getConstantPrec op in
     let paren = needsParens opfix opprec context fix prec in
     let result = (getConstantPrintName op) 
       ^ " " 
-      ^ (string_of_term' (List.hd args) RightTermContext opfix opprec) in
+      ^ (string_of_term' (List.hd args) RightTermContext opfix opprec bindings) in
 
     if paren then
       "(" ^ result ^ ")"
     else
       result
   
-  and string_of_infixterm = fun op opfix args context fix prec ->
+  and string_of_infixterm op opfix args context fix prec bindings =
     let opprec = getConstantPrec op in
     let paren = needsParens opfix opprec context fix prec in
     let result =
-      (string_of_term' (List.hd args) LeftTermContext opfix opprec) ^ 
+      (string_of_term' (List.hd args) LeftTermContext opfix opprec bindings) ^ 
         " " ^ (getConstantPrintName op) ^ " " ^
-        (string_of_term' (List.hd (List.tl args)) RightTermContext opfix opprec)
+        (string_of_term'
+          (List.hd (List.tl args)) RightTermContext opfix opprec bindings)
     in
     
     if paren then
@@ -1299,23 +1300,23 @@ and string_of_term term =
     else
       result
   
-  and string_of_postfixterm = fun op opfix args context fix prec ->
+  and string_of_postfixterm op opfix args context fix prec bindings =
     let opprec = getConstantPrec op in
     let paren = needsParens opfix opprec context fix prec in
-    let result = (string_of_term' (List.hd args) LeftTermContext opfix opprec) 
-                      ^ " " ^ (getConstantPrintName op) in
-    
+    let result =
+      (string_of_term' (List.hd args) LeftTermContext opfix opprec bindings) ^
+        " " ^ (getConstantPrintName op) in
     if paren then
       "(" ^ result ^ ")"
     else
       result
   
-  and string_of_app term context fix prec =
+  and string_of_app term context fix prec bindings =
     let rec string_of_args args =
       match args with
           [] -> ""
-        | a::[] -> (string_of_term' a RightTermContext appFixity appPrec)
-        | a::aa -> (string_of_term' a RightTermContext appFixity appPrec) 
+        | a::[] -> (string_of_term' a RightTermContext appFixity appPrec bindings)
+        | a::aa -> (string_of_term' a RightTermContext appFixity appPrec bindings) 
                              ^ " " ^ (string_of_args aa)
     in
     
@@ -1327,65 +1328,65 @@ and string_of_term term =
               (match (getConstantFixity c) with
                   Prefix -> 
                     if numargs = 1 then
-                      (string_of_prefixterm c Prefix args context fix prec,
+                      (string_of_prefixterm c Prefix args context fix prec bindings,
                       [])
                     else
                       (string_of_prefixterm c Prefix args 
-                                            LeftTermContext appFixity appPrec,
+                                            LeftTermContext appFixity appPrec bindings,
                       List.tl args)
                 | Prefixr ->
                     if numargs = 1 then
-                      (string_of_prefixterm c Prefix args context fix prec,
+                      (string_of_prefixterm c Prefix args context fix prec bindings,
                       [])
                     else
                       (string_of_prefixterm c Prefix 
-                                            args LeftTermContext appFixity appPrec,
+                                            args LeftTermContext appFixity appPrec bindings,
                       List.tl args)
                 | Infix ->
                     if numargs = 2 then
-                      (string_of_infixterm c Infix args context fix prec,
+                      (string_of_infixterm c Infix args context fix prec bindings,
                       [])
                     else
                       (string_of_infixterm c Infix 
-                                           args LeftTermContext appFixity appPrec,
+                                           args LeftTermContext appFixity appPrec bindings,
                       List.tl (List.tl args))
                 | Infixr ->
                     if numargs = 2 then
-                      (string_of_infixterm c Infixr args context fix prec,
+                      (string_of_infixterm c Infixr args context fix prec bindings,
                       [])
                     else
                       (string_of_infixterm c Infixr 
-                                             args LeftTermContext appFixity appPrec,
+                                             args LeftTermContext appFixity appPrec bindings,
                       List.tl (List.tl args))
                 | Infixl ->
                     if numargs = 2 then
-                      (string_of_infixterm c Infixl args context fix prec,
+                      (string_of_infixterm c Infixl args context fix prec bindings,
                       [])
                     else
                       (string_of_infixterm c Infixl 
-                                           args LeftTermContext appFixity appPrec,
+                                           args LeftTermContext appFixity appPrec bindings,
                       List.tl (List.tl args))
                 | Postfix ->
                     if numargs = 1 then
-                      (string_of_postfixterm c Postfix args context fix prec,
+                      (string_of_postfixterm c Postfix args context fix prec bindings,
                       [])
                     else
                       (string_of_postfixterm c Postfix 
-                                             args LeftTermContext appFixity appPrec,
+                                             args LeftTermContext appFixity appPrec  bindings,
                       List.tl args)
                 | Postfixl ->
                     if numargs = 1 then
-                      (string_of_postfixterm c Postfixl args context fix prec,
+                      (string_of_postfixterm c Postfixl args context fix prec bindings,
                       [])
                     else
                       (string_of_postfixterm c Postfixl 
-                                             args LeftTermContext appFixity appPrec,
+                                             args LeftTermContext appFixity appPrec  bindings,
                       List.tl args)
                 | NoFixity ->
-                    (string_of_term' f LeftTermContext appFixity appPrec,
+                    (string_of_term' f LeftTermContext appFixity appPrec bindings,
                     args))
             | _ ->
-              (string_of_term' f LeftTermContext appFixity appPrec,
+              (string_of_term' f LeftTermContext appFixity appPrec bindings,
               args))
           in
         
@@ -1402,22 +1403,27 @@ and string_of_term term =
         let (head,args) = getTermApplicationHeadAndArguments term in
         let term' = 
           ApplicationTerm(FirstOrderApplication(head, args, List.length args), b,p) in
-        string_of_app term' context fix prec
+        string_of_app term' context fix prec bindings
     | _ -> Errormsg.impossible (getTermPos term) "string_of_app: term not an application"
 
-  and string_of_abstraction = fun term context fix prec ->
+  and string_of_abstraction term context fix prec bindings =
+    let getVars t = match t with
+        AbstractionTerm(NestedAbstraction(_),_,_) -> [getTermAbstractionVar t]
+      | AbstractionTerm(UNestedAbstraction(_),_,_) -> getTermAbstractionVars t
+      | _ -> Errormsg.impossible (getTermPos t) "string_of_abstraction: term not an abstraction"
+    in
     let paren = needsParens lamFixity lamPrec context fix prec in
     let aterm = getTermAbstractionBody term in
-    let avar = getTermAbstractionVar term in
-    let result = (getTypeSymbolName avar) 
-                       ^ "\\ " 
-                       ^ (string_of_term' aterm RightTermContext lamFixity lamPrec) in
+    let avars = getVars term in
+    let lambdas = (String.concat "\\ " (List.map getTypeSymbolName avars)) ^ "\\ " in
+    let bindings' = List.rev_append avars bindings in
+    let result = lambdas ^ (string_of_term' aterm RightTermContext lamFixity lamPrec bindings') in
     if paren then
       "(" ^ result  ^ ")"
     else
       result
   
-  and string_of_term' term context fix prec =
+  and string_of_term' term context fix prec bindings =
     match term with
       IntTerm(i,_,_) -> (string_of_int i)
     | RealTerm(r,_,_) -> (string_of_float r)
@@ -1426,14 +1432,15 @@ and string_of_term term =
     | ConstantTerm(c,_,_,_) -> (getConstantPrintName c)
     | FreeVarTerm(NamedFreeVar(s),_,_) -> Symbol.name (getTypeSymbolSymbol s)
     | BoundVarTerm(NamedBoundVar(s),_,_) -> Symbol.name (getTypeSymbolSymbol s)
-    | ApplicationTerm(_) -> string_of_app term context fix prec
-    | AbstractionTerm(_) -> string_of_abstraction term context fix prec
+    | BoundVarTerm(DBIndex(i),_,_) -> getTypeSymbolName (List.nth bindings (i - 1))
+    | ApplicationTerm(_) -> string_of_app term context fix prec bindings
+    | AbstractionTerm(_) -> string_of_abstraction term context fix prec bindings
     | ErrorTerm -> "#error#"
     | _ -> Errormsg.impossible (getTermPos term) 
                                "string_of_term': unimplemented for this term"
   in
   
-  (string_of_term' term WholeTermContext NoFixity 0)
+  (string_of_term' term WholeTermContext NoFixity 0 [])
 
 and getTermPos = function
   IntTerm(_,_,p) -> p

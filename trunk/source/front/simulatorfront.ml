@@ -138,11 +138,8 @@ let solveQueries () =
       print_string ("[" ^ modName ^"] ?- ");
       let query = read_line () in
 
-      solveQuery query
-      
-        
+      solveQuery query  
     done
-
   in
 
   let print_banner () =

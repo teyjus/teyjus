@@ -73,10 +73,10 @@ let makeConstantMolecule parsingtoplevel constant =
   in
   
   let envsize = 
-	if (Absyn.isPervasiveConstant constant) then 
-	  Absyn.getConstantTypeEnvSize true constant 
-	else
-	  Absyn.getConstantTypeEnvSize parsingtoplevel constant 
+    if (Absyn.isPervasiveConstant constant) then 
+      Absyn.getConstantTypeEnvSize true constant 
+    else
+      Absyn.getConstantTypeEnvSize parsingtoplevel constant 
   in
   let skel = Absyn.getConstantSkeleton constant in
   
@@ -237,93 +237,95 @@ and string_of_typemolecule' = fun mol bindings printpar ->
   in
   string_of_type t
 
+(********************************************************************
+*getMoleculeListTypes;
+********************************************************************)
+let rec getMoleculeListTypes args =
+  match args with
+    [] -> []
+  | a::aa ->
+      (getMoleculeType a)::(getMoleculeListTypes aa)
+
+(********************************************************************
+*replaceType:
+* Finds the given type and converts it to a skeleton type.
+********************************************************************)
+let rec replaceType ty env i =
+  match env with
+    [] -> None
+  | t::ts ->
+      if t == ty then
+        Some(Absyn.SkeletonVarType(ref i))
+      else
+        replaceType ty ts (i + 1)
+
+(********************************************************************
+*skeletonizeArgs:
+* Skeletonizes a list of types in turn.
+********************************************************************)
+let rec skeletonizeArgs args env index =
+  match args with
+    [] -> ([], env, false, index)
+  | a::aa ->
+      let _ = Errormsg.log Errormsg.none ("Types.skeletonizeArgs: " ^ 
+                                          (Absyn.string_of_type_ast a)) in
+      let (a', newvars, index') = skeletonize a env index in
+      let env' = getMoleculeEnvironment a' in
+      
+      let (args', env'', newvars', index'') = skeletonizeArgs aa env' index' in
+      (a'::args', env'', newvars || newvars', index'')
+
+(********************************************************************
+*skeletonize:
+* Primary skeletonization routine; recurses over structure of type.
+********************************************************************)
+and skeletonize ty env index =
+  let ty' = Absyn.dereferenceType ty in
+  match ty' with
+    Absyn.TypeVarType(r) ->
+      (match !r with
+        Absyn.BindableTypeVar(_) ->
+          let ty'' = replaceType ty' env 0 in
+          if Option.isSome ty'' then
+            (Molecule(Option.get ty'', env), false, index)
+          else
+            let index' = index + 1 in
+            (Molecule(Absyn.SkeletonVarType(ref index), env @ [ty']), true, index')
+      | _ -> Errormsg.impossible Errormsg.none 
+                                 "Types.skeletonizeType: \
+                                  invalid type variable")
+  | Absyn.ApplicationType(k, args) ->
+      let (argmols, env', newvars, index') = skeletonizeArgs args env index in
+      let args' = getMoleculeListTypes argmols in
+      (Molecule(Absyn.ApplicationType(k, args'), env'), newvars, index')
+  | Absyn.ArrowType(_) ->
+      let targty = Absyn.getArrowTypeTarget ty' in
+      let argtys = Absyn.getArrowTypeArguments ty' in
+             
+      let (targmol, newvars, index') = skeletonize targty env index in
+      let targty' = getMoleculeType targmol in
+      let env' = getMoleculeEnvironment targmol in
+      
+      let (argmols, env'', newvars', index'') = 
+                      skeletonizeArgs argtys env' index' in
+      let argtys' = getMoleculeListTypes argmols in
+      (Molecule(Absyn.makeArrowType targty' argtys', env''), 
+       newvars || newvars', index'')
+  | Absyn.TypeSetType(_) ->
+      (Errormsg.impossible Errormsg.none 
+                           "Types.skeletonizeType: invalid type set")
+  | _ -> (Molecule(ty', env), false, index)
+
+
 (**********************************************************************
 *skeletonizeType:
 * Converts a type with free variables into a type molecule with
 * skeleton variables.
 **********************************************************************)
-let rec skeletonizeType ty =
-  (********************************************************************
-  *getMoleculeListTypes;
-  ********************************************************************)
-  let rec getMoleculeListTypes args =
-    match args with
-      [] -> []
-    | a::aa ->
-        (getMoleculeType a)::(getMoleculeListTypes aa)
-  in
-
-  (********************************************************************
-  *replaceType:
-  * Finds the given type and converts it to a skeleton type.
-  ********************************************************************)
-  let rec replaceType ty env i =
-    match env with
-      [] -> None
-    | t::ts ->
-        if t == ty then
-          Some(Absyn.SkeletonVarType(ref i))
-        else
-          replaceType ty ts (i + 1)
-  in
-  
-  (********************************************************************
-  *skeletonizeArgs:
-  * Skeletonizes a list of types in turn.
-  ********************************************************************)
-  let rec skeletonizeArgs args env index =
-    match args with
-      [] -> ([], env, false, index)
-    | a::aa ->
-        let _ = Errormsg.log Errormsg.none ("Types.skeletonizeArgs: " ^ 
-                                            (Absyn.string_of_type_ast a)) in
-        let (a', newvars, index') = skeletonize a env index in
-        let env' = getMoleculeEnvironment a' in
-        
-        let (args', env'', newvars', index'') = skeletonizeArgs aa env' index' in
-        (a'::args', env'', newvars || newvars', index'')
-  
-  and skeletonize ty env index =
-    let ty' = Absyn.dereferenceType ty in
-    match ty' with
-      Absyn.TypeVarType(r) ->
-        (match !r with
-          Absyn.BindableTypeVar(_) ->
-            let ty'' = replaceType ty' env 0 in
-            if Option.isSome ty'' then
-              (Molecule(Option.get ty'', env), false, index)
-            else
-              let index' = index + 1 in
-              (Molecule(Absyn.SkeletonVarType(ref index), env @ [ty']), true, index')
-        | _ -> Errormsg.impossible Errormsg.none 
-                                   "Types.skeletonizeType: \
-                                    invalid type variable")
-    | Absyn.ApplicationType(k, args) ->
-        let (argmols, env', newvars, index') = skeletonizeArgs args env index in
-        let args' = getMoleculeListTypes argmols in
-        (Molecule(Absyn.ApplicationType(k, args'), env'), newvars, index')
-    | Absyn.ArrowType(_) ->
-        let targty = Absyn.getArrowTypeTarget ty' in
-        let argtys = Absyn.getArrowTypeArguments ty' in
-               
-        let (targmol, newvars, index') = skeletonize targty env index in
-        let targty' = getMoleculeType targmol in
-        let env' = getMoleculeEnvironment targmol in
-        
-        let (argmols, env'', newvars', index'') = 
-                        skeletonizeArgs argtys env' index' in
-        let argtys' = getMoleculeListTypes argmols in
-        (Molecule(Absyn.makeArrowType targty' argtys', env''), 
-         newvars || newvars', index'')
-    | Absyn.TypeSetType(_) ->
-        (Errormsg.impossible Errormsg.none 
-                             "Types.skeletonizeType: invalid type set")
-    | _ -> (Molecule(ty', env), false, index)
-  in
-
+let skeletonizeType ty =
   let _ = Errormsg.log Errormsg.none ("Types.skeletonizeType: " ^ 
                                       (Absyn.string_of_type_ast ty)) in
-  let (mol, newvars, index) = skeletonize ty [] 0 in
+  let (mol, _, index) = skeletonize ty [] 0 in
   
   if index > Pervasiveutils.maxSkeletonIndex then
     (Errormsg.error Errormsg.none
@@ -333,13 +335,28 @@ let rec skeletonizeType ty =
   else
     mol
 
+(**********************************************************************
+*skeletonizeMoleulce:
+* Converts a moleulce with free variables and skeleton variables
+* into a type molecule with skeleton variables only.
+**********************************************************************)
+let skeletonizeMolecule tmol =
+  let Molecule(ty, env) = tmol in
+  let (mol', _, index) = skeletonize ty env (List.length env) in
+  if index > Pervasiveutils.maxSkeletonIndex then
+    (Errormsg.error Errormsg.none
+                    "Unable to skeletonize type: \
+                     type contains too many free variables";
+    errorMolecule)
+  else
+    mol'
 
 (**********************************************************************
 *occursCheck:
 * Performs an occurs check on a type: given a type variable and a type,
 * determines if the variable occurs in the type.
 **********************************************************************)
-and occursCheck = fun var skel bindings ->
+let rec occursCheck var skel bindings =
   match skel with
     Absyn.ErrorType -> skel
   | Absyn.TypeVarType(_) ->
