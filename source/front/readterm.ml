@@ -240,25 +240,25 @@ let termAndTypeSize tm ty =
 (*                       interface function                         *)
 (********************************************************************)
 let readTermAndType tm tymol fvars tyfvars =
-  let getTypeMoleculeType tymol =
+    let getTypeMoleculeType tymol =
     let rec getTypeMoleculeTypeAux tyenv tyskel =
       match (Absyn.dereferenceType tyskel) with
-	Absyn.SkeletonVarType(ind) -> List.nth tyenv (!ind)
-      | Absyn.ArrowType(l, r)   ->
-	  Absyn.ArrowType(getTypeMoleculeTypeAux tyenv l, 
-			  getTypeMoleculeTypeAux tyenv r)
+        Absyn.SkeletonVarType(ind) -> List.nth tyenv (!ind)
+      | Absyn.ArrowType(l, r) ->
+          Absyn.ArrowType(getTypeMoleculeTypeAux tyenv l, 
+            getTypeMoleculeTypeAux tyenv r)
       | Absyn.ApplicationType(k, args) ->
-	  Absyn.ApplicationType(k, 
-				List.map (getTypeMoleculeTypeAux tyenv) args)
-      | _ -> Errormsg.impossible Errormsg.none 
-	    "getTypeMoleculeType: invalid type skeleton"
+          Absyn.ApplicationType(k,
+            List.map (getTypeMoleculeTypeAux tyenv) args)
+      | _ ->
+          Errormsg.impossible Errormsg.none 
+            "Readterm.getTypeMoleculeType: invalid type skeleton"
     in
     
     let tyskel = Types.getMoleculeType tymol in
     let tyenv  = Types.getMoleculeEnvironment tymol in
     getTypeMoleculeTypeAux tyenv tyskel
   in
-  
   let ty = getTypeMoleculeType tymol in
   let (numTmNodes, numTyNodes) = termAndTypeSize tm ty in
   let _ = 
