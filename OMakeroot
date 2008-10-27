@@ -5,12 +5,6 @@ if $(mem $(OSTYPE), Win32 Cygwin)
     GXX_FOUND = true
     export
 
-if $(equal $(OSTYPE), Win32)
-    OSTYPE = Cygwin
-    GCC_FOUND = true
-    GXX_FOUND = true
-    export
-
 open build/C
 open build/OCaml
 
