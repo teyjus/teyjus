@@ -55,7 +55,7 @@ Cygwin:
 Microsoft Visual Studio 2008:
   The following dependencies must be in the path.  Listed is a place
   to get either the actual dependency, or information on procuring it.
-  
+
   OCaml                           http://caml.inria.fr/
   Microsoft Visual Studio 2008    http://msdn.microsoft.com/vstudio/
   ocamake                         /util/ocamake.ml  (included)
@@ -73,15 +73,15 @@ Microsoft Visual Studio 2008:
   component                 command                    path
   -----------------------------------------------------------------
   compiler                  omake tjcc                 teyjus/source
-  
+
   simulator                 omake tjsim                teyjus/source
-  
+
   disassembler              omake tjdis                teyjus/source
-  
+
   linker                    omake tjlink               teyjus/source
-  
+
   dependency analyzer       omake tjdepend             teyjus/source
-  
+
   all                       omake all                  teyjus/source
 
 
@@ -102,7 +102,7 @@ Microsoft Visual Studio 2008:
   Building the System:
     To build the system in a Windows environment, use the provided
     Microsoft Visual Studio 2008 solution file, (/source/VisualStudio/Teyjus.sln).
-    
+
     To build the system, first set the number of parallel build threads to 1, by
     clicking Tools > Options, and then selecting Project Solutions > Build and Run,
     and finally changing "maximum number of parallel project builds" to 1.
@@ -116,7 +116,7 @@ Microsoft Visual Studio 2008:
 
     Alternatively, it should be possible to build projects individually by
     simply building a particular project using "Build Project" (Ctrl + Shift + B).
-  
+
     If you have trouble building the solution, try running the script
     /source/VisualStudio/clean.bat.  It removes O'Caml object files that Visual
     Studio doesn't know about.
@@ -134,7 +134,7 @@ Microsoft Visual Studio 2008:
 
   1. compiler (teyjus/source/tjcc)
   --------------------------------
-  
+
   Usage: tjcc <options> <module-names>
   options are:
     -o         Specifies the name of the output bytecode file
@@ -147,11 +147,11 @@ Microsoft Visual Studio 2008:
     --version  Return the system version
     -help      Display this list of options
     --help     Display this list of options
-  
-  
+
+
   2. simulator (tejus/source/tjsim)
   ---------------------------------
-  
+
   Usage: tjsim -b <options> <module-name>
   options are:
     -p         Add PATH to the search path.
@@ -178,14 +178,14 @@ Microsoft Visual Studio 2008:
     --version  Return the system version
     -help      Display this list of options
     --help     Display this list of options
-  
-  
+
+
   Note that the interactive interface is not implemented. The simulator only
   works in batch mode (with option -b specified).
-  
+
   3. disassembler (teyjus/source/tjdis)
   -------------------------------------
-  
+
   Usage: tjdis <options> <object-file>
   options are:
     -t         Only print tables
@@ -196,11 +196,11 @@ Microsoft Visual Studio 2008:
     --version  Return the system version
     -help      Display this list of options
     --help     Display this list of options
-  
-  
+
+
   4. linker (teyjus/source/tjlink)
   --------------------------------
-  
+
   Usage: tjlink <module-name>
   -V         Produce verbose output - use multiple times to increase verbosity
   --verbose  Produce verbose output - use multiple times to increase verbosity
@@ -212,7 +212,7 @@ Microsoft Visual Studio 2008:
 
   5. dependency analyzer (teyjus/source/tjdepend)
   -----------------------------------------------
-  
+
   Usage: tjdepend <options> <module-files>
   options are:
     -v         Return the system version
