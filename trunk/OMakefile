@@ -22,7 +22,7 @@ OCamlProgramCopy(all, ., source/tjdepend)
 #  2. Create a distribution directory
 #  3. Confirm that 'omake all' works within that directory
 #  4. Re-create the distribution directory
-#  5. Set permissions and package up the distribution directory 
+#  5. Set permissions and package up the distribution directory
 
 BuildDist() =
     rm -rf dist
