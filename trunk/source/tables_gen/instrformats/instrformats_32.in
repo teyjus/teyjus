@@ -159,7 +159,7 @@ INSTR CATEGORY
   CALL_I1_LEN 7
 
 
-INSTRUCTIONS 144
+INSTRUCTIONS 145
 
    /*  Instructions for term unification and creation  */
 
@@ -341,4 +341,6 @@ INSTRUCTIONS 144
 
    /* resolved by the linker */
    142       execute_link_only          CWPX         CWPX_LEN;     
-   143       call_link_only             I1CWPX       I1CWPX_LEN
+   143       call_link_only             I1CWPX       I1CWPX_LEN;
+
+   144       put_variable_te            RRX          RRX_LEN
