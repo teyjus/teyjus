@@ -533,7 +533,7 @@ let getRegTermReg regOrTerm =
 (* genPuttingVarCode:                                                   *)
 (* auxiliary function for putting a variable in sythesizing terms       *)
 (************************************************************************)
-let genPuttingVarCode var regNum chunk lowval last normalize =
+let genPuttingVarCode var regNum chunk lowval last normalize hasenv =
 
   (* first occurrence of a temporary variable *)
   let genPuttingFirstTempVar varData regNum lastUse =
@@ -542,8 +542,12 @@ let genPuttingVarCode var regNum chunk lowval last normalize =
 	  else Registers.assignTmReg varData chunk lowval
 	in
 	let (inst, size) = 
-	  ([Instr.Ins_put_variable_t(newRegNum, regNum)],
-	   Instr.getSize_put_variable_t)
+	  if (hasenv) then 
+	    ([Instr.Ins_put_variable_te(newRegNum, regNum)],
+	     Instr.getSize_put_variable_te)
+	  else
+	    ([Instr.Ins_put_variable_t(newRegNum, regNum)],
+	     Instr.getSize_put_variable_t)
 	in
 	if (lastUse) then (Registers.markUnusedReg newRegNum; (inst, size))
 	else (inst, size)
@@ -605,12 +609,12 @@ let genPuttingVarCode var regNum chunk lowval last normalize =
 (* used for holding this variable together with other flags indicating  *)
 (* whether it should be discarded are returned.                         *)
 (************************************************************************)
-let genGlobalize var chunk lowval =
+let genGlobalize var chunk lowval hasenv =
 
   (* first occurrence *)
   let genGlobalizeFirstOcc perm =
 	let regNum = Registers.getHighFreeReg () in
-	let (inst, size) = genPuttingVarCode var regNum chunk lowval false false in
+	let (inst, size) = genPuttingVarCode var regNum chunk lowval false false hasenv in
 	let (newInst, newSize) =
 	  if (perm) then 
 		(inst@[Instr.Ins_globalize_t(regNum)],size+Instr.getSize_globalize_t)
@@ -771,7 +775,7 @@ and genSTermCode regNum term chunk lowval last hasenv normalize =
 	then genSTermCodeCons args regNum
 	else                                       (* head code *)
 	  let (headCode, headSize, headReg, varHead, discardReg, freeReg) = 
-		if (Absyn.isTermFreeVariable func) then genGlobalize func chunk lowval
+		if (Absyn.isTermFreeVariable func) then genGlobalize func chunk lowval hasenv
 		else genRigid func 
 	  in
 	  let (argsCode, argsSize, regTermList) = (* args code *)
@@ -801,7 +805,7 @@ and genSTermCode regNum term chunk lowval last hasenv normalize =
 	let body   = Absyn.getTermAbstractionBody term in
 	let numAbs = Absyn.getTermAbstractionNumberOfLambda term in
 	let (bodyCode, bodySize, bodyReg, varHead, discardReg, freeReg) =
-	  if (Absyn.isTermFreeVariable body) then genGlobalize body chunk lowval
+	  if (Absyn.isTermFreeVariable body) then genGlobalize body chunk lowval hasenv
 	  else genRigid body
 	in
 	let (inst, size) = 
@@ -835,7 +839,7 @@ and genSTermCode regNum term chunk lowval last hasenv normalize =
 	  genSTermCodePConst c tyenv regNum
   | Absyn.FreeVarTerm(_)               ->
 	  let (inst, size) =
-		genPuttingVarCode term regNum chunk lowval last normalize
+		genPuttingVarCode term regNum chunk lowval last normalize hasenv
 	  in
 	  (inst, size, false) 
   | Absyn.ApplicationTerm(_)           ->  genSTermCodeApp term regNum 
@@ -913,7 +917,7 @@ and genSTermCodesansReg term chunk lowval last hasenv normalize =
 	then genSTermCodeConssansReg args
 	else                                       (* head code *)
 	  let (headCode, headSize, headReg, varHead, discardReg, freeReg) = 
-		if (Absyn.isTermFreeVariable func) then genGlobalize func chunk lowval
+		if (Absyn.isTermFreeVariable func) then genGlobalize func chunk lowval hasenv
 		else genRigidsansReg func 
 	  in
 	  let (argsCode, argsSize, regTermList) = (* args code *)
@@ -945,7 +949,7 @@ and genSTermCodesansReg term chunk lowval last hasenv normalize =
 	let body   = Absyn.getTermAbstractionBody term in
 	let numAbs = Absyn.getTermAbstractionNumberOfLambda term in
 	let (bodyCode, bodySize, bodyReg, varHead, discardReg, freeReg) =
-	  if (Absyn.isTermFreeVariable body) then genGlobalize body chunk lowval
+	  if (Absyn.isTermFreeVariable body) then genGlobalize body chunk lowval hasenv
 	  else genRigidsansReg body
 	in
         let regNum = Registers.getHighFreeReg () in
@@ -985,7 +989,7 @@ and genSTermCodesansReg term chunk lowval last hasenv normalize =
   | Absyn.FreeVarTerm(_)               ->
 	  let regNum = Registers.getHighFreeReg () in
 	  let (inst, size) =
-		genPuttingVarCode term regNum chunk lowval last normalize
+		genPuttingVarCode term regNum chunk lowval last normalize hasenv
 	  in
 	  (inst, size, regNum, false) 
   | Absyn.ApplicationTerm(_)           ->  genSTermCodeAppsansReg term

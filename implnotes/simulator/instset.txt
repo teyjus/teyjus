@@ -372,6 +372,12 @@ put_variable Xn, Ai
     of the universe count register UC. A reference to this cell is then put
     into Ai and Xn.
 
+put_variable_e Xn, Ai
+
+    Like put_variable Xi except that the universe count recorded in the
+    current top environment record is used as the universe count in creating
+    the free variable term.
+
 put_variable Yn, Ai
 
     This instruction is for the first occurrence of a permanent variable

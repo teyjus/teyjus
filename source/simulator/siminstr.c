@@ -78,6 +78,17 @@ void SINSTR_put_variable_t()              //put_variable Xn,Ai -- R_R_X
     AM_hreg = nhreg;
 }
 
+void SINSTR_put_variable_te()             //put_variable_te Xn,Ai -- R_R_X
+{
+    INSACC_RRX(regX, regA);
+    nhreg = AM_hreg + DF_TM_ATOMIC_SIZE;
+    AM_heapError(nhreg);
+    DF_mkVar(AM_hreg,  AM_envUC());
+    DF_mkRef((MemPtr)regX, (DF_TermPtr)AM_hreg); 
+    *regA = *regX;                               
+    AM_hreg = nhreg;
+}
+
 void SINSTR_put_variable_p()              //put_variable Yn,Ai -- E_R_X
 {
     INSACC_ERX(envY, regA);
