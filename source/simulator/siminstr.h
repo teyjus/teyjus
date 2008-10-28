@@ -32,6 +32,7 @@
 /* PUT CLASS                                              */
 /**********************************************************/
 void SINSTR_put_variable_t();
+void SINSTR_put_variable_te();
 void SINSTR_put_variable_p();
 void SINSTR_put_value_t();
 void SINSTR_put_value_p();
