@@ -2,6 +2,7 @@
 !include "path.nsh"
 
 !system 'cd ..\.. && svn up' = 0
+!system 'cd .. && omake distclean' = 0
 !system 'cd .. && omake all' = 0
 !system '..\tjcc -v | perl -pe "s/Teyjus version/!define VERSION/" > version.nsh'
 !include version.nsh
@@ -15,7 +16,7 @@ OutFile "teyjus-installer-${VERSION}.exe"
 ; The default installation directory
 InstallDir $PROGRAMFILES\Teyjus
 
-; Registry key to check for directory (so if you install again, it will 
+; Registry key to check for directory (so if you install again, it will
 ; overwrite the old one automatically)
 InstallDirRegKey HKLM "Software\Teyjus" "Install_Dir"
 
@@ -37,7 +38,7 @@ RequestExecutionLevel admin
 
 ;--------------------------------
 ;Languages
- 
+
 !insertmacro MUI_LANGUAGE "English"
 
 
@@ -57,21 +58,21 @@ Section "Teyjus (required)"
   File /r /x .svn "..\..\emacs"
 
   File /r /x .svn /x depend /x *.lp /x *.lpo "..\..\examples"
-  
+
   ; Add to user's $PATH
   Push $INSTDIR\bin
   Call AddToPath
-    
+
   ; Write the installation path into the registry
   WriteRegStr HKLM SOFTWARE\Teyjus "Install_Dir" "$INSTDIR"
-  
+
   ; Write the uninstall keys for Windows
   WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Teyjus" "DisplayName" "Teyjus"
   WriteRegStr HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Teyjus" "UninstallString" '"$INSTDIR\uninstall.exe"'
   WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Teyjus" "NoModify" 1
   WriteRegDWORD HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Teyjus" "NoRepair" 1
   WriteUninstaller "uninstall.exe"
-  
+
 SectionEnd
 
 ;--------------------------------
@@ -79,7 +80,7 @@ SectionEnd
 ; Uninstaller
 
 Section "Uninstall"
-  
+
   ; Remove registry keys
   DeleteRegKey HKLM "Software\Microsoft\Windows\CurrentVersion\Uninstall\Teyjus"
   DeleteRegKey HKLM SOFTWARE\Teyjus
