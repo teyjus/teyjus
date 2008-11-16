@@ -69,3 +69,7 @@ dist:
 .PHONY: clean
 clean:
     rm $(filter-proper-targets $(ls R, .))
+
+.PHONY: distclean
+distclean: clean
+    rm -rf dist
