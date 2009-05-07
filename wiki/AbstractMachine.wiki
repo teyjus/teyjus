@@ -2,7 +2,7 @@
 
 = An Overview of the Virtual Machine Underlying Teyjus =
 
-An integral part of the scheme that has been used for implementing Teyjus is virtual machine that is capable of realizing the operations that arise in typical Lambda Prolog programs efficiently. As with other logic programming languages, unification and backtracking are intrinsic to Lambda Prolog and the Warren Abstract Machine (WAM) provides a basic structure for treating these aspects well. However, an extensive embellishment of this framework is needed for realizing several additional features satisfactorily:
+An integral part of the scheme that has been used for implementing Teyjus is a virtual machine that is capable of realizing the operations that arise in typical Lambda Prolog programs efficiently. As with other logic programming languages, unification and backtracking are intrinsic to Lambda Prolog and the Warren Abstract Machine (WAM) provides a basic structure for treating these aspects well. However, an extensive embellishment of this framework is needed for realizing several additional features satisfactorily:
 
     * The language contains primitives that can alter the name space and the definitions of procedures in the course of execution. This means, in particular, that unification has to pay attention to changing signatures and that the solution to each (sub)goal has to be relativized to the relevant program context.
 
