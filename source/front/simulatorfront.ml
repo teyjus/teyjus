@@ -186,6 +186,9 @@ let _ =
             exit 1
         | Simerrors.Abort    ->    (* abort *)
             exit 1
+        | End_of_file        ->    (* Ctrl-D *)
+            print_newline ();
+            exit 0
         | exp                ->    (* other exceptions *)
             print_endline "Uncaught internal exception" ;
             exit 2 

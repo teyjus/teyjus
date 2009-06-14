@@ -154,13 +154,6 @@ let makeSignature () =
     clearResults ();
     s
 
-let parse_error s =
-  if s = "syntax error" then
-    let pos = Parsing.symbol_start_pos () in
-    Errormsg.error pos "syntax error"
-  else
-    ()
-
 %}
 
 
