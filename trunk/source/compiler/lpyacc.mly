@@ -397,8 +397,7 @@ parseModClause:
                                  "Clause never terminated" ;
                                ErrorTerm }
 
-  | error EOF                { genericError "clause" ;
-                               Errormsg.error (getPos 1)
+  | error EOF                { Errormsg.error (getPos 1)
                                  "Clause never terminated" ;
                                ErrorTerm }
 

@@ -36,11 +36,6 @@ let maxStringLength = Int32.to_int (Int32.div Int32.max_int (Int32.of_int 2))
 
 let commentLev = ref 0
 
-let strPos = ref 0
-let escapePos = ref 0
-let strErr = ref false
-let quotedid = ref false
-
 let stringBuffer = Buffer.create 16
 let string_of_char = String.make 1
 
