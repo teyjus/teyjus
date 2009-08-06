@@ -20,9 +20,12 @@ The rules below describe the syntax of the declarations that may appear in a mod
 
 <ModPreamble>   ::=  <Empty>
                    | 'import' <NameTokens> '.' <ModPreamble>
-                   | 'accumulate' <NameTokens> '.' <ModPreamble>
-                   | 'accum_sig' <NameTokens> '.' <ModPreamble>
-                   | 'use_sig' <NameTokens> '.' <ModPreamble>
+                   | 'accumulate' <UseList> '.' <ModPreamble>
+                   | 'accum_sig' <UseList> '.' <ModPreamble>
+                   | 'use_sig' <UseList> '.' <ModPreamble>
+
+<NameTokens> ::= <NameToken>
+                   | <NameToken> ',' <NameTokens>
 
 <ModBody>       ::=  <Empty> 
                    | <ModSignDecl> <ModBody>
@@ -184,4 +187,6 @@ The module declaration must satisfy certain properties in addition to adhering t
 
     * Every sort and type constructor that is used in the type declarations and clauses in a module must be explicitly declared. Similarly, every constant that is used in the clauses that define predicates in a module must be explicitly declared. Queries in the _Teyjus_ system are posed relative to modules. All constants, sorts and type constructors that are used in such queries must be defined in the signature corresponding to the module. 
 
-    * A chain of imports or accumulates from a given module must not lead back to the same module. A violation of this "syntactic" property cannot be detected at compile time without violating the philosophy of separate compilation. However it can be and is checked at linking time. 
+    * A chain of imports or accumulates from a given module must not lead back to the same module. A violation of this "syntactic" property cannot be detected at compile time without violating the philosophy of separate compilation. However it can be and is checked at linking time.
+
+    * The use and meaning of renamings on accumulate, use`_`sig and accum`_`sig is the same as in signatures, and the same restrictions apply.
