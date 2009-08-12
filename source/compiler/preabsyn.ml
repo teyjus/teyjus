@@ -45,6 +45,13 @@ type pfixitykind =
 (* Symbols *)
 type psymbol = Symbol of symbol * pidkind * pos
 
+(* Accumulate statements *)
+and paccum = Accumulate of psymbol * prenaming list option
+
+and prenaming =
+  | TypeRenaming of psymbol * psymbol
+  | KindRenaming of psymbol * psymbol
+
 (* Type Symbols *)
 and ptypesymbol = TypeSymbol of (symbol * ptype option * pidkind * pos)
 
@@ -90,11 +97,11 @@ and pfixity = Fixity of psymbol list * pfixitykind * int * pos
 type pmodule =
   | Module of string * pconstant list * pconstant list * 
       pconstant list * pconstant list * pconstant list * pfixity list *
-      pkind list * pkind list * ptypeabbrev list * pclause list * psymbol list *
-      psymbol list * psymbol list * psymbol list
+      pkind list * pkind list * ptypeabbrev list * pclause list * paccum list *
+      paccum list * paccum list * psymbol list
   | Signature of string * pconstant list * pconstant list *
       pconstant list * pkind list *
-      ptypeabbrev list * pfixity list * psymbol list * psymbol list
+      ptypeabbrev list * pfixity list * paccum list * paccum list
 
 let string_of_pos pos = Errormsg.string_of_pos pos
 

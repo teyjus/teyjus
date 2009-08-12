@@ -910,18 +910,12 @@ and mergeConstants clist ctable f =
   in
   List.fold_left merge ctable clist
 
-(**********************************************************************
-*mergeKinds:
-* Merges a list of kinds into a table of kinds, based on the
-* options specified.
-**********************************************************************)
-and mergeKinds klist ktable f =
-  let merge table kind =
-    let sym = Absyn.getKindSymbol kind in
-    let kind' = Table.find sym ktable in
-    (f kind' kind ktable)
+and mergeConstants' clist ctable f =
+  let merge table (sym,constant) =
+    let constant' = Table.find sym ctable in
+    (f constant' constant table)
   in
-  List.fold_left merge ktable klist
+  List.fold_left merge ctable clist
 
 (**********************************************************************
 *previouslyExists:
@@ -1194,6 +1188,109 @@ let copyUseonly generalCopier owner currentConstant newConstant =
   else
     ()
 
+let mapSymbolName list =
+  let filterSome list = List.map Option.get (List.filter Option.isSome list) in
+  filterSome (List.map (function
+                Some(a,b) -> Some(Symbol.name a, b)
+              | None -> None)
+      list)
+
+let (renameTable, renameSigs) = 
+  let assoc2table assoc =
+    List.fold_left
+      (fun table -> function (Some (key, value)) -> Table.add key value table
+                            | None -> table)
+      Table.empty assoc
+  in
+
+  let renameKind (Absyn.Kind(_,a,b,c,d)) name = Absyn.Kind(name,a,b,c,d) in
+
+  let renameType (Absyn.Constant(_,a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p)) name =
+    Absyn.Constant(name,a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p) in
+
+  let renameAbbrev (Absyn.TypeAbbrev(_,a,b,c)) name = Absyn.TypeAbbrev(name,a,b,c) in
+
+  let renameKinds flag renaming ktable =
+    List.map (
+      function
+        (Preabsyn.KindRenaming(Preabsyn.Symbol(a,_,_), Preabsyn.Symbol(b,_,_))) ->
+          (match Table.find a ktable with
+            Some kind -> Some ((if flag then b else a), renameKind kind b)
+          | None -> None)
+      | (Preabsyn.TypeRenaming _) -> None
+    ) renaming
+  in
+
+  let renameAbbrevs renaming ktable =
+    List.map (
+      function
+        (Preabsyn.KindRenaming(Preabsyn.Symbol(a,_,_), Preabsyn.Symbol(b,_,_))) ->
+          (match Table.find a ktable with
+            Some kind -> Some (b, renameAbbrev kind b)
+          | None -> None)
+      | (Preabsyn.TypeRenaming _) -> None
+    ) renaming
+  in
+
+  let renameTypes flag renaming ctable =
+    List.map (
+      function
+        (Preabsyn.TypeRenaming(Preabsyn.Symbol(a,_,_), Preabsyn.Symbol(b,_,_))) ->
+          (match Table.find a ctable with
+            Some const -> Some ((if flag then b else a), renameType const b)
+          | None -> None)
+      | (Preabsyn.KindRenaming _) -> None
+    ) renaming
+  in
+
+  ((fun (ktable, ctable, atable) renaming ->
+    match renaming with
+    Some ren ->
+      (assoc2table (renameKinds true ren ktable),
+       assoc2table (renameTypes true ren ctable),
+       assoc2table (renameAbbrevs ren atable))
+  | None -> (ktable, ctable, atable)),
+  (fun signature renaming ->
+    match renaming with
+      Some ren ->
+        (let prepare list = List.map (fun (a,b) -> Some(Symbol.symbol a, b)) list in
+        match signature with
+          Absyn.AccumulatedModule(n, Absyn.Signature(name, kinds, types)) ->
+            Absyn.AccumulatedModule(n, Absyn.Signature(name,
+             mapSymbolName (renameKinds false ren (assoc2table (prepare kinds))),
+             mapSymbolName (renameTypes false ren (assoc2table (prepare types)))))
+        | _ -> Absyn.AccumulatedModule("", Absyn.ErrorModule))
+    | None -> signature))
+
+(* Tests that the renaming is an injective function *)
+(* We also should be checking that the signature is self-contained *)
+let checkRenaming renaming =
+  let goodRenaming renaming =
+    let rec unique lst =
+      (* This could be made faster *)
+      (match lst with
+        [] -> true
+      | x::xs ->
+          if unique xs
+            then not (List.mem x xs)
+            else false)
+    in
+    let types = List.filter (function Preabsyn.TypeRenaming _ -> true | _ -> false) renaming in
+    let kinds = List.filter (function Preabsyn.KindRenaming _ -> true | _ -> false) renaming in
+    let x = Symbol.symbol "impossible" in
+    let typeKeys = List.map (function Preabsyn.TypeRenaming(Preabsyn.Symbol(a,_,_),_) -> a | _ -> x) types in
+    let typeValues = List.map (function Preabsyn.TypeRenaming(_,Preabsyn.Symbol(a,_,_)) -> a | _ -> x) types in
+    let kindKeys = List.map (function Preabsyn.KindRenaming(Preabsyn.Symbol(a,_,_),_) -> a | _ -> x) kinds in
+    let kindValues = List.map (function Preabsyn.KindRenaming(_,Preabsyn.Symbol(a,_,_)) -> a | _ -> x) kinds in
+    List.for_all unique [typeKeys; typeValues; kindKeys; kindValues]
+  in
+  match renaming with
+    Some ren ->
+      if goodRenaming ren
+        then ()
+        else Errormsg.error Errormsg.none "Renaming is not an injective function"
+  | None -> ()
+
 (**********************************************************************
 *translate:
 * Convert from a preabsyn module to an absyn module by translating the
@@ -1272,9 +1369,13 @@ and translateSignature s owner accumOrUse ktable ctable atable generalCopier =
               Table.add s kind ktable)
       | Absyn.Kind(_,_,_,Absyn.PervasiveKind,_) ->
           ktable (*  Ignore pervasive kinds. *)
-      | _ -> Errormsg.impossible Errormsg.none "Invliad kind encountered in mergeKinds"              
+      | _ -> Errormsg.impossible Errormsg.none "Invalid kind encountered in mergeKinds"              
     in
     (List.fold_left merge kt klist)
+  in
+
+  let mergeKindTable klist ktable =
+    mergeKinds (getFromTable (fun _ -> true) klist) ktable
   in
   
   (******************************************************************
@@ -1286,9 +1387,9 @@ and translateSignature s owner accumOrUse ktable ctable atable generalCopier =
   ******************************************************************)
   let mergeConstants clist ctable copier =
     let merge ctable c =
-      let s = Absyn.getConstantSymbol c in
       let pos = Absyn.getConstantPos c in
-      match (Table.find s ctable) with
+      let s = Absyn.getConstantSymbol c in
+      match Table.find s ctable with
         Some c2 ->  (*  Already in the table. *)
           if Absyn.isPervasiveConstant c2 then
             if Absyn.isPervasiveConstant c then
@@ -1316,6 +1417,10 @@ and translateSignature s owner accumOrUse ktable ctable atable generalCopier =
     (List.fold_left merge ctable clist)
   in    
 
+  let mergeConstantTable clist ctable copier =
+    mergeConstants (getFromTable (fun _ -> true) clist) ctable copier
+  in
+
   (******************************************************************
   *processAccumSigs:
   * Convert a list of accumulated signature filenames into a list of
@@ -1332,10 +1437,8 @@ and translateSignature s owner accumOrUse ktable ctable atable generalCopier =
   ******************************************************************)
   let mergeTables ktable ctable atable tables =
     let mergeTable (ktable,ctable,atable) (ktable',ctable',atable') =
-      let kinds = getFromTable (fun _ -> true) ktable' in
-      let constants = getFromTable (fun _ -> true) ctable' in
-      let (ktable'') = mergeKinds kinds ktable in
-      let (ctable'') = mergeConstants constants ctable generalCopier in
+      let (ktable'') = mergeKindTable ktable' ktable in
+      let (ctable'') = mergeConstantTable ctable' ctable generalCopier in
       let atable'' = mergeTypeAbbrevs atable atable' in
       (ktable'', ctable'', atable'')
     in
@@ -1348,7 +1451,7 @@ and translateSignature s owner accumOrUse ktable ctable atable generalCopier =
   ******************************************************************)
   let rec translateSigs tables accum sigs = 
     match sigs with
-      s::rest ->	
+      s::rest ->
         let (asig, table) =
           translateSignature s owner accum
             Pervasive.pervasiveKinds
@@ -1375,16 +1478,24 @@ and translateSignature s owner accumOrUse ktable ctable atable generalCopier =
   * switched to useonly.
   ******************************************************************)
   let rec translateUseSigs = translateSigs [] false in
+
+
+  (* There is a bug here: renaming kinds doesn't work properly *)
+  let doSigs isigs translator ktable ctable atable =
+    let accums = List.map (function Preabsyn.Accumulate(s,_) -> s) isigs in
+    let renamings = List.map (function Preabsyn.Accumulate(_,r) -> r) isigs in
+    let _ = List.iter checkRenaming renamings in
+    let sigs = processSigs accums in
+    let tables = translator sigs in
+    let tables = List.map2 renameTable tables renamings in
+    mergeTables ktable ctable atable tables
+  in
   
   (*  Process accumulated signatures: *)
-  let sigs = processSigs accumsigs in
-  let tables = translateAccumSigs sigs in
-  let (ktable, ctable, atable) = mergeTables ktable ctable atable tables in
-  
+  let (ktable, ctable, atable) = doSigs accumsigs translateAccumSigs ktable ctable atable in
+
   (*  Process used signatures:  *)
-  let sigs = processSigs usesigs in
-  let tables = translateUseSigs sigs in
-  let (ktable, ctable, atable) = mergeTables ktable ctable atable tables in
+  let (ktable, ctable, atable) = doSigs usesigs translateUseSigs ktable ctable atable in
   
   (*  Process kinds *)
   let kindlist = translateKinds gkinds buildGlobalKind in
@@ -1420,11 +1531,14 @@ and translateSignature s owner accumOrUse ktable ctable atable generalCopier =
   (*  Renaming. *)
   let kindRenaming = getFromTable (fun k -> not (Absyn.isPervasiveKind k)) ktable in
   let constRenaming = getFromTable (fun c -> not (Absyn.isPervasiveConstant c)) ctable in
+
+  let kindRenaming' = List.map (fun k -> (Absyn.getKindName k, k)) kindRenaming in
+  let constRenaming' = List.map (fun c -> (Absyn.getConstantName c, c)) constRenaming in
   
   (*  Translate fixities *)
   let ctable = translateFixities fixities ctable in
  
-  (Absyn.Signature(name, kindRenaming, constRenaming),
+  (Absyn.Signature(name, kindRenaming', constRenaming'),
   (ktable,ctable,atable))
 
 (**********************************************************************
@@ -1667,27 +1781,12 @@ and translateModule mod' ktable ctable atable =
     in
     mergeConstants clist ctable f
   in
-  
-  (******************************************************************
-  *processAccumMods:
-  * Convert a list of accumulated modules filenames into a list of
-  * preabsyn signatures.
-  ******************************************************************)
-  let rec processAccumMods = function
-    Preabsyn.Symbol(accum,_,_)::rest ->
-      (Compile.compileSignature ((Symbol.name accum)))::(processAccumMods rest)
-  | [] -> []
-  in
-  
-  (******************************************************************
-  *processImpMods:
-  * Convert a list of imported modules filenames into a list of
-  * preabsyn signatures.
-  ******************************************************************)
-  let rec processImpMods = function
-    Preabsyn.Symbol(accum,_,_)::rest ->
-      (Compile.compileSignature ((Symbol.name accum)))::(processImpMods rest)
-  | [] -> []
+
+  let processMods mods =
+    List.map
+      (fun (Preabsyn.Symbol(accum,_,_)) ->
+        Compile.compileSignature (Symbol.name accum))
+      mods
   in
   
   (******************************************************************
@@ -1713,16 +1812,16 @@ and translateModule mod' ktable ctable atable =
   * accumulating module and puts it in the renaming list.
   ******************************************************************)
   let normalizeRenaming ktable ctable atable asig =
-    let renameKind k =
+    let renameKind (n,k) =
       match Table.find (Absyn.getKindSymbol k) ktable with
-          Some k' -> k'
+          Some k' -> (n,k')
         | _ ->
             Errormsg.impossible Errormsg.none
               "Translate.normalizeRenaming: invalid constant"
     in
-    let renameConst c =
+    let renameConst (n,c) =
      match Table.find (Absyn.getConstantSymbol c) ctable with
-          Some c' -> c'
+          Some c' -> (n,c')
         | _ ->
             Errormsg.impossible Errormsg.none
               "Translate.normalizeRenaming: invalid constant"
@@ -1799,12 +1898,16 @@ and translateModule mod' ktable ctable atable =
                     gkinds, lkinds, tabbrevs, clauses, accummods,
                     accumsigs, usesigs, impmods) ->
 
-      (*  Translate the accumulated modules *)
-      let accummods' = processAccumMods accummods in
+      let accums = List.map (function Preabsyn.Accumulate(s,_) -> s) accummods in
+      let renamings = List.map (function Preabsyn.Accumulate(_,r) -> r) accummods in
+      let _ = List.iter checkRenaming renamings in
+      let accummods' = processMods accums in
       let (accums, acctables) = translateAccumMods accummods' in
+      let acctables = List.map2 renameTable acctables renamings in
+      let accums = List.map2 renameSigs accums renamings in
       
       (*  Translate the imported modules  *)
-      let impmods' = processImpMods impmods in
+      let impmods' = processMods impmods in
       let (imps, imptables) = translateImpMods impmods' in
 
       let (ktable, ctable, atable) = mergeTables ktable ctable atable acctables in

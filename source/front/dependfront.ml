@@ -64,6 +64,7 @@ let rec lpo_deps modname =
         match compile_module modname with
           | Preabsyn.Module(_, _, _, _, _, _, _, _, _, _, _,
                             accum_mods, accum_sigs, use_sigs, import_mods) ->
+              let accum_mods = List.map (fun (Preabsyn.Accumulate(sym,_)) -> sym) accum_mods in
               let direct_deps =
                 List.map psymbol_to_name (accum_mods @ import_mods)
               in
@@ -101,6 +102,8 @@ let rec sig_deps signame =
         H.add sig_deps_table signame Computing ;
         match compile_signature signame with
           | Preabsyn.Signature(_, _, _, _, _, _, _, accum_sigs, use_sigs) ->
+              let accum_sigs = List.map (fun (Preabsyn.Accumulate(sym,_)) -> sym) accum_sigs in
+              let use_sigs = List.map (fun (Preabsyn.Accumulate(sym,_)) -> sym) use_sigs in
               let direct_deps =
                 List.map psymbol_to_name (accum_sigs @ use_sigs)
               in
@@ -119,6 +122,9 @@ let root_sig_deps modname =
     match compile_module modname with
       | Preabsyn.Module(_, _, _, _, _, _, _, _, _, _, _,
                         accum_mods, accum_sigs, use_sigs, import_mods) ->
+          let accum_mods = List.map (fun (Preabsyn.Accumulate(sym,_)) -> sym) accum_mods in
+          let accum_sigs = List.map (fun (Preabsyn.Accumulate(sym,_)) -> sym) accum_sigs in
+          let use_sigs = List.map (fun (Preabsyn.Accumulate(sym,_)) -> sym) use_sigs in
           let direct_deps =
             List.map psymbol_to_name
               (accum_mods @ accum_sigs @ use_sigs @ import_mods)

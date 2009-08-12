@@ -164,7 +164,7 @@ let makeSignature () =
 %token IMPLIES INFIXLAMBDA TYARROW CUT PI SIGMA COMMA
 %token SEMICOLON AMPAND RDIVIDE NILLIST LISTCONS EQUAL
 %token PLUS MINUS TIMES LESS LEQ GTR GEQ UMINUS PERIOD
-%token LPAREN RPAREN LBRACK RBRACK COLON VBAR
+%token LPAREN RPAREN LBRACK RBRACK COLON VBAR LCURLY RCURLY
 %token SIGSTART MODSTART TERMSTART
 %token EOF
 
@@ -249,13 +249,13 @@ modpreamble:
   | modpreamble IMPORT cvidlist PERIOD
       { importedModList := $3 @ !importedModList }
 
-  | modpreamble ACCUMULATE cvidlist PERIOD
+  | modpreamble ACCUMULATE acclist PERIOD
       { accumulatedModList := $3 @ !accumulatedModList }
 
-  | modpreamble ACCUMSIG cvidlist PERIOD
+  | modpreamble ACCUMSIG acclist PERIOD
       { accumulatedSigList := $3 @ !accumulatedSigList }
 
-  | modpreamble USESIG cvidlist PERIOD
+  | modpreamble USESIG acclist PERIOD
       { useSigList := $3 @ !useSigList }
 
   | error PERIOD              { genericError "preamble" }
@@ -263,10 +263,10 @@ modpreamble:
 sigpreamble:
   |                           {  }
 
-  | sigpreamble USESIG cvidlist PERIOD
+  | sigpreamble USESIG acclist PERIOD
       { useSigList := $3 @ !useSigList }
 
-  | sigpreamble ACCUMSIG cvidlist PERIOD
+  | sigpreamble ACCUMSIG acclist PERIOD
       { accumulatedSigList := $3 @ !accumulatedSigList }
 
   | error PERIOD              { genericError "preamble" }
@@ -277,6 +277,23 @@ cvidlist:
   | cvidlist COMMA UPCID      { (makeSymbol $3) :: $1 }
   | cvidlist COMMA SYID       { (makeSymbol $3) :: $1 }
 
+acclist:
+  | accum                     { [$1] }
+  | accum COMMA acclist       { $1 :: $3 }
+
+accum:
+  | tok                       { Accumulate(makeSymbol $1, None) }
+  | tok LCURLY rename RCURLY  { Accumulate(makeSymbol $1, Some $3) }
+
+rename:
+  | ren                       { [$1] }
+  | ren COMMA rename          { $1 :: $3 }
+
+ren:
+  | TYPE tok                  { TypeRenaming(makeSymbol $2, makeSymbol $2) }
+  | TYPE tok IMPLIES tok      { TypeRenaming(makeSymbol $2, makeSymbol $4) }
+  | KIND tok                  { KindRenaming(makeSymbol $2, makeSymbol $2) }
+  | KIND tok IMPLIES tok      { KindRenaming(makeSymbol $2, makeSymbol $4) }
 
 idlist:
   | ID                        { (makeSymbol $1) :: [] }

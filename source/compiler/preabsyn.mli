@@ -44,6 +44,13 @@ type pfixitykind =
 (* Symbols *)
 type psymbol = Symbol of symbol * pidkind * pos
 
+(* Accumulate statements *)
+and paccum = Accumulate of psymbol * prenaming list option
+
+and prenaming =
+  | TypeRenaming of psymbol * psymbol
+  | KindRenaming of psymbol * psymbol
+
 (* Type Symbols *)
 and ptypesymbol = TypeSymbol of (symbol * ptype option * pidkind * pos)
 
@@ -99,11 +106,11 @@ and pfixity = Fixity of psymbol list * pfixitykind * int * pos
  *
  *   Type Abbreviations: ptypeabbrev list
  *
- *   Clauses: pterm list
+ *   Clauses: pclause list
  *
- *   Accumulated Modules: psymbol list
- *   Accumulated Signatures: psymbol list
- *   Used Signatures: psymbol list
+ *   Accumulated Modules: paccum list
+ *   Accumulated Signatures: paccum list
+ *   Used Signatures: paccum list
  *   Imported Modules: psymbol list
  *
  *  Signature:
@@ -116,16 +123,17 @@ and pfixity = Fixity of psymbol list * pfixitykind * int * pos
  *
  *   Type Abbreviations: ptypeabbrevlist
  *
- *   Accumulated Signatures: psymbol list
+ *   Accumulated Signatures: paccum list
+ *   Used Signatures: paccum list
  ********************************************************************)
 type pmodule =
   | Module of string * pconstant list * pconstant list * 
       pconstant list * pconstant list * pconstant list * pfixity list *
-      pkind list * pkind list * ptypeabbrev list * pclause list * psymbol list *
-      psymbol list * psymbol list * psymbol list
+      pkind list * pkind list * ptypeabbrev list * pclause list * paccum list *
+      paccum list * paccum list * psymbol list
   | Signature of string * pconstant list * pconstant list *
       pconstant list * pkind list *
-      ptypeabbrev list * pfixity list * psymbol list * psymbol list
+      ptypeabbrev list * pfixity list * paccum list * paccum list
 
 val printPreAbsyn : pmodule -> out_channel -> unit
 

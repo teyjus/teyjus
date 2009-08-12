@@ -248,7 +248,7 @@ and amodule =
       atypeabbrev Table.SymbolTable.t * astringinfo list * akind list *
       akind list * aconstant list * aconstant list * aconstant list ref *
       askeleton list * askeleton list ref * aclauseinfo ref)
-  | Signature of (string * akind list * aconstant list)
+  | Signature of (string * (string * akind) list * (string * aconstant) list)
   | ErrorModule
 
 and aimportedmodule = 
@@ -2166,10 +2166,10 @@ let printAbsyn = fun m out ->
       (output "Signature(";
       output_line name;
       output_line "Kinds:";
-      List.iter printKind kinds;
+      List.iter (fun (_,k) -> printKind k) kinds;
       output_line "";
       output_line "Constants:";
-      List.iter printConstant consts;
+      List.iter (fun (_,c) -> printConstant c) consts;
       output_line ")")
   | ErrorModule ->
       (output "ErrorModule")

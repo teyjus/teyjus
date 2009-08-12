@@ -51,7 +51,7 @@
 (* kinds lists: (kinds list, number of kinds)                             *)
 (**************************************************************************)
 type cgkinds =  KindList of Absyn.akind list * int
-
+type cgnkinds =  NamedKindList of (string * Absyn.akind) list * int
 
 (**************************************************************************)
 (* global, local and hidden constants                                     *)
@@ -59,6 +59,7 @@ type cgkinds =  KindList of Absyn.akind list * int
 (* constants lists: (constants list, number of constants)                 *)
 (**************************************************************************)
 type cgconsts = ConstantList of Absyn.aconstant list * int
+type cgnconsts = NamedConstantList of (string * Absyn.aconstant) list * int
 
 
 (**************************************************************************)
@@ -94,7 +95,7 @@ type cgpreds = PredList of Absyn.aconstant list * int
 (*========================================================================*)
 (* renaming lists: (modname, kinds renaming, constant renaming            *)
 (**************************************************************************)
-type cgrenaming = RenamingInfo of string * cgkinds * cgconsts
+type cgrenaming = RenamingInfo of string * cgnkinds * cgnconsts
 
 
 (**************************************************************************)

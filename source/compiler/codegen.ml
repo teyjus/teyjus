@@ -51,6 +51,7 @@
 (* kinds lists: (kinds list, number of kinds)                             *)
 (**************************************************************************)
 type cgkinds =  KindList of Absyn.akind list * int
+type cgnkinds =  NamedKindList of (string * Absyn.akind) list * int
 
 
 (**************************************************************************)
@@ -59,6 +60,7 @@ type cgkinds =  KindList of Absyn.akind list * int
 (* constants lists: (constants list, number of constants)                 *)
 (**************************************************************************)
 type cgconsts = ConstantList of Absyn.aconstant list * int
+type cgnconsts = NamedConstantList of (string * Absyn.aconstant) list * int
 
 
 (**************************************************************************)
@@ -93,7 +95,7 @@ type cgpreds = PredList of Absyn.aconstant list * int
 (*========================================================================*)
 (* renaming lists: (modname, kinds renaming, constant renaming            *)
 (**************************************************************************)
-type cgrenaming = RenamingInfo of string * cgkinds * cgconsts
+type cgrenaming = RenamingInfo of string * cgnkinds * cgnconsts
 
 
 (**************************************************************************)
@@ -393,8 +395,8 @@ let collectRenamingInfo amod =
   let gkinds = Absyn.getSignatureGlobalKindsList amod in
   let gconsts = Absyn.getSignatureGlobalConstantsList amod in
   RenamingInfo(Absyn.getSignatureName amod, 
-	       KindList(List.rev gkinds, List.length gkinds),
-	       ConstantList(List.rev gconsts, List.length gconsts))
+	       NamedKindList(List.rev gkinds, List.length gkinds),
+	       NamedConstantList(List.rev gconsts, List.length gconsts))
 
 
 let collectImports imps = 
@@ -1111,20 +1113,14 @@ let collectClosedConstsInAccs accs =
     match accs with
       [] -> List.rev consts
     | (Absyn.AccumulatedModule(_, asig) :: rest) ->
-	let consts' = 
-	  collectClosedConsts (Absyn.getSignatureGlobalConstantsList asig) consts
-	in
+    let clist = List.map (fun (_,x) -> x) (Absyn.getSignatureGlobalConstantsList asig) in
+	let consts' = collectClosedConsts clist consts in
 	collectClosedConstsInAccsAux rest consts'
   in
 
   Clausegen.initAccConsts ();
   let consts = collectClosedConstsInAccsAux accs [] in
   Clausegen.setAccConsts consts
-
-  
-
-
-  
 
 
 (*****************************************************************************)

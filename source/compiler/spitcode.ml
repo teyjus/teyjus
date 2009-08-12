@@ -275,23 +275,23 @@ let writeRenamingInfo renamingList =
 
   let writeRenamingInfoOneMod renaming =
 	let writeRenamingKinds kinds =
-          let writeRenamingKind kind =
-	    Bytecode.writeString (Absyn.getKindName kind);
+          let writeRenamingKind (name, kind) =
+	    Bytecode.writeString name;
 	    writeKindIndex kind
 	  in
 
-	  let Codegen.KindList(kindList, numKinds) = kinds in
+	  let Codegen.NamedKindList(kindList, numKinds) = kinds in
 	  Bytecode.writeint2 numKinds;
 	  map writeRenamingKind kindList
 	in
 	
 	let writeRenamingConsts consts =
-	  let writeRenamingConst const =
-	    Bytecode.writeString (Absyn.getConstantName const);
+	  let writeRenamingConst (name, const) =
+	    Bytecode.writeString name;
 	    writeConstIndex const;
 	  in
 
-	  let Codegen.ConstantList(constList, numConsts) = consts in
+	  let Codegen.NamedConstantList(constList, numConsts) = consts in
 	  Bytecode.writeint2 numConsts;
 	  map writeRenamingConst constList
 	in
