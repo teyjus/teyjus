@@ -1,0 +1,75 @@
+.SUBDIRS: source
+
+################################################
+# Default target build programs and moves them to toplevel
+#
+
+OCamlProgramCopy(all, ., source/tjcc)
+OCamlProgramCopy(all, ., source/tjsim)
+OCamlProgramCopy(all, ., source/tjlink)
+OCamlProgramCopy(all, ., source/tjdis)
+OCamlProgramCopy(all, ., source/tjdepend)
+.DEFAULT: all
+
+################################################
+# Distribution
+#
+
+# The dist target will package up teyjus into a tarball.
+
+# Here are the main steps in building the tarball
+#  1. Run all tests (temporarily disabled)
+#  2. Create a distribution directory
+#  3. Confirm that 'omake all' works within that directory
+#  4. Re-create the distribution directory
+#  5. Set permissions and package up the distribution directory
+
+BuildDist() =
+    rm -rf dist
+    rm $(filter-proper-targets $(ls R, .))
+
+    mkdir dist
+    cp README dist/
+    cp COPYING dist/
+    cp OMakefile dist/
+    cp OMakeroot dist/
+
+    cp -r util dist/
+    cp -r examples dist/
+    cp -r source dist/
+    cp -r emacs dist/
+    rm -rf dist/source/test
+    rm -rf $(find dist -name .svn)
+    rm -f $(find dist -name *.omc)
+    rm -f $(find dist/examples -name *.lp)
+    rm -f $(find dist/examples -name *.lpo)
+    rm -f $(find dist/examples -name depend)
+
+.PHONY: dist
+dist:
+    section
+        BuildDist()
+        cd dist && omake all
+        VERSION = $(shell dist/tjcc -v | perl -pe 's/Teyjus version //')
+        BuildDist()
+        rm -f dist.tar.gz
+        mv dist teyjus
+        bash -c "/usr/bin/find teyjus -type d | xargs chmod 755"
+        bash -c "/usr/bin/find teyjus -type f | xargs chmod 644"
+        tar c teyjus | gzip - > dist.tar.gz
+        bash -c "chmod 664 dist.tar.gz"
+        mv dist.tar.gz teyjus-source-$(VERSION).tar.gz
+        rm -rf teyjus
+
+
+################################################
+# Utilites
+#
+
+.PHONY: clean
+clean:
+    rm $(filter-proper-targets $(ls R, .))
+
+.PHONY: distclean
+distclean: clean
+    rm -rf dist

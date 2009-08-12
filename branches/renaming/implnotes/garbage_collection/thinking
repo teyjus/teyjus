@@ -1,0 +1,424 @@
+GARBAGE COLLECTION IDEAS
+==========================
+
+This text includes some thinking on the adoption of garbage collection to the 
+new Teyjus. The discussions here are based on the tutorial "Topics in Logic 
+Programming Implementation" by Bart Demoen, and the paper "A Time- and Space- 
+Efficient Garbage Compaction Algorithm" by F. Lockwood Morris.
+
+
+1. When to trigger the garbage collector?
+=========================================
+A simple way of doing this is to trigger the garbage collector when a heap 
+error is detected. For instance, the AM_heapError function can be written as
+
+  void AM_heapError(MemPtr p){
+   if (AM_heapEnd < p) {
+       garbageCollect(...)
+   }
+  }
+where the parameter p is the heap address to be checked.
+
+HeapError could occur in the following situations:
+ 1. In the execution of compiled unification instructions when new structures
+    are about to be pushed onto the current heap top;
+ 2. In the interpretive unification process, when new structures are about to
+    be created on the current heap top;
+ 3. In the normalization process, when new structures are about to be created 
+    on the current heap top.
+
+An optimization suggested in Bart's paper can also be considered in our 
+context: the maximal size of *new* structures that are created in the 
+execution of instructions for compiled unification (the first situation 
+mentioned above) can be approximated at the compilation time; therefore as 
+opposed to distribute the heap error check into the unification instructions,
+a single check can be performed at the beginning of the execution of 
+a sequence of instructions. Specifically, such a check can be added in
+the front of the instructions for each goal chunk, where the head of a clause
+is viewed as belonging to the first chunk. (The precise way to partite chunks 
+can be found in the "chunkify" function in teyjus/source/compiler/clausegen.c).
+For example, a new instruction "heap_check N" can be added, where N is the 
+max number of cells could be used in the execution of a chunk of program.  
+Then the instructions of the clause (p :- q1, q2, q3.) become 
+     heap_check N1
+     {instructions for p}
+     {instructions for q1}
+     heap_check N2
+     {instructions for q2}
+     heap_check N3
+     {instructions for q3}
+
+In the WAM, the AM_heapError function is good enough for the heap_check 
+instruction. However, in our context, interpretive unification and normalization
+processes could also increase the size of heap and therefore need heap error 
+detection which properly interleaves with those in compiled unification 
+instructions. 
+An attempt can be made as letting these processes have their own heap error 
+checks when new structures are about to be created, together with 
+the usage of the heap_check instruction. However, this is incorrect.
+For example, suppose the block {instructions for p} in the above 
+example has a finish_unify instruction at the end, and suppose the interpretive 
+unification invoked by this instruction consumes M cells on the top of heap.
+Further, let H be the heap top at the time heap_check N1 is executed. The heap
+error check is performed as the following:
+
+   heap_check N1           : if (AM_heapEnd < (H+N1)) ?
+   {instructions for q}    : increase heap top by K1, where K1 <= N1
+   finish_unify            : if (AM_heapEnd < (H+K1+M)) ?       
+   {instructions for q1}   : increase heap top by K2, where K1+K2 <= N1
+   ...
+
+It can be observed that at the end of the instructions for q1, the top of heap
+is increased to (H+K1+K2+M). In an extreme case, let's assume K1 + K2 = N1.
+Then the heap top should be (H+N+M) at the end. However, the performed heap 
+overflow checks check once for (H+N), and once for (H+K1+M). Hence, overflow 
+occurs in the execution of {instructions of q1} might be missed.
+
+A simple fix of this is to maintain another register HE in addition to the top 
+of heap H, denoting the "estimated" heap top. The heap_check N instruction
+becomes:
+    heap_check(N)
+    { if ((H + N) > heapEnd) garbage_collect(...);
+      else HE = (H+N); } 
+
+and the heap_error function used in interpretive unification and normalization 
+processes should check against HE:
+    heap_error(N)
+    { if ((HE + N) > heapEnd) garbage_collect(...);
+      else HE = (HE+N); }
+
+This refined scheme should work now, and there is one more point to be
+made explicit: if an "allocate" instruction appears in the front of the first 
+chunk of program, the heap_check instruction must be added *before* it.
+The reason for this will become clear after the discussion of the marking
+process of the garbage collector in the next question.
+
+
+An additional thing to be noted is with regard to build-in predicates: some
+of them (for example, read_term) do not have a upper limit of the number 
+of cells to be created, and they have to do their own overflow check and
+handling. The heap_error function can be used along with term creation 
+in their execution.
+
+
+
+2. The garbage collection algorithm
+====================================   
+
+Since we persist with the memory (especially, heap) management of the WAM
+in the new teyjus implementation, the spatial order of heap object does matter, 
+and therefore has to be preserved by the garbage collector. 
+For this reason, the sliding method, which is cell preserving, will be used 
+for memory compacting. 
+
+The garbage collector consists of two phases performed sequentially: marking 
+and compacting (sliding).
+
+Marking:
+========
+The marking process traverses data by following pointers starting from a root
+set and leaves a mark with each elementary piece of data indicating that they
+might be useful for future computation.  
+
+An algorithm for marking in the WAM's garbage collector can be found in 
+Bart's paper. There are several things to be noted in adopting this algorithm 
+to the new teyjus implementation.
+1) In our case, the "elementary piece of data" are not memory cells (words),
+   but are terms, suspension environment items, types and disagreement pairs
+   (items that will possibly appear on heap). 
+   The reason for not using word basis is that we decided to use C's data 
+   encoding for portability, and a mark bit is not always possible to be
+   spared in every word under this scheme (for example, the value field of an 
+   integer). 
+2) The root set in our context should be: 
+   a) the environment/choice point stack; 
+   b) the argument registers and all registers could contain (reference to) 
+      heap items (especially, llreg (the disagreement list register)); 
+   c) the trail.
+3) Among the different portions of the root set, special attention has to be
+   paid on those in environment records during the marking phase with regard to
+   the following issues:
+   a) Terms and types appearing in an environment record should be able to be
+      distinguished from their category tags.
+      Both terms and types could have their presence on environment 
+      records, and more importantly, in a mixed fashion (because of environment
+      trimming), and the marking process traverses the argument segment of an 
+      environment on the basis of memory cells (words). Therefore it is 
+      apparent that the tags (which are in fact integers) of terms and types 
+      should not be confused. Hence, in the internal encodings 
+      (simulator/dataformats.h(c)), the tags for types and terms should not 
+      overlap. Now the striking problem is whether
+      such an organization of tags leads to extra cost to the operations other
+      than garbage collection? The answer is no, because in those 
+      operations it is always known what kind the data item belongs to 
+      (eg, type? term? others?) before hand. This fact is explained in more 
+      details at the end of this text.
+
+   b) How to identify the root set more precisely on environment records,
+      when environment trimming is involved?
+      To avoid including trimmed permanent variables into the root set, 
+      the heap_check instruction should be also to retrieve the 
+      "number of alive permanent variable" argument from the code location 
+      determined by CP (which is set by the previous call or execute 
+      instructions). If garbage collection is triggered, the marking process
+      should use this number to determine the size of the current top-level
+      environment with respect to trimming.
+      For example, suppose the program is 
+        p(Y) :- q(Z), r(Y), w(Z).
+        w(X) :- s(X), t(X).
+      Considering the following two situations:
+      1) The garbage collector is triggered in the heap_check instruction
+         at the beginning of the second clause (which defines w).
+         (Note that environment record referred to by the register E at 
+          this time is that of p as opposed to that of w.)
+         From the CP register, the second argument of (call w, 1) is retrieved,
+         and from this number, the garbage collector knows that only one
+         variable (Z) is alive in this environment and starts marking on 
+         environment records from this variable.
+      2) The garbage collector is triggered in the heap_check instruction
+         after (call r 2) in the body of p. 
+         Now E refers to the environment of p itself, and from the CP register,
+         which is set during (call r 2), the garbage collector knows that 
+         2 permanent variables (Z and Y) are live in the environment. 
+
+      This is also true for the heap_error functions.
+     
+      Recall the point we stressed in the discussion of where to 
+      add heap_check instructions that if heap_check is to be added in
+      the first program chunk that starts with an "allocate" , it must be
+      added in the front of the allocate instruction.
+      The reason is now clear: the allocate instruction will reset the E 
+      register, which becomes the "callee's" environment as opposed to that of
+      the "caller".
+       
+
+   c) The above refinement helps to prevent marking the trimmed permanent 
+      variables in an environment record, but there are yet another set of 
+      permanent variables that we haven't considered yet: those who have not 
+      been initialized at the time the garbage collector is triggered.
+      For example, consider the clause:
+        a :- b(X), c(X, Y), d(Y).
+      and suppose the garbage collector is triggered in the heap_check 
+      instruction following (call b 2) in the clause defining a, or is
+      triggered in the heap_check instruction as the very beginning of 
+      a clause defining c. In both of these two situations, the variable
+      Y in the environment record of the clause defining a has not been 
+      initialized yet, and can be anything. An attempt on interpreting this 
+      field will very possibly lead to system crash. Per Bart's suggestion,
+      "init_p_variable" instructions can be added just before the first call
+      instruction appearing in the clause defining a to initialize permanent
+      variables yet have their first occurrences in the clause. 
+      This amendment is all right for the WAM. However, in our context, 
+      since heap error could also occur in the interpretive unification 
+      process invoked at the end of the clause head, more permanent variables 
+      should be considered for such initialization, and their initialization 
+      has to be performed more eagerly. 
+      Consider the following clause:
+        a(X) :- b(Y), c(X, Y).
+      The permanent variable Y will not get eager initialization under
+      Bart's scheme since it has an appearance before (call b 2). However,
+      if garbage collection begins in the interpretive unification phase,
+      this cell on the environment is left dangling. Apparently, in our 
+      context, the set of permanent variables that need to be initialized
+      should be those not appearing in the clause head. Secondly, the 
+      initialization of those variables should take place before the first time
+      the environment on which they reside can be used as root set. Hence 
+      a possible position to add those instructions is the beginning of
+      the unification instructions of the clause head. 
+      One must also remember to trail even the unification that occur at the
+      first occurrence of permanent variables.
+      
+      Extra cost is introduced by this method to operations other than 
+      garbage collection. So the question to be answered is whether this cost
+      is tolerable? And if not, how to reduce it? A careful study is needed
+      for answering this question and should be performed in the future. 
+      At the first glimpse, it seems that the situation is not so severe:
+      the compiler can decide whether a "finish_unify" instruction is needed
+      statically, and in the absence of this instruction, Bart's criteria 
+      can still be used (Attention has also to be paid on the "head_normalize" 
+      instructions appearing in the first body goal.); further, based on
+      Spiro and Frank's empirical study, such higher-order instructions 
+      might not appear frequently.
+
+
+
+
+Sliding (Compacting):
+=====================
+
+A complete algorithm for sliding is presented in F. Lockwood Morris paper.
+We are not going to discuss the details here but just stress several issues
+to be noticed in adopting it to the new teyjus implementation.
+
+
+1). Tagging heap data
+---------------------
+The sliding process is based on the heap cells, i.e., the heap is traversed 
+from the beginning to the end sequentially and along this process, data that
+are marked as useful are compacted to contiguous locations starting from the  
+beginning of the heap. The data items that may appear on the heap 
+can be classified into the following three categories:
+  a) terms (including suspension environment items);
+  b) types;
+  c) disagreement pairs
+and the items in a) (including suspension environment items) and in b) are
+further classified into sub-categories. The sliding process has to be able to
+recognize the subcategory of a heap item without knowing which kind among 
+a), b) and c) this item belongs to.
+To support such an ability, some requirements on our internal data 
+representation have to be satisfied with: 
+1). all kinds of heap items should have a common encoded leading tag 
+    (including a category tag and a mark field);
+2). the subcategory tags of terms, types and suspension environment items
+    (and the tag of disagreement pair) should not overlap.
+and so that by interpreting the leading tag field of a heap item the garbage 
+collector can understand whether this item is alive and how much space it 
+consumes. Note that such requirements have already been posed to the 
+representations of terms and types by the marking process, as discussed in
+identifying root set in environment records. 
+Provided our current heap data encoding, the following changes should be 
+made:
+1). a tag field has to be added to the representation of disagreement pairs;
+2). the tag field of environment items (dummy/pair) has to be changed into
+    one that shares the same structure with those of other heap items;
+3). a control has to be added to the enumeration of term_category_tag, 
+    env_item_category_tag, type_category_tag and disagreement_pair_tag so that
+    they are contiguous without overlapping. This change is well-foundated:
+    as opposed to only locally interpreting data items within their 
+    "top-level" classifications (ie, types, terms and etc.), we now provide 
+    a global view to them in the sense of heap data.
+
+Of course, now the question becomes whether these changes will lead extra 
+cost to operations other than garbage collection, and let's look at changes
+one by one.
+1). The extra tag field to disagreement pair will cause extra cost in the
+    creation and maintenance of these sort of data: apparently, their size 
+    is increased by 1 word (regardless to machine architecture), and there 
+    is one more field to be maintained in data creation and movement. 
+    (Note there is no extra cost in the decomposition and recognition if it 
+    is known that the data item is a disagreement pair before accessing.)
+    Again based on Spiro and Frank's empirical study, higher-order unification
+    not in the LLambda subset occurs very rarely, which tells us the usage
+    of disagreement pairs is quite limited, and therefore the cost may be
+    tolerated. 
+2). The tagging field of environment items will not lead to extra overhead,
+    because a field indicating whether an item is dummy or pair has already
+    been encoded into their representation. The only change is to make this 
+    field in the same format as those of terms and types.
+3). The third change won't introduce extra cost to operations other than garbage
+    collection either. If the "top-level" category of a heap item is known
+    to an operation before it being carried out, the correctness of the 
+    entire system implicitly ensures that the operation cannot run across
+    the "top-level" boundaries, so that such a check need not to be added
+    into the operation itself.
+    For instance, there is function on terms which checks whether a given term 
+    is atomic. Based on the assumption that the tags of atomic term have 
+    smaller enumerated indices than those of complex ones, the function is 
+    implemented as:
+     Boolean DF_isAtomic(DF_TermPtr tmPtr)  
+     {   return (tmPtr -> tag.categoryTag < DF_TM_TAG_REF);    }
+    Now the worry is that if the type tags have their enumerated indices 
+    less than all those of terms, whether an extra check is needed on the 
+    lower boundary of term tags like
+      ((tm -> tag.categoryTag < DF_TM_TAG_REF) && 
+       (tm -> tag.categoryTag > DF_TM_TAG_VAR)),
+    assuming that DF_TM_TAG_VAR is the smallest tag of terms.
+    The answer is no, because when the isAtomic function is invoked, it is 
+    always known that its actual parameter is a term whose tag can never
+    fall below DF_TM_TAG_VAR.
+   
+    In summary, only the first change on data format involves more cost, but
+    this cost is believed to contribute very little to the entire system 
+    performance. For this reason, the changes of internal heap data encoding 
+    will be adopted in our implementation.
+
+
+2). What to trail?
+------------------ 
+Another question posed by the garbage collector to the other part of system is
+what data format should be taken by the trail, which is relevant to both
+marking and compacting.
+
+The following data can appear on a trail:
+a) terms: applications, suspensions, abstractions and free variables;
+b) types: free variables (self references);
+c) disagreement pair address;
+e) backchained counts and most recent choice points for segments of imported 
+   code.
+Items from a) to c) are all relevant to heap and should be considered by 
+garbage collection. The one of special interests is that in category a), since 
+value trailing has to be performed for those data. 
+Note that the sizes of applications and suspensions in a) are both larger than
+the atomic term size, and therefore two options can be considered in trailing
+them.
+The first way is to trail the data item completely. For example, suppose an 
+application is to be destructively updated during normalization, the (starting) 
+address of the application and the content in the three words (the size of 
+an application) starting from that address is encapsulated and copied into
+the trail. After this, the three words taken by the application are, so to 
+speak, freed; it is used for holding another term with size less than or equal
+to 3. 
+The alternative is to trail only a part, precisely, the leading two words 
+(atomic size), of the data item. In the above application example, a
+destructive change in normalization is controlled in the way that if the 
+application is to be updated to is a term with a size larger than two words, 
+the new term is created on the top of heap and a reference to it is placed 
+into the first two words of the application. Apparently, necessary information 
+requiring trailing in this situation is the application's two leading words.
+
+Both of the two methods have their pros and cons, and roughly speaking, the 
+first is more expensive for trailing and unwinding, whereas garbage collection
+is hard to deal with under the second scheme.
+The disadvantage of the first method is obvious: more space have to be 
+allocated, the operation performed in unwinding the trail has to interpret
+the term tag to decide how many words have to be moved, and more words have to
+be copied back and forth in moving data items.
+Although the second method has its advantage in trailing and unwind trail,
+it breaks the integrality of terms and consequently a much more
+sophisticated control has to be built into the garbage collection
+progress to deal with the incomplete structures on the trail.
+First, in the marking process, the trail and heap have to be looked at 
+simultaneously to recognize all pointers contained in a term structure. Second, 
+in memory compacting, the remaining structures of an incompletely trailed term
+have to be recognized as alive and get compacted. For instance, consider
+the third word of an application. Suppose the application is trailed and updated
+to a reference, the third word (which is a pointer to its argument vector)
+left on the heap is still alive and should not be deallocated.
+However, this knowledge cannot be obtained simply from a traversal of the heap,
+but also from the "first half" of the application currently recorded in the
+trail. The following method can be considered to conquer this difficulty.
+After marking and before compacting is started, the term items currently on the
+trail is backed up. Of course, the current contents at those heap 
+locations have to be recorded somehow (maybe trailed on the current trail top).
+Then the compacting process starts on this recovered heap. Attention has to be
+taken in modifying pointers in both the old and new segments of the trail
+with respect to data movement. After compacting is finished, the new segment
+of trail should be unwinded. Let's call the heap image at the time when 
+overflow is detected, but before the garbage collector is invoked the 
+"old heap", and the one obtained from recovering the trailed terms the 
+"new heap". This method is based on the assumption that the trailed component 
+could only be updated to terms with atomic sizes, so that the alive cells on 
+the new heap are a superset of the old one. A careful proof on this fact 
+should be provided if this method is to be used.
+
+At the current phase of our implementation, we decided to use the first trailing
+method, both because of the complexity of implementing a garbage collector and 
+for the integrality of data on the trail in case it is also relevant to other
+operations. Once the first version of the working system is completed and if
+the integrality issue turns out not to be a serious problem to the entire 
+system, the second method for trailing can be used as an optimization.
+
+   
+ 
+
+
+
+
+ 
+
+    
+
+ 
+
+
+
