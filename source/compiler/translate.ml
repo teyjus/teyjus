@@ -1195,6 +1195,52 @@ let mapSymbolName list =
               | None -> None)
       list)
 
+(******************************************************************
+*normalizeType:
+* Change a type so that kinds in it are found in the kind table.
+******************************************************************)
+let rec normalizeType ktable t =
+  match t with
+      Absyn.ArrowType(t1,t2) ->
+        Absyn.ArrowType(normalizeType ktable t1, normalizeType ktable t2)
+    | Absyn.ApplicationType(k,args) ->
+        let ko = Table.find (Absyn.getKindSymbol k) ktable in
+        let ko' =
+          if Option.isSome ko
+            then ko
+            else Table.find (Absyn.getKindSymbol k) Pervasive.pervasiveKinds in
+        if Option.isSome ko' then
+          Absyn.ApplicationType(Option.get ko', List.map (normalizeType ktable) args)
+        else
+          Errormsg.impossible Errormsg.none
+            ("Translate.normalizeType: undefined type constructor " ^ Absyn.getKindName k)
+    | t' -> t'
+
+(******************************************************************
+*normalizeTable:
+* Ensures that all kinds referred to in all constants in a constant
+* table point at kinds in the given kind table.
+******************************************************************)
+let normalizeTable ktable ctable =
+  let normalizeConstant ktable sym c =
+    let Absyn.Constant(_, f, p, ed, uo, nd, c, tp, red, skel, tes, skelneed, need, ci, ct, i, pos) = c in
+    if Option.isSome !skel then
+      let Absyn.Skeleton(ty,p,b) = (Option.get !skel) in
+      let ty' = normalizeType ktable ty in
+      skel := Some(Absyn.Skeleton(ty',p,b))
+    else
+      ()
+  in
+  (Table.iter (normalizeConstant ktable) ctable;
+  ctable)
+
+let normalizeTypeAbbrevTable ktable atable =
+  let normalizeTypeAbbrev a =
+    let Absyn.TypeAbbrev(s, args, ty, p) = a in
+    Absyn.TypeAbbrev(s, args, normalizeType ktable ty, p)
+  in
+  Table.fold (fun sym a tab -> Table.add sym (normalizeTypeAbbrev a) tab) atable Table.empty
+
 let (renameTable, renameSigs) = 
   let assoc2table assoc =
     List.fold_left
@@ -1246,9 +1292,10 @@ let (renameTable, renameSigs) =
   ((fun (ktable, ctable, atable) renaming ->
     match renaming with
     Some ren ->
+      let ktab = assoc2table (renameKinds false ren ktable) in
       (assoc2table (renameKinds true ren ktable),
-       assoc2table (renameTypes true ren ctable),
-       assoc2table (renameAbbrevs ren atable))
+       normalizeTable ktab (assoc2table (renameTypes true ren ctable)),
+       normalizeTypeAbbrevTable ktab (assoc2table (renameAbbrevs ren atable)))
   | None -> (ktable, ctable, atable)),
   (fun signature renaming ->
     match renaming with
@@ -1263,7 +1310,6 @@ let (renameTable, renameSigs) =
     | None -> signature))
 
 (* Tests that the renaming is an injective function *)
-(* We also should be checking that the signature is self-contained *)
 let checkRenaming renaming =
   let goodRenaming renaming =
     let rec unique lst =
@@ -1973,40 +2019,3 @@ and translateModule mod' ktable ctable atable =
         Absyn.ErrorModule
   | Preabsyn.Signature _ ->
       invalid_arg "Types.translateModule: attempted to translate Preabsyn.Signature()"
-
-(******************************************************************
-*normalizeTable:
-* Ensures that all kinds referred to in all constants in a constant
-* table point at kinds in the given kind table.
-******************************************************************)
-and normalizeTable ktable ctable =
-  (******************************************************************
-  *normalizeType:
-  * Change a type so that kinds in it are found in the kind table.
-  ******************************************************************)
-  let rec normalizeType ktable t =
-    match t with
-        Absyn.ArrowType(t1,t2) ->
-          Absyn.ArrowType(normalizeType ktable t1, normalizeType ktable t2)
-      | Absyn.ApplicationType(k,args) ->
-          let ko = Table.find (Absyn.getKindSymbol k) ktable in
-          if Option.isSome ko then
-            Absyn.ApplicationType(Option.get ko, List.map (normalizeType ktable) args)
-          else
-            Errormsg.impossible Errormsg.none "Translate.normalizeType: invalid kind"
-      | t' -> t'
-  in
-  (******************************************************************
-  *normalizeConstant:
-  ******************************************************************)
-  let normalizeConstant ktable sym c =
-    let Absyn.Constant(_, f, p, ed, uo, nd, c, tp, red, skel, tes, skelneed, need, ci, ct, i, pos) = c in
-    if Option.isSome !skel then
-      let Absyn.Skeleton(ty,p,b) = (Option.get !skel) in
-      let ty' = normalizeType ktable ty in
-      skel := Some(Absyn.Skeleton(ty',p,b))
-    else
-      ()
-  in
-  (Table.iter (normalizeConstant ktable) ctable;
-  ctable)
