@@ -91,7 +91,7 @@ KindInd LK_RENAME_RenameKind(char* name)
   EM_TRY{
     result = LK_TREE_Retrieve(&KindRNTree,name);
   } EM_CATCH {
-    bad("Error renaming const \"%s\"\n",name);
+    bad("Error renaming kind \"%s\"\n",name);
     EM_RETHROW();
   }
   return result;
