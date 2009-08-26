@@ -30,7 +30,8 @@ comprehensive introduction to Lambda Prolog or to its underlying
 theory. If you are interested learning more about these aspects, one
 place to look may be the paper 
 
-  * G. Nadathur and D. Miller, Higher-Order Logic Programming, in _Handbook of Logic in Artificial Intelligence and Logic Programming_, D. M. Gabbay, C. J. Hogger and J. A. Robinson (eds.), Oxford University Press, January 1998, pages 499--590.
+  * G. Nadathur and D. Miller, Higher-Order Logic Programming, in _Handbook of Logic in Artificial Intelligence and Logic Programming_, D. M. Gabbay, C. J. Hogger and J. A. Robinson (eds.), Oxford University Press, January 1998, pages 499--590. ([http://www-users.cs.umn.edu/~gopalan/papers/holp.dvi dvi]) ([http://www-users.cs.umn.edu/~gopalan/papers/holp.ps ps])
+
 
 The distribution material also contains several examples of Lambda
 Prolog code with pointers to papers describing conceptual aspects of the
