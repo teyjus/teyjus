@@ -1309,6 +1309,43 @@ let (renameTable, renameSigs) =
         | _ -> Absyn.AccumulatedModule("", Absyn.ErrorModule))
     | None -> signature))
 
+let augmentRenaming (ktable, ctable, atable) renaming =
+  let s sym = Preabsyn.Symbol(sym, Preabsyn.ConstID, Errormsg.none) in
+  let constGensym sym =
+    Preabsyn.TypeRenaming(s sym, s (Symbol.generate()))
+  in
+  let hasConstSym ren sym =
+    List.exists (function
+      Preabsyn.TypeRenaming(Preabsyn.Symbol(s,_,_),_) -> sym = s
+    | Preabsyn.KindRenaming _ -> false) ren
+  in
+  let augmentConsts renaming =
+    Table.fold (fun sym const ren ->
+      if hasConstSym ren sym
+        then ren
+        else constGensym sym::ren
+    ) ctable renaming
+  in
+  let kindGensym sym =
+    Preabsyn.KindRenaming(s sym, s (Symbol.generate()))
+  in
+  let hasKindSym ren sym =
+    List.exists (function
+      Preabsyn.KindRenaming(Preabsyn.Symbol(s,_,_),_) -> sym = s
+    | Preabsyn.TypeRenaming _ -> false) ren
+  in
+  let augmentKinds renaming =
+    Table.fold (fun sym kind ren ->
+      if (hasKindSym ren sym) || (Absyn.isPervasiveKind kind)
+        then ren
+        else kindGensym sym::ren
+    ) ktable renaming
+  in
+  match renaming with
+    None -> None 
+  | Some ren ->
+      Some (augmentKinds (augmentConsts ren))
+
 (* Tests that the renaming is an injective function *)
 let checkRenaming renaming =
   let goodRenaming renaming =
@@ -1526,7 +1563,6 @@ and translateSignature s owner accumOrUse ktable ctable atable generalCopier =
   let rec translateUseSigs = translateSigs [] false in
 
 
-  (* There is a bug here: renaming kinds doesn't work properly *)
   let doSigs isigs translator ktable ctable atable =
     let accums = List.map (function Preabsyn.Accumulate(s,_) -> s) isigs in
     let renamings = List.map (function Preabsyn.Accumulate(_,r) -> r) isigs in
@@ -1949,6 +1985,8 @@ and translateModule mod' ktable ctable atable =
       let _ = List.iter checkRenaming renamings in
       let accummods' = processMods accums in
       let (accums, acctables) = translateAccumMods accummods' in
+      let _ = List.map2 renameTable acctables renamings in
+      let renamings = List.map2 augmentRenaming acctables renamings in
       let acctables = List.map2 renameTable acctables renamings in
       let accums = List.map2 renameSigs accums renamings in
       
