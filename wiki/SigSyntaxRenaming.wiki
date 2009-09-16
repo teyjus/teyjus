@@ -14,13 +14,13 @@ The Teyjus parser for signatures is a combination of a "pre-parser" automaticall
 <SigEnd>       ::=   'end' | '$'                 % $ stands for eof
 
 <SigPreamble>  ::=   <Empty>
-                   | accum_sig <UseList> '.' <SigPreamble>
-                   | use_sig <UseList> '.' <SigPreamble>
+                   | accum_sig <QualifiedModList> '.' <SigPreamble>
+                   | use_sig <QualifiedModList> '.' <SigPreamble>
 
-<UseList>   ::=   <Use>
-                   | <Use> ',' <UseList>
+<QualifiedModList>   ::=   <QualifiedModName>
+                   | <QualifiedModName> ',' <QualifiedModList>
 
-<Use> ::= <NameToken>
+<QualifiedModName> ::= <NameToken>
                    | <NameToken> '{' <Renamings> '}'
 
 <Renamings> ::= <Renaming>
@@ -144,4 +144,13 @@ The declarations in a signature file must satisfy certain properties in addition
 
     * In accum`_`sig and use`_`sig declarations, the meaning of the renamings is as follows. If there are no curly brackets, all symbols from the corresponding signature are available to the current signature. If there are curly brackets, then only the symbols listed will have their types and kinds available. As constants and type constructors (together with type abbreviations) are in different namespaces, it needs to be specified which one is being referred to. So to refer to a constant called foo, the notation here is "type foo" and to refer to a type or type constructor or type abbreviation called foo, the notation is "kind foo". Only the symbols listed in the curly brackets will be available, and if there is an arrow in the declaration, then they will be renamed to the name after the arrow.
 
-    * There are two restrictions on the renaming list of accum`_`sig and use`_`sig declarations. The first is that the renaming mapping be injective. That is, two things cannot be renamed to the same name. In the case of constants, this would have problematic semantics with respect to unification: the two symbols would unify in the accumulating module but not the accumulated module. In the case of types, it would be problematic because the accumulating module would have more flexibility than the accumulated module in terms of what terms may be arguments to what. The second restriction is that the list be sufficient type-wise: each constant and typeabbrev used needs to have a type that doesn't depend on types which are not accumulated. Otherwise, there would be no way to make sense of the constant.
+    * There are two restrictions on the renaming list of accum`_`sig and use`_`sig declarations. The first is that the renaming mapping be injective. That is, two things cannot be renamed to the same name. 
+<wiki:comment>
+GN: This stuff is for the developers and should not be in the manual itself
+In the case of constants, this would have problematic semantics with respect to unification: the two symbols would unify in the accumulating module but not the accumulated module. In the case of types, it would be problematic because the accumulating module would have more flexibility than the accumulated module in terms of what terms may be arguments to what.
+</wiki:comment>
+The second restriction is that the list be sufficient type-wise: each constant and typeabbrev used needs to have a type that doesn't depend on types which are not accumulated. 
+<wiki:comment>
+GN: Again useful for developers but not part of the manual.
+Otherwise, there would be no way to make sense of the constant.
+</wiki:comment>
