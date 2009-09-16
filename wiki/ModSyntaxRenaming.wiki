@@ -20,9 +20,9 @@ The rules below describe the syntax of the declarations that may appear in a mod
 
 <ModPreamble>   ::=  <Empty>
                    | 'import' <NameTokens> '.' <ModPreamble>
-                   | 'accumulate' <UseList> '.' <ModPreamble>
-                   | 'accum_sig' <UseList> '.' <ModPreamble>
-                   | 'use_sig' <UseList> '.' <ModPreamble>
+                   | 'accumulate' <QualifiedModList> '.' <ModPreamble>
+                   | 'accum_sig' <QualifiedModList> '.' <ModPreamble>
+                   | 'use_sig' <QualifiedModList> '.' <ModPreamble>
 
 <NameTokens> ::= <NameToken>
                    | <NameToken> ',' <NameTokens>
