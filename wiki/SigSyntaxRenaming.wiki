@@ -101,14 +101,14 @@ The declarations in a signature file must satisfy certain properties in addition
 
     * The intended effect of _accum`_`sig_ declarations is to include the declarations in the named signatures in the signature being generated from the text in the present file. Thus, _accum`_`sig_ functions in a manner similar to _#include_ in C. The possible interactions between sibling accumulated signatures and the accumulating signature are discussed further below.
 
-    * Kind declarations are those expressions in the category _<Sign-Decl>_ that begin with the token kind. The purpose of these declarations is to identify sorts and type constructors that may be used in determining types for constants and variables. Thus a declaration of the form
+    * Kind declarations are those expressions in the category `<Sign-Decl>` that begin with the token kind. The purpose of these declarations is to identify sorts and type constructors that may be used in determining types for constants and variables. Thus a declaration of the form
  {{{      	
            kind  foo  type -> ... -> type
 }}}
 
    with n+1 occurrences of type identifies foo as a type constructor of arity n. (If n is 0 the object identified is a sort.) Note that there are restrictions built into the grammar rules on the syntax of tokens that can be identified as sorts and type constructors.
 
-    * Type abbreviation declarations are those expressions in the category _<Sign-Decl>_ that begin with the token _typeabbrev_. The purpose of these declarations is to identify names that can be used as shorthands in type expressions. These names can also be parameterized. For example, a declaration of the form 
+    * Type abbreviation declarations are those expressions in the category `<Sign-Decl>` that begin with the token _typeabbrev_. The purpose of these declarations is to identify names that can be used as shorthands in type expressions. These names can also be parameterized. For example, a declaration of the form 
 {{{
           typeabbrev   (bar A)   list A -> list A
 }}}
