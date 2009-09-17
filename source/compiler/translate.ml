@@ -1224,15 +1224,14 @@ let rec normalizeType ktable t =
 let normalizeTable ktable ctable =
   let normalizeConstant ktable sym c =
     let Absyn.Constant(_, f, p, ed, uo, nd, c, tp, red, skel, tes, skelneed, need, ci, ct, i, pos) = c in
-    if Option.isSome !skel then
-      let Absyn.Skeleton(ty,p,b) = (Option.get !skel) in
-      let ty' = normalizeType ktable ty in
-      skel := Some(Absyn.Skeleton(ty',p,b))
-    else
-      ()
+      match !skel with
+        | Some Absyn.Skeleton(ty,p,b) ->
+            let ty' = normalizeType ktable ty in
+              skel := Some(Absyn.Skeleton(ty',p,b))
+        | None -> ()
   in
-  (Table.iter (normalizeConstant ktable) ctable;
-  ctable)
+    Table.iter (normalizeConstant ktable) ctable;
+    ctable
 
 let normalizeTypeAbbrevTable ktable atable =
   let normalizeTypeAbbrev a =
@@ -1350,28 +1349,32 @@ let augmentRenaming (ktable, ctable, atable) renaming =
 let checkRenaming renaming =
   let goodRenaming renaming =
     let rec unique lst =
-      (* This could be made faster *)
-      (match lst with
-        [] -> true
-      | x::xs ->
-          if unique xs
-            then not (List.mem x xs)
-            else false)
+      match lst with
+          [] -> true
+        | x::xs -> not (List.mem x xs) && unique xs
     in
-    let types = List.filter (function Preabsyn.TypeRenaming _ -> true | _ -> false) renaming in
-    let kinds = List.filter (function Preabsyn.KindRenaming _ -> true | _ -> false) renaming in
-    let x = Symbol.symbol "impossible" in
-    let typeKeys = List.map (function Preabsyn.TypeRenaming(Preabsyn.Symbol(a,_,_),_) -> a | _ -> x) types in
-    let typeValues = List.map (function Preabsyn.TypeRenaming(_,Preabsyn.Symbol(a,_,_)) -> a | _ -> x) types in
-    let kindKeys = List.map (function Preabsyn.KindRenaming(Preabsyn.Symbol(a,_,_),_) -> a | _ -> x) kinds in
-    let kindValues = List.map (function Preabsyn.KindRenaming(_,Preabsyn.Symbol(a,_,_)) -> a | _ -> x) kinds in
-    List.for_all unique [typeKeys; typeValues; kindKeys; kindValues]
+    let typeKeys, typeValues, kindKeys, kindValues =
+      List.fold_left
+        (fun (tk, tv, kk, kv) ren ->
+           match ren with
+               Preabsyn.TypeRenaming(Preabsyn.Symbol(k,_,_),
+                                     Preabsyn.Symbol(v,_,_))
+               ->
+                 (k::tk, v::tv, kk, kv)
+
+             | Preabsyn.KindRenaming(Preabsyn.Symbol(k,_,_),
+                                     Preabsyn.Symbol(v,_,_))
+               ->
+                 (tk, tv, k::kk, v::kv))
+        ([], [], [], [])
+        renaming
+    in
+      List.for_all unique [typeKeys; typeValues; kindKeys; kindValues]
   in
   match renaming with
     Some ren ->
-      if goodRenaming ren
-        then ()
-        else Errormsg.error Errormsg.none "Renaming is not an injective function"
+      if not (goodRenaming ren) then
+        Errormsg.error Errormsg.none "Renaming is not an injective function"
   | None -> ()
 
 (**********************************************************************
