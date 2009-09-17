@@ -1371,10 +1371,16 @@ let checkRenaming renaming =
     in
       List.for_all unique [typeKeys; typeValues; kindKeys; kindValues]
   in
+  let extractRenamingPos = function
+      Some (Preabsyn.TypeRenaming(Preabsyn.Symbol(_,_,pos), _) :: _)
+    | Some (Preabsyn.KindRenaming(Preabsyn.Symbol(_,_,pos), _) :: _) -> pos
+    | _ -> Errormsg.none
+  in
   match renaming with
     Some ren ->
       if not (goodRenaming ren) then
-        Errormsg.error Errormsg.none "Renaming is not an injective function"
+        let pos = extractRenamingPos renaming in
+          Errormsg.error pos "Renaming is not an injective function"
   | None -> ()
 
 (**********************************************************************
