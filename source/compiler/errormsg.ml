@@ -36,8 +36,8 @@ let warningsAsErrors = ref false
 
 (********************************************************************
 *none:
-*	An empty pos, useful when printing internal compiler errors that
-*	are unrelated to a particular file or location.
+*  An empty pos, useful when printing internal compiler errors that
+*  are unrelated to a particular file or location.
 ********************************************************************)
 let none = { pos_fname = "none" ;
              pos_lnum = 0 ;
@@ -46,20 +46,20 @@ let none = { pos_fname = "none" ;
   
 (********************************************************************
 *string_of_pos:
-*	Convert a pos to a string.
+*  Convert a pos to a string.
 ********************************************************************)
 let string_of_pos pos =
   let file = pos.pos_fname in
   let line = pos.pos_lnum in
   let char = pos.pos_cnum - pos.pos_bol in
-    file ^ "(" ^ (string_of_int line) ^ "," ^ (string_of_int char) ^ ")"
+  file ^ "(" ^ (string_of_int line) ^ "," ^ (string_of_int char) ^ ")"
 
 (********************************************************************
 *printPosition:
-*	Prints position information.
+*  Prints position information.
 ********************************************************************)
 let rec printPosition = fun p ->
-	prerr_string (string_of_pos p)
+  prerr_string (string_of_pos p)
 
 (********************************************************************
 *reset:
@@ -79,7 +79,7 @@ let info msg =
 * Annotates a message with a file location.
 ********************************************************************)
 let see pos msg =
-	(info "See " ^ msg ^ " at " ^ (string_of_pos pos))
+  (info "See " ^ msg ^ " at " ^ (string_of_pos pos))
 
 (********************************************************************
 *error:
@@ -87,11 +87,11 @@ let see pos msg =
 ********************************************************************)
 let error pos msg =
   if !errorsEnabled then
-		(anyErrors := true;
-		printPosition pos;
-		prerr_string " : Error : ";
-		prerr_string msg;
-        prerr_newline ())
+    (anyErrors := true;
+    printPosition pos;
+    prerr_string " : Error : ";
+    prerr_string msg;
+    prerr_newline ())
   else
     ()
 
@@ -101,27 +101,27 @@ let error pos msg =
 ********************************************************************)
 let warning pos msg =
   if !warningsEnabled && !errorsEnabled then
-	  (if !warningsAsErrors then
-	    anyErrors := true
-	  else
-	    ();
-	  printPosition pos;
-	  prerr_string " : Warning : ";
-	  prerr_string msg;
-      prerr_newline ())
+    (if !warningsAsErrors then
+      anyErrors := true
+    else
+      ();
+    printPosition pos;
+    prerr_string " : Warning : ";
+    prerr_string msg;
+    prerr_newline ())
   else
-    ()		
+    ()    
 
 (********************************************************************
 *log:
-*	Outputs logging information.
+*  Outputs logging information.
 ********************************************************************)
 let log pos msg =
   if !loggingEnabled then
-	  (printPosition pos;
-	  prerr_string " : Log : ";
-	  prerr_string msg;
-      prerr_newline ())
+    (printPosition pos;
+    prerr_string " : Log : ";
+    prerr_string msg;
+    prerr_newline ())
   else
     ()
 
@@ -131,9 +131,9 @@ let log pos msg =
 * InternalError.
 ********************************************************************)
 let impossible pos msg =
-		(anyErrors := true;
-		printPosition pos;
-		prerr_string " : Internal Error : ";
-		prerr_string msg; 
-		prerr_newline ();
-		raise InternalError)
+  (anyErrors := true;
+  printPosition pos;
+  prerr_string " : Internal Error : ";
+  prerr_string msg; 
+  prerr_newline ();
+  raise InternalError)
