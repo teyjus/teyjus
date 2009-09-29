@@ -59,12 +59,15 @@ let usageMsg =
   "Usage: tjsim <options> <module-name>\n" ^
     "options are:"
 
+(***********************************************************************
+*solveQueries:
+* Main interaction loop.
+***********************************************************************)
 let solveQueries () =
-  (* solve a query in batch mode *)
   let solveQueryBatch () =
     let rec solveQueryBatchAux numResults =
       if Query.solveQuery () && numResults < !maxSolutions then
-        (Query.showAnswers ();
+        (if not !quiet then Query.showAnswers ();
          solveQueryBatchAux (numResults + 1))
       else
          numResults
@@ -87,7 +90,6 @@ let solveQueries () =
   in
 
   let rec solveQueryInteract () =
-
     let rec moreAnswers () =
       print_string "\nMore solutions (y/n)? ";
       match read_line () with
@@ -109,8 +111,6 @@ let solveQueries () =
         print_endline "\nyes\n"
     else
       print_endline "\nno (more) solutions\n"
-
-   
   in
   
   (* solve one query *)
@@ -129,7 +129,6 @@ let solveQueries () =
   in
 
   let rec interactSolveQuery queries modName =
-
     (* first solve queries input through the command line *)
     List.iter solveQuery queries;
 
@@ -158,17 +157,25 @@ let solveQueries () =
     List.iter solveQuery !queryStrings
   else
     let modName = if !inputName = "" then "toplevel" else !inputName in
-      if !queryStrings = [] then
-        print_banner (); 
-      interactSolveQuery !queryStrings modName
+    if !queryStrings = [] then
+      print_banner (); 
+    interactSolveQuery !queryStrings modName
 
-
+(**********************************************************************
+*readTerm:
+* Reads terms with respect to the current module; registered with
+* the simulator.
+**********************************************************************)
 let readTerm term =
   Query.readTerm term (Module.getCurrentModule ())
-
 let _ = Callback.register "ocaml_read_term" readTerm
   
-let _ =
+(**********************************************************************
+*main:
+* Main entrypoint; sets up the simulator based on command line
+* arguments, loads the secified module, and then starts the interactive loop.
+**********************************************************************)
+let main =
   Arg.parse (Arg.align specList) (setInputName ~filter:getModName) usageMsg ;
 
   try 
