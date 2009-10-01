@@ -27,3 +27,9 @@ separatecomp:
   separatecomp.mod; if you uncomment some of the various errors in
   separatecomp.sig, accumsig1.sig, and accumsig2.sig, you will see examples of
   how such errors are reported.
+
+builtintest:
+  Before builtin predicates (pervasives) could be extended, which would crash
+  the compiler (and would have messed with the simulator in any event due to the
+  way builtins are implemented).  Now all builtins are flagged "nodefs".  This
+  module tests this property.
