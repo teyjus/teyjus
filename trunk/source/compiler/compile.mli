@@ -44,11 +44,5 @@ val compileSignature : string -> Preabsyn.pmodule
 **********************************************************************)
 val compileString : string -> Preabsyn.pterm option
 
-(*  Flags indicating whether to print various stages of compilation;
-    for testing.  *)
-val printPreAbsyn : bool ref
-val printAbsyn : bool ref
-val printClauses : bool ref
-
+(*  File Utilities  *)
 val openFile : string -> (string -> 'a) -> 'a
-val closeFile : 'a -> ('a -> unit) -> unit

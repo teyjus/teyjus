@@ -32,7 +32,7 @@ Global kind table:
 Local kind table:
 
 Type skeleton table:
-0: (i -> (i -> (i -> o)))
+0: i -> i -> i -> o
 
 Global constant table: 
 0: foo (No Fixity, precedence 0)

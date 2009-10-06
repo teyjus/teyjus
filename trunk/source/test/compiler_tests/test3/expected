@@ -88,9 +88,9 @@ Global kind table:
 Local kind table:
 
 Type skeleton table:
-0: ('0 -> o)
-1: ('1 -> '0)
-2: (pair '0 '1)
+0: A -> o
+1: B -> A
+2: pair A B
 
 Global constant table: 
 0: foo (No Fixity, precedence 0)

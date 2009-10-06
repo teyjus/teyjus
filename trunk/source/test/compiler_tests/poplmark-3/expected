@@ -4464,16 +4464,16 @@ Global kind table:
 Local kind table:
 
 Type skeleton table:
-0: (tp -> ((term -> term) -> term))
+0: tp -> (term -> term) -> term
 1: o
-2: (term -> (term -> (term -> (tp -> o))))
+2: term -> term -> term -> tp -> o
 3: term
-4: (tp -> ((tp -> term) -> term))
+4: tp -> (tp -> term) -> term
 5: tp
-6: (tp -> (tp -> tp))
-7: (term -> (term -> term))
-8: (term -> (tp -> term))
-9: (tp -> ((tp -> tp) -> tp))
+6: tp -> tp -> tp
+7: term -> term -> term
+8: term -> tp -> term
+9: tp -> (tp -> tp) -> tp
 
 Global constant table: 
 0: abs (No Fixity, precedence 0)

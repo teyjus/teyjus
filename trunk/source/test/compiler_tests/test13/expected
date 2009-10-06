@@ -97,8 +97,8 @@ Global kind table:
 Local kind table:
 
 Type skeleton table:
-0: (i -> o)
-1: '0
+0: i -> o
+1: A
 2: i
 
 Global constant table: 

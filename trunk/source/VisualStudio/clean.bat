@@ -6,7 +6,6 @@ rem Delete compiler temporary files.
 del ..\compiler\*.obj /Q
 del ..\compiler\*.cm* /Q
 
-
 rem Delete disassembler temporary files.
 del ..\disassembler\*.obj /Q
 del ..\disassembler\*.cm* /Q

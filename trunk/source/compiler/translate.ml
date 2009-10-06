@@ -75,8 +75,7 @@ let rationalizeTypeAbbrevVar sym symtable p =
 * Used when translating a type variable while translating a type into
 * a type skeleton. 
 **********************************************************************)
-let rationalizeSkeletonVar =
-  fun sym symtable p ->
+let rationalizeSkeletonVar sym symtable p =
     let t = Absyn.SkeletonVarType(ref !typeSkeletonIndex) in
     (typeSkeletonIndex := !typeSkeletonIndex + 1;
     TypeAndBindings(t, (Table.add sym t symtable)))
@@ -1893,6 +1892,7 @@ and normalizeTable ktable ctable =
             Errormsg.impossible Errormsg.none "Translate.normalizeType: invalid kind"
       | t' -> t'
   in
+
   (******************************************************************
   *normalizeConstant:
   ******************************************************************)

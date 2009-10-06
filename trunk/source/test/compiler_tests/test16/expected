@@ -23,17 +23,17 @@ Global kind table:
 Local kind table:
 
 Type skeleton table:
-0: (i -> i)
-1: (i -> o)
+0: i -> i
+1: i -> o
 2: i
-3: (i -> (i -> i))
-4: (i -> o)
+3: i -> i -> i
+4: i -> o
 5: i
-6: (i -> i)
-7: (i -> (i -> i))
-8: (i -> o)
+6: i -> i
+7: i -> i -> i
+8: i -> o
 9: i
-10: (i -> i)
+10: i -> i
 
 Global constant table: 
 0: foo (No Fixity, precedence 0)

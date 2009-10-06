@@ -56,7 +56,7 @@ let specList = dualArgs
    versionspec]
 
 let usageMsg =
-  "Usage: tjsim <options> <module-name>\n" ^
+  "Usage: tjsim [options] <module-name>\n" ^
     "options are:"
 
 (***********************************************************************

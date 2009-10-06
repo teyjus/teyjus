@@ -13,9 +13,9 @@ Local kind table:
 1: /1
 
 Type skeleton table:
-0: ('0 -> '0)
-1: ('0 -> ('0 -> '0))
-2: '0
+0: A -> A
+1: A -> A -> A
+2: A
 
 Global constant table: 
 0: a (No Fixity, precedence 0)

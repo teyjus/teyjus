@@ -141,7 +141,7 @@ let print_sig_deps signame =
 (* Actual front-end code *)
       
 let usageMsg = 
-  "Usage: tjdepend <options> <module-files>\n" ^
+  "Usage: tjdepend [options] <module-files>\n" ^
   "options are:"
 
 let specList = dualArgs [versionspec]

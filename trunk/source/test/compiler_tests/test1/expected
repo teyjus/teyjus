@@ -78,12 +78,12 @@ Global kind table:
 Local kind table:
 
 Type skeleton table:
-0: ((i -> i) -> o)
-1: (i -> o)
-2: ((i -> i) -> i)
-3: ((i -> (i -> i)) -> o)
-4: (i -> (i -> i))
-5: ((i -> (i -> i)) -> i)
+0: (i -> i) -> o
+1: i -> o
+2: (i -> i) -> i
+3: (i -> i -> i) -> o
+4: i -> i -> i
+5: (i -> i -> i) -> i
 
 Global constant table: 
 0: foo1 (No Fixity, precedence 0)

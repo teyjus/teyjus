@@ -21,7 +21,7 @@ Global kind table:
 Local kind table:
 
 Type skeleton table:
-0: ('0 -> o)
+0: A -> o
 
 Global constant table: 
 0: mod (No Fixity, precedence 0)

@@ -65,6 +65,8 @@ Microsoft Visual Studio 2008:
 
   dependency analyzer       omake tjdepend             teyjus/source  
   
+  parser                    omake tjparse              teyjus/source
+  
   all                       omake all                  teyjus/source
 
 
@@ -107,14 +109,12 @@ Microsoft Visual Studio 2008:
   1. compiler (teyjus/source/tjcc)
   --------------------------------
   
-  Usage: tjcc <options> <module-names>
+  Usage: tjcc [options] <module-names>
   options are:
     -o         Specifies the name of the output bytecode file
     --output   Specifies the name of the output bytecode file
     -p         Add PATH to the search path.
     --path     Add PATH to the search path.
-    --log      Enable logging information.
-    --log      Enable logging information.
     -v         Return the system version
     --version  Return the system version
     -help      Display this list of options
@@ -124,7 +124,7 @@ Microsoft Visual Studio 2008:
   2. simulator (tejus/source/tjsim)
   ---------------------------------
   
-  Usage: tjsim -b <options> <module-name>
+  Usage: tjsim [options] <module-name>
   options are:
     -p         Add PATH to the search path.
     --path     Add PATH to the search path.
@@ -151,14 +151,10 @@ Microsoft Visual Studio 2008:
     -help      Display this list of options
     --help     Display this list of options
   
-  
-  Note that the interactive interface is not implemented. The simulator only
-  works in batch mode (with option -b specified).
-  
   3. disassembler (teyjus/source/tjdis)
   -------------------------------------
   
-  Usage: tjdis <options> <object-file>
+  Usage: tjdis [options] <object-file>
   options are:
     -t         Only print tables
     --table    Only print tables
@@ -173,7 +169,7 @@ Microsoft Visual Studio 2008:
   4. linker (teyjus/source/tjlink)
   --------------------------------
   
-  Usage: tjlink <module-name>
+  Usage: tjlink [options] <module-name>
   -V         Produce verbose output - use multiple times to increase verbosity
   --verbose  Produce verbose output - use multiple times to increase verbosity
   -v         Return the system version
@@ -185,13 +181,25 @@ Microsoft Visual Studio 2008:
   5. dependency analyzer (teyjus/source/tjdepend)
   -----------------------------------------------
   
-  Usage: tjdepend <options> <module-files>
+  Usage: tjdepend [options] <module-files>
   options are:
     -v         Return the system version
     --version  Return the system version
     -help      Display this list of options
     --help     Display this list of options
   
+
+  6. parser (teyjus/source/tjparse)
+  -----------------------------------------------
+
+  Usage: tjparse [options] <file>
+  options are:
+    -o         Specifies the name of the output module
+    --output   Specifies the name of the output module
+    -v         Return the system version
+    --version  Return the system version
+    -help      Display this list of options
+    --help     Display this list of options
 
                                TESTING
                                =======
