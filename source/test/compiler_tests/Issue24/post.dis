@@ -138,9 +138,9 @@ Global kind table:
 Local kind table:
 
 Type skeleton table:
-0: (((i -> i) -> ((i -> i) -> (i -> i))) -> o)
-1: (((i -> i) -> ((i -> i) -> ((i -> i) -> (i -> i)))) -> o)
-2: (i -> i)
+0: ((i -> i) -> (i -> i) -> i -> i) -> o
+1: ((i -> i) -> (i -> i) -> (i -> i) -> i -> i) -> o
+2: i -> i
 
 Global constant table: 
 0: two_corresp (No Fixity, precedence 0)

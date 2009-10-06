@@ -450,7 +450,8 @@ and string_of_type_ast ty =
         "'" ^ (string_of_int i)
     | ApplicationType(kind, tlist) ->
         if (List.length tlist) > 0 then
-          "(" ^ (string_of_kind kind) ^ " " ^ (print' tlist) ^ ")"
+          let args = String.concat " " (List.map string_of_type_ast tlist) in
+          "(" ^ (string_of_kind kind) ^ args ^ ")"
         else
           (string_of_kind kind)
     | SkeletonVarType(i) -> "SkeletonVarType(" ^ (string_of_int !i) ^ ")"
@@ -461,28 +462,40 @@ and string_of_type_ast ty =
     | ErrorType -> "ErrorType"
 
 and string_of_type ty =
-  let rec print' = function
-      t::[] -> (string_of_type t)
-    | t::ts -> (string_of_type t) ^ " " ^ (print' ts)
-    | [] -> ""
+  let rec str needsParens ty =
+    let parens s =
+      if needsParens then
+        "(" ^ s ^ ")"
+      else
+        s
+    in
+    let ty' = dereferenceType ty in
+    match ty' with
+        ArrowType(t1, t2) ->
+          let s = (str true t1) ^ " -> " ^ (str false t2) in
+          parens s
+      | TypeVarType(r) ->
+          let i : int = (Obj.magic r) in
+          "_" ^ (string_of_int i)
+      | ApplicationType(kind, tlist) ->
+          if (List.length tlist) > 0 then
+            let args = String.concat " " (List.map (str true) tlist) in
+            let s = (string_of_kind kind) ^ " " ^ args in
+            parens s
+          else
+            string_of_kind kind
+      | SkeletonVarType(i) ->
+          if !i > ((Char.code 'Z') - (Char.code 'A')) then
+            "_" ^ (string_of_int !i)
+          else
+            String.make 1 (Char.chr (!i + (Char.code 'A')))
+      | TypeSetType(d, tl, _) ->
+          (match !tl with
+            [t] -> str needsParens t
+          | _ -> str needsParens d)
+      | ErrorType -> "ErrorType"
   in
-  let ty' = dereferenceType ty in
-  match ty' with
-      ArrowType(t1, t2) -> "(" ^ (string_of_type t1) ^ " -> " ^ (string_of_type t2) ^ ")"
-    | TypeVarType(r) ->
-        let i : int = (Obj.magic r) in
-        "'" ^ (string_of_int i)
-    | ApplicationType(kind, tlist) ->
-        if (List.length tlist) > 0 then
-          "(" ^ (string_of_kind kind) ^ " " ^ (print' tlist) ^ ")"
-        else
-          (string_of_kind kind)
-    | SkeletonVarType(i) -> "'" ^ (string_of_int !i)
-    | TypeSetType(d, tl, _) ->
-        (match !tl with
-          [t] -> string_of_type t
-        | _ -> string_of_type d)
-    | ErrorType -> "ErrorType"
+  str false ty
 
 (* errorType *)
 let errorType = ErrorType
@@ -702,13 +715,13 @@ let string_of_skeleton_ast (Skeleton(ty,_,_)) =
 (*************************************************************************)
 (* * Convert an absyn fixity to a string.  Used only in print *)
 let string_of_fixity = function
-  Infix -> "Infix"
-| Infixl -> "Infixl"
-| Infixr -> "Infixr"
-| Prefix -> "Prefix"
-| Prefixr -> "Prefixr"
-| Postfix -> "Postfix"
-| Postfixl -> "Postfixl"
+  Infix -> "infix"
+| Infixl -> "infixl"
+| Infixr -> "infixr"
+| Prefix -> "prefix"
+| Prefixr -> "prefixr"
+| Postfix -> "postfix"
+| Postfixl -> "postfixl"
 | NoFixity -> "No Fixity"
 
 let isFixityPrefix = function
@@ -1185,6 +1198,17 @@ let rec needsParens opfix opprec context fix prec =
       | _ -> (Errormsg.impossible Errormsg.none "Absyn.needsParens: invalid fixity"))
   | WholeTermContext -> false
 
+let getTermPos = function
+  IntTerm(_,_,p) -> p
+| StringTerm(_,_,p) -> p
+| RealTerm(_,_,p) -> p
+| AbstractionTerm(_,_,p) -> p
+| ConstantTerm(_,_,_,p) -> p
+| FreeVarTerm(_,_,p) -> p
+| BoundVarTerm(_,_,p) -> p
+| ApplicationTerm(_,_,p) -> p
+| ErrorTerm -> Errormsg.none
+
 (* abstraction term *)
 let getTermAbstractionVar = function
   AbstractionTerm(NestedAbstraction(v,_),_,_) -> v
@@ -1193,6 +1217,12 @@ let getTermAbstractionVar = function
 let getTermAbstractionVars = function
   AbstractionTerm(UNestedAbstraction(vars,_,_),_,_) -> vars
 | _ -> Errormsg.impossible Errormsg.none "Absyn.getTermAbstractionVars: invalid term"
+
+let getTermAllAbstractionVars t = match t with
+  AbstractionTerm(NestedAbstraction(_),_,_) -> [getTermAbstractionVar t]
+| AbstractionTerm(UNestedAbstraction(_),_,_) -> getTermAbstractionVars t
+| _ -> Errormsg.impossible (getTermPos t) "Absyn.getTermAbstractionVars': term not an abstraction"
+
 
 let getTermAbstractionBody = function
   AbstractionTerm(NestedAbstraction(_,b),_,_) -> b
@@ -1242,7 +1272,7 @@ let rec string_of_term_ast term =
   | ConstantTerm(c,tl,_,_) -> 
       let tlstr = "[" ^ (String.concat "," (List.map string_of_type_ast tl)) ^ "]" in
       if (getConstantType c = HiddenConstant) then
-	"hc: " ^ (getConstantPrintName c) ^ tlstr
+        "hc: " ^ (getConstantPrintName c) ^ tlstr
       else (getConstantPrintName c) ^ tlstr
   | FreeVarTerm(NamedFreeVar(s),_,_) -> 
       "fv: " ^ 
@@ -1258,41 +1288,54 @@ let rec string_of_term_ast term =
   | AbstractionTerm(UNestedAbstraction(_),_,_) ->
       let aterm = getTermAbstractionBody term in
       let avars = getTermAbstractionVars term in
-      (String.concat " " (List.map (getTypeSymbolName) avars)) 
-                                ^ "\\" ^ (string_of_term_ast aterm)
+      "(" ^ (String.concat " " (List.map (getTypeSymbolName) avars)) 
+        ^ ")\\ " ^ (string_of_term_ast aterm)
   | ApplicationTerm(FirstOrderApplication(h,args,_),_,_) ->
-      let rec getargs = function
-          [] -> ""
-        | a::aa -> " " ^ (string_of_term_ast a) ^ (getargs aa)
+      let s =
+        if args = [] then
+          ""
+        else
+          String.concat " " (List.map string_of_term_ast args)
       in
-      
-      "(" ^ (string_of_term_ast h) ^ (getargs args) ^ ")"
+      "((" ^ (string_of_term_ast h) ^ s ^ "))"
   | ApplicationTerm(CurriedApplication(l,r),_,_) ->
       "(" ^ (string_of_term_ast l) ^ " " ^ (string_of_term_ast r) ^ ")"
-  | _ -> "#ERROR#"
+  | _ -> "<error>"
   
 
 and string_of_term term =
-  let rec string_of_prefixterm op opfix args context fix prec bindings =
+  let tabs t =
+    if t = 0 then ""
+    else
+      "\n" ^ (String.make (2 * t) ' ')
+  in
+
+  let rec string_of_prefixterm op opfix args context fix prec bindings tab =
     let opprec = getConstantPrec op in
     let paren = needsParens opfix opprec context fix prec in
-    let result = (getConstantPrintName op) 
-      ^ " " 
-      ^ (string_of_term' (List.hd args) RightTermContext opfix opprec bindings) in
+    let result = (getConstantPrintName op) ^ " " ^
+      (string_of_term' (List.hd args) RightTermContext opfix opprec bindings tab)
+    in
 
     if paren then
       "(" ^ result ^ ")"
     else
       result
   
-  and string_of_infixterm op opfix args context fix prec bindings =
+  and string_of_infixterm op opfix args context fix prec bindings tab =
     let opprec = getConstantPrec op in
     let paren = needsParens opfix opprec context fix prec in
+    let name = getConstantPrintName op in
+    let (sep1, sep2, tab') =
+      if List.mem name [","; ";"] then ("", tabs tab, tab)
+      else if List.mem name ["=>"; ":-"] then (" ", tabs (tab + 1), tab + 1)
+      else (" ", " ", tab)
+    in
     let result =
-      (string_of_term' (List.hd args) LeftTermContext opfix opprec bindings) ^ 
-        " " ^ (getConstantPrintName op) ^ " " ^
+      (string_of_term' (List.hd args) LeftTermContext opfix opprec bindings tab) ^ 
+        sep1 ^ name ^ sep2 ^
         (string_of_term'
-          (List.hd (List.tl args)) RightTermContext opfix opprec bindings)
+          (List.hd (List.tl args)) RightTermContext opfix opprec bindings tab')
     in
     
     if paren then
@@ -1300,23 +1343,23 @@ and string_of_term term =
     else
       result
   
-  and string_of_postfixterm op opfix args context fix prec bindings =
+  and string_of_postfixterm op opfix args context fix prec bindings tab =
     let opprec = getConstantPrec op in
     let paren = needsParens opfix opprec context fix prec in
     let result =
-      (string_of_term' (List.hd args) LeftTermContext opfix opprec bindings) ^
+      (string_of_term' (List.hd args) LeftTermContext opfix opprec bindings tab) ^
         " " ^ (getConstantPrintName op) in
     if paren then
       "(" ^ result ^ ")"
     else
       result
   
-  and string_of_app term context fix prec bindings =
+  and string_of_app term context fix prec bindings tab =
     let rec string_of_args args =
       match args with
           [] -> ""
-        | a::[] -> (string_of_term' a RightTermContext appFixity appPrec bindings)
-        | a::aa -> (string_of_term' a RightTermContext appFixity appPrec bindings) 
+        | a::[] -> (string_of_term' a RightTermContext appFixity appPrec bindings tab)
+        | a::aa -> (string_of_term' a RightTermContext appFixity appPrec bindings tab) 
                              ^ " " ^ (string_of_args aa)
     in
     
@@ -1328,65 +1371,65 @@ and string_of_term term =
               (match (getConstantFixity c) with
                   Prefix -> 
                     if numargs = 1 then
-                      (string_of_prefixterm c Prefix args context fix prec bindings,
+                      (string_of_prefixterm c Prefix args context fix prec bindings tab,
                       [])
                     else
                       (string_of_prefixterm c Prefix args 
-                                            LeftTermContext appFixity appPrec bindings,
+                                            LeftTermContext appFixity appPrec bindings tab,
                       List.tl args)
                 | Prefixr ->
                     if numargs = 1 then
-                      (string_of_prefixterm c Prefix args context fix prec bindings,
+                      (string_of_prefixterm c Prefix args context fix prec bindings tab,
                       [])
                     else
                       (string_of_prefixterm c Prefix 
-                                            args LeftTermContext appFixity appPrec bindings,
+                                            args LeftTermContext appFixity appPrec bindings tab,
                       List.tl args)
                 | Infix ->
                     if numargs = 2 then
-                      (string_of_infixterm c Infix args context fix prec bindings,
+                      (string_of_infixterm c Infix args context fix prec bindings tab,
                       [])
                     else
                       (string_of_infixterm c Infix 
-                                           args LeftTermContext appFixity appPrec bindings,
+                                           args LeftTermContext appFixity appPrec bindings tab,
                       List.tl (List.tl args))
                 | Infixr ->
                     if numargs = 2 then
-                      (string_of_infixterm c Infixr args context fix prec bindings,
+                      (string_of_infixterm c Infixr args context fix prec bindings tab,
                       [])
                     else
                       (string_of_infixterm c Infixr 
-                                             args LeftTermContext appFixity appPrec bindings,
+                                             args LeftTermContext appFixity appPrec bindings tab,
                       List.tl (List.tl args))
                 | Infixl ->
                     if numargs = 2 then
-                      (string_of_infixterm c Infixl args context fix prec bindings,
+                      (string_of_infixterm c Infixl args context fix prec bindings tab,
                       [])
                     else
                       (string_of_infixterm c Infixl 
-                                           args LeftTermContext appFixity appPrec bindings,
+                                           args LeftTermContext appFixity appPrec bindings tab,
                       List.tl (List.tl args))
                 | Postfix ->
                     if numargs = 1 then
-                      (string_of_postfixterm c Postfix args context fix prec bindings,
+                      (string_of_postfixterm c Postfix args context fix prec bindings tab,
                       [])
                     else
                       (string_of_postfixterm c Postfix 
-                                             args LeftTermContext appFixity appPrec  bindings,
+                                             args LeftTermContext appFixity appPrec bindings tab,
                       List.tl args)
                 | Postfixl ->
                     if numargs = 1 then
-                      (string_of_postfixterm c Postfixl args context fix prec bindings,
+                      (string_of_postfixterm c Postfixl args context fix prec bindings tab,
                       [])
                     else
                       (string_of_postfixterm c Postfixl 
-                                             args LeftTermContext appFixity appPrec  bindings,
+                                             args LeftTermContext appFixity appPrec bindings tab,
                       List.tl args)
                 | NoFixity ->
-                    (string_of_term' f LeftTermContext appFixity appPrec bindings,
+                    (string_of_term' f LeftTermContext appFixity appPrec bindings tab,
                     args))
             | _ ->
-              (string_of_term' f LeftTermContext appFixity appPrec bindings,
+              (string_of_term' f LeftTermContext appFixity appPrec bindings tab,
               args))
           in
         
@@ -1403,27 +1446,22 @@ and string_of_term term =
         let (head,args) = getTermApplicationHeadAndArguments term in
         let term' = 
           ApplicationTerm(FirstOrderApplication(head, args, List.length args), b,p) in
-        string_of_app term' context fix prec bindings
+        string_of_app term' context fix prec bindings tab
     | _ -> Errormsg.impossible (getTermPos term) "string_of_app: term not an application"
 
-  and string_of_abstraction term context fix prec bindings =
-    let getVars t = match t with
-        AbstractionTerm(NestedAbstraction(_),_,_) -> [getTermAbstractionVar t]
-      | AbstractionTerm(UNestedAbstraction(_),_,_) -> getTermAbstractionVars t
-      | _ -> Errormsg.impossible (getTermPos t) "string_of_abstraction: term not an abstraction"
-    in
+  and string_of_abstraction term context fix prec bindings tab =
     let paren = needsParens lamFixity lamPrec context fix prec in
     let aterm = getTermAbstractionBody term in
-    let avars = getVars term in
+    let avars = getTermAllAbstractionVars term in
     let lambdas = (String.concat "\\ " (List.map getTypeSymbolName avars)) ^ "\\ " in
     let bindings' = List.rev_append avars bindings in
-    let result = lambdas ^ (string_of_term' aterm RightTermContext lamFixity lamPrec bindings') in
+    let result = lambdas ^ (string_of_term' aterm RightTermContext lamFixity lamPrec bindings' tab) in
     if paren then
       "(" ^ result  ^ ")"
     else
       result
   
-  and string_of_term' term context fix prec bindings =
+  and string_of_term' term context fix prec bindings tab =
     match term with
       IntTerm(i,_,_) -> (string_of_int i)
     | RealTerm(r,_,_) -> (string_of_float r)
@@ -1433,25 +1471,13 @@ and string_of_term term =
     | FreeVarTerm(NamedFreeVar(s),_,_) -> Symbol.name (getTypeSymbolSymbol s)
     | BoundVarTerm(NamedBoundVar(s),_,_) -> Symbol.name (getTypeSymbolSymbol s)
     | BoundVarTerm(DBIndex(i),_,_) -> getTypeSymbolName (List.nth bindings (i - 1))
-    | ApplicationTerm(_) -> string_of_app term context fix prec bindings
-    | AbstractionTerm(_) -> string_of_abstraction term context fix prec bindings
+    | ApplicationTerm(_) -> string_of_app term context fix prec bindings tab
+    | AbstractionTerm(_) -> string_of_abstraction term context fix prec bindings tab
     | ErrorTerm -> "#error#"
     | _ -> Errormsg.impossible (getTermPos term) 
                                "string_of_term': unimplemented for this term"
   in
-  
-  (string_of_term' term WholeTermContext NoFixity 0 [])
-
-and getTermPos = function
-  IntTerm(_,_,p) -> p
-| StringTerm(_,_,p) -> p
-| RealTerm(_,_,p) -> p
-| AbstractionTerm(_,_,p) -> p
-| ConstantTerm(_,_,_,p) -> p
-| FreeVarTerm(_,_,p) -> p
-| BoundVarTerm(_,_,p) -> p
-| ApplicationTerm(_,_,p) -> p
-| ErrorTerm -> Errormsg.none
+  string_of_term' term WholeTermContext NoFixity 0 [] 0
 
 (* free variable *)
 let getTermFreeVariableVariableData = function
@@ -1807,6 +1833,11 @@ let getModuleName = function
 | Signature(_) -> Errormsg.impossible Errormsg.none "getModuleName: not a module"
 | ErrorModule -> Errormsg.impossible Errormsg.none "getModuleName: invalid module"
 
+let setModuleName md name = match md with
+  Module(_,a,b,c,d,e,f,g,h,i,j,k,l,m,n) -> Module(name,a,b,c,d,e,f,g,h,i,j,k,l,m,n)
+| Signature(_) -> Errormsg.impossible Errormsg.none "getModuleName: not a module"
+| ErrorModule -> Errormsg.impossible Errormsg.none "getModuleName: invalid module"
+
 let getModuleGlobalKindsList = function
   Module(_,_,_,_,_,_,_,gkinds,_,_,_,_,_,_,_) -> gkinds
 | Signature(_) -> Errormsg.impossible Errormsg.none 
@@ -1944,232 +1975,3 @@ let makeNewClauseBlock cl closed =
 	  else (ref [cl], ref closed, ref 0, ref None)
   | _ ->  (ref [cl], ref closed, ref 0, ref None)
 
-(**********************************************************************
-*printAbsyn:
-* Prints the absyn representation of a module to the given out_channel.
-**********************************************************************)
-let printAbsyn = fun m out ->
-  (*  Text output functions *)
-  let output = function s -> (output_string out s) in
-  let output_line = function s -> (output_string out (s ^ "\n")) in
-  
-  let printPos = fun p ->
-    (output "Pos(";
-    output (Errormsg.string_of_pos p);
-    output ")")
-  in
-  
-  let rec printTypeVar = function
-    TypeVar(_) -> (output "TypeVar")
-    
-  and printTypeVarInfo = function
-    BindableTypeVar(t) ->
-      (match (!t) with
-        Some t -> printType t
-      | None -> output "None")
-  | FreeTypeVar(tv, b) ->
-      (match !tv with
-        Some tvar -> printTypeVar tvar
-      | None -> output "None")
-
-  (*  Print an absyn type *)
-  and printType = function
-    TypeVarType(v) ->
-      (output "TypeVar(";
-      printTypeVarInfo (!v);
-      output ")")
-  | TypeSetType(def, l, r) ->
-      let rec print' = function
-        t::[] -> (printType t)
-      | t::ts -> (printType t; output ", "; print' ts)
-      | [] -> (output "")
-      in
-      
-      let printRef = function
-        Some(t) -> printType t
-      | None -> output "None"
-      in
-      
-      (output "TypeSetType(";
-      printType def;
-      output "[";
-      print' !l;
-      output "], ";
-      printRef !r;
-      output ")")
-  | ArrowType(l, r) -> 
-      (output "Arrow(";
-      printType l;
-      output ", ";
-      printType r;
-      output ")")
-  | ApplicationType(f,t) ->
-      let rec print' = function
-        t::[] -> (printType t)
-      | t::ts -> (printType t; output ", "; print' ts)
-      | [] -> (output "None")
-      in
-      
-      (output "App(";
-      output (string_of_kind f);
-      output ", ";
-      print' t;
-      output ")")
-  | SkeletonVarType(i) ->
-      (output "SkeletonVar(";
-      output (string_of_int !i);
-      output ")")
-  | ErrorType ->
-      (output "Error")
-
-  and printConstant const =
-    printconstant' (Symbol.symbol "") const
-  
-  (*  Print a constant.  For use with printTable. *)
-  and printconstant' sym const =
-    let printConstantType = function
-      GlobalConstant -> output "Global"
-    | LocalConstant -> output "Local"
-    | AnonymousConstant -> output "Anonymous"
-    | HiddenConstant -> output "Hidden"
-    | PervasiveConstant(b) -> 
-        if b then
-          output "Mutable Pervasive"
-        else
-          output "Immutable Pervasive"
-    in
-    
-    let rec printSkeleton = function
-      None -> output "None"
-    | Some(Skeleton(t,i,b)) -> 
-        (output "Skeleton(";
-        printType t;
-        output (", " ^ (Option.string_of_option !i string_of_int));
-        output (", " ^ (string_of_bool !b));
-        output ")")
-    in
-    
-    match const with
-      Constant(sym,fix,prec,exportdef,useonly,nodefs,closed,typepreserv,
-        reducible,skel,envsize,_,_,codeinfo,ctype,index,pos) ->
-        (output "Constant(";
-        output (Symbol.name sym);
-        output ", ";
-        output (string_of_fixity !fix);
-        output ", ";
-        output (string_of_int !prec);
-        output ", ";
-        output (string_of_bool !exportdef);
-        output ", ";
-        output (string_of_bool !useonly);
-        output ", ";
-        output (string_of_bool !nodefs);
-        output ", ";
-        output (string_of_bool !closed);
-        output ", ";
-        output (string_of_bool !typepreserv);
-        output ", ";
-        output (string_of_bool !reducible);
-        output ", ";
-        printSkeleton !skel;
-        output ", ";
-        output (string_of_int !envsize);
-        output ", ";
-        printConstantType !ctype;
-        output ", ";
-        printPos pos;
-        output_line ")")
-  
-  (*  Print a kind.  For use with printTable. *)
-  and printKind = fun k ->
-    let print' = fun sym a kmap ->
-      match a with
-        Some a' ->
-          (output (Symbol.name sym);
-          output ", ";
-          output (string_of_int a'))
-      | None ->
-          (output (Symbol.name sym);
-          output ", ";
-          output "None")
-    in
-    
-    match k with
-      Kind(sym,arity,kmap,LocalKind,p) ->
-        (output "Kind(";
-        print' sym arity kmap;
-        output ", LocalKind, ";
-        output ")")
-    | Kind(sym,arity,kmap,GlobalKind,p) ->
-        (output "Kind(";
-        print' sym arity kmap;
-        output ", GlobalKind, ";
-        output ")")
-    | Kind(sym,arity,kmap,PervasiveKind,p) ->
-        (output "Kind(";
-        print' sym arity kmap;
-        output ", PervasiveKind, ";
-        output ")")
-  in
-  
-  (*  Print the contents of a table *)
-  let printTable = fun f table ->
-    Table.iter f table
-  in
-  
-  let printkind' = fun s k ->
-    (output (Symbol.name s);
-    output " : ";
-    printKind k;
-    output_line "")
-  in
-
-  (*
-  let printClauseBlock = function
-    (cl,_,_,_,_,_) ->
-      (List.iter printClause (!cl))
-  in
-  
-  let printClause = function
-      Fact(c,tl,tyl,) ->
-    | Rule() ->
-  in
-  
-  let printClauses = function
-      ClauseBlocks(cbs) -> List.iter printClauseBlock cbs
-    | PreClauseBlocks(defs) -> List.iter printDefinition defs
-  in
-  *)
-  match m with
-    Module(name, impmods, accummods, ctable, ktable, tabbrevtable, strings,
-      gkinds, lkinds, gconsts, lconsts, hconsts, gskels, lskels, clauses) ->
-      
-      (output "Module(";
-      output name;
-      output_line ", ";
-      
-      output_line "ConstantTable:";
-      printTable printconstant' !ctable;
-      output_line "";
-      
-      output_line "KindTable:";
-      printTable printkind' !ktable;
-      output_line "";
-      
-      (*
-      output_line "Clauses:";
-      printClauses !clauses;
-      *)
-      output_line ")")
-      
-  | Signature(name, kinds, consts) ->
-      (output "Signature(";
-      output_line name;
-      output_line "Kinds:";
-      List.iter printKind kinds;
-      output_line "";
-      output_line "Constants:";
-      List.iter printConstant consts;
-      output_line ")")
-  | ErrorModule ->
-      (output "ErrorModule")

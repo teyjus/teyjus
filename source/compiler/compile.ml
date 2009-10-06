@@ -19,19 +19,16 @@
 * along with Teyjus.  If not, see <http://www.gnu.org/licenses/>.
 ****************************************************************************)
 (**********************************************************************
-*
+* Compile
 **********************************************************************)
 exception Exception
 open Lexing
 open Lpyacc
 
-let printPreAbsyn = ref false
-let printAbsyn = ref false
-let printClauses = ref false
-
 (******************************************************************
 *openFile:
-* Open a file and exit if there is an error.
+* Open a file and exit if there is an error; this should be used
+* everywhere a file is opened.
 ******************************************************************)
 let openFile fname f =
   try 
@@ -40,18 +37,16 @@ let openFile fname f =
   with Sys_error(s) -> (prerr_endline s; exit 1)
 
 (******************************************************************
-*closeFile:
-* Closes a file given a closing function.
+*compile:
+* Given a file, opens it as a lex buffer and parses it using the
+* given parser function
 ******************************************************************)
-let closeFile fname f =
-  f fname
-
-let compile parse fname =
-  let inchannel = openFile fname open_in in
+let compile parse filename =
+  let inchannel = openFile filename open_in in
   let lexbuf = Lexing.from_channel inchannel in
-  let _ = Lplex.setFileName lexbuf fname in
+  let () = Lplex.setFileName lexbuf filename in
   let result = parse Lplex.initial lexbuf in
-  let _ = closeFile inchannel close_in in
+  let () = close_in inchannel in
   result
 
 let compileModule basename =
@@ -60,11 +55,17 @@ let compileModule basename =
 let compileSignature basename =
   compile Lpyacc.parseSignature (basename ^ ".sig")
 
+(******************************************************************
+*compileString:
+* Compile a string to a term.  Tracks whether any errors are raised
+* during parsing specifically (this can be called from the frontend,
+* which could set the error flag multiple times).
+******************************************************************)
 let compileString s =
   let previous = !Errormsg.anyErrors in
   let () = Errormsg.anyErrors := false in
   let lexbuf = Lexing.from_string s in
-  let _ = Lplex.setFileName lexbuf "" in
+  let () = Lplex.setFileName lexbuf "" in
   let cl = parseModClause Lplex.initial lexbuf in
   let result =
     if !Errormsg.anyErrors then
@@ -74,4 +75,3 @@ let compileString s =
   in
   (Errormsg.anyErrors := previous || (!Errormsg.anyErrors);
   result)
-  

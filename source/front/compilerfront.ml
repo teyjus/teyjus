@@ -87,12 +87,10 @@ let specList = dualArgs
     " Specifies the name of the output bytecode file") ;
    ("-p", "--path", Arg.String setPath,
     " Add PATH to the search path.") ;
-   ("-l", "--log", Arg.Set(Errormsg.loggingEnabled),
-    " Enable logging information.") ;
    versionspec]
 
 let usageMsg = 
-  "Usage: tjcc <options> <files>\n" ^
+  "Usage: tjcc [options] <files>\n" ^
   "options are:"
 
 let _ =    

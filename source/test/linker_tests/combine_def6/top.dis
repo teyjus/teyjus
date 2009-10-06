@@ -11,7 +11,7 @@ Global kind table:
 Local kind table:
 
 Type skeleton table:
-0: (i -> o)
+0: i -> o
 
 Global constant table: 
 

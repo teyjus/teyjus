@@ -220,9 +220,9 @@ and aclause =
 			   atermvarmap * atypevarmap * avar list * int option ref * 
 			   aimportedmodule list)
   | Rule of (aconstant * aterm list * atype list * int * int * atermvarmap *
-			   atypevarmap * avar list * int option ref * agoal * 
-               agoalenvassoc ref * avar option ref * bool ref * 
-			   aimportedmodule list)
+			      atypevarmap * avar list * int option ref * agoal * 
+              agoalenvassoc ref * avar option ref * bool ref * 
+			      aimportedmodule list)
 
 (* Goal number and environment size association list*)
 and agoalenvassoc =  GoalEnvAssoc of ((int * int) list)
@@ -261,11 +261,6 @@ and aaccumulatedmodule =
 and aclauseinfo = 
     ClauseBlocks of aclausesblock list
   | PreClauseBlocks of adefinitions
-
-(*****************************************************************************)
-(*Auxiliary functions:                                                       *)
-(*****************************************************************************)
-val printAbsyn : amodule -> out_channel -> unit
 
 (*************************************************************************)
 (*  akind:                                                               *)
@@ -491,6 +486,7 @@ val isTermConstant     : aterm -> bool
 
 val getTermAbstractionVar : aterm -> atypesymbol
 val getTermAbstractionVars : aterm -> atypesymbol list
+val getTermAllAbstractionVars : aterm -> atypesymbol list
 val getTermAbstractionBody : aterm -> aterm
 val getTermAbstractionNumberOfLambda : aterm -> int
 
@@ -566,6 +562,7 @@ val getGoalEnvAssocNthEnvSize : agoalenvassoc -> int -> int
 (*  amodule:                                                             *)
 (*************************************************************************)
 val getModuleName : amodule -> string
+val setModuleName : amodule -> string -> amodule
 val getModuleGlobalKindsList : amodule -> akind list
 val getModuleGlobalConstantsList : amodule -> aconstant list
 val getModuleHiddenConstantsRef : amodule -> aconstant list ref

@@ -74,28 +74,28 @@ Global kind table:
 Local kind table:
 
 Type skeleton table:
-0: (int -> o)
-1: (int -> (int -> int))
-2: (int -> int)
+0: int -> o
+1: int -> int -> int
+2: int -> int
 
 Global constant table: 
 0: foo (No Fixity, precedence 0)
     Env Size: 0, Type Skeleton: #0
-1: plus (Infixl, precedence 6)
+1: plus (infixl, precedence 6)
     Env Size: 0, Type Skeleton: #1
-2: mul (Infixl, precedence 7)
+2: mul (infixl, precedence 7)
     Env Size: 0, Type Skeleton: #1
-3: divide (Infixl, precedence 7)
+3: divide (infixl, precedence 7)
     Env Size: 0, Type Skeleton: #1
-4: minus (Infixl, precedence 6)
+4: minus (infixl, precedence 6)
     Env Size: 0, Type Skeleton: #1
-5: ** (Infixl, precedence 9)
+5: ** (infixl, precedence 9)
     Env Size: 0, Type Skeleton: #1
-6: inc (Postfixl, precedence 10)
+6: inc (postfixl, precedence 10)
     Env Size: 0, Type Skeleton: #2
-7: inc_non (Postfix, precedence 10)
+7: inc_non (postfix, precedence 10)
     Env Size: 0, Type Skeleton: #2
-8: preinc (Prefixr, precedence 10)
+8: preinc (prefixr, precedence 10)
     Env Size: 0, Type Skeleton: #2
 
 Local constant table: 

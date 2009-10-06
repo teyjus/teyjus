@@ -47,7 +47,7 @@ Global kind table:
 Local kind table:
 
 Type skeleton table:
-0: (int -> ('0 -> ((list '0) -> o)))
+0: int -> A -> (list A) -> o
 
 Global constant table: 
 0: nth (No Fixity, precedence 0)

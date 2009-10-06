@@ -485,7 +485,7 @@ and deOrifyCutGoal goal andgoal uvdefs newclauses hcs =
 * The uv list must be added to, the body processed, each AND goal list
 * returned should be collapsed into a single goal with a universal
 * quantifier ranging over it and then conjoined with the andgoals. Finally,
-* `closure' clauses must be added for possible definitions pertaining to 
+* 'closure' clauses must be added for possible definitions pertaining to 
 * the universally quantified variable and the free variable list should
 * be pruned.
 **********************************************************************)
@@ -899,7 +899,6 @@ and etaFluffQuantifier term arg =
       let term = Absyn.ApplicationTerm(
         Absyn.FirstOrderApplication(arg, [bvterm], 1), false, Errormsg.none) in
       (term, tsym)
-        
 
 (**********************************************************************
 *normalizeClause:
@@ -923,7 +922,6 @@ and normalizeClause clauseterm clauses uvs uvdefs embedded =
   * An "plain" atom head, with or without arguments.
   ********************************************************************)
   let rigidAtom term clauses args =
-
     match args with
       [] ->
         term :: clauses
@@ -1032,21 +1030,17 @@ and translateClauses pmod amod =
   (********************************************************************
   *translateClause:
   * Translates a given preabsyn clause.  It first parses it using the
-  * Parse module, which generates an absyn term.  Then, then normalizes
+  * Parse module, which generates an absyn term.  Then, it normalizes
   * the term, and finally deorifies it.  The result is a list of
   * absyn clauses.
   ********************************************************************)
   let translateClause preclause amod clauses newclauses hcs =
     let preterm = Preabsyn.getClauseTerm preclause in
-    let clause =
-      Parse.translateClause preterm amod in
-
+    let clause = Parse.translateClause preterm amod in
     if Option.isSome clause then
       let clause = Option.get clause in
-      let () = Errormsg.log Errormsg.none ("Clauses.translateClause: " ^ (Absyn.string_of_term_ast clause)) in
       let uvdefs = ref [] in
       let clauses' = normalizeClause clause [] [] uvdefs false in
-
       let DeOrifyClauseResult(clauses', _, _, newclauses', hcs') = 
         (deOrifyClauses clauses' clauses [] newclauses hcs) in
       (clauses', newclauses', hcs')
@@ -1078,40 +1072,3 @@ and translateClauses pmod amod =
   (amod', List.map Parse.removeNestedAbstractions clauses', 
   List.map Parse.removeNestedAbstractions (List.concat newclauses''),
   getClosedDefs ())
-
-(**********************************************************************
-*printTranslatedClauses:
-* Takes the results of translateClauses (namely the clauses themselves,
-* and the new clauses) along with an out_channel, and prints them.
-**********************************************************************)
-let printTranslatedClauses clauses newclauses out =
-  (*  Text output functions *)
-  let output s = (output_string out s) in
-  let output_line s = (output (s ^ "\n")) in
-  
-  let printClause t =
-    (output_line (Absyn.string_of_term_ast t))
-  in
-  
-  (output_line "Clauses:";
-  List.iter printClause clauses;
-  output_line "";
-  output_line "New Clauses:";
-  List.iter printClause newclauses)
-
-let unitTests () =
-  let _ = Errormsg.log Errormsg.none ("Clauses Unit Tests:") in
-  
-  let t = Absyn.ApplicationTerm(
-    Absyn.FirstOrderApplication(
-      Absyn.ConstantTerm(Absyn.makeAnonymousConstant 0,[],false,Errormsg.none),
-      [Absyn.makeFreeVarTerm (Absyn.ImplicitVar(Symbol.symbol "A", ref None, ref false, ref None)) Errormsg.none;Absyn.makeFreeVarTerm (Absyn.ImplicitVar(Symbol.symbol "B", ref None, ref false, ref None)) Errormsg.none],
-      2),
-    false,
-    Errormsg.none) in
-  let (t', fvs) = collectFreeVars t [] [] in
-  let _ = Errormsg.log Errormsg.none ("Term: " ^ (Absyn.string_of_term t)) in
-  let _ = Errormsg.log Errormsg.none ("Term and Free Vars: " ^ (Absyn.string_of_term t') ^ "; " ^ (String.concat ", " (List.map (Absyn.getTypeSymbolName) fvs))) in
-  
-  let _ = Errormsg.log Errormsg.none ("Clauses Unit Tests Compete.\n") in
-  ()

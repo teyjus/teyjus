@@ -9,6 +9,7 @@ OCamlProgramCopy(all, ., source/tjsim)
 OCamlProgramCopy(all, ., source/tjlink)
 OCamlProgramCopy(all, ., source/tjdis)
 OCamlProgramCopy(all, ., source/tjdepend)
+OCamlProgramCopy(all, ., source/tjparse)
 .DEFAULT: all
 
 ################################################

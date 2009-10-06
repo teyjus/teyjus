@@ -112,9 +112,9 @@ Global kind table:
 Local kind table:
 
 Type skeleton table:
-0: (i -> o)
+0: i -> o
 1: i
-2: ((list i) -> o)
+2: (list i) -> o
 
 Global constant table: 
 0: foo1 (No Fixity, precedence 0)

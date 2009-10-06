@@ -14,10 +14,10 @@ Global kind table:
 Local kind table:
 
 Type skeleton table:
-0: (i -> (i -> i))
-1: (i -> o)
+0: i -> i -> i
+1: i -> o
 2: i
-3: (i -> i)
+3: i -> i
 
 Global constant table: 
 0: a (No Fixity, precedence 0)

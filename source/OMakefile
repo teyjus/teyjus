@@ -60,6 +60,23 @@ DEP_ML[] =
     $(CMP)/preabsyn
     $(CMP)/table
 
+PAR_ML[] =
+    $(CMP)/absyn
+    $(CMP)/clauses
+    $(CMP)/compile
+    $(CMP)/errormsg
+    $(CMP)/lplex
+    $(CMP)/lpyacc
+    $(CMP)/option
+    $(CMP)/parse
+    $(CMP)/pervasive
+    $(CMP)/pervasiveutils
+    $(CMP)/preabsyn
+    $(CMP)/symbol
+    $(CMP)/table
+    $(CMP)/translate
+    $(CMP)/types
+
 DIS_ML[] =
     $(DIS)/context
     $(DIS)/disassembly
@@ -162,6 +179,7 @@ CMP_MAIN = $(FNT)/compilerfront
 SIM_MAIN = $(FNT)/simulatorfront
 LNK_MAIN = $(FNT)/linkerfront
 DEP_MAIN = $(FNT)/dependfront
+PAR_MAIN = $(FNT)/parsefront
 
 ############################################################
 # Platform specific changes
@@ -248,6 +266,8 @@ if $(not $(file-exists prebuilt))
   OCamlProgram(tjdis, $(DIS_MAIN) $(CMP_ML) $(LOD_ML) $(DIS_ML) $(FNT_ML))
 
   OCamlProgram(tjdepend, $(DEP_MAIN) $(DEP_ML) $(FNT_ML))
+  
+  OCamlProgram(tjparse, $(PAR_MAIN) $(PAR_ML) $(FNT_ML))
 
   # The simulator and linker require linking with C code
 
@@ -269,9 +289,10 @@ TJSIM = $(CWD)/tjsim$(EXE)
 TJDIS = $(CWD)/tjdis$(EXE)
 TJLINK = $(CWD)/tjlink$(EXE)
 TJDEPEND = $(CWD)/tjdepend$(EXE)
+TJPARSE = $(CWD)/tjparse$(EXE)
 
 .PHONY: all
-all: $(TJCC) $(TJSIM) $(TJDIS) $(TJLINK) $(TJDEPEND)
+all: $(TJCC) $(TJSIM) $(TJDIS) $(TJLINK) $(TJDEPEND) $(TJPARSE)
 
 ############################################################
 # Testing Targets

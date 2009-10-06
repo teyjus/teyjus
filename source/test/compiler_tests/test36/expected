@@ -86,7 +86,7 @@ Global kind table:
 Local kind table:
 
 Type skeleton table:
-0: ((n -> o) -> o)
+0: (n -> o) -> o
 1: n
 
 Global constant table: 

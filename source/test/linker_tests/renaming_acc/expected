@@ -14,13 +14,13 @@ Local kind table:
 2: /3
 
 Type skeleton table:
-0: ('0 -> '0)
-1: ('0 -> ('0 -> '0))
-2: '0
-3: ('0 -> ('0 -> ('0 -> '0)))
-4: '0
-5: ('0 -> '0)
-6: ('0 -> ('0 -> '0))
+0: A -> A
+1: A -> A -> A
+2: A
+3: A -> A -> A -> A
+4: A
+5: A -> A
+6: A -> A -> A
 
 Global constant table: 
 0: a (No Fixity, precedence 0)

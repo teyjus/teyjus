@@ -29,7 +29,7 @@ let specList = dualArgs
    versionspec]
 
 let usageMsg =
-  "Using: tjdis <options> <object-file>\n" ^
+  "Using: tjdis [options] <object-file>\n" ^
     "options are:"
 
 let _ =

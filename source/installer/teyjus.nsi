@@ -53,6 +53,7 @@ Section "Teyjus (required)"
   File "..\tjlink.exe"
   File "..\tjdis.exe"
   File "..\tjdepend.exe"
+  File "..\tjparse.exe"
 
   SetOutPath $INSTDIR
   File /r /x .svn "..\..\emacs"
