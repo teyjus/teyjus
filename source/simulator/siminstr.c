@@ -494,7 +494,15 @@ void SINSTR_get_m_structure()           //get_m_structure Xi,f,n--R_C_I1_X
     INSACC_RCI1X(regX, constInd, n);
     tmPtr = DF_termDeref((DF_TermPtr)regX);
     switch (DF_termTag(tmPtr)) {
-    case DF_TM_TAG_VAR: { SINSTRL_bindStr(tmPtr, constInd, n); return; }
+    case DF_TM_TAG_VAR: 
+    { 
+      if (DF_fvUnivCount(tmPtr) >= AM_cstUnivCount(constInd)) {
+	SINSTRL_bindStr(tmPtr, constInd, n);
+	return; 
+      } else {
+	EM_THROW(EM_FAIL);
+      }
+    }
     case DF_TM_TAG_APP: 
     {
         func = DF_termDeref(DF_appFunc(tmPtr));
@@ -538,7 +546,15 @@ void SINSTR_get_p_structure()           //get_p_structure Xi,f,n--R_C_I1_X
     INSACC_RCI1X(regX, constInd, n);
     tmPtr = DF_termDeref((DF_TermPtr)regX);
     switch (DF_termTag(tmPtr)) {
-    case DF_TM_TAG_VAR: { SINSTRL_bindTStr(tmPtr, constInd, n); return; }
+    case DF_TM_TAG_VAR:
+    {
+      if (DF_fvUnivCount(tmPtr) >= AM_cstUnivCount(constInd)) {
+	SINSTRL_bindTStr(tmPtr, constInd, n);
+	return; 
+      } else {
+	EM_THROW(EM_FAIL);
+      }
+    }
     case DF_TM_TAG_APP:
     {
         func = DF_termDeref(DF_appFunc(tmPtr));
