@@ -74,7 +74,7 @@ Accumulates/imports
   (3) combine definitions                       -- test18, test19, test24
 
   (4) generating dummy "try_me_else"            -- test21
-
+  (5) accum_sig in modules                      -- test37
 
 MISC
 ====
@@ -84,7 +84,6 @@ MISC
   (4) a bug in removing overloads               -- test32, test33
   (5) max string length                         -- test34
   (6) a bug in register assignment              -- test35
-
 
 Compiler front 
 ==============

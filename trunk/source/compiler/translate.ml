@@ -1668,27 +1668,17 @@ and translateModule mod' ktable ctable atable =
   in
   
   (******************************************************************
-  *processAccumMods:
-  * Convert a list of accumulated modules filenames into a list of
-  * preabsyn signatures.
+  *processSignatures:
+  * Convert a list of signature filenames in to a list of preabsyn
+  * signatures.
   ******************************************************************)
-  let rec processAccumMods = function
-    Preabsyn.Symbol(accum,_,_)::rest ->
-      (Compile.compileSignature ((Symbol.name accum)))::(processAccumMods rest)
-  | [] -> []
+  let processSignatures sigs = 
+    List.map
+      (fun (Preabsyn.Symbol(accum,_,_)) ->
+        Compile.compileSignature (Symbol.name accum))
+      sigs
   in
-  
-  (******************************************************************
-  *processImpMods:
-  * Convert a list of imported modules filenames into a list of
-  * preabsyn signatures.
-  ******************************************************************)
-  let rec processImpMods = function
-    Preabsyn.Symbol(accum,_,_)::rest ->
-      (Compile.compileSignature ((Symbol.name accum)))::(processImpMods rest)
-  | [] -> []
-  in
-  
+    
   (******************************************************************
   *mergeTables:
   * Merges the tables from accumulated or imported modules into the
@@ -1749,11 +1739,13 @@ and translateModule mod' ktable ctable atable =
     in
     List.map normalize accums
   in
+
   (******************************************************************
   *translateMods:
-  * Generalizes processing of imported and accumulated modules.
+  * Generalizes processing of imported, used, and accumulated modules
+  * and signatures.
   ******************************************************************)
-  let rec translateMods make sigs tables l =
+  let rec translateMods make copier sigs tables l =
     match l with
         [] -> (sigs, tables)
       | l'::ls ->
@@ -1762,34 +1754,46 @@ and translateModule mod' ktable ctable atable =
               Pervasive.pervasiveKinds
               Pervasive.pervasiveConstants
               Pervasive.pervasiveTypeAbbrevs
-              copyAccum
+              copier
           in
-          let s = (make asig) in
-          translateMods make (s::sigs) (table::tables) ls
+          let s = make asig in
+          translateMods make copier (s::sigs) (table::tables) ls
   in
 
   (********************************************************************
-  *translateAccumMods:
-  * Goes through all of the accumulated modules, parses them, and
-  * gets the appropriate tables and suchlike.
+  *translateAccumSigs:
   ********************************************************************)
+  let translateAccumSigs sigs =
+    let make asig = asig in
+    translateMods make copyAccum [] [] sigs
+  in
+  
+  (********************************************************************
+  *translateUseSigs:
+  ********************************************************************)
+  let translateUseSigs sigs =
+    let make asig = asig in
+    translateMods make (copyUseonly copyAccum false) [] [] sigs
+  in
+  
+  (********************************************************************
+  *translateAccumMods:
+  *********************************************************************)
   let translateAccumMods accums =
     let make asig =
       Absyn.AccumulatedModule(Absyn.getSignatureName asig, asig)
     in
-    translateMods make [] [] accums
+    translateMods make copyAccum [] [] accums
   in
   
   (********************************************************************
   *translateImpMods:
-  * Goes through all of the imported modules, parses them, and
-  * gets the appropriate tables and suchlike.
   ********************************************************************)
   let translateImpMods imps =
     let make asig =
       Absyn.ImportedModule(Absyn.getSignatureName asig, asig)
     in
-    translateMods make [] [] imps
+    translateMods make copyAccum [] [] imps
   in
  
   (*  Get the pieces of the module  *)
@@ -1797,15 +1801,24 @@ and translateModule mod' ktable ctable atable =
     Preabsyn.Module(name, gconsts, lconsts, cconsts, uconsts, econsts, fixities,
                     gkinds, lkinds, tabbrevs, clauses, accummods,
                     accumsigs, usesigs, impmods) ->
-
+      (*  Translate the accumulated signatures  *)
+      let accumsigs' = processSignatures accumsigs in
+      let (_, accsigstables) = translateAccumSigs accumsigs' in
+      
+      (*  Translate the used signatures *)
+      let usesigs' = processSignatures usesigs in
+      let (_, usesigstables) = translateUseSigs usesigs' in
+      
       (*  Translate the accumulated modules *)
-      let accummods' = processAccumMods accummods in
+      let accummods' = processSignatures accummods in
       let (accums, acctables) = translateAccumMods accummods' in
       
       (*  Translate the imported modules  *)
-      let impmods' = processImpMods impmods in
+      let impmods' = processSignatures impmods in
       let (imps, imptables) = translateImpMods impmods' in
 
+      let (ktable, ctable, atable) = mergeTables ktable ctable atable accsigstables in
+      let (ktable, ctable, atable) = mergeTables ktable ctable atable usesigstables in
       let (ktable, ctable, atable) = mergeTables ktable ctable atable acctables in
       let (ktable, ctable, atable) = mergeTables ktable ctable atable imptables in
 

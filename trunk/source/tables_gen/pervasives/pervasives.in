@@ -76,15 +76,15 @@
       /* o (type of proposition)*/
       TYPE      6      bool   
         /* true proposition */  
-	4  true            true  0 0  0  TRUE   FALSE  0   NOFIXITY NOCODE
+        4  true            true  0 0  0  TRUE   FALSE  0   NOFIXITY NOCODE
         /* cut predicate */
-	5  !               cut   0 0  0  TRUE   FALSE  0   NOFIXITY NOCODE
+        5  !               cut   0 0  0  TRUE   FALSE  0   NOFIXITY NOCODE
         /* fail predicate */
         6  fail            fail  0 0  0  TRUE   FALSE  0   NOFIXITY NOCODE
         /* halt the system */
         9  halt            halt  0 0  0  TRUE   FALSE  0   NOFIXITY NOCODE
         /* return to top level */
-       10  stop            stop  0 0  0  TRUE   FALSE  0   NOFIXITY NOCODE
+        10  stop            stop  0 0  0  TRUE   FALSE  0   NOFIXITY NOCODE
       ;;
 
       /* int -> int */
