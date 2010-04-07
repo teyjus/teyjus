@@ -1072,3 +1072,123 @@ and translateClauses pmod amod =
   (amod', List.map Parse.removeNestedAbstractions clauses', 
   List.map Parse.removeNestedAbstractions (List.concat newclauses''),
   getClosedDefs ())
+
+(**********************************************************************
+*linearizeClause:
+* Linearizes a term representing a clause.  The resulting are probably
+* broken.
+**********************************************************************)
+let linearizeClause clause =
+  let counter = ref 0 in
+  let fresh tsym =
+    let () = incr counter in
+    let name = "Linearized-" ^ (string_of_int !counter) in
+    let sym = Symbol.symbol name in
+    let tsym' = Absyn.copyTypeSymbol sym tsym in
+    Absyn.NamedFreeVar(tsym')
+  in
+
+  let imp head body pos =
+    Absyn.ApplicationTerm(
+      Absyn.FirstOrderApplication(
+        Absyn.ConstantTerm(Pervasive.implConstant, [], false, pos),
+        [body; head],
+        2),
+      false,
+      pos)
+  in
+  let conj pos l r =
+    Absyn.ApplicationTerm(
+      Absyn.FirstOrderApplication(
+        Absyn.ConstantTerm(Pervasive.andConstant, [], false, pos),
+        [l; r],
+        2),
+      false,
+      pos)
+  in
+  
+  let getHeadAndBody clause =
+    match clause with
+        Absyn.ApplicationTerm(
+          Absyn.FirstOrderApplication(
+            Absyn.ConstantTerm(impc, _, _, _),
+            [body; head],
+            _),
+          _,
+          _) when impc == Pervasive.implConstant ->
+          (head, Some body)
+      | _ -> (clause, None)
+  in
+  
+  let linearizeHead head pos =
+    let rec fold f s ts =
+      match ts with
+        t::ts' ->
+          let (h, b) = f t s in
+          let (hs, b') = fold f s ts' in
+          (h::hs, b')
+      | [] -> ([], s)
+    in
+    
+    let rec linearize term uvs =
+      match term with
+        | Absyn.IntTerm(_) | Absyn.RealTerm(_)
+        | Absyn.StringTerm(_) | Absyn.ConstantTerm(_)
+        | Absyn.BoundVarTerm(_) | Absyn.ErrorTerm -> (term, uvs)
+        
+        | Absyn.ApplicationTerm(Absyn.FirstOrderApplication(c, args, i), b, p) ->
+            let (args', uvs') = fold linearize uvs args in
+            (Absyn.ApplicationTerm(Absyn.FirstOrderApplication(c, args', i), b, p), uvs')
+        | Absyn.AbstractionTerm(Absyn.UNestedAbstraction(tsyms, i, body), b, p) ->
+            let (body', uvs') = linearize body uvs in
+            (Absyn.AbstractionTerm(Absyn.UNestedAbstraction(tsyms, i, body'), b, p), uvs')
+        
+        | Absyn.FreeVarTerm(Absyn.NamedFreeVar(tsym) as info, b, p) ->
+            let sym = Absyn.getTypeSymbolSymbol tsym in
+            (try
+              let (_, others) = List.assoc sym uvs in
+              let fv = fresh tsym in
+              let uvs' = List.remove_assq sym uvs in
+              (Absyn.FreeVarTerm(fv, b, p), (sym, (info, fv :: others)) :: uvs')
+            with Not_found ->
+               (term, (sym, (info, [])) :: uvs))
+        | _ -> Errormsg.impossible pos ("Clauses.linearize: invalid term " ^ (Absyn.string_of_term_ast term))
+    in
+    match head with
+        Absyn.ApplicationTerm(Absyn.FirstOrderApplication(c, args, i), b, _) ->
+          let (args', uvs) = fold linearize [] args in
+          (Absyn.ApplicationTerm(Absyn.FirstOrderApplication(c, args', i), b, pos), uvs)
+      | Absyn.ConstantTerm(_) -> (head, [])
+      | _ -> Errormsg.impossible pos ("Clauses.linearize: invalid head " ^ (Absyn.string_of_term_ast head))
+  in
+  
+  let equalities pos uvs body =
+    let equality tinfo tinfo' =
+      let types = [] in
+      let fv = Absyn.FreeVarTerm(tinfo, false, pos) in
+      let fv' = Absyn.FreeVarTerm(tinfo', false, pos) in
+      Absyn.ApplicationTerm(
+        Absyn.FirstOrderApplication(
+          Absyn.ConstantTerm(Pervasive.eqConstant, types, false, pos),
+          [fv;fv'],
+          2),
+        false,
+        pos)
+    in
+    let eqs = List.flatten (List.map (fun (_, (info, fvs)) -> List.map (equality info) fvs) uvs) in
+    match eqs with
+      eq::eqs' ->
+        let l = List.fold_left (conj pos) eq eqs' in
+        (match body with
+            Some body' -> Some (conj pos l body')
+          | None -> Some l)
+    | [] -> body
+  in
+  
+  let (head, body) = getHeadAndBody clause in
+  let pos = Absyn.getTermPos head in
+  let (head', uvs) = linearizeHead head pos in
+  match equalities pos uvs body with
+      Some body' ->
+        imp head' body' pos
+    | None -> head'

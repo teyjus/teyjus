@@ -21,6 +21,8 @@
 open Parseargs
 open Absyn
 
+let linearize = ref false
+
 (**********************************************************************
 * Writing Functions
 **********************************************************************)
@@ -184,10 +186,20 @@ let compile basename outbasename =
   in
   let _ = abortOnError () in
 
+  (*  Linearize heads if requested. *)
+  let (clauses', newclauses') =
+    if !linearize then
+      (List.map Clauses.linearizeClause clauses,
+      List.map Clauses.linearizeClause newclauses)
+    else
+     clauses, newclauses
+  in
+  let _ = abortOnError () in
+
   let modout = Compile.openFile (outbasename ^ ".mod") open_out in
   let sigout = Compile.openFile (outbasename ^ ".sig") open_out in
   let absyn' = Absyn.setModuleName absyn outbasename in
-  writeModule absyn' clauses newclauses modout;
+  writeModule absyn' clauses' newclauses' modout;
   writeModuleSignature absyn' sigout;
   
   close_out modout;
@@ -200,7 +212,8 @@ let outputName = ref ""
 let specList = dualArgs
   [("-o", "--output", Arg.Set_string outputName,
     " Specifies the name of the output module (default is input module name)") ;
-   versionspec]
+   versionspec] @
+  ["--linearize", Arg.Set linearize, " linearize clause heads"]
 
 let usageMsg = 
   "Usage: tjparse [options] <module-file>\n" ^
