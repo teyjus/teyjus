@@ -189,10 +189,11 @@ let compile basename outbasename =
   (*  Linearize heads if requested. *)
   let (clauses', newclauses') =
     if !linearize then
+      let () = Errormsg.log Errormsg.none "linearizing..." in
       (List.map Clauses.linearizeClause clauses,
       List.map Clauses.linearizeClause newclauses)
     else
-     clauses, newclauses
+     (clauses, newclauses)
   in
   let _ = abortOnError () in
 
@@ -209,10 +210,10 @@ let compile basename outbasename =
   
 let outputName = ref ""
 
-let specList = dualArgs
+let specList = (dualArgs
   [("-o", "--output", Arg.Set_string outputName,
     " Specifies the name of the output module (default is input module name)") ;
-   versionspec] @
+   versionspec]) @
   ["--linearize", Arg.Set linearize, " linearize clause heads"]
 
 let usageMsg = 
