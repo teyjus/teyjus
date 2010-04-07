@@ -1097,6 +1097,7 @@ let linearizeClause clause =
       false,
       pos)
   in
+
   let conj pos l r =
     Absyn.ApplicationTerm(
       Absyn.FirstOrderApplication(
@@ -1117,7 +1118,17 @@ let linearizeClause clause =
           _,
           _) when impc == Pervasive.implConstant ->
           (head, Some body)
-      | _ -> (clause, None)
+      | Absyn.ApplicationTerm(
+          Absyn.FirstOrderApplication(
+            Absyn.ConstantTerm(impc, _, _, _),
+            [head; body],
+            _),
+          _,
+          _) when impc == Pervasive.colondashConstant ->
+          (head, Some body)
+      | Absyn.ApplicationTerm(_) -> (clause, None)
+      | Absyn.ConstantTerm(_) -> (clause, None)
+      | _ -> Errormsg.impossible (Absyn.getTermPos clause) ("Clauses.linearizeClause: invalid clause " ^ (Absyn.string_of_term_ast clause))
   in
   
   let linearizeHead head pos =
@@ -1125,7 +1136,7 @@ let linearizeClause clause =
       match ts with
         t::ts' ->
           let (h, b) = f t s in
-          let (hs, b') = fold f s ts' in
+          let (hs, b') = fold f b ts' in
           (h::hs, b')
       | [] -> ([], s)
     in
@@ -1147,10 +1158,12 @@ let linearizeClause clause =
             let sym = Absyn.getTypeSymbolSymbol tsym in
             (try
               let (_, others) = List.assoc sym uvs in
+              let () = Errormsg.log p ("Clauses.linearseClause: found " ^ (Absyn.string_of_term_ast term)) in
               let fv = fresh tsym in
               let uvs' = List.remove_assq sym uvs in
               (Absyn.FreeVarTerm(fv, b, p), (sym, (info, fv :: others)) :: uvs')
             with Not_found ->
+                let () = Errormsg.log p ("Clauses.linearseClause: not found " ^ (Absyn.string_of_term_ast term)) in
                (term, (sym, (info, [])) :: uvs))
         | _ -> Errormsg.impossible pos ("Clauses.linearize: invalid term " ^ (Absyn.string_of_term_ast term))
     in
@@ -1175,10 +1188,11 @@ let linearizeClause clause =
         false,
         pos)
     in
-    let eqs = List.flatten (List.map (fun (_, (info, fvs)) -> List.map (equality info) fvs) uvs) in
+    let uvs' = List.rev uvs in
+    let eqs = List.flatten (List.map (fun (_, (info, fvs)) -> List.map (equality info) (List.rev fvs)) uvs') in
     match eqs with
       eq::eqs' ->
-        let l = List.fold_left (conj pos) eq eqs' in
+        let l = List.fold_right (conj pos) eqs' eq in
         (match body with
             Some body' -> Some (conj pos l body')
           | None -> Some l)
@@ -1187,6 +1201,10 @@ let linearizeClause clause =
   
   let (head, body) = getHeadAndBody clause in
   let pos = Absyn.getTermPos head in
+  let () = Errormsg.log pos ("Clauses.linearizeClause: head " ^ (Absyn.string_of_term_ast head)) in
+  let () = if Option.isSome body then
+    Errormsg.log pos ("Clauses.linearizeClause: body " ^ (Absyn.string_of_term_ast (Option.get body)))
+  in
   let (head', uvs) = linearizeHead head pos in
   match equalities pos uvs body with
       Some body' ->
