@@ -39,7 +39,7 @@ let compile basename outfile =
 
   (* Get the list of clauses and new clauses. *)
   let (absyn, clauses, newclauses, closeddefs) = 
-	Clauses.translateClauses modresult absyn in
+    Clauses.translateClauses modresult absyn in
   let _ = abortOnError () in
 
   (*

@@ -43,3 +43,4 @@ type closeddefinition = (Absyn.aconstant * Absyn.aterm)
 **********************************************************************)
 val translateClauses : Preabsyn.pmodule -> Absyn.amodule -> 
   (Absyn.amodule * Absyn.aterm list * Absyn.aterm list * closeddefinition list)
+val linearizeClause : Absyn.aterm -> Absyn.aterm
