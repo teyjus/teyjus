@@ -131,7 +131,7 @@ The module declaration must satisfy certain properties in addition to adhering t
 
     * Local constant and local kind declarations are those in the category `<ModSignDecl>` that begin with the tokens local and localkind respectively. These declarations identify constants and kinds whose scope is limited to the module in which they appear and to the code obtained from the modules imported and accumulated by that module. 
 
-    * There is some redundancy in module syntax. In particular, _exportdef_, _useonly_, `local` and `localkind` declarations may be left out; the former two must also appear in the explicit signature file and locals can be taken to be the complement of the sorts, type constructors and constants defined in the explicit signature file. However, they are included in the syntax of modules to permit a preprocessing phase that calculates the explicit signature. This is not the preferred situation though and is not one used in the Teyjus system; signature files are intended to be useful in the certification of module interactions and are not an obstacle to be surmounted in whichever way possible and, for this reason, are required to be explicitly provided for every module in the Teyjus framework.
+    * There is some redundancy in module syntax. In particular, _exportdef_, _useonly_, `local` and `localkind` declarations may be left out; the former two must also appear in the explicit signature file and locals can be taken to be the complement of the sorts, type constructors and constants defined in the explicit signature file. However, they are included in the syntax of modules to permit a preprocessing phase that calculates the explicit signature. This is not the preferred situation though and is not one used in the _Teyjus_ system; signature files are intended to be useful in the certification of module interactions and are not an obstacle to be surmounted in whichever way possible and, for this reason, are required to be explicitly provided for every module in the _Teyjus_ framework.
 
     * The name of a predicate defined by a clause that appears at the top level in the module or in the antecedent of an implication goal must not be identical to that of a logical symbol or a _useonly_ predicate. It must not also be identical to that of a built-in predicate unless the predicate name has been redefined through a type declaration.
 
@@ -142,19 +142,19 @@ The module declaration must satisfy certain properties in addition to adhering t
              <Term> <TypedCIdent> <Term> 
 }}}
 
-      that appears in the rules for <Term>, the identifier must have been declared as an infix operator. Similarly, in the form     	
+      that appears in the rules for `<Term>`, the identifier must have been declared as an infix operator. Similarly, in the form     	
 {{{
              <Term> <TypedCIdent>
 }}}
 
-      that appears in the rule for <Term>, the identifier must have been declared as a postfix operator and in the form    	
+      that appears in the rule for `<Term>`, the identifier must have been declared as a postfix operator and in the form    	
 {{{
              <TypedCIdent> <Term>
 }}}
 
-      the identifier should have been declared as a prefix operator. The rule for <Term> is obviously ambiguous as written. Disambiguation is to be affected using the precedence and associativity of the relevant operators. In this context, it is also to be noted that abstraction and application are treated like (infix) operators, that application is left associative and has higher precedence than all other operators and abstraction is right associative and has lower precedence than all other operators.
+      the identifier should have been declared as a prefix operator. The rule for `<Term>` is obviously ambiguous as written. Disambiguation is to be affected using the precedence and associativity of the relevant operators. In this context, it is also to be noted that abstraction and application are treated like (infix) operators, that application is left associative and has higher precedence than all other operators and abstraction is right associative and has lower precedence than all other operators.
 
-    * The comma (',') token is overloaded: it can be read as the symbol for conjunction or as the separator between list elements in the _Prolog_ style list notation that is supported within the _Teyjus_ system. The rule for disambiguating this operator is simple. It is read as a list separator when it appears at the top-level in a list context and is read as the conjunction operator everywhere else. To illustrate these conventions, suppose that p, _q_ and _r_ are constants of propositional (or, more precisely, _o_) type. Then the expression 
+    * The comma (',') token is overloaded: it can be read as the symbol for conjunction or as the separator between list elements in the _Prolog_ style list notation that is supported within the _Teyjus_ system. The rule for disambiguating this operator is simple. It is read as a list separator when it appears at the top-level in a list context and is read as the conjunction operator everywhere else. To illustrate these conventions, suppose that _p_, _q_ and _r_ are constants of propositional (or, more precisely, _o_) type. Then the expression 
 {{{
            [ p,q,s]
 }}}
@@ -180,7 +180,7 @@ The module declaration must satisfy certain properties in addition to adhering t
 
     * Tokens that begin with uppercase letters are to be interpreted as variables. Such variables may be bound or free depending on whether or not they are captured by an enclosing abstraction. Notice in contrast that tokens that begin with `_` can only be free variables. Notice also that bound variables may, in addition, begin with lower case letters or sign characters, much like constant tokens. Free variables that appear in clauses are to be understood as being implicitly universally qualified at the head of the clause. All occurrences of a (bound or free) variable in a clause must have the same type.
 
-    * In the rule for an _<Atom>_, the head is permitted to be an essentially universally quantified variable. In determining the interpretation of a quantifier, the assumption is that a top-level clause in a module appears in a negative context.
+    * In the rule for an `<Atom>`, the head is permitted to be an essentially universally quantified variable. In determining the interpretation of a quantifier, the assumption is that a top-level clause in a module appears in a negative context.
 
     * Every sort and type constructor that is used in the type declarations and clauses in a module must be explicitly declared. Similarly, every constant that is used in the clauses that define predicates in a module must be explicitly declared. Queries in the _Teyjus_ system are posed relative to modules. All constants, sorts and type constructors that are used in such queries must be defined in the signature corresponding to the module. 
 
