@@ -97,7 +97,7 @@ The declarations in a signature file must satisfy certain properties in addition
 
    with n+1 occurrences of type identifies foo as a type constructor of arity n. (If n is 0 the object identified is a sort.) Note that there are restrictions built into the grammar rules on the syntax of tokens that can be identified as sorts and type constructors.
 
-    * Type abbreviation declarations are those expressions in the category _<Sign-Decl>_ that begin with the token _typeabbrev_. The purpose of these declarations is to identify names that can be used as shorthands in type expressions. These names can also be parameterized. For example, a declaration of the form 
+    * Type abbreviation declarations are those expressions in the category `<Sign-Decl>` that begin with the token _typeabbrev_. The purpose of these declarations is to identify names that can be used as shorthands in type expressions. These names can also be parameterized. For example, a declaration of the form 
 {{{
           typeabbrev   (bar A)   list A -> list A
 }}}
@@ -106,7 +106,7 @@ The declarations in a signature file must satisfy certain properties in addition
 
     * Tokens that are identified as the names of abbreviations have an appearance in syntax that is similar to that of sorts and type constructors. We shall refer to all of these kinds of symbols collectively as type constants when there is no need to make finer distinctions.
 
-    * Type declarations are those expressions in the category _<Sign-Decl>_ that begin with the token _type_. Type declarations identify term constants with their associated types. Note that the constants for which types can be so declared have a limited syntax. In particular, they should not begin with an uppercase letter or the underscore (`_`) character.
+    * Type declarations are those expressions in the category `<Sign-Decl>` that begin with the token _type_. Type declarations identify term constants with their associated types. Note that the constants for which types can be so declared have a limited syntax. In particular, they should not begin with an uppercase letter or the underscore (`_`) character.
 
     * Type expressions are constructed, as expected, from type constants, type variables and the arrow type constructor written as _->_. Tokens appearing in such expressions are classified as type variables or type constants depending on whether or not they begin with an uppercase letter or the underscore (`_`) character. In understanding the structure of potentially ambiguous type expressions, the following convention is to be used: the application of a type constructor to types is left associative and has higher precedence than the construction of an arrow type; i.e. _(tc ty1 ... tyn -> sort)_ is read as _((...(tc ty1)...tyn) -> sort)_.
 
@@ -116,14 +116,14 @@ The declarations in a signature file must satisfy certain properties in addition
 
     * A well-formed type expression denotes the type that is obtained by replacing each type abbreviation used within it by the fully expanded type expression that it corresponds to; what is meant by "expansion" in this context is discussed informally in the comment explaining type abbreviations and we expect that this notion is unambiguously understood at this point.  
 
-    * Operator declarations are those expressions in the category _<Sign-Decl>_ that are further characterized by the form
+    * Operator declarations are those expressions in the category `<Sign-Decl>` that are further characterized by the form
 {{{
        	 <Fixity> <Ids> <SmallInt> '.' 
 }}}
 
       Such declarations identify relevant (term) constants as being infix, prefix or postfix operators that are not associative, left associative or right associative and having a specified precedence. Types of constants that are defined as operators must be consistent with their interpretation as such.
 
-    * Exportdef and useonly declarations are expressions in the <Sign-Decl> category that begin with the tokens exportdef and useonly, respectively. exportdef and useonly declarations must pertain to predicate constants only, i.e. constants with a target type o. exportdef declarations identify the relevant constants as ones whose definitions emanating from the module associated with the signature must not change. useonly declarations play a complementary role: these identify predicates that might be used in the module associated with the signature but whose definitions cannot be further refined there. exportdef and useonly declarations can also identify types with the relevant constants. In this case, the type expressions must satisfy all the requirements required of them relative to type declarations of the usual form.
+    * Exportdef and useonly declarations are expressions in the `<Sign-Decl>` category that begin with the tokens exportdef and useonly, respectively. exportdef and useonly declarations must pertain to predicate constants only, i.e. constants with a target type o. exportdef declarations identify the relevant constants as ones whose definitions emanating from the module associated with the signature must not change. useonly declarations play a complementary role: these identify predicates that might be used in the module associated with the signature but whose definitions cannot be further refined there. exportdef and useonly declarations can also identify types with the relevant constants. In this case, the type expressions must satisfy all the requirements required of them relative to type declarations of the usual form.
 
     * The intended effect of use`_`sig declarations is similar to that of accum`_`sig declarations with one change: every exportdef declaration appearing in the signature being included (or accumulated) must first be changed to a useonly declaration of the same constants. Intuitively, use`_`sig declarations serve to identify predicates (and associated constants and kinds) in the signature of a "consumer;" the change in annotation from exportdef to useonly signals that these predicates can be used but must not be redefined or extended in any code possessing the signature. 
 
