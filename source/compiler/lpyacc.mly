@@ -391,7 +391,7 @@ parseModClause:
   | term PERIOD              { let pt = SeqTerm(List.rev $1, (getPos 1)) in
                                  clauseList := Clause(pt) :: !clauseList ;
                                  pt }
-  | error PERIOD             { genericError "clause" ; ErrorTerm }
+  | error PERIOD             { genericError "expression" ; ErrorTerm }
       
   | term EOF                 { Errormsg.error (getPos 1)
                                  "Clause never terminated" ;
