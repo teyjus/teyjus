@@ -85,7 +85,7 @@ std_out
     of type out_stream, representing the standard output stream
 std_err
 
-    of type in_stream, representing the standard error stream
+    of type out_stream, representing the standard error stream
 nil
 
     of type (list A), representing the (polymorphic) nil list
