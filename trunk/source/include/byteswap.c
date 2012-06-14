@@ -28,3 +28,8 @@ u_int32_t bswap_32(u_int32_t x)
 {
   return (bswap_16(x & 0xffff) << 16) | bswap_16(x >> 16);
 }
+
+u_int64_t bswap_64(u_int64_t x)
+{
+  return (((u_int64_t)bswap_32(x & 0xffffffff)) << 32) | bswap_32(x >> 32);
+}
