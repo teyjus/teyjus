@@ -23,5 +23,6 @@
 
 u_int16_t bswap_16(u_int16_t x);
 u_int32_t bswap_32(u_int32_t x);
+u_int64_t bswap_64(u_int64_t x);
 
 #endif
