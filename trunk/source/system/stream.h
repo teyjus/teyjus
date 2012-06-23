@@ -70,8 +70,12 @@ void     STREAM_close(WordPtr inStream);
  ***************************************************************************/
 int STREAM_readCharacters(WordPtr inStream, int inMaxCount, char* outString, 
                           int inDoStopOnNewline);
-/* STREAM_printf returns the number of characters written */
+/* STREAM_printf and STREAM_sans_printf return the number of characters 
+   written, -1 in case of error. STREAM_printf takes a format 
+   STREAM_sans_printf interprets the input as a string to be printed */
 int     STREAM_printf(WordPtr inStream, char *format, ...);
+int     STREAM_sans_printf(WordPtr inStream, char *str);
+/* STREAM_printf returns the number of characters written, -1 in case of error*/
 int     STREAM_lookahead(WordPtr inStream, char *outChar);
 Boolean STREAM_eof(WordPtr inStream); 
 int     STREAM_flush(WordPtr inStream);
