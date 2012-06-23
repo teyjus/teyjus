@@ -272,7 +272,14 @@ int MSG_vMessage(int inIndex, va_list *ap)
         if (MSG_doPrintMessageFlag) {
             STREAM_flush(STREAM_stdout);
             MSG_printMessage(lMessage, STREAM_stderr, ap);
-        } else {
+        } 
+        /* GN June 23, 2012
+       This code seems to do nothing that is observable---it creates a
+       string in MSG_storedMessage that is not looked at till is freed
+       by a use of this code again. Leaving it in for now, but should 
+       be looked at in more detail and removed or actually used at that
+       point. */
+       else {
             WordPtr lStream = STREAM_toString();
             if (MSG_storedMessage) free(MSG_storedMessage);
 

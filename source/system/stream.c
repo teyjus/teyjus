@@ -524,6 +524,9 @@ int STREAM_printf(WordPtr inStream, char *format, ...)
    return result;
 }
 
+int STREAM_sans_printf(WordPtr outStream, char *str)
+{ STREAM_printf(outStream, "%s", str); }
+
 int STREAM_lookahead(WordPtr inStream, char *outChar)
 {
    STREAML_Stream *lStream = (STREAML_Stream *)inStream;

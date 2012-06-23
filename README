@@ -149,7 +149,7 @@ Microsoft Visual Studio 2008:
     --help     Display this list of options
 
 
-  2. simulator (tejus/source/tjsim)
+  2. simulator (teyjus/source/tjsim)
   ---------------------------------
 
   Usage: tjsim -b <options> <module-name>

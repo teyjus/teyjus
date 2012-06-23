@@ -103,13 +103,24 @@ static int BIIO_getIntegerFromTerm(DF_TermPtr tmPtr)
 /* Given an lpwam VAR term pointer, and a stream index,
    bind the variable term to the given stream. */
 static void BIIO_bindVarToStream(DF_TermPtr varPtr, WordPtr stream)
-{
+{   MemPtr nhreg;
+
     HN_hnorm(varPtr);
     varPtr = DF_termDeref(varPtr);
     if (!DF_isFV(varPtr)) EM_error(BI_ERROR_NON_VAR_TERM, varPtr);
 
     TR_trailTerm(varPtr);
-    DF_mkStream((MemPtr)varPtr, stream);
+    //GN, bug fix on June 20, 2012. 
+    //Pointers to file descriptors have to be globalized. 
+    //Otherwise, they could end up in registers (via put_value,
+    //for example) and then updating them, such as when closing 
+    //a stream, will update the contents of the register and 
+    //not have the required global effect.
+    nhreg = AM_hreg + DF_TM_ATOMIC_SIZE;
+    AM_heapError(nhreg);
+    DF_mkStream((MemPtr)AM_hreg,stream); 
+    DF_mkRef((MemPtr)varPtr,(DF_TermPtr)AM_hreg); 
+    AM_hreg = nhreg;
 }
 
 /* Given an lpwam VAR term pointer, and an integer value,
@@ -277,7 +288,7 @@ void BIIO_output()
   
   if (!str) EM_error(BI_ERROR_UNBOUND_VARIABLE, "string");
   
-  if (STREAM_printf(stream, str) == -1) 
+  if (STREAM_sans_printf(stream, str) == -1) 
       EM_error(BI_ERROR_WRITING_STREAM, (DF_TermPtr)AM_reg(1));
   
   AM_preg = AM_cpreg;
@@ -387,7 +398,7 @@ void BIIO_flush()
 void BIIO_print()
 {
     char *str = BIIO_getStringFromTerm((DF_TermPtr)AM_reg(1));
-    if (str) STREAM_printf(STREAM_stdout, str);
+    if (str) STREAM_sans_printf(STREAM_stdout, str);
     else EM_error(BI_ERROR_UNBOUND_VARIABLE, "string");
     
     AM_preg = AM_cpreg;
