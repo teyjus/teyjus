@@ -23,7 +23,7 @@ The Teyjus parser for signatures is a combination of a "pre-parser" automaticall
 <QualifiedModName>   ::= <NameToken>
                    | <NameToken> '{' <Renamings> '}'
 
-<Renamings>.     ::= <Renaming>
+<Renamings>    ::= <Renaming>
                    | <Renaming> ',' <Renamings>
 
 <Renaming>       ::= 'type' <NameToken>
