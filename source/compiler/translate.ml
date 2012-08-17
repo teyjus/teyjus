@@ -1215,13 +1215,13 @@ let rec translate mod' sig' =
 *   s: the signature to parse
 *   owner: is this signature the current module's or is it an
 *     an accumulated module's signature
-*   accumOrUse: whether the signature is peing translated due to an
+*   accumOrUse: whether the signature is being translated due to an
 *     accum_sig or a use_sig.  If true, the signature is being translated
 *     due to an accum_sig, and so is treated normally.  If false, the
 *     signature is being parsed due to a use_sig, and so exportdef
 *     constants should be marked as useonly instead of exportdef.
 *   ktable: the kind table
-*   ctabls: the constant table
+*   ctable: the constant table
 *   tabbrevtable: the type abbreviation table
 *   generalCopier: the copier to use to move information back into
 *     the symbol table when translating a constant that already
@@ -1253,25 +1253,27 @@ and translateSignature s owner accumOrUse ktable ctable atable generalCopier =
               Otherwise, add it to the table. *)
 	        let kindInTab = Table.find s ktable in
           (match kindInTab with
-            Some (Absyn.Kind(s', Some a', _, Absyn.PervasiveKind, p')) ->
-              Table.add s kind ktable
-	        | Some (Absyn.Kind(s', Some a', _, Absyn.GlobalKind, p')) ->
-	            if a <> a' then
-                (Errormsg.error p ("kind '" ^ (Symbol.name s) ^ "' already declared with arity " ^
-				            (string_of_int a') ^ (Errormsg.see p' "kind declaration"));
-                ktable)
-              else
-                (*  Leave the existing global kind. *)
-                ktable
-          | Some k ->
-              Errormsg.impossible (Absyn.getKindPos k)
-                ("invalid kind type " ^ (Absyn.string_of_kind k))
-          | None ->
-              (*  Isn't in the table, so just add it. *)
-              Table.add s kind ktable)
+             Some (Absyn.Kind(s', Some a', _, Absyn.PervasiveKind, p')) ->
+                             Table.add s kind ktable
+	   | Some (Absyn.Kind(s', Some a', _, Absyn.GlobalKind, p')) ->
+	       if a <> a' 
+               then (Errormsg.error p ("kind '" ^ (Symbol.name s) ^ 
+                                          "' already declared with arity " ^
+		                          (string_of_int a') ^ 
+                                          (Errormsg.see p' "kind declaration"));
+                     ktable)
+               else (*  Leave the existing global kind. *)
+                     ktable
+           | Some k ->
+               Errormsg.impossible (Absyn.getKindPos k)
+                 ("invalid kind type " ^ (Absyn.string_of_kind k))
+           | None -> 
+               (*  Isn't in the table, so just add it. *)
+               Table.add s kind ktable)
       | Absyn.Kind(_,_,_,Absyn.PervasiveKind,_) ->
           ktable (*  Ignore pervasive kinds. *)
-      | _ -> Errormsg.impossible Errormsg.none "Invliad kind encountered in mergeKinds"              
+      | _ -> Errormsg.impossible Errormsg.none 
+                                 "Invalid kind encountered in mergeKinds"
     in
     (List.fold_left merge kt klist)
   in
@@ -1289,28 +1291,29 @@ and translateSignature s owner accumOrUse ktable ctable atable generalCopier =
       let pos = Absyn.getConstantPos c in
       match (Table.find s ctable) with
         Some c2 ->  (*  Already in the table. *)
-          if Absyn.isPervasiveConstant c2 then
-            if Absyn.isPervasiveConstant c then
-              (*  Don't overwrite a pervasive with another pervasive. *)
+          if Absyn.isPervasiveConstant c2 
+          then
+            if Absyn.isPervasiveConstant c 
+            then (*  Don't overwrite a pervasive with another pervasive. *)
               ctable
-            else if Absyn.getConstantRedefinable c2 then
-              (Table.add s c ctable)
-            else
-              (Errormsg.error pos ("redefinition of '" ^ (Symbol.name s) ^ "' is not allowed");
-              ctable)
-          else if not (compareConstants c c2) then
-            (*  Prints an error; no need to worry about the renaming as
-                we won't be compiling.  *)
-            ctable
-          else
-            let () = copier c2 c in
-            ctable
+            else 
+              if Absyn.getConstantRedefinable c2 
+              then (Table.add s c ctable)
+              else  (Errormsg.error pos ("redefinition of '" ^ (Symbol.name s) ^ 
+                                         "' is not allowed");
+                     ctable)
+          else if not (compareConstants c c2) 
+               then (*  Prints an error; no need to worry about the renaming as
+                        we won't be compiling.  *)
+                   ctable
+               else let () = copier c2 c in ctable
 
       | None -> (*  Not in the table, so put it in. *)
           let () = copier c c in
           let t = if Absyn.isLocalConstant c then "local" else "global" in
-          let () = Errormsg.log pos (t ^" constant '" ^ (Symbol.name s) ^  "' not in table") in
-          (Table.add s c ctable)
+          let () = Errormsg.log pos (t ^" constant '" ^ (Symbol.name s) ^  
+                                     "' not in table") in
+            (Table.add s c ctable)
     in
     (List.fold_left merge ctable clist)
   in    
