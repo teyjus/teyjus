@@ -119,7 +119,7 @@ void LD_LOADER_LoadModuleName(char* modname)
   buf = EM_malloc(len+1);
   LD_FILE_GetString(buf,len);
   if(0!=strcmp(buf,modname)){
-    LD_error("Unexpected module name %s in %s%s",buf,modname,LINKCODE_EXT);
+    LD_error("Unexpected module name %s in %s%s\n",buf,modname,LINKCODE_EXT);
     free(buf);
     EM_THROW(LD_LoadError);
   }
