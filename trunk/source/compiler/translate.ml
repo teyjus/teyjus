@@ -101,8 +101,11 @@ let rec rationalizeType
   * Translate an arrow from preabsyn to absyn.
   ******************************************************************)
   let rec translateArrow = function Preabsyn.Arrow(l,r,p) ->
-    let TypeAndBindings(l', ls) = rationalizeType l vartable kindtable typeabbrevtable newsymfunc transvarfunc in
-    let TypeAndBindings(r', rs) = rationalizeType r ls kindtable typeabbrevtable newsymfunc transvarfunc in
+    let TypeAndBindings(l', ls) = rationalizeType l vartable kindtable 
+                                                  typeabbrevtable newsymfunc 
+                                                  transvarfunc in
+    let TypeAndBindings(r', rs) = rationalizeType r ls kindtable typeabbrevtable 
+                                                  newsymfunc transvarfunc in
 
     TypeAndBindings(Absyn.ArrowType(l', r'), rs)
   | t -> invalid_arg "Types.translateArrow: invalid type"
@@ -112,59 +115,65 @@ let rec rationalizeType
   *translateApp:
   * Translate an application from preabsyn to absyn.
   ******************************************************************)
-  let rec translateApp = function Preabsyn.App(f,t,p) ->
-    (**************************************************************
-    *translateArgs:
-    * Gets the arguments as a list instead of a tree.
-    **************************************************************)
-    let rec translate' t ts =
-      match t with
-        Preabsyn.App(f,arg,p') ->
-          let TypeAndBindings(argtype, ts') = rationalizeType arg ts kindtable typeabbrevtable newsymfunc transvarfunc in
-          let (head, ts'', argtypes) = (translate' f ts') in
-          (head, ts'', argtype :: argtypes)
-      | _ -> (t, ts, [])
-    in
+  let translateApp ty =
+     match ty with 
+       Preabsyn.App(f,t,p) ->
+         (**************************************************************
+          *translateArgs:
+          * Gets the arguments as a list instead of a tree.
+          **************************************************************)
+          let rec translate' t ts =
+            match t with
+              Preabsyn.App(f,arg,p') ->
+                let TypeAndBindings(argtype, ts') = 
+                       rationalizeType arg ts kindtable typeabbrevtable 
+                                       newsymfunc transvarfunc in
+                let (head, ts'', argtypes) = (translate' f ts') in
+                (head, ts'', argtype :: argtypes)
+            | _ -> (t, ts, [])
+          in
 
-    let (head, ts, args) = translate' ty vartable in
+          let (head, ts, args) = translate' ty vartable in
     
-    (match head with
-      Preabsyn.Atom(sym,k,p) ->
-          (match k with
-            Preabsyn.VarID ->
-              (Errormsg.error p "found type variable, expected a constructor";
-              TypeAndBindings(Absyn.ErrorType, vartable))
-          | Preabsyn.AVID ->
-              (Errormsg.error p "found type variable, expected a constructor";
-              TypeAndBindings(Absyn.ErrorType, vartable))
-          | Preabsyn.CVID ->
-              (Errormsg.error p "found type variable, expected a constructor";
-              TypeAndBindings(Absyn.ErrorType, vartable))
-          | _ ->
-            (match (Table.find sym vartable) with
-              Some t ->
-                (Errormsg.error p "found type variable, expected a constructor";
-                TypeAndBindings(Absyn.ErrorType, vartable))
-            | None ->
-                (match (Table.find sym kindtable) with
-                  Some k ->
-                    if (Absyn.getKindArity k) <> (List.length args) then
-                      (Errormsg.error p ("type constructor " ^ (Symbol.name sym) ^
-                        " has arity " ^ (string_of_int (Absyn.getKindArity k)));
-                      TypeAndBindings(Absyn.ErrorType, vartable))
-                    else
-                      TypeAndBindings(Absyn.ApplicationType(k, args), ts)
-                | None ->
-                      (match (Table.find sym typeabbrevtable) with
-                        Some t ->
-                          (translateTypeAbbrevCall t args ts p)
+          (match head with
+            Preabsyn.Atom(sym,k,p) ->
+                (match k with
+                  Preabsyn.VarID ->
+                    (Errormsg.error p "found type variable, expected a constructor";
+                    TypeAndBindings(Absyn.ErrorType, vartable))
+                | Preabsyn.AVID ->
+                    (Errormsg.error p "found type variable, expected a constructor";
+                     TypeAndBindings(Absyn.ErrorType, vartable))
+                | Preabsyn.CVID ->
+                    (Errormsg.error p "found type variable, expected a constructor";
+                     TypeAndBindings(Absyn.ErrorType, vartable))
+                | _ ->
+                  (match (Table.find sym vartable) with
+                    Some t ->
+                      (Errormsg.error p "found type variable, expected a constructor";
+                       TypeAndBindings(Absyn.ErrorType, vartable))
+                  | None ->
+                      (match (Table.find sym kindtable) with
+                        Some k ->
+                          if (Absyn.getKindArity k) <> (List.length args) then
+                            (Errormsg.error p ("type constructor " ^ (Symbol.name sym) ^
+                                               " has arity " ^ 
+                                               (string_of_int (Absyn.getKindArity k)));
+                             TypeAndBindings(Absyn.ErrorType, vartable))
+                          else
+                             TypeAndBindings(Absyn.ApplicationType(k, args), ts)
                       | None ->
-                        (Errormsg.error p ("undeclared constructor " ^ (Symbol.name sym));
-                        TypeAndBindings(Absyn.ErrorType, vartable))))))
-    | _ ->
-      (Errormsg.error p "expected a constructor");
-      TypeAndBindings(Absyn.ErrorType, vartable))
-  | t -> invalid_arg "Types.translateApp: invalid type"
+                            (match (Table.find sym typeabbrevtable) with
+                              Some t ->
+                                (translateTypeAbbrevCall t args ts p)
+                            | None ->
+                              (Errormsg.error p ("undeclared constructor " ^ 
+                                                 (Symbol.name sym));
+                               TypeAndBindings(Absyn.ErrorType, vartable))))))
+          | _ ->  
+             (Errormsg.error p "expected a constructor");
+              TypeAndBindings(Absyn.ErrorType, vartable))
+     | t -> invalid_arg "Types.translateApp: invalid type"
   in  
 
   match ty with
@@ -186,7 +195,7 @@ let rec rationalizeType
       (match (Table.find s kindtable) with
         Some k ->
           if (Absyn.getKindArity k) <> 0 then
-            (Errormsg.error pos ("type constructor has arity " ^
+            (Errormsg.error pos ("expected a sort but found type constructor of arity " ^
               (string_of_int (Absyn.getKindArity k)));
             TypeAndBindings(Absyn.ErrorType, vartable))
           else
@@ -265,7 +274,8 @@ and translateTypeSkeleton ty kindtable typeabbrevtable newsymfunc =
       match args with
         arg::rest ->
           let TypeAndBindings(t, ts') =
-            rationalizeType arg ts kindtable typeabbrevtable newsymfunc rationalizeSkeletonVar in
+            rationalizeType arg ts kindtable typeabbrevtable 
+                            newsymfunc rationalizeSkeletonVar in
           t::(translateArgs rest ts')
       | [] -> []
     in
@@ -288,7 +298,8 @@ and translateTypeSkeleton ty kindtable typeabbrevtable newsymfunc =
     
     (*  First translate the target.  *)
     let TypeAndBindings(target', ts) =
-      rationalizeType target Table.empty kindtable typeabbrevtable newsymfunc rationalizeSkeletonVar in
+      rationalizeType target Table.empty kindtable typeabbrevtable 
+                      newsymfunc rationalizeSkeletonVar in
 
     (*  Translate all of the arguments  *)
     let args' = translateArgs args ts in
@@ -306,7 +317,8 @@ and translateTypeSkeleton ty kindtable typeabbrevtable newsymfunc =
       TypeAndEnvironment(translateArrow ty, !typeSkeletonIndex)
   | _ ->
     let TypeAndBindings(t, ts) =
-      rationalizeType ty Table.empty kindtable typeabbrevtable newsymfunc rationalizeSkeletonVar in
+      rationalizeType ty Table.empty kindtable typeabbrevtable 
+                      newsymfunc rationalizeSkeletonVar in
     TypeAndEnvironment(t, !typeSkeletonIndex) 
 
 (**********************************************************************
@@ -657,13 +669,14 @@ and translateTypeAbbrev abbrev abbrevtable kindtable =
   (*  Translate the type body *)
   let TypeAndBindings(bodytype,bindings) =
     (rationalizeType ty symtable kindtable abbrevtable newSymFunc
-      rationalizeTypeAbbrevVar)
+                     rationalizeTypeAbbrevVar)
   in
   
-  (Table.add
-    abbrevname
-    (Absyn.TypeAbbrev(abbrevname, args, bodytype, pos))
-    abbrevtable)
+(* GN, Aug 20, 2012: Looks like we should be checking for conflicts with the global  
+   and local type constructor (kind) tables here. *)
+  (mergeTypeAbbrev abbrevname 
+                   (Absyn.TypeAbbrev(abbrevname, args, bodytype, pos))
+                   abbrevtable)
 
 (********************************************************************
 *translateTypeAbbrevCall:
@@ -708,28 +721,35 @@ and translateTypeAbbrevCall abbrev args vartable pos =
     TypeAndBindings((replaceAll 0 args target), vartable)
 
 (******************************************************************
-*mergeTypeAbbrevs:
+*mergeTypeAbbrev:
 ******************************************************************)
-and mergeTypeAbbrevs t1 t2 =
-  let merge = fun sym tabbrev table ->
-    let Absyn.TypeAbbrev(s, args, ty, p) = tabbrev in
-    
-    match (Table.find sym table) with
+and mergeTypeAbbrev sym tabbrev table =
+     let Absyn.TypeAbbrev(s, args, ty, p) = tabbrev in
+     match (Table.find sym table) with
       Some Absyn.TypeAbbrev(s', args', ty', p') ->
-        if args <> args' then
-          (Errormsg.error p ("type abbreviation already declared with different arguments" ^
-            (Errormsg.see p' "type abbreviation declaration"));
-          table)
-        else if ty <> ty' then
-          (Errormsg.error p ("type abbreviation already declared with different type" ^
-            (Errormsg.see p' "type abbreviation declaration"));
-          table)
-        else
-          table
+        (* GN, Aug 20, 2012: should not be checking name identity here since *)
+        (* different abbrev presentations could use different names *)
+        (* if args <> args' then *)
+         if (List.length args) <> (List.length args') 
+         then (Errormsg.error p 
+                 ("conflict in argument numbers for type abbreviation" ^
+                 (Errormsg.see p' "type abbreviation declaration"));
+               table)
+       (* GN, Aug 20, 2012: May be better not to rely on OCaml's equality here! *)
+         else if ty <> ty' then
+               (Errormsg.error p 
+                      ("conflict in type for type abbreviation" ^
+                      (Errormsg.see p' "type abbreviation declaration"));
+                table)
+              else table
     | None ->
       (Table.add sym tabbrev table)
-  in
-  (Table.fold merge t1 t2)
+
+
+(******************************************************************
+*mergeTypeAbbrevs:
+******************************************************************)
+and mergeTypeAbbrevs t1 t2 = (Table.fold mergeTypeAbbrev t1 t2)
 
 (**********************************************************************
 *compareConstants:
