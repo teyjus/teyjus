@@ -67,7 +67,8 @@ let typeSkeletonIndex = ref 0
 * into abstract syntax.
 **********************************************************************)
 let rationalizeTypeAbbrevVar sym symtable p =
-  (Errormsg.error p ("unbound variable " ^ (Symbol.name sym) ^ " in type abbreviation");
+  (Errormsg.error p ("unbound variable " ^ (Symbol.name sym) ^ 
+                     " in type abbreviation");
   TypeAndBindings(Absyn.ErrorType, symtable))
 
 (**********************************************************************
@@ -116,25 +117,26 @@ let rec rationalizeType
   * Translate an application from preabsyn to absyn.
   ******************************************************************)
   let translateApp ty =
-     match ty with 
-       Preabsyn.App(f,t,p) ->
-         (**************************************************************
-          *translateArgs:
-          * Gets the arguments as a list instead of a tree.
-          **************************************************************)
-          let rec translate' t ts =
+
+   (**************************************************************
+    *getHeadAndArgsType:
+    * Gets the arguments as a list instead of a tree.
+    **************************************************************)
+    let rec getHeadAndArgsType t ts =
             match t with
               Preabsyn.App(f,arg,p') ->
                 let TypeAndBindings(argtype, ts') = 
                        rationalizeType arg ts kindtable typeabbrevtable 
                                        newsymfunc transvarfunc in
-                let (head, ts'', argtypes) = (translate' f ts') in
-                (head, ts'', argtype :: argtypes)
+                let (head, ts'', argtypes) = (getHeadAndArgsType f ts') in
+                  (head, ts'', argtype :: argtypes)
             | _ -> (t, ts, [])
-          in
+    in
 
-          let (head, ts, args) = translate' ty vartable in
-    
+     match ty with 
+       Preabsyn.App(f,t,p) ->
+
+          let (head, ts, args) = getHeadAndArgsType ty vartable in
           (match head with
             Preabsyn.Atom(sym,k,p) ->
                 (match k with
@@ -598,9 +600,13 @@ and translateConstant c clist kindtable typeabbrevtable buildconstant =
 
   match c with
     Preabsyn.Constant(names, Some t, pos) ->
-      let TypeAndEnvironment(tyskel, size) = translateTypeSkeleton t kindtable typeabbrevtable newSymFunc in
+      let TypeAndEnvironment(tyskel, size) = 
+              translateTypeSkeleton t kindtable 
+                                    typeabbrevtable newSymFunc in
       (* let ty = translateType' t kindtable typeabbrevtable in *)
-      (enter names [tyskel] (ref(Some(Absyn.Skeleton(tyskel, ref None, ref false)))) size clist)
+        (enter names [tyskel] 
+                     (ref(Some(Absyn.Skeleton(tyskel, ref None, ref false))))
+                     size clist)
   | Preabsyn.Constant(names, None, pos) ->
       (enter names [] (ref None) 0 clist)
 
@@ -615,7 +621,7 @@ and translateTypeAbbrevs tabbrevs kindtable =
       [] -> abbrevtable
     | t::ts ->
         let abbrevtable' = translateTypeAbbrev t abbrevtable kindtable in
-        translate' ts abbrevtable'
+           translate' ts abbrevtable'
   in
   translate' tabbrevs Table.empty
 
@@ -672,11 +678,21 @@ and translateTypeAbbrev abbrev abbrevtable kindtable =
                      rationalizeTypeAbbrevVar)
   in
   
-(* GN, Aug 20, 2012: Looks like we should be checking for conflicts with the global  
-   and local type constructor (kind) tables here. *)
-  (mergeTypeAbbrev abbrevname 
+  (* GN, Aug 23, 2012: We assume here that kindtable contains ALL the kind 
+     declarations pertinent to the present module/signature and we check for
+     clashes with this when populating the type abbreviations table. *)
+    let kindInTab = Table.find abbrevname kindtable in
+          (match kindInTab with
+             Some (Absyn.Kind(_,_,_,_,p')) -> 
+                    (Errormsg.error pos ("type abbreviation name '" ^
+                                        (Symbol.name abbrevname) ^ 
+                                        "' clashes with kind name" ^
+                                        (Errormsg.see p' "kind declaration"));
+                    abbrevtable)
+           | None -> 
+              (mergeTypeAbbrev abbrevname 
                    (Absyn.TypeAbbrev(abbrevname, args, bodytype, pos))
-                   abbrevtable)
+                    abbrevtable))
 
 (********************************************************************
 *translateTypeAbbrevCall:
@@ -749,7 +765,20 @@ and mergeTypeAbbrev sym tabbrev table =
 (******************************************************************
 *mergeTypeAbbrevs:
 ******************************************************************)
-and mergeTypeAbbrevs t1 t2 = (Table.fold mergeTypeAbbrev t1 t2)
+and mergeTypeAbbrevs t1 t2 ktable = 
+   (Table.fold 
+       (fun sym abbrev abbtab ->
+            let kindInTab = Table.find sym ktable in
+              (match kindInTab with
+                  Some (Absyn.Kind(_,_,_,_,p')) -> 
+                      (Errormsg.error (Absyn.getTypeAbbrevPos abbrev)
+                                      ("type abbreviation name '" ^
+                                          (Symbol.name sym) ^ 
+                                          "' clashes with kind name" ^
+                                          (Errormsg.see p' "kind declaration"));
+                       abbtab)
+                | None -> (mergeTypeAbbrev sym abbrev abbtab)))
+       t1 t2)
 
 (**********************************************************************
 *compareConstants:
@@ -1352,16 +1381,15 @@ and translateSignature s owner accumOrUse ktable ctable atable generalCopier =
   (******************************************************************
   *mergeTables:
   ******************************************************************)
-  let mergeTables ktable ctable atable tables =
-    let mergeTable (ktable,ctable,atable) (ktable',ctable',atable') =
+  let mergeKindandConstTables ktable ctable tables =
+    let mergeTable (ktable,ctable) (ktable',ctable',_) =
       let kinds = getFromTable (fun _ -> true) ktable' in
       let constants = getFromTable (fun _ -> true) ctable' in
       let (ktable'') = mergeKinds kinds ktable in
       let (ctable'') = mergeConstants constants ctable generalCopier in
-      let atable'' = mergeTypeAbbrevs atable atable' in
-      (ktable'', ctable'', atable'')
+      (ktable'', ctable'')
     in
-    List.fold_left mergeTable (ktable, ctable, atable) tables
+    List.fold_left mergeTable (ktable, ctable) tables
   in
 
   (******************************************************************
@@ -1400,21 +1428,33 @@ and translateSignature s owner accumOrUse ktable ctable atable generalCopier =
   
   (*  Process accumulated signatures: *)
   let sigs = processSigs accumsigs in
-  let tables = translateAccumSigs sigs in
-  let (ktable, ctable, atable) = mergeTables ktable ctable atable tables in
+  let acctables = translateAccumSigs sigs in
+  let (ktable, ctable) = mergeKindandConstTables ktable ctable acctables in
   
   (*  Process used signatures:  *)
   let sigs = processSigs usesigs in
-  let tables = translateUseSigs sigs in
-  let (ktable, ctable, atable) = mergeTables ktable ctable atable tables in
+  let usetables = translateUseSigs sigs in
+  let (ktable, ctable) = mergeKindandConstTables ktable ctable usetables in
   
   (*  Process kinds *)
   let kindlist = translateKinds gkinds buildGlobalKind in
   let ktable = mergeKinds kindlist ktable in
-  
+
+
+  (* GN, Aug 23, 2012: merging of type abbreviations tables should be 
+     done after the kind table has been constructed to ensure complete
+     checking of clashes of abbreviation names with kind names *)
   (*  Process type abbreviations  *)
   let atable' = translateTypeAbbrevs tabbrevs ktable in
-  let atable = mergeTypeAbbrevs atable' atable in
+  let atable = 
+         let mergeTypeAbbrevs' t1 t2 = mergeTypeAbbrevs t2 t1 ktable in
+         let acctypeabbrevtabs = (List.map (fun (_,_,t) -> t) acctables) in
+         let usetypeabbrevtabs = (List.map (fun (_,_,t) -> t) usetables) in
+           (List.fold_left mergeTypeAbbrevs'  
+                 (List.fold_left mergeTypeAbbrevs' 
+                                 (mergeTypeAbbrevs' atable' atable)
+                                 acctypeabbrevtabs)
+                 usetypeabbrevtabs) in
   
   (*  Translate constants *)
   let constantlist = translateConstants gconsts ktable atable buildGlobalConstant in
@@ -1707,16 +1747,18 @@ and translateModule mod' ktable ctable atable =
   * Merges the tables from accumulated or imported modules into the
   * global symbol tables.
   ******************************************************************)
-  let mergeTables ktable ctable atable tables =
-    let mergeTable (ktable,ctable,atable) (ktable',ctable',atable') =
-      let kinds = getFromTable (fun k -> not (Absyn.isPervasiveKind k)) ktable' in
-      let constants = getFromTable (fun c -> not (Absyn.isPervasiveConstant c)) ctable' in
+  let mergeKindandConstTables ktable ctable tables =
+    let mergeKindandConstTable (ktable,ctable) (ktable',ctable',_) =
+      let kinds = getFromTable (fun k -> not (Absyn.isPervasiveKind k)) 
+                               ktable' in
+      let constants = 
+            getFromTable (fun c -> not (Absyn.isPervasiveConstant c)) 
+                         ctable' in
       let ktable'' = mergeGlobalKinds kinds ktable in
       let ctable'' = mergeGlobalConstants constants ctable in
-      let atable'' = mergeTypeAbbrevs atable atable' in
-      (ktable'', ctable'', atable'')
+      (ktable'', ctable'')
     in
-    List.fold_left mergeTable (ktable, ctable, atable) tables
+    List.fold_left mergeKindandConstTable (ktable, ctable) tables
   in
 
   (******************************************************************
@@ -1840,10 +1882,10 @@ and translateModule mod' ktable ctable atable =
       let impmods' = processSignatures impmods in
       let (imps, imptables) = translateImpMods impmods' in
 
-      let (ktable, ctable, atable) = mergeTables ktable ctable atable accsigstables in
-      let (ktable, ctable, atable) = mergeTables ktable ctable atable usesigstables in
-      let (ktable, ctable, atable) = mergeTables ktable ctable atable acctables in
-      let (ktable, ctable, atable) = mergeTables ktable ctable atable imptables in
+      let (ktable, ctable) = mergeKindandConstTables ktable ctable accsigstables in
+      let (ktable, ctable) = mergeKindandConstTables ktable ctable usesigstables in
+      let (ktable, ctable) = mergeKindandConstTables ktable ctable acctables in
+      let (ktable, ctable) = mergeKindandConstTables ktable ctable imptables in
 
       (*  Translate local and global kinds, and get associated tables *)
       let gkindlist = translateGlobalKinds gkinds in
@@ -1851,10 +1893,28 @@ and translateModule mod' ktable ctable atable =
       let ktable = mergeGlobalKinds gkindlist ktable in
       let ktable = mergeLocalKinds lkindlist ktable in
 
+      (* GN, Aug 23, 2012: merging of type abbreviations tables should be 
+         done after the kind table has been constructed to ensure complete
+         checking of clashes of abbreviation names with kind names *)
       (*  Translate type abbreviations and get the associated table *)
-      let tabbrevs' = translateTypeAbbrevs tabbrevs ktable in
-      let atable = mergeTypeAbbrevs tabbrevs' atable in
-      
+      let atable' = translateTypeAbbrevs tabbrevs ktable in
+      let atable = 
+         let mergeTypeAbbrevs' t1 t2 = mergeTypeAbbrevs t2 t1 ktable in
+         let accsigstypeabbrevtabs = (List.map (fun (_,_,t) -> t) accsigstables) in
+         let usesigstypeabbrevtabs = (List.map (fun (_,_,t) -> t) usesigstables) in
+         let accstypeabbrevtabs = (List.map (fun (_,_,t) -> t) acctables) in
+         let impstypeabbrevtabs = (List.map (fun (_,_,t) -> t) imptables) in
+           (List.fold_left mergeTypeAbbrevs'  
+                (List.fold_left mergeTypeAbbrevs' 
+                     (List.fold_left mergeTypeAbbrevs' 
+                          (List.fold_left mergeTypeAbbrevs' 
+                               (mergeTypeAbbrevs' atable' atable)
+                               accsigstypeabbrevtabs)
+                          usesigstypeabbrevtabs)
+                     accstypeabbrevtabs)
+                impstypeabbrevtabs) 
+      in
+
       (*  Translate local, global, closed, useonly, and exportdef constants
           and get the associated tables. *)
       let gconstlist = translateGlobalConstants gconsts ktable atable in
