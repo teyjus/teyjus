@@ -361,6 +361,11 @@ val string_of_skeleton : askeleton -> string
 val string_of_skeleton_ast : askeleton -> string
 
 (*************************************************************************)
+(* atypeabbrev                                                           *)
+(*************************************************************************)
+val getTypeAbbrevPos : atypeabbrev -> pos
+
+(*************************************************************************)
 (*  afixity:                                                             *)
 (*************************************************************************)
 val string_of_fixity : afixity -> string
