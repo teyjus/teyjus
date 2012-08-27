@@ -48,6 +48,8 @@ type pos = Errormsg.pos
 
 let maxPrecedence = 255
 
+let uniqModId = ref 0
+
 (**********************************************************************
 * These data structures are the result of parsing a signature or
 * module.  If a signature is parsed, the appropriate structures are
@@ -94,6 +96,7 @@ let reverseResults () =
   fixityList := List.rev !fixityList
 
 let clearResults () =
+  uniqModId := 0;
   importedModList := [];
   accumulatedModList := [];
   accumulatedSigList := [];
@@ -164,7 +167,7 @@ let makeSignature () =
 %token IMPLIES INFIXLAMBDA TYARROW CUT PI SIGMA COMMA
 %token SEMICOLON AMPAND RDIVIDE NILLIST LISTCONS EQUAL
 %token PLUS MINUS TIMES LESS LEQ GTR GEQ UMINUS PERIOD
-%token LPAREN RPAREN LBRACK RBRACK COLON VBAR
+%token LPAREN RPAREN LBRACK RBRACK COLON VBAR LCURLY RCURLY
 %token SIGSTART MODSTART TERMSTART
 %token EOF
 
@@ -184,6 +187,10 @@ let makeSignature () =
 %type <Preabsyn.pfixitykind> fixity
 %type <Preabsyn.pterm list> term
 %type <Preabsyn.pterm> abstterm atomterm constvar typedconst
+%type <Preabsyn.prenaming> ren 
+%type <Preabsyn.prenaming list> rename
+%type <Preabsyn.paccum> accum
+%type <Preabsyn.paccum list> acclist
 
 %type <(string * Preabsyn.pidkind)> tok
 %type <(Symbol.symbol * Preabsyn.ptype option * Preabsyn.pidkind * pos)>
@@ -249,13 +256,13 @@ modpreamble:
   | modpreamble IMPORT cvidlist PERIOD
       { importedModList := $3 @ !importedModList }
 
-  | modpreamble ACCUMULATE cvidlist PERIOD
+  | modpreamble ACCUMULATE acclist PERIOD
       { accumulatedModList := $3 @ !accumulatedModList }
 
-  | modpreamble ACCUMSIG cvidlist PERIOD
+  | modpreamble ACCUMSIG acclist PERIOD
       { accumulatedSigList := $3 @ !accumulatedSigList }
 
-  | modpreamble USESIG cvidlist PERIOD
+  | modpreamble USESIG acclist PERIOD
       { useSigList := $3 @ !useSigList }
 
   | error PERIOD              { genericError "preamble" }
@@ -263,13 +270,14 @@ modpreamble:
 sigpreamble:
   |                           {  }
 
-  | sigpreamble USESIG cvidlist PERIOD
+  | sigpreamble USESIG acclist PERIOD
       { useSigList := $3 @ !useSigList }
 
-  | sigpreamble ACCUMSIG cvidlist PERIOD
+  | sigpreamble ACCUMSIG acclist PERIOD
       { accumulatedSigList := $3 @ !accumulatedSigList }
 
   | error PERIOD              { genericError "preamble" }
+
 
 cvidlist:
   | tok                       { (makeSymbol $1) :: [] }
@@ -283,6 +291,32 @@ idlist:
   | SYID                      { (makeSymbol $1) :: [] }
   | idlist COMMA ID           { (makeSymbol $3) :: $1 }
   | idlist COMMA SYID         { (makeSymbol $3) :: $1 }
+
+
+acclist:
+  | accum                     { [$1] }
+  | accum COMMA acclist       { $1 :: $3 }
+ 
+accum:
+  | tok                       { uniqModId:=!uniqModId+1;
+                                Accumulate(makeSymbol $1, !uniqModId, None) }
+  | tok LCURLY rename RCURLY  { uniqModId:=!uniqModId+1;
+                                Accumulate(makeSymbol $1, !uniqModId, Some $3)}
+rename:
+  | ren                       { [$1] }
+  | ren COMMA rename          { $1 :: $3 }
+
+ren:
+  | TYPE tok                  { TypeRenaming(makeSymbol $2, makeSymbol $2,
+                                             getPos 1) }
+  | TYPE tok IMPLIES tok      { TypeRenaming(makeSymbol $2, makeSymbol $4,
+                                             getPos 1) }
+  | KIND tok                  { KindRenaming(makeSymbol $2, makeSymbol $2, 
+                                             getPos 1) }
+  | KIND tok IMPLIES tok      { KindRenaming(makeSymbol $2, makeSymbol $4,
+                                             getPos 1) }
+                                                                
+
 
 modbody:
   |                           {  }
