@@ -44,6 +44,14 @@ type pfixitykind =
 (* Symbols *)
 type psymbol = Symbol of symbol * pidkind * pos
 
+(* Accumulate statements *)
+and paccum = Accumulate of psymbol * int * prenaming list option
+
+(* Qualified renamings *)
+and prenaming =
+| TypeRenaming of psymbol * psymbol * pos
+| KindRenaming of psymbol * psymbol * pos
+
 (* Type Symbols *)
 and ptypesymbol = TypeSymbol of (symbol * ptype option * pidkind * pos)
 
@@ -121,11 +129,11 @@ and pfixity = Fixity of psymbol list * pfixitykind * int * pos
 type pmodule =
   | Module of string * pconstant list * pconstant list * 
       pconstant list * pconstant list * pconstant list * pfixity list *
-      pkind list * pkind list * ptypeabbrev list * pclause list * psymbol list *
-      psymbol list * psymbol list * psymbol list
+      pkind list * pkind list * ptypeabbrev list * pclause list 
+      * paccum list * paccum list * paccum list * psymbol list
   | Signature of string * pconstant list * pconstant list *
       pconstant list * pkind list *
-      ptypeabbrev list * pfixity list * psymbol list * psymbol list
+      ptypeabbrev list * pfixity list * paccum list * paccum list
 
 val printPreAbsyn : pmodule -> out_channel -> unit
 
@@ -133,6 +141,19 @@ val printPreAbsyn : pmodule -> out_channel -> unit
 val getFixityPos : pfixitykind -> pos
 val getTermPos : pterm -> pos
 val getModuleClauses : pmodule -> pclause list
+val getSignatureName : pmodule -> string
 val getClauseTerm : pclause -> pterm
 
 val string_of_term : pterm -> string
+
+val getSymbol : psymbol -> Symbol.symbol
+val getSymbolPos : psymbol -> pos
+val getAccumulatePsymbol : paccum -> psymbol
+val getAccumulateID : paccum -> int
+val getAccumulateRenaming : paccum -> prenaming list option 
+val areAccumulateEqualP : paccum -> paccum -> bool 
+val isTypeRenamingP : prenaming -> bool 
+val getRenamingFromPsymbol : prenaming -> psymbol
+val getRenamingToPsymbol : prenaming -> psymbol
+val getRenamingPos : prenaming -> pos 
+
