@@ -1,0 +1,221 @@
+                             QUICK START
+                             ===========
+
+You must have the following software installed
+
+  OCaml               http://caml.inria.fr/
+  OMake               http://omake.metaprl.org/
+
+These standard tools are also required: a C compiler, lex, and yacc.
+
+To build teyjus, execute 'omake' from the teyjus directory. This will
+create tjcc, tjlink, tjsim, tjdepend, and tjdis. These can be copied
+anywhere for installation, e.g. 'cp tj* /usr/local/bin/'.
+
+Documentation for Teyjus can be found at http://teyjus.cs.umn.edu/
+
+The rest of this file gives detailed instructions for compiling teyjus
+on various platforms. The instructions for *nix apply to both Linux
+and Mac OS X.
+
+
+                             DEPENDENCIES
+                             ============
+
+                              ---*nix---
+
+The following dependencies must be in the path:
+
+  OCaml
+  OMake
+  flex
+  bison
+
+                            ---Windows---
+
+Teyjus can be compiled with either the Cygwin toolchain or the MS
+toolchain.
+
+Cygwin:
+  The following software must be installed.
+
+    OCaml for the MinGW toolchain   http://caml.inria.fr/
+    OMake                           http://omake.metaprl.org/
+    Cygwin                          http://www.cygwin.com/
+
+  When installing Cygwin, you must select the following packages
+    Devel: bison
+    Devel: gcc
+    Devel: flex
+
+  After Cygwin is installed, you must put Cygwin's binary directory
+  in your path. For example, 'C:\cygwin\bin'
+
+
+Microsoft Visual Studio 2008:
+  The following dependencies must be in the path.  Listed is a place
+  to get either the actual dependency, or information on procuring it.
+
+  OCaml                           http://caml.inria.fr/
+  Microsoft Visual Studio 2008    http://msdn.microsoft.com/vstudio/
+  ocamake                         /util/ocamake.ml  (included)
+  flex                            http://gnuwin32.sourceforge.net/
+  bison                           http://gnuwin32.sourceforge.net/
+
+
+                             BUILD SYSTEM
+                             ============
+
+                        ---*nix and Cygwin---
+
+  To build the system in a *nix or Cygwin environment, use omake:
+
+  component                 command                    path
+  -----------------------------------------------------------------
+  compiler                  omake tjcc                 teyjus/source
+
+  simulator                 omake tjsim                teyjus/source
+
+  disassembler              omake tjdis                teyjus/source
+
+  linker                    omake tjlink               teyjus/source
+
+  dependency analyzer       omake tjdepend             teyjus/source
+
+  all                       omake all                  teyjus/source
+
+
+             ---Windows: Microsoft Visual Studio 2008---
+
+  Installing dependencies:
+    Make sure that O'Caml is installed and in your path.
+
+    Make sure that flex and bison are in your path.
+
+    Build ocamake and make sure it is in your path.  To build ocamake,
+    run this command in the /util directory of the distribution:
+      ocamlc unix.cma str.cma ocamake.ml -o ocamake.exe
+    Then, copy that file into your ocaml/bin directory, or alternatively
+    modify your path.  Be sure to use the provided version of ocamake.ml, as
+    it has been patched to work with Visual Studio 2008 project files.
+
+  Building the System:
+    To build the system in a Windows environment, use the provided
+    Microsoft Visual Studio 2008 solution file, (/source/VisualStudio/Teyjus.sln).
+
+    To build the system, first set the number of parallel build threads to 1, by
+    clicking Tools > Options, and then selecting Project Solutions > Build and Run,
+    and finally changing "maximum number of parallel project builds" to 1.
+
+    Then, simply "Build All" (Ctrl + Alt + F7).
+
+    The result should be "8 succeeded, 0 failed, 0 skipped."  The produced
+    binaries will be written to /source/VisualStudio/Debug, to /bin, and to
+    /source.  In addition, the file /source/prebuilt will be create; this will
+    allow the tests to run correctly.
+
+    Alternatively, it should be possible to build projects individually by
+    simply building a particular project using "Build Project" (Ctrl + Shift + B).
+
+    If you have trouble building the solution, try running the script
+    /source/VisualStudio/clean.bat.  It removes O'Caml object files that Visual
+    Studio doesn't know about.
+
+    Note that there is no support for building Teyjus using omake on Windows as
+    of yet.
+
+  Testing:
+    The testing harness only partially works on Windows.  Several tests fail due
+    to ActivePerl's method of calling other programs through cmd.exe.
+
+
+                             SYSTEM USAGE
+                             ============
+
+  1. compiler (teyjus/source/tjcc)
+  --------------------------------
+
+  Usage: tjcc <options> <module-names>
+  options are:
+    -o         Specifies the name of the output bytecode file
+    --output   Specifies the name of the output bytecode file
+    -p         Add PATH to the search path.
+    --path     Add PATH to the search path.
+    --log      Enable logging information.
+    --log      Enable logging information.
+    -v         Return the system version
+    --version  Return the system version
+    -help      Display this list of options
+    --help     Display this list of options
+
+
+  2. simulator (teyjus/source/tjsim)
+  ---------------------------------
+
+  Usage: tjsim -b <options> <module-name>
+  options are:
+    -p         Add PATH to the search path.
+    --path     Add PATH to the search path.
+    -s         Solve the given query on startup. Several queries may be specified
+    --solve    Solve the given query on startup. Several queries may be specified
+    -e         Expect at least this many solutions from each query;
+                  error if fewer. Valid only in batch mode
+    --expect   Expect at least this many solutions from each query;
+                  error if fewer. Valid only in batch mode
+    -m         Halt after this many solutions to the query have been found.
+                  Valid only in batch mode
+    --maximum  Halt after this many solutions to the query have been found.
+                  Valid only in batch mode
+    -q         Suppress all non-error output from the system,
+                  except variable bindings on query success
+    --quiet    Suppress all non-error output from the system,
+                  except variable bindings on query success
+    -b         Suppress system interaction; send all output without stopping
+    --batch    Suppress system interaction; send all output without stopping
+    -k         Allocate a heap of the given size (K)
+    --heap     Allocate a heap of the given size (K)
+    -v         Return the system version
+    --version  Return the system version
+    -help      Display this list of options
+    --help     Display this list of options
+
+
+  Note that the interactive interface is not implemented. The simulator only
+  works in batch mode (with option -b specified).
+
+  3. disassembler (teyjus/source/tjdis)
+  -------------------------------------
+
+  Usage: tjdis <options> <object-file>
+  options are:
+    -t         Only print tables
+    --table    Only print tables
+    -i         Only print instructions
+    --instr    Only print instructions
+    -v         Return the system version
+    --version  Return the system version
+    -help      Display this list of options
+    --help     Display this list of options
+
+
+  4. linker (teyjus/source/tjlink)
+  --------------------------------
+
+  Usage: tjlink <module-name>
+  -V         Produce verbose output - use multiple times to increase verbosity
+  --verbose  Produce verbose output - use multiple times to increase verbosity
+  -v         Return the system version
+  --version  Return the system version
+  -help      Display this list of options
+  --help     Display this list of options
+
+
+  5. dependency analyzer (teyjus/source/tjdepend)
+  -----------------------------------------------
+
+  Usage: tjdepend <options> <module-files>
+  options are:
+    -v         Return the system version
+    --version  Return the system version
+    -help      Display this list of options
+    --help     Display this list of options

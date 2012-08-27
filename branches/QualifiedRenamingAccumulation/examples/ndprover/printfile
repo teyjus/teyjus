@@ -1,0 +1,524 @@
+/* File logic.sig. This file identifies the signature for a simple, 
+first-order (object) logic.                                      */
+
+sig logic.
+
+kind    i       type.
+kind    bool    type.
+
+type    and     bool -> bool -> bool.
+type    or      bool -> bool -> bool.
+type    imp     bool -> bool -> bool.
+type    neg     bool -> bool.
+type    forall  (i -> bool) -> bool.
+type	some    (i -> bool) -> bool.
+type    perp    bool.
+
+infixr  and 140.
+infixr  or  140.
+infixr  imp 130.
+
+
+
+/* File nonlogical.sig. This file defines the encoding of the non-logical 
+vocabulary of a first-order logic. */
+
+sig  nonlogical.
+
+accum_sig  logic.
+
+type    a               i.
+type    b               i.
+type	jar		i.
+
+
+type    p               i -> bool.
+type    q               i -> bool.
+type	sterile		i -> bool.
+type	dead		i -> bool.
+type	animal		i -> bool.
+type	bug		i -> bool.
+type	heated		i -> bool.
+
+type	in		i -> i -> bool.
+
+
+
+/* File ndproofs.sig. This file defines the the signature for proof terms in 
+a natural deduction setting.  */
+
+sig  ndproofs.
+
+accum_sig  logic.
+
+kind    proof_object	type.
+
+type    and_i           proof_object -> proof_object -> proof_object.
+type    or_i1           proof_object -> proof_object.
+type    or_i2           proof_object -> proof_object.
+type    imp_i           (proof_object -> proof_object) -> proof_object.
+type    forall_i        (i -> proof_object) -> proof_object.
+type    exists_i        i -> proof_object -> proof_object.
+type    and_e1          proof_object -> proof_object.
+type    and_e2          proof_object -> proof_object.
+type    imp_e           proof_object -> proof_object -> proof_object.
+type    forall_e        i -> proof_object -> proof_object.
+type    or_e            proof_object -> (proof_object -> proof_object) ->
+                         (proof_object -> proof_object) -> proof_object.
+type    exists_e        proof_object ->
+                         (i -> proof_object -> proof_object) ->
+                         proof_object.
+
+
+
+/* File goaltypes.sig. This file contains the type declarations for 
+building goal expressions.           */
+
+sig  goaltypes.
+
+kind    goal            type.
+
+type    truegoal        goal.
+type    andgoal         goal -> goal -> goal.
+type    allgoal         (A -> goal) -> goal.
+
+
+
+
+/* File listmanip.sig. Signature file for list manipulating predicates
+used in the theorem prover */
+
+sig listmanip.
+
+type    member                  A -> (list A) -> o.
+type    member_and_rest         A -> (list A) -> (list A) -> o.
+type    nth_item                int -> A -> (list A) -> o.
+type    nth_item_and_rest       int -> A -> (list A) -> (list A) -> o.
+type    member_move_to_end      A -> (list A) -> (list A) -> o.
+type    add_to_end              A -> (list A) -> (list A) -> o.
+
+
+
+
+
+/* File listmanip.sig. Various simple list manipulation programs
+needed for writing our theorem provers are defined here.  All of these
+programs are essentially first-order and correspond to code one would
+write in normal Prolog.  */
+
+module listmanip.
+
+type    member                  A -> (list A) -> o.
+type    member_and_rest         A -> (list A) -> (list A) -> o.
+type    nth_item                int -> A -> (list A) -> o.
+type    nth_item_and_rest       int -> A -> (list A) -> (list A) -> o.
+type    member_move_to_end      A -> (list A) -> (list A) -> o.
+type    add_to_end              A -> (list A) -> (list A) -> o.
+
+member X (X::L) :- !.
+member X (Y::L) :- member X L.
+
+member_and_rest A (A::Rest) Rest.
+member_and_rest A (B::Tail) (B::Rest) :-
+  member_and_rest A Tail Rest.
+
+nth_item 0 A List :- !, member A List.
+nth_item 1 A (A::Rest) :- !.
+nth_item N A (B::Tail) :-
+  (N1 is (N - 1)), nth_item N1 A Tail.
+
+nth_item_and_rest 0 A List Rest :- !,
+  member_and_rest A List Rest.
+nth_item_and_rest 1 A (A::Rest) Rest.
+nth_item_and_rest N A (B::Tail) (B::Rest) :-
+  (N1 is (N - 1)),
+  nth_item_and_rest N1 A Tail Rest.
+
+member_move_to_end A (A::Rest) NewList :-
+  add_to_end A Rest NewList.
+member_move_to_end A (B::Tail) (B::NewList) :-
+  member_move_to_end A Tail NewList.
+
+add_to_end A nil (A::nil).
+add_to_end A (Head::Tail) (Head::NewTail) :-
+  add_to_end A Tail NewTail.
+
+
+
+/* File ndtac.sig, The interface file for a set of primitive tactics
+for a fragment of first-order logic. */
+
+sig  ndtac. 
+
+accum_sig goaltypes, ndproofs, logic.
+
+kind    judgment	type.
+kind    answer		type.
+
+type    of_type		proof_object -> bool -> judgment.
+type    -->		(list judgment) -> judgment -> goal.
+
+type	yes		answer.
+
+type	exists_e_tac	int -> goal -> goal -> o.
+type	or_e_tac	int -> goal -> goal -> o.
+type	forall_e_query	int -> goal -> goal -> o.
+type	forall_e_tac	int -> goal -> goal -> o.
+type	fchain_tac	int -> goal -> goal -> o.
+type	bchain_tac	int -> goal -> goal -> o.
+type	imp_e_retain	int -> goal -> goal -> o.
+type	imp_e_tac	int -> goal -> goal -> o.
+type	and_e_tac	int -> goal -> goal -> o.
+type	exists_i_query	goal -> goal -> o.
+type	exists_i_tac	goal -> goal -> o.
+type	forall_i_tac	goal -> goal -> o.
+type	imp_i_tac	goal -> goal -> o.
+type	or_i2_tac	goal -> goal -> o.
+type	or_i1_tac	goal -> goal -> o.
+type	and_i_tac	goal -> goal -> o.
+type	close_tacn	int -> goal -> goal -> o.
+type	close_tac	goal -> goal -> o.
+
+infix   of_type 120.
+infix   --> 110.
+
+
+
+/* File ndtac.mod. This module defines primitive tactics for a
+fragment of first-order logic. The proof objects that are built to
+complement the use of the tactics here are in the form of natural
+deduction proofs.  */
+
+module ndtac.
+
+accum_sig goaltypes, ndproofs, logic.
+
+accumulate listmanip.
+
+kind    judgment	type.
+kind    answer		type.
+
+type    of_type		proof_object -> bool -> judgment.
+type    -->		(list judgment) -> judgment -> goal.
+
+type	yes		answer.
+
+type	exists_e_tac	int -> goal -> goal -> o.
+type	or_e_tac	int -> goal -> goal -> o.
+type	forall_e_query	int -> goal -> goal -> o.
+type	forall_e_tac	int -> goal -> goal -> o.
+type	fchain_tac	int -> goal -> goal -> o.
+type	bchain_tac	int -> goal -> goal -> o.
+type	imp_e_retain	int -> goal -> goal -> o.
+type	imp_e_tac	int -> goal -> goal -> o.
+type	and_e_tac	int -> goal -> goal -> o.
+type	exists_i_query	goal -> goal -> o.
+type	exists_i_tac	goal -> goal -> o.
+type	forall_i_tac	goal -> goal -> o.
+type	imp_i_tac	goal -> goal -> o.
+type	or_i2_tac	goal -> goal -> o.
+type	or_i1_tac	goal -> goal -> o.
+type	and_i_tac	goal -> goal -> o.
+type	close_tacn	int -> goal -> goal -> o.
+type	close_tac	goal -> goal -> o.
+
+infix   of_type 120.
+infix   --> 110.
+
+close_tac (Gamma --> (P of_type A)) truegoal :-
+  member (P of_type A) Gamma.
+
+close_tacn N (Gamma --> P of_type A) truegoal :-
+  nth_item N (P of_type A) Gamma.
+
+and_i_tac (Gamma --> (and_i P1 P2) of_type A and B)
+          (andgoal (Gamma --> P1 of_type A) (Gamma --> P2 of_type B)).
+
+or_i1_tac (Gamma --> (or_i1 P) of_type A or B)
+          (Gamma --> P of_type A).
+
+or_i2_tac (Gamma --> (or_i2 P) of_type A or B)
+          (Gamma --> P of_type B).
+
+imp_i_tac (Gamma --> (imp_i P) of_type A imp B)
+          (allgoal PA\ (((PA of_type A) :: Gamma) --> (P PA) of_type B)).
+
+forall_i_tac (Gamma --> (forall_i P) of_type forall A)
+             (allgoal T\ (Gamma --> (P T) of_type (A T))).
+
+exists_i_tac (Gamma --> (exists_i T P) of_type some A)
+             (Gamma --> P of_type (A T)).
+
+exists_i_query (Gamma --> (exists_i T P) of_type some A)
+               (Gamma --> P of_type (A T)) :-
+  print "Enter substitution term: ", read T.
+
+and_e_tac N (Gamma --> PC of_type C)
+            ((((and_e1 P) of_type A) :: (((and_e2 P) of_type B) :: Gamma1)) 
+                     --> PC of_type C) :-
+  nth_item_and_rest N (P of_type A and B) Gamma Gamma1.
+
+imp_e_tac N (Gamma --> PC of_type C)
+            (andgoal (Gamma1 --> PA of_type A)
+                     ((((imp_e PA P) of_type B)::Gamma1) --> PC of_type C)) :-
+  nth_item_and_rest N (P of_type A imp B) Gamma Gamma1.
+
+imp_e_retain N (Gamma --> PC of_type C)
+               (andgoal (Gamma --> PA of_type A)
+                        ((((imp_e PA P) of_type B) :: Gamma) 
+                                        --> PC of_type C)) :-
+  nth_item N (P of_type A imp B) Gamma.
+
+bchain_tac N (Gamma --> (imp_e PA P) of_type B)
+             (Gamma1 --> PA of_type A) :-
+  nth_item_and_rest N (P of_type A imp B) Gamma Gamma1.
+
+fchain_tac N (Gamma --> PC of_type C)
+             ((((imp_e PA P) of_type B)::Gamma2) --> PC of_type C) :-
+  nth_item_and_rest N (P of_type A imp B) Gamma Gamma1,
+  member_and_rest (PA of_type A) Gamma1 Gamma2.
+
+forall_e_tac N (Gamma --> PC of_type C)
+               ((((forall_e T P) of_type (A T)) :: Gamma1) --> PC of_type C) :-
+  nth_item_and_rest N (P of_type forall A) Gamma Gamma1.
+
+forall_e_query N (Gamma --> PC of_type C)
+                 ((((forall_e T P) of_type (A T))::Gamma1) --> PC of_type C) :-
+  print "Enter substitution term: ", read T,
+  print "Remove hypothesis? ",
+  (read yes, nth_item_and_rest N (P of_type forall A) Gamma Gamma1;
+   Gamma1 = Gamma, nth_item N (P of_type forall A) Gamma).
+
+or_e_tac N (Gamma --> (or_e P P1 P2) of_type C)
+          (andgoal (allgoal PA\ (((PA of_type A)::Gamma1) 
+                                          --> (P1 PA) of_type C))
+                   (allgoal PB\ (((PB of_type B)::Gamma1) 
+                                          --> (P2 PB) of_type C))) :-
+  nth_item_and_rest N (P of_type A or B) Gamma Gamma1.
+
+exists_e_tac N (Gamma --> (exists_e P PC) of_type C)
+               (allgoal T\ (allgoal PA\
+                 (((PA of_type (A T))::Gamma1) --> (PC T PA) of_type C))) :-
+  nth_item_and_rest N (P of_type some A) Gamma Gamma1.
+
+
+
+/* File goalred.sig. Interface to a module for simplifying goals */
+
+sig  goalred.
+
+accum_sig   goaltypes. 
+
+type    goalreduce      goal -> goal -> o.
+
+
+
+/* File goalred.mod. This module contains code for simplifying
+goals. Currently the only simplification is that of removing trivial
+goals (truegoal) from larger goal expressions. */
+
+module goalred.
+
+accum_sig  goaltypes.
+
+type    goalreduce      goal -> goal -> o.
+
+goalreduce (andgoal truegoal Goal) OutGoal :-
+  !, goalreduce Goal OutGoal.
+
+goalreduce (andgoal Goal truegoal) OutGoal :-
+  !, goalreduce Goal OutGoal.
+
+goalreduce (allgoal T\ truegoal) truegoal :- !.
+
+goalreduce Goal Goal.
+
+
+
+/* File tacticals.sig. Interface for a module that contains code for
+combining simpler tactics into more involved ones. */
+
+sig  tacticals. 
+
+accum_sig  goaltypes.
+
+type    maptac          (goal -> goal -> o) -> goal -> goal -> o.
+type    then            (goal -> goal -> o)
+                          -> (goal -> goal -> o) -> goal -> goal -> o.
+type    orelse          (goal -> goal -> o)
+                          -> (goal -> goal -> o) -> goal -> goal -> o.
+type    idtac           goal -> goal -> o.
+type    repeattac       (goal -> goal -> o) -> goal -> goal -> o.
+type    try             (goal -> goal -> o) -> goal -> goal -> o.
+type    complete        (goal -> goal -> o) -> goal -> goal -> o.
+
+
+
+/* File tacticals.mod. Tacticals provide a calculus for combining
+primitive tactics into compound tactics.  Several tacticals are
+defined below. */
+
+module tacticals.
+
+accumulate  goalred.
+
+type    maptac          (goal -> goal -> o) -> goal -> goal -> o.
+type    then            (goal -> goal -> o)
+                          -> (goal -> goal -> o) -> goal -> goal -> o.
+type    orelse          (goal -> goal -> o)
+                          -> (goal -> goal -> o) -> goal -> goal -> o.
+type    idtac           goal -> goal -> o.
+type    repeattac       (goal -> goal -> o) -> goal -> goal -> o.
+type    try             (goal -> goal -> o) -> goal -> goal -> o.
+type    complete        (goal -> goal -> o) -> goal -> goal -> o.
+
+%  maptac will map a tactical over a compound goal structure.  This
+%  is useful since we only need to have primitive tactics work on
+%  primitive goals.
+
+maptac Tac truegoal truegoal.
+
+maptac Tac (andgoal InGoal1 InGoal2) OutGoal :-
+  maptac Tac InGoal1 OutGoal1,
+  maptac Tac InGoal2 OutGoal2,
+  goalreduce (andgoal OutGoal1 OutGoal2) OutGoal.
+
+maptac Tac (allgoal InGoal) OutGoal :-
+  pi T\ (maptac Tac (InGoal T) (OutGoal1 T)),
+  goalreduce (allgoal OutGoal1) OutGoal.
+
+maptac Tac InGoal OutGoal :-
+  Tac InGoal OutGoal.
+
+%  The next three clauses define three familar and basic tactics.
+
+then Tac1 Tac2 InGoal OutGoal :-
+  Tac1 InGoal MidGoal,
+  maptac Tac2 MidGoal OutGoal.
+
+orelse Tac1 Tac2 InGoal OutGoal :-
+  Tac1 InGoal OutGoal,!;
+  Tac2 InGoal OutGoal.
+
+idtac Goal Goal.
+
+% The next three clauses define certain other useful tacticals.
+
+repeattac Tac InGoal OutGoal :-
+  orelse (then Tac (repeattac Tac)) idtac InGoal OutGoal.
+
+try Tac InGoal OutGoal :-
+  orelse Tac idtac InGoal OutGoal.
+
+complete Tac InGoal truegoal :-
+  Tac InGoal truegoal.
+
+
+
+/* File formulas.sig. Interface to a module containing the encodings of
+a set of formulas. */
+
+sig  formulas. 
+
+accum_sig  logic, nonlogical. 
+
+kind  name  type. 
+
+type  bugs, baffler, cases1   name.
+
+type  formula  name -> bool -> o. 
+
+
+
+/* File formulas.mod. This file contains an encoding of some
+first-order formulas */
+
+module formulas.
+
+accum_sig  logic, nonlogical.
+
+kind	name		type.
+
+type	formula		name -> bool -> o.
+
+formula bugs
+ (((heated jar) and (forall X\ ((bug X) imp (animal X))) and
+   (forall X\ (forall Y\ (((heated Y) and (in X Y) and (animal X))
+                            imp (dead X)))) and
+   (forall Y\ ((forall X\ (((in X Y) and (bug X)) imp (dead X)))
+    imp (sterile Y))))
+  imp (sterile jar)).
+
+
+formula baffler (some X\ (forall Y\ ((p X) imp (p Y)))).
+
+formula cases1 (((q a) or (q b)) imp (some X\ (q X))).
+
+      
+
+% File inter.sig. Interface to an interactive theorem prover
+
+sig  inter.
+
+accum_sig  logic, nonlogical, formulas, ndproofs, ndtac, tacticals.
+
+type	inter_top	name -> proof_object -> goal -> o.
+type	inter		goal -> goal -> o.
+type	do		o -> goal -> goal -> o.
+type	quitg		goal -> goal -> o.
+type	backup		goal -> goal -> o.
+type	print_form_list	list judgment -> int -> o.
+type    nl              o.
+type    write           A -> o.
+
+
+
+/* File inter.mod. An interactive theorem prover based on the use of
+tactics and tacticals. */
+
+module inter.
+
+accum_sig  formulas.
+
+accum_sig  logic, nonlogical, formulas, ndproofs, ndtac.
+
+accumulate ndtac, tacticals, formulas.
+
+type	inter_top	name -> proof_object -> goal -> o.
+type	inter		goal -> goal -> o.
+type	do		o -> goal -> goal -> o.
+type	quitg		goal -> goal -> o.
+type	backup		goal -> goal -> o.
+type	print_form_list	list judgment -> int -> o.
+type    nl              o.
+type    write           A -> o.
+
+inter_top Name P OutGoal :- formula Name Formula,
+  inter (nil --> P of_type Formula) OutGoal.
+
+
+inter (Gamma --> P of_type A) NewGoal :-
+  nl, print "Assumptions: ",
+  nl, print_form_list Gamma 1,
+  nl, print "Conclusion: ",
+  nl, write A, nl,
+  print "Enter tactic: ", read Tac,
+  process_input Tac (Gamma --> P of_type A) NewGoal.
+
+process_input backup _ _ :- !, fail.
+process_input quitg NewGoal NewGoal :- !.
+process_input (do G) OldGoal NewGoal :- G, inter OldGoal NewGoal.
+process_input Tac OldGoal NewGoal :-
+  Tac OldGoal MidGoal, maptac inter MidGoal NewGoal.
+process_input _ OldGoal NewGoal :- 
+  inter OldGoal NewGoal. 
+
+print_form_list nil N.
+print_form_list ((P of_type A)::Tail) N :-
+  write N, print " ", write A, nl,
+  (N1 is (N + 1)),
+  print_form_list Tail N1.
+
+write A :- term_to_string A Str, print Str.
+nl :- print "\n".
+

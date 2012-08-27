@@ -1,0 +1,305 @@
+STRUCTURE OF THE BYTECODE FILE
+==============================
+
+We assume for the moment that there is a 1-1 mapping between a
+bytecode file and a module and that the names of these are the same. 
+However, we still bracket the bytecode by a module name marker and
+name and an endmodule marker. This is done to simplify a possible
+future transition to a situation where files contain multiple modules. 
+
+The bytecode file is divided into 17 segments whose purpose and use is
+described in detail in the sibling file
+
+      schemeformodules.txt
+
+The structure of all segments is spelled out explicitly here. This
+file forms an interface between the compiler and the loader. While
+changes can be made to it to suit the needs of either, these changes
+must be approved by a gatekeeper (GN at UMN) and recorded in this
+file first before they become official. 
+
+Code for find code functions
+----------------------------
+Currently only two possibilities are contemplated: a sequential search
+function or a hash function. The choice is indicated by a 1 byte
+number, 0 for sequential search and 1 for hash table based search. 
+
+
+Fixity of constants/operators
+-----------------------------
+The following possibilities exist (not all need be used by the
+compiler or be present in the language eventually): 
+
+infix        ---   coded as 0
+infixl       ---   coded as 1
+infixr       ---   coded as 2
+none         ---   coded as 3
+prefix       ---   coded as 4
+prefixr      ---   coded as 5
+postfix      ---   coded as 6
+postfixl     ---   coded as 7
+
+
+Bytecode version number
+-----------------------
+Each change to this file should be accompanied by an increment to the
+bytecode version number.  Compilers should identify their output with
+the current version number, and loaders should compare the version
+number of every bytecode file to the current version number.  Loaders
+should refuse to load a file for which these version numbers do not
+match.
+
+This revision of bytecode.txt is number 2.  Any code based on this
+file should identify itself with this value.
+
+
+Space
+-----
+The bytecode header contains fields indicating bytes of space needed
+for strings, type skeletons, code, and other header info.  These refer
+to the number of bytes needed in memory, and are used directly by the
+loader for this purpose.
+
+Note that the field for string space size should be rounded up to the
+next multiple of four to ensure longword alignment.
+
+
+Format of bytecode
+------------------
+In the presentation below, line breaks and blank lines are introduced
+for the sake of readability. These components will not appear as such
+in the actual bytecode.
+
+Multibyte integers are stored with the most significant byte appearing
+first in the file.
+
+//Common field formats
+[String] (Strings should not contain a '\0' terminator).
+<length of string in bytes> --- 4 bytes
+{
+  <ith character of string> --- 1 byte
+}
+
+[Kind Index]
+<mark global(0)/local(1)/pervasive(3)> --- 1 byte
+<index into kind table> --- 2 bytes
+
+[Constant Index]
+<mark global(0)/local(1)/hidden(2)/pervasive(3)> --- 1 byte
+<index into constant table> --- 2 bytes
+
+//Beginning of Module description
+<bytecode version number> --- 1 word
+<module name> --- [String]
+
+<number of bytes of space needed for code> --- 1 word
+
+[Global Kinds]
+<number of global kinds> --- 2 bytes
+{
+  [Global Kind]
+  <arity> --- 1 byte
+  <name> --- [String]
+}
+
+[Local Kinds]
+<number of local kinds> --- 2 bytes
+{
+  [Local Kind]
+  <arity> --- 1 byte
+}
+
+[Type Skeletons]
+<number of type skeletons> --- 2 bytes
+{
+  [Type Skeleton]
+  {
+    <Arrow = 0> --- 1 byte
+    <Left argument> --- [Type Skeleton]
+    <Right argument> --- [Type Skeleton]
+  } or {
+    <Kind = 1> --- 1 byte
+    <index> --- [Kind Index]
+    <arity> --- 1 byte
+    <arguments> --- kind arity [Type Skeleton]s
+  } or {
+    <Var = 2> --- 1 byte
+    <offset> --- 1 byte
+  }
+}
+
+[Global Constants]
+<number of global constants> --- 2 bytes
+{
+  [Global Constant]
+  <fixity> --- 1 byte
+  <precedence> --- 1 byte
+  <type env size> --- 1 byte
+  <name> --- [String]
+  <index into type skeleton list> --- 2 bytes
+}
+
+[Local Constants]
+<number of local constants> --- 2 bytes
+{
+  [Local Constant]
+  <fixity> --- 1 byte
+  <precedence> --- 1 byte
+  <type env size> --- 1 byte
+  <index into type skeleton list> --- 2 bytes
+}
+
+[Hidden Constants]
+<number of hidden constants> --- 2 bytes
+{
+  [Hidden Constant]
+  <index into type skeleton list> --- 2 bytes
+}
+
+[Strings]
+<number of strings> --- 2 bytes
+{
+  <ith string> --- [String]
+}
+
+[Implication Goal Tables]
+<number of implication goals> --- 2 bytes
+{
+  [Implication goal]
+  [Next Clause Table]
+  <number of entries in next clause table> --- 2 bytes
+  {
+    <entry index> --- [Constant index]
+  }
+  <find function code> --- 1 byte (1 = hash, 0 = sequential)
+  [Search Table]
+  <number of predicates> --- 2 bytes
+  {
+    <entry index> --- [Constant index]
+    <relative address of code> --- 1 word
+  }
+}
+
+[Hash Tables]
+<number of hash tables> --- 2 bytes
+{
+  [Hash Table]
+  <number of entries> --- 2 bytes
+  {
+    <entry index> --- [Constant index]
+    <relative address of code> --- 1 word
+  }
+}
+
+[Bound Variable Tables]
+<number of bound variable tables>
+{
+  [Bound Variable Table]
+  <number of entries> --- 2 bytes
+  {
+    <index> --- 1 byte
+    <relative address of code> --- 1 word
+  }
+}
+
+[Import Table]
+[Next Clause Table]
+<number of global, non-exportdef predicates> --- 2 bytes
+{
+  <entry index> --- [Constant index]
+}
+[Exportdef Predicates Table]
+<number of exportdef predicates> --- 2 bytes
+{
+  <entry index> --- [Constant index]
+}
+[Local Predicates Table]
+<number of local predicates> --- 2 bytes
+{
+  <entry index> --- [Constant index]
+}
+<code for function to be used to find predicate definitions>  --- 1 byte
+[Search Table]
+<total number of predicates> --- 2 bytes
+{
+  <entry index> --- [Constant index]
+  <relative address of code> --- 1 word
+}
+
+
+[Accumulated Modules]
+<count of accumulated modules> --- 1 byte
+{
+  [Accumulated Module, in reverse order of accumulation]
+  <size of module name> --- 1 byte
+  <sequence of characters defining name>
+  
+  [Kind Renaming Function]
+  <size of kind renaming function> -- 2 bytes
+  {
+    <name of global kind in accumulated module> --- [String]
+    <index into kind tables of this module> --- [Kind index]
+  }
+  
+  [Constant Renaming Function]
+  <size of constant renaming function> --- 2 bytes
+  {
+    <name of global constant in accumulated module> --- [String]
+    <index into constant tables of this module> --- [Kind index]
+  }
+}
+
+[Imported Modules]
+<count of accumulated modules> --- 1 byte
+{
+  [Imported Module]
+  <size of module name> --- 1 byte
+  <sequence of characters defining name>
+  
+  [Kind Renaming Function]
+  <size of kind renaming function> -- 2 bytes
+  {
+    <name of global kind in imported module> --- [String]
+    <index into kind table of this module> --- [Kind index]
+  }
+  
+  [Constant Renaming Function]
+  <size of constant renaming function> --- 2 bytes
+  {
+    <name of global constant in imported module> --- [String]
+    <index into constant tables of this module> --- [Kind index]
+  }
+}
+
+[Bytecode]
+{
+This part will consist of a sequence of instructions each 
+of which is given by the op code followed by info about the 
+requisite number of operands. The op codes for various 
+instructions are available in the file instructions.h in the 
+simulator code directory. This file also decribes a code for
+each kind of operand. The presentation of operand info in the
+bytecode is as follows:
+   P (padding)               ---  null field
+   WP (Word padding)         ---  null field
+   SEG(Module Segment ID)    ---  1 byte number (dummy value in .lpo)
+   R (register no)           ---  1 byte number
+   E (env variable)          ---  1 byte number
+   N (next clause in i.p.)   ---  1 byte number
+   I1 (small integer)        ---  1 byte number
+   CE (closure env var)      ---  1 byte number
+   C  (constant index)       ---  [Constant index]
+   K  (kind index)           ---  [Kind index]
+   MT (module table address) ---  2 byte index
+   IT (impl. table address)  ---  2 byte index
+   HT (hash table address)   ---  2 byte index
+   BVT (bound variable table address) --- 2 byte index
+   S  (string start address) ---  2 byte index
+   L  (code location)        ---  4 byte relative address: offset in
+        	bytes from start of
+        	instruction
+   I (integer)               ---  4 bytes, encoded as a single long
+        	integer
+   F (floating point number) ---  8 bytes: first 4 bytes are mantissa,
+        	second 4 bytes are exponent.
+}
