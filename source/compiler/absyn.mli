@@ -249,14 +249,15 @@ and amodule =
       atypeabbrev Table.SymbolTable.t * astringinfo list * akind list *
       akind list * aconstant list * aconstant list * aconstant list ref *
       askeleton list * askeleton list ref * aclauseinfo ref)
-  | Signature of (string * akind list * aconstant list)
+  | Signature of (string * akind list * aconstant list 
+  * akind list * aconstant list )
   | ErrorModule
 
 and aimportedmodule = 
   ImportedModule of (string * amodule)
 
 and aaccumulatedmodule =
-  AccumulatedModule of (string * amodule)
+  AccumulatedModule of (string * amodule * int)
 
 and aclauseinfo = 
     ClauseBlocks of aclausesblock list
