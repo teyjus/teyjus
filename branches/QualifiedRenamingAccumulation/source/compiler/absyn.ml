@@ -947,10 +947,6 @@ let getConstantClosedRef = function
   Constant(_,_,_,_,_,_,c,_,_,_,_,_,_,_,_,_,_) ->
     c
 
-
-let setConstantClosed c b = (getConstantClosedRef c) := b 
-
-
 let getConstantUseOnly = function
   Constant(_,_,_,_,u,_,_,_,_,_,_,_,_,_,_,_,_) ->
     !u
