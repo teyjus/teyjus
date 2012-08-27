@@ -410,7 +410,7 @@ let collectAccs accs =
   let rec collectAccsAux accs renamingInfo =
     match accs with
       [] -> (List.rev renamingInfo)
-    | (Absyn.AccumulatedModule(_, amod) :: rest) ->
+    | (Absyn.AccumulatedModule(_, amod, _) :: rest) ->
 	collectAccsAux rest ((collectRenamingInfo amod) :: renamingInfo)
   in 
   collectAccsAux accs []
@@ -1110,7 +1110,7 @@ let collectClosedConstsInAccs accs =
   let rec collectClosedConstsInAccsAux accs consts =
     match accs with
       [] -> List.rev consts
-    | (Absyn.AccumulatedModule(_, asig) :: rest) ->
+    | (Absyn.AccumulatedModule(_, asig, _) :: rest) ->
 	let consts' = 
 	  collectClosedConsts (Absyn.getSignatureGlobalConstantsList asig) consts
 	in

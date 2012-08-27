@@ -45,6 +45,14 @@ type pfixitykind =
 (* Symbols *)
 type psymbol = Symbol of symbol * pidkind * pos
 
+(* Accumulate statements *)
+and paccum = Accumulate of psymbol * int * prenaming list option
+
+(* Qualified renamings *)
+and prenaming =
+| TypeRenaming of psymbol * psymbol * pos
+| KindRenaming of psymbol * psymbol * pos
+
 (* Type Symbols *)
 and ptypesymbol = TypeSymbol of (symbol * ptype option * pidkind * pos)
 
@@ -90,11 +98,11 @@ and pfixity = Fixity of psymbol list * pfixitykind * int * pos
 type pmodule =
   | Module of string * pconstant list * pconstant list * 
       pconstant list * pconstant list * pconstant list * pfixity list *
-      pkind list * pkind list * ptypeabbrev list * pclause list * psymbol list *
-      psymbol list * psymbol list * psymbol list
+      pkind list * pkind list * ptypeabbrev list * pclause list * 
+      paccum list * paccum list * paccum list * psymbol list
   | Signature of string * pconstant list * pconstant list *
       pconstant list * pkind list *
-      ptypeabbrev list * pfixity list * psymbol list * psymbol list
+      ptypeabbrev list * pfixity list * paccum list * paccum list
 
 let string_of_pos pos = Errormsg.string_of_pos pos
 
@@ -286,3 +294,43 @@ let getModuleClauses = function
   | _ ->
       Errormsg.impossible Errormsg.none
         "Preabsyn.getModuleClauses: invalid module"
+
+let getModuleName m =
+  match m with
+    Module(name,_,_,_,_,_,_,_,_,_,_,_,_,_,_) -> name
+  | _ -> Errormsg.impossible Errormsg.none 
+    "Preabsyn.getModuleName: invalid module"
+
+let getSignatureName s =
+  match s with
+    Signature(name,_,_,_,_,_,_,_,_) -> name
+  | _ -> Errormsg.impossible Errormsg.none
+    "Preabsyn.getSignatureName: invalid signature"
+
+
+let getSymbol = function | Symbol(s,_,_) -> s
+let getSymbolPos = function | Symbol(_,_,p) -> p
+
+
+(* Accumulate auxillary functions *)
+let getAccumulatePsymbol = function | Accumulate(s,_,_) -> s
+let getAccumulateID = function | Accumulate(_,i,_) -> i
+let getAccumulateRenaming = function | Accumulate(_,_,r) -> r
+let areAccumulateEqualP x y = (getAccumulateID x) == (getAccumulateID y)
+  
+
+(* Qualified renamings auxillaries *)
+let isTypeRenamingP = function | TypeRenaming(_) -> true | _ -> false
+let getRenamingFromPsymbol = 
+  function 
+  | TypeRenaming(s,_,_) -> s
+  | KindRenaming(s,_,_) -> s
+let getRenamingToPsymbol = 
+  function 
+  | TypeRenaming(_,s,_) -> s
+  | KindRenaming(_,s,_) -> s
+let getRenamingPos = 
+  function 
+  | TypeRenaming(_,_,p) -> p
+  | KindRenaming(_,_,p) -> p
+

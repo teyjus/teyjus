@@ -175,6 +175,9 @@ rule initial = parse
 | ":"           {COLON}
 | "|"           {VBAR}
 
+| "{"           {LCURLY}
+| "}"           {RCURLY}
+
 | (NUM? "." NUM) as num   {REALLIT(float_of_string(num))}
 | NUM as num              {INTLIT(int_of_string(num))}
 

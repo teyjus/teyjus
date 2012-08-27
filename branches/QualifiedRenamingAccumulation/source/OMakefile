@@ -50,6 +50,7 @@ CMP_ML[] =
     $(CMP)/translate
     $(CMP)/typereduction
     $(CMP)/types
+    $(CMP)/accumaux
 
 DEP_ML[] =
     $(CMP)/compile
@@ -76,6 +77,7 @@ PAR_ML[] =
     $(CMP)/table
     $(CMP)/translate
     $(CMP)/types
+    $(CMP)/accumaux
 
 DIS_ML[] =
     $(DIS)/context

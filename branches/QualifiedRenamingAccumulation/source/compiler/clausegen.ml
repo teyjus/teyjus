@@ -1903,7 +1903,7 @@ and genAtomicGoal goal cl goalNum last chunk chunks insts startLoc =
 	      ([Instr.Ins_execute_link_only(pred)], Instr.getSize_execute_link_only,
 	       goalNum)
 	  else (* do not have code *)
-	    if (List.memq pred (getAccConsts ())) then
+	    if (List.mem pred (getAccConsts ())) then
 	      ([Instr.Ins_execute_link_only(pred)], Instr.getSize_execute_link_only,
 	       goalNum)
 	    else
@@ -1934,7 +1934,7 @@ and genAtomicGoal goal cl goalNum last chunk chunks insts startLoc =
 	  ([Instr.Ins_call_link_only(envsize, pred)], Instr.getSize_call_link_only,
 	   myGoalNum)
       else (* do not have code *)
-	if (List.memq pred (getAccConsts ())) then 
+	if (List.mem pred (getAccConsts ())) then 
 	  ([Instr.Ins_call_link_only(envsize, pred)], Instr.getSize_call_link_only,
 	   myGoalNum)
 	else

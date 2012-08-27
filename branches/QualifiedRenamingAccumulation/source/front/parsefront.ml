@@ -72,7 +72,7 @@ let writeModule m clauses newclauses oc =
   let writeImp oc (ImportedModule(name,_)) =
     writeLine oc ("import " ^ name ^ ".")
   in
-  let writeAcc oc (AccumulatedModule(name,_)) =
+  let writeAcc oc (AccumulatedModule(name,_,_)) =
     writeLine oc ("accumulate " ^ name ^ ".")
   in
   

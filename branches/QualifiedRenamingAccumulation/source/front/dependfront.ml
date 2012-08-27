@@ -65,7 +65,13 @@ let rec lpo_deps modname =
           | Preabsyn.Module(_, _, _, _, _, _, _, _, _, _, _,
                             accum_mods, accum_sigs, use_sigs, import_mods) ->
               let direct_deps =
-                List.map psymbol_to_name (accum_mods @ import_mods)
+                (List.map 
+                  (function Preabsyn.Accumulate(accum,_,_) 
+                    -> psymbol_to_name accum)
+                  (accum_mods))
+                @
+                (List.map psymbol_to_name import_mods)
+                
               in
               let nested_deps =
                 List.flatten (List.map lpo_deps direct_deps)
@@ -101,8 +107,11 @@ let rec sig_deps signame =
         H.add sig_deps_table signame Computing ;
         match compile_signature signame with
           | Preabsyn.Signature(_, _, _, _, _, _, _, accum_sigs, use_sigs) ->
-              let direct_deps =
-                List.map psymbol_to_name (accum_sigs @ use_sigs)
+            let direct_deps =
+                List.map 
+                  (function Preabsyn.Accumulate(accum,_,_) 
+                    -> psymbol_to_name accum)
+                  (accum_sigs @ use_sigs)
               in
               let nested_deps =
                 List.flatten (List.map sig_deps direct_deps)
@@ -120,8 +129,11 @@ let root_sig_deps modname =
       | Preabsyn.Module(_, _, _, _, _, _, _, _, _, _, _,
                         accum_mods, accum_sigs, use_sigs, import_mods) ->
           let direct_deps =
-            List.map psymbol_to_name
-              (accum_mods @ accum_sigs @ use_sigs @ import_mods)
+            (List.map 
+              (function Preabsyn.Accumulate(accum,_,_) 
+            -> psymbol_to_name accum)
+              (accum_mods @ accum_sigs @ use_sigs))
+            @ (List.map psymbol_to_name import_mods)
           in
           let nested_deps =
             List.flatten (List.map sig_deps direct_deps)
