@@ -32,15 +32,20 @@
 * that are injective on a per module basis.
 ******************************************************************)
 let checkRenamingInjectivity accums = 
-  let eq x y =
-    (((Preabsyn.isTypeRenamingP x) == (Preabsyn.isTypeRenamingP y))
+  (* True if the two input renamings have the same range element. *)
+  let eqRange x y =
+    ((Preabsyn.isTypeRenamingP x) == (Preabsyn.isTypeRenamingP y))
     && (Symbol.equal
       (Preabsyn.getSymbol (Preabsyn.getRenamingToPsymbol x))
-      (Preabsyn.getSymbol (Preabsyn.getRenamingToPsymbol y))))
+      (Preabsyn.getSymbol (Preabsyn.getRenamingToPsymbol y)))
   in
+  (* Test each renaming against all other renamings in the list for 
+   * range equality. *)
   let testItemInjectivity rs x =
-    try let _ = List.find (eq x) rs in false with Not_found -> true
+    try let _ = List.find (eqRange x) rs in false with Not_found -> true
   in
+  (* eqRange is commutative therefore a lower traingular all pairs test
+   * is sufficient. *)
   let rec testListInjectivity rs = 
     match rs with
       [] -> true
@@ -60,7 +65,9 @@ let checkRenamingInjectivity accums =
   (* Fold all the errors. *)
   let folder _ = function 
     | None -> ()
-    | (Some p) -> Errormsg.error p "Renaming mapping not injective."
+    | (Some p) -> Errormsg.error p 
+      ("Qualified renaming for accumulate, accum_sig, or use_sig is not "
+      ^"injective.")
   in
   let mapped = List.map mapper accums in List.fold_left folder () mapped
 
@@ -79,23 +86,14 @@ let checkRenamingDomainElements renameopt kindlist constantlist tabbrevlist =
     then 
       let ktest = function  
         | (Preabsyn.Kind(Preabsyn.Symbol(n,a,b)::rest,c,d)) -> eq n fromsym
-        | _ -> false
-      in
-      try 
-        let _ = List.find ktest kindlist in ()
-      with
-        Not_found -> Errormsg.error p 
-          (fromstr ^ " is not a global kind in this signature.")
-    else
-      let ctest = function  
-        | (Preabsyn.Constant(Preabsyn.Symbol(n,a,b)::rest,c,d)) -> eq n fromsym
-        | _ -> false
+        | _ ->  (Errormsg.impossible Errormsg.none 
+                   "Accumaux.checkRenamingDomainElements: ill-formed kind.")
       in
       let ttest = function  
         | (Preabsyn.TypeAbbrev(Preabsyn.Symbol(n,a,b),c,d,e)) -> eq n fromsym
       in
       try 
-        let _ = List.find ctest constantlist in ()
+        let _ = List.find ktest kindlist in ()
       with
         Not_found -> 
           try 
@@ -103,8 +101,20 @@ let checkRenamingDomainElements renameopt kindlist constantlist tabbrevlist =
           with
             Not_found -> Errormsg.error p 
               (fromstr 
-               ^ " is not a global constant/type abbreviation" ^
+               ^ " is not a global kind or global type abbreviation" ^
                  " in this signature.")
+    else
+      let ctest = function  
+        | (Preabsyn.Constant(Preabsyn.Symbol(n,a,b)::rest,c,d)) -> eq n fromsym
+        | _ ->  (Errormsg.impossible Errormsg.none 
+                   ("Accumaux.checkRenamingDomainElements: ill-formed "
+                   ^"constant."))
+      in
+      try 
+        let _ = List.find ctest constantlist in ()
+      with
+        Not_found -> Errormsg.error p 
+          (fromstr ^ " is not a global constant in this signature.")
   in
   match renameopt with
     None -> () 
@@ -131,7 +141,7 @@ let getRenameListForModule
   in
   try Preabsyn.getAccumulateRenaming (List.find finder renamings) with
     Not_found -> Errormsg.impossible Errormsg.none
-      ("Translate.getSignatureRenamingInformation:'"^ name 
+      ("Translate.getRenameListForModule:'"^ name 
        ^ "' has not been accumulated or used.")
 
 (******************************************************************
@@ -313,10 +323,7 @@ let rec renameType
     | Preabsyn.Atom(s,k,p) ->
       (match (renameSymbol true renamesopt s) with
         Some s -> Preabsyn.Atom(s,k,p)
-      | None -> 
-        (match (renameSymbol false renamesopt s) with
-          Some s -> Preabsyn.Atom(s,k,p)
-        | None -> Preabsyn.Atom(s,k,p)))
+      | None -> Preabsyn.Atom(s,k,p))
     | t' -> t'
 (******************************************************************
 * renameConstantFolder:
@@ -384,9 +391,9 @@ let renameTypeAbvsFolder
 : Preabsyn.ptypeabbrev list
 =  match tak with 
     (Preabsyn.TypeAbbrev(Preabsyn.Symbol(n,a,b),c,d,e)) ->
-      (match renameSymbol false renamesopt n with
+      (match renameSymbol true renamesopt n with
         None -> syms
-      | Some s -> 
+      | Some n -> 
         let d = renameType renamesopt d in 
         (Preabsyn.TypeAbbrev(Preabsyn.Symbol(n,a,b),c,d,e))::syms)
 
