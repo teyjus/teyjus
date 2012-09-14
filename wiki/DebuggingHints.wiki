@@ -27,7 +27,7 @@ append (X :: L) K (X :: M) :- append L K M.
 
 The addition of the first line to the usual definition has the effect of printing each call to append before its actual invocation based on the usual definition. To turn off the printing of this "trace" information, all that needs to be done is  commenting out the first line (and, of course, recompiling and re-loading before execution).
 
-The predicate spy is intended to be used by supplying it the goal that one actually wants to invoke in a debugging mode. To understand how exactly this works, consider the following clause for the predicate test that essentially encodes a specific invocation of append. 
+The predicate spy is intended to be used by supplying it as an argument the goal that one actually wants to invoke in a debugging mode. To understand how exactly this works, consider the following clause for the predicate test that essentially encodes a specific invocation of append. 
 
 {{{
 test L :- spy (append L [2,3] [1,2,3])).
