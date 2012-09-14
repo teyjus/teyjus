@@ -15,7 +15,7 @@ spy G :- (bracket ">Entering " G "\n", G, bracket ">Success  " G "\n";
           bracket ">Leaving  " G "\n", fail).
 }}}
 
-These lines can be added to a .mod file containing code that you wish debug. To be able to use the predicates at the top level, you must, of course, also include the type declarations in the corresponding .sig file. 
+These lines can be added to a .mod file containing the code that you wish debug. To be able to use the predicates at the top level, you must, of course, also include the type declarations in the corresponding .sig file. 
 
 The announce predicate never succeeds although it does a print.  It can be used to observe each of the invocations of a particular predicate. For example, consider the following modification of the specification of the usual append predicate on lists:
 
