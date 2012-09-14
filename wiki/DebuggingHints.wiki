@@ -1,0 +1,72 @@
+#summary Some Hints for Debugging Lambda Prolog Programs
+=  Debugging Aids for Teyjus=
+
+The current compiler for Teyjus does not contain direct support for
+debugging.  Fortunately, the ability to write higher-order programs in
+lambda Prolog makes it possible to write some simple and powerful
+debugging aids.  We illustrate two such higher-order programs here.
+
+Consider the following type declaration and clauses.
+      +--------------------------------------------------------+
+type announce, spy    o -> o.
+type bracket          string -> o -> string -> o.  % Auxiliary
+
+bracket Pre G Post :- print Pre, term_to_string G S, print S, print Post.
+announce G :- bracket ">>" G "\n", fail.
+spy G :- (bracket ">Entering " G "\n", G, bracket ">Success  " G "\n";
+          bracket ">Leaving  " G "\n", fail).
+      +--------------------------------------------------------+
+These linear can be added to a .mod file containing code that you wish
+debug.  
+
+The announce predicate never succeeds although it does a print.  It
+can be used to observe how a given predicate is repeatedly called.
+For example, modify the specification of the append program by adding
+a new, first clause.
+      +--------------------------------------------------------+
+append A B C :- announce (append A B C).
+append nil K K.
+append (X :: L) K (X :: M) :- append L K M.
+      +--------------------------------------------------------+
+When you modify append this way, every time append is called, the
+actual call is printed: otherwise, the behavior of append is not
+affected.  Once can simply turn out this announcing of calls to append
+by commenting out this first line (and recompiling).
+
+The predicate spy can be used around any goal formula in the body of a
+program clause.  Consider, for example, the following simple called to
+append. 
+      +--------------------------------------------------------+
+test L :- spy (append L [2,3] [1,2,3])).
+      +--------------------------------------------------------+
+The following queries takes place at the top-level of tjsim.
+      +--------------------------------------------------------+
+[test] ?- test L.
+>Entering append _156 (2 :: 3 :: nil) (1 :: 2 :: 3 :: nil)
+>Success  append (1 :: nil) (2 :: 3 :: nil) (1 :: 2 :: 3 :: nil)
+
+The answer substitution:
+L = 1 :: nil
+
+More solutions (y/n)? y
+>Leaving  append _156 (2 :: 3 :: nil) (1 :: 2 :: 3 :: nil)
+
+no (more) solutions
+
+[test] ?- 
+      +--------------------------------------------------------+
+Notice that the difference between the printing of the goal before and
+after its invocation can reveal changes to some logic variables.
+Notice also that backtracking can have a "success" followed by a
+"leaving".
+
+The few lines above for defining announce and bracket can be inserted
+into any module.  They can also be placed into a single pair of
+.mod/.sig files which are then accumulated the module file you are
+debugging.
+
+Obviously, there could be many variations of how these two predicates
+are defined and deployed.  This use of higher-order predicates provides
+a flexible approach to debugging of code.
+Add your content here.
+
