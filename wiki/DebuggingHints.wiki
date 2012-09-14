@@ -54,6 +54,6 @@ no (more) solutions
 Notice that the difference between the printing of the goal before and
 after its invocation can show the changes that have taken place in the bindings of logic variables through the invocation. Notice also that backtracking can lead to a string of "successes" before the printing of a "leaving".
 
-The few lines above that define announce and bracket can be inserted directly into any module containing the code you want to debug. Alternatively, they can be placed in a "library" module, identifying via suitable .mod and .sig files, and this module can then be accumulated into any context in which the debugging predicates are needed. 
+The few lines above that define announce, spy and bracket can be inserted directly into any module containing the code you want to debug. Alternatively, they can be placed in a "library" module, identified via suitable .mod and .sig files, and this module can then be accumulated into any context in which the debugging predicates are needed. 
 
 Obviously, there can be many variants to the definition and deployment of the two debugging predicates discussed here. In general, the ability to use higher-order predicates supports a flexible approach to debugging of code.
