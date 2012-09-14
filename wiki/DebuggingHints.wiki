@@ -3,7 +3,7 @@
 
 The Teyjus system currently does not provide  direct support for debugging.  Fortunately, the ability to write higher-order programs in Lambda Prolog makes it possible for one to quickly build ones own debugging aids that could also be quite powerful. We illustrate two such tools here.
 
-The particular programs that are of interest are defined by the following type declarations and clauses
+The particular programs that are of interest are defined by the following type declarations and clauses:
 
 {{{
 type announce, spy    o -> o.
