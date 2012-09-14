@@ -14,7 +14,7 @@ The following table of contents provides you a path to the different kinds of in
 || TeyjusPrograms          ||      The Syntax of Teyjus Programs                    ||
 || TeyjusBuiltins          ||      The Builtin Predicates Supported                 ||
 || [Examples]              ||      Examples of Lambda Prolog Programs               ||
-|| [Debugging Hints]       ||      Some suggestions for building debugging tools    ||
+|| [DebuggingHints]        ||      Some suggestions for building debugging tools    ||
 || PeopleInvolved          ||      The people behind the system                     ||
 || ContactingTheAuthors    ||      How to get in touch with the authors             ||
 || ProjectSupport          ||      Acknowledgements of Grant Support                ||
