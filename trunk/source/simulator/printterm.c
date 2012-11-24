@@ -642,6 +642,7 @@ static void PRINT_writeApp(WordPtr outStream, DF_TermPtr tmPtr,
 	PRINT_writePostfixTerm(outStream, head, fix, prec, OP_LEFT_TERM,
 			       OP_APP_FIXITY, OP_APP_PREC, args);
       }
+      arity--; args++;
       break;
     case OP_NONE:
       if (pparen) PRINT_writeLParen(outStream);
