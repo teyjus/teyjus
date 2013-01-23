@@ -437,11 +437,6 @@ and types_equal t1 t2 =
 
 (* string_of_type                    *)
 and string_of_type_ast ty =
-  let rec print' = function
-      t::[] -> (string_of_type_ast t)
-    | t::ts -> (string_of_type_ast t) ^ " " ^ (print' ts)
-    | [] -> ""
-  in
   let ty' = dereferenceType ty in
   match ty' with
       ArrowType(t1, t2) -> "(" ^ (string_of_type_ast t1) ^ " -> " ^ (string_of_type_ast t2) ^ ")"
