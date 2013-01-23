@@ -188,7 +188,7 @@ PAR_MAIN = $(FNT)/parsefront
 if $(mem $(OSTYPE), Cygwin Win32)
     YACC = bison -by
     LEX = flex
-    CFLAGS += -mno-cygwin
+    CC = i686-pc-mingw32-gcc
     INC_C[] += $(INC)/byteswap $(INC)/search
     export
 

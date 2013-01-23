@@ -115,20 +115,6 @@ let getStackState = function Stack(_,state,_,_) -> state
 let getStackPrec = function Stack(_,_,prec,_) -> prec
 let getStackFixity = function Stack(_,_,_,fix) -> fix
 
-let printStack stack =
-  let rec print' data =
-    match data with
-      (StackOp(c,_,_))::ds -> "{" ^ (Absyn.getConstantPrintName c) ^ "}" 
-                                  ^ (print' ds)
-    | (StackTerm(t))::ds -> "{" ^ (Absyn.string_of_term (getTermTerm t)) 
-                                ^ "}" ^ (print' ds)
-    | (StackError)::ds -> "{StackError}" ^ (print' ds)
-    | [] -> ""
-  in
-  
-  
-  ()
-
 let contains env v =
   let find tsym =
     (Symbol.equal (Absyn.getTypeSymbolSymbol tsym) v)
@@ -471,7 +457,6 @@ and parseTerms parsingtoplevel inlist terms fvs bvs amodule stack =
 
   (*  Translate each term in turn.  Once the end of the list has been
       reached, execute the given termination operation. *)
-  let _ = printStack stack in
   match terms with
     (t::ts) ->
       let (stack', fvs') = translate' t in
