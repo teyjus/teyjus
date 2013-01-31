@@ -135,7 +135,7 @@ int LD_CODE_LoadCode(MEM_GmtEnt* ent)
         
           case INSTR_F:
     	      *(INSTR_Float*)(code+j)=LD_getFloat();
-	      fprintf(stderr, "float %f\n", *(INSTR_Float*)(code+j));
+	      LD_debug("float %f\n", *(INSTR_Float*)(code+j));
               //*(Word*)(code+j)=LD_FILE_GETWORD();
               j+=sizeof(Word);///\todo Check length of float encoding across arch types
               break;
