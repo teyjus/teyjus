@@ -11,7 +11,7 @@
 /*                                                                     */
 /***********************************************************************/
 
-/* $Id: misc.h,v 1.30 2004/05/17 17:09:59 doligez Exp $ */
+/* $Id: misc.h 8822 2008-02-29 12:56:15Z doligez $ */
 
 /* Miscellaneous macros and variables. */
 
@@ -46,19 +46,9 @@ typedef size_t asize_t;
 
 /* Export control (to mark primitives and to handle Windows DLL) */
 
-#if defined(_WIN32) && defined(CAML_DLL)
-# define CAMLexport __declspec(dllexport)
-# define CAMLprim __declspec(dllexport)
-# if defined(IN_OCAMLRUN)
-#  define CAMLextern __declspec(dllexport) extern
-# else
-#  define CAMLextern __declspec(dllimport) extern
-# endif
-#else
-# define CAMLexport
-# define CAMLprim
-# define CAMLextern extern
-#endif
+#define CAMLexport
+#define CAMLprim
+#define CAMLextern extern
 
 /* Assertions */
 

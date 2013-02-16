@@ -11,7 +11,7 @@
 /*                                                                     */
 /***********************************************************************/
 
-/* $Id: custom.h,v 1.11.6.1 2005/02/22 14:33:36 doligez Exp $ */
+/* $Id: custom.h 11037 2011-05-12 14:34:05Z xleroy $ */
 
 #ifndef CAML_CUSTOM_H
 #define CAML_CUSTOM_H
@@ -26,11 +26,12 @@ struct custom_operations {
   char *identifier;
   void (*finalize)(value v);
   int (*compare)(value v1, value v2);
-  long (*hash)(value v);
-  void (*serialize)(value v, 
-                    /*out*/ unsigned long * wsize_32 /*size in bytes*/,
-                    /*out*/ unsigned long * wsize_64 /*size in bytes*/);
-  unsigned long (*deserialize)(void * dst);
+  intnat (*hash)(value v);
+  void (*serialize)(value v,
+                    /*out*/ uintnat * wsize_32 /*size in bytes*/,
+                    /*out*/ uintnat * wsize_64 /*size in bytes*/);
+  uintnat (*deserialize)(void * dst);
+  int (*compare_ext)(value v1, value v2);
 };
 
 #define custom_finalize_default NULL
@@ -38,11 +39,12 @@ struct custom_operations {
 #define custom_hash_default NULL
 #define custom_serialize_default NULL
 #define custom_deserialize_default NULL
+#define custom_compare_ext_default NULL
 
 #define Custom_ops_val(v) (*((struct custom_operations **) (v)))
 
 CAMLextern value caml_alloc_custom(struct custom_operations * ops,
-                                   unsigned long size, /*size in bytes*/
+                                   uintnat size, /*size in bytes*/
                                    mlsize_t mem, /*resources consumed*/
                                    mlsize_t max  /*max resources*/);
 

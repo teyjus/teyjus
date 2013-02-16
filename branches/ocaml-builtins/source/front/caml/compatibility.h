@@ -11,7 +11,7 @@
 /*                                                                     */
 /***********************************************************************/
 
-/* $Id: compatibility.h,v 1.13 2004/06/14 14:28:30 doligez Exp $ */
+/* $Id: compatibility.h 8953 2008-07-28 11:59:55Z doligez $ */
 
 /* definitions for compatibility with old identifiers */
 
@@ -211,7 +211,6 @@
 
 /* **** major_gc.c */
 #define heap_start caml_heap_start
-#define heap_end caml_heap_end
 #define page_table caml_page_table
 
 /* **** md5.c */
@@ -237,8 +236,7 @@
 #define young_end caml_young_end
 #define young_ptr caml_young_ptr
 #define young_limit caml_young_limit
-#define ref_table_ptr caml_ref_table_ptr
-#define ref_table_limit caml_ref_table_limit
+#define ref_table caml_ref_table
 #define minor_collection caml_minor_collection
 #define check_urgent_gc caml_check_urgent_gc
 
@@ -259,11 +257,11 @@
 #define do_local_roots caml_do_local_roots
 
 /* **** signals.c */
-#define async_signal_mode caml_async_signal_mode
-#define pending_signal caml_pending_signal
+#define pending_signals caml_pending_signals
 #define something_to_do caml_something_to_do
 #define enter_blocking_section_hook caml_enter_blocking_section_hook
 #define leave_blocking_section_hook caml_leave_blocking_section_hook
+#define try_leave_blocking_section_hook caml_try_leave_blocking_section_hook
 #define async_action_hook caml_async_action_hook
 #define enter_blocking_section caml_enter_blocking_section
 #define leave_blocking_section caml_leave_blocking_section
@@ -304,6 +302,71 @@
 /* **** asmcomp/cmmgen.ml */
 
 /* **** asmcomp/asmlink.ml, asmcomp/cmmgen.ml, asmcomp/compilenv.ml */
+
+/* ************************************************************* */
+
+/* **** otherlibs/bigarray */
+#define int8 caml_ba_int8
+#define uint8 caml_ba_uint8
+#define int16 caml_ba_int16
+#define uint16 caml_ba_uint16
+#define MAX_NUM_DIMS CAML_BA_MAX_NUM_DIMS
+#define caml_bigarray_kind caml_ba_kind
+#define BIGARRAY_FLOAT32 CAML_BA_FLOAT32
+#define BIGARRAY_FLOAT64 CAML_BA_FLOAT64
+#define BIGARRAY_SINT8 CAML_BA_SINT8
+#define BIGARRAY_UINT8 CAML_BA_UINT8
+#define BIGARRAY_SINT16 CAML_BA_SINT16
+#define BIGARRAY_UINT16 CAML_BA_UINT16
+#define BIGARRAY_INT32 CAML_BA_INT32
+#define BIGARRAY_INT64 CAML_BA_INT64
+#define BIGARRAY_CAML_INT CAML_BA_CAML_INT
+#define BIGARRAY_NATIVE_INT CAML_BA_NATIVE_INT
+#define BIGARRAY_COMPLEX32 CAML_BA_COMPLEX32
+#define BIGARRAY_COMPLEX64 CAML_BA_COMPLEX64
+#define BIGARRAY_KIND_MASK CAML_BA_KIND_MASK
+#define caml_bigarray_layout caml_ba_layout
+#define BIGARRAY_C_LAYOUT CAML_BA_C_LAYOUT
+#define BIGARRAY_FORTRAN_LAYOUT CAML_BA_FORTRAN_LAYOUT
+#define BIGARRAY_LAYOUT_MASK CAML_BA_LAYOUT_MASK
+#define caml_bigarray_managed caml_ba_managed
+#define BIGARRAY_EXTERNAL CAML_BA_EXTERNAL
+#define BIGARRAY_MANAGED CAML_BA_MANAGED
+#define BIGARRAY_MAPPED_FILE CAML_BA_MAPPED_FILE
+#define BIGARRAY_MANAGED_MASK CAML_BA_MANAGED_MASK
+#define caml_bigarray_proxy caml_ba_proxy
+#define caml_bigarray caml_ba_array
+#define Bigarray_val Caml_ba_array_val
+#define Data_bigarray_val Caml_ba_data_val
+#define alloc_bigarray caml_ba_alloc
+#define alloc_bigarray_dims caml_ba_alloc_dims
+#define bigarray_map_file caml_ba_map_file
+#define bigarray_unmap_file caml_ba_unmap_file
+#define bigarray_element_size caml_ba_element_size
+#define bigarray_byte_size caml_ba_byte_size
+#define bigarray_deserialize caml_ba_deserialize
+#define MAX_BIGARRAY_MEMORY CAML_BA_MAX_MEMORY
+#define bigarray_create caml_ba_create
+#define bigarray_get_N caml_ba_get_N
+#define bigarray_get_1 caml_ba_get_1
+#define bigarray_get_2 caml_ba_get_2
+#define bigarray_get_3 caml_ba_get_3
+#define bigarray_get_generic caml_ba_get_generic
+#define bigarray_set_1 caml_ba_set_1
+#define bigarray_set_2 caml_ba_set_2
+#define bigarray_set_3 caml_ba_set_3
+#define bigarray_set_N caml_ba_set_N
+#define bigarray_set_generic caml_ba_set_generic
+#define bigarray_num_dims caml_ba_num_dims
+#define bigarray_dim caml_ba_dim
+#define bigarray_kind caml_ba_kind
+#define bigarray_layout caml_ba_layout
+#define bigarray_slice caml_ba_slice
+#define bigarray_sub caml_ba_sub
+#define bigarray_blit caml_ba_blit
+#define bigarray_fill caml_ba_fill
+#define bigarray_reshape caml_ba_reshape
+#define bigarray_init caml_ba_init
 
 #endif /* CAML_NAME_SPACE */
 #endif /* CAML_COMPATIBILITY_H */

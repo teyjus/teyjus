@@ -11,7 +11,7 @@
 /*                                                                     */
 /***********************************************************************/
 
-/* $Id: memory.h,v 1.50.2.2 2004/11/22 11:16:03 doligez Exp $ */
+/* $Id: memory.h 9153 2008-12-03 18:09:09Z doligez $ */
 
 /* Allocation macros and functions */
 
@@ -45,8 +45,8 @@ color_t caml_allocation_color (void *hp);
 
 struct caml__roots_block {
   struct caml__roots_block *next;
-  long ntables;
-  long nitems;
+  intnat ntables;
+  intnat nitems;
   value *tables [5];
 };
 
@@ -109,7 +109,7 @@ CAMLextern struct caml__roots_block *caml_local_roots;  /* defined in roots.c */
   CAMLxparamN (x, (size))
 
 
-#if defined (__GNUC__)
+#if defined (__GNUC__) && (__GNUC__ > 2 || (__GNUC__ == 2 && __GNUC_MINOR__ > 7))
   #define CAMLunused __attribute__ ((unused))
 #else
   #define CAMLunused
@@ -215,10 +215,13 @@ CAMLextern struct caml__roots_block *caml_local_roots;  /* defined in roots.c */
   return; \
 }while (0)
 
-#define CAMLreturn(result) do{ \
+#define CAMLreturnT(type, result) do{ \
+  type caml__temp_result = (result); \
   caml_local_roots = caml__frame; \
-  return (result); \
+  return (caml__temp_result); \
 }while(0)
+
+#define CAMLreturn(result) CAMLreturnT(value, result)
 
 #define CAMLnoreturn ((void) caml__frame)
 
@@ -324,5 +327,33 @@ CAMLextern void caml_register_global_root (value *);
 
 CAMLextern void caml_remove_global_root (value *);
 
+/* [caml_register_generational_global_root] registers a global C
+   variable as a memory root for the duration of the program, or until
+   [caml_remove_generational_global_root] is called.
+   The program guarantees that the value contained in this variable
+   will not be assigned directly.  If the program needs to change
+   the value of this variable, it must do so by calling
+   [caml_modify_generational_global_root].  The [value *] pointer
+   passed to [caml_register_generational_global_root] must contain
+   a valid Caml value before the call.
+   In return for these constraints, scanning of memory roots during
+   minor collection is made more efficient. */
+
+CAMLextern void caml_register_generational_global_root (value *);
+
+/* [caml_remove_generational_global_root] removes a memory root
+   registered on a global C variable with
+   [caml_register_generational_global_root]. */
+
+CAMLextern void caml_remove_generational_global_root (value *);
+
+/* [caml_modify_generational_global_root(r, newval)]
+   modifies the value contained in [r], storing [newval] inside.
+   In other words, the assignment [*r = newval] is performed,
+   but in a way that is compatible with the optimized scanning of
+   generational global roots.  [r] must be a global memory root
+   previously registered with [caml_register_generational_global_root]. */
+
+CAMLextern void caml_modify_generational_global_root(value *r, value newval);
 
 #endif /* CAML_MEMORY_H */

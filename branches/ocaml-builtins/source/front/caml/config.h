@@ -11,27 +11,28 @@
 /*                                                                     */
 /***********************************************************************/
 
-/* $Id: config.h,v 1.36 2004/04/19 07:55:28 starynke Exp $ */
+/* $Id: config.h 10787 2010-11-10 15:47:34Z doligez $ */
 
 #ifndef CAML_CONFIG_H
 #define CAML_CONFIG_H
 
-#define ARCH_CODE32
-#define ARCH_SIXTYFOUR
+#undef ARCH_SIXTYFOUR
 #define SIZEOF_INT 4
-#define SIZEOF_LONG 8
+#define SIZEOF_LONG 4
+#define SIZEOF_PTR 4
 #define SIZEOF_SHORT 2
-#define ARCH_INT64_TYPE long
-#define ARCH_UINT64_TYPE unsigned long
-#define ARCH_INT64_PRINTF_FORMAT "l"
+#define ARCH_INT64_TYPE long long
+#define ARCH_UINT64_TYPE unsigned long long
+#define ARCH_INT64_PRINTF_FORMAT "ll"
 #undef ARCH_BIG_ENDIAN
 #undef ARCH_ALIGN_DOUBLE
 #undef ARCH_ALIGN_INT64
 #undef NONSTANDARD_DIV_MOD
-#define USE_MMAP_INSTEAD_OF_MALLOC
 #define OCAML_OS_TYPE "Unix"
-#define OCAML_STDLIB_DIR "/soft/ocaml-3.08.4/x86_64/lib/ocaml"
+#define OCAML_STDLIB_DIR "/usr/lib/ocaml"
 #define POSIX_SIGNALS
+#define HAS_EXPM1_LOG1P
+#define HAS_GETRUSAGE
 #define HAS_TIMES
 #define HAS_TERMCAP
 #define HAS_SOCKETS
@@ -58,6 +59,8 @@
 #define HAS_WAITPID
 #define HAS_WAIT4
 #define HAS_GETGROUPS
+#define HAS_SETGROUPS
+#define HAS_INITGROUPS
 #define HAS_TERMIOS
 #define HAS_ASYNC_IO
 #define HAS_SETITIMER
@@ -72,35 +75,60 @@
 #define HAS_MMAP
 #define HAS_GETHOSTBYNAME_R 6
 #define HAS_GETHOSTBYADDR_R 8
+#define HAS_STACK_OVERFLOW_DETECTION
 #define HAS_SIGWAIT
+#define DBM_USES_GDBM_NDBM
+#define HAS_LIBBFD
 
 #ifndef CAML_NAME_SPACE
 #include "compatibility.h"
 #endif
 
-/* Types for signed chars, 16-bit integers, 32-bit integers, 64-bit integers */
+/* Types for signed chars, 32-bit integers, 64-bit integers,
+   native integers (as wide as a pointer type) */
 
 typedef signed char schar;
 
-typedef short int16;            /* FIXME -- not true on the Cray T3E */
-typedef unsigned short uint16;  /* FIXME -- not true on the Cray T3E */
+#if SIZEOF_PTR == SIZEOF_LONG
+/* Standard models: ILP32 or I32LP64 */
+typedef long intnat;
+typedef unsigned long uintnat;
+#define ARCH_INTNAT_PRINTF_FORMAT "l"
+#elif SIZEOF_PTR == SIZEOF_INT
+/* Hypothetical IP32L64 model */
+typedef int intnat;
+typedef unsigned int uintnat;
+#define ARCH_INTNAT_PRINTF_FORMAT ""
+#elif SIZEOF_PTR == 8 && defined(ARCH_INT64_TYPE)
+/* Win64 model: IL32LLP64 */
+typedef ARCH_INT64_TYPE intnat;
+typedef ARCH_UINT64_TYPE uintnat;
+#define ARCH_INTNAT_PRINTF_FORMAT ARCH_INT64_PRINTF_FORMAT
+#else
+#error "No integer type available to represent pointers"
+#endif
 
 #if SIZEOF_INT == 4
 typedef int int32;
 typedef unsigned int uint32;
+#define ARCH_INT32_PRINTF_FORMAT ""
 #elif SIZEOF_LONG == 4
 typedef long int32;
 typedef unsigned long uint32;
+#define ARCH_INT32_PRINTF_FORMAT "l"
 #elif SIZEOF_SHORT == 4
 typedef short int32;
 typedef unsigned short uint32;
+#define ARCH_INT32_PRINTF_FORMAT ""
+#else
+#error "No 32-bit integer type available"
 #endif
 
 #if defined(ARCH_INT64_TYPE)
 typedef ARCH_INT64_TYPE int64;
 typedef ARCH_UINT64_TYPE uint64;
 #else
-#  if ARCH_BIG_ENDIAN
+#  ifdef ARCH_BIG_ENDIAN
 typedef struct { uint32 h, l; } uint64, int64;
 #  else
 typedef struct { uint32 l, h; } uint64, int64;
@@ -114,7 +142,7 @@ typedef struct { uint32 l, h; } uint64, int64;
    float is at byte offset [a], the next lsb at [b], ..., and the
    most significant byte at [h]. */
 
-#if defined(__arm__)
+#if defined(__arm__) && !defined(__ARM_EABI__)
 #define ARCH_FLOAT_ENDIANNESS 0x45670123
 #elif defined(ARCH_BIG_ENDIAN)
 #define ARCH_FLOAT_ENDIANNESS 0x76543210
@@ -136,7 +164,7 @@ typedef struct { uint32 l, h; } uint64, int64;
 /* Memory model parameters */
 
 /* The size of a page for memory management (in bytes) is [1 << Page_log].
-   It must be a multiple of [sizeof (long)]. */
+   It must be a multiple of [sizeof (value)] and >= 8 and <= 20. */
 #define Page_log 12             /* A page is 4 kilobytes. */
 
 /* Initial size of stack (bytes). */
@@ -146,7 +174,7 @@ typedef struct { uint32 l, h; } uint64, int64;
 #define Stack_threshold (256 * sizeof(value))
 
 /* Default maximum size of the stack (words). */
-#define Max_stack_def (256 * 1024)
+#define Max_stack_def (1024 * 1024)
 
 
 /* Maximum size of a block allocated in the young generation (words). */
@@ -164,7 +192,7 @@ typedef struct { uint32 l, h; } uint64, int64;
 #define Minor_heap_max (1 << 28)
 
 /* Default size of the minor zone. (words)  */
-#define Minor_heap_def 32768
+#define Minor_heap_def 262144
 
 
 /* Minimum size increment when growing the heap (words).
@@ -172,12 +200,13 @@ typedef struct { uint32 l, h; } uint64, int64;
 #define Heap_chunk_min (2 * Page_size / sizeof (value))
 
 /* Default size increment when growing the heap. (words)
-   Must be a multiple of [Page_size / sizeof (value)]. */
-#define Heap_chunk_def (15 * Page_size)
+   Must be a multiple of [Page_size / sizeof (value)].
+   (Approx 512 Kb for a 32-bit platform, 1 Mb for a 64-bit platform.) */
+#define Heap_chunk_def (31 * Page_size)
 
 /* Default initial size of the major heap (words);
    same constraints as for Heap_chunk_def. */
-#define Init_heap_def (15 * Page_size)
+#define Init_heap_def (31 * Page_size)
 
 
 /* Default speed setting for the major GC.  The heap will grow until
