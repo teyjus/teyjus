@@ -1,0 +1,45 @@
+let 
+
+class account
+{:
+ private
+   pin:int,
+   bal:int
+ public
+   function make(i:int, p:int) =
+     (bal := i; pin := p; printf("%d\n",pin))
+   function withdraw(x:int) = 
+     (bal := bal - x)
+   function deposit(x:int) = 
+     (bal := bal + x)
+   function inquiry() : int = bal
+:}
+
+class c2
+{:
+private
+   x:int
+public
+   function make(i:int) = (x := i; printf("class c2, x=%d\n",x))
+:}
+
+var mya:account := 0   % :=0 is meaningless here
+var yoa:account := 0
+var myc2:c2 := 0
+
+function f() : int = 4
+
+in
+myc2.make(6);
+mya.make(100,3421);
+yoa.make(200,1234);
+mya.withdraw(40);
+yoa.deposit(50);
+printf("My balance is %d\n",mya.inquiry());
+printf("Your balance is %d\n",yoa.inquiry())
+end
+$
+
+
+
+

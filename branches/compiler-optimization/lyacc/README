@@ -1,0 +1,6 @@
+Lambda Yacc is a parser generator in Teyjus originally written by
+Chuck Liang and later improved and revised by Kamal Aboul-Hosn.
+
+The current manual for Lambda Yacc is available at
+
+  http://www.cs.cornell.edu/~kamal/lp/lyacc/manual.html

@@ -1,0 +1,6 @@
+use lib '../lib';
+use Test::Harness;
+
+# Pass in a list of tests to run on the command line, else run all the tests.
+my @tests = @ARGV ? @ARGV : glob( "*/*.t" );
+runtests(@tests);

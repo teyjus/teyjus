@@ -1,0 +1,58 @@
+                              SYSTEM
+                              ======
+
+The files in source/system directory contain definitions needed by all 
+the C parts of the system. 
+
+memory.h{c} 
+==========
+  The system memory management is defined in these files. 
+   a. system memory (a big chunk of memory asked by malloc)
+   b. module space component:
+      -- run-time symbol tables
+         kind table; type skeleton table; constant table
+      -- implication table and import table
+         (Please refer to the implnotes/simulator/dataareas.txt for the layout
+          of these tables.) 
+   c. system module table:
+      This is the global module table recording the loaded modules. Note that 
+      the index of a module in this table should agree with that in the OCaml
+      global module table which is defined in source/front/module.mli{ml}.
+   d. top module (the module only with pervasives) and its initialization
+      function.
+   e. a variable MEM_currentModule which refers to the module currently
+      being installed for solving query.
+      
+
+error.h{c}
+=========
+  The error handling functions needed by the C parts of the system are
+  defined here. There is no substantial changes from error.h{c} in the 
+  old teyjus system.
+
+
+message.h{c}
+===========
+  The error message handling functions needed by the EM_error function
+  in error.h{c} are defined here. There is no substantial changes from
+  message.h{c} in the old teyjus system.
+
+
+tjsignal.h 
+=========
+  Defines some macros for the jumping actions needed by error (exception) 
+  handling.
+
+
+stream.h{c}, streamlocal.h
+=========================
+  Implements stream support for all the C parts of system (mostly needed 
+  by message.c and IO-builtins (simulator/builtins/io.h{c}). No substantial 
+  changes from the old teyjus system. 
+
+
+operator.h
+==========
+  Defines a collection of different operator fixities, and the precedence 
+  and fixity of some particular operators (mostly needed by pervasive tables
+  and printing (simulator/printterm.h{c}). 
