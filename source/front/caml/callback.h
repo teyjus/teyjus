@@ -11,7 +11,7 @@
 /*                                                                     */
 /***********************************************************************/
 
-/* $Id: callback.h,v 1.13 2004/01/05 20:25:58 doligez Exp $ */
+/* $Id: callback.h 7596 2006-09-11 12:12:24Z doligez $ */
 
 /* Callbacks from C to Caml */
 
@@ -39,7 +39,7 @@ CAMLextern value caml_callbackN_exn (value closure, int narg, value args[]);
 #define Is_exception_result(v) (((v) & 3) == 2)
 #define Extract_exception(v) ((v) & ~3)
 
-CAMLextern value * caml_named_value (char * name);
+CAMLextern value * caml_named_value (char const * name);
 
 CAMLextern void caml_main (char ** argv);
 CAMLextern void caml_startup (char ** argv);

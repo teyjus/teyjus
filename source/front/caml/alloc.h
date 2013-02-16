@@ -11,7 +11,7 @@
 /*                                                                     */
 /***********************************************************************/
 
-/* $Id: alloc.h,v 1.17 2004/01/02 19:23:18 doligez Exp $ */
+/* $Id: alloc.h 7064 2005-09-22 14:21:50Z xleroy $ */
 
 #ifndef CAML_ALLOC_H
 #define CAML_ALLOC_H
@@ -32,7 +32,7 @@ CAMLextern value caml_copy_string_array (char const **);
 CAMLextern value caml_copy_double (double);
 CAMLextern value caml_copy_int32 (int32);       /* defined in [ints.c] */
 CAMLextern value caml_copy_int64 (int64);       /* defined in [ints.c] */
-CAMLextern value caml_copy_nativeint (long);    /* defined in [ints.c] */
+CAMLextern value caml_copy_nativeint (intnat);  /* defined in [ints.c] */
 CAMLextern value caml_alloc_array (value (*funct) (char const *),
                                    char const ** array);
 

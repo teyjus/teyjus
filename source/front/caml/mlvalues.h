@@ -11,7 +11,7 @@
 /*                                                                     */
 /***********************************************************************/
 
-/* $Id: mlvalues.h,v 1.48.6.1 2004/07/07 01:14:43 garrigue Exp $ */
+/* $Id: mlvalues.h 8970 2008-08-01 14:10:36Z xleroy $ */
 
 #ifndef CAML_MLVALUES_H
 #define CAML_MLVALUES_H
@@ -26,7 +26,7 @@
 
   word: Four bytes on 32 and 16 bit architectures,
         eight bytes on 64 bit architectures.
-  long: A C long integer.
+  long: A C integer having the same number of bytes as a word.
   val: The ML representation of something.  A long or a block or a pointer
        outside the heap.  If it is a block, it is the (encoded) address
        of an object.  If it is a long, it is encoded as well.
@@ -53,12 +53,12 @@
          This is for use only by the GC.
 */
 
-typedef long value;
-typedef unsigned long header_t;
-typedef unsigned long mlsize_t;
+typedef intnat value;
+typedef uintnat header_t;
+typedef uintnat mlsize_t;
 typedef unsigned int tag_t;             /* Actually, an unsigned char */
-typedef unsigned long color_t;
-typedef unsigned long mark_t;
+typedef uintnat color_t;
+typedef uintnat mark_t;
 
 /* Longs vs blocks. */
 #define Is_long(x)   (((x) & 1) != 0)
@@ -66,13 +66,13 @@ typedef unsigned long mark_t;
 
 /* Conversion macro names are always of the form  "to_from". */
 /* Example: Val_long as in "Val from long" or "Val of long". */
-#define Val_long(x)     (((long)(x) << 1) + 1)
+#define Val_long(x)     (((intnat)(x) << 1) + 1)
 #define Long_val(x)     ((x) >> 1)
-#define Max_long ((1L << (8 * sizeof(value) - 2)) - 1)
-#define Min_long (-(1L << (8 * sizeof(value) - 2)))
+#define Max_long (((intnat)1 << (8 * sizeof(value) - 2)) - 1)
+#define Min_long (-((intnat)1 << (8 * sizeof(value) - 2)))
 #define Val_int(x) Val_long(x)
 #define Int_val(x) ((int) Long_val(x))
-#define Unsigned_long_val(x) ((unsigned long)(x) >> 1)
+#define Unsigned_long_val(x) ((uintnat)(x) >> 1)
 #define Unsigned_int_val(x)  ((int) Unsigned_long_val(x))
 
 /* Structure of the header:
@@ -109,7 +109,7 @@ bits  63    10 9     8 7   0
 
 #define Num_tags (1 << 8)
 #ifdef ARCH_SIXTYFOUR
-#define Max_wosize ((1L << 54) - 1)
+#define Max_wosize (((intnat)1 << 54) - 1)
 #else
 #define Max_wosize ((1 << 22) - 1)
 #endif
@@ -188,7 +188,11 @@ typedef opcode_t * code_t;
 #define Class_val(val) Field((val), 0)
 #define Oid_val(val) Long_val(Field((val), 1))
 CAMLextern value caml_get_public_method (value obj, value tag);
-/* called as: callback(caml_get_public_method(obj, hash_variant(name)), obj) */
+/* Called as:
+   caml_callback(caml_get_public_method(obj, caml_hash_variant(name)), obj) */
+/* caml_get_public_method returns 0 if tag not in the table.
+   Note however that tags being hashed, same tag does not necessarily mean
+   same method name. */
 
 /* Special case of tuples of fields: closures */
 #define Closure_tag 247
@@ -199,7 +203,7 @@ CAMLextern value caml_get_public_method (value obj, value tag);
 #define Lazy_tag 246
 
 /* Another special case: variants */
-CAMLextern value caml_hash_variant(char * tag);
+CAMLextern value caml_hash_variant(char const * tag);
 
 /* 2- If tag >= No_scan_tag : a sequence of bytes. */
 
@@ -239,7 +243,7 @@ CAMLextern void caml_Store_double_val (value,double);
 #define Store_double_field(v,i,d) do{ \
   mlsize_t caml__temp_i = (i); \
   double caml__temp_d = (d); \
-  Store_double_val((value)((double *) v + caml__temp_i), caml__temp_d); \
+  Store_double_val((value)((double *) (v) + caml__temp_i), caml__temp_d); \
 }while(0)
 
 /* Custom blocks.  They contain a pointer to a "method suite"
@@ -254,7 +258,7 @@ struct custom_operations;       /* defined in [custom.h] */
 /* Int32.t, Int64.t and Nativeint.t are represented as custom blocks. */
 
 #define Int32_val(v) (*((int32 *) Data_custom_val(v)))
-#define Nativeint_val(v) (*((long *) Data_custom_val(v)))
+#define Nativeint_val(v) (*((intnat *) Data_custom_val(v)))
 #ifndef ARCH_ALIGN_INT64
 #define Int64_val(v) (*((int64 *) Data_custom_val(v)))
 #else
@@ -266,22 +270,6 @@ CAMLextern int64 caml_Int64_val(value v);
 
 CAMLextern header_t caml_atom_table[];
 #define Atom(tag) (Val_hp (&(caml_atom_table [(tag)])))
-
-/* Is_atom tests whether a well-formed block is statically allocated
-   outside the heap. For the bytecode system, only zero-sized block (Atoms)
-   fall in this class. For the native-code generator, data
-   emitted by the code generator (as described in the table
-   caml_data_segments) are also atoms. */
-
-#ifndef NATIVE_CODE
-#define Is_atom(v) ((v) >= Atom(0) && (v) <= Atom(255))
-#else
-CAMLextern char * caml_static_data_start, * caml_static_data_end;
-#define Is_atom(v) \
-  ((((char *)(v) >= caml_static_data_start \
-     && (char *)(v) < caml_static_data_end) \
-    || ((v) >= Atom(0) && (v) <= Atom(255))))
-#endif
 
 /* Booleans are integers 0 or 1 */
 
