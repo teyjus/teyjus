@@ -1,0 +1,35 @@
+SCRATCH DIRECTORY:
+  This directory is home to tests and examples that shouldn't be in the final
+  repository; used to share information between developers.
+
+CONTENTS:
+
+abbrevtest:
+  Some simple type abbreviation tests, with errors in constants with types
+  constructed from abbreviations.
+
+abbrevtest2:
+  Some more abbreviation tests, this time with errors in the application of
+  abbreviations.
+
+sigtest:
+  Tests that show error messages for errors encountered while processing
+  signature constructs (kind/constant declarations, etc).
+
+modtest:
+  Tests that show error messages for errors encountered while processing
+  module constructs (term/clause parsing).  This is just blist.mod with holes
+  poked in it.
+
+separatecomp:
+  Currently correct example of using accum_sig and accumulate to build
+  up the environment; all of the errors are term parsing ones encountered in
+  separatecomp.mod; if you uncomment some of the various errors in
+  separatecomp.sig, accumsig1.sig, and accumsig2.sig, you will see examples of
+  how such errors are reported.
+
+builtintest:
+  Before builtin predicates (pervasives) could be extended, which would crash
+  the compiler (and would have messed with the simulator in any event due to the
+  way builtins are implemented).  Now all builtins are flagged "nodefs".  This
+  module tests this property.
