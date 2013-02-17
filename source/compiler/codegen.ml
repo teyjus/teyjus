@@ -209,18 +209,19 @@ let assignKindIndex gkinds lkinds =
 (*                         ASSIGN CONSTANT INDEXES                          *)
 (* 1. assign indexes (offsets) to global, local and hidden constants of the *)
 (*    module.                                                               *)
-(* 2. gather predicates have definitions in this module                     *)
-(*    gather non-exportdef global predicates have definitions in this module*)
+(* 2. gather predicates having definitions in this module                   *)
+(*    gather non-exportdef global predicates having definitions in this     *)
+(*    module                                                                *)
 (*    gather exportdef (global) predicates have definitions in this module  *)
 (*    gather local predicates have definitions in this module               *)
-(* 3. gather predicates whose previous defintions may be extended by code   *)
+(* 3. gather predicates whose previous definitions may be extended by code  *)
 (*    in this module                                                        *)
 (****************************************************************************)
 let assignConstIndex gconsts lconsts hconsts =
 
   (* a). assignIndex for local consts;                                    *)
   (* b). gather predicates having definitions;                            *)
-  (* c). close the defintions for such predicate.                         *)
+  (* c). close the definitions for such predicate.                        *)
   let rec assignLocalConstIndex consts index defs numDefs =
 	match consts with
 	  [] -> (index, defs, numDefs)  (*note defs are in reversed order *)
@@ -228,7 +229,7 @@ let assignConstIndex gconsts lconsts hconsts =
 		Absyn.setConstantIndex const index; (*set index*)
 		let (newDefs, newNumDefs) =
 		  match (!(Absyn.getConstantCodeInfo const)) with
-			  None -> (defs, numDefs)         (* not have def in this module *)
+		    None -> (defs, numDefs) (* does not have def in this module *)
 		  | Some(Absyn.Clauses(clauseBlock)) ->
 			    Absyn.setClauseBlockClose clauseBlock true;
 			    (const :: defs, numDefs + 1)
@@ -961,7 +962,7 @@ let processDef clauseBlock insts startLoc =
 
   if (Absyn.getClauseBlockClose clauseBlock) then (* closed definition *)
     (Absyn.setClauseBlockOffset clauseBlock (startLoc + dummyTryMeElseSize);
-     genSwitchCode partitions (insts @ dummyTryMeElse) (startLoc + dummyTryMeElseSize))
+     genSwitchCode partitions (dummyTryMeElse @ insts) (startLoc + dummyTryMeElseSize)) (*GN*)
   else
     (Absyn.setClauseBlockOffset clauseBlock startLoc; 
      
@@ -985,7 +986,7 @@ let processDef clauseBlock insts startLoc =
      (*  L2: switch code    *)
      let (newInsts, newStartLoc) =
        genSwitchCode partitions 
-	 (insts @ [switch_on_reg; tryCode; trust_ext] @ dummyTryMeElse) swCodeLoc
+	 (dummyTryMeElse @ [trust_ext; tryCode; switch_on_reg] @ insts) swCodeLoc (*GN*)
      in
      (newInsts, newStartLoc))
 
