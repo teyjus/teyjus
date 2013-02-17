@@ -1,0 +1,36 @@
+generateModuleCode (codegen.ml)
+
+    genCodeInitialization (codegen.ml)      --- to be checked
+
+*    processTopLevelDefs (codegen.ml)        --- being checked
+
+      getClauseInfoClauseBlocks (absyn.ml)   --- checked
+
+      processTopLevelDefsAux (codegen.ml)    --- being checked
+
+        processDef (codegen.ml)              --- being checked
+
+          Absyn.getClauseBlockClauses        --- checked
+
+          Codegen.calculateIndexing          --- to be checked
+
+          Codegen.genDummyTryMeElse          --- checked
+
+          Absyn.getClauseBlockClose          --- checked
+
+          Absyn.setClauseBlockOffset         --- checked
+
+          Codegen.genSwitchCode              --- to be checked
+
+          Absyn.getClauseNumberOfArgs        --- checked
+
+          Absyn.getClauseBlockNextClause     --- checked
+
+*    genImpPointCode (codegen.ml)            --- to be checked
+
+    collectImports (codegen.ml)             --- to be checked
+
+    collectAccs    (codegen.ml)             --- to be checked
+
+
+writeByteCode     (spitcode.ml)
