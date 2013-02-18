@@ -38,3 +38,12 @@ int ocaml_read_term(char *str)
     ocaml_read_term_closure = caml_named_value("ocaml_read_term");
   return Int_val(caml_callback(*ocaml_read_term_closure, caml_copy_string(str)));
 }
+
+int ocaml_open_in(char *str)
+{
+  static value *ocaml_open_in_closure = NULL;
+  if (ocaml_open_in_closure == NULL) 
+    ocaml_open_in_closure = caml_named_value("ocaml_open_in");
+  return Int_val(caml_callback(*ocaml_open_in_closure, caml_copy_string(str)));
+}
+

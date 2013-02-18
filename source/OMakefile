@@ -98,6 +98,7 @@ FNT_ML_TO_C[] =
     $(FNT)/front
     $(FNT)/readterm
     $(FNT)/simerrors
+    $(FNT)/io
 
 SIM_C[] =
     $(SIM)/abstmachine

@@ -161,14 +161,6 @@ let solveQueries () =
       print_banner (); 
     interactSolveQuery !queryStrings modName
 
-(**********************************************************************
-*readTerm:
-* Reads terms with respect to the current module; registered with
-* the simulator.
-**********************************************************************)
-let readTerm term =
-  Query.readTerm term (Module.getCurrentModule ())
-let _ = Callback.register "ocaml_read_term" readTerm
   
 (**********************************************************************
 *main:
@@ -179,6 +171,7 @@ let main =
   Arg.parse (Arg.align specList) (setInputName ~filter:getModName) usageMsg ;
 
   try 
+        Io.register_callbacks ();
         Front.systemInit  !heapSize ;
         Module.setPath    !path;
         Module.moduleLoad !inputName;
