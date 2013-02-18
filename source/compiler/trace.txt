@@ -12,7 +12,7 @@ generateModuleCode (codegen.ml)
 
           Absyn.getClauseBlockClauses        --- checked
 
-          Codegen.calculateIndexing          --- to be checked
+          Codegen.calculateIndexing          --- checked
 
           Codegen.genDummyTryMeElse          --- checked
 
@@ -20,7 +20,39 @@ generateModuleCode (codegen.ml)
 
           Absyn.setClauseBlockOffset         --- checked
 
-          Codegen.genSwitchCode              --- to be checked
+          Codegen.genSwitchCode              --- checked
+
+             Codegen.genSwitchCodePartitions --- checked
+
+              Codegen.genPartitionCode       --- checked
+
+              Codegen.genSwitchOnTerm        --- to be checked
+
+               Codegen.VarClausesCode         --- checked ***
+
+               Codegen.genSwConstCode        --- to be checked
+
+               Codegen.genSwConsCode         --- to be checked
+
+              Codegen.VarClausesCode         --- checked ***
+
+             Codegen.VarClausesCode          --- checked
+
+               Codegen.SingleVarClause       --- checked
+
+                Clausegen.genClauseCode      --- to be checked
+
+               Codegen.genVarClausesStart    --- checked
+
+                Clausegen.genClauseCode      --- to be checked  ***
+
+               Codegen.genVarClausesMid      --- checked
+
+                Clausegen.genClauseCode      --- to be checked  ***
+
+               Codegen,genVarClausesLast     --- to be checked
+
+                Clausegen.genClauseCode      --- to be checked  ***
 
           Absyn.getClauseNumberOfArgs        --- checked
 
@@ -34,3 +66,9 @@ generateModuleCode (codegen.ml)
 
 
 writeByteCode     (spitcode.ml)
+
+
+Things to check
+---------------
+
+Can we have empty partitions in genSwitchCode?

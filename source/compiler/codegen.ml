@@ -490,7 +490,7 @@ let calculateIndexing clauses =
 		else (List.rev nvarCls, cls)
   in
 
-  (* partition a given clauses list into blocks with starting with *)
+  (* partition a given clauses list into blocks starting with *)
   (* non-fv-head first argument and ending with fv-head first args *)
   let rec partition cls = 
 	match cls with
@@ -507,24 +507,29 @@ let calculateIndexing clauses =
   (* generate partition information from one given clauses block *)
   let genPartition (allclauses, trailclauses) =
 	(* collect constant switch information *)
-	let rec insertConstSwitch c cl constSwitch inserted =
+        (*GN*)
+	let rec insertConstSwitch c cl constSwitch =
 	  match constSwitch with
-		[] -> 
-		  if inserted then []
-		  else [ConstSwInfo(c, [cl])]
-	  | (ConstSwInfo(c', cls) :: rest) ->
-		  if (not inserted) && (c == c') then 
-			(ConstSwInfo(c', cls @ [cl]) :: insertConstSwitch c cl rest true)
+		[] -> [ConstSwInfo(c, [cl])]
+	  | ((ConstSwInfo(c', cls) as ccls) :: rest) ->
+		  if (c == c') then 
+			(ConstSwInfo(c', cl :: cls) :: rest)
 		  else
-			(ConstSwInfo(c', cls) :: insertConstSwitch c cl rest inserted)
+			(ccls :: insertConstSwitch c cl rest)
 	in
 
 	(* partition rigid clauses *)
 	let rec genPartitionAux rigidCls constSwitch intCls realCls strCls nilCls 
 		consCls =
 	  match rigidCls with
-		[] -> (List.rev constSwitch, List.rev intCls, List.rev realCls, 
-			   List.rev strCls, List.rev nilCls,  List.rev consCls)
+                (*GN*)
+		[] -> (List.rev 
+                           (List.map 
+                              (function (ConstSwInfo(c,cls)) -> 
+                                           (ConstSwInfo(c,(List.rev cls))))
+                              constSwitch), 
+                       List.rev intCls, List.rev realCls, List.rev strCls, 
+                       List.rev nilCls,  List.rev consCls)
 	  | (cl :: rest) ->
 		  let firstArgHead = termHead (List.hd (Absyn.getClauseTermArgs cl)) in
 		  let (constSwitch', intCls', realCls', strCls', nilCls', consCls') =
@@ -535,7 +540,7 @@ let calculateIndexing clauses =
 				else if (Pervasive.isconsConstant c) then
 				  (constSwitch, intCls, realCls, strCls, nilCls, cl::consCls)
 				else
-				  (insertConstSwitch c cl constSwitch false, intCls, realCls, 
+				  (insertConstSwitch c cl constSwitch, intCls, realCls, 
 				   strCls, nilCls, consCls)
 			| Absyn.IntTerm(_) ->
 				(constSwitch, cl :: intCls, realCls, strCls, nilCls, consCls)
@@ -573,16 +578,14 @@ let calculateIndexing clauses =
 (* least two clauses.                                                        *)
 (*****************************************************************************)
 let breakClauses cls =
-  let rec breakClausesAux cls =
+  let rec breakClausesAux cls mid =
 	let (cl, rest) = (List.hd cls, List.tl cls) in
-	if (rest = []) then ([], cl)
-	else 
-	  let (mid, last) = breakClausesAux rest in
-	  (cl :: mid, last)
+	if (rest = []) then (List.rev mid, cl)
+	else breakClausesAux rest (cl :: mid)
   in
   let (start, rest)  = (List.hd cls, List.tl cls) in
-  let (middle, last) = breakClausesAux rest in
-  (start, middle, last)
+  let (middle, last) = breakClausesAux rest [] 
+  in  (start, middle, last)
 
 (************************************************************************)
 (* generating an indexed sequence of code for a list of variable clauses*)
@@ -602,7 +605,7 @@ let genVarClausesCode cls isbeginning isend insts startLoc =
 		(*   clause instructions   *)
 		(* L:                      *)
 		let (newInstrs, nextCodeLoc)= 
-		  Clausegen.genClauseCode cl (insts @ [try_me_else]) 
+		  Clausegen.genClauseCode cl (try_me_else :: insts) 
 			                      (startLoc + Instr.getSize_try_me_else)
 		in
 		nextCodeLocRef := nextCodeLoc;
@@ -611,7 +614,7 @@ let genVarClausesCode cls isbeginning isend insts startLoc =
 		(*    trust_me numArgs     *)
 		let trust_me = Instr.Ins_trust_me(numArgs) in
 		(*    clause instructions  *)
-		Clausegen.genClauseCode cl (insts @ [trust_me]) 
+		Clausegen.genClauseCode cl (trust_me :: insts) 
 		                        (startLoc+Instr.getSize_trust_me)
 	| false, false ->
 		(*    retry_me_else numArgs L *) 
@@ -620,7 +623,7 @@ let genVarClausesCode cls isbeginning isend insts startLoc =
 		(*    clause instructions     *)
 		(* L:                         *)
 		let (newInstrs, nextCodeLoc) =
-		  Clausegen.genClauseCode cl (insts @ [retry_me_else])
+		  Clausegen.genClauseCode cl (retry_me_else :: insts)
 			                      (startLoc + Instr.getSize_retry_me_else)
 		in
 		nextCodeLocRef := nextCodeLoc;
@@ -641,7 +644,7 @@ let genVarClausesCode cls isbeginning isend insts startLoc =
 	(*    clause instructions                            *)
 	(* L:                                                *) 
 	let (newInsts, nextCodeLoc) =
-	  Clausegen.genClauseCode cl (insts @ [instr]) clCodeLoc in
+	  Clausegen.genClauseCode cl (instr :: insts) clCodeLoc in
 	nextCodeLocRef := nextCodeLoc;
 	(newInsts, nextCodeLoc)
   in
@@ -658,7 +661,7 @@ let genVarClausesCode cls isbeginning isend insts startLoc =
 		(*    clause instructions     *)
 		(* L:                         *)
 		let (newInstrs, nextCodeLoc) = 
-		  Clausegen.genClauseCode cl (insts @ [retry_me_else]) 
+		  Clausegen.genClauseCode cl (retry_me_else :: insts) 
 			                      (startLoc + Instr.getSize_retry_me_else)
 		in
 		nextCodeLocRef := nextCodeLoc;
@@ -679,7 +682,7 @@ let genVarClausesCode cls isbeginning isend insts startLoc =
 	(*     clause instructions                         *)
 	(*  L:                                             *)  
 	let (newInstrs, nextCodeLoc) = 
-	  Clausegen.genClauseCode cl (insts @ [instr]) clCodeLoc 
+	  Clausegen.genClauseCode cl (instr :: insts) clCodeLoc 
 	in
 	nextCodeLocRef := nextCodeLoc;
 	(newInstrs, nextCodeLoc)
@@ -837,7 +840,7 @@ let genPartitionCode partition isbeginning isend insts startLoc =
 	in
 	(* V: variable code          *)
 	let (varCode, varCodeNextLoc) =
-	  genVarClausesCode allcls true true (insts @ [switch_on_term]) varCodeLoc
+	  genVarClausesCode allcls true true (switch_on_term @ insts) varCodeLoc
 	in
 	(* C: const code             *)
 	let (constCode, constCodeNextLoc, constCodeLoc) = 
@@ -877,7 +880,7 @@ let genPartitionCode partition isbeginning isend insts startLoc =
 				(* L:                       *)
 				let (switchIns, nextCodeLoc) =
 				  genSwitchOnTerm allclauses conscls partition
-					(insts @[try_me_else]) (startLoc+Instr.getSize_try_me_else)
+					(try_me_else :: insts) (startLoc+Instr.getSize_try_me_else)
 				in
 				nextCodeLocRef := nextCodeLoc;
 				(switchIns, nextCodeLoc)
@@ -886,7 +889,7 @@ let genPartitionCode partition isbeginning isend insts startLoc =
 				let trust_me = Instr.Ins_trust_me(numArgs) in
 				(*    partition code   *)
 				genSwitchOnTerm allclauses conscls partition 
-				  (insts @ [trust_me]) (startLoc+Instr.getSize_trust_me) 
+				  (trust_me :: insts) (startLoc+Instr.getSize_trust_me) 
 			| false, false   ->
 				(*    retry_me_else numArgs L *)
 				let nextCodeLocRef = ref 0 in
@@ -897,7 +900,7 @@ let genPartitionCode partition isbeginning isend insts startLoc =
 				(* L:                       *)
 				let (switchIns, nextCodeLoc) =
 				  genSwitchOnTerm allclauses conscls partition
-					(insts @ [retry_me_else]) 
+					(retry_me_else :: insts) 
 					(startLoc+Instr.getSize_retry_me_else)
 				in
 				nextCodeLocRef := nextCodeLoc;
