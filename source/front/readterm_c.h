@@ -18,5 +18,5 @@
 // along with Teyjus.  If not, see <http://www.gnu.org/licenses/>.          //
 //////////////////////////////////////////////////////////////////////////////
 
-int FRONT_RT_readTermAndType(char *str);
+int FRONT_RT_readTermAndType();
 

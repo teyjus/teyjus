@@ -18,12 +18,8 @@
 * You should have received a copy of the GNU General Public License
 * along with Teyjus.  If not, see <http://www.gnu.org/licenses/>.
 ****************************************************************************)
-val buildQueryTerm : string -> Absyn.amodule -> bool
-val solveQuery     : unit -> bool
-val showAnswers    : unit -> unit
+let readTerm term =
+    Query.readTerm (Module.getCurrentModule ())
 
-
-val queryHasVars : unit -> bool
-
-(* This is the Teyjus read predicate, i.e. it reads a term from stdin *)
-val readTerm     : Absyn.amodule -> int
+let register_callbacks () = 
+    Callback.register "ocaml_read_term" readTerm

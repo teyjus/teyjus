@@ -508,16 +508,9 @@ void BIIO_readTerm()
     This is precisely what we have been calling "readterm" */
 void BIIO_read() 
 {
-#define  MAX_LINE_LENGTH 1024
-  char        buffer[MAX_LINE_LENGTH];
-  WordPtr     stream = STREAM_stdin;
   DF_TermPtr  tp;
   DF_TypePtr  typ;   
     
-  if (STREAM_readCharacters(stream, MAX_LINE_LENGTH, buffer, TRUE) == -1)
-    EM_error(BI_ERROR_READING_STREAM);
-    
-
   typ  = (DF_TypePtr)(AM_hreg);
   RT_setTypeStart(AM_hreg);
   AM_hreg += DF_TY_ATOMIC_SIZE;
@@ -527,12 +520,11 @@ void BIIO_read()
   AM_hreg += DF_TM_ATOMIC_SIZE;
 
 
-  if (FRONT_RT_readTermAndType(buffer)) {
+  if (FRONT_RT_readTermAndType()) {
     PRINT_resetFreeVarTab();
   } else {
     EM_THROW(EM_FAIL);
   }
-  
 
   BIIO_typesUnify(typ, (DF_TypePtr)(AM_reg(2)));
   

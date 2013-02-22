@@ -84,10 +84,10 @@ let queryHasVars () =
 (*  parse a term and create relevant structures onto simulator heap        *)
 (***************************************************************************)
 
-let readTerm term amod =
+let readTerm amod =
  
   (* parse the term to pre abstract syntax *)
-  let preTerm = Compile.compileString term in
+  let preTerm = Compile.compileStdin () in
   if Option.isNone preTerm then
     0
   else
