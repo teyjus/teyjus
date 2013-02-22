@@ -45,11 +45,11 @@ val compileSignature : string -> Preabsyn.pmodule
 val compileString : string -> Preabsyn.pterm option
 
 (**********************************************************************
-*compileStdin:
-* Given a string from stdin containing lambda prolog code, parses it and
-* returns a preabsyn term.
+*compileChannel:
+* Given a period terminated string from a channel ontaining lambda prolog code,
+* parses it and returns a preabsyn term.
 **********************************************************************)
-val compileStdin : unit -> Preabsyn.pterm option
+val compileClauseChannel : in_channel -> Preabsyn.pterm option
 
 (*  File Utilities  *)
 val openFile : string -> (string -> 'a) -> 'a

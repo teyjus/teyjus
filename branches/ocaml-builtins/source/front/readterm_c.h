@@ -18,5 +18,7 @@
 // along with Teyjus.  If not, see <http://www.gnu.org/licenses/>.          //
 //////////////////////////////////////////////////////////////////////////////
 
-int FRONT_RT_readTermAndType();
+int FRONT_RT_readTermAndTypeStdin();
+int FRONT_RT_readTermAndTypeFileId(int file_id);
+int FRONT_RT_open(char *fname, char *mode);
 

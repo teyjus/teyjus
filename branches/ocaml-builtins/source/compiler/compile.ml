@@ -82,10 +82,10 @@ let compileString s =
 * during parsing specifically (this can be called from the frontend,
 * which could set the error flag multiple times).
 ******************************************************************)
-let compileStdin () =
+let compileClauseChannel channel =
   let previous = !Errormsg.anyErrors in
   let () = Errormsg.anyErrors := false in
-  let lexbuf = Lexing.from_channel stdin in
+  let lexbuf = Lexing.from_channel channel in
   let () = Lplex.setFileName lexbuf "" in
   let cl = parseModClause Lplex.initial lexbuf in
   let result =

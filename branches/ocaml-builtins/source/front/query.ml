@@ -80,14 +80,14 @@ let queryHasVars () =
   Ccode_stubs.queryHasVars ()
 
 (***************************************************************************)
-(*                      read term                                          *)
+(*                      read term  from  a channel                         *)
 (*  parse a term and create relevant structures onto simulator heap        *)
 (***************************************************************************)
 
-let readTerm amod =
+let readTermChannel channel amod =
  
   (* parse the term to pre abstract syntax *)
-  let preTerm = Compile.compileStdin () in
+  let preTerm = Compile.compileClauseChannel channel in
   if Option.isNone preTerm then
     0
   else
@@ -100,4 +100,3 @@ let readTerm amod =
       let (term, tymol, fvars, tyfvars) = Option.get result in
       Readterm.readTermAndType term tymol fvars tyfvars;
       1
-	

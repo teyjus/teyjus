@@ -61,6 +61,15 @@ static char* BIIO_getStringFromTerm(DF_TermPtr tmPtr)
     else return NULL;
 }
 
+/* get string from an lpwam string term pointer */
+static int BIIO_getIntFromTerm(DF_TermPtr tmPtr)
+{
+    HN_hnorm(tmPtr);
+    tmPtr = DF_termDeref(tmPtr);
+    if (DF_isInt(tmPtr)) return (int)DF_intValue(tmPtr);
+    else return NULL;
+}
+
 /* get stream index from an lpwam stream term */
 static WordPtr BIIO_getStreamFromTerm(DF_TermPtr tmPtr)
 {
@@ -176,16 +185,16 @@ static void BIIO_closeStreamTerm(DF_TermPtr tmPtr)
 
 static void BIIO_doOpen(char *inMode)
 {
-  WordPtr stream;
+  int file_id;
   char    *fname;
 
   fname = BIIO_getStringFromTerm((DF_TermPtr)AM_reg(1));  
   if (!fname) EM_error(BI_ERROR_UNBOUND_VARIABLE, "filename");
 
-  stream = STREAM_open(fname, inMode, FALSE);
-  if (stream == STREAM_ILLEGAL) EM_error(BI_ERROR_CANNOT_OPEN_STREAM, fname);
+  file_id = FRONT_RT_open(fname, inMode);
+  if (file_id == -1) EM_error(BI_ERROR_CANNOT_OPEN_STREAM, fname);
   
-  BIIO_bindVarToStream(((DF_TermPtr)AM_reg(2)), stream);
+  BIIO_bindVarToInt(((DF_TermPtr)AM_reg(2)), file_id);
   AM_preg = AM_cpreg;
 }
 
@@ -222,17 +231,18 @@ void BIIO_closeOut()     { BIIO_doClose();             }
     in_stream to X                              */
 void BIIO_openStr()
 {
+  /* TODO
   char*    str;
   WordPtr  stream;
-  
+
   str = BIIO_getStringFromTerm((DF_TermPtr)AM_reg(1));
   if (!str) EM_error(BI_ERROR_UNBOUND_VARIABLE, "string");
-  
+
   stream = STREAM_fromString(str, FALSE);
   if (stream == STREAM_ILLEGAL) EM_error(BI_ERROR_OPENING_STRING, str);
-  
-  BIIO_bindVarToStream((DF_TermPtr)AM_reg(2), stream); 
-  AM_preg = AM_cpreg;
+
+  BIIO_bindVarToStream((DF_TermPtr)AM_reg(2), stream);
+  AM_preg = AM_cpreg; */
 }
 
 /* type  input    in_stream -> int -> string -> o
@@ -242,6 +252,7 @@ void BIIO_openStr()
  */
 void BIIO_input()
 {
+    /*  TODO 	
     char*    buffer;
     int      num, length, size;
     WordPtr  stream;
@@ -249,8 +260,8 @@ void BIIO_input()
     MemPtr   strData     = strDataHead + DF_STRDATA_HEAD_SIZE;
     MemPtr   nhreg;
     
-    num = BIIO_getIntegerFromTerm((DF_TermPtr)AM_reg(2)) + 1; /* +1 for the null
-                                                                 character */
+    num = BIIO_getIntegerFromTerm((DF_TermPtr)AM_reg(2)) + 1; % +1 for the null
+                                                                 character 
     if (num <= 0) EM_error(BI_ERROR_NEGATIVE_VALUE, num);
     
     stream = BIIO_getStreamFromTerm((DF_TermPtr)AM_reg(1));
@@ -271,7 +282,7 @@ void BIIO_input()
 
     DF_mkStr((MemPtr)AM_reg(1), (DF_StrDataPtr)strDataHead);
     DF_copyAtomic((DF_TermPtr)AM_reg(3), (MemPtr)AM_reg(2));
-    AM_preg = AM_eqCode;
+    AM_preg = AM_eqCode; */
 }
 
 /* type    output   out_stream -> string -> o
@@ -430,7 +441,7 @@ void BIIO_printTerm()
     and bind it to X */
 void BIIO_strToTerm()
 {   
-
+/* TODO
   WordPtr     stream;
   char       *str;
   DF_TermPtr  tp;
@@ -458,7 +469,7 @@ void BIIO_strToTerm()
   BIIO_typesUnify(typ, (DF_TypePtr)(AM_reg(3)));
   
   DF_mkRef((MemPtr)AM_reg(1), tp);
-  AM_preg = AM_eqCode;    
+  AM_preg = AM_eqCode;    */
 
 }
 
@@ -468,17 +479,12 @@ void BIIO_strToTerm()
     an lpwam term and unify it with X. */
 void BIIO_readTerm()
 {
-#define  MAX_LINE_LENGTH 1024
-  char        buffer[MAX_LINE_LENGTH];
-  WordPtr     stream;
+  int file_id;
 
   DF_TermPtr  tp;
   DF_TypePtr  typ;
     
-  stream = BIIO_getStreamFromTerm((DF_TermPtr)AM_reg(1));
-  if (STREAM_readCharacters(stream, MAX_LINE_LENGTH, buffer, TRUE) == -1)
-    EM_error(BI_ERROR_READING_STREAM);
-
+  file_id = BIIO_getIntFromTerm((DF_TermPtr)AM_reg(1));
 
   typ  = (DF_TypePtr)(AM_hreg);
   RT_setTypeStart(AM_hreg);
@@ -488,7 +494,7 @@ void BIIO_readTerm()
   RT_setTermStart(AM_hreg);
   AM_hreg += DF_TM_ATOMIC_SIZE;
   
-  if (FRONT_RT_readTermAndType(buffer)) {
+  if (FRONT_RT_readTermAndTypeFileId(file_id)) {
     PRINT_resetFreeVarTab();
   } else {
     EM_THROW(EM_FAIL);
@@ -520,7 +526,7 @@ void BIIO_read()
   AM_hreg += DF_TM_ATOMIC_SIZE;
 
 
-  if (FRONT_RT_readTermAndType()) {
+  if (FRONT_RT_readTermAndTypeStdin()) {
     PRINT_resetFreeVarTab();
   } else {
     EM_THROW(EM_FAIL);
