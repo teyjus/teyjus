@@ -38,11 +38,18 @@ val compileModule : string -> Preabsyn.pmodule
 val compileSignature : string -> Preabsyn.pmodule
 
 (**********************************************************************
-*compileModule:
-* Given a string containing lambda prolog code, parses the file and
+*compileString:
+* Given a string containing lambda prolog code, parses it and
 * returns a preabsyn term.
 **********************************************************************)
 val compileString : string -> Preabsyn.pterm option
+
+(**********************************************************************
+*compileStdin:
+* Given a string from stdin containing lambda prolog code, parses it and
+* returns a preabsyn term.
+**********************************************************************)
+val compileStdin : unit -> Preabsyn.pterm option
 
 (*  File Utilities  *)
 val openFile : string -> (string -> 'a) -> 'a

@@ -75,3 +75,24 @@ let compileString s =
   in
   (Errormsg.anyErrors := previous || (!Errormsg.anyErrors);
   result)
+
+(******************************************************************
+*compileStdin:
+* Compile a string from stdin to a term.  Tracks whether any errors are raised
+* during parsing specifically (this can be called from the frontend,
+* which could set the error flag multiple times).
+******************************************************************)
+let compileStdin () =
+  let previous = !Errormsg.anyErrors in
+  let () = Errormsg.anyErrors := false in
+  let lexbuf = Lexing.from_channel stdin in
+  let () = Lplex.setFileName lexbuf "" in
+  let cl = parseModClause Lplex.initial lexbuf in
+  let result =
+    if !Errormsg.anyErrors then
+      None
+    else
+      Some cl
+  in
+  (Errormsg.anyErrors := previous || (!Errormsg.anyErrors);
+  result)

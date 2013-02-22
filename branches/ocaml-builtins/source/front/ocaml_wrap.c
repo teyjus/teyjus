@@ -31,12 +31,12 @@ void ocaml_simulator_main()
   caml_callback(*ocaml_main_closure, Val_unit);
 }
 
-int ocaml_read_term(char *str)
+int ocaml_read_term(void)
 {
   static value *ocaml_read_term_closure = NULL;
   if (ocaml_read_term_closure == NULL) 
     ocaml_read_term_closure = caml_named_value("ocaml_read_term");
-  return Int_val(caml_callback(*ocaml_read_term_closure, caml_copy_string(str)));
+  return Int_val(caml_callback(*ocaml_read_term_closure, Val_unit));
 }
 
 int ocaml_open_in(char *str)

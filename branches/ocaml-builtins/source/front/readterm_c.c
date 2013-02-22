@@ -21,7 +21,7 @@
 #include "readterm_c.h"
 #include "ocaml_wrap.h"
 
-int FRONT_RT_readTermAndType(char *str)
+int FRONT_RT_readTermAndType(void)
 {
-  return ocaml_read_term(str);
+  return ocaml_read_term();
 }
