@@ -31,19 +31,30 @@ void ocaml_simulator_main()
   caml_callback(*ocaml_main_closure, Val_unit);
 }
 
-int ocaml_read_term(void)
+int ocaml_read_term_stdin(void)
 {
-  static value *ocaml_read_term_closure = NULL;
-  if (ocaml_read_term_closure == NULL) 
-    ocaml_read_term_closure = caml_named_value("ocaml_read_term");
-  return Int_val(caml_callback(*ocaml_read_term_closure, Val_unit));
+  static value *ocaml_read_term_stdin_closure = NULL;
+  if (ocaml_read_term_stdin_closure == NULL) 
+    ocaml_read_term_stdin_closure = caml_named_value("ocaml_read_term_stdin");
+  return Int_val(caml_callback(*ocaml_read_term_stdin_closure, Val_unit));
 }
 
-int ocaml_open_in(char *str)
+int ocaml_read_term_file_id(int file_id)
 {
-  static value *ocaml_open_in_closure = NULL;
-  if (ocaml_open_in_closure == NULL) 
-    ocaml_open_in_closure = caml_named_value("ocaml_open_in");
-  return Int_val(caml_callback(*ocaml_open_in_closure, caml_copy_string(str)));
+  static value *ocaml_read_term_file_id_closure = NULL;
+  if (ocaml_read_term_file_id_closure == NULL) 
+    ocaml_read_term_file_id_closure =
+	    caml_named_value("ocaml_read_term_file_id");
+  return Int_val(caml_callback(*ocaml_read_term_file_id_closure, 
+			  	Val_int(file_id)));
+}
+
+int ocaml_open(char *str, char *mode)
+{
+  static value *ocaml_open_closure = NULL;
+  if (ocaml_open_closure == NULL) 
+    ocaml_open_closure = caml_named_value("ocaml_open");
+  return Int_val(caml_callback2(*ocaml_open_closure, caml_copy_string(str),
+			  	caml_copy_string(mode)));
 }
 

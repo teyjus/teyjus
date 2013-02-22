@@ -171,7 +171,7 @@ let main =
   Arg.parse (Arg.align specList) (setInputName ~filter:getModName) usageMsg ;
 
   try 
-        Io.register_callbacks ();
+        Io.registerCallbacks ();
         Front.systemInit  !heapSize ;
         Module.setPath    !path;
         Module.moduleLoad !inputName;

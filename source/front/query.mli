@@ -25,5 +25,4 @@ val showAnswers    : unit -> unit
 
 val queryHasVars : unit -> bool
 
-(* This is the Teyjus read predicate, i.e. it reads a term from stdin *)
-val readTerm     : Absyn.amodule -> int
+val readTermChannel     : in_channel -> Absyn.amodule -> int
