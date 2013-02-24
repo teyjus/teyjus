@@ -511,7 +511,7 @@ let calculateIndexing clauses =
 	let rec insertConstSwitch c cl constSwitch =
 	  match constSwitch with
 		[] -> [ConstSwInfo(c, [cl])]
-	  | ((ConstSwInfo(c', cls) as ccls) :: rest) ->
+	      | ((ConstSwInfo(c', cls) as ccls) :: rest) ->
 		  if (c == c') then 
 			(ConstSwInfo(c', cl :: cls) :: rest)
 		  else
