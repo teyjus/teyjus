@@ -18,4 +18,6 @@
 * You should have received a copy of the GNU General Public License
 * along with Teyjus.  If not, see <http://www.gnu.org/licenses/>.
 ****************************************************************************)
+
+(* Register all the functions which can be called from the C part *)
 val registerCallbacks : unit -> unit 

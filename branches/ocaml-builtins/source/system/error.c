@@ -112,14 +112,8 @@ void EM_error(int inIndex, ...)
      */
     if (lExnType == EM_NO_EXN) return;
     else { /* note we've encountered an error */
-        EM_anyErrors = 1;
         EM_THROW(lExnType);
     }
-}
-
-void EM_reset()
-{
-   EM_anyErrors = 0;
 }
 
 #endif //ERROR_C
