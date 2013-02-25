@@ -508,11 +508,11 @@
 				>
 			</File>
 			<File
-				RelativePath="..\front\readterm_c.c"
+				RelativePath="..\front\io_c.c"
 				>
 			</File>
 			<File
-				RelativePath="..\front\readterm_c.h"
+				RelativePath="..\front\io_c.h"
 				>
 			</File>
 		</Filter>

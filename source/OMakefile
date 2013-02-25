@@ -91,7 +91,7 @@ FNT_C[] =
     $(FNT)/ccode_stubs
     $(FNT)/front_c
     $(FNT)/query_c
-    $(FNT)/readterm_c
+    $(FNT)/io_c
     $(FNT)/ocaml_wrap
 
 FNT_ML_TO_C[] =
