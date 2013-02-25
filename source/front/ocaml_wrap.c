@@ -58,3 +58,10 @@ int ocaml_open(char *str, char *mode)
 			  	caml_copy_string(mode)));
 }
 
+int ocaml_close(int file_id)
+{
+  static value *ocaml_close_closure = NULL;
+  if (ocaml_close_closure == NULL) 
+    ocaml_close_closure = caml_named_value("ocaml_close");
+  return Int_val(caml_callback(*ocaml_close_closure, Val_int(file_id)));
+}

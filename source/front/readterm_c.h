@@ -21,4 +21,5 @@
 int FRONT_RT_readTermAndTypeStdin();
 int FRONT_RT_readTermAndTypeFileId(int file_id);
 int FRONT_RT_open(char *fname, char *mode);
+int FRONT_RT_close(int file_id);
 

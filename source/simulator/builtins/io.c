@@ -61,15 +61,6 @@ static char* BIIO_getStringFromTerm(DF_TermPtr tmPtr)
     else return NULL;
 }
 
-/* get string from an lpwam string term pointer */
-static int BIIO_getIntFromTerm(DF_TermPtr tmPtr)
-{
-    HN_hnorm(tmPtr);
-    tmPtr = DF_termDeref(tmPtr);
-    if (DF_isInt(tmPtr)) return (int)DF_intValue(tmPtr);
-    else return NULL;
-}
-
 /* get stream index from an lpwam stream term */
 static WordPtr BIIO_getStreamFromTerm(DF_TermPtr tmPtr)
 {
@@ -170,17 +161,17 @@ static void BIIO_bindVarToString(DF_TermPtr varPtr, char* str)
 
 static void BIIO_closeStreamTerm(DF_TermPtr tmPtr)
 {
-    WordPtr stream;
+    int file_id;
 
     HN_hnorm(tmPtr);
     tmPtr = DF_termDeref(tmPtr);
     if (DF_isFV(tmPtr)) EM_error(BI_ERROR_UNBOUND_VARIABLE, "stream");
-    
-    if ((stream = DF_streamTabIndex(tmPtr)) == STREAM_ILLEGAL)
+   
+   file_id = BIIO_getIntegerFromTerm(tmPtr);
+
+   if (FRONT_RT_close(file_id) == -1)
         EM_error(BI_ERROR_STREAM_ALREADY_CLOSED);
 
-    STREAM_close(stream);
-    DF_setStreamInd(tmPtr, STREAM_ILLEGAL);
 }
 
 static void BIIO_doOpen(char *inMode)
@@ -192,6 +183,7 @@ static void BIIO_doOpen(char *inMode)
   if (!fname) EM_error(BI_ERROR_UNBOUND_VARIABLE, "filename");
 
   file_id = FRONT_RT_open(fname, inMode);
+
   if (file_id == -1) EM_error(BI_ERROR_CANNOT_OPEN_STREAM, fname);
   
   BIIO_bindVarToInt(((DF_TermPtr)AM_reg(2)), file_id);
@@ -484,7 +476,7 @@ void BIIO_readTerm()
   DF_TermPtr  tp;
   DF_TypePtr  typ;
     
-  file_id = BIIO_getIntFromTerm((DF_TermPtr)AM_reg(1));
+  file_id = BIIO_getIntegerFromTerm((DF_TermPtr)AM_reg(1));
 
   typ  = (DF_TypePtr)(AM_hreg);
   RT_setTypeStart(AM_hreg);
@@ -493,11 +485,11 @@ void BIIO_readTerm()
   tp   = (DF_TermPtr)(AM_hreg);  
   RT_setTermStart(AM_hreg);
   AM_hreg += DF_TM_ATOMIC_SIZE;
-  
-  if (FRONT_RT_readTermAndTypeFileId(file_id)) {
-    PRINT_resetFreeVarTab();
+
+  if ((FRONT_RT_readTermAndTypeFileId(file_id)) == -1) {
+    EM_error(BI_ERROR_ILLEGAL_STREAM);	  
   } else {
-    EM_THROW(EM_FAIL);
+    PRINT_resetFreeVarTab();
   }
   
 

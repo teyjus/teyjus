@@ -18,6 +18,8 @@ INC = $(dir include)
 # Compile flags
 #
 
+OCAMLOPTFLAGS = -g
+OCAML_NATIVE_LINK_FLAGS = -g
 OCAMLINCLUDES += $(CMP) $(DIS) $(SIM) $(LOD)
 CFLAGS += -g
 
