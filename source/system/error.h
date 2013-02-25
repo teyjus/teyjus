@@ -165,6 +165,5 @@ void EM_error(int inIndex, ...);
  * Have there been any errors since last EM_Reset()?                        *
  ****************************************************************************/
 extern Boolean EM_anyErrors;
-void EM_reset();
 
 #endif  //ERROR_H 
