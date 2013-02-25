@@ -39,7 +39,7 @@
 #include "../../tables/pervasives.h" 
 #include "../../system/error.h"      
 #include "../../system/stream.h"    
-#include "../../front/readterm_c.h" 
+#include "../../front/io_c.h" 
 
 
 /* unify types */
@@ -169,7 +169,7 @@ static void BIIO_closeStreamTerm(DF_TermPtr tmPtr)
    
    file_id = BIIO_getIntegerFromTerm(tmPtr);
 
-   if (FRONT_RT_close(file_id) == -1)
+   if (FRONT_IO_close(file_id) == -1)
         EM_error(BI_ERROR_STREAM_ALREADY_CLOSED);
 
 }
@@ -182,7 +182,7 @@ static void BIIO_doOpen(char *inMode)
   fname = BIIO_getStringFromTerm((DF_TermPtr)AM_reg(1));  
   if (!fname) EM_error(BI_ERROR_UNBOUND_VARIABLE, "filename");
 
-  file_id = FRONT_RT_open(fname, inMode);
+  file_id = FRONT_IO_open(fname, inMode);
 
   if (file_id == -1) EM_error(BI_ERROR_CANNOT_OPEN_STREAM, fname);
   
@@ -486,7 +486,7 @@ void BIIO_readTerm()
   RT_setTermStart(AM_hreg);
   AM_hreg += DF_TM_ATOMIC_SIZE;
 
-  if ((FRONT_RT_readTermAndTypeFileId(file_id)) == -1) {
+  if ((FRONT_IO_readTermAndTypeFileId(file_id)) == -1) {
     EM_error(BI_ERROR_ILLEGAL_STREAM);	  
   } else {
     PRINT_resetFreeVarTab();
@@ -518,7 +518,7 @@ void BIIO_read()
   AM_hreg += DF_TM_ATOMIC_SIZE;
 
 
-  if (FRONT_RT_readTermAndTypeStdin()) {
+  if (FRONT_IO_readTermAndTypeStdin()) {
     PRINT_resetFreeVarTab();
   } else {
     EM_THROW(EM_FAIL);
