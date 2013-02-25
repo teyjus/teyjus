@@ -19,36 +19,49 @@
 * along with Teyjus.  If not, see <http://www.gnu.org/licenses/>.
 ****************************************************************************)
 
-(* The number of files which can be optinally handled.
- * Notice that there is no restriction of the number of files which can
- * be handled, just a performance issue *)
-let nbFilesInit = 2
+type chan = In of in_channel | Out of out_channel;;
 
-let htFiles = Hashtbl.create nbFilesInit 
+let htFiles = Hashtbl.create 2 
 
 let readTermStdin term =
         Query.readTermChannel stdin (Module.getCurrentModule ())
 
+let readTermFileId fileId = 
+        try
+                match Hashtbl.find htFiles fileId with
+                | In(chan) -> 
+                        Query.readTermChannel chan (Module.getCurrentModule ())
+                | _ -> -1
+        with
+                Not_found -> -1 
 
 let openFile fname mode = 
+        let fnameHash = Hashtbl.hash fname in
         match mode with
-        | "r" -> 
-                begin 
-                        try
-                                let chan = open_in fname in
-                                let fnameHash = Hashtbl.hash fname in
-                                Hashtbl.add htFiles fnameHash chan ;
-                                fnameHash
-                        with _  -> -1
-                end
-        | _ -> Printf.printf "TODO\n" ; -1
+        | "r" -> let chan = open_in fname in
+                Hashtbl.add htFiles fnameHash (In(chan)) ; 
+                fnameHash
+        | "w" -> let chan = open_out fname in 
+                Hashtbl.add htFiles fnameHash (Out(chan)) ; 
+                fnameHash
+        | _ -> Printf.printf "TODO: Unsupported mode\n" ; -1
 
-let readTermFileId fileId = 
-        let chan = Hashtbl.find htFiles fileId in
-        Query.readTermChannel chan (Module.getCurrentModule ())
+let closeFile fileId  = 
+        try
+                let chan = Hashtbl.find htFiles fileId in
+                Hashtbl.remove htFiles fileId ;
+                (match chan with 
+                | In(chan) -> close_in chan  
+                | Out(chan) -> close_out chan) ; 1
+        with
+                Not_found -> -1 
+
+
+
 
 let registerCallbacks () = 
         Callback.register "ocaml_read_term_stdin" readTermStdin;
         Callback.register "ocaml_open" openFile;
-        Callback.register "ocaml_read_term_file_id" readTermFileId;
+        Callback.register "ocaml_close" closeFile;
+        Callback.register "ocaml_read_term_file_id" readTermFileId
 

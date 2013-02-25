@@ -35,3 +35,8 @@ int FRONT_RT_open(char *fname, char *mode)
 {
   return ocaml_open(fname, mode);
 }
+
+int FRONT_RT_close(int file_id)
+{
+  return ocaml_close(file_id);
+}
