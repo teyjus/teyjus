@@ -71,6 +71,7 @@ static WordPtr BIIO_getStreamFromTerm(DF_TermPtr tmPtr)
         if (DF_isConst(tmPtr)) {
             cstInd = DF_constTabIndex(tmPtr);
             switch (cstInd) {
+            case PERV_STDIN_INDEX:  return STREAM_stdin;
             case PERV_STDOUT_INDEX: return STREAM_stdout;
             case PERV_STDERR_INDEX: return STREAM_stderr;
             default: EM_error(BI_ERROR_NON_STREAM_TERM, tmPtr);
@@ -222,8 +223,18 @@ void BIIO_closeOut()     { BIIO_doClose();             }
     in_stream to X                              */
 void BIIO_openStr()
 {
-  /* Useful ? */	
-  EM_error(BI_ERROR_NOT_IMPLEMENTED);
+  /* TODO
+  char*    str;
+  WordPtr  stream;
+
+  str = BIIO_getStringFromTerm((DF_TermPtr)AM_reg(1));
+  if (!str) EM_error(BI_ERROR_UNBOUND_VARIABLE, "string");
+
+  stream = STREAM_fromString(str, FALSE);
+  if (stream == STREAM_ILLEGAL) EM_error(BI_ERROR_OPENING_STRING, str);
+
+  BIIO_bindVarToStream((DF_TermPtr)AM_reg(2), stream);
+  AM_preg = AM_cpreg; */
 }
 
 /* type  input    in_stream -> int -> string -> o
@@ -465,6 +476,8 @@ void BIIO_readTerm()
   DF_TermPtr  tp;
   DF_TypePtr  typ;
     
+  /* We need to have something more general than just getInt.
+   * Because we want to have readterm std_in 3. */
   file_id = BIIO_getIntegerFromTerm((DF_TermPtr)AM_reg(1));
 
   typ  = (DF_TypePtr)(AM_hreg);
@@ -587,6 +600,10 @@ void BIIO_getEnv()
    INet must be instantiated to an inet address (in string form) and
    PortNo must be bound to a port number for a relevant service. In and
    Out are bound to streams associated with the socket so specified.
+   Unix specific functions are used in the realization---see the
+   definition of SSTREAM_open in the file /system/stream.c. In and Out
+   are expected to be unbound whereas INet and PortNo must be fully
+   instantiated.
 */
 void BIIO_openSocket()
 {
@@ -602,6 +619,7 @@ void BIIO_openSocket()
 */
 void BIIO_unixTime()
 {
+  //to be filled in
   EM_error(BI_ERROR_NOT_IMPLEMENTED);
 }
 

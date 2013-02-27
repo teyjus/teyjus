@@ -45,6 +45,32 @@
 /* the vtables for the streams. */
 static STREAML_Vtable STREAM_vtable[6] = 
 {
+    {	/* InFile */			
+        NULL, 
+        STREAM_file_readCharacters, 
+        STREAM_file_lookahead, 
+        STREAM_file_flush,
+        STREAM_file_eof,
+        STREAM_file_close,
+        NULL,
+        STREAM_file_getFile,
+        NULL,
+        STREAM_file_getName
+    },
+
+    {  /* OutFile */
+        STREAM_file_printf,
+        NULL,
+        NULL,
+        STREAM_file_flush,
+        NULL,
+        STREAM_file_close,
+        STREAM_file_remove,
+        STREAM_file_getFile,
+        NULL,
+        STREAM_file_getName
+    },
+
     {  /* InString */
         NULL,
         STREAM_string_readCharacters,
@@ -52,6 +78,7 @@ static STREAML_Vtable STREAM_vtable[6] =
         STREAM_string_flush,
         STREAM_string_eof,
         STREAM_string_close,
+        NULL,
         NULL,
         STREAM_string_getString,
         STREAM_string_getName
@@ -65,6 +92,7 @@ static STREAML_Vtable STREAM_vtable[6] =
         NULL,
         STREAM_string_close,
         NULL,
+        NULL,
         STREAM_string_getString,
         STREAM_string_getName
     },
@@ -77,6 +105,7 @@ static STREAML_Vtable STREAM_vtable[6] =
         STREAM_file_eof,
         NULL,
         NULL,
+        STREAM_file_getFile,
         NULL,
         STREAM_file_getName
     },
@@ -89,6 +118,7 @@ static STREAML_Vtable STREAM_vtable[6] =
         NULL,
         NULL,
         NULL,
+        STREAM_file_getFile,
         NULL,
         STREAM_file_getName
     }
@@ -117,6 +147,7 @@ static STREAML_Stream *STREAM_firstStream = &STREAM_standardStreams[0];
  *                             EXPORTED VARIABLES                            *
  *****************************************************************************/
 
+WordPtr STREAM_stdin  =  (WordPtr)&STREAM_standardStreams[0];
 WordPtr STREAM_stdout =  (WordPtr)&STREAM_standardStreams[1];
 WordPtr STREAM_stderr =  (WordPtr)&STREAM_standardStreams[2];
 
@@ -304,6 +335,20 @@ int STREAM_string_eof(STREAML_Stream *inStream)
     return !inStream->mUnion.mString.mData[inStream->mUnion.mString.mOffset];
 }
 
+int STREAM_file_close(STREAML_Stream *inStream)
+{
+    fclose(inStream->mUnion.mFile.mFile);
+    STREAM_listRemove(inStream);
+    return 0;
+}
+
+int STREAM_file_remove(STREAML_Stream *inStream)
+{
+    remove(inStream->mUnion.mFile.mName);
+    STREAM_listRemove(inStream);
+    return 0;
+}
+
 int STREAM_string_close(STREAML_Stream *inStream)
 {
     if (inStream->mUnion.mString.mMalloc && inStream->mUnion.mString.mData)
@@ -312,6 +357,10 @@ int STREAM_string_close(STREAML_Stream *inStream)
     return 0;
 }
 
+FILE *STREAM_file_getFile(STREAML_Stream *inStream)
+{
+    return inStream->mUnion.mFile.mFile;
+}
 
 char *STREAM_string_getString(STREAML_Stream *inStream)
 {
@@ -331,6 +380,55 @@ char *STREAM_string_getName(STREAML_Stream *inStream)
 /*****************************************************************************/
 /*                   STREAM OPERATIONS                                       */
 /*****************************************************************************/
+/*                      OPENING                                              */
+WordPtr STREAM_open(char *inFilename, char *inMode, int inDoUsePaths)
+{
+    int  i;
+    char *lFilename = NULL;
+    FILE *lFile = NULL;
+    //PATHS_Pathname *lPathname = NULL;
+    STREAML_Stream *lStream = NULL;
+    
+    STREAM_checkInit();
+    
+    EM_TRY {
+        lStream = (STREAML_Stream *)EM_malloc(sizeof(STREAML_Stream));
+        
+        if (inDoUsePaths) {/*
+            lPathname = PATHS_makePathname(inFilename);
+            if (!lPathname || !PATHS_search(lPathname)) EM_THROW(EM_FAIL);
+            
+            lFilename = EM_strdup(PATHS_getFullname(lPathname));
+            PATHS_free(lPathname);
+            lPathname = NULL;*/
+        } else lFilename = EM_strdup(inFilename);
+        
+        lFile = fopen(lFilename, inMode);
+        if (!lFile) EM_THROW(EM_FAIL);
+        
+        /* fill in the stream data structure */
+        lStream -> mParserBuffer = NULL;
+        lStream -> mType = strcmp(inMode, "r") ? STREAML_OUTFILE : 
+            STREAML_INFILE;
+        lStream -> mVtable = &STREAM_vtable[lStream -> mType];
+        lStream -> mUnion.mFile.mFile = lFile;
+        lStream -> mUnion.mFile.mName = lFilename;
+        
+        /* insert the stream into stream table */
+        STREAM_listInsert(lStream);
+    } EM_CATCH {
+        //if (lPathname) PATH_free(lPathname);
+        if (lFilename) free(lFilename);
+        if (lFile)     fclose(lFile);
+        if (lStream)   free(lStream);
+        
+        if (EM_CurrentExnType == EM_FAIL) return STREAM_ILLEGAL;
+        else EM_RETHROW();
+    }
+    
+    /* finally return it */
+    return (WordPtr)lStream;
+}
 
 WordPtr  STREAM_fromString(char *inString, int inDoCopyString)
 {
@@ -473,6 +571,17 @@ char* STREAM_getString(WordPtr inStream)
    else return 0;
 }
 
+FILE*   STREAM_getFile(WordPtr inStream)
+{
+   STREAML_Stream *lStream = (STREAML_Stream *)inStream;
+
+   STREAM_checkInit();
+
+   if (lStream->mVtable->STREAML_getFile)
+      return lStream->mVtable->STREAML_getFile(lStream);
+   else return 0;
+}
+    
 char*  STREAM_getName(WordPtr inStream)
 {
    STREAML_Stream *lStream = (STREAML_Stream *)inStream;
