@@ -43,12 +43,16 @@
  *                             EXPORTED VARIABLES                            *
  *****************************************************************************/
 /* STREAMs corresponding to the three standard streams */
-extern WordPtr STREAM_stdout, STREAM_stderr;
+extern WordPtr STREAM_stdin, STREAM_stdout, STREAM_stderr;
 
 /****************************************************************************
  *                      BASIC FUNCTIONS                                     *
  ****************************************************************************/
 
+/* STREAM_open returns STREAM_ILLEGAL if the stream can't be opened;
+   if inDoCountLines is false, the line numbering calls below will not
+   work. */
+WordPtr  STREAM_open(char *inFilename, char *inMode, int inDoUsePaths);
 /* open strings as streams.  Note that the STREAM system does not
    distinguish to_string and from_string streams after they are
    opened.  Results are undefined for a write to a from_string or read
@@ -80,6 +84,7 @@ int     STREAM_flush(WordPtr inStream);
  *                             ACCESSORS                                   *  
  ***************************************************************************/
 char*   STREAM_getString(WordPtr inStream);
+FILE*   STREAM_getFile(WordPtr inStream);
 char*   STREAM_getName(WordPtr inStream);
 
 #endif //STREAM_H

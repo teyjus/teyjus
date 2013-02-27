@@ -45,6 +45,7 @@ typedef struct STREAML_Vtable
     int (*STREAML_eof)(STREAML_Stream *);
     int (*STREAML_close)(STREAML_Stream *);
     int (*STREAML_remove)(STREAML_Stream *);
+    FILE *(*STREAML_getFile)(STREAML_Stream *);
     char *(*STREAML_getString)(STREAML_Stream *);
     char *(*STREAML_getName)(STREAML_Stream *);
 } STREAML_Vtable;
@@ -61,7 +62,10 @@ int STREAM_file_flush(STREAML_Stream *);
 int STREAM_string_flush(STREAML_Stream *);
 int STREAM_file_eof(STREAML_Stream *);
 int STREAM_string_eof(STREAML_Stream *);
+int STREAM_file_close(STREAML_Stream *);
+int STREAM_file_remove(STREAML_Stream *);
 int STREAM_string_close(STREAML_Stream *);
+FILE *STREAM_file_getFile(STREAML_Stream *);
 char *STREAM_string_getString(STREAML_Stream *);
 char *STREAM_file_getName(STREAML_Stream *);
 char *STREAM_string_getName(STREAML_Stream *);
@@ -70,7 +74,9 @@ char *STREAM_string_getName(STREAML_Stream *);
 /* (Note: Parser related types are removed from Dustin's version) */
 typedef enum STREAML_Type
 {
-   STREAML_INSTRING = 0,
+   STREAML_INFILE = 0,
+   STREAML_OUTFILE,
+   STREAML_INSTRING,
    STREAML_OUTSTRING,
    STREAML_STDINFILE,		/* permanent */
    STREAML_STDOUTFILE 		/* permanent */
