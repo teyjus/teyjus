@@ -39,14 +39,14 @@ int ocaml_read_term_stdin(void)
   return Int_val(caml_callback(*ocaml_read_term_stdin_closure, Val_unit));
 }
 
-int ocaml_read_term_file_id(int file_id)
+int ocaml_read_term_file_id(char *fname)
 {
   static value *ocaml_read_term_file_id_closure = NULL;
   if (ocaml_read_term_file_id_closure == NULL) 
     ocaml_read_term_file_id_closure =
 	    caml_named_value("ocaml_read_term_file_id");
   return Int_val(caml_callback(*ocaml_read_term_file_id_closure, 
-			  	Val_int(file_id)));
+			  	caml_copy_string(fname)));
 }
 
 int ocaml_open(char *str, char *mode)
@@ -58,10 +58,10 @@ int ocaml_open(char *str, char *mode)
 			  	caml_copy_string(mode)));
 }
 
-int ocaml_close(int file_id)
+int ocaml_close(char *fname)
 {
   static value *ocaml_close_closure = NULL;
   if (ocaml_close_closure == NULL) 
     ocaml_close_closure = caml_named_value("ocaml_close");
-  return Int_val(caml_callback(*ocaml_close_closure, Val_int(file_id)));
+  return Int_val(caml_callback(*ocaml_close_closure, caml_copy_string(fname)));
 }

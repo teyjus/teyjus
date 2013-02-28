@@ -26,9 +26,9 @@ int FRONT_IO_readTermAndTypeStdin(void)
   return ocaml_read_term_stdin();
 }
 
-int FRONT_IO_readTermAndTypeFileId(int file_id)
+int FRONT_IO_readTermAndTypeFileId(char *fname)
 {
-  return ocaml_read_term_file_id(file_id);
+  return ocaml_read_term_file_id(fname);
 }
 
 int FRONT_IO_open(char *fname, char *mode)
@@ -36,7 +36,7 @@ int FRONT_IO_open(char *fname, char *mode)
   return ocaml_open(fname, mode);
 }
 
-int FRONT_IO_close(int file_id)
+int FRONT_IO_close(char *fname)
 {
-  return ocaml_close(file_id);
+  return ocaml_close(fname);
 }

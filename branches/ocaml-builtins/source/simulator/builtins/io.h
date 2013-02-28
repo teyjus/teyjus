@@ -26,6 +26,19 @@
 #ifndef IO_H
 #define IO_H
 
+
+
+typedef struct BIIO_finfo
+{
+    char * name;
+} BIIO_finfo;
+
+
+char*   BIIO_getFileName(WordPtr finfo);
+
+
+
+
 void BIIO_openIn();
 void BIIO_openOut();
 void BIIO_openApp();

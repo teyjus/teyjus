@@ -208,6 +208,7 @@ typedef TwoBytes  DF_CstTabInd; //constant symbol table index
 typedef TwoBytes  DF_Arity;     //application arity
 typedef TwoBytes  DF_DBInd;     //de Bruijn ind, embed level and num of lams
 typedef WordPtr   DF_StreamTabInd; 
+typedef WordPtr   DF_FinfoTabInd; 
 
 typedef struct                  //logic variables          
 {
@@ -268,6 +269,12 @@ typedef struct                  //stream
     DF_Tag        tag;     
     DF_StreamTabInd index;
 } DF_StreamTerm;
+
+typedef struct                  //stream
+{
+    DF_Tag        tag;     
+    DF_FinfoTabInd index;
+} DF_FinfoTerm;
 
 typedef struct                  //empty list
 {
@@ -366,6 +373,8 @@ Boolean DF_isBV(DF_TermPtr tmPtr)
 {   return (tmPtr -> tag.categoryTag == DF_TM_TAG_BVAR);  }
 Boolean DF_isStream(DF_TermPtr tmPtr)  
 {   return (tmPtr -> tag.categoryTag == DF_TM_TAG_STREAM);}
+Boolean DF_isFinfo(DF_TermPtr tmPtr)  
+{   return (tmPtr -> tag.categoryTag == DF_TM_TAG_FINFO);}
 Boolean DF_isRef(DF_TermPtr tmPtr)     
 {   return (tmPtr -> tag.categoryTag == DF_TM_TAG_REF);   }
 Boolean DF_isCons(DF_TermPtr tmPtr)    
@@ -435,6 +444,12 @@ MCSTR_Str DF_strDataValue(DF_StrDataPtr tmPtr)     //acc str value from data fd
 WordPtr DF_streamTabIndex(DF_TermPtr tmPtr)        //stream table index
 {
     return ((DF_StreamTerm*)tmPtr)->index;
+}
+
+//finfo TEMP
+WordPtr DF_finfoTabIndex(DF_TermPtr tmPtr)        //stream table index
+{
+    return ((DF_FinfoTerm*)tmPtr)->index;
 }
 //de Bruijn index
 int DF_bvIndex(DF_TermPtr tmPtr)                    //de Bruijn index
@@ -574,6 +589,11 @@ void DF_mkStrDataHead(MemPtr loc)                            //string data head
 void DF_mkStream(MemPtr loc, WordPtr ind)                    //stream 
 {
     ((DF_StreamTerm*)loc) -> tag.categoryTag = DF_TM_TAG_STREAM;
+    ((DF_StreamTerm*)loc) -> index = ind;
+}
+void DF_mkFinfo(MemPtr loc, WordPtr ind)                    //finfo 
+{
+    ((DF_StreamTerm*)loc) -> tag.categoryTag = DF_TM_TAG_FINFO;
     ((DF_StreamTerm*)loc) -> index = ind;
 }
 void DF_setStreamInd(DF_TermPtr tm, WordPtr ind)             //update stream ind

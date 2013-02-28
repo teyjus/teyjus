@@ -28,6 +28,7 @@
 #include <stdio.h> 
 #include "builtins.h"
 #include "readterm.h"
+#include "io.h"
 #include "../abstmachine.h" 
 #include "../dataformats.h" 
 #include "../hnorm.h"       
@@ -87,6 +88,16 @@ static WordPtr BIIO_getStreamFromTerm(DF_TermPtr tmPtr)
     return NULL;
 }
 
+static WordPtr BIIO_getFinfoFromTerm(DF_TermPtr tmPtr)
+{
+    HN_hnorm(tmPtr);
+    tmPtr = DF_termDeref(tmPtr);
+    if (!DF_isFinfo(tmPtr))
+        EM_error(BI_ERROR_NON_STREAM_TERM, tmPtr);
+    WordPtr finfo = DF_finfoTabIndex(tmPtr);
+    return finfo;
+}
+
 /* get value of an lpwam integer term pointer */
 static int BIIO_getIntegerFromTerm(DF_TermPtr tmPtr)
 {
@@ -103,7 +114,8 @@ static int BIIO_getIntegerFromTerm(DF_TermPtr tmPtr)
 /* Given an lpwam VAR term pointer, and a stream index,
    bind the variable term to the given stream. */
 static void BIIO_bindVarToStream(DF_TermPtr varPtr, WordPtr stream)
-{   MemPtr nhreg;
+{   
+    MemPtr nhreg;
 
     HN_hnorm(varPtr);
     varPtr = DF_termDeref(varPtr);
@@ -121,6 +133,32 @@ static void BIIO_bindVarToStream(DF_TermPtr varPtr, WordPtr stream)
     DF_mkStream((MemPtr)AM_hreg,stream); 
     DF_mkRef((MemPtr)varPtr,(DF_TermPtr)AM_hreg); 
     AM_hreg = nhreg;
+}
+
+
+/* Given an lpwam VAR term pointer, and a file information,
+ * bind the variable term to the given file information */ 
+static void BIIO_bindVarToFinfo(DF_TermPtr varPtr, WordPtr finfo)
+{   
+    MemPtr nhreg;
+
+    HN_hnorm(varPtr);
+    varPtr = DF_termDeref(varPtr);
+    if (!DF_isFV(varPtr)) EM_error(BI_ERROR_NON_VAR_TERM, varPtr);
+
+    TR_trailTerm(varPtr);
+    //GN, bug fix on June 20, 2012. 
+    //Pointers to file descriptors have to be globalized. 
+    //Otherwise, they could end up in registers (via put_value,
+    //for example) and then updating them, such as when closing 
+    //a stream, will update the contents of the register and 
+    //not have the required global effect.
+    nhreg = AM_hreg + DF_TM_ATOMIC_SIZE;
+    AM_heapError(nhreg);
+    DF_mkFinfo((MemPtr)AM_hreg, finfo); 
+    DF_mkRef((MemPtr)varPtr,(DF_TermPtr)AM_hreg); 
+    AM_hreg = nhreg;
+
 }
 
 /* Given an lpwam VAR term pointer, and an integer value,
@@ -159,40 +197,44 @@ static void BIIO_bindVarToString(DF_TermPtr varPtr, char* str)
     DF_mkStr((MemPtr)varPtr, (DF_StrDataPtr)strDataHead);
 }
 
-static void BIIO_closeStreamTerm(DF_TermPtr tmPtr)
-{
-    int file_id;
-
-    HN_hnorm(tmPtr);
-    tmPtr = DF_termDeref(tmPtr);
-    if (DF_isFV(tmPtr)) EM_error(BI_ERROR_UNBOUND_VARIABLE, "stream");
-   
-   file_id = BIIO_getIntegerFromTerm(tmPtr);
-
-   if (FRONT_IO_close(file_id) == -1)
-        EM_error(BI_ERROR_STREAM_ALREADY_CLOSED);
-
-}
 
 static void BIIO_doOpen(char *inMode)
 {
-  int file_id;
-  char    *fname;
-
+  char *fname;
+  BIIO_finfo *finfo;
+  
   fname = BIIO_getStringFromTerm((DF_TermPtr)AM_reg(1));  
   if (!fname) EM_error(BI_ERROR_UNBOUND_VARIABLE, "filename");
 
-  file_id = FRONT_IO_open(fname, inMode);
-
-  if (file_id == -1) EM_error(BI_ERROR_CANNOT_OPEN_STREAM, fname);
-  
-  BIIO_bindVarToInt(((DF_TermPtr)AM_reg(2)), file_id);
+  if (FRONT_IO_open(fname, inMode) == -1) 
+    EM_error(BI_ERROR_CANNOT_OPEN_STREAM, fname);
+ 
+  finfo = (BIIO_finfo *)EM_malloc(sizeof(BIIO_finfo));
+  finfo->name = EM_strdup(fname); 
+   
+  BIIO_bindVarToFinfo(((DF_TermPtr)AM_reg(2)), (WordPtr)finfo);
   AM_preg = AM_cpreg;
 }
 
 static void BIIO_doClose()
 {
-  BIIO_closeStreamTerm((DF_TermPtr)(AM_reg(1)));
+  DF_TermPtr  tmPtr;
+  char *fname;
+  WordPtr finfo;
+
+ 
+  tmPtr= ((DF_TermPtr)(AM_reg(1)));
+  HN_hnorm(tmPtr);
+  tmPtr = DF_termDeref(tmPtr);
+
+  if (DF_isFV(tmPtr)) EM_error(BI_ERROR_UNBOUND_VARIABLE, "stream");
+  
+  finfo = BIIO_getFinfoFromTerm(tmPtr);
+  fname = ((BIIO_finfo*)finfo)->name;
+
+  if (FRONT_IO_close(fname) == -1)
+    EM_error(BI_ERROR_STREAM_ALREADY_CLOSED);
+
   AM_preg = AM_cpreg;
 }
 
@@ -471,14 +513,14 @@ void BIIO_strToTerm()
     an lpwam term and unify it with X. */
 void BIIO_readTerm()
 {
-  int file_id;
+  char *fname;
 
   DF_TermPtr  tp;
   DF_TypePtr  typ;
     
   /* We need to have something more general than just getInt.
-   * Because we want to have readterm std_in 3. */
-  file_id = BIIO_getIntegerFromTerm((DF_TermPtr)AM_reg(1));
+   * Because we want to have readterm std_in X. */
+  fname = BIIO_getStringFromTerm((DF_TermPtr)AM_reg(1));
 
   typ  = (DF_TypePtr)(AM_hreg);
   RT_setTypeStart(AM_hreg);
@@ -488,7 +530,7 @@ void BIIO_readTerm()
   RT_setTermStart(AM_hreg);
   AM_hreg += DF_TM_ATOMIC_SIZE;
 
-  if ((FRONT_IO_readTermAndTypeFileId(file_id)) == -1) {
+  if ((FRONT_IO_readTermAndTypeFileId(fname)) == -1) {
     EM_error(BI_ERROR_ILLEGAL_STREAM);	  
   } else {
     PRINT_resetFreeVarTab();

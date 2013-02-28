@@ -63,6 +63,7 @@ typedef enum
     DF_TM_TAG_NIL,            // empty lists
     DF_TM_TAG_STR,            // strings
     DF_TM_TAG_STREAM,         // streams
+    DF_TM_TAG_FINFO,          // file informations
     DF_TM_TAG_BVAR,           // lambda bound variables (de Bruijn index)
                               // -- atoms above
     DF_TM_TAG_REF,            // references
@@ -282,6 +283,7 @@ Boolean DF_isNil(DF_TermPtr);    // is list nil?
 Boolean DF_isStr(DF_TermPtr);    // is string?
 Boolean DF_isBV(DF_TermPtr);     // is de Bruijn index?
 Boolean DF_isStream(DF_TermPtr); // is stream?
+Boolean DF_isFinfo(DF_TermPtr);  // is file info?
 Boolean DF_isRef(DF_TermPtr);    // is reference?
 Boolean DF_isCons(DF_TermPtr);   // is list cons?
 Boolean DF_isLam(DF_TermPtr);    // is abstraction?
@@ -311,6 +313,8 @@ DF_StrDataPtr DF_strData(DF_TermPtr tmPtr);  // string data field
 MCSTR_Str DF_strDataValue(DF_StrDataPtr tmPtr);  //acc str value from data fd
 //stream
 WordPtr DF_streamTabIndex(DF_TermPtr);       // stream table index 
+//finfo
+WordPtr DF_finfoTabIndex(DF_TermPtr);        // file info table index 
 //de Bruijn indices
 int DF_bvIndex(DF_TermPtr);                  // de Bruijn index
 //reference
