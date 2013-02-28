@@ -20,7 +20,7 @@
 ****************************************************************************)
 
 (* Channels for input/output/output and append *)
-type chan = In of in_channel | Out of out_channel  | OutApp of out_channel ;;
+type chan = In of in_channel | Out of out_channel | OutApp of out_channel ;;
 
 let htFiles = Hashtbl.create 2 
 
@@ -30,30 +30,37 @@ let readTermStdin term =
 let readTermFileId fileId = 
 	try match Hashtbl.find htFiles fileId with
 		| In(chan) -> 
-				Query.readTermChannel chan (Module.getCurrentModule ())
+		  Query.readTermChannel chan (Module.getCurrentModule ())
 		| _ -> -1
 	with
 		Not_found -> -1 
 
 let openFile fname mode = 
-	let fnameHash = Hashtbl.hash fname in
-	match mode with
-		| "r" -> let chan = open_in fname in
-			Hashtbl.add htFiles fnameHash (In(chan)) ; fnameHash
-		| "w" -> let chan = open_out fname in 
-			Hashtbl.add htFiles fnameHash (Out(chan)) ; fnameHash
-		| "a" -> 
-			let chan = open_out_gen [Open_creat; Open_append] 0o644 fname in
-			Hashtbl.add htFiles fnameHash (OutApp(chan)) ; fnameHash
-		| _  -> (* Should never be reached *)
-			Printf.eprintf "Internal error while opening the file %s 
-			(%s is not a valid mode)\n" fname mode ;
-			exit (-1)
+    try
+        match mode with
+            | "r" -> 
+                let chan = open_in fname in
+                let () = Hashtbl.add htFiles fname (In(chan)) in
+                1
+            | "w" -> 
+                let chan = open_out fname in 
+                let () = Hashtbl.add htFiles fname (Out(chan)) in
+                1
+            | "a" -> 
+                let chan = open_out_gen [Open_creat; Open_append] 0o644 fname in
+                let () = Hashtbl.add htFiles fname (OutApp(chan)) in
+                1
+            | _  -> (* Should never be reached *)
+                Printf.eprintf "Internal error while opening the file %s 
+                (%s is not a valid mode)\n" fname mode ; exit (-1)
+    with
+        Sys_error(_) -> -1
 
-let closeFile fileId  = 
-	try
-		let chan = Hashtbl.find htFiles fileId in
-			Hashtbl.remove htFiles fileId ;
+
+let closeFile fname =
+    try
+		let chan = Hashtbl.find htFiles fname in
+			Hashtbl.remove htFiles fname ;
 			(match chan with 
 				| In(chan) -> close_in chan  
 				| Out(chan) | OutApp(chan) -> close_out chan) ; 1

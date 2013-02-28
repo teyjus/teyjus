@@ -20,12 +20,12 @@
 
 void ocaml_simulator_main();
 int ocaml_read_term_stdin();
-int ocaml_read_term_file_id(int file_id);
+int ocaml_read_term_file_id(char *fname);
 
 /* Opens the file given as an argument and returns a unique identifier for this
  * file that the functions input, input_line, lookahead, eof, readterm should
  * give back to OCaml when they want to perform an operation on this file */
-int ocaml_open(char *str, char *mode);
+int ocaml_open(char *fname, char *mode);
 
-int ocaml_close(int file_id);
+int ocaml_close(char *fname);
 

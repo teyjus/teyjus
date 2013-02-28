@@ -47,6 +47,7 @@
 #include "abstmachine.h"
 #include "io-datastructures.h"
 #include "builtins/builtins.h"
+#include "builtins/io.h"
 #include "../system/stream.h"
 #include "../system/error.h"
 #include "../system/operators.h"
@@ -172,6 +173,14 @@ static void PRINT_writeStream(WordPtr outStream, DF_TermPtr tmPtr)
     STREAM_printf(outStream, "<stream ");
     if (stream == STREAM_ILLEGAL) STREAM_printf(outStream, "-- closed>");
     else STREAM_printf(outStream, "-- \"%s\">", STREAM_getName(stream));
+}
+
+/* Writing out a file info constant to a given output stream */
+static void PRINT_writeFinfo(WordPtr outStream, DF_TermPtr tmPtr)
+{
+    WordPtr finfo = DF_finfoTabIndex(tmPtr);
+    STREAM_printf(outStream, "<stream ");
+    STREAM_printf(outStream, "-- \"%s\">", ((BIIO_finfo*)finfo)->name);
 }
 
 /****************************************************************************
@@ -675,6 +684,7 @@ static void PRINT_writeTerm(WordPtr outStream, DF_TermPtr tmPtr,
     case DF_TM_TAG_FLOAT:   PRINT_writeFloat(outStream, tmPtr);  break;
     case DF_TM_TAG_STR:     PRINT_writeString(outStream, tmPtr); break;
     case DF_TM_TAG_STREAM:  PRINT_writeStream(outStream, tmPtr); break;
+    case DF_TM_TAG_FINFO:   PRINT_writeFinfo(outStream, tmPtr); break;
     case DF_TM_TAG_CONST:   PRINT_writeConst(outStream, tmPtr);  break;
     case DF_TM_TAG_VAR:     PRINT_writeFVar(outStream, tmPtr);   break;
     case DF_TM_TAG_BVAR:    PRINT_writeBVar(outStream, tmPtr);   break;
