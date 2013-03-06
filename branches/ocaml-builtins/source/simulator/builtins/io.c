@@ -513,14 +513,19 @@ void BIIO_strToTerm()
     an lpwam term and unify it with X. */
 void BIIO_readTerm()
 {
+  DF_TermPtr  tmPtr;
   char *fname;
+  WordPtr finfo;
 
   DF_TermPtr  tp;
   DF_TypePtr  typ;
+
+  tmPtr= ((DF_TermPtr)(AM_reg(1)));
+  HN_hnorm(tmPtr);
+  tmPtr = DF_termDeref(tmPtr);
     
-  /* We need to have something more general than just getInt.
-   * Because we want to have readterm std_in X. */
-  fname = BIIO_getStringFromTerm((DF_TermPtr)AM_reg(1));
+  finfo = BIIO_getFinfoFromTerm(tmPtr);
+  fname = ((BIIO_finfo*)finfo)->name;
 
   typ  = (DF_TypePtr)(AM_hreg);
   RT_setTypeStart(AM_hreg);
@@ -531,7 +536,7 @@ void BIIO_readTerm()
   AM_hreg += DF_TM_ATOMIC_SIZE;
 
   if ((FRONT_IO_readTermAndTypeFileId(fname)) == -1) {
-    EM_error(BI_ERROR_ILLEGAL_STREAM);	  
+    EM_THROW(EM_FAIL);	  
   } else {
     PRINT_resetFreeVarTab();
   }
@@ -546,8 +551,7 @@ void BIIO_readTerm()
 
 /*  type read   A -> o
          read   Y  :- input_line std_in X, string_to_term X Y.
-    Universal reading. Read in a term from standard input.
-    This is precisely what we have been calling "readterm" */
+    Universal reading. Read in a term from standard input*/
 void BIIO_read() 
 {
   DF_TermPtr  tp;
@@ -561,7 +565,7 @@ void BIIO_read()
   RT_setTermStart(AM_hreg);
   AM_hreg += DF_TM_ATOMIC_SIZE;
 
-
+  printf("stdin\n");
   if (FRONT_IO_readTermAndTypeStdin()) {
     PRINT_resetFreeVarTab();
   } else {
