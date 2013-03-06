@@ -1,0 +1,19 @@
+open_in
+-> behavior OK when:
+  * opening a correct file
+  * opening an incorrect file
+  * opening two times the same file
+
+close_in
+-> behavior OK when:
+  * closing an opened file
+  * closing a variable of an incorrect type (unbound, string, ...)
+  * closing two times the same opened file
+
+read
+-> behavior OK when:
+  * parsing over multiple lines
+
+readterm
+-> behavior OK when:
+  * parsing a period terminated string from a file
