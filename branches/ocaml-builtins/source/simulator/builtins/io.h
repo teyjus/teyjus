@@ -30,12 +30,8 @@
 
 typedef struct BIIO_finfo
 {
-    char * name;
+  char * name;
 } BIIO_finfo;
-
-
-char*   BIIO_getFileName(WordPtr finfo);
-
 
 
 

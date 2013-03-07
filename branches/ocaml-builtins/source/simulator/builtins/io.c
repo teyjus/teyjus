@@ -90,12 +90,23 @@ static WordPtr BIIO_getStreamFromTerm(DF_TermPtr tmPtr)
 
 static WordPtr BIIO_getFinfoFromTerm(DF_TermPtr tmPtr)
 {
+    int cstInd;
     HN_hnorm(tmPtr);
     tmPtr = DF_termDeref(tmPtr);
-    if (!DF_isFinfo(tmPtr))
-        EM_error(BI_ERROR_NON_STREAM_TERM, tmPtr);
-    WordPtr finfo = DF_finfoTabIndex(tmPtr);
-    return finfo;
+    if (!DF_isFinfo(tmPtr)) {
+        if (DF_isConst(tmPtr)) {
+            cstInd = DF_constTabIndex(tmPtr);
+            switch (cstInd) {
+            case PERV_STDIN_INDEX:  return NULL;
+            case PERV_STDOUT_INDEX: return NULL;
+            case PERV_STDERR_INDEX: return NULL;
+            default: EM_error(BI_ERROR_NON_STREAM_TERM, tmPtr);
+            }
+        } else EM_error(BI_ERROR_NON_STREAM_TERM, tmPtr);
+    } else {
+        WordPtr finfo = DF_finfoTabIndex(tmPtr);
+        return finfo;
+    }
 }
 
 /* get value of an lpwam integer term pointer */
@@ -525,7 +536,9 @@ void BIIO_readTerm()
   tmPtr = DF_termDeref(tmPtr);
     
   finfo = BIIO_getFinfoFromTerm(tmPtr);
-  fname = ((BIIO_finfo*)finfo)->name;
+  if (finfo != NULL) {
+    fname = ((BIIO_finfo*)finfo)->name;
+  }
 
   typ  = (DF_TypePtr)(AM_hreg);
   RT_setTypeStart(AM_hreg);
@@ -535,13 +548,17 @@ void BIIO_readTerm()
   RT_setTermStart(AM_hreg);
   AM_hreg += DF_TM_ATOMIC_SIZE;
 
-  if ((FRONT_IO_readTermAndTypeFileId(fname)) == -1) {
-    EM_THROW(EM_FAIL);	  
+  if (finfo == NULL) {
+      /* We read from the standard input */
+      FRONT_IO_readTermAndTypeStdin();
   } else {
-    PRINT_resetFreeVarTab();
+    if ((FRONT_IO_readTermAndTypeFileId(fname)) == -1) {
+      EM_THROW(EM_FAIL);	  
+    } else {
+      PRINT_resetFreeVarTab();
+    }
   }
   
-
   BIIO_typesUnify(typ, (DF_TypePtr)(AM_reg(3)));
   
   DF_mkRef((MemPtr)AM_reg(1), tp);
@@ -565,7 +582,6 @@ void BIIO_read()
   RT_setTermStart(AM_hreg);
   AM_hreg += DF_TM_ATOMIC_SIZE;
 
-  printf("stdin\n");
   if (FRONT_IO_readTermAndTypeStdin()) {
     PRINT_resetFreeVarTab();
   } else {

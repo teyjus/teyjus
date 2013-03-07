@@ -17,3 +17,4 @@ read
 readterm
 -> behavior OK when:
   * parsing a period terminated string from a file
+  * specifying std_in as the input stream

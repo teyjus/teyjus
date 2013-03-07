@@ -270,7 +270,7 @@ typedef struct                  //stream
     DF_StreamTabInd index;
 } DF_StreamTerm;
 
-typedef struct                  //stream
+typedef struct                  //finfo
 {
     DF_Tag        tag;     
     DF_FinfoTabInd index;
@@ -447,7 +447,7 @@ WordPtr DF_streamTabIndex(DF_TermPtr tmPtr)        //stream table index
 }
 
 //finfo TEMP
-WordPtr DF_finfoTabIndex(DF_TermPtr tmPtr)        //stream table index
+WordPtr DF_finfoTabIndex(DF_TermPtr tmPtr)         //finfo table index
 {
     return ((DF_FinfoTerm*)tmPtr)->index;
 }
