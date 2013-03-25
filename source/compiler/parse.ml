@@ -849,7 +849,7 @@ and stackOperation parsingtoplevel o amodule stack =
     let name = (Absyn.getConstantName (getStackOpConstant o)) in
     let fixity = (getStackOpFixity o) in
     let prec = (getStackOpPrec o) in
-    let pos = (getStackItemPos o) in
+    let pos = getStackItemPos (stackTop stack) in
     
     (******************************************************************
     *precedenceConflict:
