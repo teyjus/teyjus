@@ -849,7 +849,7 @@ and stackOperation parsingtoplevel o amodule stack =
     let name = (Absyn.getConstantName (getStackOpConstant o)) in
     let fixity = (getStackOpFixity o) in
     let prec = (getStackOpPrec o) in
-    let pos = getStackItemPos (stackTop stack) in
+    let pos = (getStackItemPos o) in
     
     (******************************************************************
     *precedenceConflict:
@@ -874,6 +874,7 @@ and stackOperation parsingtoplevel o amodule stack =
         (precedenceConflict ();
         raise TermException)
       else
+        let pos = getStackItemPos (stackTop stack) in
         (Errormsg.error pos 
           ("missing left argument for " ^
           (String.lowercase (Absyn.string_of_fixity fixity)) ^
@@ -892,6 +893,7 @@ and stackOperation parsingtoplevel o amodule stack =
         (precedenceConflict ();
         raise TermException)
       else
+        let pos = getStackItemPos (stackTop stack) in
         (Errormsg.error pos 
           ("missing left argument for " ^
           (String.lowercase (Absyn.string_of_fixity fixity)) ^
