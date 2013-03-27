@@ -23,7 +23,7 @@
 #include "caml/alloc.h"
 
 
-void ocaml_simulator_main()
+void ocaml_simulator_main(void)
 {
   static value *ocaml_main_closure = NULL;
   if (ocaml_main_closure == NULL) 
@@ -64,4 +64,12 @@ int ocaml_close(char *fname)
   if (ocaml_close_closure == NULL) 
     ocaml_close_closure = caml_named_value("ocaml_close");
   return Int_val(caml_callback(*ocaml_close_closure, caml_copy_string(fname)));
+}
+
+char * ocaml_input_line_stdin(void)
+{
+  static value *ocaml_input_line_stdin_closure = NULL;
+  if (ocaml_input_line_stdin_closure == NULL) 
+    ocaml_input_line_stdin_closure = caml_named_value("ocaml_input_line_stdin");
+  return String_val(caml_callback(*ocaml_input_line_stdin_closure, Val_unit));
 }

@@ -40,3 +40,9 @@ int FRONT_IO_close(char *fname)
 {
   return ocaml_close(fname);
 }
+
+char * FRONT_IO_inputLineStdin(void)
+{
+    return ocaml_input_line_stdin();
+}
+

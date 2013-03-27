@@ -29,3 +29,4 @@ int ocaml_open(char *fname, char *mode);
 
 int ocaml_close(char *fname);
 
+char * ocaml_input_line_stdin(void);
