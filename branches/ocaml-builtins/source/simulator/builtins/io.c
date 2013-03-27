@@ -359,26 +359,34 @@ void BIIO_output()
  */
 void BIIO_inputLine()
 {
-    #define  MAX_LINE_LENGTH 1024
-    char     buffer[MAX_LINE_LENGTH];
-    WordPtr  stream;
-    int      length, size;
     MemPtr   strDataHead = AM_hreg;
     MemPtr   strData     = strDataHead + DF_STRDATA_HEAD_SIZE;
     MemPtr   nhreg;
+    WordPtr  finfo;
+    DF_TermPtr  tmPtr;
+    char *str;
+    int length;
+    char *fname;
     
-    stream = BIIO_getStreamFromTerm((DF_TermPtr)AM_reg(1));
+    tmPtr= ((DF_TermPtr)(AM_reg(1)));
+    HN_hnorm(tmPtr);
+    tmPtr = DF_termDeref(tmPtr);
+
+    finfo = BIIO_getFinfoFromTerm(tmPtr);
+    if (finfo != NULL) {
+      fname = ((BIIO_finfo*)finfo)->name;
+    }
+
+    if (finfo == NULL) {
+      str = FRONT_IO_inputLineStdin();
+    }
     
-    if (STREAM_readCharacters(stream, MAX_LINE_LENGTH, buffer, TRUE) == -1)
-        EM_error(BI_ERROR_READING_STREAM, (DF_TermPtr)AM_reg(1));
-    
-    length = strlen(buffer);
-    size   = MCSTR_numWords(length);
-    nhreg  = strData + size;
+    length = strlen(str);
+    nhreg  = strData + MCSTR_numWords(length);
     
     AM_heapError(nhreg);
     DF_mkStrDataHead(strDataHead);
-    MCSTR_toString((MCSTR_Str)strData, buffer, length);
+    MCSTR_toString((MCSTR_Str)strData, str, length);
     AM_hreg = nhreg;
 
     DF_mkStr((MemPtr)AM_reg(1), (DF_StrDataPtr)strDataHead);

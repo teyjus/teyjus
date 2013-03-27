@@ -67,10 +67,15 @@ let closeFile fname =
 	with
 		Not_found -> -1 
 
+
+let inputLineStdin fileId = read_line ()
+
+
 (* Register all the functions which can be called from the C part *)
 let registerCallbacks () = 
 	Callback.register "ocaml_read_term_stdin" readTermStdin;
 	Callback.register "ocaml_open" openFile;
 	Callback.register "ocaml_close" closeFile;
-	Callback.register "ocaml_read_term_file_id" readTermFileId
+    Callback.register "ocaml_read_term_file_id" readTermFileId;
+	Callback.register "ocaml_input_line_stdin" inputLineStdin
 
