@@ -1,0 +1,13 @@
+Whenever multiple definitions for a predicate exist within a set of accumulation related modules, we need to resolve those predicates in the proper order.  Since all accumulated-descendents of a module share it's import table, we combine predicate definitions just before we restore from the current import table to the previous one.
+
+The find code table for a module functions effectively as a listing of the predicate definitions related to that module.  As we extend an import table, we add the find code table for each module to a list of find code tables for that import table.  When the import table is finished we determine which definitions to combine by sequentially combining the find code tables and merging definitions that appear in both tables.  Since we load the find code tables of the modules sharing an import point in the reverse order in which want to test the definitions, we prepend the definitions to the first set in the order we loaded them.  This is accomplished in the IMPO_RestoreImportTab() and HASH_MergeFindCodeTabs() functions.
+
+The CODE_MergeDefs() procedure combines two definitions at the switch_on_reg layer.  It first determines the arity of the predicate from the n value of try statement found through the L1 of the younger definition's switch_on_reg statement. It peels off the switch_on_reg layer of the younger definition, and intellegently looks past the older definitions switch_on_reg layer.  It calls CODE_MergeSequence() to combine the clause layer.
+
+CODE_MergeSequence() combines definitions at the clause layer.  It checks the definitions to see if they are single clauses or multiple, and if the younger's first and older's last clauses are indexed.  If they are both indexed it calls CODE_MergeTerm() to merge the lower layer.  It fixes it's layer and returns.
+
+CODE_MergeTerm() combines definitions at the switch_on_term layer.  It combines the sequences for each of it's arguments.  Keeping one if the other is a 'fail'.  Variables are merged with CODE_MergeSequence(), Constants are merged by calling HASH_MergeHashTabs(), Lists with CODE_MergeSubsequence() and bound variables with BVR_MergeBvrTabs().
+
+CODE_MergeSubsequence() merges two definitions at the try layer.  If there are any single definitions, it extends the code space to give them choice point instructions.
+
+BVR_MergeBvrTabs() and HASH_MergeHashTabs() operate similarly to HASH_MergeFindCodeTabs() except they call CODE_MergeSubsequence() instead of CODE_MergeDefs().

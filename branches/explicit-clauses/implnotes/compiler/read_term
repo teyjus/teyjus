@@ -1,0 +1,174 @@
+READTERM MODULE
+===============
+
+This module is used to create a term on the abstract machine heap
+from its abstract syntax produced by the parser in (interpretively) solving a 
+top-level query against a module or in solving builtin predicates read_term, 
+read and string_to_term. Assuming that new constants and sorts are not 
+allowed, the interface of this module is like the following:
+
+Module interface
+================
+
+Input: (provided by PARSETERM)
+------------------------------
+  1). The abstract syntax of the term with name based logic variable
+      representation with the number of nodes (subterms);
+  2). The abstract syntax of the type of the term (in type molecule with
+      a type skeleton and type environments) with the number of nodes 
+      (subterms);
+  3). A list of logic (free) variables appearing in the term (name based 
+      representation);
+  4). A list of type variables appearing in the type environment of the 
+      top-level type or in type environments of constant occurrences in the 
+      term.
+
+Output:
+-------
+  1). A pointer to the term in virtual machine data encoding created on the
+      heap;
+  2). A pointer to the type of the term in virtual machine data encoding
+      created on the heap;
+  3). Register the free variables contained in the term to the IO free term
+      variable table.
+
+
+Internal organization
+=====================
+
+Since in this implementation the abstract syntax is encoded in OCaml and the 
+virtual machine data is encoded in C, the READTERM module is separated into
+two components with OCaml and C respectively. The communication between these
+two parts are supposed to be performed in the following way: OCaml functions
+are first invoked on the abstract syntax representations, and they are 
+in charge of invoking corresponding C functions to carry out virtual 
+machine term creation. At the C part, local structures (in C) like a queue
+(breath-first term traversal) or stack (depth-first term traversal) are 
+maintained to record the heap locations where the subterms are located. Thus
+the C addresses need not to be passed to the OCaml functions, and in the 
+invocation of the C functions, only parameters with basic types (int, float,
+string) need to be considered. This simplifies the interfacing between 
+the two different languages. 
+Note the breath-first traversal may be a better choice, because it is easy
+to avoid indirections in the structure of heap terms under this scheme.
+  
+Specifically, the OCaml and C parts of READTERM can be structured as the 
+following:
+
+Create free type variable functions
+-----------------------------------
+  OCaml part:
+    . traverse the free type variable list, and obtain an association list
+      of free type variables and integer indexes;
+    . invoke the create free type variable function in the C part with the
+      number of free type variables
+
+  C part:
+    . push n free type variables on the current top of heap, where n is 
+      given by parameter; maintain a pointer to the first type variable cell,
+      so that in the later type creation phase, the free type variables 
+      can be accessed by index as an array.
+  
+Create type functions
+---------------------
+  OCaml part: 
+    . transform the type molecule into a type;
+    . invoke a C queue init function with the number of nodes in the type;
+    . traverse the type abstract syntax in breath-first order (for reducing
+      indirections) and invoke C create type functions for corresponding
+      nodes. 
+      Parameters passed to the C functions:
+      sort:          index to the symbol table
+      structure:     arity 
+      type variable: the index in the association list obtained in the 
+                     create free type variable phase
+    . invoke a C function to deallocate the address queue
+
+
+  C part:
+    a. queue init function:
+       . allocate a queue of max size n through malloc 
+    b. type creation functions:
+       . dequeue the address stored in the address queue, and push a type
+         structure into that location. For a type variable, use the index
+         argument to obtain the address of the corresponding field in the 
+         free type variable array, and push a reference into the location.
+         If the type currently being created is a structure or an arrow,
+         enqueue the addresses of its arguments sequentially.
+
+
+Create free term variable functions
+-----------------------------------
+  OCaml part:
+    . traverse the free variable list, and obtain an association list
+      of free variables and integer indexes; at the meanwhile, invoke the
+      C create free variable function with a string parameter as the
+      variable name.
+     
+  C part:
+    . push a free variable cell onto the top of heap;
+    . enter the address of the free variable together with its name to the
+      IO free term variable array.
+
+
+Create term functions
+---------------------
+  OCaml part:
+    . invoke a C queue init function with the number of nodes in the term;
+    . traverse the term abstract syntax and in breath-first order and invoke
+      C create term (type) functions for corresponding nodes.
+      Parameters passed to the C functions:
+      free variable:  the index in the association list obtained in the 
+                      create free term variable phase;
+      constant:       the symbol table index; whether has type association
+      int:            integer value;
+      float:          float value;
+      string:         the character list;
+      bound variable: the de Bruijn index;
+      abstraction:    the length of binder;
+      application:    arity;
+      * note the OCaml type creation functions are invoked if the constant
+        has type environments.
+    . invoke a C function to deallocate the address queue.
+
+  C part:
+   . dequeue the address stored in the address queue as loc;
+   . for constant without type association, int, float, bound variable and 
+     nil, create the term into loc;
+   . for constant with type association, push a typed constant cell onto the
+     current top of heap, create a reference to the newly created cell at loc 
+     and enqueue the addresses for its type environments.
+   . for free variable, use the index parameter to look for the address of
+     the free variable in the IO free term variable list, and make a reference
+     to that address at loc;
+   . for a string, push the character list onto the top of heap in virtual 
+     machine string encoding, and create a string term at loc;
+   . for an application, push an application term onto the top of the heap,
+     make a reference at loc and enqueue the addresses of its function and
+     arguments sequentially;
+   . for a list cons, create a cons term at loc and enqueue the addresses of
+     its two arguments;
+   . for an abstraction, create an abstraction term at loc and enqueue the 
+     address of its body.
+ 
+
+Notes on the PARSETERM module
+=============================
+
+  For this module to provide proper input for the READTERM module, the 
+  following issues need to be noted:
+  1. If new constants and kinds are not allowed, this module should be 
+     parameterized by the pre term, the kind symbol table and the constant
+     symbol table;
+  2. In the kind and constant symbol tables used for READTERM, the indexes
+     of kinds and constants should be consistent with those in the run-time
+     symbol tables;
+  3. The skeletonization of free term variables needs not to be performed,
+     and consequently, the free type variables occurred in their types need
+     not to be collected. For example, in the term (F X) where F has a type
+     A -> int and X has type A, it is unnecessary to collect the type variable
+     A into the free type variable list.
+
+
+
+
