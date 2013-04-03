@@ -301,15 +301,34 @@ let rec ptypeToCode = function
   | Arrow(t1, t2, _) -> (ptypeToCode t1) ^ " -> " ^ (ptypeToCode t2) 
   | _ -> failwith "Please provide a correct .mod file"
 
-let rec pconstantToCode gconst = match gconst with
+(* typ is either type, useonly, or exportdef *)
+let rec pconstantToCode typ pconst = match pconst with
   | Constant([], _, _) -> ""
   | Constant(psym::q, ptypOpt, pos) -> 
-      "type " ^ (psymbolToCode psym) ^ " " ^ 
+      typ ^ " " ^ (psymbolToCode psym) ^ " " ^ 
       (match ptypOpt with
          | None -> ""
          | Some(ptyp) -> (ptypeToCode ptyp)
       ) ^ ".\n" ^
-      pconstantToCode (Constant(q, ptypOpt, pos))
+      pconstantToCode typ (Constant(q, ptypOpt, pos)) 
+
+let pfixitykindToCode pfixitykind = match pfixitykind with
+  | Infix(_) -> "infix"
+  | Infixl(_) -> "infixl"
+  | Infixr(_) -> "infixr"
+  | Prefix(_) -> "prefix"
+  | Prefixr(_) ->"prefixr"
+  | Postfix(_) ->"postfix"
+  | Postfixl(_) -> "postfixl"
+
+let rec pfixityToCode pfixity = match pfixity with
+  | Fixity([], _, _,_) -> ""
+  | Fixity(psym::q, pfixkind, prec, pos) ->
+     (pfixitykindToCode pfixkind) ^ " " ^
+     (psymbolToCode psym) ^ " " ^ (string_of_int prec) ^ ".\n" ^
+     (pfixityToCode (Fixity(q, pfixkind, prec, pos)))
+                                    
+    
 
 (* We do not handle explicit local declarations (i.e. only those
  * which do not have specific keywords but instead do not appear
@@ -324,7 +343,10 @@ let preAbsynToCode pmod basename = match pmod with
         let output_line s = output_string chan (s ^ "\n") in
         let output_list f list = List.iter (fun t -> output_line (f t)) list in
            output_line (nameToCode name);
-           output_list pconstantToCode gconsts
+           output_list (pconstantToCode "type") gconsts;
+           output_list (pconstantToCode "useonly") uconsts;
+           output_list (pconstantToCode "exportdef") econsts;
+           output_list pfixityToCode fixities
       with
           Sys_error(s) -> prerr_endline ("Error: " ^ s); exit (-1)
       end
