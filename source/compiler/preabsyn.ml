@@ -297,7 +297,7 @@ let psymbolToCode = function
 
 let rec ptypeToCode = function
   | Atom(sym, _, _) -> Symbol.name sym
-  | App(t1, t2, _) -> (ptypeToCode t1) ^ " APP? " ^ (ptypeToCode t2) 
+  | App(t1, t2, _) -> "(" ^ (ptypeToCode t1) ^ " " ^ (ptypeToCode t2) ^ ")"
   | Arrow(t1, t2, _) -> (ptypeToCode t1) ^ " -> " ^ (ptypeToCode t2) 
   | _ -> failwith "Please provide a correct .mod file"
 
@@ -327,26 +327,51 @@ let rec pfixityToCode pfixity = match pfixity with
      (pfixitykindToCode pfixkind) ^ " " ^
      (psymbolToCode psym) ^ " " ^ (string_of_int prec) ^ ".\n" ^
      (pfixityToCode (Fixity(q, pfixkind, prec, pos)))
+
+let rec kindlevelToCode level = match level with
+  | 0 -> "type"
+  | lv -> "type -> " ^ kindlevelToCode (lv - 1)
                                     
+let rec pkindToCode pkind = match pkind with
+  | Kind([], _, _) -> ""
+  | Kind(psym::q, Some(level), pos) ->
+      "kind " ^ (psymbolToCode psym) ^ " " ^ (kindlevelToCode level) ^
+      ".\n" ^ (pkindToCode (Kind(q, Some(level), pos)))
+  | _ -> failwith "Local kinds are not handled"
+
     
+let ptypeabbrevToCode ptypeabbrev = match ptypeabbrev with
+  | TypeAbbrev(psymbol, [], ptype, _) ->
+    "typeabbrev " ^ (psymbolToCode psymbol) ^ " " ^ (ptypeToCode ptype) 
+    ^ ".\n"
+  | TypeAbbrev(psymbol, psym_list, ptype, _) ->
+    "typeabbrev (" ^ (psymbolToCode psymbol) ^ 
+    (List.fold_left 
+       (fun acc elt -> acc ^ " " ^ (psymbolToCode psymbol)) 
+       "" 
+       psym_list
+    ) ^
+    ") " ^ (ptypeToCode ptype) ^ ".\n"
+
 
 (* We do not handle explicit local declarations (i.e. only those
  * which do not have specific keywords but instead do not appear
  * in the signature *)
 let preAbsynToCode pmod basename = match pmod with  
   | Module(name, gconsts, [], [], uconsts, econsts, fixities,
-      gkinds, [], tabbrevs, clauses, accummods,
-      accumsigs, usesigs, []) -> 
+      gkinds, [], tabbrevs, clauses, accummods, accumsigs, usesigs, []) -> 
       begin
       try
         let chan = open_out (basename ^ "_exp.mod") in 
         let output_line s = output_string chan (s ^ "\n") in
         let output_list f list = List.iter (fun t -> output_line (f t)) list in
-           output_line (nameToCode name);
-           output_list (pconstantToCode "type") gconsts;
-           output_list (pconstantToCode "useonly") uconsts;
-           output_list (pconstantToCode "exportdef") econsts;
-           output_list pfixityToCode fixities
+          output_line (nameToCode name);
+          output_list (pconstantToCode "type") gconsts;
+          output_list (pconstantToCode "useonly") uconsts;
+          output_list (pconstantToCode "exportdef") econsts;
+          output_list pfixityToCode fixities;
+          output_list pkindToCode gkinds;
+          output_list ptypeabbrevToCode tabbrevs
       with
           Sys_error(s) -> prerr_endline ("Error: " ^ s); exit (-1)
       end
