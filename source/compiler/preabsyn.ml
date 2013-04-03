@@ -292,7 +292,6 @@ let getModuleClauses = function
 
 let nameToCode name = "module " ^ name ^ ".\n"
 
-
 let psymbolToCode = function
   Symbol(sym, _, _) -> Symbol.name sym
 
@@ -305,29 +304,30 @@ let rec ptypeToCode = function
 let rec pconstantToCode gconst = match gconst with
   | Constant([], _, _) -> ""
   | Constant(psym::q, ptypOpt, pos) -> 
-      "type " ^ (psymbolToCode psym) ^ 
+      "type " ^ (psymbolToCode psym) ^ " " ^ 
       (match ptypOpt with
          | None -> ""
          | Some(ptyp) -> (ptypeToCode ptyp)
       ) ^ ".\n" ^
       pconstantToCode (Constant(q, ptypOpt, pos))
 
-
-
-let gconstsToCode chan gconsts =
-  List.fold_left (fun acc gc -> acc ^ (pconstantToCode gc)) ""  gconsts
-
+(* We do not handle explicit local declarations (i.e. only those
+ * which do not have specific keywords but instead do not appear
+ * in the signature *)
 let preAbsynToCode pmod basename = match pmod with  
-  | Module(name, gconsts, lconsts, cconsts, uconsts, econsts, fixities,
-      gkinds, lkinds, tabbrevs, clauses, accummods,
-      accumsigs, usesigs, impmods) -> 
+  | Module(name, gconsts, [], [], uconsts, econsts, fixities,
+      gkinds, [], tabbrevs, clauses, accummods,
+      accumsigs, usesigs, []) -> 
       begin
       try
         let chan = open_out (basename ^ "_exp.mod") in 
         let output_line s = output_string chan (s ^ "\n") in
-           output_line (nameToCode name)
+        let output_list f list = List.iter (fun t -> output_line (f t)) list in
+           output_line (nameToCode name);
+           output_list pconstantToCode gconsts
       with
           Sys_error(s) -> prerr_endline ("Error: " ^ s); exit (-1)
       end
   | Signature(name, gconstants, _,_, gkinds, tabbrevs, fixities, 
               accumsig, usig) -> ()
+  | _ -> failwith "Please do not use weird keywords (local/import/closed)"
