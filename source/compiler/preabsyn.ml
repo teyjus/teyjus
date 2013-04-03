@@ -287,10 +287,35 @@ let getModuleClauses = function
       Errormsg.impossible Errormsg.none
         "Preabsyn.getModuleClauses: invalid module"
 
-let nameToCode chan name = 
-  output_string chan ("module " ^ name ^ ".")
 
 
+
+let nameToCode name = "module " ^ name ^ ".\n"
+
+
+let psymbolToCode = function
+  Symbol(sym, _, _) -> Symbol.name sym
+
+let rec ptypeToCode = function
+  | Atom(sym, _, _) -> Symbol.name sym
+  | App(t1, t2, _) -> (ptypeToCode t1) ^ " APP? " ^ (ptypeToCode t2) 
+  | Arrow(t1, t2, _) -> (ptypeToCode t1) ^ " -> " ^ (ptypeToCode t2) 
+  | _ -> failwith "Please provide a correct .mod file"
+
+let rec pconstantToCode gconst = match gconst with
+  | Constant([], _, _) -> ""
+  | Constant(psym::q, ptypOpt, pos) -> 
+      "type " ^ (psymbolToCode psym) ^ 
+      (match ptypOpt with
+         | None -> ""
+         | Some(ptyp) -> (ptypeToCode ptyp)
+      ) ^ ".\n" ^
+      pconstantToCode (Constant(q, ptypOpt, pos))
+
+
+
+let gconstsToCode chan gconsts =
+  List.fold_left (fun acc gc -> acc ^ (pconstantToCode gc)) ""  gconsts
 
 let preAbsynToCode pmod basename = match pmod with  
   | Module(name, gconsts, lconsts, cconsts, uconsts, econsts, fixities,
@@ -299,7 +324,8 @@ let preAbsynToCode pmod basename = match pmod with
       begin
       try
         let chan = open_out (basename ^ "_exp.mod") in 
-          nameToCode chan name
+        let output_line s = output_string chan (s ^ "\n") in
+           output_line (nameToCode name)
       with
           Sys_error(s) -> prerr_endline ("Error: " ^ s); exit (-1)
       end
