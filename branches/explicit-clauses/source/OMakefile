@@ -34,6 +34,7 @@ CMP_ML[] =
     $(CMP)/codegen
     $(CMP)/compile
     $(CMP)/errormsg
+    $(CMP)/explicify
     $(CMP)/instr
     $(CMP)/lplex
     $(CMP)/lpyacc

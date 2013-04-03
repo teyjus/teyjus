@@ -136,3 +136,7 @@ val getModuleClauses : pmodule -> pclause list
 val getClauseTerm : pclause -> pterm
 
 val string_of_term : pterm -> string
+
+(* toCodePreAbsyn pmod fname writes the pmodule pmod 
+* in fname.mod (or fname.sig) as lambda prolog code *)
+val preAbsynToCode : pmodule -> string -> unit

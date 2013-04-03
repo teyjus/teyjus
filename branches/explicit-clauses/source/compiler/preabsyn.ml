@@ -286,3 +286,22 @@ let getModuleClauses = function
   | _ ->
       Errormsg.impossible Errormsg.none
         "Preabsyn.getModuleClauses: invalid module"
+
+let nameToCode chan name = 
+  output_string chan ("module " ^ name ^ ".")
+
+
+
+let preAbsynToCode pmod basename = match pmod with  
+  | Module(name, gconsts, lconsts, cconsts, uconsts, econsts, fixities,
+      gkinds, lkinds, tabbrevs, clauses, accummods,
+      accumsigs, usesigs, impmods) -> 
+      begin
+      try
+        let chan = open_out (basename ^ "_exp.mod") in 
+          nameToCode chan name
+      with
+          Sys_error(s) -> prerr_endline ("Error: " ^ s); exit (-1)
+      end
+  | Signature(name, gconstants, _,_, gkinds, tabbrevs, fixities, 
+              accumsig, usig) -> ()
