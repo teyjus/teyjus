@@ -24,18 +24,13 @@ let abortOnError () =
   if !Errormsg.anyErrors then
     exit 1
 
-let parse basename =
+let compile basename outfile =
   (* Parse the input module and signature and generate preabsyn. *)
   let modresult = Compile.compileModule basename in
   let _ = abortOnError () in
     
   let sigresult = Compile.compileSignature basename in
   let _ = abortOnError () in
-    (modresult, sigresult)
-
-
-let compile basename outfile =
-  let (modresult, sigresult) = parse basename in
       
   (* Construct an absyn module.  At this point only the module's *)
   (* constant, kind, and type abbrev information is valid.       *)
@@ -82,12 +77,10 @@ let compile basename outfile =
 	Spitcode.writeByteCode cg ;
     abortOnError ()
 
-let explicify basename = 
-  let (modresult, sigresult) = parse basename in
-  let modresultExp = Explicify.explicify modresult in
-  let sigresultExp = Explicify.explicify sigresult in
-  Preabsyn.preAbsynToCode modresultExp basename;
-  Preabsyn.preAbsynToCode sigresultExp basename
+let explicify basename =  ()
+(*  let (modresult, sigresult) = parse basename in*)
+(*  let modresultExp = Explicify.explicify modresult in*)
+(*  let sigresultExp = Explicify.explicify sigresult in*)
 
 
 let outputName = ref ""
@@ -116,8 +109,9 @@ let _ =
 
   if !outputName = "" then
     outputName := Bytecode.makeByteCodeFileName !inputName ;
-
+  
   if !explicit then
     explicify !inputName 
   else
     compile !inputName !outputName
+
