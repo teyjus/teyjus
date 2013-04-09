@@ -79,7 +79,7 @@ let writeModule m clauses newclauses oc =
   let writeClause oc lastHead t =
     let isConstant test t =
       match t with
-          ConstantTerm(c, _, _, _) -> test c
+          ConstantTerm(c, _, _) -> test c
         | _ -> false
     in
     let isUniversal v = match v with
@@ -92,7 +92,7 @@ let writeModule m clauses newclauses oc =
       
     let rec getActualClause t =
       match t with
-          ApplicationTerm(FirstOrderApplication(h,[AbstractionTerm(_) as abs],_),_,_)
+          ApplicationTerm(FirstOrderApplication(h,[AbstractionTerm(_) as abs],_),_)
             when isConstant Pervasive.isallConstant h
             ->  let vs = getTermAllAbstractionVars abs in
                 if List.for_all isUniversal vs then
@@ -104,14 +104,14 @@ let writeModule m clauses newclauses oc =
     
     let reverse t =
       match t with
-          ApplicationTerm(FirstOrderApplication(h, [l;r], i), b, p)
+          ApplicationTerm(FirstOrderApplication(h, [l;r], i), p)
             when isConstant Pervasive.isimplConstant h
             ->  ApplicationTerm(
                   FirstOrderApplication(
-                    ConstantTerm(Pervasive.colondashConstant, [], b, p),
+                    ConstantTerm(Pervasive.colondashConstant, [], p),
                     [r;l],
                     i),
-                  b, p)
+                  p)
         | _ ->  t
     in
     let getHead t =
@@ -123,7 +123,7 @@ let writeModule m clauses newclauses oc =
           None
       in
       match t with
-          ApplicationTerm(FirstOrderApplication(h, [l;_], _), _, _)
+          ApplicationTerm(FirstOrderApplication(h, [l;_], _), _)
             when isConstant Pervasive.iscolondashConstant h
             -> get l
         | _ -> get t

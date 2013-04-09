@@ -445,7 +445,7 @@ let reducePredicates amod =
     let checkTerms neededness terms i tvar =
       let rec checkTerm tvar t =
         match t with
-            Absyn.ConstantTerm(_,env,_,_) ->
+            Absyn.ConstantTerm(_,env,_) ->
               let result = mapi (checkTypeForVar (-1) tvar) env in
               if (List.exists ((==) true) result) then
                 (Array.set neededness i true)
@@ -458,14 +458,14 @@ let reducePredicates amod =
           | Absyn.BoundVarTerm(_) -> ()
           | Absyn.FreeVarTerm(_) -> ()
           
-          | Absyn.AbstractionTerm(Absyn.NestedAbstraction(_,term),_,_) ->
+          | Absyn.AbstractionTerm(Absyn.NestedAbstraction(_,term),_) ->
               (checkTerm tvar term)
-          | Absyn.AbstractionTerm(Absyn.UNestedAbstraction(_,_,term),_,_) ->
+          | Absyn.AbstractionTerm(Absyn.UNestedAbstraction(_,_,term),_) ->
               (checkTerm tvar term)
-          | Absyn.ApplicationTerm(Absyn.FirstOrderApplication(t,tl,_),_,_) ->
+          | Absyn.ApplicationTerm(Absyn.FirstOrderApplication(t,tl,_),_) ->
               (checkTerm tvar t;
               List.iter (checkTerm tvar) tl)
-          | Absyn.ApplicationTerm(Absyn.CurriedApplication(t1,t2),_,_) ->
+          | Absyn.ApplicationTerm(Absyn.CurriedApplication(t1,t2),_) ->
               (checkTerm tvar t1;
               checkTerm tvar t2)
           | Absyn.ErrorTerm ->
