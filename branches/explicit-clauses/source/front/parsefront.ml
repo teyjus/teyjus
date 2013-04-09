@@ -22,6 +22,7 @@ open Parseargs
 open Absyn
 
 let linearize = ref false
+let explicify = ref false
 
 (**********************************************************************
 * Writing Functions
@@ -92,7 +93,8 @@ let writeModule m clauses newclauses oc =
       
     let rec getActualClause t =
       match t with
-          ApplicationTerm(FirstOrderApplication(h,[AbstractionTerm(_) as abs],_),_,_)
+          ApplicationTerm(FirstOrderApplication(
+                          h,[AbstractionTerm(_) as abs],_),_,_)
             when isConstant Pervasive.isallConstant h
             ->  let vs = getTermAllAbstractionVars abs in
                 if List.for_all isUniversal vs then
@@ -136,7 +138,8 @@ let writeModule m clauses newclauses oc =
   in
   
   match m with
-    | Module(name, implist, acclist, _, _, _, _, _, lkinds, _, lconsts, _, _, _, ci) ->
+    | Module(name, implist, acclist, _, _, _, _, _, 
+             lkinds, _, lconsts, _, _, _, ci) ->
         writeLine oc ("module " ^ name ^ ".");
         List.iter (writeImp oc)  implist;
         List.iter (writeAcc oc)acclist;
@@ -151,14 +154,16 @@ let writeModule m clauses newclauses oc =
     
 let writeModuleSignature s oc =
   match s with
-    | Module(name, implist, acclist, _, _, _, _, gkinds, lkinds, gconsts, lconsts, _, _, _, _) ->
+    | Module(name, implist, acclist, _, _, _, _, 
+             gkinds, lkinds, gconsts, lconsts, _, _, _, _) ->
         writeLine oc ("sig " ^ name ^ ".");
         writeLine oc "";
         List.iter (writeKind oc false) (List.rev gkinds);
         writeLine oc "";
         List.iter (writeConst oc true false) (List.rev gconsts);
         ()
-    | _ -> Errormsg.impossible Errormsg.none "Absyn.writeModuleSignature: invalid signature"
+    | _ -> Errormsg.impossible Errormsg.none 
+             "Absyn.writeModuleSignature: invalid signature"
 
 (**********************************************************************
 * Program
@@ -177,14 +182,22 @@ let compile basename outbasename =
       
   (* Construct an absyn module.  At this point only the module's *)
   (* constant, kind, and type abbrev information is valid.       *)
-  let (absyn, sigabsyn) = Translate.translate modresult sigresult in
+  let (absyn, _) = Translate.translate modresult sigresult in
   let _ = abortOnError () in
 
+
   (* Get the list of clauses and new clauses. *)
-  let (absyn, clauses, newclauses, closeddefs) =
+  let (absyn, clauses, newclauses, _) =
     Clauses.translateClauses modresult absyn
   in
   let _ = abortOnError () in
+
+  let (absyn, clauses, newclauses) =
+    if !explicify then
+      Explicify.explicify absyn clauses newclauses
+    else
+      (absyn, clauses, newclauses)
+  in
 
   (*  Linearize heads if requested. *)
   let (clauses', newclauses') =
@@ -214,7 +227,8 @@ let specList = (dualArgs
   [("-o", "--output", Arg.Set_string outputName,
     " Specifies the name of the output module (default is input module name)") ;
    versionspec]) @
-  ["--linearize", Arg.Set linearize, " linearize clause heads"]
+  ["--linearize", Arg.Set linearize, " linearize clause heads"] @
+  ["--explicify", Arg.Set explicify, " explicify clauses"]
 
 let usageMsg = 
   "Usage: tjparse [options] <module-file>\n" ^
