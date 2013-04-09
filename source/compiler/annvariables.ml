@@ -342,13 +342,13 @@ let rec synthesizeTerms termList perm heapvar =
 (**************************************************************************)
 and synthesizeTerm term perm heapvar =
   match term with 
-	Absyn.ConstantTerm(_, tyenv, _, _) ->
+	Absyn.ConstantTerm(_, tyenv, _) ->
 	  synthesizeTypeArgs tyenv
-  | Absyn.FreeVarTerm(freeVarInfo, _, _) ->
+  | Absyn.FreeVarTerm(freeVarInfo, _) ->
 	  synthesizeFreeVarTerm term perm heapvar
-  | Absyn.AbstractionTerm(abstInfo, _, _) ->
+  | Absyn.AbstractionTerm(abstInfo, _) ->
 	  synthesizeAbstractionTerm abstInfo
-  | Absyn.ApplicationTerm(appInfo, _, _) ->
+  | Absyn.ApplicationTerm(appInfo, _) ->
 	  synthesizeApplicationTerm appInfo 
   | _ -> ()
 
@@ -374,10 +374,10 @@ and synthesizeApplicationTerm appInfo =
 			synthesizeAppArgs rest (term :: delayed)
 		| Absyn.FreeVarTerm(_) -> 
 			synthesizeAppArgs rest (term :: delayed)
-		| Absyn.AbstractionTerm(abstInfo, _, _) ->
+		| Absyn.AbstractionTerm(abstInfo, _) ->
 			synthesizeAbstractionTerm abstInfo;
 			synthesizeAppArgs rest delayed
-		| Absyn.ApplicationTerm(appInfo, _, _) ->
+		| Absyn.ApplicationTerm(appInfo, _) ->
 			synthesizeApplicationTerm appInfo;
 			synthesizeAppArgs rest delayed 
 		| _ -> synthesizeAppArgs rest delayed
@@ -442,10 +442,10 @@ let rec analyseAppArgs terms heaparg =
 	  [] -> analyseTerms (List.rev delayed)
 	| (term :: rest) ->
 	  match term with
-		Absyn.ConstantTerm(_, tyenv, _, _) ->
+		Absyn.ConstantTerm(_, tyenv, _) ->
 		  analyseTypeArgs tyenv true;
 		  analyseAppArgsAux  rest delayed
-	  | Absyn.FreeVarTerm(_, _, _) ->
+	  | Absyn.FreeVarTerm(_, _) ->
 		  analyseFreeVarTerm term heaparg;
 		  analyseAppArgsAux rest delayed 
 	  | Absyn.AbstractionTerm(_) ->
@@ -466,9 +466,9 @@ and analyseTerms terms =
 	[] -> ()
   | (term :: rest) ->
 	  (match term with
-		Absyn.AbstractionTerm(abstInfo, _, _) -> 
+		Absyn.AbstractionTerm(abstInfo, _) -> 
 		  synthesizeAbstractionTerm abstInfo
-	  | Absyn.ApplicationTerm(applInfo, _, _) -> 
+	  | Absyn.ApplicationTerm(applInfo, _) -> 
 		  analyseApplicationTerm applInfo
 	  | _ -> Errormsg.impossible Errormsg.none "analyseTerms: invalid term");
 	  analyseTerms rest
@@ -481,7 +481,7 @@ and analyseTerms terms =
 and analyseApplicationTerm applInfo =
   match applInfo with
 	Absyn.FirstOrderApplication(
-	  Absyn.ConstantTerm(_, tyenv, _, _), args, _) ->
+	  Absyn.ConstantTerm(_, tyenv, _), args, _) ->
 		analyseTypeArgs tyenv true;
 		analyseAppArgs args true
   | _ -> synthesizeApplicationTerm applInfo 			

@@ -187,14 +187,14 @@ let rec transType tyExp =
 (**************************************************************************)
 let rec transTerm bvs tm = 
   match tm with
-  Absyn.IntTerm(v, _, _)            -> Absyn.IntTerm(v, false, Errormsg.none)
-  | Absyn.RealTerm(v, _, _)           -> Absyn.RealTerm(v, false,Errormsg.none)
-  | Absyn.StringTerm(s, _, _)         -> (transTermStr s)
-  | Absyn.ConstantTerm(c, tyenv, _, _)-> (transTermConst c tyenv)
-  | Absyn.FreeVarTerm(varInfo, _, _)  -> (transTermFreeVar varInfo)
-  | Absyn.BoundVarTerm(varInfo, _, _) -> (transTermBoundVar varInfo bvs) 
-  | Absyn.AbstractionTerm(abst, _, _) -> (transTermAbst bvs abst) 
-  | Absyn.ApplicationTerm(app, _, _)  -> (transTermAppl bvs app)
+  Absyn.IntTerm(v, _)            -> Absyn.IntTerm(v, Errormsg.none)
+  | Absyn.RealTerm(v, _)           -> Absyn.RealTerm(v, Errormsg.none)
+  | Absyn.StringTerm(s, _)         -> (transTermStr s)
+  | Absyn.ConstantTerm(c, tyenv, _)-> (transTermConst c tyenv)
+  | Absyn.FreeVarTerm(varInfo, _)  -> (transTermFreeVar varInfo)
+  | Absyn.BoundVarTerm(varInfo, _) -> (transTermBoundVar varInfo bvs) 
+  | Absyn.AbstractionTerm(abst, _) -> (transTermAbst bvs abst) 
+  | Absyn.ApplicationTerm(app, _)  -> (transTermAppl bvs app)
   | _ -> Errormsg.impossible Errormsg.none "transTerm: invalid term structure"
 
 (***********************************************************************)
@@ -207,7 +207,7 @@ and transTermStr s =
   Absyn.StringLiteral(chs) -> 
     let strdata = Absyn.StringData(chs, ref None, ref None) in
     (addModStr strdata);
-    Absyn.StringTerm(strdata, false, Errormsg.none)
+    Absyn.StringTerm(strdata, Errormsg.none)
   | _ -> Errormsg.impossible Errormsg.none "transTermStr: invalid string rep"
 
 
@@ -240,9 +240,9 @@ and transTermConst c tyenv =
   if (Absyn.isPervasiveConstant c) then
     Absyn.ConstantTerm(c, List.map transType 
            (trunclist tyenv (Absyn.getConstantTypeEnvSize false c)),
-           false, Errormsg.none)
+           Errormsg.none)
   else
-    Absyn.ConstantTerm(c, trimTypeEnvironment tyenv 0 [], false, Errormsg.none)
+    Absyn.ConstantTerm(c, trimTypeEnvironment tyenv 0 [], Errormsg.none)
       
 (**************************************************************************)
 (* transform variables:                                                   *)
@@ -285,7 +285,7 @@ and transTermVar tysy =
 and transTermFreeVar var =
   match var with
   Absyn.NamedFreeVar(tysy) ->
-    Absyn.FreeVarTerm(Absyn.FreeVar(transTermVar tysy, ref None), false, 
+    Absyn.FreeVarTerm(Absyn.FreeVar(transTermVar tysy, ref None), 
             Errormsg.none)
   | _ -> Errormsg.impossible Errormsg.none "transTermFreeVar: invalid var rep"
 
@@ -316,9 +316,9 @@ and transTermBoundVar var bvs =
     in
     let (dbInd, found) = ith bvs 1 in
     if (found) then (* lambda-bound? *)
-    Absyn.BoundVarTerm(Absyn.DBIndex(dbInd), false, Errormsg.none)
+    Absyn.BoundVarTerm(Absyn.DBIndex(dbInd), Errormsg.none)
     else 
-    Absyn.FreeVarTerm(Absyn.FreeVar(transTermVar tysy, ref None), false, 
+    Absyn.FreeVarTerm(Absyn.FreeVar(transTermVar tysy, ref None), 
               Errormsg.none)
   | _ -> Errormsg.impossible Errormsg.none "transTermBoundVar: invalid var rep"
     
@@ -336,7 +336,7 @@ and transTermAbst bvs abstTerm =
     | (bd::rest) -> collectBinders rest (bd::newbd)
     in
     let newbody = transTerm (collectBinders binders bvs) body in  
-    Absyn.AbstractionTerm(Absyn.UNestedAbstraction([], nabs, newbody), false,
+    Absyn.AbstractionTerm(Absyn.UNestedAbstraction([], nabs, newbody), 
               Errormsg.none)
   | _ -> Errormsg.impossible Errormsg.none "transTermAbst: invalid abst rep"
 
@@ -349,7 +349,7 @@ and transTermAppl bvs applTerm =
       Absyn.ApplicationTerm(
       Absyn.FirstOrderApplication(transTerm bvs func,
           List.map (transTerm bvs) args,
-          nargs), false, Errormsg.none)
+          nargs), Errormsg.none)
   | _ -> Errormsg.impossible Errormsg.none "transTermAppl: invalid app rep"
 
 (** ********************************************************************** **)
@@ -435,7 +435,7 @@ let rec processClause clauseTerm =
   in
   (* function body of processClause *)
   match clauseTerm with
-    Absyn.ConstantTerm(head, tyenv, _, _) -> (* proposition fact *)
+    Absyn.ConstantTerm(head, tyenv, _) -> (* proposition fact *)
       let (preClause, freeVars, freeTyVars) = processFact head tyenv [] 0 in
       (preClause, freeVars, freeTyVars, collectHQVars (!hqVars))
   | Absyn.ApplicationTerm(_) ->
@@ -490,7 +490,7 @@ and processRule clauseHead clauseBody =
   let (pred, tyenv, args, arity) =
   match clauseHead with
     (*proposition*)
-      Absyn.ConstantTerm(pred, tyenv, _, _) -> (pred, tyenv, [], 0) 
+      Absyn.ConstantTerm(pred, tyenv, _) -> (pred, tyenv, [], 0) 
     | Absyn.ApplicationTerm(_) ->
       let head = Absyn.getTermApplicationHead clauseHead in
       (Absyn.getTermConstant head, Absyn.getTermMoleculeEnv head,
@@ -520,7 +520,7 @@ and processGoal gltm =
   let head = Absyn.getTermApplicationHead gltm in
   let args = Absyn.getTermApplicationArguments gltm in
   (match head with
-    Absyn.ConstantTerm(pred, _, _, _) ->
+    Absyn.ConstantTerm(pred, _, _) ->
       if Pervasive.isandConstant pred then               (*and goal *)
         processAndGoal (List.hd args) (List.hd (List.tl args))
       else if Pervasive.issomeConstant pred then         (*some goal*)
@@ -543,9 +543,9 @@ and processGoal gltm =
 (**************************************************************************)
 and processAtomicGoal gltm head args arity =
   match head with
-    Absyn.FreeVarTerm(Absyn.NamedFreeVar(_), _, _) -> (* free var head *)
+    Absyn.FreeVarTerm(Absyn.NamedFreeVar(_), _) -> (* free var head *)
       Absyn.AtomicGoal(Pervasive.solveConstant, 1, 1, [(transTerm [] gltm)],[])
-  | Absyn.ConstantTerm(pred, tyenv, _, _) ->
+  | Absyn.ConstantTerm(pred, tyenv, _) ->
       Absyn.AtomicGoal(pred, arity + (Absyn.getConstantTypeEnvSize false pred), arity,
            List.map (transTerm []) args, List.map transType tyenv)
   | _ -> Errormsg.impossible Errormsg.none "processAtomicGoal: invalid pred"

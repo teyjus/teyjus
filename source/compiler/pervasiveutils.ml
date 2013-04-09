@@ -118,10 +118,10 @@ let listSeparatorConstant =
 
 let cutFailTerm = 
   Absyn.ApplicationTerm(Absyn.FirstOrderApplication(
-						Absyn.ConstantTerm(Pervasive.andConstant, [], false, Errormsg.none),
-						[Absyn.ConstantTerm(Pervasive.cutConstant, [], false, Errormsg.none) ;
-						 Absyn.ConstantTerm(Pervasive.failConstant, [], false, Errormsg.none)], 2),
-						false, Errormsg.none)
+						Absyn.ConstantTerm(Pervasive.andConstant, [],  Errormsg.none),
+						[Absyn.ConstantTerm(Pervasive.cutConstant, [], Errormsg.none) ;
+						 Absyn.ConstantTerm(Pervasive.failConstant, [], Errormsg.none)], 2),
+						 Errormsg.none)
 
 (**************************************************************************)
 (* pervasive kind and constant index-data mapping table: needed for       *)

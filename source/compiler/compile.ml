@@ -52,7 +52,7 @@ let openFile fname f =
             inchannel
       with Not_found -> (* The file does not exist in TJPATH *)
         (prerr_endline s; exit 1)
-    with Sys_error(_) -> (* TJPATH is not defined *)
+    with Not_found -> (* TJPATH is not defined *)
       (prerr_endline s; exit 1)
 
 

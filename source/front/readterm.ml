@@ -116,23 +116,23 @@ let buildTerm fvIndex tyfvIndex terms =
   | (term :: rest) ->
 	  let (restTerms, restTypes) =
 		match term with
-		  Absyn.IntTerm(i, _, _)             -> 
+		  Absyn.IntTerm(i, _)             -> 
 			let _ =
 			  Simerrors.handleSimExceptions (Ccode_stubs.buildIntTerm i) 
 			in
 			(rest, types)
-		| Absyn.RealTerm(f, _, _)            -> 
+		| Absyn.RealTerm(f, _)            -> 
 			let _ =
 			  Simerrors.handleSimExceptions (Ccode_stubs.buildRealTerm f)
 			in
 			(rest, types)
-		| Absyn.StringTerm(s, _, _)          -> 
+		| Absyn.StringTerm(s, _)          -> 
 			let _ =
 			  Simerrors.handleSimExceptions 
 				(Ccode_stubs.buildStringTerm (Absyn.getStringInfoString s))
 			in
 			(rest, types)
-		| Absyn.ConstantTerm(c, [], _, _)    -> 
+		| Absyn.ConstantTerm(c, [], _)    -> 
 			let _ = 
 			  if (Pervasive.isnilConstant c) then
 				Simerrors.handleSimExceptions (Ccode_stubs.buildNilTerm ())
@@ -141,7 +141,7 @@ let buildTerm fvIndex tyfvIndex terms =
 				  (Ccode_stubs.buildMConstantTerm (Absyn.getConstantIndex c))
 			in
 			(rest, types)
-		| Absyn.ConstantTerm(c, tyenv, _, _) -> 
+		| Absyn.ConstantTerm(c, tyenv, _) -> 
 			let _ =
 			  Simerrors.handleSimExceptions 
 				(Ccode_stubs.buildPConstantTerm (Absyn.getConstantIndex c)
@@ -216,7 +216,7 @@ let termAndTypeSize tm ty =
 	  [] -> (numTmNodes, numTyNodes)
 	| (tm :: rest) ->
 		match tm with
-		  Absyn.ConstantTerm(c, tyenv, _, _)     ->
+		  Absyn.ConstantTerm(c, tyenv, _)     ->
 			termNodes rest numTmNodes 
 			  ((typeNodes tyenv (List.length tyenv)) + numTyNodes)
 		| Absyn.AbstractionTerm(_)               ->
