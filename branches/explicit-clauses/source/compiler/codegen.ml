@@ -528,7 +528,7 @@ let calculateIndexing clauses =
 		  let firstArgHead = termHead (List.hd (Absyn.getClauseTermArgs cl)) in
 		  let (constSwitch', intCls', realCls', strCls', nilCls', consCls') =
 			match firstArgHead with
-			  Absyn.ConstantTerm(c, _, _, _) ->
+			  Absyn.ConstantTerm(c, _,  _) ->
 				if (Pervasive.isnilConstant c) then
 				  (constSwitch, intCls, realCls, strCls, cl :: nilCls, consCls)
 				else if (Pervasive.isconsConstant c) then

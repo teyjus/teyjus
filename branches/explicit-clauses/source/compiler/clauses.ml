@@ -138,7 +138,7 @@ let rec newHead fvs =
   
   if List.length fvs = 0 then
     let c = Absyn.makeAnonymousConstant 0 in
-    let t = Absyn.ConstantTerm(c, [], false, Errormsg.none) in
+    let t = Absyn.ConstantTerm(c, [], Errormsg.none) in
     (c, t)
   else
     let (args, argtys) = argumentsAndTypes fvs in
@@ -147,8 +147,8 @@ let rec newHead fvs =
     let tymol = Types.skeletonizeType ty in
     let env = (Types.getMoleculeEnvironment tymol) in
     let c = Absyn.makeAnonymousConstant (List.length env) in
-    let t = Absyn.ConstantTerm(c, env, false, Errormsg.none) in
-    let t' = Absyn.ApplicationTerm(Absyn.FirstOrderApplication(t, List.rev args, List.length args), false, Errormsg.none) in
+    let t = Absyn.ConstantTerm(c, env,  Errormsg.none) in
+    let t' = Absyn.ApplicationTerm(Absyn.FirstOrderApplication(t, List.rev args, List.length args), Errormsg.none) in
     (c, t')
 
 (********************************************************************
@@ -188,7 +188,6 @@ and getGoal head andgoal =
         Pervasive.andTerm,
         [head; andgoal'],
         2),
-      false,
       Absyn.getTermPos head) in
     head'
   else
@@ -245,24 +244,24 @@ and collectFreeVars term fvs bvs =
     Absyn.IntTerm(_) -> (term, fvs)
   | Absyn.RealTerm(_) -> (term, fvs)
   | Absyn.StringTerm(_) -> (term, fvs)
-  | Absyn.FreeVarTerm(Absyn.NamedFreeVar(tsym),_,pos) ->
+  | Absyn.FreeVarTerm(Absyn.NamedFreeVar(tsym),pos) ->
       if not (List.memq tsym fvs) then
         (term, tsym::fvs)
       else
         (term, fvs)
-  | Absyn.BoundVarTerm(Absyn.NamedBoundVar(tsym), _, pos) ->
+  | Absyn.BoundVarTerm(Absyn.NamedBoundVar(tsym), pos) ->
       if not ((List.memq tsym bvs) || (List.memq tsym fvs)) then
         (term, tsym::fvs)
       else
         (term, fvs)
-  | Absyn.ConstantTerm(c,_,_,pos) ->
+  | Absyn.ConstantTerm(c,_,pos) ->
       if illegalConstant c pos then
         (Absyn.errorTerm, [])
       else
         (term, fvs)
-  | Absyn.AbstractionTerm(Absyn.NestedAbstraction(tsym, body),b,pos) ->
+  | Absyn.AbstractionTerm(Absyn.NestedAbstraction(tsym, body),pos) ->
       let (body', fvs') = collectFreeVars body fvs bvs in
-      let term' = Absyn.AbstractionTerm(Absyn.NestedAbstraction(tsym, body'), b, pos) in
+      let term' = Absyn.AbstractionTerm(Absyn.NestedAbstraction(tsym, body'), pos) in
       (term', fvs')
   | Absyn.ApplicationTerm(_) ->
       let pos = Absyn.getTermPos term in
@@ -274,7 +273,6 @@ and collectFreeVars term fvs bvs =
           head',
           args',
           List.length args'),
-        false,
         pos) in
       (term', fvs'')
   | Absyn.ErrorTerm -> (term, fvs)
@@ -329,9 +327,8 @@ and distributeQuantifierTerms qterm tsym goals andgoal =
         Absyn.ApplicationTerm(
           Absyn.FirstOrderApplication(
             qterm,
-            [Absyn.AbstractionTerm(Absyn.NestedAbstraction(tsym, g), false, Errormsg.none)],
+            [Absyn.AbstractionTerm(Absyn.NestedAbstraction(tsym, g), Errormsg.none)],
             1),
-          false,
           Errormsg.none) in
       
       let goal' = getGoal goal andgoal in
@@ -349,8 +346,7 @@ and distributeUniversal term tsym terms =
     | t::ts ->
         let newterm = Absyn.ApplicationTerm(
           Absyn.FirstOrderApplication(term,
-            [Absyn.AbstractionTerm(Absyn.NestedAbstraction(tsym, t), false, Errormsg.none)], 1),
-          false,
+            [Absyn.AbstractionTerm(Absyn.NestedAbstraction(tsym, t), Errormsg.none)], 1),
           Errormsg.none) in
         (newterm :: (distribute' term ts))
   in
@@ -368,7 +364,7 @@ and reverseDistributeImplication head goals cls =
     let goals' = List.tl goals in
     
     let appinfo = Absyn.FirstOrderApplication(Absyn.makeConstantTerm (Pervasive.implConstant) [] (Errormsg.none), [goal;head], 2) in
-    let cls' = (Absyn.ApplicationTerm(appinfo, false, Errormsg.none)) :: cls in
+    let cls' = (Absyn.ApplicationTerm(appinfo, Errormsg.none)) :: cls in
     reverseDistributeImplication head goals' cls'
 
 (**********************************************************************
@@ -386,13 +382,13 @@ and distributeImplication goal cls result =
     let regularImplication () =
       let imply = Pervasive.implicationTerm in
       Absyn.ApplicationTerm(
-        Absyn.FirstOrderApplication(imply, [goal; clause], 2),false, Errormsg.none)
+        Absyn.FirstOrderApplication(imply, [goal; clause], 2), Errormsg.none)
     in
     
     match clause with
-      Absyn.ApplicationTerm(Absyn.FirstOrderApplication(f, args, _), _, pos) ->
+      Absyn.ApplicationTerm(Absyn.FirstOrderApplication(f, args, _), pos) ->
         (match f with
-          Absyn.ConstantTerm(c,_,_,_) ->
+          Absyn.ConstantTerm(c,_,_) ->
             if c = Pervasive.allConstant then
               let arg1 = List.hd args in
               let tsym = Absyn.getTermAbstractionVar arg1 in
@@ -401,9 +397,8 @@ and distributeImplication goal cls result =
               Absyn.ApplicationTerm(
                 Absyn.FirstOrderApplication(
                   f,
-                  [Absyn.AbstractionTerm(Absyn.NestedAbstraction(tsym, distribute goal body), false, pos')],
+                  [Absyn.AbstractionTerm(Absyn.NestedAbstraction(tsym, distribute goal body), pos')],
                   1),
-                false,
                 Errormsg.none)
             else if c = Pervasive.implConstant then
               let arg1 = List.hd args in
@@ -413,14 +408,12 @@ and distributeImplication goal cls result =
                   Pervasive.andTerm,
                   [arg1; goal],
                   2),
-                false,
                 Errormsg.none) in
               Absyn.ApplicationTerm(
                 Absyn.FirstOrderApplication(
                   f, 
                   [inner; arg2],
                   2),
-                false,
                 Errormsg.none)
             else
               regularImplication ()
@@ -443,7 +436,7 @@ and deOrifyGoal goal uvs uvdefs andgoal wholegoal newclauses hcs =
   let (t, args) = Absyn.getTermApplicationHeadAndArguments goal in
   
   match t with
-    Absyn.ConstantTerm(c,_,_,pos) ->
+    Absyn.ConstantTerm(c,_,pos) ->
       if c = Pervasive.allConstant then
         let arg1 = List.hd args in
         (deOrifyUniversalGoal t arg1 uvs uvdefs andgoal wholegoal newclauses hcs)
@@ -563,7 +556,6 @@ and deOrifyImplicationGoal clause goal uvs uvdefs andgoal wholegoal newclauses h
               Pervasive.andTerm,
               [newcl; clause],
               2),
-            false,
             Errormsg.none) in
           normalize clause' goal'
         else if (c = Pervasive.colondashConstant) then
@@ -575,7 +567,6 @@ and deOrifyImplicationGoal clause goal uvs uvdefs andgoal wholegoal newclauses h
               Pervasive.andTerm,
               [newcl; clause],
               2),
-            false,
             Errormsg.none) in
           normalize clause' goal'
         else
@@ -634,7 +625,6 @@ and deOrifyImplicationGoal clause goal uvs uvdefs andgoal wholegoal newclauses h
             Pervasive.andTerm,
             [g; (andifyList gs)],
             2),
-          false,
           Errormsg.none)
   in
   
@@ -659,7 +649,6 @@ and deOrifyImplicationGoal clause goal uvs uvdefs andgoal wholegoal newclauses h
     let goal' = Absyn.ApplicationTerm(
       Absyn.FirstOrderApplication(
         Pervasive.implicationTerm, [cl;goal], 2),
-      false,
       Errormsg.none) in
     
     let goal'' = getGoal goal' andgoal in
@@ -690,21 +679,20 @@ and deOrifyAtomicGoal head args andgoal uvs uvdefs newclauses hcs =
             head,
             args',
             List.length args'),
-          false,
           Absyn.getTermPos head) in
         DeOrifyGoalResult([(getGoal head' andgoal)], fvs', uvdefs, hascut, newclauses, hcs)
   in
   
   match head with
-    Absyn.BoundVarTerm(Absyn.NamedBoundVar(tsym),b,pos) ->
+    Absyn.BoundVarTerm(Absyn.NamedBoundVar(tsym),pos) ->
       if (List.memq tsym uvs) then
         let c = Absyn.getTypeSymbolHiddenConstant tsym in
-        let head' = Absyn.ConstantTerm(c, [], false, pos) in
+        let head' = Absyn.ConstantTerm(c, [],  pos) in
         (deorify' head' false [] uvdefs)
       else
-        let head' = Absyn.FreeVarTerm(Absyn.NamedFreeVar(tsym), b, pos) in
+        let head' = Absyn.FreeVarTerm(Absyn.NamedFreeVar(tsym), pos) in
         (deorify' head' false [tsym] uvdefs)
-  | Absyn.FreeVarTerm(Absyn.NamedFreeVar(tsym),_,pos) ->
+  | Absyn.FreeVarTerm(Absyn.NamedFreeVar(tsym),pos) ->
       deorify' head false [tsym] uvdefs
   | _ -> deorify' head false [] uvdefs
 
@@ -772,7 +760,6 @@ and deOrifyOrGoal goal1 goal2 uvs uvdefs andgoal wholegoal newclauses hcs =
           Pervasive.andTerm,
           [pred; Option.get andgoal],
           2),
-        false,
         Errormsg.none) in
       DeOrifyGoalResult([goal'], fvs', uvdefs', false, newclauses''', hcs'')
     else
@@ -824,7 +811,7 @@ and deOrifyClause term currentclauses fvs uvs uvdefs newclauses hcs =
   
   match term with
     (*  An application  *)
-    Absyn.ApplicationTerm(_, b, pos) ->
+    Absyn.ApplicationTerm(_, pos) ->
 
       let (f, aa) = Absyn.getTermApplicationHeadAndArguments term in
       let arg = List.hd aa in
@@ -833,12 +820,12 @@ and deOrifyClause term currentclauses fvs uvs uvdefs newclauses hcs =
       (*  atomicHead: regular head with arguments.  *)
       let atomicHead () =  
         let (args', fvs') = checkClauseArguments (arg::args) fvs in
-        let newclause = Absyn.ApplicationTerm(Absyn.FirstOrderApplication(f, args', List.length args'),b,pos) in
+        let newclause = Absyn.ApplicationTerm(Absyn.FirstOrderApplication(f, args', List.length args'),pos) in
         DeOrifyClauseResult(newclause::currentclauses, fvs', uvdefs, newclauses, hcs)
       in
 
       (match f with
-        Absyn.ConstantTerm(c,_,_,_) ->
+        Absyn.ConstantTerm(c,_,_) ->
           if c = Pervasive.allConstant then
             let tsym = Absyn.getTermAbstractionVar arg in
             let DeOrifyClauseResult(clauses', fvs', uvdefs', newclauses', hcs') =
@@ -895,9 +882,9 @@ and etaFluffQuantifier term arg =
   | _ ->
       let tenv = Absyn.getTermMoleculeEnv term in
       let tsym = Absyn.BoundVar(Symbol.generate (), ref None, ref true, ref(Some(List.hd tenv))) in
-      let bvterm = Absyn.BoundVarTerm(Absyn.NamedBoundVar(tsym), false, Errormsg.none) in
+      let bvterm = Absyn.BoundVarTerm(Absyn.NamedBoundVar(tsym), Errormsg.none) in
       let term = Absyn.ApplicationTerm(
-        Absyn.FirstOrderApplication(arg, [bvterm], 1), false, Errormsg.none) in
+        Absyn.FirstOrderApplication(arg, [bvterm], 1), Errormsg.none) in
       (term, tsym)
 
 (**********************************************************************
@@ -928,7 +915,7 @@ and normalizeClause clauseterm clauses uvs uvdefs embedded =
     | _ ->
         let term' = Absyn.ApplicationTerm(
           Absyn.FirstOrderApplication(term, args, List.length args),
-          false, Errormsg.none) in
+          Errormsg.none) in
         (term' :: clauses)
   in
   
@@ -940,7 +927,7 @@ and normalizeClause clauseterm clauses uvs uvdefs embedded =
   let (t, args) = Absyn.getTermApplicationHeadAndArguments clauseterm in
 
   match t with
-      Absyn.ConstantTerm(c, env, b, pos) ->
+      Absyn.ConstantTerm(c, env, pos) ->
         (*  Clause is: all P  *)
         if c = Pervasive.allConstant then
           let (arg, tsym) = etaFluffQuantifier t (List.hd args) in
@@ -991,10 +978,10 @@ and normalizeClause clauseterm clauses uvs uvdefs embedded =
           else
             (rigidAtom t clauses args)
         
-  | Absyn.BoundVarTerm(Absyn.NamedBoundVar(tsym), _, pos) ->
+  | Absyn.BoundVarTerm(Absyn.NamedBoundVar(tsym), pos) ->
       if List.memq tsym uvs then
         let t' = Absyn.ConstantTerm(Absyn.getTypeSymbolHiddenConstant tsym,
-                  [], false, Errormsg.none) in
+                  [], Errormsg.none) in
         if not (List.memq tsym !uvdefs) then
           (uvdefs := tsym :: !uvdefs;
            rigidAtom t' clauses args)
@@ -1002,7 +989,7 @@ and normalizeClause clauseterm clauses uvs uvdefs embedded =
           (rigidAtom t' clauses args)
       else
         (indeterminate tsym pos)
-  | Absyn.FreeVarTerm(Absyn.NamedFreeVar(tsym), _, pos) ->
+  | Absyn.FreeVarTerm(Absyn.NamedFreeVar(tsym), pos) ->
       (indeterminate tsym pos)
   | _ ->
     (Errormsg.impossible (Absyn.getTermPos t) ("Clauses.normalizeClause: Invalid term type: " ^
@@ -1091,20 +1078,18 @@ let linearizeClause clause =
   let imp head body pos =
     Absyn.ApplicationTerm(
       Absyn.FirstOrderApplication(
-        Absyn.ConstantTerm(Pervasive.implConstant, [], false, pos),
+        Absyn.ConstantTerm(Pervasive.implConstant, [],  pos),
         [body; head],
         2),
-      false,
       pos)
   in
 
   let conj pos l r =
     Absyn.ApplicationTerm(
       Absyn.FirstOrderApplication(
-        Absyn.ConstantTerm(Pervasive.andConstant, [], false, pos),
+        Absyn.ConstantTerm(Pervasive.andConstant, [], pos),
         [l; r],
         2),
-      false,
       pos)
   in
   
@@ -1112,18 +1097,16 @@ let linearizeClause clause =
     match clause with
         Absyn.ApplicationTerm(
           Absyn.FirstOrderApplication(
-            Absyn.ConstantTerm(impc, _, _, _),
+            Absyn.ConstantTerm(impc, _, _),
             [body; head],
             _),
-          _,
           _) when impc == Pervasive.implConstant ->
           (head, Some body)
       | Absyn.ApplicationTerm(
           Absyn.FirstOrderApplication(
-            Absyn.ConstantTerm(impc, _, _, _),
+            Absyn.ConstantTerm(impc, _, _),
             [head; body],
             _),
-          _,
           _) when impc == Pervasive.colondashConstant ->
           (head, Some body)
       | Absyn.ApplicationTerm(_) -> (clause, None)
@@ -1147,30 +1130,30 @@ let linearizeClause clause =
         | Absyn.StringTerm(_) | Absyn.ConstantTerm(_)
         | Absyn.BoundVarTerm(_) | Absyn.ErrorTerm -> (term, uvs)
         
-        | Absyn.ApplicationTerm(Absyn.FirstOrderApplication(c, args, i), b, p) ->
+        | Absyn.ApplicationTerm(Absyn.FirstOrderApplication(c, args, i), p) ->
             let (args', uvs') = fold linearize uvs args in
-            (Absyn.ApplicationTerm(Absyn.FirstOrderApplication(c, args', i), b, p), uvs')
-        | Absyn.AbstractionTerm(Absyn.UNestedAbstraction(tsyms, i, body), b, p) ->
+            (Absyn.ApplicationTerm(Absyn.FirstOrderApplication(c, args', i), p), uvs')
+        | Absyn.AbstractionTerm(Absyn.UNestedAbstraction(tsyms, i, body), p) ->
             let (body', uvs') = linearize body uvs in
-            (Absyn.AbstractionTerm(Absyn.UNestedAbstraction(tsyms, i, body'), b, p), uvs')
+            (Absyn.AbstractionTerm(Absyn.UNestedAbstraction(tsyms, i, body'), p), uvs')
         
-        | Absyn.FreeVarTerm(Absyn.NamedFreeVar(tsym) as info, b, p) ->
+        | Absyn.FreeVarTerm(Absyn.NamedFreeVar(tsym) as info, p) ->
             let sym = Absyn.getTypeSymbolSymbol tsym in
             (try
               let (_, others) = List.assoc sym uvs in
               let () = Errormsg.log p ("Clauses.linearseClause: found " ^ (Absyn.string_of_term_ast term)) in
               let fv = fresh tsym in
               let uvs' = List.remove_assq sym uvs in
-              (Absyn.FreeVarTerm(fv, b, p), (sym, (info, fv :: others)) :: uvs')
+              (Absyn.FreeVarTerm(fv, p), (sym, (info, fv :: others)) :: uvs')
             with Not_found ->
                 let () = Errormsg.log p ("Clauses.linearseClause: not found " ^ (Absyn.string_of_term_ast term)) in
                (term, (sym, (info, [])) :: uvs))
         | _ -> Errormsg.impossible pos ("Clauses.linearize: invalid term " ^ (Absyn.string_of_term_ast term))
     in
     match head with
-        Absyn.ApplicationTerm(Absyn.FirstOrderApplication(c, args, i), b, _) ->
+        Absyn.ApplicationTerm(Absyn.FirstOrderApplication(c, args, i), _) ->
           let (args', uvs) = fold linearize [] args in
-          (Absyn.ApplicationTerm(Absyn.FirstOrderApplication(c, args', i), b, pos), uvs)
+          (Absyn.ApplicationTerm(Absyn.FirstOrderApplication(c, args', i), pos), uvs)
       | Absyn.ConstantTerm(_) -> (head, [])
       | _ -> Errormsg.impossible pos ("Clauses.linearize: invalid head " ^ (Absyn.string_of_term_ast head))
   in
@@ -1178,14 +1161,13 @@ let linearizeClause clause =
   let equalities pos uvs body =
     let equality tinfo tinfo' =
       let types = [] in
-      let fv = Absyn.FreeVarTerm(tinfo, false, pos) in
-      let fv' = Absyn.FreeVarTerm(tinfo', false, pos) in
+      let fv = Absyn.FreeVarTerm(tinfo, pos) in
+      let fv' = Absyn.FreeVarTerm(tinfo', pos) in
       Absyn.ApplicationTerm(
         Absyn.FirstOrderApplication(
-          Absyn.ConstantTerm(Pervasive.eqConstant, types, false, pos),
+          Absyn.ConstantTerm(Pervasive.eqConstant, types, pos),
           [fv;fv'],
           2),
-        false,
         pos)
     in
     let uvs' = List.rev uvs in

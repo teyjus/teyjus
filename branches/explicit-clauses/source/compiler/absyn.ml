@@ -181,14 +181,14 @@ and aapplicationinfo =
 *Terms:
 *****************************************************************************)
 and aterm =
-    IntTerm of (int * bool * pos)
-  | RealTerm of (float * bool * pos)
-  | StringTerm of (astringinfo * bool * pos)
-  | ConstantTerm of (aconstant * atype list * bool * pos)
-  | FreeVarTerm of (afreevarinfo * bool * pos)
-  | BoundVarTerm of (aboundvarinfo * bool * pos)
-  | AbstractionTerm of (aabstractioninfo * bool * pos)
-  | ApplicationTerm of (aapplicationinfo * bool * pos)
+    IntTerm of (int * pos)
+  | RealTerm of (float * pos)
+  | StringTerm of (astringinfo * pos)
+  | ConstantTerm of (aconstant * atype list * pos)
+  | FreeVarTerm of (afreevarinfo * pos)
+  | BoundVarTerm of (aboundvarinfo * pos)
+  | AbstractionTerm of (aabstractioninfo * pos)
+  | ApplicationTerm of (aapplicationinfo * pos)
   | ErrorTerm
 
 (*****************************************************************************
@@ -997,7 +997,7 @@ let makeHiddenConstant skel envsize =
 let makeConstantTerm c env pos =
   (*let esize = getConstantTypeEnvSize false c in
   if esize = (List.length env) then *)
-    ConstantTerm(c, env, false, pos)
+    ConstantTerm(c, env, pos)
   (* else
     Errormsg.impossible (getConstantPos c)
       "makeConstantTerm: constant environment size and given environment don't match" *)
@@ -1199,38 +1199,38 @@ let rec needsParens opfix opprec context fix prec =
   | WholeTermContext -> false
 
 let getTermPos = function
-  IntTerm(_,_,p) -> p
-| StringTerm(_,_,p) -> p
-| RealTerm(_,_,p) -> p
-| AbstractionTerm(_,_,p) -> p
-| ConstantTerm(_,_,_,p) -> p
-| FreeVarTerm(_,_,p) -> p
-| BoundVarTerm(_,_,p) -> p
-| ApplicationTerm(_,_,p) -> p
+  IntTerm(_,p) -> p
+| StringTerm(_,p) -> p
+| RealTerm(_,p) -> p
+| AbstractionTerm(_,p) -> p
+| ConstantTerm(_,_,p) -> p
+| FreeVarTerm(_,p) -> p
+| BoundVarTerm(_,p) -> p
+| ApplicationTerm(_,p) -> p
 | ErrorTerm -> Errormsg.none
 
 (* abstraction term *)
 let getTermAbstractionVar = function
-  AbstractionTerm(NestedAbstraction(v,_),_,_) -> v
+  AbstractionTerm(NestedAbstraction(v,_),_) -> v
 | _ -> Errormsg.impossible Errormsg.none "Absyn.getTermAbstractionVar: invalid term"
 
 let getTermAbstractionVars = function
-  AbstractionTerm(UNestedAbstraction(vars,_,_),_,_) -> vars
+  AbstractionTerm(UNestedAbstraction(vars,_,_),_) -> vars
 | _ -> Errormsg.impossible Errormsg.none "Absyn.getTermAbstractionVars: invalid term"
 
 let getTermAllAbstractionVars t = match t with
-  AbstractionTerm(NestedAbstraction(_),_,_) -> [getTermAbstractionVar t]
-| AbstractionTerm(UNestedAbstraction(_),_,_) -> getTermAbstractionVars t
+  AbstractionTerm(NestedAbstraction(_),_) -> [getTermAbstractionVar t]
+| AbstractionTerm(UNestedAbstraction(_),_) -> getTermAbstractionVars t
 | _ -> Errormsg.impossible (getTermPos t) "Absyn.getTermAbstractionVars': term not an abstraction"
 
 
 let getTermAbstractionBody = function
-  AbstractionTerm(NestedAbstraction(_,b),_,_) -> b
-| AbstractionTerm(UNestedAbstraction(_,_,b),_,_) -> b
+  AbstractionTerm(NestedAbstraction(_,b),_) -> b
+| AbstractionTerm(UNestedAbstraction(_,_,b),_) -> b
 | _ -> Errormsg.impossible Errormsg.none "Absyn.getTermAbstractionBody: invalid term"
 
 let getTermAbstractionNumberOfLambda = function
-  AbstractionTerm(UNestedAbstraction(_,n,_),_,_) -> n
+  AbstractionTerm(UNestedAbstraction(_,n,_),_) -> n
 | _ -> Errormsg.impossible Errormsg.none 
          "Absyn.getTermAbstractionNumberOfLambda: invalid term"
 
@@ -1242,10 +1242,10 @@ let getTermAbstractionNumberOfLambda = function
 ********************************************************************)
 let rec getTermApplicationHeadAndArguments term =  
   match term with
-    ApplicationTerm(FirstOrderApplication(t', args, _), _, pos) ->
+    ApplicationTerm(FirstOrderApplication(t', args, _), pos) ->
       let (head, args') = getTermApplicationHeadAndArguments t' in
       (head, args' @ args)
-  | ApplicationTerm(CurriedApplication(l,r),_,pos) ->
+  | ApplicationTerm(CurriedApplication(l,r), pos) ->
       let (head, args') = getTermApplicationHeadAndArguments l in
       (head, args' @ [r])
   | _ -> (term, [])
@@ -1265,32 +1265,32 @@ let getTermApplicationArity t =
 (* Converts an absyn term to a string representation. *)
 let rec string_of_term_ast term =
   match term with
-    IntTerm(i,_,_) -> string_of_int i
-  | RealTerm(r,_,_) -> string_of_float r
-  | StringTerm(StringLiteral(s),_,_) -> "\"" ^ (s) ^ "\""
-  | StringTerm(StringData(s,_,_),_,_) -> "\"" ^ (s) ^ "\""
-  | ConstantTerm(c,tl,_,_) -> 
+    IntTerm(i,_) -> string_of_int i
+  | RealTerm(r,_) -> string_of_float r
+  | StringTerm(StringLiteral(s),_) -> "\"" ^ (s) ^ "\""
+  | StringTerm(StringData(s,_,_),_) -> "\"" ^ (s) ^ "\""
+  | ConstantTerm(c,tl,_) -> 
       let tlstr = "[" ^ (String.concat "," (List.map string_of_type_ast tl)) ^ "]" in
       if (getConstantType c = HiddenConstant) then
         "hc: " ^ (getConstantPrintName c) ^ tlstr
       else (getConstantPrintName c) ^ tlstr
-  | FreeVarTerm(NamedFreeVar(s),_,_) -> 
+  | FreeVarTerm(NamedFreeVar(s),_) -> 
       "fv: " ^ 
       (Symbol.name (getTypeSymbolSymbol s))
-  | BoundVarTerm(NamedBoundVar(s),_,_) ->
+  | BoundVarTerm(NamedBoundVar(s),_) ->
       "bv: " ^
       (Symbol.name (getTypeSymbolSymbol s))
-  | BoundVarTerm(DBIndex(i),_,_) -> "#" ^ string_of_int i
-  | AbstractionTerm(NestedAbstraction(_),_,_) ->
+  | BoundVarTerm(DBIndex(i),_) -> "#" ^ string_of_int i
+  | AbstractionTerm(NestedAbstraction(_),_) ->
       let aterm = getTermAbstractionBody term in
       let avar = getTermAbstractionVar term in
       (getTypeSymbolName avar) ^ "\\" ^ (string_of_term_ast aterm)
-  | AbstractionTerm(UNestedAbstraction(_),_,_) ->
+  | AbstractionTerm(UNestedAbstraction(_),_) ->
       let aterm = getTermAbstractionBody term in
       let avars = getTermAbstractionVars term in
       "(" ^ (String.concat " " (List.map (getTypeSymbolName) avars)) 
         ^ ")\\ " ^ (string_of_term_ast aterm)
-  | ApplicationTerm(FirstOrderApplication(h,args,_),_,_) ->
+  | ApplicationTerm(FirstOrderApplication(h,args,_),_) ->
       let s =
         if args = [] then
           ""
@@ -1298,7 +1298,7 @@ let rec string_of_term_ast term =
           String.concat " " (List.map string_of_term_ast args)
       in
       "((" ^ (string_of_term_ast h) ^ s ^ "))"
-  | ApplicationTerm(CurriedApplication(l,r),_,_) ->
+  | ApplicationTerm(CurriedApplication(l,r),_) ->
       "(" ^ (string_of_term_ast l) ^ " " ^ (string_of_term_ast r) ^ ")"
   | _ -> "<error>"
   
@@ -1364,10 +1364,10 @@ and string_of_term term =
     in
     
     match term with
-      ApplicationTerm(FirstOrderApplication(f, args, numargs),_,_) ->
+      ApplicationTerm(FirstOrderApplication(f, args, numargs),_) ->
         let string_of_head h =
           (match h with
-            ConstantTerm(c,_,_,_) ->
+            ConstantTerm(c,_,_) ->
               (match (getConstantFixity c) with
                   Prefix -> 
                     if numargs = 1 then
@@ -1442,10 +1442,10 @@ and string_of_term term =
           (head ^ " " ^ (string_of_args args'))
         else
           head
-    | ApplicationTerm(CurriedApplication(h, r),b,p) ->
+    | ApplicationTerm(CurriedApplication(h, r),p) ->
         let (head,args) = getTermApplicationHeadAndArguments term in
         let term' = 
-          ApplicationTerm(FirstOrderApplication(head, args, List.length args), b,p) in
+          ApplicationTerm(FirstOrderApplication(head, args, List.length args), p) in
         string_of_app term' context fix prec bindings tab
     | _ -> Errormsg.impossible (getTermPos term) "string_of_app: term not an application"
 
@@ -1463,14 +1463,14 @@ and string_of_term term =
   
   and string_of_term' term context fix prec bindings tab =
     match term with
-      IntTerm(i,_,_) -> (string_of_int i)
-    | RealTerm(r,_,_) -> (string_of_float r)
-    | StringTerm(StringLiteral(s),_,_) -> "\"" ^ s ^ "\""
-    | StringTerm(StringData(s,_,_),_,_) -> "\"" ^ s ^ "\""
-    | ConstantTerm(c,_,_,_) -> (getConstantPrintName c)
-    | FreeVarTerm(NamedFreeVar(s),_,_) -> Symbol.name (getTypeSymbolSymbol s)
-    | BoundVarTerm(NamedBoundVar(s),_,_) -> Symbol.name (getTypeSymbolSymbol s)
-    | BoundVarTerm(DBIndex(i),_,_) -> getTypeSymbolName (List.nth bindings (i - 1))
+      IntTerm(i,_) -> (string_of_int i)
+    | RealTerm(r,_) -> (string_of_float r)
+    | StringTerm(StringLiteral(s),_) -> "\"" ^ s ^ "\""
+    | StringTerm(StringData(s,_,_),_) -> "\"" ^ s ^ "\""
+    | ConstantTerm(c,_,_) -> (getConstantPrintName c)
+    | FreeVarTerm(NamedFreeVar(s),_) -> Symbol.name (getTypeSymbolSymbol s)
+    | BoundVarTerm(NamedBoundVar(s),_) -> Symbol.name (getTypeSymbolSymbol s)
+    | BoundVarTerm(DBIndex(i),_) -> getTypeSymbolName (List.nth bindings (i - 1))
     | ApplicationTerm(_) -> string_of_app term context fix prec bindings tab
     | AbstractionTerm(_) -> string_of_abstraction term context fix prec bindings tab
     | ErrorTerm -> "#error#"
@@ -1481,12 +1481,12 @@ and string_of_term term =
 
 (* free variable *)
 let getTermFreeVariableVariableData = function
-  FreeVarTerm(FreeVar(varData, _),_,_) -> varData
+  FreeVarTerm(FreeVar(varData, _),_) -> varData
 | _ -> Errormsg.impossible Errormsg.none 
         "getTermFreeVariableVariableData: invalid term"
 
 let getTermFreeVariableFirst = function
-  FreeVarTerm(FreeVar(_, first),_,_) ->
+  FreeVarTerm(FreeVar(_, first),_) ->
     if Option.isSome !first then
       Option.get (!first)
     else
@@ -1497,12 +1497,12 @@ let getTermFreeVariableFirst = function
 
 let setTermFreeVariableFirst var f = 
   match var with
-	FreeVarTerm(FreeVar(_, first),_,_) -> first := Some(f)
+	FreeVarTerm(FreeVar(_, first),_) -> first := Some(f)
   | _ -> Errormsg.impossible Errormsg.none 
         "getTermFreeVariableFirst: invalid term"	
 
 let getTermFreeVariableTypeSymbol = function
-  FreeVarTerm(NamedFreeVar(tySymbol),_, _) -> tySymbol
+  FreeVarTerm(NamedFreeVar(tySymbol), _) -> tySymbol
 | _ -> Errormsg.impossible Errormsg.none
 	    "getTernFreeVariableTypeSymbol: invalid term"
 
@@ -1513,32 +1513,32 @@ let isTermFreeVariable = function
 
 (* make a name based free variable *)
 let makeFreeVarTerm tsym pos =
-  FreeVarTerm(NamedFreeVar(tsym), false, pos)
+  FreeVarTerm(NamedFreeVar(tsym), pos)
 
 let getTermBoundVariableDBIndex = function
-  BoundVarTerm(DBIndex(ind),_,_) -> ind
+  BoundVarTerm(DBIndex(ind),_) -> ind
 | _ -> Errormsg.impossible Errormsg.none 
         "getTermBoundVariableDBIndex: invalid term"
 
 (* make a name based bound variable *)
 let makeBoundVarTerm tsym pos =
-  BoundVarTerm(NamedBoundVar(tsym), false, pos)
+  BoundVarTerm(NamedBoundVar(tsym), pos)
 
 (* constant *)
 let getTermConstant = function
-  ConstantTerm(c,_,_,_) -> c
+  ConstantTerm(c,_,_) -> c
 | t -> Errormsg.impossible Errormsg.none 
                            ("Absyn.getTermConstant: invalid term: " 
                                   ^ (string_of_term t))
 
 let getTermMoleculeEnv = function
-  ConstantTerm(_,te,_,_) -> te
+  ConstantTerm(_,te,_) -> te
 | t -> Errormsg.impossible Errormsg.none 
                            ("Absyn.getTermMoleculeEnv: invalid term" 
                                   ^ (string_of_term t))
 
 let getTermConstantTypeEnv = function
-  ConstantTerm(_,te,_,_) -> te
+  ConstantTerm(_,te,_) -> te
 | _ -> Errormsg.impossible Errormsg.none 
          "getTermConstantTypeEnv: invalid term"  
 
@@ -1578,9 +1578,9 @@ let getStringInfoString = function
 let rec sameTermStructure t1 t2 =
   let rec collectUnNestedAbst t tsyms =
 	match t with
-	  AbstractionTerm(NestedAbstraction(tsym, body),_,_) ->
+	  AbstractionTerm(NestedAbstraction(tsym, body),_) ->
 	    collectUnNestedAbst body (tsym :: tsyms)
-	| AbstractionTerm(UNestedAbstraction(tsyms', _, body),_,_) ->
+	| AbstractionTerm(UNestedAbstraction(tsyms', _, body),_) ->
 		(body, (List.rev tsyms) @ tsyms')
 	| _ -> (t, List.rev tsyms)
   in
@@ -1595,29 +1595,29 @@ let rec sameTermStructure t1 t2 =
   in
 
   match (t1, t2) with
-	(IntTerm(i, _, _), IntTerm(j, _, _)) -> if (i = j) then true else false
-  | (RealTerm(r, _, _), RealTerm(r', _, _)) -> if (r = r') then true else false
-  | (StringTerm(s,_,_), StringTerm(s',_,_)) ->
+	(IntTerm(i, _), IntTerm(j, _)) -> if (i = j) then true else false
+  | (RealTerm(r, _), RealTerm(r', _)) -> if (r = r') then true else false
+  | (StringTerm(s,_), StringTerm(s',_)) ->
 	  if (getStringInfoString s = getStringInfoString s') then true else false
-  | (ConstantTerm(c,_,_,_), ConstantTerm(c',_,_,_)) ->
+  | (ConstantTerm(c,_,_), ConstantTerm(c',_,_)) ->
 	  if (c == c') then true else false
-  | (FreeVarTerm(NamedFreeVar(tsym),_,_), FreeVarTerm(NamedFreeVar(tsym'),_,_)) ->
+  | (FreeVarTerm(NamedFreeVar(tsym),_), FreeVarTerm(NamedFreeVar(tsym'),_)) ->
 	  if (tsym == tsym') then true else false
-  | (BoundVarTerm(NamedBoundVar(tsym),_,_), BoundVarTerm(NamedBoundVar(tsym'),_,_)) ->
+  | (BoundVarTerm(NamedBoundVar(tsym),_), BoundVarTerm(NamedBoundVar(tsym'),_)) ->
 	  if (tsym == tsym') then true else false
-  | (AbstractionTerm(UNestedAbstraction(tsyms, nabs, body),_,_), 
-	 AbstractionTerm(UNestedAbstraction(tsyms', nabs', body'),_,_)) ->
+  | (AbstractionTerm(UNestedAbstraction(tsyms, nabs, body),_), 
+	 AbstractionTerm(UNestedAbstraction(tsyms', nabs', body'),_)) ->
 	   ((nabs = nabs') && (sameTSyms tsyms tsyms') && (sameTermStructure body body'))
-  | (AbstractionTerm(UNestedAbstraction(tsyms, nabs, body),_,_),
-	 AbstractionTerm(NestedAbstraction(tsym, body'),_,_)) ->
+  | (AbstractionTerm(UNestedAbstraction(tsyms, nabs, body),_),
+	 AbstractionTerm(NestedAbstraction(tsym, body'),_)) ->
 	   let (body'', tsyms'') = collectUnNestedAbst t2 [] in
 	   ((sameTSyms tsyms tsyms'') && (sameTermStructure body body'))
-  | (AbstractionTerm(NestedAbstraction(tsym, body'),_,_),
-	 AbstractionTerm(UNestedAbstraction(tsyms, nabs, body),_,_)) ->
+  | (AbstractionTerm(NestedAbstraction(tsym, body'),_),
+	 AbstractionTerm(UNestedAbstraction(tsyms, nabs, body),_)) ->
 	   let (body'', tsyms'') = collectUnNestedAbst t1 [] in
 	   ((sameTSyms tsyms tsyms'') && (sameTermStructure body body'))
-  | (ApplicationTerm(FirstOrderApplication(h, args, arity),_,_), 
-	 ApplicationTerm(FirstOrderApplication(h', args', arity'),_,_)) ->
+  | (ApplicationTerm(FirstOrderApplication(h, args, arity),_), 
+	 ApplicationTerm(FirstOrderApplication(h', args', arity'),_)) ->
 	   (arity = arity') && (sameTermStructure h h') && (sameTermStructureList args args')
   | _ -> 
 	  false

@@ -182,14 +182,14 @@ and aapplicationinfo =
 *Terms:
 *****************************************************************************)
 and aterm =
-    IntTerm of (int * bool * pos)
-  | RealTerm of (float * bool * pos)
-  | StringTerm of (astringinfo * bool * pos)
-  | ConstantTerm of (aconstant * atype list * bool * pos)
-  | FreeVarTerm of (afreevarinfo * bool * pos)
-  | BoundVarTerm of (aboundvarinfo * bool * pos)
-  | AbstractionTerm of (aabstractioninfo * bool * pos)
-  | ApplicationTerm of (aapplicationinfo * bool * pos)
+    IntTerm of (int * pos)
+  | RealTerm of (float * pos)
+  | StringTerm of (astringinfo * pos)
+  | ConstantTerm of (aconstant * atype list * pos)
+  | FreeVarTerm of (afreevarinfo * pos)
+  | BoundVarTerm of (aboundvarinfo * pos)
+  | AbstractionTerm of (aabstractioninfo * pos)
+  | ApplicationTerm of (aapplicationinfo * pos)
   | ErrorTerm
 
 (*****************************************************************************
