@@ -19,46 +19,24 @@
 * You should have received a copy of the GNU General Public License
 * along with Teyjus.  If not, see <http://www.gnu.org/licenses/>.
 ****************************************************************************)
-open Preabsyn
+open Absyn
 
-let explicify_name name = name 
-let explicify_gconsts gconsts = gconsts 
-let explicify_lconsts lsconsts = lsconsts 
-let explicify_cconsts cconsts = cconsts 
-let explicify_uconsts uconsts = uconsts 
-let explicify_econsts econsts = econsts 
-let explicify_fixities fixities = fixities 
-let explicify_gkinds gkinds = gkinds  
-let explicify_lkinds lkinds = lkinds  
-let explicify_tabbrevs tabbrevs = tabbrevs 
-let explicify_clauses clauses = clauses 
-let explicify_accummods accummods = accummods 
-let explicify_accumsigs accumsigs = accumsigs
-let explicify_usesigs usesigs = usesigs 
+(* val explicify_clauses : Absyn.aterm list ->  Absyn.aterm list *)
+let rec explicify_clauses clauses = match clauses with
+  | [] -> []
+  | (clause::q) -> Printf.printf "%s\n" (string_of_term clause);
+                     (clause::(explicify_clauses q))
 
 
-
-let explicify pmodule = match pmodule with 
-  | Module(name, gconsts, lconsts, cconsts, uconsts, econsts, fixities,
-      gkinds, lkinds, tabbrevs, clauses, accummods,
-      accumsigs, usesigs, impmods) -> 
-      let name' = explicify_name name in 
-      let gconsts' = explicify_gconsts gconsts in 
-      let lconsts' = explicify_lconsts lconsts in 
-      let cconsts' = explicify_cconsts cconsts in 
-      let uconsts' = explicify_uconsts uconsts in 
-      let econsts' = explicify_econsts econsts in 
-      let fixities' = explicify_fixities fixities in 
-      let gkinds' = explicify_gkinds gkinds in 
-      let lkinds' = explicify_lkinds lkinds in 
-      let tabbrevs' = explicify_tabbrevs tabbrevs in 
-      let clauses' = explicify_clauses clauses in 
-      let accummods' = explicify_accummods accummods in 
-      let accumsigs' = explicify_accumsigs accumsigs in 
-      let usesigs' = explicify_usesigs usesigs in 
-      (* Importation of modules is deprecated *)
-      let impmods' = impmods in 
-        Module(name', gconsts', lconsts', cconsts', uconsts', econsts', fixities',
-               gkinds', lkinds', tabbrevs', clauses', accummods',
-               accumsigs', usesigs', impmods') 
-  | s -> s (* TODO *)
+(*  explicify : 
+    Absyn.amodule -> 
+    Absyn.aterm list -> 
+    Absyn.aterm list->
+    (Absyn.amodule * Absyn.aterm list * Absyn.aterm list) *)
+let explicify m clauses newclauses = 
+  match m with
+    | Module(name, implist, acclist, kind_t, const_t, tabb_t, strings,
+            gkinds, lkinds, gconsts, lconsts, hidden_const, skel, hskel, ci) ->
+        let  clauses' = explicify_clauses clauses in
+        (m, clauses', newclauses)
+    | _ -> Errormsg.impossible Errormsg.none "Explicify: invalid module"
