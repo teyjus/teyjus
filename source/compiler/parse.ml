@@ -208,7 +208,7 @@ let makeType term s ktable pos =
 let makeConstantTerm parsingtoplevel c pos =
   let ty = Types.makeConstantMolecule parsingtoplevel c in
   let env = Types.getMoleculeEnvironment ty in
-  Term(Absyn.ConstantTerm(c,env,false,pos), ty)
+  Term(Absyn.ConstantTerm(c,env,pos), ty)
 
 
 let listSeparatorIdTerm = 
@@ -369,15 +369,15 @@ and parseTerm parsingtoplevel inlist term fvs bvs amodule =
       in (makeAbstraction tty bbvs pos, fvs')
   
   | Preabsyn.IntTerm(i, pos) -> 
-           (makeType (Absyn.IntTerm(i, false, pos)) 
+           (makeType (Absyn.IntTerm(i,  pos)) 
                      "int" (Absyn.getModuleKindTable amodule) pos, 
             fvs)
   | Preabsyn.RealTerm(r, pos) -> 
-           (makeType (Absyn.RealTerm(r, false, pos)) 
+           (makeType (Absyn.RealTerm(r, pos)) 
                       "real" (Absyn.getModuleKindTable amodule) pos,
             fvs)
   | Preabsyn.StringTerm(s, pos) -> 
-           (makeType (Absyn.StringTerm(Absyn.StringLiteral(s), false, pos))
+           (makeType (Absyn.StringTerm(Absyn.StringLiteral(s), pos))
                      "string" (Absyn.getModuleKindTable amodule) pos,
             fvs)
 
@@ -559,7 +559,7 @@ and constantToOpTerm parsingtoplevel term constant fvs amodule =
     if fixity = Absyn.NoFixity then
       (StackTerm(Term(Absyn.ConstantTerm(constant, 
                                          (Types.getMoleculeEnvironment tmol), 
-                                         false, pos), tmol)), 
+                                         pos), tmol)), 
        fvs)
     else
       (StackOp(constant, (Types.getMoleculeEnvironment tmol), pos), fvs)
@@ -1116,7 +1116,6 @@ and makeAbstraction termmol bvs pos =
     | bv::bvs' ->
         let term' = Absyn.AbstractionTerm(
           Absyn.NestedAbstraction(bv, currentterm),
-          false,
           pos) in
         (makeTerm term' bvs')
   in
@@ -1149,7 +1148,6 @@ and makeApplyOp pos =
 and makeApply f arg =
   let term = Absyn.ApplicationTerm(
     Absyn.CurriedApplication(getTermTerm f, getTermTerm arg),
-    false,
     Absyn.getTermPos (getTermTerm f)) in
   let ty = Types.checkApply (getTermMolecule f) (getTermMolecule arg) term in
   
@@ -1168,10 +1166,8 @@ and makeBinaryApply f (arg1 : ptterm) (arg2 : ptterm) =
     Absyn.CurriedApplication(
       Absyn.ApplicationTerm(
         Absyn.CurriedApplication(getTermTerm f, getTermTerm arg1),
-        false,
         Absyn.getTermPos (getTermTerm f)),
       getTermTerm arg2),
-    false,
     Absyn.getTermPos (getTermTerm f)) in
   
   let ty = Types.checkApply (getTermMolecule f) (getTermMolecule arg1) term in
@@ -1209,34 +1205,34 @@ and removeOverloads term =
     Absyn.IntTerm(_) -> term
   | Absyn.RealTerm(_) -> term
   | Absyn.StringTerm(_) -> term
-  | Absyn.FreeVarTerm(Absyn.NamedFreeVar(tsym), b, p) ->
+  | Absyn.FreeVarTerm(Absyn.NamedFreeVar(tsym), p) ->
       let tsym' = removeTypeSymbolOverloads tsym in
-      Absyn.FreeVarTerm(Absyn.NamedFreeVar(tsym'), b, p)
+      Absyn.FreeVarTerm(Absyn.NamedFreeVar(tsym'), p)
   | Absyn.FreeVarTerm(_) ->
       (Errormsg.impossible Errormsg.none
         "Parse.removeOverloads: invalid free variable term";)
-  | Absyn.BoundVarTerm(Absyn.NamedBoundVar(tsym), b, p) ->
+  | Absyn.BoundVarTerm(Absyn.NamedBoundVar(tsym), p) ->
       let tsym' = removeTypeSymbolOverloads tsym in
-      Absyn.BoundVarTerm(Absyn.NamedBoundVar(tsym'), b, p)
+      Absyn.BoundVarTerm(Absyn.NamedBoundVar(tsym'), p)
   | Absyn.BoundVarTerm(_) ->
       (Errormsg.impossible Errormsg.none
         "Parse.removeOverloads: invalid bound variable term";)
-  | Absyn.AbstractionTerm(Absyn.NestedAbstraction(t, body), b, p) ->
+  | Absyn.AbstractionTerm(Absyn.NestedAbstraction(t, body), p) ->
       let body' = removeOverloads body in
-      Absyn.AbstractionTerm(Absyn.NestedAbstraction(t, body'), b, p)
-  | Absyn.AbstractionTerm(Absyn.UNestedAbstraction(ts, c, body), b, p) ->
+      Absyn.AbstractionTerm(Absyn.NestedAbstraction(t, body'), p)
+  | Absyn.AbstractionTerm(Absyn.UNestedAbstraction(ts, c, body), p) ->
       let body' = removeOverloads body in
-      Absyn.AbstractionTerm(Absyn.UNestedAbstraction(ts, c, body'), b, p)
-  | Absyn.ApplicationTerm(Absyn.FirstOrderApplication(f, args, i), b, p) ->
+      Absyn.AbstractionTerm(Absyn.UNestedAbstraction(ts, c, body'), p)
+  | Absyn.ApplicationTerm(Absyn.FirstOrderApplication(f, args, i), p) ->
       let f' = removeOverloads f in
       let args' = List.map removeOverloads args in
-      Absyn.ApplicationTerm(Absyn.FirstOrderApplication(f', args', i), b, p)
-  | Absyn.ApplicationTerm(Absyn.CurriedApplication(f, a), b, p) ->
+      Absyn.ApplicationTerm(Absyn.FirstOrderApplication(f', args', i), p)
+  | Absyn.ApplicationTerm(Absyn.CurriedApplication(f, a), p) ->
       let f' = removeOverloads f in
       let a' = removeOverloads a in
-      Absyn.ApplicationTerm(Absyn.CurriedApplication(f', a'), b, p)
+      Absyn.ApplicationTerm(Absyn.CurriedApplication(f', a'), p)
 
-  | Absyn.ConstantTerm(c, tl, b, p) ->
+  | Absyn.ConstantTerm(c, tl, p) ->
       if Pervasiveutils.isOverloaded c then
         let ty = List.hd tl in
         let ty' = Absyn.dereferenceType ty in
@@ -1249,10 +1245,10 @@ and removeOverloads term =
                 Absyn.getTypeKind (List.hd !l)
               else
                 Absyn.getTypeKind def) in
-            Absyn.ConstantTerm(Pervasiveutils.getOverload k c, [], b, p)
+            Absyn.ConstantTerm(Pervasiveutils.getOverload k c, [], p)
         | _ -> Absyn.ErrorTerm)
       else
-        Absyn.ConstantTerm(c, List.map Types.replaceTypeSetType tl, b, p)
+        Absyn.ConstantTerm(c, List.map Types.replaceTypeSetType tl, p)
   | Absyn.ErrorTerm -> Absyn.ErrorTerm
 
 (**********************************************************************
@@ -1271,27 +1267,27 @@ and removeOverloads term =
 and removeNestedAbstractions term =
   let rec remove term =
     match term with
-      Absyn.AbstractionTerm(abst, b, p) ->
+      Absyn.AbstractionTerm(abst, p) ->
         let (tsyms, body) = removeAbstraction abst [] in
-        Absyn.AbstractionTerm(Absyn.UNestedAbstraction(
-          tsyms,List.length tsyms, body), b, p)
-    | Absyn.ApplicationTerm(Absyn.CurriedApplication(t1, t2), b, p) ->
+        Absyn.AbstractionTerm(
+          Absyn.UNestedAbstraction(tsyms,List.length tsyms, body), p)
+    | Absyn.ApplicationTerm(Absyn.CurriedApplication(t1, t2), p) ->
         let t1' = removeNestedAbstractions t1 in
         let t2' = removeNestedAbstractions t2 in
-        Absyn.ApplicationTerm(Absyn.CurriedApplication(t1', t2'), b, p) 
+        Absyn.ApplicationTerm(Absyn.CurriedApplication(t1', t2'), p) 
     | Absyn.ApplicationTerm(
-        Absyn.FirstOrderApplication(head, args, l), b, p) ->
+        Absyn.FirstOrderApplication(head, args, l), p) ->
         let head' = removeNestedAbstractions head in
         let args' = List.map removeNestedAbstractions args in
         Absyn.ApplicationTerm(
-          Absyn.FirstOrderApplication(head', args', l), b, p)
+          Absyn.FirstOrderApplication(head', args', l), p)
     | _ -> term
 
   and removeAbstraction abst tsyms =
     match abst with 
       Absyn.NestedAbstraction(tsym, body) ->
         (match body with
-          Absyn.AbstractionTerm(abst', b, p) -> 
+          Absyn.AbstractionTerm(abst', p) -> 
             removeAbstraction abst' (tsym :: tsyms)
         | _ -> (List.rev (tsym :: tsyms), remove body))
     | Absyn.UNestedAbstraction(_) ->
@@ -1372,7 +1368,7 @@ and normalizeTerm term =
         encountered.  If so, check for an environment entry, and use
         the corresponding term or suspension.  Otherwise, simply use
         the term. *)
-    | Absyn.BoundVarTerm(Absyn.NamedBoundVar(tsym), _, pos) ->
+    | Absyn.BoundVarTerm(Absyn.NamedBoundVar(tsym), pos) ->
         let entryop = (findEntry env tsym) in
         if (Option.isSome entryop) then
           let entry = Option.get entryop in
@@ -1387,7 +1383,7 @@ and normalizeTerm term =
         else
           (TermEntry(term))
     (*  Application *)
-    | Absyn.ApplicationTerm(Absyn.CurriedApplication(l, r), b, p) ->
+    | Absyn.ApplicationTerm(Absyn.CurriedApplication(l, r), p) ->
         let l' = normalize l env true in
         if (isEntrySuspension l') then
           let t' = (getEntrySuspensionTerm l') in
@@ -1398,9 +1394,9 @@ and normalizeTerm term =
         else
           let l' = (getEntryTerm l') in
           let r' = (getEntryTerm (normalize r env false)) in
-          TermEntry(Absyn.ApplicationTerm(Absyn.CurriedApplication(l', r'), b, p))
+          TermEntry(Absyn.ApplicationTerm(Absyn.CurriedApplication(l', r'), p))
     
-    | Absyn.AbstractionTerm(Absyn.NestedAbstraction(tsym, aterm), _, pos) ->
+    | Absyn.AbstractionTerm(Absyn.NestedAbstraction(tsym, aterm), pos) ->
         if whnf then
           SuspensionEntry(term, env)
         else if (getEnvironmentSize env) > 0 then
@@ -1411,15 +1407,15 @@ and normalizeTerm term =
           let t' = makeTerm tsym t env in
           let aterm' = (getEntryTerm (normalize aterm t' false)) in
           if aterm <> aterm' then
-            TermEntry(Absyn.AbstractionTerm(Absyn.NestedAbstraction(tsym', aterm'), 
-                                            false, pos))
+            TermEntry(
+              Absyn.AbstractionTerm(Absyn.NestedAbstraction(tsym', aterm'), pos))
           else
             TermEntry(term)
         else
           let aterm' = (getEntryTerm (normalize aterm emptyEnvironment false)) in
           if aterm <> aterm' then
             TermEntry(Absyn.AbstractionTerm(Absyn.NestedAbstraction(tsym, aterm'), 
-                                            false, pos))
+                                            pos))
           else
             TermEntry(term)
     | Absyn.ErrorTerm -> TermEntry(Absyn.ErrorTerm)
@@ -1477,9 +1473,9 @@ and fixTerm term =
       not already done in the call to removeNestedAbstractions in translateTerm *)
   and unCurryTopLevelApps appterm args =
     match appterm with
-        (Absyn.CurriedApplication (f,a)) -> 
+        (Absyn.CurriedApplication(f,a)) -> 
           (match f with
-              (Absyn.ApplicationTerm (appterm',_,_)) -> 
+              (Absyn.ApplicationTerm(appterm',_)) -> 
                 unCurryTopLevelApps appterm' (a::args)
             | _ -> (f, a :: args))
       | _ -> Errormsg.impossible Errormsg.none
@@ -1490,17 +1486,17 @@ and fixTerm term =
      the highest de Bruijn index within the term *)
   and fixTerm' term bvars fvars ftyvars =
     match term with 
-        Absyn.IntTerm(i,_,p) -> (Absyn.IntTerm(i,true,p),fvars,ftyvars,0)
-      | Absyn.RealTerm(r,_,p) -> (Absyn.RealTerm(r,true,p),fvars,ftyvars,0)
-      | Absyn.StringTerm(s,_,p) -> (Absyn.StringTerm(s,true,p),fvars,ftyvars,0)
-      | Absyn.ConstantTerm(c,tenv,_,p) -> 
+        Absyn.IntTerm(i,p) -> (Absyn.IntTerm(i,p),fvars,ftyvars,0)
+      | Absyn.RealTerm(r,p) -> (Absyn.RealTerm(r,p),fvars,ftyvars,0)
+      | Absyn.StringTerm(s,p) -> (Absyn.StringTerm(s,p),fvars,ftyvars,0)
+      | Absyn.ConstantTerm(c,tenv,p) -> 
           (* collect type variables in (needed components of) type environment 
              and check constant is legal here *)
           let () = checkIllegalConstant c p in
           let neededtenv = trunclist tenv (Absyn.getConstantTypeEnvSize false c) in
-          (Absyn.ConstantTerm(c,neededtenv,true,p),fvars,
+          (Absyn.ConstantTerm(c,neededtenv,p),fvars,
             Types.getNewVarsInTypes neededtenv ftyvars,0)
-      | Absyn.FreeVarTerm(fv,_,p) -> 
+      | Absyn.FreeVarTerm(fv,p) -> 
           (match fv with
             Absyn.NamedFreeVar(tysy) -> 
               let nfvars = 
@@ -1509,17 +1505,17 @@ and fixTerm term =
                 else
                   (tysy :: fvars)
               in
-              (Absyn.FreeVarTerm(fv,true,p),nfvars,ftyvars,0)
+              (Absyn.FreeVarTerm(fv,p),nfvars,ftyvars,0)
           | _ -> Errormsg.impossible Errormsg.none
                                      "Parse.fixTerm.FreeVarTerm: non-named var.")
-      | Absyn.BoundVarTerm(bv,_,p) ->
+      | Absyn.BoundVarTerm(bv,p) ->
           (match bv with 
             Absyn.NamedBoundVar(tysy) ->
                let ind = (findBVinList tysy bvars) in
-                 (Absyn.BoundVarTerm(Absyn.DBIndex(ind),false,p),fvars,ftyvars,ind)
+                 (Absyn.BoundVarTerm(Absyn.DBIndex(ind),p),fvars,ftyvars,ind)
           | _ -> Errormsg.impossible Errormsg.none
                                    "Parse.fixTerm.BoundVarTerm: non-named form.")
-      | Absyn.AbstractionTerm(abs,_,p) ->
+      | Absyn.AbstractionTerm(abs,p) ->
           (* note that the list of abstracted variables is in reverse order
              after removeNestedAbstractions *)
           (match abs with
@@ -1529,18 +1525,18 @@ and fixTerm term =
                 in
                 let ind' = (if (ind > 0) then (ind - 1) else 0) in
                 (Absyn.AbstractionTerm(Absyn.UNestedAbstraction(tysyl,i,nbody),
-                  (ind > 1),p),
+                  p),
                   nfvars,nftyvars,ind')
           | _ -> Errormsg.impossible Errormsg.none 
                   "Parse.fixTerm.AbstractionTerm: nested abstractions?")
-      | Absyn.ApplicationTerm(appterm,_,p) ->
+      | Absyn.ApplicationTerm(appterm,p) ->
          let (h,args) = unCurryTopLevelApps appterm [] in
          let (nh,nfvars,nftyvars,ind) = fixTerm' h bvars fvars ftyvars in
          let (nargs,nfvars',nftyvars',ind') = 
            (fixTerms args bvars nfvars nftyvars ind) in
          (Absyn.ApplicationTerm(Absyn.FirstOrderApplication(nh,nargs,
                                                             List.length nargs),
-                                   (ind' > 0),p),nfvars',nftyvars',ind')
+                                   p),nfvars',nftyvars',ind')
       | Absyn.ErrorTerm -> (Absyn.ErrorTerm, fvars, ftyvars, 0)
 
   and fixTerms ts bvars fvars ftyvars ind = 
