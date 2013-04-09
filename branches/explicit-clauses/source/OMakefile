@@ -34,7 +34,6 @@ CMP_ML[] =
     $(CMP)/codegen
     $(CMP)/compile
     $(CMP)/errormsg
-    $(CMP)/explicify
     $(CMP)/instr
     $(CMP)/lplex
     $(CMP)/lpyacc
@@ -66,6 +65,7 @@ PAR_ML[] =
     $(CMP)/clauses
     $(CMP)/compile
     $(CMP)/errormsg
+    $(CMP)/explicify
     $(CMP)/lplex
     $(CMP)/lpyacc
     $(CMP)/option

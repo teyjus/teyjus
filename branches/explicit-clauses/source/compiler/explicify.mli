@@ -25,7 +25,8 @@
 
 (**********************************************************************
 *explicify:
-* Given a preabsyn module, explicify clauses and connectives.
+* Given an absyn module, explicify clauses and connectives.
 **********************************************************************)
-val explicify : Preabsyn.pmodule -> Preabsyn.pmodule 
+val explicify : Absyn.amodule -> Absyn.aterm list -> Absyn.aterm list->
+  (Absyn.amodule * Absyn.aterm list * Absyn.aterm list) 
 
