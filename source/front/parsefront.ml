@@ -78,6 +78,7 @@ let writeModule m clauses newclauses oc =
   in
   
   let writeClause oc lastHead t =
+    Printf.printf "Taking care of %s\n" (string_of_term t);
     let isConstant test t =
       match t with
           ConstantTerm(c, _, _) -> test c
@@ -93,7 +94,9 @@ let writeModule m clauses newclauses oc =
       
     let rec getActualClause t =
       match t with
-          ApplicationTerm(FirstOrderApplication(h,[AbstractionTerm(_) as abs],_),_)
+          ApplicationTerm(
+            FirstOrderApplication(h,[AbstractionTerm(_) as abs],_),
+            _)
             when isConstant Pervasive.isallConstant h
             ->  let vs = getTermAllAbstractionVars abs in
                 if List.for_all isUniversal vs then
@@ -153,8 +156,7 @@ let writeModule m clauses newclauses oc =
     
 let writeModuleSignature s oc =
   match s with
-    | Module(name, implist, acclist, _, _, _, _, 
-             gkinds, lkinds, gconsts, lconsts, _, _, _, _) ->
+    | Module(name, _, _, _, _, _, _, gkinds, _, gconsts, _, _, _, _, _) ->
         writeLine oc ("sig " ^ name ^ ".");
         writeLine oc "";
         List.iter (writeKind oc false) (List.rev gkinds);

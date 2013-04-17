@@ -23,6 +23,12 @@
 *Explicify:
 **********************************************************************)
 
+
+val print_aclausesblock : Absyn.aclausesblock -> unit
+
+val print_clause : Absyn.aclause -> unit
+
+
 (**********************************************************************
 *explicify:
 * Given an absyn module, explicify clauses and connectives.
