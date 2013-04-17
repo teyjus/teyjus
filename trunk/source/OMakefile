@@ -19,8 +19,6 @@ INC = $(dir include)
 #
 
 OCAMLINCLUDES += $(CMP) $(DIS) $(SIM) $(LOD)
-OCAMLOPTFLAGS += -bin-annot
-OCAMLCFLAGS += -bin-annot
 CFLAGS += -g
 
 ############################################################
