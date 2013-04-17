@@ -1068,7 +1068,7 @@ and translateClauses pmod amod =
 let linearizeClause clause =
   let counter = ref 0 in
   let fresh tsym =
-    let () = incr counter in
+    let _ = incr counter in
     let name = "Linearized-" ^ (string_of_int !counter) in
     let sym = Symbol.symbol name in
     let tsym' = Absyn.copyTypeSymbol sym tsym in
@@ -1141,12 +1141,12 @@ let linearizeClause clause =
             let sym = Absyn.getTypeSymbolSymbol tsym in
             (try
               let (_, others) = List.assoc sym uvs in
-              let () = Errormsg.log p ("Clauses.linearseClause: found " ^ (Absyn.string_of_term_ast term)) in
+              let _ = Errormsg.log p ("Clauses.linearseClause: found " ^ (Absyn.string_of_term_ast term)) in
               let fv = fresh tsym in
               let uvs' = List.remove_assq sym uvs in
               (Absyn.FreeVarTerm(fv, p), (sym, (info, fv :: others)) :: uvs')
             with Not_found ->
-                let () = Errormsg.log p ("Clauses.linearseClause: not found " ^ (Absyn.string_of_term_ast term)) in
+                let _ = Errormsg.log p ("Clauses.linearseClause: not found " ^ (Absyn.string_of_term_ast term)) in
                (term, (sym, (info, [])) :: uvs))
         | _ -> Errormsg.impossible pos ("Clauses.linearize: invalid term " ^ (Absyn.string_of_term_ast term))
     in
@@ -1183,8 +1183,8 @@ let linearizeClause clause =
   
   let (head, body) = getHeadAndBody clause in
   let pos = Absyn.getTermPos head in
-  let () = Errormsg.log pos ("Clauses.linearizeClause: head " ^ (Absyn.string_of_term_ast head)) in
-  let () = if Option.isSome body then
+  let _ = Errormsg.log pos ("Clauses.linearizeClause: head " ^ (Absyn.string_of_term_ast head)) in
+  let _ = if Option.isSome body then
     Errormsg.log pos ("Clauses.linearizeClause: body " ^ (Absyn.string_of_term_ast (Option.get body)))
   in
   let (head', uvs) = linearizeHead head pos in

@@ -76,7 +76,6 @@ let gListAppend vars varList = varList := (!varList @ vars)
 let qVars : Absyn.avar list ref = ref []
 let isQVar   var      = isMember var (!qVars)
 let addQVars var      = gListAdd var qVars
-let appQVars dataList = gListAppend dataList qVars 
 let getQVars ()       = !qVars
 let setQVars dataList = qVars := dataList		  
 
@@ -793,7 +792,7 @@ and processImpGoal clDefs body last cutVarRef =
 (***********************************************************************)  
 and processEmbeddedClause clause fvs tyfvs =
   (* process the embedded clause *)
-  let (lqVars, lhqVars, lexpqVars, lclVars, lembedded, lgoalNum) =
+  let (lqVars, lhqVars, _, lclVars, lembedded, lgoalNum) =
 	(getQVars (), getHQVars (), getExpQVars (), getClVars (), 
 	 isEmbedded (), getGoalNum ())
   in  

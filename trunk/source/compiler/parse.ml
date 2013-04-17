@@ -226,14 +226,6 @@ let stackTop = function
 | Stack([],_,_,_) -> (Errormsg.impossible Errormsg.none 
                                           "Parse.stackTop: stack is empty.")
 
-(**********************************************************************
-*popStack:
-* Removes the top of the given stack and returns the new stack.
-**********************************************************************)
-let popStack = function
-  Stack(_::ss,a,b,c) -> Stack(ss, a, b, c)
-| Stack([],_,_,_) -> (Errormsg.impossible Errormsg.none 
-                                          "Parse.popStack: stack is empty.")
 
 (**********************************************************************
 *translateClauses:
@@ -583,8 +575,6 @@ and constantToOpTerm parsingtoplevel term constant fvs amodule =
 
 and makeImplicitTypeSymbol c sym ty =
   Absyn.ImplicitVar(sym, ref c, ref false, ref (Some ty))
-and makeBoundTypeSymbol c sym ty =
-  Absyn.BoundVar(sym, ref c, ref false, ref (Some ty))
 and makeAnonymousTypeSymbol c sym ty =
   Absyn.AnonymousImplicitVar(sym, ref c, ref false, ref (Some ty))
 

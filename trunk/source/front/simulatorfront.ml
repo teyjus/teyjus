@@ -114,7 +114,7 @@ let solveQueries () =
   in
   
   (* solve one query *)
-  let rec solveQuery query =
+  let solveQuery query =
    if Query.buildQueryTerm query (Module.getCurrentModule ()) then 
       if !batch then
         solveQueryBatch ()
@@ -128,7 +128,7 @@ let solveQueries () =
       
   in
 
-  let rec interactSolveQuery queries modName =
+  let interactSolveQuery queries modName =
     (* first solve queries input through the command line *)
     List.iter solveQuery queries;
 
@@ -175,7 +175,7 @@ let _ = Callback.register "ocaml_read_term" readTerm
 * Main entrypoint; sets up the simulator based on command line
 * arguments, loads the secified module, and then starts the interactive loop.
 **********************************************************************)
-let main =
+let _ =
   Arg.parse (Arg.align specList) (setInputName ~filter:getModName) usageMsg ;
 
   try 

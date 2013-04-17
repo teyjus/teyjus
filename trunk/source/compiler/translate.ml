@@ -20,9 +20,6 @@
 ****************************************************************************)
 type pos = Errormsg.pos
 
-type typemolecule =
-  Molecule of (Absyn.atype * Absyn.atype list * bool)
-
 type typeandbindings =
   TypeAndBindings of (Absyn.atype * Absyn.atype Table.symboltable)
 
@@ -48,16 +45,6 @@ let getTypeAndEnvironmentType = function
     
 let getTypeAndEnvironmentSize = function
   TypeAndEnvironment(_, i) -> i
-
-type argstypes =
-  ArgsTypes of (int * Absyn.atype list * Absyn.atype list)
-
-
-(*  Unification results *)
-type unifyresult =
-    OccursCheckFailure
-  | ClashFailure
-  | Success
 
 let typeSkeletonIndex = ref 0
 
@@ -95,18 +82,18 @@ let rationalizeVar sym symtable p =
 * Rationalizes a type.
 *********************************************************************)
 let rec rationalizeType
-  ty vartable kindtable typeabbrevtable newsymfunc transvarfunc =
+  ty vartable kindtable typeabbrevtable transvarfunc =
     
   (******************************************************************
   *translateArrow:
   * Translate an arrow from preabsyn to absyn.
   ******************************************************************)
-  let rec translateArrow = function Preabsyn.Arrow(l,r,p) ->
+  let translateArrow = function Preabsyn.Arrow(l,r,p) ->
     let TypeAndBindings(l', ls) = rationalizeType l vartable kindtable 
-                                                  typeabbrevtable newsymfunc 
+                                                  typeabbrevtable 
                                                   transvarfunc in
     let TypeAndBindings(r', rs) = rationalizeType r ls kindtable typeabbrevtable 
-                                                  newsymfunc transvarfunc in
+                                                  transvarfunc in
 
     TypeAndBindings(Absyn.ArrowType(l', r'), rs)
   | t -> invalid_arg "Types.translateArrow: invalid type"
@@ -127,7 +114,7 @@ let rec rationalizeType
               Preabsyn.App(f,arg,p') ->
                 let TypeAndBindings(argtype, ts') = 
                        rationalizeType arg ts kindtable typeabbrevtable 
-                                       newsymfunc transvarfunc in
+                                       transvarfunc in
                 let (head, ts'', argtypes) = (getHeadAndArgsType f ts') in
                   (head, ts'', argtype :: argtypes)
             | _ -> (t, ts, [])
@@ -223,25 +210,21 @@ let rec rationalizeType
 * Translate a preabsyn representation of a type into an absyn type.
 **********************************************************************)
 and translateType ty amodule =
-  let newSymFunc () = () in
 
-  let TypeAndBindings(t, _) = (rationalizeType ty Table.empty
-    (Absyn.getModuleKindTable amodule) (Absyn.getModuleTypeAbbrevTable amodule)
-    newSymFunc rationalizeVar) in
-  t
-
-and translateType' ty kindtable typeabbrevtable =
-  let newSymFunc () = () in
-  let TypeAndBindings(t, _) = (rationalizeType ty Table.empty
-    kindtable typeabbrevtable newSymFunc rationalizeVar) in
-  t
+  let TypeAndBindings(t, _) = 
+    rationalizeType ty Table.empty
+      (Absyn.getModuleKindTable amodule) 
+      (Absyn.getModuleTypeAbbrevTable amodule)
+      rationalizeVar 
+  in
+    t
 
 (**********************************************************************
 *translateTypeSkeleton:
 * Translate a preabsyn representation of a type into an absyn type
 * skeleton.
 **********************************************************************)
-and translateTypeSkeleton ty kindtable typeabbrevtable newsymfunc =
+and translateTypeSkeleton ty kindtable typeabbrevtable =
   (*********************************************************************
   *translateArrow:
   * Translate an arrow, with a check to ensure that
@@ -277,7 +260,7 @@ and translateTypeSkeleton ty kindtable typeabbrevtable newsymfunc =
         arg::rest ->
           let TypeAndBindings(t, ts') =
             rationalizeType arg ts kindtable typeabbrevtable 
-                            newsymfunc rationalizeSkeletonVar in
+                            rationalizeSkeletonVar in
           t::(translateArgs rest ts')
       | [] -> []
     in
@@ -301,7 +284,7 @@ and translateTypeSkeleton ty kindtable typeabbrevtable newsymfunc =
     (*  First translate the target.  *)
     let TypeAndBindings(target', ts) =
       rationalizeType target Table.empty kindtable typeabbrevtable 
-                      newsymfunc rationalizeSkeletonVar in
+                      rationalizeSkeletonVar in
 
     (*  Translate all of the arguments  *)
     let args' = translateArgs args ts in
@@ -320,7 +303,7 @@ and translateTypeSkeleton ty kindtable typeabbrevtable newsymfunc =
   | _ ->
     let TypeAndBindings(t, ts) =
       rationalizeType ty Table.empty kindtable typeabbrevtable 
-                      newsymfunc rationalizeSkeletonVar in
+                      rationalizeSkeletonVar in
     TypeAndEnvironment(t, !typeSkeletonIndex) 
 
 (**********************************************************************
@@ -595,15 +578,13 @@ and translateConstant c clist kindtable typeabbrevtable buildconstant =
     | [] -> clist
   in
   
-  let rec newSymFunc = fun () -> ()
-  in
-
   match c with
     Preabsyn.Constant(names, Some t, pos) ->
       let TypeAndEnvironment(tyskel, size) = 
               translateTypeSkeleton t kindtable 
-                                    typeabbrevtable newSymFunc in
-      (* let ty = translateType' t kindtable typeabbrevtable in *)
+                                    typeabbrevtable in
+      (* let ty = translateType' t kindtable typeabbrevtable in 
+        If necessary, translateType' was removed in commit 1067 *)
         (enter names [tyskel] 
                      (ref(Some(Absyn.Skeleton(tyskel, ref None, ref false))))
                      size clist)
@@ -663,8 +644,6 @@ and translateTypeAbbrev abbrev abbrevtable kindtable =
         (Table.add sym (Absyn.SkeletonVarType(ref i)) (buildTable ss (i + 1)))
   in
   
-  let newSymFunc () = () in
-  
   (*  Get the name and arguments  *)
   let abbrevname = getName name in
   let args = checkArgs arglist in
@@ -674,7 +653,7 @@ and translateTypeAbbrev abbrev abbrevtable kindtable =
   
   (*  Translate the type body *)
   let TypeAndBindings(bodytype,bindings) =
-    (rationalizeType ty symtable kindtable abbrevtable newSymFunc
+    (rationalizeType ty symtable kindtable abbrevtable
                      rationalizeTypeAbbrevVar)
   in
   
@@ -819,51 +798,6 @@ and compareConstants c1 c2 =
       false)
     else
       true
-  else
-    true
-
-(**********************************************************************
-*compareAccumConstants:
-* Determines whether two constants are defined in compatible ways.
-**********************************************************************)
-and compareAccumConstants c1 c2 =
-  let name = Absyn.getConstantName c1 in
-
-  let fix = Absyn.getConstantFixity c1 in
-  let fix' = Absyn.getConstantFixity c2 in
-  
-  let prec = Absyn.getConstantPrec c1 in
-  let prec' = Absyn.getConstantPrec c2 in
-  
-  let skel = Absyn.getConstantSkeleton c1 in
-  let skel' = Absyn.getConstantSkeleton c2 in
-  
-  let p = Absyn.getConstantPos c1 in
-  let p' = Absyn.getConstantPos c2 in
-    
-  (*
-  let ed = Absyn.getConstantExportDef c1 in
-  let ed' = Absyn.getConstantExportDef c2 in
-  *)
-  if not (checkFixity fix fix') then
-    (Errormsg.error p ("constant already declared with fixity " ^
-      (Absyn.string_of_fixity fix') ^
-      (Errormsg.see p' "constant declaration"));
-    false)
-  else if not (checkPrec prec prec') then
-    (Errormsg.error p ("constant already declared with precedence" ^
-    (string_of_int prec'));
-    false)
-  else if (Option.isSome skel) && (Option.isSome skel') then
-    let t1 = Absyn.getSkeletonType (Option.get skel) in
-    let t2 = Absyn.getSkeletonType (Option.get skel') in
-    if not (Absyn.types_equal t1 t2) then
-      (Errormsg.error p ("constant '" ^ name ^ "' declared with incompatible type '" ^
-        (Absyn.string_of_skeleton (Option.get skel)) ^ "'" ^
-        (Errormsg.see p' ("constant declaration with type '" ^ (Absyn.string_of_skeleton (Option.get skel')) ^ "'")));
-      false)
-    else
-      true  
   else
     true
 
@@ -1027,22 +961,6 @@ and error s = fun currentConstant newConstant ctable ->
     (Errormsg.error p s';
     ctable)
 
-and log s = fun currentConstant newConstant ctable ->
-  let p = Absyn.getConstantPos newConstant in
-  let s' = "constant '" ^ (Absyn.getConstantPrintName newConstant) ^ "' " ^ s in
-  if Option.isSome currentConstant then
-    let p' = Absyn.getConstantPos (Option.get currentConstant) in
-    (Errormsg.log p
-      (s' ^ (Errormsg.see p' "constant declaration"));
-    ctable)
-  else
-    (Errormsg.log p s';
-    ctable)
-
-and orElse left right =
-  fun currentConstant newConstant ->
-    (left currentConstant newConstant) || (right currentConstant newConstant)
-
 and andAlso args =
   fun currentConstant newConstant ->
     let forall f = (f currentConstant newConstant) in
@@ -1062,17 +980,6 @@ and doesNot test =
   fun currentConstant newConstant ->
     not (test currentConstant newConstant)
 
-(**********************************************************************
-*copySkeleton:
-* Copies the skeleton from the new constant to the old.
-**********************************************************************)
-and copySkeleton =
-  fun currentConstant newConstant ctable ->
-    let skelref = Absyn.getConstantSkeletonRef currentConstant in
-    let newskel = Absyn.getConstantSkeleton newConstant in
-    (skelref := newskel;
-    ctable)
-  
 (**********************************************************************
 *enterConstant:
 **********************************************************************)
@@ -1111,10 +1018,6 @@ and hasCurrentConstantExportdef v =
     else
       Errormsg.impossible Errormsg.none
         "Translate.hasCurrentConstantExportdef: invalid current constant"
-
-and noAction =
-  fun currentConstant newConstant ctable ->
-    ctable
 
 and setCurrentConstantClosed v =
   fun currentConstant newConstant ctable ->
@@ -1196,12 +1099,12 @@ and copyConstant =
 * in translateModule.
 **********************************************************************)
 let copy currentConstant newConstant =
-  let () = Errormsg.log Errormsg.none
+  let _ = Errormsg.log Errormsg.none
     ("copying constant '" ^ (Absyn.getConstantPrintName newConstant) ^ "'") in
   let skelref = Absyn.getConstantSkeletonRef currentConstant in
   let sizeref = Absyn.getConstantTypeEnvSizeRef currentConstant in
   let tref = Absyn.getConstantTypeRef currentConstant in
-  let () = tref := Absyn.getConstantType newConstant in
+  let _ = tref := Absyn.getConstantType newConstant in
   if (Option.isNone !skelref) then
     (sizeref := Absyn.getConstantTypeEnvSize false newConstant;
     skelref := Absyn.getConstantSkeleton newConstant)
@@ -1209,17 +1112,17 @@ let copy currentConstant newConstant =
     ()
 
 let copyAccum currentConstant newConstant =
-  let () = Errormsg.log Errormsg.none
+  let _ = Errormsg.log Errormsg.none
     ("copying accum '" ^ (Absyn.getConstantPrintName newConstant) ^ "'") in
 
   let currentType = Absyn.getConstantType currentConstant in
-  let () = copy currentConstant newConstant in
+  let _ = copy currentConstant newConstant in
   (Absyn.getConstantTypeRef currentConstant) := currentType
 
 let copyExportdef generalCopier owner currentConstant newConstant =
-  let () = Errormsg.log Errormsg.none
+  let _ = Errormsg.log Errormsg.none
     ("copying exportdef '" ^ (Absyn.getConstantPrintName newConstant) ^ "'") in
-  let () = generalCopier currentConstant newConstant in
+  let _ = generalCopier currentConstant newConstant in
   
   if owner then
     let edref = Absyn.getConstantExportDefRef currentConstant in
@@ -1230,9 +1133,9 @@ let copyExportdef generalCopier owner currentConstant newConstant =
     ()
 
 let copyUseonly generalCopier owner currentConstant newConstant =
-  let () = Errormsg.log Errormsg.none
+  let _ = Errormsg.log Errormsg.none
     ("copying useonly '" ^ (Absyn.getConstantPrintName newConstant) ^ "'") in
-  let () = generalCopier currentConstant newConstant in
+  let _ = generalCopier currentConstant newConstant in
   if owner then
     let uoref = Absyn.getConstantUseOnlyRef currentConstant in
     let nodefsref = Absyn.getConstantNoDefsRef currentConstant in
@@ -1288,7 +1191,7 @@ and translateSignature s owner accumOrUse ktable ctable atable generalCopier =
   | Preabsyn.Signature(name, gconsts, uconsts, econsts, gkinds, tabbrevs,
       fixities,accumsigs,usesigs) ->
 
-  let () = Errormsg.log Errormsg.none ("translating signature '" ^ name ^ "'") in
+  let _ = Errormsg.log Errormsg.none ("translating signature '" ^ name ^ "'") in
   
   (******************************************************************
   *mergeKinds:
@@ -1355,12 +1258,12 @@ and translateSignature s owner accumOrUse ktable ctable atable generalCopier =
                then (*  Prints an error; no need to worry about the renaming as
                         we won't be compiling.  *)
                    ctable
-               else let () = copier c2 c in ctable
+               else let _ = copier c2 c in ctable
 
       | None -> (*  Not in the table, so put it in. *)
-          let () = copier c c in
+          let _ = copier c c in
           let t = if Absyn.isLocalConstant c then "local" else "global" in
-          let () = Errormsg.log pos (t ^" constant '" ^ (Symbol.name s) ^  
+          let _ = Errormsg.log pos (t ^" constant '" ^ (Symbol.name s) ^  
                                      "' not in table") in
             (Table.add s c ctable)
     in

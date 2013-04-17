@@ -101,9 +101,3 @@ val impossible : pos -> string -> 'a
 * the relevant position information included.
 **********************************************************************)
 val see : pos -> string -> string
-
-(**********************************************************************
-*reset:
-* Resets anyErrors to false.
-**********************************************************************)
-val reset : unit -> unit
