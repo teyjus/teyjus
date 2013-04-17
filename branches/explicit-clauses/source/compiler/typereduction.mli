@@ -29,5 +29,7 @@ val reduceSkeletons : Absyn.amodule -> Absyn.amodule
 *reducePredicates:
 * Given an absyn module, returns the module updated to reflect any
 * possible predicate optimizations.
+                                                                      
+* This function has never been used (always commented in compilerfront.ml 
 **********************************************************************)
 val reducePredicates : Absyn.amodule -> Absyn.amodule
