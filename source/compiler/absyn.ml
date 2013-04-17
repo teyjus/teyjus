@@ -885,7 +885,7 @@ let getConstantTypeEnvSize search constant =
     let skel = (getConstantSkeleton constant) in
     if (Option.isSome skel) then
       let skel = Option.get skel in
-      let () = findMaxIndex (getSkeletonType skel) in
+      let _ = findMaxIndex (getSkeletonType skel) in
       (!max + 1)
     else
       (Errormsg.impossible Errormsg.none
@@ -1156,7 +1156,7 @@ type atermcontext =
 * Determins whether or not to output parentheses based on the current
 * operator precedence and fixity.
 **********************************************************************)
-let rec needsParens opfix opprec context fix prec =
+let needsParens opfix opprec context fix prec =
   let checkLE () = opprec <= prec in
   let checkL () = opprec < prec in
   let checkLeft () =
@@ -1250,11 +1250,11 @@ let rec getTermApplicationHeadAndArguments term =
       (head, args' @ [r])
   | _ -> (term, [])
 
-let rec getTermApplicationHead t =
+let getTermApplicationHead t =
   let (f,_) = getTermApplicationHeadAndArguments t in
   f
 
-let rec getTermApplicationArguments t =
+let getTermApplicationArguments t =
   let (_,args) = getTermApplicationHeadAndArguments t in
   args
  

@@ -233,10 +233,10 @@ let reduceSkeletons amod =
   
   (*  Iterate over the constant table, destructively reducing each
       constant's skeleton.  *)
-  let () = Errormsg.log Errormsg.none "Typereduction.reduceSkeletons: reducing skeletons..." in
+  let _ = Errormsg.log Errormsg.none "Typereduction.reduceSkeletons: reducing skeletons..." in
   let ctable = Absyn.getModuleConstantTable amod in
-  let () = Table.iter reduceConstant ctable in
-  let () = Errormsg.log Errormsg.none "Typereduction.reduceSkeletons: reduced skeletons" in
+  let _ = Table.iter reduceConstant ctable in
+  let _ = Errormsg.log Errormsg.none "Typereduction.reduceSkeletons: reduced skeletons" in
   amod
 
 (**********************************************************************

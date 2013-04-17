@@ -34,7 +34,7 @@ let compile basename outfile =
       
   (* Construct an absyn module.  At this point only the module's *)
   (* constant, kind, and type abbrev information is valid.       *)
-  let (absyn, sigabsyn) = Translate.translate modresult sigresult in
+  let (absyn, _) = Translate.translate modresult sigresult in
   let _ = abortOnError () in
 
   (* Get the list of clauses and new clauses. *)

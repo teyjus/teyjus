@@ -21,9 +21,6 @@
 type typemolecule =
   Molecule of (Absyn.atype * Absyn.atype list)
 
-type typeandenvironment =
-  TypeAndEnvironment of (Absyn.atype * Absyn.atype list)
-
 type variablebindings = (Absyn.atype * int) list
 
 (*  The error molecule. *)
@@ -124,7 +121,7 @@ let dereferenceMolecule (Molecule(t, env)) =
   *get:
   * Gets the ith type from the type environment.
   ********************************************************************)
-  let rec get i env =
+  let get i env =
     try
       List.nth env i
     with
@@ -164,7 +161,7 @@ and string_of_typemolecule' = fun mol bindings printpar ->
   let Molecule(t,env) = (dereferenceMolecule mol) in
 
   let rec string_of_skelvar i =
-    let rec get i env =
+    let get i env =
       try
         let e = (List.nth env i) in
         string_of_typemolecule' (Molecule(Absyn.dereferenceType e, env)) 
@@ -643,6 +640,7 @@ let occursCheckError = fun fargty argty term ->
     (Errormsg.info ("operator type: " ^ operator)) ^
     (Errormsg.info ("operand type: " ^ operand)) ^
     (Errormsg.info ("in expression: " ^ (Absyn.string_of_term term))))
+
 
 (**********************************************************************
 *checkApply:
