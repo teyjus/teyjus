@@ -893,19 +893,6 @@ and mergeConstants clist ctable f =
   List.fold_left merge ctable clist
 
 (**********************************************************************
-*mergeKinds:
-* Merges a list of kinds into a table of kinds, based on the
-* options specified.
-**********************************************************************)
-and mergeKinds klist ktable f =
-  let merge table kind =
-    let sym = Absyn.getKindSymbol kind in
-    let kind' = Table.find sym ktable in
-    (f kind' kind ktable)
-  in
-  List.fold_left merge ktable klist
-
-(**********************************************************************
 *previouslyExists:
 * Checks that the constant already existed.
 **********************************************************************)
