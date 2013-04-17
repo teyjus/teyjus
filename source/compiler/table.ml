@@ -48,9 +48,6 @@ let find =
 let add = fun k v table ->
   (SymbolTable.add k v table)
 
-let remove = fun k table ->
-  (SymbolTable.remove k table)
-
 let iter = fun f table ->
   (SymbolTable.iter f table)
 

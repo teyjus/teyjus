@@ -143,8 +143,6 @@ type regused =
 
 let regUseList : (regused list) ref = ref []
 
-(* initialize regUseList to an empty list *)
-let initRegUseList ()     = regUseList := []
 (* add a new reg-var/tyvar pair to the front of regUseList *)
 let addRegUseList  data   = regUseList := data :: (!regUseList)
 

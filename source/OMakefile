@@ -19,7 +19,10 @@ INC = $(dir include)
 #
 
 OCAMLINCLUDES += $(CMP) $(DIS) $(SIM) $(LOD)
-CFLAGS += -g
+OCAMLOPTFLAGS += -g -bin-annot
+OCAMLCFLAGS += -bin-annot
+CC += -g 
+OCAMLOPTLINK = ocamlopt -g -bin-annot
 
 ############################################################
 # Compilation files

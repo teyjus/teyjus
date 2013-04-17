@@ -98,11 +98,6 @@ val getNumGoalArgs : unit -> int
 (* register array initialization: all registers are initially free         *)
 val initRegsArray : unit -> unit
 
-(*****************************************************************************)
-(*                   VARIABLE REGISTER CORRESPONDENCE LIST                   *)
-(*****************************************************************************)
-(* nitialize regUseList to an empty list *)
-val initRegUseList : unit -> unit
 
 (***************************************************************************)
 (*                 REGISTER ASSIGNMENT FUNCTIONS                           *)

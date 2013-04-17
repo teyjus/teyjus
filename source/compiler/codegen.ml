@@ -736,7 +736,7 @@ let genSeqCode cls insts startLoc =
 (* if the sequence is of length > 1, a try/retry/trust sequence will be      *)
 (* generated.                                                                *)
 (*****************************************************************************)
-let rec genCodeTableEntry cls insts startLoc =
+let genCodeTableEntry cls insts startLoc =
   (* assume cls is not empty *)
   match cls with
 	[cl] -> (insts, startLoc, Absyn.getClauseOffset cl)
@@ -1028,7 +1028,7 @@ let genImpDefs defs insts startLoc =
 
   let rec genImpDefsAux defs insts startLoc extNum extPreds predNum predInfo =
 	(* generate code for one definition *)
-	let rec genImpDef pred clauseBlock insts startLoc extNum extPreds =
+	let genImpDef pred clauseBlock insts startLoc extNum extPreds =
       let (newExtPreds, newExtNum) =
 		if (Absyn.getClauseBlockClose clauseBlock) then (extPreds, extNum)
 		else

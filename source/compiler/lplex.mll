@@ -20,7 +20,6 @@
 ****************************************************************************)
 {
 open Lexing
-open Errormsg
 open Lpyacc
 
 let setFileName lexbuf name =
