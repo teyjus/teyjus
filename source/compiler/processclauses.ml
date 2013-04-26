@@ -854,24 +854,24 @@ let rec processTopLevelClauses clauseTerms impmods clauseDefs anonymous =
       let fvMaps = Absyn.TermVarMap([]) in
       let tyfvMaps = Absyn.TypeVarMap([]) in
       let (pred, clause) = 
-  (* transfer preclause into clause:                           *)
-  (* the offset field for facts and rules and goalNum-envSize  *)
+        (* transfer preclause into clause:                           *)
+        (* the offset field for facts and rules and goalNum-envSize  *)
         (* association, cutvar and hasenv fields for rules are left  *)
         (* to be filled in the next phase.                           *) 
-  match preClause with 
-    Fact(pred, args, tyargs, nargs, ntermargs) ->
-      (pred, Absyn.Fact(pred, args, tyargs, nargs, ntermargs, fvMaps, 
-            tyfvMaps, expHQVars, ref None, impmods))
-  | Rule(pred, args, tyargs, nargs, ntermargs, goal) ->
-      (pred, Absyn.Rule(pred, args, tyargs, nargs, ntermargs, fvMaps, 
-            tyfvMaps, expHQVars, ref None, goal, 
-            ref (Absyn.GoalEnvAssoc([])), ref None, 
-            ref false, impmods))
+        match preClause with 
+            Fact(pred, args, tyargs, nargs, ntermargs) ->
+              (pred, Absyn.Fact(pred, args, tyargs, nargs, ntermargs, fvMaps, 
+                                tyfvMaps, expHQVars, ref None, impmods))
+          | Rule(pred, args, tyargs, nargs, ntermargs, goal) ->
+              (pred, Absyn.Rule(pred, args, tyargs, nargs, ntermargs, fvMaps, 
+                                tyfvMaps, expHQVars, ref None, goal, 
+                                ref (Absyn.GoalEnvAssoc([])), ref None, 
+                                ref false, impmods))
       in
       (* collect this clause into the module definitions which is organized *)
       (* around predicate names.                                            *)
       let newClDefs = insertClause pred clause clauseDefs false anonymous in
-      processTopLevelClauses rest impmods newClDefs anonymous	  
+        processTopLevelClauses rest impmods newClDefs anonymous	  
 
 (** ********************************************************************** **)
 (**                       INTERFACE FUNCTION                               **)
@@ -881,7 +881,8 @@ let processClauses amod clTerms newClTerms closeddefs =
     Absyn.Module(modname, modimps, modaccs, ctable, ktable, atable, _,
      gkinds, lkinds, gconsts, lconsts, hconsts, skels, hskels, _)
     ->
-      let () = Errormsg.log Errormsg.none "Procesclauses.processClauses: processing clauses..." in
+      let () = Errormsg.log Errormsg.none 
+                 "Procesclauses.processClauses: processing clauses..." in
       setClosedDefs closeddefs;
       (* process anonymous clauses (those introduced for deorification), and*)
       (* increment them into the module definition list.                    *)
@@ -895,7 +896,8 @@ let processClauses amod clTerms newClTerms closeddefs =
       let newClDefs = processTopLevelClauses clTerms modimps clDefs false in
       (* Insert the clauses definitions and the string list into the module *)
       (* abstract syntax.                                                   *)
-      let () = Errormsg.log Errormsg.none "Procesclauses.processClauses: processed clauses" in
+      let () = Errormsg.log Errormsg.none 
+                 "Procesclauses.processClauses: processed clauses" in
     Absyn.Module(modname, modimps, modaccs, ctable, ktable, atable, !modStr, 
                    gkinds, lkinds, gconsts, lconsts, hconsts, skels, hskels, 
            ref (Absyn.PreClauseBlocks(Absyn.Definitions(newClDefs))))
