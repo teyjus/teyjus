@@ -1056,9 +1056,9 @@ and translateClauses pmod amod =
   (*  Enter the hidden constants into the module  *)
   let amod' = setHiddenConstants amod hcs' in
   let newclauses'' = getNewClauses newclauses' in  
-  (amod', List.map Parse.removeNestedAbstractions clauses', 
-  List.map Parse.removeNestedAbstractions (List.concat newclauses''),
-  getClosedDefs ())
+    (amod', List.map Parse.removeNestedAbstractions clauses', 
+     List.map Parse.removeNestedAbstractions (List.concat newclauses''),
+     getClosedDefs ())
 
 (**********************************************************************
 *linearizeClause:
