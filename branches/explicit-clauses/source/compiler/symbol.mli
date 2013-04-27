@@ -78,3 +78,4 @@ val generate : unit -> symbol
 * Produces a fresh symbol whose name is similar to the given name.
 **********************************************************************)
 val generateName : string -> symbol
+
