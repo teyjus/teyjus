@@ -77,12 +77,6 @@ let compile basename outfile =
 	Spitcode.writeByteCode cg ;
     abortOnError ()
 
-let explicify basename =  ()
-(*  let (modresult, sigresult) = parse basename in*)
-(*  let modresultExp = Explicify.explicify modresult in*)
-(*  let sigresultExp = Explicify.explicify sigresult in*)
-
-
 let outputName = ref ""
 
 let setPath path =
@@ -110,8 +104,5 @@ let _ =
   if !outputName = "" then
     outputName := Bytecode.makeByteCodeFileName !inputName ;
   
-  if !explicit then
-    explicify !inputName 
-  else
-    compile !inputName !outputName
+  compile !inputName !outputName
 

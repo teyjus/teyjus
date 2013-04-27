@@ -286,3 +286,112 @@ let getModuleClauses = function
   | _ ->
       Errormsg.impossible Errormsg.none
         "Preabsyn.getModuleClauses: invalid module"
+
+
+let clause_sym = Symbol.symbol "clause__" 
+let fact_sym = Symbol.symbol "fact__" 
+
+let explicify pmod = 
+  let explicify_name name = name ^ "_exp" in
+    
+  let split_clause ptermlist = 
+    let rec split_clause_aux ptermlist before   =
+      match ptermlist with
+        | [] -> None (* This is a fact *)
+        | IdTerm(symbol, ptypeoption, pidkind, pos)::q
+            when ((Symbol.name symbol) = ":-") ->
+            Some(List.rev before, q)
+        | x::q -> split_clause_aux q (x::before)
+    in
+     split_clause_aux ptermlist [] 
+  in
+
+  let typ_clause = 
+    Arrow(
+      App(
+        Atom(Symbol.symbol "list", ConstID, Errormsg.none),
+        Atom(Symbol.symbol "o", ConstID, Errormsg.none), 
+        Errormsg.none
+      ),   
+      Arrow(
+        App(
+            Atom(Symbol.symbol "list", ConstID, Errormsg.none),
+            Atom(Symbol.symbol "o", ConstID, Errormsg.none), 
+            Errormsg.none
+        ),   
+        Atom(Symbol.symbol "o", ConstID, Errormsg.none), 
+        Errormsg.none), 
+      Errormsg.none)
+  in
+
+  let typ_fact = 
+    Arrow(
+      App(
+        Atom(Symbol.symbol "list", ConstID, Errormsg.none),
+        Atom(Symbol.symbol "o", ConstID, Errormsg.none), 
+        Errormsg.none
+      ),   
+      Atom(Symbol.symbol "o", ConstID, Errormsg.none), 
+      Errormsg.none) 
+  in
+
+  let clause_psym = Symbol(clause_sym, ConstID, Errormsg.none) in 
+  let clause_constant = Constant([clause_psym], Some(typ_clause), 
+                                  Errormsg.none) in 
+  let fact_psym = Symbol(fact_sym, ConstID, Errormsg.none) in 
+  let fact_constant = Constant([fact_psym], Some(typ_fact), 
+                                  Errormsg.none) in 
+
+  let rec explicify_pterm pterm = 
+    let explicify_pterm_ptermlist ptermlist = 
+      List.map (explicify_pterm) ptermlist
+    in
+    match pterm with 
+      | SeqTerm(ptermlist, pos) -> 
+          begin
+          match (split_clause ptermlist) with
+            | None -> 
+                SeqTerm(
+                  [IdTerm(fact_sym, Some(typ_fact), 
+                          ConstID, Errormsg.none);
+                   ListTerm(ptermlist, Errormsg.none)],
+                  pos)
+            | Some(head, body) -> 
+                SeqTerm(
+                  [IdTerm(clause_sym, Some(typ_clause), 
+                          ConstID, Errormsg.none);
+                   ListTerm(head, Errormsg.none);
+                   ListTerm(body, Errormsg.none)],
+                  pos)
+          end
+      | ListTerm(ptermlist, pos) ->
+          let ptermlist' = explicify_pterm_ptermlist ptermlist in
+            ListTerm(ptermlist', pos)
+      | ConsTerm(ptermlist, pterm, pos) ->
+          let ptermlist' = explicify_pterm_ptermlist ptermlist in
+          let pterm' = explicify_pterm pterm  in
+         ConsTerm(ptermlist', pterm', pos) 
+      | LambdaTerm(ptypesymbollist, ptermlist, pos) ->
+          let ptermlist' = explicify_pterm_ptermlist ptermlist in
+          LambdaTerm(ptypesymbollist, ptermlist', pos) 
+      | other -> other
+  in
+
+
+  match pmod with 
+  | Module(name, gconsts, lconsts, cconsts, uconsts, econsts, fixities,
+      gkinds, lkinds, tabbrevs, clauses, accummods,
+      accumsigs, usesigs, impmods) ->
+      let name' = explicify_name name in
+      let clauses' = List.map (fun cl -> 
+                                 let pterm = getClauseTerm cl in
+                                 let pterm' = explicify_pterm pterm in 
+                                   Clause(pterm')) clauses in
+      Module(name', gconsts, lconsts, cconsts, uconsts, econsts, fixities,
+             gkinds, lkinds, tabbrevs, clauses', accummods,
+             accumsigs, usesigs, impmods) 
+  | Signature(name, gconstants, useonly, exportdef, gkinds, tabbrevs, 
+              fixities, accumsig, usig) ->
+      let gconstants' = (fact_constant::clause_constant::gconstants) in
+      Signature(name, gconstants', useonly, exportdef, gkinds, tabbrevs, 
+                fixities, accumsig, usig)

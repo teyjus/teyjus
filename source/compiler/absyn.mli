@@ -212,17 +212,19 @@ and ahcvarassoc = HCVarAssocs of ((avar * aconstant) list)
 
 (**********************************************************************
 *Clauses:
-* (head, args, tyargs, numargs, numtargs, body, offset, varmap, tyvarmap
-* gesplist, cutvar, hasenv, impmods)
+* (predicate, term args, type args, number term args, number type args, 
+* term variable map, type variable map, logic variables, offset,  
+* [body, gesplist, cut var, hasenv,] 
+* imported modules)
 **********************************************************************)
 and aclause = 
     Fact of (aconstant * aterm list * atype list * int * int * 
-			   atermvarmap * atypevarmap * avar list * int option ref * 
-			   aimportedmodule list)
-  | Rule of (aconstant * aterm list * atype list * int * int * atermvarmap *
-			      atypevarmap * avar list * int option ref * agoal * 
-              agoalenvassoc ref * avar option ref * bool ref * 
-			      aimportedmodule list)
+             atermvarmap * atypevarmap * avar list * int option ref * 
+             aimportedmodule list)
+  | Rule of (aconstant * aterm list * atype list * int * int * 
+             atermvarmap * atypevarmap * avar list * int option ref * 
+             agoal * agoalenvassoc ref * avar option ref * bool ref * 
+             aimportedmodule list)
 
 (* Goal number and environment size association list*)
 and agoalenvassoc =  GoalEnvAssoc of ((int * int) list)

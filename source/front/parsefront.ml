@@ -78,7 +78,6 @@ let writeModule m clauses newclauses oc =
   in
   
   let writeClause oc lastHead t =
-    Printf.printf "Taking care of %s\n" (string_of_term t);
     let isConstant test t =
       match t with
           ConstantTerm(c, _, _) -> test c
@@ -180,7 +179,22 @@ let compile basename outbasename =
     
   let sigresult = Compile.compileSignature basename in
   let _ = abortOnError () in
-      
+
+  let modresult = 
+    if !explicify then
+      (Preabsyn.explicify modresult)
+    else
+      modresult
+  in
+
+  let sigresult = 
+    if !explicify then
+      (Preabsyn.explicify sigresult)
+    else
+      sigresult
+  in
+  let _ = abortOnError () in
+
   (* Construct an absyn module.  At this point only the module's *)
   (* constant, kind, and type abbrev information is valid.       *)
   let (absyn, _) = Translate.translate modresult sigresult in
@@ -193,12 +207,6 @@ let compile basename outbasename =
   in
   let _ = abortOnError () in
 
-  let (absyn, clauses, newclauses) =
-    if !explicify then
-      Explicify.explicify absyn clauses newclauses
-    else
-      (absyn, clauses, newclauses)
-  in
 
   (*  Linearize heads if requested. *)
   let (clauses', newclauses') =
