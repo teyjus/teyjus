@@ -110,10 +110,10 @@ and string_of_typesymbol = function
   | TypeSymbol(tsym, Some t, idk, pos) ->
       "TypeSymbol(" ^ (Symbol.name tsym) ^ ", " ^
         (string_of_type t) ^ ", " ^ (string_of_idkind idk) ^ ", " ^
-        (string_of_pos pos)
+        (string_of_pos pos) ^ ")"
   | TypeSymbol(tsym, None, idk, pos) ->
       "TypeSymbol(" ^ (Symbol.name tsym) ^ ", " ^
-        (string_of_idkind idk) ^ ", " ^ (string_of_pos pos)
+        (string_of_idkind idk) ^ ", " ^ (string_of_pos pos) ^ ")"
 
 and string_of_term = function
   | SeqTerm(tlist, pos) ->
