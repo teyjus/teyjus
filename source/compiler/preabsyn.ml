@@ -140,7 +140,7 @@ and string_of_term = function
   | StringTerm(s, pos) ->
       "StringTerm(" ^ s ^ ", " ^ (string_of_pos pos) ^ ")"
   | LambdaTerm(lt, t, pos) ->
-      "LambdaTerm(" ^ (string_of_typesymbollist lt) ^ ", " ^
+      "LambdaTerm([" ^ (string_of_typesymbollist lt) ^ "], " ^
         (string_of_termlist t) ^ ", " ^ (string_of_pos pos) ^ ")"
   | ErrorTerm ->
       "Error"
