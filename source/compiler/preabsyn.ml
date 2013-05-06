@@ -287,31 +287,22 @@ let getModuleClauses = function
       Errormsg.impossible Errormsg.none
         "Preabsyn.getModuleClauses: invalid module"
 
+(* Retrieve all the constants in a pmod *)
+let getAllConstants pmod =
+  match pmod with 
+  | Module(name, gconsts, lconsts, cconsts, uconsts, econsts, fixities,
+      gkinds, lkinds, tabbrevs, clauses, accummods,
+      accumsigs, usesigs, impmods) ->
+      gconsts @ lconsts @ cconsts @ uconsts @ econsts
+  | Signature(name, gconstants, useonly, exportdef, gkinds, tabbrevs, 
+              fixities, accumsig, usig) ->
+      gconstants @ useonly 
+
 let clause_sym = Symbol.symbol "clause__" 
 let fact_sym = Symbol.symbol "fact__" 
 let implies_sym = Symbol.symbol "implies__" 
 
-let explicify pmod = 
-  (* Clauses are explicified after a first pass with translate thus we expect
-   * the folowing restrictions: 
-   - Each clause contains at most one :-
-   - There are no => to the left of a :- (at any depth)
-   - Two => appearing at the same depth belong to two different conjunctions
-   - Disjunction have the shape a, (b, (c, ...))                                                 
-
-   To explicify a clause we proceed like that: 
-   1) split the clause into two lists: the head and the body 
-    (None if it is a fact)
-   2) Split the body according to the commas present at the top so we have
-    a list of lists. 
-    For each of those lists:
-    - They may contain at most one =>  at the top level
-        We thus transform e1 ..ek => en ... ep into:
-        Implies([e1' ... ek']; [en'... ep']). 
-   where each ei' is recursively computed starting from step 2)  
-   3) Combine the result of step 2 to form:
-      Clause(head, body)                                   
-   *)   
+let explicify pmod all_consts = 
   let explicify_name name = name ^ "_exp" in
 
   let typ_clause = 
@@ -330,28 +321,14 @@ let explicify pmod =
 
   let typ_fact = 
     Arrow(
-      App(
-        Atom(Symbol.symbol "list", ConstID, Errormsg.none),
-        Atom(Symbol.symbol "o", ConstID, Errormsg.none), 
-        Errormsg.none
-      ),   
+      Atom(Symbol.symbol "o", ConstID, Errormsg.none), 
       Atom(Symbol.symbol "o", ConstID, Errormsg.none), 
       Errormsg.none) 
   in
 
-  (* Given a list of pterms, returns a list of lists according to the commas 
-   * separating conjuncts *)
-(*  let (split_ands : pterm list -> pterm list list) = fun ptermlist ->*)
-(*    let rec aux ptermlist acc = *)
-(*      match ptermlist with *)
-(*        | [] -> [List.rev acc]*)
-(*        | (IdTerm(symbol, _, _, _)::q) when Symbol.name symbol = "," -> *)
-(*            (List.rev acc)::(aux q [])*)
-(*        | other::q -> aux q (other::acc) *)
-(*    in*)
-(*      aux ptermlist  []*)
-(*  in*)
-    
+  let cons = IdTerm(Symbol.symbol "::", None, ConstID, Errormsg.none) in
+  let nil = IdTerm(Symbol.symbol "nil", None, ConstID, Errormsg.none) in
+
   (* Given a list of pterms with at most one symbol sym:
    - returns None if the symbol is not present
    - returns Some(before, after) where 
@@ -400,41 +377,97 @@ let explicify pmod =
   in
 
   let rec insert_cons : pterm list -> pterm list = fun ptermlist ->
-    let cons = IdTerm(Symbol.symbol "::", None, ConstID, Errormsg.none) in
-    let nil = IdTerm(Symbol.symbol "nil", None, ConstID, Errormsg.none) in
     match ptermlist with
       | [] -> [nil]
       | x::q -> x :: cons  :: (insert_cons q)
   in
 
   (* Explicify a list of pterms. 
-   * top_level indicates if we at the top level of the body rule
+   * top_level indicates if we at the top level of a rule's body 
+   * i.e. we will need to wrap the return value in a list
    *)
-  let rec exp_list : pterm list -> bool -> pterm = fun l -> fun top_level -> 
-    let ll = flatten_conjuncts l in
-    let rec (core : pterm list -> pterm list) = function
+  let rec exp_list l top_level =
+
+    (* core : pterm list -> bool -> pterm list 
+    * Given a list of pterms __without__ commas at top-level we recursively
+    * make explicit all the elements
+    * is_arg is here to indicate if the first element is in position
+    * to be the argument of a predicate.
+    * Indeed we need in cases such as
+    *    type f o -> o.
+    *    type x o.
+    *    f x.
+    * to embed the term x into the singleton list since
+    * every predicate's type is transformed such that every atom o
+    * in an argument position is transformed into list o *)
+    let rec core ptermlist is_arg = 
+      match ptermlist with
       | [] -> []
       | SeqTerm(l, p)::q -> 
-          (exp_list l false)::(core q)
-(*          SeqTerm(core l, Errormsg.none)::(core q)*)
+          (* is_arg can still be true.
+           * For instance while reading
+           * type f o -> o -> o.
+           * type a int -> o.
+           * f (a 1) (a 2).
+           * we will have
+           * SeqTerm( a 1 ) :: SeqTerm ( a 2) *)
+          (exp_list l false)::(core q is_arg)
+      | (IdTerm(sym, ptypopt, ConstID, pos) as idt)::q 
+        when 
+          (* If symbol's type is o and is in an argument's position,
+           * then we transform the term into a singleton *)
+          (List.exists 
+             (fun const -> 
+                let o = Symbol.symbol "o" in
+                  match const with
+                    | Constant(psym_list, 
+                               Some(
+                                 Atom(t_sym, ConstID, _)
+                               ),
+                               _) when (t_sym = o) -> 
+                        (List.exists 
+                           (fun (Symbol(sym', _, _)) -> sym = sym') 
+                           psym_list)
+                    | _ -> false
+             )
+             all_consts) 
+        ->
+          (* In both cases the next IdTerm is still in position to be an 
+           * argument (if we have for instance type f o -> o -> o *)
+          if is_arg then
+            SeqTerm(idt::cons::[nil], Errormsg.none)::(core q true)
+          else
+            idt::(core q true)
+      | (IdTerm(_, _, _, _) as idt)::q -> 
+          idt::(core q true)
 (*      | LambdaTerm(symlist, plist, pos)::q ->*)
 (*          LambdaTerm(symlist, [exp_list plist false], pos)::(core q)*)
-      | other::q -> other::(core q)
+      | other::q -> other::(core q false)
     in
+
+    (* First of all we split list of terms into a list of lists
+     * according the commas at the top level *)
+    let ll = flatten_conjuncts l in
       match ll with
         | [] -> 
             Errormsg.impossible Errormsg.none 
               "Explicit list: impossible case"
         | [no_more] ->
-            let core_exp = core no_more in
+            (* There are no commas at top level. 
+             * We need however to continue inside the lists which may 
+             * be deep inside *)
+            let core_exp = core no_more false in
               if top_level then
                 SeqTerm(insert_cons [SeqTerm(core_exp, Errormsg.none)], 
                         Errormsg.none) 
               else
-                SeqTerm((core no_more), Errormsg.none)
+                SeqTerm((core no_more false), Errormsg.none)
         | other -> 
+            (* We recursively make explicit all the elements of the list
+             * which are independent and then finally put them together
+             * in a sequence where are delimited by :: *)
             let other_exp = 
-              List.map (fun x -> SeqTerm(core x, Errormsg.none)) other in
+              List.map (fun x -> SeqTerm(core x false, Errormsg.none)) other in
               SeqTerm(insert_cons other_exp, Errormsg.none)
   in
 
@@ -446,7 +479,12 @@ let explicify pmod =
   let fact_constant = Constant([fact_psym], Some(typ_fact), 
                                   Errormsg.none) in 
 
-  let rec explicify_pterm pterm = 
+  (* To explicify a clause we: 
+   - split the clause into two lists: the head and the body 
+    (None if it is a fact)
+   - Make the explicit the list of terms contained in the body
+    of the rule (or the fact) *)                                 
+  let explicify_clause pterm = 
 (*    Printf.printf "term bef = %s\n\n" (string_of_term pterm);*)
     match pterm with 
       | SeqTerm(ptermlist, pos) -> 
@@ -454,11 +492,12 @@ let explicify pmod =
           match (split_symbol ptermlist ":-") with
             | None -> 
                 (* Fact *)
+                let fact_exp = exp_list ptermlist false in
                 let seq = 
                   SeqTerm(
                     [IdTerm(fact_sym, Some(typ_fact), 
                             ConstID, Errormsg.none);
-                     ListTerm(ptermlist, Errormsg.none)],
+                     fact_exp],
                     pos) in
 (*                  Printf.printf "term aft = %s\n\n" (string_of_term seq);*)
                   seq
@@ -482,28 +521,30 @@ let explicify pmod =
       | other -> other
   in
 
-  let rec exp_type typ output_pos = 
-    match typ with 
-      | Atom(sym, _, pos) when 
-          (Symbol.name sym = "o" && output_pos = false)
-        -> 
-          App(
-            Atom(Symbol.symbol "list", ConstID, Errormsg.none),
-            Atom(Symbol.symbol "o", ConstID,  Errormsg.none), 
-            pos)
-      | Arrow(ptyp_i, ptyp_o, pos) ->
-          let ptyp_i' = exp_type ptyp_i false in
-          let ptyp_o' = exp_type ptyp_o true in
-            Arrow(ptyp_i', ptyp_o', pos)
-      | _ -> typ
-  in
             
-
+  (* Each constant's type is transformed in the following way:
+   * If there is an atom o in an argument position, then
+   * it is changed as list o *)
   let exp_const ((Constant(psymlist, ptypopt, pos)) as const)= 
-    match ptypopt with 
-      | None -> const
-      | Some(typ) -> 
-          Constant(psymlist, Some(exp_type typ true), pos)
+    let rec exp_type typ output_pos = 
+      match typ with 
+        | Atom(sym, _, pos) when 
+            (Symbol.name sym = "o" && output_pos = false)
+          -> 
+            App(
+              Atom(Symbol.symbol "list", ConstID, Errormsg.none),
+              Atom(Symbol.symbol "o", ConstID,  Errormsg.none), 
+              pos)
+        | Arrow(ptyp_i, ptyp_o, pos) ->
+            let ptyp_i' = exp_type ptyp_i false in
+            let ptyp_o' = exp_type ptyp_o true in
+              Arrow(ptyp_i', ptyp_o', pos)
+        | _ -> typ
+    in
+      match ptypopt with 
+        | None -> const
+        | Some(typ) -> 
+            Constant(psymlist, Some(exp_type typ true), pos)
   in
 
   match pmod with 
@@ -511,10 +552,21 @@ let explicify pmod =
       gkinds, lkinds, tabbrevs, clauses, accummods,
       accumsigs, usesigs, impmods) ->
       let name' = explicify_name name in
+      (* Clauses are explicified after a first pass so the preabstract 
+       * syntax is already under some normal form shape. 
+       * We thus expect the following restrictions: 
+       - Each clause contains at most one :-
+       - There are no => to the left of a :- (at any depth)
+       - Two => appearing at the same depth belong to two different conjunctions
+       - The body of a clause (and of a fact) has the shape a, (b, (c, ...))           - Facts do not contain commas at their top level 
+         (only within arguments of predicates)
+
+      *)   
       let clauses' = List.map (fun cl -> 
                                  let pterm = getClauseTerm cl in
-                                 let pterm' = explicify_pterm pterm in 
+                                 let pterm' = explicify_clause pterm  in 
                                    Clause(pterm')) clauses in
+
       let gconsts_exp = List.map (exp_const) gconsts in
       Module(name', gconsts_exp, lconsts, cconsts, uconsts, econsts, fixities,
              gkinds, lkinds, tabbrevs, clauses', accummods,
@@ -523,5 +575,6 @@ let explicify pmod =
               fixities, accumsig, usig) ->
       let gconstants_exp = List.map (exp_const) gconstants in
       let gconstants' = (fact_constant::clause_constant::gconstants_exp) in
+(*      List.iter (fun t -> Printf.printf "t = %s\n" (string_of_constant t)) gconstants' ;*)
       Signature(name, gconstants', useonly, exportdef, gkinds, tabbrevs, 
                 fixities, accumsig, usig)

@@ -182,14 +182,15 @@ let compile basename outbasename =
 
   let modresult = 
     if !explicify then
-      (Preabsyn.explicify modresult)
+      let allconsts = Preabsyn.getAllConstants sigresult in 
+      (Preabsyn.explicify modresult allconsts)
     else
       modresult
   in
 
   let sigresult = 
     if !explicify then
-      (Preabsyn.explicify sigresult)
+      (Preabsyn.explicify sigresult [])
     else
       sigresult
   in
