@@ -134,7 +134,8 @@ val getFixityPos : pfixitykind -> pos
 val getTermPos : pterm -> pos
 val getModuleClauses : pmodule -> pclause list
 val getClauseTerm : pclause -> pterm
-
-val explicify : pmodule -> pmodule
+                                 
+val getAllConstants : pmodule -> pconstant list
+val explicify : pmodule -> pconstant list -> pmodule
 
 val string_of_term : pterm -> string
