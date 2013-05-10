@@ -1178,10 +1178,11 @@ let generateModuleCode amod =
       let cgAccumulates = collectAccs modaccs in
       (* back patching "call" and "execute" instructions *)
       Clausegen.backPatch ();
-      let () = Errormsg.log Errormsg.none "Codegen.generateModuleCode: generated module code" in
-      Module(modname, cgGKinds, cgLKinds, cgGConsts, cgLConsts, cgHConsts,
-             cgDefs, cgGNonExpDefs, cgGExpDefs, cgLDefs, 
-             cgTySkels, cgStrings, cgImports, cgAccumulates, cgInstructions,
-             getHashTabs (), cgImpGoals)
+      let () = Errormsg.log 
+                Errormsg.none "Codegen.generateModuleCode: generated module code" 
+      in Module(modname, cgGKinds, cgLKinds, cgGConsts, cgLConsts, cgHConsts,
+                cgDefs, cgGNonExpDefs, cgGExpDefs, cgLDefs, 
+                cgTySkels, cgStrings, cgImports, cgAccumulates, cgInstructions,
+                getHashTabs (), cgImpGoals)
   | _ -> Errormsg.impossible Errormsg.none 
 	"genModuleCode: invalid input module"
