@@ -195,8 +195,8 @@ let compile basename outbasename =
   let (clauses', newclauses', absyn') =
     if !explicify then
       let () = Errormsg.log Errormsg.none "explicifying..." in
-      (List.map Explicify.explicify_term clauses,
-      List.map Explicify.explicify_term newclauses,
+      (List.map (fun x -> Explicify.explicify_term x false) clauses,
+      List.map (fun x-> Explicify.explicify_term x false) newclauses,
       Explicify.add_constants absyn)
     else
      (clauses, newclauses, absyn)

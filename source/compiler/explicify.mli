@@ -28,7 +28,7 @@
 *explicify:
 * Given a term, explicify it 
 **********************************************************************)
-val explicify_term : Absyn.aterm -> Absyn.aterm
+val explicify_term : Absyn.aterm -> bool -> Absyn.aterm 
 
 val add_constants : Absyn.amodule -> Absyn.amodule
 
