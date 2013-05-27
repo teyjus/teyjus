@@ -180,22 +180,6 @@ let compile basename outbasename =
   let sigresult = Compile.compileSignature basename in
   let _ = abortOnError () in
 
-  let modresult = 
-    if !explicify then
-      let allconsts = Preabsyn.getAllConstants sigresult in 
-      (Preabsyn.explicify modresult allconsts)
-    else
-      modresult
-  in
-
-  let sigresult = 
-    if !explicify then
-      (Preabsyn.explicify sigresult [])
-    else
-      sigresult
-  in
-  let _ = abortOnError () in
-
   (* Construct an absyn module.  At this point only the module's *)
   (* constant, kind, and type abbrev information is valid.       *)
   let (absyn, _) = Translate.translate modresult sigresult in
@@ -208,23 +192,33 @@ let compile basename outbasename =
   in
   let _ = abortOnError () in
 
+  let (clauses', newclauses', absyn') =
+    if !explicify then
+      let () = Errormsg.log Errormsg.none "explicifying..." in
+      (List.map Explicify.explicify_term clauses,
+      List.map Explicify.explicify_term newclauses,
+      Explicify.add_constants absyn)
+    else
+     (clauses, newclauses, absyn)
+  in
+  let _ = abortOnError () in
 
   (*  Linearize heads if requested. *)
-  let (clauses', newclauses') =
+  let (clauses'', newclauses'') =
     if !linearize then
       let () = Errormsg.log Errormsg.none "linearizing..." in
-      (List.map Clauses.linearizeClause clauses,
-      List.map Clauses.linearizeClause newclauses)
+      (List.map Clauses.linearizeClause clauses',
+      List.map Clauses.linearizeClause newclauses')
     else
-     (clauses, newclauses)
+     (clauses', newclauses')
   in
   let _ = abortOnError () in
 
   let modout = Compile.openFile (outbasename ^ ".mod") open_out in
   let sigout = Compile.openFile (outbasename ^ ".sig") open_out in
-  let absyn' = Absyn.setModuleName absyn outbasename in
-  writeModule absyn' clauses' newclauses' modout;
-  writeModuleSignature absyn' sigout;
+  let absyn'' = Absyn.setModuleName absyn' outbasename in
+  writeModule absyn'' clauses'' newclauses'' modout;
+  writeModuleSignature absyn'' sigout;
   
   close_out modout;
   close_out sigout;
