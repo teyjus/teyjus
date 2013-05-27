@@ -99,76 +99,66 @@ let explicify_const term =
 
 
 (* val explicify_term : Absyn.aterm  ->  Absyn.aterm  *)
-let rec explicify_term clause = 
-    match clause with
+let rec explicify_term term add_sing = 
+    match term with
+      (* :- *)
       | ApplicationTerm(
           FirstOrderApplication(
             ConstantTerm(const, typ_list, pos_const), 
             body::[head], _), pos) 
           when const = Pervasive.implConstant ->
         let f' = makeConstantTerm clause_constant typ_list pos_const in
-        let body_exp = explicify_term body in
-        let body_list = flatten_ands body_exp in
-        let body_list_term = embed_terms_in_list body_list in 
-        let head_exp = explicify_term head in
+        let body_exp = explicify_term body true in
+        let head_exp = explicify_term head false in
           ApplicationTerm(
-            FirstOrderApplication(f', [head_exp; body_list_term], 
-                                  List.length body_list+1), 
+            FirstOrderApplication(f', [head_exp; body_exp], 2), 
             pos)
+
+      (* , *)
       | ApplicationTerm(
           FirstOrderApplication(
-            ConstantTerm(const, typ_list, pos_cons), 
-            [arg], nbargs), pos) ->
-          (* When a predicate has a single argument it may be because:
-           * - it is really simply a single argument 
-           * - this is the representation of a conjunction *)
-          let exp_arg =  explicify_term arg in
-          let flat_args = flatten_ands exp_arg in 
-            begin
-              match flat_args with 
-                | [single] -> 
-                    (* No ands.
-                    *  However, we may still to need this unique argument in 
-                    *  a list if it is of type "o" *)
-                    let single' = explicify_const single in
-                    ApplicationTerm(
-                      FirstOrderApplication(
-                        ConstantTerm(const, typ_list, pos_cons),
-                        [single'], 1), pos)
-                | _ -> 
-                    (* Ands *)
-                    let flat_args_list = embed_terms_in_list flat_args in
-                    ApplicationTerm(
-                      FirstOrderApplication(
-                        ConstantTerm(const, typ_list, pos_cons),
-                        [flat_args_list], 1), pos)
-            end
+            ConstantTerm(const, typ_list, pos_const), 
+            args, _), pos) 
+          when const = Pervasive.andConstant ->
+          let term_flat = flatten_ands term  in
+          let term_flat_exp = 
+            List.map (fun x -> explicify_term x false) term_flat in
+            embed_terms_in_list term_flat_exp 
+
+      (* Any other predicate *)
       | ApplicationTerm(
           FirstOrderApplication(
             ConstantTerm(const, typ_list, pos_cons), 
             args, nbargs), pos) ->
-          (* Many arguments thus no conjuncts at the arguments level *)
-          let exp_args = List.map explicify_term args in
-          (* Each argument may have to be transformed as a list singleton if 
-           * it is of type "o" *)
-          let exp_args' = 
-            if isGlobalConstant const || isLocalConstant const then 
-              List.map explicify_const exp_args 
-            else
-              (* We do not want to interfere with pervasive constants *)
-              exp_args
-          in
+          (* Incorrect, to change *)
+          let add_sing' = not (Pervasive.isconsConstant const) in
+          let exp_args = 
+            List.map (fun x -> explicify_term x add_sing') args in
+          let term_exp  = 
             ApplicationTerm(
               FirstOrderApplication(
                 ConstantTerm(const, typ_list, pos_cons),
-                exp_args', nbargs), pos)
+                exp_args, List.length exp_args), pos)
+          in
+            if add_sing then
+                embed_terms_in_list [term_exp]
+            else
+              term_exp
+
+      | ConstantTerm(const, atyp_list, pos)  as ct ->
+          if (isGlobalConstant const || isLocalConstant const) && add_sing then 
+            explicify_const  ct
+          else
+            (* We do not want to interfere with pervasive constants *)
+            ct
+
       | AbstractionTerm(
           UNestedAbstraction(asymlist, nb, body), pos) ->
-          let body_exp = explicify_term body in
+          let body_exp = explicify_term body true in
             AbstractionTerm(UNestedAbstraction(asymlist, nb, body_exp), pos)
       | AbstractionTerm(NestedAbstraction(_,_),_) ->
             failwith "Nested Abs"
-      | _ -> clause
+      | _ -> term
 
 (* Every "o" except the one in the target position is replaced by "list o".
 * For instance (A -> o) -> o is transformed into (A -> list o) -> o *)
@@ -177,7 +167,7 @@ let explicify_const_ty const =
     match ty with
       | ApplicationType(kbool, []) ->
           ApplicationType(klist, [ApplicationType(kbool, [])])
-      | ArrowType(left, right) as ar -> 
+      | ArrowType(left, right) -> 
           let left' = o_to_list_o left in
           let right' = o_to_list_o right in
             makeArrowType right' [left']
