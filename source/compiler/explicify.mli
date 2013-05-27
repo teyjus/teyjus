@@ -24,15 +24,11 @@
 **********************************************************************)
 
 
-val print_aclausesblock : Absyn.aclausesblock -> unit
-
-val print_clause : Absyn.aclause -> unit
-
-
 (**********************************************************************
 *explicify:
-* Given an absyn module, explicify clauses and connectives.
+* Given a term, explicify it 
 **********************************************************************)
-val explicify : Absyn.amodule -> Absyn.aterm list -> Absyn.aterm list->
-  (Absyn.amodule * Absyn.aterm list * Absyn.aterm list) 
+val explicify_term : Absyn.aterm -> Absyn.aterm
+
+val add_constants : Absyn.amodule -> Absyn.amodule
 
