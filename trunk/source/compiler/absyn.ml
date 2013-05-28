@@ -446,7 +446,7 @@ and string_of_type_ast ty =
     | ApplicationType(kind, tlist) ->
         if (List.length tlist) > 0 then
           let args = String.concat " " (List.map string_of_type_ast tlist) in
-          "(" ^ (string_of_kind kind) ^ args ^ ")"
+          "(" ^ (string_of_kind kind) ^ " " ^ args ^ ")"
         else
           (string_of_kind kind)
     | SkeletonVarType(i) -> "SkeletonVarType(" ^ (string_of_int !i) ^ ")"
