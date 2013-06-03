@@ -982,9 +982,9 @@ let makeLocalConstant symbol fixity prec tyEnvSize tySkel index =
 		   ref None, ref None, ref None, ref LocalConstant, ref index, 
 		   Errormsg.none)
 
-let makeAnonymousConstant i =
+let makeAnonymousConstant i skel =
   Constant(Symbol.generate (), ref NoFixity, ref (-1), ref true, ref false,
-    ref false, ref true, ref false, ref false, ref None, ref i,
+    ref false, ref true, ref false, ref false, ref (Some(skel)), ref i,
     ref (Some(Array.make i true)), ref (Some(Array.make i true)),
     ref None, ref AnonymousConstant, ref 0, Errormsg.none)
 
