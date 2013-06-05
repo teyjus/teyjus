@@ -137,18 +137,25 @@ let rec newHead fvs =
   in
   
   if List.length fvs = 0 then
-    let c = Absyn.makeAnonymousConstant 0 in
+    let ty = Absyn.makeKindType Pervasive.kbool in
+    let skel = Absyn.makeSkeleton ty in
+    let c = Absyn.makeAnonymousConstant 0 skel in
     let t = Absyn.ConstantTerm(c, [], Errormsg.none) in
     (c, t)
   else
     let (args, argtys) = argumentsAndTypes fvs in
     let ty = Absyn.makeArrowType (Absyn.makeKindType Pervasive.kbool) argtys in
-    let _ = Errormsg.log Errormsg.none ("Clauses.newHead: type: " ^ (Absyn.string_of_type_ast ty)) in
+    let _ = Errormsg.log Errormsg.none 
+              ("Clauses.newHead: type: " ^ (Absyn.string_of_type_ast ty)) in
     let tymol = Types.skeletonizeType ty in
     let env = (Types.getMoleculeEnvironment tymol) in
-    let c = Absyn.makeAnonymousConstant (List.length env) in
+    let skel = Absyn.makeSkeleton ty in
+    let c = Absyn.makeAnonymousConstant (List.length env) skel in
     let t = Absyn.ConstantTerm(c, env,  Errormsg.none) in
-    let t' = Absyn.ApplicationTerm(Absyn.FirstOrderApplication(t, List.rev args, List.length args), Errormsg.none) in
+    let t' = 
+      Absyn.ApplicationTerm(
+        Absyn.FirstOrderApplication(t, List.rev args, List.length args), 
+        Errormsg.none) in
     (c, t')
 
 (********************************************************************

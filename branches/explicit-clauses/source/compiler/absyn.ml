@@ -446,7 +446,7 @@ and string_of_type_ast ty =
     | ApplicationType(kind, tlist) ->
         if (List.length tlist) > 0 then
           let args = String.concat " " (List.map string_of_type_ast tlist) in
-          "(" ^ (string_of_kind kind) ^ args ^ ")"
+          "(" ^ (string_of_kind kind) ^ " " ^ args ^ ")"
         else
           (string_of_kind kind)
     | SkeletonVarType(i) -> "SkeletonVarType(" ^ (string_of_int !i) ^ ")"
@@ -457,7 +457,7 @@ and string_of_type_ast ty =
     | ErrorType -> "ErrorType"
 
 and string_of_type ty =
-  let rec str needsParens ty =
+  let rec str needsParens ty bindings =
     let parens s =
       if needsParens then
         "(" ^ s ^ ")"
@@ -467,14 +467,15 @@ and string_of_type ty =
     let ty' = dereferenceType ty in
     match ty' with
         ArrowType(t1, t2) ->
-          let s = (str true t1) ^ " -> " ^ (str false t2) in
+          let s = (str true t1 bindings) ^ " -> " ^ (str false t2 bindings) in
           parens s
       | TypeVarType(r) ->
-          let i : int = (Obj.magic r) in
-          "_" ^ (string_of_int i)
+        let i : int = (Obj.magic r) in
+        "'" ^ (string_of_int i)
+(*          string_of_var ty' bindings*)
       | ApplicationType(kind, tlist) ->
           if (List.length tlist) > 0 then
-            let args = String.concat " " (List.map (str true) tlist) in
+            let args = String.concat " " (List.map (fun x -> str true x bindings) tlist) in
             let s = (string_of_kind kind) ^ " " ^ args in
             parens s
           else
@@ -484,13 +485,14 @@ and string_of_type ty =
             "_" ^ (string_of_int !i)
           else
             String.make 1 (Char.chr (!i + (Char.code 'A')))
+
       | TypeSetType(d, tl, _) ->
           (match !tl with
-            [t] -> str needsParens t
-          | _ -> str needsParens d)
+            [t] -> str needsParens t bindings
+          | _ -> str needsParens d bindings)
       | ErrorType -> "ErrorType"
   in
-  str false ty
+  str false ty (ref [])
 
 (* errorType *)
 let errorType = ErrorType
@@ -982,9 +984,9 @@ let makeLocalConstant symbol fixity prec tyEnvSize tySkel index =
 		   ref None, ref None, ref None, ref LocalConstant, ref index, 
 		   Errormsg.none)
 
-let makeAnonymousConstant i =
+let makeAnonymousConstant i skel =
   Constant(Symbol.generate (), ref NoFixity, ref (-1), ref true, ref false,
-    ref false, ref true, ref false, ref false, ref None, ref i,
+    ref false, ref true, ref false, ref false, ref (Some(skel)), ref i,
     ref (Some(Array.make i true)), ref (Some(Array.make i true)),
     ref None, ref AnonymousConstant, ref 0, Errormsg.none)
 

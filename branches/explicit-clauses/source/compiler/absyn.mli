@@ -425,7 +425,7 @@ val makeGlobalConstant : symbol -> afixity -> int -> bool -> bool -> int
   -> askeleton -> int -> aconstant
 val makeLocalConstant : symbol -> afixity -> int -> int -> askeleton ->
   int -> aconstant
-val makeAnonymousConstant : int -> aconstant
+val makeAnonymousConstant : int -> askeleton -> aconstant
 val makeHiddenConstant : askeleton -> int -> aconstant
 val makeConstantTerm : aconstant -> atype list -> pos -> aterm
 (*  val makeConstantType : aconstant -> atype *)
