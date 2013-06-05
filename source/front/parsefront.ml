@@ -23,6 +23,8 @@ open Absyn
 
 let linearize = ref false
 let explicify = ref false
+                  
+let addedTypes = ref []
 
 (**********************************************************************
 * Writing Functions
@@ -121,7 +123,8 @@ let writeModule m clauses newclauses oc =
       let get t =
         let head = getTermApplicationHead t in
         if isTermConstant head then
-          Some (getConstantPrintName (getTermConstant head))
+          let name = getConstantPrintName (getTermConstant head) in
+          Some (name)
         else
           None
       in
@@ -131,11 +134,110 @@ let writeModule m clauses newclauses oc =
             -> get l
         | _ -> get t
     in
+    let stringOfType ty = 
+      (* the string_of_type functionfrom absyn.ml is here sligthly modified.
+       * I am not sure if this could be merged in absyn.ml so keep it here *)
+      let aux str needsParens ty bindings = 
+        let parens s =
+          if needsParens then
+            "(" ^ s ^ ")"
+          else
+            s
+        in
+        let stringOfVar  = 
+          let character i =
+            if i>= 26 then
+              (string_of_int i)
+            else
+              (String.make 1 (Char.chr ((Char.code 'A') + i)))
+          in
+            (try
+               let i = List.assq t !bindings in
+                 character i
+             with
+                 Not_found ->
+                   let i = List.length !bindings in
+                   let _ = bindings := (t, i)::!bindings in
+                     character i) 
+        in
+        let ty' = dereferenceType ty in
+          match ty' with
+            | TypeVarType(_) -> stringOfVar 
+            | ApplicationType(kind, tlist) ->
+                if (List.length tlist) > 0 then
+                  let args = String.concat " " (List.map (fun x -> str true x bindings) tlist) in
+                  let s = (string_of_kind kind) ^ " " ^ args in
+                    parens s
+                    else
+                      string_of_kind kind
+
+            | _ -> string_of_type ty
+      in
+        aux false ty (ref [])
+    in
+
+
+    let rec renameAndWriteGeneratedSymbols t =
+      match t with
+        | ConstantTerm(
+              Constant(sym, fix, prec, expdef, use, nodefs, closed, tpres, red, 
+                     skel, tenvSize, skelNeed, need, cinfo, ct, index, p) as const, 
+              atypList,
+              constPos)  -> 
+              (* Write missing type *)
+              if not (List.mem const (getModuleGlobalConstantsList m) ||
+                      Pervasive.isPerv const ||
+                      List.mem const !addedTypes )
+               then
+                let name = getConstantPrintName const in
+                let skValue = getConstantSkeletonValue const in
+                let ty = getSkeletonType skValue in
+                let tyStr = stringOfType ty (ref []) in
+                  let newSym = 
+                    (* Prefix with g since anonymous constants start with a _
+                     * which is not allowed by the grammar *)
+                    ((addedTypes := const::!addedTypes ;
+                      writeLine oc ("type " ^  "g" ^ name ^ " " ^ tyStr ^ "."));
+                     Symbol.symbol ("g" ^ name))
+                in
+                 ConstantTerm(
+                   Constant(newSym, fix, prec, expdef, use, nodefs, closed, tpres, red, 
+                            skel, tenvSize, skelNeed, need, cinfo, ct, index, p), 
+                   atypList, constPos)
+              else
+                   t
+        | ApplicationTerm(FirstOrderApplication(head, args, nbArgs), pos) ->
+            let head' = renameAndWriteGeneratedSymbols head in
+            let args' = List.map renameAndWriteGeneratedSymbols args in
+              ApplicationTerm(FirstOrderApplication(head', args', nbArgs), pos) 
+        | _ -> t
+    in
+
+(*    let writeTypeNewClauses t = *)
+(*      Printf.printf "term = %s\n" (string_of_term t);*)
+(*      match t with*)
+(*        | ApplicationTerm(FirstOrderApplication(h, [_;r], _), _) when *)
+(*            isConstant Pervasive.isimplConstant h &&*)
+(*            isTermConstant r -> *)
+(*            let const = getTermConstant r in*)
+(*              if not (List.mem const (getModuleGlobalConstantsList m) ||*)
+(*                      List.mem const !addedTypes) then*)
+(*                  let constName = getConstantPrintName const in*)
+(*                    (if String.sub constName 0 1 = "_" then*)
+(*                      (addedTypes := const::!addedTypes ;*)
+(*                       writeLine oc ("type " ^  "g" ^ constName ^ " o."))*)
+(*                    else*)
+(*                      failwith "Unsupported generated symbol")*)
+(*        | _ -> ()*)
+
+(*    in*)
+
+(*    writeTypeNewClauses  t;*)
     let t' = reverse (getActualClause t) in
-    let head = getHead t' in
-    if Option.isNone head || (head <> lastHead) then writeLine oc "";
-    writeLine oc (string_of_term t' ^ ".");
-    head
+    let t'' = renameAndWriteGeneratedSymbols t' in
+    let head = getHead t'' in
+    if Option.isNone head || (head <> lastHead) then 
+      writeLine oc ""; writeLine oc (string_of_term t'' ^ "."); head
   in
   
   match m with
@@ -143,7 +245,7 @@ let writeModule m clauses newclauses oc =
              lkinds, _, lconsts, _, _, _, ci) ->
         writeLine oc ("module " ^ name ^ ".");
         List.iter (writeImp oc)  implist;
-        List.iter (writeAcc oc)acclist;
+        List.iter (writeAcc oc) acclist;
         writeLine oc "";
         List.iter (writeKind oc true) lkinds;
         writeLine oc "";
@@ -195,8 +297,8 @@ let compile basename outbasename =
   let (clauses', newclauses', absyn') =
     if !explicify then
       let () = Errormsg.log Errormsg.none "explicifying..." in
-      (List.map (fun x -> Explicify.explicify_term x false) clauses,
-      List.map (fun x-> Explicify.explicify_term x false) newclauses,
+      (List.map (fun x -> Explicify.explicify_term x false true) clauses,
+      List.map (fun x-> Explicify.explicify_term x false true) newclauses,
       Explicify.add_constants absyn)
     else
      (clauses, newclauses, absyn)

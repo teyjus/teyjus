@@ -30,7 +30,7 @@ let klist = Kind(Symbol.symbol "list", Some 1, ref 4, PervasiveKind,
 let o_type = Absyn.makeKindType kbool
 let list_type = Absyn.makeKindType klist
 
-let tyskel = 
+let tyskel_clause = 
   Skeleton(
     ArrowType(
       ApplicationType(kbool, []), 
@@ -42,6 +42,26 @@ let tyskel =
     ref None, 
     ref false)
 
+let tyskel_fact = 
+  Skeleton(
+    ArrowType(
+      ApplicationType(kbool, []), 
+      ApplicationType(kbool, [])),
+    ref None, 
+    ref false)
+
+let tyskel_forall = 
+  Skeleton(
+    ArrowType(
+      ArrowType(
+        SkeletonVarType((ref 0)), 
+        ApplicationType(klist, [ApplicationType(kbool, [])])
+      ), 
+      ApplicationType(kbool, [])
+    ),
+    ref None, 
+    ref false)
+
 let clause_constant =
   let symbol = Symbol.symbol "clause" in
   let fixity = Infixl in
@@ -49,7 +69,43 @@ let clause_constant =
   let exp_def = false in
   let use_only = false in
   let tenv_size = 0 in 
-  let skel =  tyskel in
+  let skel =  tyskel_clause in
+  let index = 0 in (* TODO: check this is correct *)
+    makeGlobalConstant symbol fixity prec exp_def 
+      use_only tenv_size skel index 
+
+let fact_constant =
+  let symbol = Symbol.symbol "fact" in
+  let fixity = NoFixity in
+  let prec = 0 in 
+  let exp_def = false in
+  let use_only = false in
+  let tenv_size = 0 in 
+  let skel =  tyskel_fact in
+  let index = 0 in (* TODO: check this is correct *)
+    makeGlobalConstant symbol fixity prec exp_def 
+      use_only tenv_size skel index 
+
+let implies_constant =
+  let symbol = Symbol.symbol "implies" in
+  let fixity = Infixr in
+  let prec = 130 in 
+  let exp_def = false in
+  let use_only = false in
+  let tenv_size = 0 in 
+  let skel =  tyskel_clause in
+  let index = 0 in (* TODO: check this is correct *)
+    makeGlobalConstant symbol fixity prec exp_def 
+      use_only tenv_size skel index 
+
+let forall_constant =
+  let symbol = Symbol.symbol "pi'" in
+  let fixity = NoFixity in
+  let prec = 0 in 
+  let exp_def = false in
+  let use_only = false in
+  let tenv_size = 1 in 
+  let skel =  tyskel_forall in
   let index = 0 in (* TODO: check this is correct *)
     makeGlobalConstant symbol fixity prec exp_def 
       use_only tenv_size skel index 
@@ -90,7 +146,9 @@ let explicify_const term =
         let skel = getConstantSkeletonValue const in
         let ty = getSkeletonType skel in
           match ty with
-            | ApplicationType(kbool, []) ->
+            | ApplicationType(t, []) when t = kbool ->
+(*                Printf.printf "!! Explicify const : %s of type %s\n" *)
+(*                  (string_of_term_ast term) (string_of_type_ast ty);*)
                 embed_terms_in_list [ct] 
             | _ -> 
                 ct
@@ -99,7 +157,8 @@ let explicify_const term =
 
 
 (* val explicify_term : Absyn.aterm  ->  Absyn.aterm  *)
-let rec explicify_term term add_sing = 
+let rec explicify_term term add_sing top_level = 
+(*  Printf.printf "t = %s\n" (string_of_term_ast term);*)
     match term with
       (* :- *)
       | ApplicationTerm(
@@ -107,14 +166,30 @@ let rec explicify_term term add_sing =
             ConstantTerm(const, typ_list, pos_const), 
             body::[head], _), pos) 
           when const = Pervasive.implConstant ->
-        let f' = makeConstantTerm clause_constant typ_list pos_const in
-        let body_exp = explicify_term body true in
-        let head_exp = explicify_term head false in
-          ApplicationTerm(
-            FirstOrderApplication(f', [head_exp; body_exp], 2), 
-            pos)
+(*          Printf.printf "app term = %s\n" (string_of_term_ast body);*)
+        let body_flat = flatten_ands body  in
+        let body_exp = List.map (fun x -> explicify_term x false false) body_flat in
+        let head_exp = explicify_term head false false in
+        let body_exp_list = embed_terms_in_list body_exp in
+          if top_level then
+            ApplicationTerm(
+              FirstOrderApplication(
+                ConstantTerm(clause_constant, typ_list, pos_const), 
+                [head_exp; body_exp_list], 2), 
+              pos) 
+          else
+            let term_exp = ApplicationTerm(
+              FirstOrderApplication(
+                ConstantTerm(implies_constant, typ_list, pos_const), 
+                [head_exp; body_exp_list], 2), 
+              pos) in
+              if add_sing then
+                embed_terms_in_list [term_exp]
+              else
+                term_exp
 
-      (* , *)
+
+      (* , i.e. conjunction not the list separator *)
       | ApplicationTerm(
           FirstOrderApplication(
             ConstantTerm(const, typ_list, pos_const), 
@@ -122,39 +197,79 @@ let rec explicify_term term add_sing =
           when const = Pervasive.andConstant ->
           let term_flat = flatten_ands term  in
           let term_flat_exp = 
-            List.map (fun x -> explicify_term x false) term_flat in
+            List.map (fun x -> explicify_term x false false) term_flat in
             embed_terms_in_list term_flat_exp 
+
+      (* pi *)
+      | ApplicationTerm(
+          FirstOrderApplication(
+            ConstantTerm(const, typ_list, pos_const), 
+            args, nb_args), pos) 
+          when const = Pervasive.allConstant ->
+          let args_exp = List.map (fun x -> explicify_term x true false) args in
+          let term_exp = 
+            ApplicationTerm(
+              FirstOrderApplication(
+                ConstantTerm(forall_constant, typ_list, pos_const), 
+                args_exp, List.length args_exp), pos)  in
+              term_exp
 
       (* Any other predicate *)
       | ApplicationTerm(
           FirstOrderApplication(
             ConstantTerm(const, typ_list, pos_cons), 
             args, nbargs), pos) ->
-          (* Incorrect, to change *)
-          let add_sing' = not (Pervasive.isconsConstant const) in
+(*            Printf.printf "***  Term : %s \n"*)
+(*                                (string_of_term_ast term);*)
           let exp_args = 
-            List.map (fun x -> explicify_term x add_sing') args in
+            List.map (fun x -> explicify_term x true false) args in
           let term_exp  = 
             ApplicationTerm(
               FirstOrderApplication(
                 ConstantTerm(const, typ_list, pos_cons),
-                exp_args, List.length exp_args), pos)
-          in
-            if add_sing then
-                embed_terms_in_list [term_exp]
-            else
-              term_exp
+                exp_args, List.length exp_args), pos) in
+(*            Printf.printf "*** Considering const : %s \n"*)
+(*                                (string_of_term_ast term);*)
+            let skel = getConstantSkeletonValue const in
+            let cons_ty = getSkeletonType skel in
+              if top_level then
+                (* This is a fact *)
+                begin
+                ApplicationTerm(
+                  FirstOrderApplication(
+                    ConstantTerm(fact_constant, [], Errormsg.none),
+                    [term_exp],
+                    1),
+                  Errormsg.none)
+                end
+              else
+                if add_sing && 
+                   (cons_ty = o_type || 
+                    (isArrowType cons_ty && (getArrowTypeTarget cons_ty = o_type))) then
+                  begin
+(*                    Printf.printf "*** Considering const : %s \n"*)
+(*                      (string_of_term_ast term);*)
+                    embed_terms_in_list [term_exp] 
+                  end
+                else
+                  term_exp
 
-      | ConstantTerm(const, atyp_list, pos)  as ct ->
-          if (isGlobalConstant const || isLocalConstant const) && add_sing then 
-            explicify_const  ct
+      | ConstantTerm(_, _, _)  as ct when add_sing -> explicify_const ct
+      | ConstantTerm(_, _, _)  as ct -> 
+          if top_level then
+            (* This is a fact *)
+            ApplicationTerm(
+              FirstOrderApplication(
+                ConstantTerm(fact_constant, [], Errormsg.none),
+                [ct],
+                1),
+              Errormsg.none)
           else
-            (* We do not want to interfere with pervasive constants *)
-            ct
+              ct
 
       | AbstractionTerm(
           UNestedAbstraction(asymlist, nb, body), pos) ->
-          let body_exp = explicify_term body true in
+          let body_exp = explicify_term body true false in
             AbstractionTerm(UNestedAbstraction(asymlist, nb, body_exp), pos)
       | AbstractionTerm(NestedAbstraction(_,_),_) ->
             failwith "Nested Abs"
@@ -165,12 +280,19 @@ let rec explicify_term term add_sing =
 let explicify_const_ty const = 
   let rec o_to_list_o ty = 
     match ty with
-      | ApplicationType(kbool, []) ->
-          ApplicationType(klist, [ApplicationType(kbool, [])])
+      | ApplicationType(t, []) when t = kbool ->
+          ApplicationType(klist, [o_type])
       | ArrowType(left, right) -> 
           let left' = o_to_list_o left in
           let right' = o_to_list_o right in
             makeArrowType right' [left']
+      | ApplicationType(left, [t]) when t = o_type ->
+          ApplicationType(left,
+                          [ApplicationType(klist, [o_type])]
+          )
+      | ApplicationType(left, right) ->
+          let right' = List.map o_to_list_o right in
+          ApplicationType(left, right')
       | _ -> ty
   in
 
@@ -202,12 +324,14 @@ let explicify_const_ty const =
 
 let add_constants amod = 
   match amod with
-    | Absyn.Module(modname, modimps, modaccs, ctable, ktable, atable, astring,
+    | Module(modname, modimps, modaccs, ctable, ktable, atable, astring,
                    gkinds, lkinds, gconsts, lconsts, hconsts, skels, hskels,
                    aclinfo ) ->
         let gconsts_exp = List.map explicify_const_ty gconsts in
-        Absyn.Module(modname, modimps, modaccs, ctable, ktable, atable, astring,
-                     gkinds, lkinds, clause_constant::gconsts_exp, lconsts, 
+        let gconsts_exp' = implies_constant::clause_constant::
+                           fact_constant::forall_constant::gconsts_exp in
+        Module(modname, modimps, modaccs, ctable, ktable, atable, astring,
+                     gkinds, lkinds, gconsts_exp', lconsts, 
                      hconsts, skels, hskels, aclinfo)
     | _ -> amod
 
