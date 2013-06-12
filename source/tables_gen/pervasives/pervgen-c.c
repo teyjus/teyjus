@@ -45,7 +45,6 @@ static char* collectStringArray(StringArray arr, char* emptyText)
     char *myText = NULL;
     char *myText2 = NULL;
     int  i;
-    int  length = 0;
 
     for (i = 0; i < arr.length; i++) {
         char* text = arr.array[i];

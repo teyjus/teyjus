@@ -70,7 +70,6 @@ void cgenOpTypes(char *name, char* typeName, char* types, char* comments,
     char* myOpTypes = opTypes;
     char* myOpTypeMaps = opTypeMaps;
     size_t   length;
-    size_t   commentLen = comments ?  strlen(comments) : 0u;
     length = (opTypes ? strlen(opTypes) : 0u) + INDENT1_LEN + PREFIX_LEN + 
              strlen(name) + (comments ?  strlen(comments) : 0u) + 30u;
     opTypes = UTIL_mallocStr(length);
