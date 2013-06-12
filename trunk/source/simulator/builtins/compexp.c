@@ -86,6 +86,8 @@ void BICOMP_comp()
                                    DF_strDataValue(BIEVAL_evalStr(rOp))) >= 0);
       break;
     }
+    default:
+      EM_THROW(EM_FAIL);
     }
     
     if (success) AM_preg = AM_cpreg;
