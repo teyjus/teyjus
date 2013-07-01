@@ -41,7 +41,7 @@ void LD_IMPORTTAB_LoadImportTabs(MEM_GmtEnt* ent)
   EM_TRY{
     ent->addtable=(CSpacePtr)LD_IMPORTTAB_LoadImportTab(ent);
   }EM_CATCH{
-    LD_error("While loading add code table %d\n",i);
+    LD_error("While loading add code table\n");
     EM_RETHROW();
   }
   for(i=1;i<count;i++)

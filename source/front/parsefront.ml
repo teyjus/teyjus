@@ -135,9 +135,9 @@ let writeModule m clauses newclauses oc =
         | _ -> get t
     in
     let stringOfType ty = 
-      (* the string_of_type functionfrom absyn.ml is here sligthly modified.
+      (* the string_of_type function from absyn.ml is here sligthly modified.
        * I am not sure if this could be merged in absyn.ml so keep it here *)
-      let aux str needsParens ty bindings = 
+      let rec aux needsParens ty bindings = 
         let parens s =
           if needsParens then
             "(" ^ s ^ ")"
@@ -146,7 +146,7 @@ let writeModule m clauses newclauses oc =
         in
         let stringOfVar  = 
           let character i =
-            if i>= 26 then
+            if i >= 26 then
               (string_of_int i)
             else
               (String.make 1 (Char.chr ((Char.code 'A') + i)))
@@ -165,13 +165,20 @@ let writeModule m clauses newclauses oc =
             | TypeVarType(_) -> stringOfVar 
             | ApplicationType(kind, tlist) ->
                 if (List.length tlist) > 0 then
-                  let args = String.concat " " (List.map (fun x -> str true x bindings) tlist) in
+                  let args = 
+                    String.concat 
+                      " " 
+                      (List.map (fun x -> aux true x bindings) tlist) in
                   let s = (string_of_kind kind) ^ " " ^ args in
                     parens s
                     else
                       string_of_kind kind
-
-            | _ -> string_of_type ty
+            | ArrowType(t1, t2) -> 
+                let t1_ = aux false t1 bindings in
+                let t2_ = aux false t2 bindings in
+                  t1_ ^ " -> " ^ t2_
+            | _ -> 
+                string_of_type ty
       in
         aux false ty (ref [])
     in
@@ -186,19 +193,18 @@ let writeModule m clauses newclauses oc =
               constPos)  -> 
               (* Write missing type *)
               if not (List.mem const (getModuleGlobalConstantsList m) ||
+                      List.mem const (getModuleLocalConstantsList m) ||
                       Pervasive.isPerv const ||
                       List.mem const !addedTypes )
                then
                 let name = getConstantPrintName const in
                 let skValue = getConstantSkeletonValue const in
                 let ty = getSkeletonType skValue in
-                let tyStr = stringOfType ty (ref []) in
-                  let newSym = 
-                    (* Prefix with g since anonymous constants start with a _
-                     * which is not allowed by the grammar *)
-                    ((addedTypes := const::!addedTypes ;
-                      writeLine oc ("type " ^  "g" ^ name ^ " " ^ tyStr ^ "."));
-                     Symbol.symbol ("g" ^ name))
+                let tyStr = stringOfType ty in
+                let newSym = 
+                  ((addedTypes := const::!addedTypes ;
+                    writeLine oc ("type " ^ name ^ " " ^ tyStr ^ "."));
+                   Symbol.symbol (name))
                 in
                  ConstantTerm(
                    Constant(newSym, fix, prec, expdef, use, nodefs, closed, tpres, red, 
@@ -233,6 +239,8 @@ let writeModule m clauses newclauses oc =
 (*    in*)
 
 (*    writeTypeNewClauses  t;*)
+
+
     let t' = reverse (getActualClause t) in
     let t'' = renameAndWriteGeneratedSymbols t' in
     let head = getHead t'' in
