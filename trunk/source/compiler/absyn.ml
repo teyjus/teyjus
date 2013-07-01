@@ -238,8 +238,8 @@ and aclausesblock = (aclause list ref * bool ref * int ref * int option ref)
 (*****************************************************************************
 *Modules:
 * (modname, imported, accumulated, kind table, constant table,
-* type abbre table, string list, local kind list, global kind list,
-* local constant list, global constant list, hidden constant list,
+* type abbre table, string list, global kind list, local kind list,
+* global constant list, local constant list, hidden constant list,
 * skeleton list, hskeleton list, clauses blocks list)
 *****************************************************************************)
 and amodule = 
@@ -1851,6 +1851,15 @@ let getModuleGlobalConstantsList = function
                                       "getModuleGlobalConstList: not a module"
 | ErrorModule -> Errormsg.impossible Errormsg.none 
                                      "getModuleGlobalConstList: invalid module"
+
+let getModuleLocalConstantsList = function
+  Module(_,_,_,_,_,_,_,_,_,_,lconsts,_,_,_,_) -> lconsts
+| Signature(_) -> Errormsg.impossible 
+                    Errormsg.none 
+                    "getModuleLocalConstantsList: not a module"
+| ErrorModule -> Errormsg.impossible 
+                   Errormsg.none 
+                   "getModuleLocalConstantsList: invalid module"
 
 let getModuleHiddenConstantsRef = function
   Module(_,_,_,_,_,_,_,_,_,_,_,hcs,_,_,_) -> hcs
