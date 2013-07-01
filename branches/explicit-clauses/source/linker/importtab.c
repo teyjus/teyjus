@@ -168,7 +168,6 @@ Boolean shouldTidySwitchOnReg(ConstInd ind)
 void ConditionallyAddToNextClauseTable(ConstInd ind)
 {
   struct Vector* vec;
-  int size;
   ConstInd* table;
 
   if(isImportLocal(ind))
@@ -292,7 +291,6 @@ void ImpImportTab(int fd, struct Module_st* CMData)
   TwoBytes count;
   struct Vector* nct_vec;
   ConstInd* nct;
-  ConstInd index;
   struct Vector* expd_vec;
   ConstInd* expd;
 
@@ -378,7 +376,6 @@ void WriteNctEntry(int fd, void* entry)
 //Write out a single import table to file.
 void WriteImportTab(int fd, void* entry)
 {
-  int i;
   TImportTab_t* ImportTab=(TImportTab_t*)entry;
   debug("Writing an import table.\n");
   LK_FILE_PUT1(fd,ImportTab->numSegs);

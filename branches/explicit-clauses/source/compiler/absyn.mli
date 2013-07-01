@@ -572,6 +572,7 @@ val getModuleName : amodule -> string
 val setModuleName : amodule -> string -> amodule
 val getModuleGlobalKindsList : amodule -> akind list
 val getModuleGlobalConstantsList : amodule -> aconstant list
+val getModuleLocalConstantsList : amodule -> aconstant list
 val getModuleHiddenConstantsRef : amodule -> aconstant list ref
 val getModuleHiddenConstantSkeletonsRef : amodule -> askeleton list ref
 val getModuleHiddenConstantSkeletons : amodule -> askeleton list
