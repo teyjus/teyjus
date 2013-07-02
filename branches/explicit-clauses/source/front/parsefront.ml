@@ -184,7 +184,7 @@ let writeModule m clauses newclauses oc =
     in
 
 
-    let rec renameAndWriteGeneratedSymbols t =
+    let rec writeGeneratedTypeSymbols t =
       match t with
         | ConstantTerm(
               Constant(sym, fix, prec, expdef, use, nodefs, closed, tpres, red, 
@@ -201,51 +201,23 @@ let writeModule m clauses newclauses oc =
                 let skValue = getConstantSkeletonValue const in
                 let ty = getSkeletonType skValue in
                 let tyStr = stringOfType ty in
-                let newSym = 
-                  ((addedTypes := const::!addedTypes ;
-                    writeLine oc ("type " ^ name ^ " " ^ tyStr ^ "."));
-                   Symbol.symbol (name))
-                in
-                 ConstantTerm(
-                   Constant(newSym, fix, prec, expdef, use, nodefs, closed, tpres, red, 
-                            skel, tenvSize, skelNeed, need, cinfo, ct, index, p), 
-                   atypList, constPos)
-              else
-                   t
+                  (addedTypes := const::!addedTypes ;
+                   writeLine oc ("type " ^ name ^ " " ^ tyStr ^ "."))
+                  else
+                    ()
+
         | ApplicationTerm(FirstOrderApplication(head, args, nbArgs), pos) ->
-            let head' = renameAndWriteGeneratedSymbols head in
-            let args' = List.map renameAndWriteGeneratedSymbols args in
-              ApplicationTerm(FirstOrderApplication(head', args', nbArgs), pos) 
-        | _ -> t
+            let _ = writeGeneratedTypeSymbols head in
+            let _ = List.map writeGeneratedTypeSymbols args in
+              ()
+        | _ -> ()
     in
 
-(*    let writeTypeNewClauses t = *)
-(*      Printf.printf "term = %s\n" (string_of_term t);*)
-(*      match t with*)
-(*        | ApplicationTerm(FirstOrderApplication(h, [_;r], _), _) when *)
-(*            isConstant Pervasive.isimplConstant h &&*)
-(*            isTermConstant r -> *)
-(*            let const = getTermConstant r in*)
-(*              if not (List.mem const (getModuleGlobalConstantsList m) ||*)
-(*                      List.mem const !addedTypes) then*)
-(*                  let constName = getConstantPrintName const in*)
-(*                    (if String.sub constName 0 1 = "_" then*)
-(*                      (addedTypes := const::!addedTypes ;*)
-(*                       writeLine oc ("type " ^  "g" ^ constName ^ " o."))*)
-(*                    else*)
-(*                      failwith "Unsupported generated symbol")*)
-(*        | _ -> ()*)
-
-(*    in*)
-
-(*    writeTypeNewClauses  t;*)
-
-
     let t' = reverse (getActualClause t) in
-    let t'' = renameAndWriteGeneratedSymbols t' in
-    let head = getHead t'' in
+    let _ = writeGeneratedTypeSymbols t' in
+    let head = getHead t' in
     if Option.isNone head || (head <> lastHead) then 
-      writeLine oc ""; writeLine oc (string_of_term t'' ^ "."); head
+      writeLine oc ""; writeLine oc (string_of_term t' ^ "."); head
   in
   
   match m with

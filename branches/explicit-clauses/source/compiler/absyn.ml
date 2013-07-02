@@ -457,7 +457,7 @@ and string_of_type_ast ty =
     | ErrorType -> "ErrorType"
 
 and string_of_type ty =
-  let rec str needsParens ty bindings =
+  let rec str needsParens ty =
     let parens s =
       if needsParens then
         "(" ^ s ^ ")"
@@ -467,15 +467,14 @@ and string_of_type ty =
     let ty' = dereferenceType ty in
     match ty' with
         ArrowType(t1, t2) ->
-          let s = (str true t1 bindings) ^ " -> " ^ (str false t2 bindings) in
+          let s = (str true t1) ^ " -> " ^ (str false t2) in
           parens s
       | TypeVarType(r) ->
-        let i : int = (Obj.magic r) in
-        "'" ^ (string_of_int i)
-(*          string_of_var ty' bindings*)
+          let i : int = (Obj.magic r) in
+          "_" ^ (string_of_int i)
       | ApplicationType(kind, tlist) ->
           if (List.length tlist) > 0 then
-            let args = String.concat " " (List.map (fun x -> str true x bindings) tlist) in
+            let args = String.concat " " (List.map (str true) tlist) in
             let s = (string_of_kind kind) ^ " " ^ args in
             parens s
           else
@@ -485,14 +484,13 @@ and string_of_type ty =
             "_" ^ (string_of_int !i)
           else
             String.make 1 (Char.chr (!i + (Char.code 'A')))
-
       | TypeSetType(d, tl, _) ->
           (match !tl with
-            [t] -> str needsParens t bindings
-          | _ -> str needsParens d bindings)
+            [t] -> str needsParens t
+          | _ -> str needsParens d)
       | ErrorType -> "ErrorType"
   in
-  str false ty (ref [])
+  str false ty
 
 (* errorType *)
 let errorType = ErrorType
