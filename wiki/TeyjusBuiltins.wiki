@@ -8,7 +8,7 @@ The builtin notions supported by Teyjus are sub-categorized below and are descri
 
    * [LogicalConsts Logical Constants and Primitive Goals]
 
-   * [PervasiveConstants Prevasive Constants]
+   * [PervasiveConstants Pervasive Constants]
 
    * [ComparisonPreds Builtin Comparison Predicates]
 
