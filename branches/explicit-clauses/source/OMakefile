@@ -19,10 +19,7 @@ INC = $(dir include)
 #
 
 OCAMLINCLUDES += $(CMP) $(DIS) $(SIM) $(LOD)
-OCAMLOPTFLAGS += -g -bin-annot
-OCAMLCFLAGS += -bin-annot
-CC += -g 
-OCAMLOPTLINK = ocamlopt -g -bin-annot
+CFLAGS += -g
 
 ############################################################
 # Compilation files
@@ -65,7 +62,6 @@ DEP_ML[] =
 
 PAR_ML[] =
     $(CMP)/absyn
-    $(CMP)/annvariables
     $(CMP)/clauses
     $(CMP)/compile
     $(CMP)/errormsg
@@ -76,13 +72,11 @@ PAR_ML[] =
     $(CMP)/parse
     $(CMP)/pervasive
     $(CMP)/pervasiveutils
-    $(CMP)/processclauses
     $(CMP)/preabsyn
     $(CMP)/symbol
     $(CMP)/table
     $(CMP)/translate
     $(CMP)/types
-    $(CMP)/typereduction
 
 DIS_ML[] =
     $(DIS)/context
