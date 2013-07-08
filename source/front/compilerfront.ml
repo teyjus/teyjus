@@ -82,15 +82,11 @@ let outputName = ref ""
 let setPath path =
   print_string "not implemented\n"
 
-let explicit = ref false
-  
 let specList = dualArgs
   [("-o", "--output", Arg.Set_string outputName,
     " Specifies the name of the output bytecode file") ;
    ("-p", "--path", Arg.String setPath,
     " Add PATH to the search path.") ;
-   ("-exp", "--explicit", Arg.Set explicit,
-    " Transform clauses into explicit ones (experimental)") ;
    versionspec]
 
 let usageMsg = 

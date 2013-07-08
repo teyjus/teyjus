@@ -70,7 +70,6 @@ dist:
 .PHONY: clean
 clean:
     rm $(filter-proper-targets $(ls R, .))
-    rm $(find . -name *.cmt*)
 
 .PHONY: distclean
 distclean: clean
