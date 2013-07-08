@@ -79,7 +79,7 @@ let writeModule m clauses newclauses oc =
     writeLine oc ("accumulate " ^ name ^ ".")
   in
   
-  let writeClause oc lastHead t =
+  let writeClause oc newCl lastHead t =
     let isConstant test t =
       match t with
           ConstantTerm(c, _, _) -> test c
@@ -135,6 +135,8 @@ let writeModule m clauses newclauses oc =
         | _ -> get t
     in
     let rec writeGeneratedTypeSymbols t =
+      (* Every disjunction is transformed and new predicates are added.
+       * We thus need to detect those ones and write them *)
       match t with
         | ConstantTerm(
               Constant(sym, fix, prec, expdef, use, nodefs, closed, tpres, red, 
@@ -142,21 +144,18 @@ let writeModule m clauses newclauses oc =
                 as const, 
               atypList,
               constPos)  -> 
-              (* Write missing type *)
-              if not (List.mem const (getModuleGlobalConstantsList m) ||
-                      List.mem const (getModuleLocalConstantsList m) ||
-                      Pervasive.isPerv const ||
-                      List.mem const !addedTypes )
-               then
-                let name = getConstantPrintName const in
-                let skValue = getConstantSkeletonValue const in
-                let ty = getSkeletonType skValue in
-                let tyStr' = Types.string_of_typemolecule 
-                               (Types.Molecule(ty, [])) in
-                  (addedTypes := const::!addedTypes ;
-                   writeLine oc ("type " ^ name ^ " " ^ tyStr' ^ "."))
-                  else
-                    ()
+                let constTab = getModuleConstantTable m  in
+                  if (Table.find sym constTab = None) && 
+                     not (List.mem const !addedTypes) then
+                    let name = getConstantPrintName const in
+                    let skValue = getConstantSkeletonValue const in
+                    let ty = getSkeletonType skValue in
+                    let tyStr' = Types.string_of_typemolecule 
+                                   (Types.Molecule(ty, [])) in 
+                      (* We do not want to interfere with the constant table
+                       * of the compiler so we keep this information apart *)
+                      (addedTypes := const::!addedTypes ;
+                       writeLine oc ("type " ^ name ^ " " ^ tyStr' ^ "."))
 
         | ApplicationTerm(FirstOrderApplication(head, args, nbArgs), pos) ->
             let _ = writeGeneratedTypeSymbols head in
@@ -166,7 +165,7 @@ let writeModule m clauses newclauses oc =
     in
 
     let t' = reverse (getActualClause t) in
-    let _ = writeGeneratedTypeSymbols t' in
+    let _ = if newCl then  writeGeneratedTypeSymbols t' else () in
     let head = getHead t' in
     if Option.isNone head || (head <> lastHead) then 
       writeLine oc ""; writeLine oc (string_of_term t' ^ "."); head
@@ -182,8 +181,8 @@ let writeModule m clauses newclauses oc =
         List.iter (writeKind oc true) lkinds;
         writeLine oc "";
         List.iter (writeConst oc false true) lconsts;
-        ignore (List.fold_left (writeClause oc) None (List.rev clauses));
-        ignore (List.fold_left (writeClause oc) None (List.rev newclauses));
+        ignore (List.fold_left (writeClause oc false) None (List.rev clauses));
+        ignore (List.fold_left (writeClause oc true) None newclauses);
         ()
     | _ -> Errormsg.impossible Errormsg.none "Absyn.writeModule: invalid module"
     
