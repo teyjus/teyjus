@@ -24,19 +24,16 @@ open Absyn
 
 (* Related to the new constants we introduce *)
 
-let kbool = Kind(Symbol.symbol "o", Some 0, ref 2, PervasiveKind, Errormsg.none)
-let klist = Kind(Symbol.symbol "list", Some 1, ref 4, PervasiveKind, 
-                 Errormsg.none)
-let o_type = Absyn.makeKindType kbool
-let list_type = Absyn.makeKindType klist
+let o_type = Absyn.makeKindType Pervasive.kbool
+let list_type = Absyn.makeKindType Pervasive.klist
 
 let tyskel_clause = 
   Skeleton(
     ArrowType(
-      ApplicationType(kbool, []), 
+      ApplicationType(Pervasive.kbool, []), 
       ArrowType(
-        ApplicationType(klist, [ApplicationType(kbool, [])]), 
-        ApplicationType(kbool, [])
+        ApplicationType(Pervasive.klist, [ApplicationType(Pervasive.kbool, [])]), 
+        ApplicationType(Pervasive.kbool, [])
       )
     ), 
     ref None, 
@@ -45,8 +42,8 @@ let tyskel_clause =
 let tyskel_fact = 
   Skeleton(
     ArrowType(
-      ApplicationType(kbool, []), 
-      ApplicationType(kbool, [])),
+      ApplicationType(Pervasive.kbool, []), 
+      ApplicationType(Pervasive.kbool, [])),
     ref None, 
     ref false)
 
@@ -55,9 +52,9 @@ let tyskel_forall =
     ArrowType(
       ArrowType(
         SkeletonVarType((ref 0)), 
-        ApplicationType(klist, [ApplicationType(kbool, [])])
+        ApplicationType(Pervasive.klist, [ApplicationType(Pervasive.kbool, [])])
       ), 
-      ApplicationType(kbool, [])
+      ApplicationType(Pervasive.kbool, [])
     ),
     ref None, 
     ref false)
@@ -146,9 +143,7 @@ let explicify_const term =
         let skel = getConstantSkeletonValue const in
         let ty = getSkeletonType skel in
           match ty with
-            | ApplicationType(t, []) when t = kbool ->
-(*                Printf.printf "!! Explicify const : %s of type %s\n" *)
-(*                  (string_of_term_ast term) (string_of_type_ast ty);*)
+            | ApplicationType(t, []) when t = Pervasive.kbool ->
                 embed_terms_in_list [ct] 
             | _ -> 
                 ct
@@ -158,7 +153,6 @@ let explicify_const term =
 
 (* val explicify_term : Absyn.aterm  ->  Absyn.aterm  *)
 let rec explicify_term term add_sing top_level = 
-(*  Printf.printf "t = %s\n" (string_of_term_ast term);*)
     match term with
       (* :- *)
       | ApplicationTerm(
@@ -166,9 +160,9 @@ let rec explicify_term term add_sing top_level =
             ConstantTerm(const, typ_list, pos_const), 
             body::[head], _), pos) 
           when const = Pervasive.implConstant ->
-(*          Printf.printf "app term = %s\n" (string_of_term_ast body);*)
         let body_flat = flatten_ands body  in
-        let body_exp = List.map (fun x -> explicify_term x false false) body_flat in
+        let body_exp = List.map 
+                         (fun x -> explicify_term x false false) body_flat in
         let head_exp = explicify_term head false false in
         let body_exp_list = embed_terms_in_list body_exp in
           if top_level then
@@ -219,8 +213,6 @@ let rec explicify_term term add_sing top_level =
           FirstOrderApplication(
             ConstantTerm(const, typ_list, pos_cons), 
             args, nbargs), pos) ->
-(*            Printf.printf "***  Term : %s \n"*)
-(*                                (string_of_term_ast term);*)
           let exp_args = 
             List.map (fun x -> explicify_term x true false) args in
           let term_exp  = 
@@ -228,8 +220,6 @@ let rec explicify_term term add_sing top_level =
               FirstOrderApplication(
                 ConstantTerm(const, typ_list, pos_cons),
                 exp_args, List.length exp_args), pos) in
-(*            Printf.printf "*** Considering const : %s \n"*)
-(*                                (string_of_term_ast term);*)
             let skel = getConstantSkeletonValue const in
             let cons_ty = getSkeletonType skel in
               if top_level then
@@ -245,12 +235,9 @@ let rec explicify_term term add_sing top_level =
               else
                 if add_sing && 
                    (cons_ty = o_type || 
-                    (isArrowType cons_ty && (getArrowTypeTarget cons_ty = o_type))) then
-                  begin
-(*                    Printf.printf "*** Considering const : %s \n"*)
-(*                      (string_of_term_ast term);*)
+                    (isArrowType cons_ty && 
+                     (getArrowTypeTarget cons_ty = o_type))) then
                     embed_terms_in_list [term_exp] 
-                  end
                 else
                   term_exp
 
@@ -280,15 +267,15 @@ let rec explicify_term term add_sing top_level =
 let explicify_const_ty const = 
   let rec o_to_list_o ty = 
     match ty with
-      | ApplicationType(t, []) when t = kbool ->
-          ApplicationType(klist, [o_type])
+      | ApplicationType(t, []) when t = Pervasive.kbool ->
+          ApplicationType(Pervasive.klist, [o_type])
       | ArrowType(left, right) -> 
           let left' = o_to_list_o left in
           let right' = o_to_list_o right in
             makeArrowType right' [left']
       | ApplicationType(left, [t]) when t = o_type ->
           ApplicationType(left,
-                          [ApplicationType(klist, [o_type])]
+                          [ApplicationType(Pervasive.klist, [o_type])]
           )
       | ApplicationType(left, right) ->
           let right' = List.map o_to_list_o right in
