@@ -273,6 +273,7 @@ let rec translateClause term amodule =
 *translateTerm:
 * Given an abstract syntax representation of a module and a preabsyn
 * term, generates a normalized absyn term.
+* ! Only used after parsing a query
 **********************************************************************)
 and translateTerm term amodule =
   let previous = !Errormsg.anyErrors in
@@ -1437,18 +1438,21 @@ and fixTerm term =
       Errormsg.error pos ("Symbol " ^ (Absyn.getConstantPrintName c) ^
         " is not permitted within terms")
     else () 
+  in
 
   (*  a general list function needed to truncated type environments here *)
-  and trunclist l n = 
+  let rec trunclist l n = 
     if n = 0 then []
     else 
       match l with
         (h::t) -> (h::(trunclist t (n-1)))
-      | _ -> Errormsg.impossible Errormsg.none "Parse.trunclist: invalid arguments."
+      | _ -> Errormsg.impossible Errormsg.none "
+               Parse.trunclist: invalid arguments."
+  in
 
   (*  count the binders back to the one binding the given bound variable 
       occurrence; needed to compute the de Bruijn index *)
-  and findBVinList bv bvs =
+  let rec findBVinList bv bvs =
     let rec findBVinList' bv bvs n =
       match bvs with
           (hbv::tbvs) ->
@@ -1457,11 +1461,12 @@ and fixTerm term =
         | _ -> Errormsg.impossible Errormsg.none
                 "Parse.fixTerm.findBVinList: bound variable not bound in term."
     in findBVinList' bv bvs 1
+  in
 
   (*  un-curry applications generating a head, arg list pair to be fixed before
       being put together using a first-order like application. Wonder why this was
       not already done in the call to removeNestedAbstractions in translateTerm *)
-  and unCurryTopLevelApps appterm args =
+  let rec unCurryTopLevelApps appterm args =
     match appterm with
         (Absyn.CurriedApplication(f,a)) -> 
           (match f with
@@ -1470,11 +1475,12 @@ and fixTerm term =
             | _ -> (f, a :: args))
       | _ -> Errormsg.impossible Errormsg.none
           "Parse.fixTerm.unCurryTopLevelApps: found non-Curried form of application"
+  in
 
   (* the main function in fixTerm. Like fixTerm except that it adds the 
      free variable and the bound variable lists as arguments and returns also
      the highest de Bruijn index within the term *)
-  and fixTerm' term bvars fvars ftyvars =
+  let rec fixTerm' term bvars fvars ftyvars =
     match term with 
         Absyn.IntTerm(i,p) -> (Absyn.IntTerm(i,p),fvars,ftyvars,0)
       | Absyn.RealTerm(r,p) -> (Absyn.RealTerm(r,p),fvars,ftyvars,0)
