@@ -25,12 +25,14 @@
 type symbol = Symbol.symbol
 type pos = Errormsg.pos
 
-(* Kinds of Identifiers *)
+(* Kinds of Identifiers 
+ * CVID and VarID are only distinguished in the preabstract syntax.
+ * After the function translateID in parse.ml they are both free variables *)
 type pidkind =
-  | CVID
-  | ConstID
-  | AVID
-  | VarID
+  | CVID        (* Free variable, starting with an uppercase letter *)
+  | ConstID     (* A constant, lowercase *)
+  | AVID        (* Anonymous variable i.e. an underscore *)
+  | VarID       (* Free variable, starting with an underscore *)
 
 type pfixitykind =
   | Infix of pos
