@@ -22,6 +22,9 @@ open Parseargs
 open Absyn
 
 let linearize = ref false
+let explicit = ref false
+let interp = ref false
+let addedTypes = ref []
 
 (**********************************************************************
 * Writing Functions
@@ -76,7 +79,7 @@ let writeModule m clauses newclauses oc =
     writeLine oc ("accumulate " ^ name ^ ".")
   in
   
-  let writeClause oc lastHead t =
+  let writeClause oc newCl lastHead t =
     let isConstant test t =
       match t with
           ConstantTerm(c, _, _) -> test c
@@ -92,7 +95,9 @@ let writeModule m clauses newclauses oc =
       
     let rec getActualClause t =
       match t with
-          ApplicationTerm(FirstOrderApplication(h,[AbstractionTerm(_) as abs],_),_)
+          ApplicationTerm(
+            FirstOrderApplication(h,[AbstractionTerm(_) as abs],_),
+            _)
             when isConstant Pervasive.isallConstant h
             ->  let vs = getTermAllAbstractionVars abs in
                 if List.for_all isUniversal vs then
@@ -118,7 +123,8 @@ let writeModule m clauses newclauses oc =
       let get t =
         let head = getTermApplicationHead t in
         if isTermConstant head then
-          Some (getConstantPrintName (getTermConstant head))
+          let name = getConstantPrintName (getTermConstant head) in
+          Some (name)
         else
           None
       in
@@ -128,37 +134,72 @@ let writeModule m clauses newclauses oc =
             -> get l
         | _ -> get t
     in
+    let rec writeGeneratedTypeSymbols t =
+      (* Every disjunction is transformed and new predicates are added.
+       * We thus need to detect those ones and write their types *)
+      match t with
+        | ConstantTerm(
+              Constant(sym, fix, prec, expdef, use, nodefs, closed, tpres, red, 
+                     skel, tenvSize, skelNeed, need, cinfo, ct, index, p) 
+                as const, 
+              atypList,
+              constPos)  -> 
+                let constTab = getModuleConstantTable m  in
+                  if (Table.find sym constTab = None) && 
+                     not (List.mem const !addedTypes) then
+                    let name = getConstantPrintName const in
+                    let skValue = getConstantSkeletonValue const in
+                    let ty = getSkeletonType skValue in
+                    let tyStr' = Types.string_of_typemolecule 
+                                   (Types.Molecule(ty, [])) in 
+                      (* We do not want to interfere with the constant table
+                       * of the compiler so we keep this information apart *)
+                      (addedTypes := const::!addedTypes ;
+                       writeLine oc ("type " ^ name ^ " " ^ tyStr' ^ "."))
+
+        | ApplicationTerm(FirstOrderApplication(head, args, nbArgs), pos) ->
+            let _ = writeGeneratedTypeSymbols head in
+            let _ = List.map writeGeneratedTypeSymbols args in
+              ()
+        | _ -> ()
+    in
+
     let t' = reverse (getActualClause t) in
+    let _ = if newCl then  writeGeneratedTypeSymbols t' else () in
     let head = getHead t' in
-    if Option.isNone head || (head <> lastHead) then writeLine oc "";
-    writeLine oc (string_of_term t' ^ ".");
-    head
+    if Option.isNone head || (head <> lastHead) then 
+      writeLine oc ""; writeLine oc (string_of_term t' ^ "."); head
   in
   
   match m with
-    | Module(name, implist, acclist, _, _, _, _, _, lkinds, _, lconsts, _, _, _, ci) ->
+    | Module(name, implist, acclist, _, _, _, _, _, 
+             lkinds, _, lconsts, _, _, _, ci) ->
         writeLine oc ("module " ^ name ^ ".");
         List.iter (writeImp oc)  implist;
-        List.iter (writeAcc oc)acclist;
+        List.iter (writeAcc oc) acclist;
         writeLine oc "";
+        (* ********************************************)
+        if !interp && !explicit then writeLine oc Explicit.interpreter_mod;
         List.iter (writeKind oc true) lkinds;
         writeLine oc "";
         List.iter (writeConst oc false true) lconsts;
-        ignore (List.fold_left (writeClause oc) None (List.rev clauses));
-        ignore (List.fold_left (writeClause oc) None (List.rev newclauses));
+        ignore (List.fold_left (writeClause oc false) None (List.rev clauses));
+        ignore (List.fold_left (writeClause oc true) None newclauses);
         ()
     | _ -> Errormsg.impossible Errormsg.none "Absyn.writeModule: invalid module"
     
 let writeModuleSignature s oc =
   match s with
-    | Module(name, implist, acclist, _, _, _, _, gkinds, lkinds, gconsts, lconsts, _, _, _, _) ->
+    | Module(name, _, _, _, _, _, _, gkinds, _, gconsts, _, _, _, _, _) ->
         writeLine oc ("sig " ^ name ^ ".");
         writeLine oc "";
+        if !interp && !explicit then writeLine oc Explicit.interpreter_sig;
         List.iter (writeKind oc false) (List.rev gkinds);
         writeLine oc "";
         List.iter (writeConst oc true false) (List.rev gconsts);
         ()
-    | _ -> Errormsg.impossible Errormsg.none "Absyn.writeModuleSignature: invalid signature"
+    | _ -> Errormsg.impossible Errormsg.none 
+             "Absyn.writeModuleSignature: invalid signature"
 
 (**********************************************************************
 * Program
@@ -174,11 +215,12 @@ let compile basename outbasename =
     
   let sigresult = Compile.compileSignature basename in
   let _ = abortOnError () in
-      
+
   (* Construct an absyn module.  At this point only the module's *)
   (* constant, kind, and type abbrev information is valid.       *)
   let (absyn, _) = Translate.translate modresult sigresult in
   let _ = abortOnError () in
+
 
   (* Get the list of clauses and new clauses. *)
   let (absyn, clauses, newclauses, _) =
@@ -186,27 +228,39 @@ let compile basename outbasename =
   in
   let _ = abortOnError () in
 
+  (* Make clauses explicit if requested *)
+  let (clauses', newclauses', absyn') =
+    if !explicit then
+      let () = Errormsg.log Errormsg.none "Making clauses explicit..." in
+      (List.map (fun x -> Explicit.explicit_term x false true) clauses,
+      List.map (fun x-> Explicit.explicit_term x false true) newclauses,
+      Explicit.add_constants absyn)
+    else
+     (clauses, newclauses, absyn)
+  in
+  let _ = abortOnError () in
+
   (*  Linearize heads if requested. *)
-  let (clauses', newclauses') =
+  let (clauses'', newclauses'') =
     if !linearize then
       let () = Errormsg.log Errormsg.none "linearizing..." in
-      (List.map Clauses.linearizeClause clauses,
-      List.map Clauses.linearizeClause newclauses)
+      (List.map Clauses.linearizeClause clauses',
+      List.map Clauses.linearizeClause newclauses')
     else
-     (clauses, newclauses)
+     (clauses', newclauses')
   in
   let _ = abortOnError () in
 
   let modout = Compile.openFile (outbasename ^ ".mod") open_out in
   let sigout = Compile.openFile (outbasename ^ ".sig") open_out in
-  let absyn' = Absyn.setModuleName absyn outbasename in
-  writeModule absyn' clauses' newclauses' modout;
-  writeModuleSignature absyn' sigout;
-  
-  close_out modout;
-  close_out sigout;
-  
-  exit 0
+  let absyn'' = Absyn.setModuleName absyn' outbasename in
+    writeModule absyn'' clauses'' newclauses'' modout;
+    writeModuleSignature absyn'' sigout;
+
+    close_out modout;
+    close_out sigout;
+
+    exit 0
   
 let outputName = ref ""
 
@@ -214,7 +268,11 @@ let specList = (dualArgs
   [("-o", "--output", Arg.Set_string outputName,
     " Specifies the name of the output module (default is input module name)") ;
    versionspec]) @
-  ["--linearize", Arg.Set linearize, " linearize clause heads"]
+  ["--linearize", Arg.Set linearize, " linearize clause heads"] @
+  ["--explicit", Arg.Set explicit, " make clauses explicit (EXPERIMENTAL)"] @
+  ["--interpreter", Arg.Set interp, " include an interpreter for clauses which
+                                     are explicit (only valid if option 
+                                     --explicit is set)"]
 
 let usageMsg = 
   "Usage: tjparse [options] <module-file>\n" ^

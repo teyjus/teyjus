@@ -81,7 +81,7 @@ let outputName = ref ""
 
 let setPath path =
   print_string "not implemented\n"
-  
+
 let specList = dualArgs
   [("-o", "--output", Arg.Set_string outputName,
     " Specifies the name of the output bytecode file") ;
@@ -101,3 +101,4 @@ let _ =
     outputName := Bytecode.makeByteCodeFileName !inputName ;
   
   compile !inputName !outputName
+
