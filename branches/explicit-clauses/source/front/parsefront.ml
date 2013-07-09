@@ -23,6 +23,7 @@ open Absyn
 
 let linearize = ref false
 let explicit = ref false
+let interp = ref false
 let addedTypes = ref []
 
 (**********************************************************************
@@ -178,7 +179,7 @@ let writeModule m clauses newclauses oc =
         List.iter (writeAcc oc) acclist;
         writeLine oc "";
         (* ********************************************)
-        writeLine oc "accumulate interp.";
+        if !interp && !explicit then writeLine oc Explicify.interpreter_mod;
         List.iter (writeKind oc true) lkinds;
         writeLine oc "";
         List.iter (writeConst oc false true) lconsts;
@@ -192,7 +193,7 @@ let writeModuleSignature s oc =
     | Module(name, _, _, _, _, _, _, gkinds, _, gconsts, _, _, _, _, _) ->
         writeLine oc ("sig " ^ name ^ ".");
         writeLine oc "";
-        writeLine oc "accum_sig interp.";
+        if !interp && !explicit then writeLine oc Explicify.interpreter_sig;
         List.iter (writeKind oc false) (List.rev gkinds);
         writeLine oc "";
         List.iter (writeConst oc true false) (List.rev gconsts);
@@ -268,7 +269,10 @@ let specList = (dualArgs
     " Specifies the name of the output module (default is input module name)") ;
    versionspec]) @
   ["--linearize", Arg.Set linearize, " linearize clause heads"] @
-  ["--explicit", Arg.Set explicit, " make clauses explicit"]
+  ["--explicit", Arg.Set explicit, " make clauses explicit"] @
+  ["--interpreter", Arg.Set interp, " include an interpreter for clauses which
+                                     are explicit (only valid if option 
+                                     --explicit is set)"]
 
 let usageMsg = 
   "Usage: tjparse [options] <module-file>\n" ^
