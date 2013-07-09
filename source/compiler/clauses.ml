@@ -872,9 +872,9 @@ and deOrifyClauses clauses currentclauses uvs newclauses hcs =
       DeOrifyClauseResult(currentclauses, [], [], newclauses, hcs)
   | c::cs ->
       let DeOrifyClauseResult(clauses', fvs', uvdefs', newclauses', hcs') = 
-  deOrifyClauses cs currentclauses uvs newclauses hcs 
+        deOrifyClauses cs currentclauses uvs newclauses hcs 
       in
-      (deOrifyClause c clauses' fvs' uvs uvdefs' newclauses' hcs')
+        (deOrifyClause c clauses' fvs' uvs uvdefs' newclauses' hcs')
 
 (**********************************************************************
 *etaFluffQuantifier:
@@ -1056,7 +1056,7 @@ and translateClauses pmod amod =
 
   in
 
-  initClosedDefs ();
+  initClosedDefs (); 
   let preclauses = Preabsyn.getModuleClauses pmod in
   let (clauses', newclauses', hcs') = parse' preclauses amod [] [] [] in
   

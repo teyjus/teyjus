@@ -183,11 +183,11 @@ and string_of_typemolecule' = fun mol bindings printpar ->
     in
     try
       let i = List.assq t bindings in
-      ("'" ^ (character i), bindings)
+      (character i, bindings)
     with
       Not_found ->
         let i = List.length bindings in
-        ("'" ^ (character i), (t, i)::bindings)
+        (character i, (t, i)::bindings)
   
   and string_of_typeset ts bindings =
     match ts with
