@@ -171,7 +171,7 @@ let rec flatten_ands term =
       | other -> [other]
 
 (* Make a constant term in an argument position explicit *)
-let explicify_const term = 
+let explicit_const term = 
   match term with
     | ConstantTerm(const, tys, pos) as ct -> 
         begin
@@ -186,7 +186,7 @@ let explicify_const term =
     | _ -> term 
 
 
-let rec explicify_term term add_sing top_level = 
+let rec explicit_term term add_sing top_level = 
     match term with
       (* :- *)
       | ApplicationTerm(
@@ -196,8 +196,8 @@ let rec explicify_term term add_sing top_level =
           when const = Pervasive.implConstant ->
         let body_flat = flatten_ands body  in
         let body_exp = List.map 
-                         (fun x -> explicify_term x false false) body_flat in
-        let head_exp = explicify_term head false false in
+                         (fun x -> explicit_term x false false) body_flat in
+        let head_exp = explicit_term head false false in
         let body_exp_list = embed_terms_in_list body_exp in
           if top_level then
             ApplicationTerm(
@@ -231,7 +231,7 @@ let rec explicify_term term add_sing top_level =
           when const = Pervasive.andConstant ->
           let term_flat = flatten_ands term  in
           let term_flat_exp = 
-            List.map (fun x -> explicify_term x false false) term_flat in
+            List.map (fun x -> explicit_term x false false) term_flat in
             embed_terms_in_list term_flat_exp 
 
       (* pi *)
@@ -240,7 +240,7 @@ let rec explicify_term term add_sing top_level =
             ConstantTerm(const, typ_list, pos_const), 
             args, nb_args), pos) 
           when const = Pervasive.allConstant ->
-          let args_exp = List.map (fun x -> explicify_term x true false) args in
+          let args_exp = List.map (fun x -> explicit_term x true false) args in
           let term_exp = 
             ApplicationTerm(
               FirstOrderApplication(
@@ -254,7 +254,7 @@ let rec explicify_term term add_sing top_level =
             ConstantTerm(const, typ_list, pos_cons), 
             args, nbargs), pos) ->
           let exp_args = 
-            List.map (fun x -> explicify_term x true false) args in
+            List.map (fun x -> explicit_term x true false) args in
           let term_exp  = 
             ApplicationTerm(
               FirstOrderApplication(
@@ -282,7 +282,7 @@ let rec explicify_term term add_sing top_level =
                 else
                   term_exp
 
-      | ConstantTerm(_, _, _)  as ct when add_sing -> explicify_const ct
+      | ConstantTerm(_, _, _)  as ct when add_sing -> explicit_const ct
       | ConstantTerm(_, _, _)  as ct -> 
           if top_level then
             (* This is a fact *)
@@ -297,7 +297,7 @@ let rec explicify_term term add_sing top_level =
 
       | AbstractionTerm(
           UNestedAbstraction(asymlist, nb, body), pos) ->
-          let body_exp = explicify_term body true false in
+          let body_exp = explicit_term body true false in
             AbstractionTerm(UNestedAbstraction(asymlist, nb, body_exp), pos)
       | AbstractionTerm(NestedAbstraction(_,_),_) ->
             failwith "Nested Abs"
@@ -306,7 +306,7 @@ let rec explicify_term term add_sing top_level =
 (* For the type of the constant const every "o" except the one in the target
  *  position is replaced by "list o".
  * For instance (A -> o) -> o is transformed into (A -> list o) -> o *)
-let explicify_const_ty const = 
+let explicit_const_ty const = 
   let rec o_to_list_o ty = 
     match ty with
       | ApplicationType(t, []) when t = Pervasive.kbool ->
@@ -325,7 +325,7 @@ let explicify_const_ty const =
       | _ -> ty
   in
 
-  let explicify_type ty = 
+  let explicit_type ty = 
     let args = getArrowTypeArguments ty in
     let tgt = getArrowTypeTarget ty in
     let exp_args =  List.map o_to_list_o args in
@@ -342,7 +342,7 @@ let explicify_const_ty const =
               | Some(skel) ->
                   let ty = getSkeletonType skel in
                     if isArrowType ty then
-                      let ty_exp = explicify_type ty in
+                      let ty_exp = explicit_type ty in
                       let skel_exp = makeSkeleton ty_exp in
                         Constant(sym, fix, prec, expdef, use, nodefs, closed, 
                                  typ_pres, red, ref (Some(skel_exp)), typ_size, 
@@ -356,7 +356,7 @@ let add_constants amod =
     | Module(modname, modimps, modaccs, ctable, ktable, atable, astring,
                    gkinds, lkinds, gconsts, lconsts, hconsts, skels, hskels,
                    aclinfo ) ->
-        let gconsts_exp = List.map explicify_const_ty gconsts in
+        let gconsts_exp = List.map explicit_const_ty gconsts in
         let gconsts_exp' = implies_constant::clause_constant::
                            fact_constant::forall_constant::gconsts_exp in
         Module(modname, modimps, modaccs, ctable, ktable, atable, astring,
