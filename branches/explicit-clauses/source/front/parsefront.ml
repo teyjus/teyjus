@@ -22,8 +22,7 @@ open Parseargs
 open Absyn
 
 let linearize = ref false
-let explicify = ref false
-                  
+let explicit = ref false
 let addedTypes = ref []
 
 (**********************************************************************
@@ -136,7 +135,7 @@ let writeModule m clauses newclauses oc =
     in
     let rec writeGeneratedTypeSymbols t =
       (* Every disjunction is transformed and new predicates are added.
-       * We thus need to detect those ones and write them *)
+       * We thus need to detect those ones and write their types *)
       match t with
         | ConstantTerm(
               Constant(sym, fix, prec, expdef, use, nodefs, closed, tpres, red, 
@@ -178,6 +177,8 @@ let writeModule m clauses newclauses oc =
         List.iter (writeImp oc)  implist;
         List.iter (writeAcc oc) acclist;
         writeLine oc "";
+        (* ********************************************)
+        writeLine oc "accumulate interp.";
         List.iter (writeKind oc true) lkinds;
         writeLine oc "";
         List.iter (writeConst oc false true) lconsts;
@@ -191,6 +192,7 @@ let writeModuleSignature s oc =
     | Module(name, _, _, _, _, _, _, gkinds, _, gconsts, _, _, _, _, _) ->
         writeLine oc ("sig " ^ name ^ ".");
         writeLine oc "";
+        writeLine oc "accum_sig interp.";
         List.iter (writeKind oc false) (List.rev gkinds);
         writeLine oc "";
         List.iter (writeConst oc true false) (List.rev gconsts);
@@ -225,9 +227,10 @@ let compile basename outbasename =
   in
   let _ = abortOnError () in
 
+  (* Make clauses explicit if requested *)
   let (clauses', newclauses', absyn') =
-    if !explicify then
-      let () = Errormsg.log Errormsg.none "explicifying..." in
+    if !explicit then
+      let () = Errormsg.log Errormsg.none "Making clauses explicit..." in
       (List.map (fun x -> Explicify.explicify_term x false true) clauses,
       List.map (fun x-> Explicify.explicify_term x false true) newclauses,
       Explicify.add_constants absyn)
@@ -250,13 +253,13 @@ let compile basename outbasename =
   let modout = Compile.openFile (outbasename ^ ".mod") open_out in
   let sigout = Compile.openFile (outbasename ^ ".sig") open_out in
   let absyn'' = Absyn.setModuleName absyn' outbasename in
-  writeModule absyn'' clauses'' newclauses'' modout;
-  writeModuleSignature absyn'' sigout;
-  
-  close_out modout;
-  close_out sigout;
-  
-  exit 0
+    writeModule absyn'' clauses'' newclauses'' modout;
+    writeModuleSignature absyn'' sigout;
+
+    close_out modout;
+    close_out sigout;
+
+    exit 0
   
 let outputName = ref ""
 
@@ -265,7 +268,7 @@ let specList = (dualArgs
     " Specifies the name of the output module (default is input module name)") ;
    versionspec]) @
   ["--linearize", Arg.Set linearize, " linearize clause heads"] @
-  ["--explicify", Arg.Set explicify, " explicify clauses"]
+  ["--explicit", Arg.Set explicit, " make clauses explicit"]
 
 let usageMsg = 
   "Usage: tjparse [options] <module-file>\n" ^
