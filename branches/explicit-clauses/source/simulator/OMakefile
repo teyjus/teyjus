@@ -1,3 +1,0 @@
-.SUBDIRS: builtins
-    if $(file-exists OMakefile)
-        include OMakefile

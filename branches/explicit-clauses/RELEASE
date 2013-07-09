@@ -1,9 +1,0 @@
-These are instructions for creating a release of the Teyjus system.
-These are to be executed from the root of the Teyjus directory.
-
- 1. Execute 'svn up' to checkout the latest sources from subversion
- 2. Edit source/front/parseargs.ml to set the version number
- 3. Execute 'omake test' and confirm that all tests are passing
- 4. Execute 'omake dist' to generate a source tarball
-
-For building a Windows installer, see source/installer/README.
