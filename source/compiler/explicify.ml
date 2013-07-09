@@ -351,3 +351,49 @@ let add_constants amod =
     | _ -> amod
 
 
+
+let interpreter_mod = "
+/********* The interpreter *************/ 
+type in A -> list A -> o.
+in X (X::L).
+in X (Y::L) :- in X L.
+
+type append list A -> list A -> list A -> o.
+append nil K K.
+append (X::L) K (X::M) :- append L K M.
+
+
+
+/* Entry point */
+run X :- run' [] X.
+
+type run' list o -> o -> o.
+run' Env X :- fact X ; in X Env.
+run' Env X :- 
+    % term_to_string X F, print \"Trying to solve \", print F, print \"\\n\",
+    (X clause Y), 
+    % term_to_string (X clause Y) Cl,
+    % print \" with clause: \\n   \", print Cl, print \"\\n\",
+    run_body Env Y. 
+
+
+type run_body list o -> list o -> o.
+run_body _ [].
+run_body Env ((A implies B)::L) :- 
+    % term_to_string A As, %    term_to_string B Bs,
+    % print \"Proving  the goal(s) \", print Bs, 
+    % print \" under the new assumption(s) \", print As, print \"\\n\",
+    append A Env NewEnv,
+    run_body NewEnv B, 
+    run_body Env L.
+run_body Env (X::L) :- 
+    term_to_string X Xs,
+    % print \"Proving the atomic goal \", print Xs, print \"\\n\",
+    run' Env X, 
+    run_body Env L.
+/************             *************/"
+
+let interpreter_sig = "type run o -> o."
+
+
+

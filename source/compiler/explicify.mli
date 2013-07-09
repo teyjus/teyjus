@@ -32,3 +32,6 @@ val explicify_term : Absyn.aterm -> bool -> bool ->  Absyn.aterm
 
 val add_constants : Absyn.amodule -> Absyn.amodule
 
+val interpreter_mod : string
+val interpreter_sig : string
+
