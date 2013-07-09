@@ -21,7 +21,7 @@
 ****************************************************************************)
 
 
-(* explicify term add_sing top_level :
+(* explicit_term term add_sing top_level :
  * Given an aterm term, returns the term with every lambda prolog connective 
  * explicit i.e. there are no more :- , pi =>  
  * The result depends on:
@@ -31,7 +31,7 @@
  *  (true for the top call in parsefront, false in all the other cases)
  *  This helps to determine if Pervasive.implconstant should be read as
  *  :- or =>  as well as if a given predicate should be embedded in a list *)
-val explicify_term : Absyn.aterm -> bool -> bool ->  Absyn.aterm 
+val explicit_term : Absyn.aterm -> bool -> bool ->  Absyn.aterm 
 
 (* Add introduced constants and modify defined types in the .sig file 
  * in the following way: * every "o" which is not in the target is replaced

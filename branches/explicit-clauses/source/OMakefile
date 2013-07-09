@@ -65,7 +65,7 @@ PAR_ML[] =
     $(CMP)/clauses
     $(CMP)/compile
     $(CMP)/errormsg
-    $(CMP)/explicify
+    $(CMP)/explicit
     $(CMP)/lplex
     $(CMP)/lpyacc
     $(CMP)/option

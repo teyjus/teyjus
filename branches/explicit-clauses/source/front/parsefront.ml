@@ -179,7 +179,7 @@ let writeModule m clauses newclauses oc =
         List.iter (writeAcc oc) acclist;
         writeLine oc "";
         (* ********************************************)
-        if !interp && !explicit then writeLine oc Explicify.interpreter_mod;
+        if !interp && !explicit then writeLine oc Explicit.interpreter_mod;
         List.iter (writeKind oc true) lkinds;
         writeLine oc "";
         List.iter (writeConst oc false true) lconsts;
@@ -193,7 +193,7 @@ let writeModuleSignature s oc =
     | Module(name, _, _, _, _, _, _, gkinds, _, gconsts, _, _, _, _, _) ->
         writeLine oc ("sig " ^ name ^ ".");
         writeLine oc "";
-        if !interp && !explicit then writeLine oc Explicify.interpreter_sig;
+        if !interp && !explicit then writeLine oc Explicit.interpreter_sig;
         List.iter (writeKind oc false) (List.rev gkinds);
         writeLine oc "";
         List.iter (writeConst oc true false) (List.rev gconsts);
@@ -232,9 +232,9 @@ let compile basename outbasename =
   let (clauses', newclauses', absyn') =
     if !explicit then
       let () = Errormsg.log Errormsg.none "Making clauses explicit..." in
-      (List.map (fun x -> Explicify.explicify_term x false true) clauses,
-      List.map (fun x-> Explicify.explicify_term x false true) newclauses,
-      Explicify.add_constants absyn)
+      (List.map (fun x -> Explicit.explicit_term x false true) clauses,
+      List.map (fun x-> Explicit.explicit_term x false true) newclauses,
+      Explicit.add_constants absyn)
     else
      (clauses, newclauses, absyn)
   in
@@ -269,7 +269,7 @@ let specList = (dualArgs
     " Specifies the name of the output module (default is input module name)") ;
    versionspec]) @
   ["--linearize", Arg.Set linearize, " linearize clause heads"] @
-  ["--explicit", Arg.Set explicit, " make clauses explicit"] @
+  ["--explicit", Arg.Set explicit, " make clauses explicit (EXPERIMENTAL)"] @
   ["--interpreter", Arg.Set interp, " include an interpreter for clauses which
                                      are explicit (only valid if option 
                                      --explicit is set)"]
