@@ -39,6 +39,18 @@ let tyskel_clause =
     ref None, 
     ref false)
 
+let tyskel_implies = 
+  Skeleton(
+    ArrowType(
+      ApplicationType(Pervasive.klist, [ApplicationType(Pervasive.kbool, [])]), 
+      ArrowType(
+        ApplicationType(Pervasive.klist, [ApplicationType(Pervasive.kbool, [])]), 
+        ApplicationType(Pervasive.kbool, [])
+      )
+    ), 
+    ref None, 
+    ref false)
+
 let tyskel_fact = 
   Skeleton(
     ArrowType(
@@ -90,7 +102,7 @@ let implies_constant =
   let exp_def = false in
   let use_only = false in
   let tenv_size = 0 in 
-  let skel =  tyskel_clause in
+  let skel =  tyskel_implies in
   let index = 0 in (* TODO: check this is correct *)
     makeGlobalConstant symbol fixity prec exp_def 
       use_only tenv_size skel index 
@@ -122,6 +134,16 @@ let rec embed_terms_in_list t_list =
             Errormsg.none),
           elt::[(embed_terms_in_list q)],
           2), Errormsg.none)
+
+
+let is_term_a_list term = 
+  match term with 
+    | Absyn.ConstantTerm(n, _, _) when n = Pervasive.nilConstant -> true 
+    | Absyn.ApplicationTerm(
+        FirstOrderApplication(Absyn.ConstantTerm(cons,_, _), _, _ ),_) 
+        when cons = Pervasive.consConstant-> true
+    | _ -> false
+
 
 let rec flatten_ands term = 
     match term with
@@ -172,10 +194,16 @@ let rec explicify_term term add_sing top_level =
                 [head_exp; body_exp_list], 2), 
               pos) 
           else
+            let head_exp' = 
+              if not (is_term_a_list head_exp) then
+                embed_terms_in_list [head_exp]
+              else
+                head_exp 
+            in
             let term_exp = ApplicationTerm(
               FirstOrderApplication(
                 ConstantTerm(implies_constant, typ_list, pos_const), 
-                [head_exp; body_exp_list], 2), 
+                [body_exp_list; head_exp'], 2), 
               pos) in
               if add_sing then
                 embed_terms_in_list [term_exp]
