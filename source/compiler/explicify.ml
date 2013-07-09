@@ -22,56 +22,32 @@
 open Absyn
 
 
-(* Related to the new constants we introduce *)
+(* Turn a lambda prolog file into an equivalent one where clauses,
+ * implications, and quantifications are explicit 
+ * Since this transformation comes after some simplifications we can assume
+ * that all the clauses    P :- Q    do not contain any implication or comma 
+ * in P.
+*)
 
+
+(* Some kinds needed for the constant we introduce *)
 let o_type = Absyn.makeKindType Pervasive.kbool
 let list_type = Absyn.makeKindType Pervasive.klist
 
-let tyskel_clause = 
-  Skeleton(
-    ArrowType(
-      ApplicationType(Pervasive.kbool, []), 
-      ArrowType(
-        ApplicationType(Pervasive.klist, [ApplicationType(Pervasive.kbool, [])]), 
-        ApplicationType(Pervasive.kbool, [])
-      )
-    ), 
-    ref None, 
-    ref false)
-
-let tyskel_implies = 
-  Skeleton(
-    ArrowType(
-      ApplicationType(Pervasive.klist, [ApplicationType(Pervasive.kbool, [])]), 
-      ArrowType(
-        ApplicationType(Pervasive.klist, [ApplicationType(Pervasive.kbool, [])]), 
-        ApplicationType(Pervasive.kbool, [])
-      )
-    ), 
-    ref None, 
-    ref false)
-
-let tyskel_fact = 
-  Skeleton(
-    ArrowType(
-      ApplicationType(Pervasive.kbool, []), 
-      ApplicationType(Pervasive.kbool, [])),
-    ref None, 
-    ref false)
-
-let tyskel_forall = 
-  Skeleton(
-    ArrowType(
-      ArrowType(
-        SkeletonVarType((ref 0)), 
-        ApplicationType(Pervasive.klist, [ApplicationType(Pervasive.kbool, [])])
-      ), 
-      ApplicationType(Pervasive.kbool, [])
-    ),
-    ref None, 
-    ref false)
-
+(* :- *)
 let clause_constant =
+  let tyskel_clause = 
+    Skeleton(
+      ArrowType(
+        ApplicationType(Pervasive.kbool, []), 
+        ArrowType(
+          ApplicationType(Pervasive.klist, 
+                          [ApplicationType(Pervasive.kbool, [])]), 
+          ApplicationType(Pervasive.kbool, [])
+        )
+      ), 
+      ref None, 
+      ref false) in
   let symbol = Symbol.symbol "clause" in
   let fixity = Infixl in
   let prec = 0 in 
@@ -79,23 +55,25 @@ let clause_constant =
   let use_only = false in
   let tenv_size = 0 in 
   let skel =  tyskel_clause in
-  let index = 0 in (* TODO: check this is correct *)
+  let index = 0 in 
     makeGlobalConstant symbol fixity prec exp_def 
       use_only tenv_size skel index 
 
-let fact_constant =
-  let symbol = Symbol.symbol "fact" in
-  let fixity = NoFixity in
-  let prec = 0 in 
-  let exp_def = false in
-  let use_only = false in
-  let tenv_size = 0 in 
-  let skel =  tyskel_fact in
-  let index = 0 in (* TODO: check this is correct *)
-    makeGlobalConstant symbol fixity prec exp_def 
-      use_only tenv_size skel index 
-
+(* => *)
 let implies_constant =
+  let tyskel_implies = 
+    Skeleton(
+      ArrowType(
+        ApplicationType(Pervasive.klist, 
+                        [ApplicationType(Pervasive.kbool, [])]), 
+        ArrowType(
+          ApplicationType(Pervasive.klist, 
+                          [ApplicationType(Pervasive.kbool, [])]), 
+          ApplicationType(Pervasive.kbool, [])
+        )
+      ), 
+      ref None, 
+      ref false) in
   let symbol = Symbol.symbol "implies" in
   let fixity = Infixr in
   let prec = 130 in 
@@ -103,11 +81,44 @@ let implies_constant =
   let use_only = false in
   let tenv_size = 0 in 
   let skel =  tyskel_implies in
-  let index = 0 in (* TODO: check this is correct *)
+  let index = 0 in 
     makeGlobalConstant symbol fixity prec exp_def 
       use_only tenv_size skel index 
 
+(* This a lambda prolog fact *)
+let fact_constant =
+  let tyskel_fact = 
+    Skeleton(
+      ArrowType(
+        ApplicationType(Pervasive.kbool, []), 
+        ApplicationType(Pervasive.kbool, [])),
+      ref None, 
+      ref false) in
+  let symbol = Symbol.symbol "fact" in
+  let fixity = NoFixity in
+  let prec = 0 in 
+  let exp_def = false in
+  let use_only = false in
+  let tenv_size = 0 in 
+  let skel =  tyskel_fact in
+  let index = 0 in 
+    makeGlobalConstant symbol fixity prec exp_def 
+      use_only tenv_size skel index 
+
+(* pi x\ ... *) 
 let forall_constant =
+  let tyskel_forall = 
+    Skeleton(
+      ArrowType(
+        ArrowType(
+          SkeletonVarType((ref 0)), 
+          ApplicationType(Pervasive.klist, 
+                          [ApplicationType(Pervasive.kbool, [])])
+        ), 
+        ApplicationType(Pervasive.kbool, [])
+      ),
+      ref None, 
+      ref false) in
   let symbol = Symbol.symbol "pi'" in
   let fixity = NoFixity in
   let prec = 0 in 
@@ -119,6 +130,7 @@ let forall_constant =
     makeGlobalConstant symbol fixity prec exp_def 
       use_only tenv_size skel index 
 
+(* Given a (OCaml) list of aterm, transform them into an aterm list  *)
 let rec embed_terms_in_list t_list =
   match t_list with 
     | [] -> 
@@ -135,7 +147,6 @@ let rec embed_terms_in_list t_list =
           elt::[(embed_terms_in_list q)],
           2), Errormsg.none)
 
-
 let is_term_a_list term = 
   match term with 
     | Absyn.ConstantTerm(n, _, _) when n = Pervasive.nilConstant -> true 
@@ -144,7 +155,9 @@ let is_term_a_list term =
         when cons = Pervasive.consConstant-> true
     | _ -> false
 
-
+(* A lambda prolog declaration p1, p2, ..., pn is parsed in
+* abstract syntax as (p1, (p2 , ...(pn-1, ))) with , a binary connective 
+* This function transforms this term into a list of terms *)
 let rec flatten_ands term = 
     match term with
       | ApplicationTerm(
@@ -157,7 +170,7 @@ let rec flatten_ands term =
           left::(flatten_ands right)
       | other -> [other]
 
-(* Explicify a constant term in an argument position *)
+(* Make a constant term in an argument position explicit *)
 let explicify_const term = 
   match term with
     | ConstantTerm(const, tys, pos) as ct -> 
@@ -173,7 +186,6 @@ let explicify_const term =
     | _ -> term 
 
 
-(* val explicify_term : Absyn.aterm  ->  Absyn.aterm  *)
 let rec explicify_term term add_sing top_level = 
     match term with
       (* :- *)
@@ -211,7 +223,7 @@ let rec explicify_term term add_sing top_level =
                 term_exp
 
 
-      (* , i.e. conjunction not the list separator *)
+      (* , conjunction not the list separator *)
       | ApplicationTerm(
           FirstOrderApplication(
             ConstantTerm(const, typ_list, pos_const), 
@@ -261,6 +273,7 @@ let rec explicify_term term add_sing top_level =
                   Errormsg.none)
                 end
               else
+                (* This predicate appears in the body of a clause *)
                 if add_sing && 
                    (cons_ty = o_type || 
                     (isArrowType cons_ty && 
@@ -290,8 +303,9 @@ let rec explicify_term term add_sing top_level =
             failwith "Nested Abs"
       | _ -> term
 
-(* Every "o" except the one in the target position is replaced by "list o".
-* For instance (A -> o) -> o is transformed into (A -> list o) -> o *)
+(* For the type of the constant const every "o" except the one in the target
+ *  position is replaced by "list o".
+ * For instance (A -> o) -> o is transformed into (A -> list o) -> o *)
 let explicify_const_ty const = 
   let rec o_to_list_o ty = 
     match ty with
@@ -307,7 +321,7 @@ let explicify_const_ty const =
           )
       | ApplicationType(left, right) ->
           let right' = List.map o_to_list_o right in
-          ApplicationType(left, right')
+            ApplicationType(left, right')
       | _ -> ty
   in
 
@@ -320,7 +334,7 @@ let explicify_const_ty const =
 
     match const with
       | Constant(sym, fix, prec, expdef, use, nodefs, closed, typ_pres, red,
-                skelref, typ_size, skel_need, need, code_info, const_ty, index,
+                 skelref, typ_size, skel_need, need, code_info, const_ty, index,
                  pos) ->
           let skelopt = !skelref in 
             match skelopt with
