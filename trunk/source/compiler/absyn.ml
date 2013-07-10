@@ -1267,8 +1267,8 @@ let rec string_of_term_ast term =
   match term with
     IntTerm(i,_) -> string_of_int i
   | RealTerm(r,_) -> string_of_float r
-  | StringTerm(StringLiteral(s),_) -> "\"" ^ (s) ^ "\""
-  | StringTerm(StringData(s,_,_),_) -> "\"" ^ (s) ^ "\""
+  | StringTerm(StringLiteral(s),_) -> "\"" ^ (String.escaped s) ^ "\""
+  | StringTerm(StringData(s,_,_),_) -> "\"" ^ (String.escaped s) ^ "\""
   | ConstantTerm(c,tl,_) -> 
       let tlstr = "[" ^ (String.concat "," (List.map string_of_type_ast tl)) ^ "]" in
       if (getConstantType c = HiddenConstant) then
@@ -1465,8 +1465,8 @@ and string_of_term term =
     match term with
       IntTerm(i,_) -> (string_of_int i)
     | RealTerm(r,_) -> (string_of_float r)
-    | StringTerm(StringLiteral(s),_) -> "\"" ^ s ^ "\""
-    | StringTerm(StringData(s,_,_),_) -> "\"" ^ s ^ "\""
+    | StringTerm(StringLiteral(s),_) -> "\"" ^ (String.escaped s) ^ "\""
+    | StringTerm(StringData(s,_,_),_) -> "\"" ^ (String.escaped s) ^ "\""
     | ConstantTerm(c,_,_) -> (getConstantPrintName c)
     | FreeVarTerm(NamedFreeVar(s),_) -> Symbol.name (getTypeSymbolSymbol s)
     | BoundVarTerm(NamedBoundVar(s),_) -> Symbol.name (getTypeSymbolSymbol s)

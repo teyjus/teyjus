@@ -383,7 +383,7 @@ append (X::L) K (X::M) :- append L K M.
 
 
 /* Entry point */
-run X :- run' [] X.
+exrun X :- run' [] X.
 
 type run' list o -> o -> o.
 run' Env X :- fact X ; in X Env.
@@ -404,8 +404,8 @@ run_body Env ((A implies B)::L) :-
     append A Env NewEnv,
     run_body NewEnv B, 
     run_body Env L.
-run_body Env ((pi' X\ Y X)::L) :- 
-    (pi X\ run_body Env (Y X)), 
+run_body Env ((pi' X\\ Y X)::L) :- 
+    (pi X\\ run_body Env (Y X)), 
     run_body Env L.
 run_body Env (X::L) :- 
     term_to_string X Xs,
@@ -414,7 +414,7 @@ run_body Env (X::L) :-
     run_body Env L.
 /************             *************/"
 
-let interpreter_sig = "type run o -> o."
+let interpreter_sig = "type exrun o -> o."
 
 
 
