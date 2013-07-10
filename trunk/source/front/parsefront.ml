@@ -146,9 +146,13 @@ let writeModule m clauses newclauses oc =
               constPos)  -> 
                 let constTab = getModuleConstantTable m  in
                   if (Table.find sym constTab = None) && 
-                     not (List.mem const !addedTypes) then
-                    let name = getConstantPrintName const in
-                    let skValue = getConstantSkeletonValue const in
+                     not (List.mem const 
+                            (!addedTypes @ Explicit.explicit_constants)) then
+                    (* The type of a new predicate can also contains "o" 
+                     * in an argument position which needs to be modified *)
+                    let const_exp = Explicit.explicit_const_ty const in
+                    let name = getConstantPrintName const_exp in
+                    let skValue = getConstantSkeletonValue const_exp in
                     let ty = getSkeletonType skValue in
                     let tyStr' = Types.string_of_typemolecule 
                                    (Types.Molecule(ty, [])) in 
@@ -266,13 +270,14 @@ let outputName = ref ""
 
 let specList = (dualArgs
   [("-o", "--output", Arg.Set_string outputName,
-    " Specifies the name of the output module (default is input module name)") ;
+    " Specifies the name of the output module  
+                 (default is input module name)") ;
    versionspec]) @
-  ["--linearize", Arg.Set linearize, " linearize clause heads"] @
-  ["--explicit", Arg.Set explicit, " make clauses explicit (EXPERIMENTAL)"] @
-  ["--interpreter", Arg.Set interp, " include an interpreter for clauses which
-                                     are explicit (only valid if option 
-                                     --explicit is set)"]
+  ["--linearize", Arg.Set linearize, " Linearize clause heads"] @
+  ["--explicit", Arg.Set explicit, " Make clauses explicit (EXPERIMENTAL)"] @
+  ["--interpreter", Arg.Set interp, 
+   " Include an interpreter for explicit clauses 
+                 (only valid if option --explicit is set)"]
 
 let usageMsg = 
   "Usage: tjparse [options] <module-file>\n" ^

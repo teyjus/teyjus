@@ -38,7 +38,14 @@ val explicit_term : Absyn.aterm -> bool -> bool ->  Absyn.aterm
  * by "list o" *)                                                       
 val add_constants : Absyn.amodule -> Absyn.amodule
 
+(* For the type of the constant const every "o" except the one in the target
+ *  position is replaced by "list o".
+ * For instance (A -> o) -> o is transformed into (A -> list o) -> o *)
+val explicit_const_ty : Absyn.aconstant -> Absyn.aconstant
+
 (* The interpreter for explicit clauses *)
 val interpreter_mod : string
 val interpreter_sig : string
 
+(* The symbols we use: clause, fact, ... *)
+val explicit_constants : Absyn.aconstant list

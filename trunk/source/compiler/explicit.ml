@@ -130,6 +130,11 @@ let forall_constant =
     makeGlobalConstant symbol fixity prec exp_def 
       use_only tenv_size skel index 
 
+let explicit_constants = [clause_constant; implies_constant; fact_constant; 
+                          forall_constant]
+
+
+
 (* Given a (OCaml) list of aterm, transform them into an aterm list  *)
 let rec embed_terms_in_list t_list =
   match t_list with 
@@ -303,9 +308,6 @@ let rec explicit_term term add_sing top_level =
             failwith "Nested Abs"
       | _ -> term
 
-(* For the type of the constant const every "o" except the one in the target
- *  position is replaced by "list o".
- * For instance (A -> o) -> o is transformed into (A -> list o) -> o *)
 let explicit_const_ty const = 
   let rec o_to_list_o ty = 
     match ty with
@@ -357,11 +359,13 @@ let add_constants amod =
                    gkinds, lkinds, gconsts, lconsts, hconsts, skels, hskels,
                    aclinfo ) ->
         let gconsts_exp = List.map explicit_const_ty gconsts in
+        let lconsts_exp = List.map explicit_const_ty lconsts in
+        let hconsts_exp = List.map explicit_const_ty !hconsts in
         let gconsts_exp' = implies_constant::clause_constant::
                            fact_constant::forall_constant::gconsts_exp in
         Module(modname, modimps, modaccs, ctable, ktable, atable, astring,
-                     gkinds, lkinds, gconsts_exp', lconsts, 
-                     hconsts, skels, hskels, aclinfo)
+                     gkinds, lkinds, gconsts_exp', lconsts_exp, 
+                     ref hconsts_exp, skels, hskels, aclinfo)
     | _ -> amod
 
 
@@ -399,6 +403,9 @@ run_body Env ((A implies B)::L) :-
     % print \" under the new assumption(s) \", print As, print \"\\n\",
     append A Env NewEnv,
     run_body NewEnv B, 
+    run_body Env L.
+run_body Env ((pi' X\ Y X)::L) :- 
+    (pi X\ run_body Env (Y X)), 
     run_body Env L.
 run_body Env (X::L) :- 
     term_to_string X Xs,
