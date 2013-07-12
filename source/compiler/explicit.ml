@@ -311,12 +311,23 @@ let rec explicit_term term add_sing top_level =
 let explicit_const_ty const = 
   let rec o_to_list_o ty = 
     match ty with
-      | ApplicationType(t, []) when t = Pervasive.kbool ->
-          ApplicationType(Pervasive.klist, [o_type])
+      | ArrowType(left, right) when right = o_type -> 
+          (* By doing so, we cannot handle cases like:
+           * type p (A -> o) -> A -> o.
+           * p (x\ true, true) true.
+           *
+           * However this kind of situation seems to do not appear in practice.
+           * In general for such a type we have:
+           * p X Y :- X Y. 
+           * which we can handle*)
+          let left' = o_to_list_o left in
+            makeArrowType right [left']
       | ArrowType(left, right) -> 
           let left' = o_to_list_o left in
           let right' = o_to_list_o right in
             makeArrowType right' [left']
+      | ApplicationType(t, []) when t = Pervasive.kbool ->
+          ApplicationType(Pervasive.klist, [o_type])
       | ApplicationType(left, [t]) when t = o_type ->
           ApplicationType(left,
                           [ApplicationType(Pervasive.klist, [o_type])]
