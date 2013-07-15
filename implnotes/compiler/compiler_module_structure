@@ -8,10 +8,8 @@ COMPILER MODULE ORGANIZATION:
 
   Implementation Modules:
   Main:
-    This module contains the program entry point (see function "main").
-    This module is responsible for parsing command line arguments, and
-    then making calls into the Compile module to compile the specified
-    module.
+    The entry point of the compiler is locate in source/front/compilerfront.ml
+    It takes care of parsing the arguments and running all the different phases.
 
   Compile:
     The compile module manages the compilation process.  The main function
@@ -99,4 +97,3 @@ COMPILER MODULE ORGANIZATION:
     Routines for recording file positions and printing error messages.  File
     positions contain the name of the file to which the they refer, so that
     positions in multiple files can be safely recorded.
-        

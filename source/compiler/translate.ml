@@ -48,6 +48,8 @@ let getTypeAndEnvironmentSize = function
 
 let typeSkeletonIndex = ref 0
 
+(* The next three functions can be passed as an argument to rationalizeType *)
+
 (**********************************************************************
 *rationalizeTypeAbbrevVar:
 * Used when translating a type variable while translating a typeabbrev
@@ -63,7 +65,7 @@ let rationalizeTypeAbbrevVar sym symtable p =
 * Used when translating a type variable while translating a type into
 * a type skeleton. 
 **********************************************************************)
-let rationalizeSkeletonVar sym symtable p =
+let rationalizeSkeletonVar sym symtable _ =
     let t = Absyn.SkeletonVarType(ref !typeSkeletonIndex) in
     (typeSkeletonIndex := !typeSkeletonIndex + 1;
     TypeAndBindings(t, (Table.add sym t symtable)))
@@ -73,7 +75,7 @@ let rationalizeSkeletonVar sym symtable p =
 * Used when translating a type variable while translating a type into
 * an absyn type.
 **********************************************************************)
-let rationalizeVar sym symtable p =
+let rationalizeVar sym symtable _ =
   let t = Absyn.makeTypeVariable () in
   TypeAndBindings(t, (Table.add sym t symtable))
 
@@ -109,101 +111,115 @@ let rec rationalizeType
     *getHeadAndArgsType:
     * Gets the arguments as a list instead of a tree.
     **************************************************************)
-    let rec getHeadAndArgsType t ts =
-            match t with
-              Preabsyn.App(f,arg,p') ->
-                let TypeAndBindings(argtype, ts') = 
-                       rationalizeType arg ts kindtable typeabbrevtable 
-                                       transvarfunc in
-                let (head, ts'', argtypes) = (getHeadAndArgsType f ts') in
-                  (head, ts'', argtype :: argtypes)
-            | _ -> (t, ts, [])
+    let rec getHeadAndArgsType ty ts =
+            match ty with
+              Preabsyn.App(f, arg, _) ->
+                (* First take care of the leftmost argument to preserve the 
+                 * convention of writing type variables in alphabetic order
+                 * from left to right (eg. A -> B -> pair A B *)
+                let (head, ts', argtypes) = (getHeadAndArgsType f ts) in
+                let TypeAndBindings(argtype, ts'') = 
+                  rationalizeType arg ts' kindtable typeabbrevtable 
+                    transvarfunc in
+                  (head, ts'', argtypes @ [argtype])
+            | _ -> (ty, ts, [])
     in
 
      match ty with 
-       Preabsyn.App(f,t,p) ->
-
-          let (head, ts, args) = getHeadAndArgsType ty vartable in
-          (match head with
-            Preabsyn.Atom(sym,k,p) ->
-                (match k with
-                  Preabsyn.VarID ->
-                    (Errormsg.error p "found type variable, expected a constructor";
-                    TypeAndBindings(Absyn.ErrorType, vartable))
-                | Preabsyn.AVID ->
-                    (Errormsg.error p "found type variable, expected a constructor";
-                     TypeAndBindings(Absyn.ErrorType, vartable))
-                | Preabsyn.CVID ->
-                    (Errormsg.error p "found type variable, expected a constructor";
-                     TypeAndBindings(Absyn.ErrorType, vartable))
-                | _ ->
-                  (match (Table.find sym vartable) with
-                    Some t ->
-                      (Errormsg.error p "found type variable, expected a constructor";
-                       TypeAndBindings(Absyn.ErrorType, vartable))
-                  | None ->
-                      (match (Table.find sym kindtable) with
-                        Some k ->
-                          if (Absyn.getKindArity k) <> (List.length args) then
-                            (Errormsg.error p ("type constructor " ^ (Symbol.name sym) ^
+       | Preabsyn.App(f,t,p) ->
+           let (head, ts, args) = getHeadAndArgsType ty vartable in
+             (match head with
+                | Preabsyn.Atom(sym, k, p) ->
+                    (match k with
+                         Preabsyn.VarID ->
+                           (Errormsg.error p 
+                              "found type variable, expected a constructor";
+                            TypeAndBindings(Absyn.ErrorType, vartable))
+                       | Preabsyn.AVID ->
+                           (Errormsg.error p 
+                              "found type variable, expected a constructor";
+                            TypeAndBindings(Absyn.ErrorType, vartable))
+                       | Preabsyn.CVID ->
+                           (Errormsg.error p 
+                              "found type variable, expected a constructor";
+                            TypeAndBindings(Absyn.ErrorType, vartable))
+                       | _ ->
+                           (match (Table.find sym vartable) with
+                                Some t ->
+                                  (Errormsg.error p 
+                                     "found type variable, expected a constructor";
+                                   TypeAndBindings(Absyn.ErrorType, vartable))
+                              | None ->
+                                  (match (Table.find sym kindtable) with
+                                       Some k ->
+                                         if (Absyn.getKindArity k) <> 
+                                               (List.length args) then
+                                           (Errormsg.error p 
+                                              ("type constructor " ^ 
+                                               (Symbol.name sym) ^
                                                " has arity " ^ 
-                                               (string_of_int (Absyn.getKindArity k)));
-                             TypeAndBindings(Absyn.ErrorType, vartable))
-                          else
-                             TypeAndBindings(Absyn.ApplicationType(k, args), ts)
-                      | None ->
-                            (match (Table.find sym typeabbrevtable) with
-                              Some t ->
-                                (translateTypeAbbrevCall t args ts p)
-                            | None ->
-                              (Errormsg.error p ("undeclared constructor " ^ 
-                                                 (Symbol.name sym));
-                               TypeAndBindings(Absyn.ErrorType, vartable))))))
-          | _ ->  
-             (Errormsg.error p "expected a constructor");
-              TypeAndBindings(Absyn.ErrorType, vartable))
-     | t -> invalid_arg "Types.translateApp: invalid type"
+                                               (string_of_int 
+                                                  (Absyn.getKindArity k)));
+                                            TypeAndBindings(
+                                              Absyn.ErrorType, vartable))
+                                         else
+                                           TypeAndBindings(
+                                             Absyn.ApplicationType(k, args), 
+                                             ts)
+                                     | None ->
+                                         (match 
+                                            (Table.find sym typeabbrevtable) with
+                                              Some t ->
+                                                (translateTypeAbbrevCall t args ts p)
+                                            | None ->
+                                                (Errormsg.error p ("undeclared constructor " ^ 
+                                                                   (Symbol.name sym));
+                                                 TypeAndBindings(Absyn.ErrorType, vartable))))))
+                | _ ->  
+                    (Errormsg.error p "expected a constructor");
+                    TypeAndBindings(Absyn.ErrorType, vartable))
+       | t -> invalid_arg "Types.translateApp: invalid type"
   in  
 
   match ty with
-    Preabsyn.Atom(s, Preabsyn.AVID, pos) ->
-      (transvarfunc s vartable pos)
-  | Preabsyn.Atom(s, Preabsyn.VarID, pos) ->
-      (****************************************************************
-      * If the variable is in the variable table, just return the type
-      * associated with it.  Otherwise, create a new one.
-      ****************************************************************)
-      (match (Table.find s vartable) with
-        Some t -> TypeAndBindings(t, vartable)
-      | None -> transvarfunc s vartable pos)
-  | Preabsyn.Atom(s, Preabsyn.CVID, pos) ->
-      (match (Table.find s vartable) with
-        Some t -> TypeAndBindings(t, vartable)
-      | None -> transvarfunc s vartable pos)
-  | Preabsyn.Atom(s, _, pos) ->
-      (match (Table.find s kindtable) with
-        Some k ->
-          if (Absyn.getKindArity k) <> 0 then
-            (Errormsg.error pos ("expected a sort but found type constructor of arity " ^
-              (string_of_int (Absyn.getKindArity k)));
-            TypeAndBindings(Absyn.ErrorType, vartable))
-          else
-            TypeAndBindings(Absyn.ApplicationType(k, []), vartable)
-      | None ->
-         (match (Table.find s typeabbrevtable) with
-            Some t ->
-              (translateTypeAbbrevCall t [] vartable pos)
-          | None ->
-            (Errormsg.error pos ("undeclared constant '" ^ (Symbol.name s) ^ "'");
-            TypeAndBindings(Absyn.ErrorType, vartable))))
-      
-  | Preabsyn.App(f, t, p) ->
-      translateApp ty
+    | Preabsyn.Atom(s, Preabsyn.AVID, pos) ->
+        (transvarfunc s vartable pos)
+    | Preabsyn.Atom(s, Preabsyn.VarID, pos) ->
+        (* If the variable is in the variable table, just return the 
+         * type associated with it.  Otherwise, create a new one. *)
+        (match (Table.find s vartable) with
+          | Some t -> TypeAndBindings(t, vartable)
+          | None -> transvarfunc s vartable pos)
+    | Preabsyn.Atom(s, Preabsyn.CVID, pos) ->
+        (match (Table.find s vartable) with
+             Some t -> TypeAndBindings(t, vartable)
+           | None -> transvarfunc s vartable pos)
+    | Preabsyn.Atom(s, _, pos) ->
+        (match (Table.find s kindtable) with
+             Some k ->
+               if (Absyn.getKindArity k) <> 0 then
+                 (Errormsg.error pos ("expected a sort but found type " ^ 
+                                      "constructor of arity " ^
+                                      (string_of_int (Absyn.getKindArity k)));
+                  TypeAndBindings(Absyn.ErrorType, vartable))
+               else
+                 TypeAndBindings(Absyn.ApplicationType(k, []), vartable)
+           | None ->
+               (match (Table.find s typeabbrevtable) with
+                    Some t ->
+                      (translateTypeAbbrevCall t [] vartable pos)
+                  | None ->
+                      (Errormsg.error pos 
+                         ("undeclared constant '" ^ (Symbol.name s) ^ "'");
+                       TypeAndBindings(Absyn.ErrorType, vartable))))
 
-  | Preabsyn.Arrow(l, r, p) ->
-      translateArrow ty
+    | Preabsyn.App(f, t, p) ->
+        translateApp ty
 
-  | Preabsyn.ErrorType -> TypeAndBindings(Absyn.ErrorType, vartable)
+    | Preabsyn.Arrow(l, r, p) ->
+        translateArrow ty
+
+    | Preabsyn.ErrorType -> TypeAndBindings(Absyn.ErrorType, vartable)
 
 (**********************************************************************
 *translateType:
@@ -280,7 +296,7 @@ and translateTypeSkeleton ty kindtable typeabbrevtable =
     (*  Get the argument and target parts *)
     let target = getTarget r in
     let args = getArgs ty in
-    
+
     (*  First translate the target.  *)
     let TypeAndBindings(target', ts) =
       rationalizeType target Table.empty kindtable typeabbrevtable 
@@ -288,7 +304,7 @@ and translateTypeSkeleton ty kindtable typeabbrevtable =
 
     (*  Translate all of the arguments  *)
     let args' = translateArgs args ts in
-    
+      
     (*  Rebuild the arrow type as absyn *)
     buildArrow target' args'
     
@@ -785,16 +801,20 @@ and compareConstants c1 c2 =
       (Errormsg.see p' "constant declaration"));
     false)
   else if not (checkPrec prec prec') then
-    (Errormsg.error p ("constant '" ^ name ^ "' already declared with precedence" ^
-      (string_of_int prec') ^ (Errormsg.see p' "constant declaration"));
-    false)
+    (Errormsg.error p 
+       ("constant '" ^ name ^ "' already declared with precedence" ^
+        (string_of_int prec') ^ (Errormsg.see p' "constant declaration"));
+     false)
   else if (Option.isSome skel) && (Option.isSome skel') then
     let t1 = Absyn.getSkeletonType (Option.get skel) in
     let t2 = Absyn.getSkeletonType (Option.get skel') in
     if not (Absyn.types_equal t1 t2) then
-      (Errormsg.error p ("constant '" ^ name ^ "' declared with incompatible type '" ^
-        (Absyn.string_of_skeleton (Option.get skel)) ^ "'" ^
-        (Errormsg.see p' ("constant declaration with type '" ^ (Absyn.string_of_skeleton (Option.get skel')) ^ "'")));
+      (Errormsg.error p 
+         ("constant '" ^ name ^ "' declared with incompatible type '" ^
+          (Absyn.string_of_skeleton (Option.get skel)) ^ "'" ^
+          (Errormsg.see p' 
+             ("constant declaration with type '" ^ 
+              (Absyn.string_of_skeleton (Option.get skel')) ^ "'")));
       false)
     else
       true
@@ -837,7 +857,8 @@ and checkConstantBodies ktable ctable =
           (Errormsg.error p
             ("constant '" ^ name ^ "' declared as both exportdef and useonly");
           result := false)
-        else if (Absyn.getConstantUseOnly c) || (Absyn.getConstantExportDef c) then
+        else if (Absyn.getConstantUseOnly c) || 
+                (Absyn.getConstantExportDef c) then
           let sort = if (Absyn.getConstantUseOnly c) 
                      then "useonly" 
                      else "exportdef" in
@@ -849,7 +870,8 @@ and checkConstantBodies ktable ctable =
             ()
           else
             (Errormsg.error p
-              ("constant '" ^ name ^ "' declared as " ^ sort ^ " without target type 'o'");
+              ("constant '" ^ name ^ "' declared as " ^ sort ^ 
+               " without target type 'o'");
             result := false)   
         else
           ()
@@ -921,7 +943,8 @@ and mustCompare =
     if (Option.isSome currentConstant) then
       compareConstants (Option.get currentConstant) newConstant
     else
-      Errormsg.impossible Errormsg.none "Translate.mustCompare: invalid constant"
+      Errormsg.impossible Errormsg.none 
+        "Translate.mustCompare: invalid constant"
 
 (**********************************************************************
 *ifThenElse:
@@ -1065,7 +1088,8 @@ and copyConstant =
       let edref = Absyn.getConstantExportDefRef currentConstant in
       let closedref = Absyn.getConstantClosedRef currentConstant in
       (Errormsg.log Errormsg.none
-        ("set exportdef '" ^ (Absyn.getConstantPrintName newConstant) ^ "' to " ^ (string_of_bool !edref));
+        ("set exportdef '" ^ (Absyn.getConstantPrintName newConstant) ^ 
+         "' to " ^ (string_of_bool !edref));
       tyref := Absyn.getConstantType newConstant;
       skelref := Absyn.getConstantSkeleton newConstant;
       uoref := Absyn.getConstantUseOnly newConstant;
