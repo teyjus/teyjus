@@ -150,9 +150,14 @@ let writeModule m clauses newclauses oc =
                             (!addedTypes @ Explicit.explicit_constants)) then
                     (* The type of a new predicate can also contains "o" 
                      * in an argument position which needs to be modified *)
-                    let const_exp = Explicit.explicit_const_ty const in
-                    let name = getConstantPrintName const_exp in
-                    let skValue = getConstantSkeletonValue const_exp in
+                    let const' = 
+                      if !explicit then
+                        Explicit.explicit_const_ty const 
+                      else
+                        const
+                    in
+                    let name = getConstantPrintName const' in
+                    let skValue = getConstantSkeletonValue const' in
                     let ty = getSkeletonType skValue in
                     let tyStr' = Types.string_of_typemolecule 
                                    (Types.Molecule(ty, [])) in 
