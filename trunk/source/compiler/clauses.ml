@@ -121,7 +121,7 @@ let makeHiddenConstant tsym =
   
 (********************************************************************
 *newHead:
-* Creats a predicate name and a clause head for a list of clauses
+* Creates a predicate name and a clause head for a list of clauses
 * corresponding to a disjunctive goal. Skeletonization here is okay
 * since the type skeleton will not be needed again for such predicates.
 ********************************************************************)
