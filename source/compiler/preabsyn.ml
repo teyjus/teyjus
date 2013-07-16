@@ -280,9 +280,7 @@ let getClauseTerm = function
   Clause(t) -> t
 
 let getModuleClauses = function
-  | Module(name, gconsts, lconsts, cconsts, uconsts, econsts, fixities,
-      gkinds, lkinds, tabbrevs, clauses, accummods,
-      accumsigs, usesigs, impmods) -> clauses
+  | Module(_, _, _, _, _, _, _, _, _, _, clauses, _, _, _, _) -> clauses
   | _ ->
       Errormsg.impossible Errormsg.none
         "Preabsyn.getModuleClauses: invalid module"

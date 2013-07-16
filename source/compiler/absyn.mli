@@ -28,13 +28,13 @@ type symbol = Symbol.symbol
 
 (*****************************************************************************
 *Kinds:
-* (symbol, arity, index, position)
 *****************************************************************************)
 type akindtype =
     LocalKind
   | GlobalKind
   | PervasiveKind
-
+    
+(* (symbol, arity, index, kindtype, position) *)
 and akind = Kind of (symbol * int option * int ref * akindtype * pos) 
 
 (*****************************************************************************
