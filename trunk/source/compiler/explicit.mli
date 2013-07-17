@@ -34,8 +34,8 @@
 val explicit_term : Absyn.aterm -> bool -> bool ->  Absyn.aterm 
 
 (* Add introduced constants and modify defined types in the .sig file 
- * in the following way: * every "o" which is not in the target is replaced
- * by "list o" *)                                                       
+ * in the following way: * every "o" which is not in a target position is 
+ * replaced by "list o" *)                                                       
 val add_constants : Absyn.amodule -> Absyn.amodule
 
 (* For the type of the constant const every "o" except the one in the target
