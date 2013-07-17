@@ -130,6 +130,7 @@ let forall_constant =
     makeGlobalConstant symbol fixity prec exp_def 
       use_only tenv_size skel index 
 
+
 let explicit_constants = [clause_constant; implies_constant; fact_constant; 
                           forall_constant]
 
@@ -196,7 +197,7 @@ let rec explicit_term term add_sing top_level =
       (* :- *)
       | ApplicationTerm(
           FirstOrderApplication(
-            ConstantTerm(const, typ_list, pos_const), 
+            ConstantTerm(const, typ_const, pos_const), 
             body::[head], _), pos) 
           when const = Pervasive.implConstant ->
         let body_flat = flatten_ands body  in
@@ -207,7 +208,7 @@ let rec explicit_term term add_sing top_level =
           if top_level then
             ApplicationTerm(
               FirstOrderApplication(
-                ConstantTerm(clause_constant, typ_list, pos_const), 
+                ConstantTerm(clause_constant, typ_const, pos_const), 
                 [head_exp; body_exp_list], 2), 
               pos) 
           else
@@ -219,7 +220,7 @@ let rec explicit_term term add_sing top_level =
             in
             let term_exp = ApplicationTerm(
               FirstOrderApplication(
-                ConstantTerm(implies_constant, typ_list, pos_const), 
+                ConstantTerm(implies_constant, typ_const, pos_const), 
                 [body_exp_list; head_exp'], 2), 
               pos) in
               if add_sing then
@@ -231,7 +232,7 @@ let rec explicit_term term add_sing top_level =
       (* , conjunction not the list separator *)
       | ApplicationTerm(
           FirstOrderApplication(
-            ConstantTerm(const, typ_list, pos_const), 
+            ConstantTerm(const, typ_const, pos_const), 
             args, _), pos) 
           when const = Pervasive.andConstant ->
           let term_flat = flatten_ands term  in
@@ -242,28 +243,30 @@ let rec explicit_term term add_sing top_level =
       (* pi *)
       | ApplicationTerm(
           FirstOrderApplication(
-            ConstantTerm(const, typ_list, pos_const), 
+            ConstantTerm(const, typ_const, pos_const), 
             args, nb_args), pos) 
           when const = Pervasive.allConstant ->
           let args_exp = List.map (fun x -> explicit_term x true false) args in
           let term_exp = 
             ApplicationTerm(
               FirstOrderApplication(
-                ConstantTerm(forall_constant, typ_list, pos_const), 
+                ConstantTerm(forall_constant, typ_const, pos_const), 
                 args_exp, List.length args_exp), pos)  in
               term_exp
+
+      (* term_to_string *)
 
       (* Any other predicate *)
       | ApplicationTerm(
           FirstOrderApplication(
-            ConstantTerm(const, typ_list, pos_cons), 
+            ConstantTerm(const, typ_const, pos_cons), 
             args, nbargs), pos) ->
           let exp_args = 
             List.map (fun x -> explicit_term x true false) args in
           let term_exp  = 
             ApplicationTerm(
               FirstOrderApplication(
-                ConstantTerm(const, typ_list, pos_cons),
+                ConstantTerm(const, typ_const, pos_cons),
                 exp_args, List.length exp_args), pos) in
             let skel = getConstantSkeletonValue const in
             let cons_ty = getSkeletonType skel in
@@ -304,8 +307,14 @@ let rec explicit_term term add_sing top_level =
           UNestedAbstraction(asymlist, nb, body), pos) ->
           let body_exp = explicit_term body true false in
             AbstractionTerm(UNestedAbstraction(asymlist, nb, body_exp), pos)
-      | AbstractionTerm(NestedAbstraction(_,_),_) ->
+      | AbstractionTerm(NestedAbstraction(_, _), _) ->
             failwith "Nested Abs"
+      | FreeVarTerm(NamedFreeVar(ImplicitVar(sym, hc, new_ty, typ_opt)), p) ->
+          (match !typ_opt with
+            | Some(ty) when ty = o_type && add_sing -> 
+                embed_terms_in_list [term]
+            | _ ->
+                term)
       | _ -> term
 
 let explicit_const_ty const = 
@@ -316,7 +325,8 @@ let explicit_const_ty const =
            * type p (A -> o) -> A -> o.
            * p (x\ true, true) true.
            *
-           * However this kind of situation seems to do not appear in practice.
+           * However this kind of situation seems to do not appear 
+           * in practice.
            * In general for such a type we have:
            * p X Y :- X Y. 
            * which we can handle*)

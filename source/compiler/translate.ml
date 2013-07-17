@@ -747,7 +747,8 @@ and mergeTypeAbbrev sym tabbrev table =
                  ("conflict in argument numbers for type abbreviation" ^
                  (Errormsg.see p' "type abbreviation declaration"));
                table)
-       (* GN, Aug 20, 2012: May be better not to rely on OCaml's equality here! *)
+       (* GN, Aug 20, 2012: 
+        * May be better not to rely on OCaml's equality here! *)
          else if ty <> ty' then
                (Errormsg.error p 
                       ("conflict in type for type abbreviation" ^
@@ -1165,8 +1166,7 @@ let copyUseonly generalCopier owner currentConstant newConstant =
 **********************************************************************)
 let rec translate mod' sig' =
     let (asig, (ktable, ctable, atable)) =
-      translateSignature sig' true true Pervasive.pervasiveKinds
-        Pervasive.pervasiveConstants Pervasive.pervasiveTypeAbbrevs copy in
+      translateSignature sig' true true copy in
     let amod = translateModule mod' ktable ctable atable in
     (amod, asig)
 
@@ -1184,9 +1184,6 @@ let rec translate mod' sig' =
 *     due to an accum_sig, and so is treated normally.  If false, the
 *     signature is being parsed due to a use_sig, and so exportdef
 *     constants should be marked as useonly instead of exportdef.
-*   ktable: the kind table
-*   ctable: the constant table
-*   tabbrevtable: the type abbreviation table
 *   generalCopier: the copier to use to move information back into
 *     the symbol table when translating a constant that already
 *     exists therein.
@@ -1194,14 +1191,17 @@ let rec translate mod' sig' =
 *   an absyn signature
 *   a tuple of the updated constant, kind and abbreviation tables.
 **********************************************************************)
-and translateSignature s owner accumOrUse ktable ctable atable generalCopier =
+and translateSignature s owner accumOrUse generalCopier =
+  let ktable = Pervasive.pervasiveKinds in
+  let ctable = Pervasive.pervasiveConstants in 
+  let atable = Pervasive.pervasiveTypeAbbrevs in
   match s with
     Preabsyn.Module(_) ->
       (Errormsg.impossible
         Errormsg.none
         "Translate.translateSignature: expected Preabsyn.Signature.")
   | Preabsyn.Signature(name, gconsts, uconsts, econsts, gkinds, tabbrevs,
-      fixities,accumsigs,usesigs) ->
+      fixities, accumsigs, usesigs) ->
 
   let _ = Errormsg.log Errormsg.none ("translating signature '" ^ name ^ "'") in
   
@@ -1221,10 +1221,11 @@ and translateSignature s owner accumOrUse ktable ctable atable generalCopier =
                              Table.add s kind ktable
 	   | Some (Absyn.Kind(s', Some a', _, Absyn.GlobalKind, p')) ->
 	       if a <> a' 
-               then (Errormsg.error p ("kind '" ^ (Symbol.name s) ^ 
-                                          "' already declared with arity " ^
-		                          (string_of_int a') ^ 
-                                          (Errormsg.see p' "kind declaration"));
+               then (Errormsg.error p 
+                       ("kind '" ^ (Symbol.name s) ^ 
+                        "' already declared with arity " ^
+                        (string_of_int a') ^ 
+                        (Errormsg.see p' "kind declaration"));
                      ktable)
                else (*  Leave the existing global kind. *)
                      ktable
@@ -1315,12 +1316,7 @@ and translateSignature s owner accumOrUse ktable ctable atable generalCopier =
   let rec translateSigs tables accum sigs = 
     match sigs with
       s::rest ->	
-        let (asig, table) =
-          translateSignature s owner accum
-            Pervasive.pervasiveKinds
-            Pervasive.pervasiveConstants
-            Pervasive.pervasiveTypeAbbrevs
-            generalCopier
+        let (asig, table) = translateSignature s owner accum generalCopier
         in
         (translateSigs (table::tables) accum rest)
     | [] ->
@@ -1373,7 +1369,8 @@ and translateSignature s owner accumOrUse ktable ctable atable generalCopier =
                  usetypeabbrevtabs) in
   
   (*  Translate constants *)
-  let constantlist = translateConstants gconsts ktable atable buildGlobalConstant in
+  let constantlist = 
+    translateConstants gconsts ktable atable buildGlobalConstant in
   let uconstantlist = translateUseOnlyConstants owner uconsts ktable atable in
   let econstantlist =
     if accumOrUse then
@@ -1496,7 +1493,8 @@ and translateModule mod' ktable ctable atable =
       | Absyn.Kind(s, None, _, Absyn.LocalKind, p) ->
           (match (Table.find s ktable) with
             Some Absyn.Kind(s', Some a', m, Absyn.GlobalKind, p') ->
-              (Table.add s (Absyn.Kind(s', Some a', m,Absyn.LocalKind, p')) ktable)
+              (Table.add s 
+                 (Absyn.Kind(s', Some a', m,Absyn.LocalKind, p')) ktable)
           | Some Absyn.Kind(s', Some a', m, Absyn.LocalKind, p') ->
               ktable
           | Some k ->
@@ -1635,14 +1633,16 @@ and translateModule mod' ktable ctable atable =
             [previouslyExists; hasCurrentConstantType Absyn.GlobalConstant;
             hasCurrentConstantUseonly false; hasCurrentConstantExportdef true])
           (success)
-          (error "declared as exportdef without corresponding declaration in signature"))
+          (error ("declared as exportdef without corresponding " ^
+                  " declaration in signature")))
         (ifThenElse
           (andAlso
             [previouslyExists; hasCurrentConstantType Absyn.GlobalConstant;
             hasCurrentConstantUseonly false; hasCurrentConstantExportdef true;
             mustCompare])
           (success)
-          (error "declared as exportdef without corresponding declaration in signature"))
+          (error ("declared as exportdef without corresponding " ^ 
+                  "declaration in signature")))
     in    
     mergeConstants clist ctable f
   in
@@ -1669,7 +1669,7 @@ and translateModule mod' ktable ctable atable =
   ******************************************************************)
   let processSignatures sigs = 
     List.map
-      (fun (Preabsyn.Symbol(accum,_,_)) ->
+      (fun (Preabsyn.Symbol(accum, _, _)) ->
         Compile.compileSignature (Symbol.name accum))
       sigs
   in
@@ -1746,15 +1746,9 @@ and translateModule mod' ktable ctable atable =
     match l with
         [] -> (sigs, tables)
       | l'::ls ->
-          let (asig, table) = 
-            translateSignature l' false true
-              Pervasive.pervasiveKinds
-              Pervasive.pervasiveConstants
-              Pervasive.pervasiveTypeAbbrevs
-              copier
-          in
+          let (asig, table) = translateSignature l' false true copier in
           let s = make asig in
-          translateMods make copier (s::sigs) (table::tables) ls
+            translateMods make copier (s::sigs) (table::tables) ls
   in
 
   (********************************************************************
@@ -1762,7 +1756,7 @@ and translateModule mod' ktable ctable atable =
   ********************************************************************)
   let translateAccumSigs sigs =
     let make asig = asig in
-    translateMods make copyAccum [] [] sigs
+      translateMods make copyAccum [] [] sigs
   in
   
   (********************************************************************
@@ -1770,7 +1764,7 @@ and translateModule mod' ktable ctable atable =
   ********************************************************************)
   let translateUseSigs sigs =
     let make asig = asig in
-    translateMods make (copyUseonly copyAccum false) [] [] sigs
+      translateMods make (copyUseonly copyAccum false) [] [] sigs
   in
   
   (********************************************************************
@@ -1780,7 +1774,7 @@ and translateModule mod' ktable ctable atable =
     let make asig =
       Absyn.AccumulatedModule(Absyn.getSignatureName asig, asig)
     in
-    translateMods make copyAccum [] [] accums
+      translateMods make copyAccum [] [] accums
   in
   
   (********************************************************************
@@ -1790,7 +1784,7 @@ and translateModule mod' ktable ctable atable =
     let make asig =
       Absyn.ImportedModule(Absyn.getSignatureName asig, asig)
     in
-    translateMods make copyAccum [] [] imps
+      translateMods make copyAccum [] [] imps
   in
  
   (*  Get the pieces of the module  *)
@@ -1834,8 +1828,10 @@ and translateModule mod' ktable ctable atable =
       let atable' = translateTypeAbbrevs tabbrevs ktable in
       let atable = 
          let mergeTypeAbbrevs' t1 t2 = mergeTypeAbbrevs t2 t1 ktable in
-         let accsigstypeabbrevtabs = (List.map (fun (_,_,t) -> t) accsigstables) in
-         let usesigstypeabbrevtabs = (List.map (fun (_,_,t) -> t) usesigstables) in
+         let accsigstypeabbrevtabs = 
+           (List.map (fun (_,_,t) -> t) accsigstables) in
+         let usesigstypeabbrevtabs = 
+           (List.map (fun (_,_,t) -> t) usesigstables) in
          let accstypeabbrevtabs = (List.map (fun (_,_,t) -> t) acctables) in
          let impstypeabbrevtabs = (List.map (fun (_,_,t) -> t) imptables) in
            (List.fold_left mergeTypeAbbrevs'  

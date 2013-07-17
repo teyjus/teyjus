@@ -227,11 +227,6 @@ let stackTop = function
                                           "Parse.stackTop: stack is empty.")
 
 
-(**********************************************************************
-*translateClauses:
-* Given an abstract syntax representation of a module and a list of
-* preabsyn terms, generates a list of absyn clauses.
-**********************************************************************)
 let rec translateClause term amodule =
   let previous = !Errormsg.anyErrors in
   let () = Errormsg.anyErrors := false in
@@ -1489,9 +1484,10 @@ and fixTerm term =
           (* collect type variables in (needed components of) type environment 
              and check constant is legal here *)
           let () = checkIllegalConstant c p in
-          let neededtenv = trunclist tenv (Absyn.getConstantTypeEnvSize false c) in
-          (Absyn.ConstantTerm(c,neededtenv,p),fvars,
-            Types.getNewVarsInTypes neededtenv ftyvars,0)
+          let neededtenv = 
+            trunclist tenv (Absyn.getConstantTypeEnvSize false c) in
+            (Absyn.ConstantTerm(c,neededtenv,p),fvars,
+             Types.getNewVarsInTypes neededtenv ftyvars,0)
       | Absyn.FreeVarTerm(fv,p) -> 
           (match fv with
             Absyn.NamedFreeVar(tysy) -> 
@@ -1502,15 +1498,15 @@ and fixTerm term =
                   (tysy :: fvars)
               in
               (Absyn.FreeVarTerm(fv,p),nfvars,ftyvars,0)
-          | _ -> Errormsg.impossible Errormsg.none
-                                     "Parse.fixTerm.FreeVarTerm: non-named var.")
+          | _ -> Errormsg.impossible 
+                   Errormsg.none "Parse.fixTerm.FreeVarTerm: non-named var.")
       | Absyn.BoundVarTerm(bv,p) ->
           (match bv with 
             Absyn.NamedBoundVar(tysy) ->
                let ind = (findBVinList tysy bvars) in
                  (Absyn.BoundVarTerm(Absyn.DBIndex(ind),p),fvars,ftyvars,ind)
-          | _ -> Errormsg.impossible Errormsg.none
-                                   "Parse.fixTerm.BoundVarTerm: non-named form.")
+          | _ -> Errormsg.impossible 
+                   Errormsg.none "Parse.fixTerm.BoundVarTerm: non-named form.")
       | Absyn.AbstractionTerm(abs,p) ->
           (* note that the list of abstracted variables is in reverse order
              after removeNestedAbstractions *)
@@ -1545,13 +1541,16 @@ and fixTerm term =
                       (fixTerms ts' bvars fvars' ftyvars' ind'') in
              (nt::nts',fvars'',ftyvars'',ind'')
             
-  in let (t,fvars,ftyvars,_) = fixTerm' term [] [] [] in
-  (t,fvars,ftyvars)  
+  in 
+  let (t,fvars,ftyvars,_) = fixTerm' term [] [] [] in
+    (t, fvars, ftyvars)  
 
 let unitTests () =
   let absyn = Absyn.Module("UnitTests", [], [],
-    ref (Pervasive.pervasiveConstants), ref (Pervasive.pervasiveKinds), Table.empty,
-    [], [], [], [], [], ref [], [], ref [], ref (Absyn.ClauseBlocks([])))
+                           ref (Pervasive.pervasiveConstants), 
+                           ref (Pervasive.pervasiveKinds), 
+                           Table.empty, [], [], [], [], [], ref [], [], ref [],
+                           ref (Absyn.ClauseBlocks([])))
   in
 
   let test t =

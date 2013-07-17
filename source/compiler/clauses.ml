@@ -1051,8 +1051,10 @@ and translateClauses pmod amod =
     match preclauses with
       [] -> (clauses, newclauses, hcs)
     | c::cs ->
-        let (clauses', newclauses', hcs') = translateClause c amod clauses newclauses hcs in
-        parse' cs amod clauses' newclauses' hcs'
+        let (clauses', newclauses', hcs') = 
+          translateClause c amod clauses newclauses hcs 
+        in
+          parse' cs amod clauses' newclauses' hcs'
 
   in
 
