@@ -96,7 +96,8 @@ let solveQueries () =
         | "y" -> true
         | "n" -> false
         | _ ->
-            print_endline "\nSorry, only options are `y' or `n'.\nLet's try it again:";
+            print_endline ("\nSorry, only options are `y' or `n'.\n" ^ 
+                           "Let's try it again:");
             moreAnswers ()
     in
 
@@ -115,13 +116,13 @@ let solveQueries () =
   
   (* solve one query *)
   let solveQuery query =
-   if Query.buildQueryTerm query (Module.getCurrentModule ()) then 
+    if Query.buildQueryTerm query (Module.getCurrentModule ()) then 
       if !batch then
         solveQueryBatch ()
       else
         solveQueryInteract ()
     else
-     prerr_endline "";
+      prerr_endline "";
     Module.cleanModule (); 
     Front.simulatorReInit false ;
     Module.initModuleContext ()
@@ -136,8 +137,7 @@ let solveQueries () =
     while true do   
       print_string ("[" ^ modName ^"] ?- ");
       let query = read_line () in
-
-      solveQuery query  
+        solveQuery query  
     done
   in
 

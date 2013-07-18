@@ -17,6 +17,7 @@
 // You should have received a copy of the GNU General Public License        //
 // along with Teyjus.  If not, see <http://www.gnu.org/licenses/>.          //
 //////////////////////////////////////////////////////////////////////////////
+#include <stdio.h>
 #include "../simulator/builtins/readterm.h"
 #include "front_c.h"
 #include "query_c.h"
@@ -102,8 +103,11 @@ void c_setTypeAndTermLocation(value v)
 
 int c_solveQuery(value v)
 {
+    int i;
     CAMLparam1 (v);
-    CAMLreturn (Val_int(QUERY_solveQuery()));
+    i = QUERY_solveQuery();
+    fflush(stdout);
+    CAMLreturn (Val_int(i));
 }
 
 int c_showAnswers(value v)

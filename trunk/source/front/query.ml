@@ -50,10 +50,13 @@ let buildQueryTerm query amod =
 		   Readterm.readTermAndType term tymol fvars tyfvars;
 		   true)
 	  else 
-		  (prerr_endline ("Error: expecting query term of type: o" ^
-		    (Errormsg.info ("encountered term: " ^ (Absyn.string_of_term term))) ^
-        (Errormsg.info ("of type: " ^ (Types.string_of_typemolecule tymol))));
-		  false)
+            (prerr_endline ("Error: expecting query term of type: o" ^
+                            (Errormsg.info ("encountered term: " ^ 
+                                            (Absyn.string_of_term term))) ^
+                            (Errormsg.info ("of type: " ^ 
+                                           (Types.string_of_typemolecule tymol)
+                            )));
+             false)
 	  
 (***************************************************************************)
 (*    invoke the simulator to solve a query                                *)
@@ -61,7 +64,7 @@ let buildQueryTerm query amod =
 let solveQuery () = 
   try
 	let _ = Simerrors.handleSimExceptions(Ccode_stubs.solveQuery()) in
-	true (* should never be encountered *)
+      true (* should never be encountered *)
   with
 	Simerrors.Query       -> false (* query was aborted *)
   | Simerrors.QueryResult -> true  (* query has some results *)
