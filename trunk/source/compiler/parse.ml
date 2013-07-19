@@ -236,10 +236,12 @@ let rec translateClause term amodule =
   let type' = getTermMolecule tty in
   
   (*  Remove all overloaded operators.  *)
-  let _ = Errormsg.log Errormsg.none "Parse.translateClause: Removing overloads..." in
+  let _ = Errormsg.log Errormsg.none 
+            "Parse.translateClause: Removing overloads..." in
   let term'' = removeOverloads term' in
   let _ = Errormsg.log Errormsg.none
-    ("Parse.translateClause: Removed overloads: " ^ (Absyn.string_of_term_ast term'')) in
+    ("Parse.translateClause: Removed overloads: " ^ 
+     (Absyn.string_of_term_ast term'')) in
   
   (*  Ensure that the term is valid and is of the correct type. *)                        
   let () = if term'' <> Absyn.errorTerm then
@@ -265,12 +267,11 @@ let rec translateClause term amodule =
   result)
 
 (**********************************************************************
-*translateTerm:
+*translateTermTopLevel:
 * Given an abstract syntax representation of a module and a preabsyn
 * term, generates a normalized absyn term.
-* ! Only used after parsing a query
 **********************************************************************)
-and translateTerm term amodule =
+and translateTermTopLevel term amodule =
   let previous = !Errormsg.anyErrors in
   let () = Errormsg.anyErrors := false in
   
@@ -292,7 +293,8 @@ and translateTerm term amodule =
 
   let (fixedterm, fvars, ftyvars) = fixTerm term''' in
   let _ = Errormsg.log (Absyn.getTermPos term''')
-      ("parsed, normalized, fixed term: " ^ (Absyn.string_of_term_ast fixedterm))
+      ("parsed, normalized, fixed term: " ^ 
+       (Absyn.string_of_term_ast fixedterm))
   in 
 
   let mol' = Types.skeletonizeMolecule mol' in
@@ -350,11 +352,11 @@ and parseTerm parsingtoplevel inlist term fvs bvs amodule =
 
   | Preabsyn.LambdaTerm(b, t, pos) ->
       (* Corresponds to x\ t. Mode should switch to non-list in parsing t *)
-      let bbvs = parseTypeSymbols b amodule in
+      let bbv = parseTypeSymbol b amodule in
       let (tty, fvs') = 
-        parseTerms parsingtoplevel false t fvs (bbvs @ bvs)
+        parseTerms parsingtoplevel false t fvs (bbv :: bvs)
                    amodule newStack 
-      in (makeAbstraction tty bbvs pos, fvs')
+      in (makeAbstraction tty bbv pos, fvs')
   
   | Preabsyn.IntTerm(i, pos) -> 
            (makeType (Absyn.IntTerm(i,  pos)) 
@@ -370,7 +372,7 @@ and parseTerm parsingtoplevel inlist term fvs bvs amodule =
             fvs)
 
   | Preabsyn.IdTerm(sym, ty, idkind, pos) ->
-      let (op', fvs') = (translateId parsingtoplevel inlist term fvs bvs amodule)
+      let (op', fvs') = translateId parsingtoplevel inlist term fvs bvs amodule
       in
       (match op' with
         StackOp(_) -> 
@@ -389,7 +391,7 @@ and parseTerm parsingtoplevel inlist term fvs bvs amodule =
 * Arguments:
 *   parsingtoplevel: a boolean flag indicating whether the function is
 *     parsing a term at the toplevel (in "interactive" mode) or a
-*     clause in a file (see translateTerm, translateClause).
+*     clause in a file (see translateTermTopLevel, translateClause).
 *   inlist: a boolean flag indicating whether the function is parsing
 *     within a list.  This is used to decided whether to parse a comma
 *     as a list separator or a conjunction operator.
@@ -452,28 +454,18 @@ and parseTerms parsingtoplevel inlist terms fvs bvs amodule stack =
   | [] -> (reduceToTerm parsingtoplevel fvs amodule stack)
 
 (**********************************************************************
-*parseTypeSymbols:
-* Parses a list of type symbols.
+*parseTypeSymbol:
+* Parses a type symbol appearing in a lambda expression.
 **********************************************************************)
-and parseTypeSymbols tsymlist amodule =
-  let newBoundTypeSymbol sym ty pos =
-    match ty with
-      Some t ->
-        let t' = Translate.translateType t amodule in
-        Absyn.BoundVar(sym, ref None, ref true, ref(Some t'))
-    | None ->
+and parseTypeSymbol tsym amodule =
+  match tsym with
+    | Preabsyn.TypeSymbol(sym, Some(t), _) -> 
+        let t' = Translate.translateTypeAnnot t amodule in
+          Absyn.BoundVar(sym, ref None, ref true, ref(Some t'))
+    | Preabsyn.TypeSymbol(sym, None, _) -> 
         Absyn.BoundVar(sym, ref None, ref true,
-          ref(Some (Absyn.makeTypeVariable ())))
-  in
+                       ref(Some (Absyn.makeTypeVariable ())))
 
-  let rec parse' tsymlist =
-    match tsymlist with
-      (Preabsyn.TypeSymbol(sym, ty, k, pos))::tsymlist' ->
-        let bv = newBoundTypeSymbol sym ty pos in
-        bv :: (parse' tsymlist')
-    | [] -> []
-  in
-  parse' tsymlist
 
 (**********************************************************************
 *translateId:
@@ -553,9 +545,10 @@ and constantToOpTerm parsingtoplevel term constant fvs amodule =
       (StackOp(constant, (Types.getMoleculeEnvironment tmol), pos), fvs)
   in
   match term with
-    Preabsyn.IdTerm(sym, Some(ty), k, pos) ->
+    Preabsyn.IdTerm(_, Some(ty), _, pos) ->
       let tm1 = Types.makeConstantMolecule parsingtoplevel constant in
-      let tm2 = Types.Molecule((Translate.translateType ty amodule), []) in
+      let tm2 = 
+        Types.Molecule((Translate.translateTypeAnnot ty amodule), []) in
       
       let result = (Types.unify tm1 tm2) in
       if result = Types.Success then
@@ -563,7 +556,7 @@ and constantToOpTerm parsingtoplevel term constant fvs amodule =
       else
         (constantTypeError tm1 result pos;
         (StackError, fvs))
-  | Preabsyn.IdTerm(sym, ty, k, pos) ->
+  | Preabsyn.IdTerm(_, None, _, pos) ->
       let tm1 = Types.makeConstantMolecule parsingtoplevel constant in
       (make' tm1 pos)
   | _ -> Errormsg.impossible (Preabsyn.getTermPos term) 
@@ -577,38 +570,39 @@ and makeAnonymousTypeSymbol c sym ty =
 and makeVarToOpTerm term fvs bvs amodule makeSymFunc =
   match term with
     Preabsyn.IdTerm(sym, Some(ty), k, pos) ->
-      let skel = Translate.translateType ty amodule in
+      (* There is a type annotation. We use it to generate the skeleton *)
+      let skel = Translate.translateTypeAnnot ty amodule in
       let tmol = Types.Molecule(skel, []) in
       let typesym = makeSymFunc None sym skel in
       let fvs' = (add fvs sym typesym) in
-      (StackTerm(Term(Absyn.makeFreeVarTerm typesym pos, tmol)), fvs')
+        (StackTerm(Term(Absyn.makeFreeVarTerm typesym pos, tmol)), fvs')
   | Preabsyn.IdTerm(sym, None, k, pos) ->
       let skel = Absyn.makeTypeVariable () in
       let tmol = Types.Molecule(skel, []) in
       let typesym = makeSymFunc None sym skel in
       let fvs' = (add fvs sym typesym) in
-      (StackTerm(Term(Absyn.makeFreeVarTerm typesym pos, tmol)), fvs')
+        (StackTerm(Term(Absyn.makeFreeVarTerm typesym pos, tmol)), fvs')
   | _ -> Errormsg.impossible Errormsg.none 
                              "Parse.makeVarToOpTerm: invalid id term"
 
 and varToOpTerm term typesym fvs bvs amodule makeVarFunc =
   match term with
-    Preabsyn.IdTerm(sym, Some(ty), k, pos) ->
-      (*  If the term has a given type, attempt to unify it with the
+    Preabsyn.IdTerm(_, Some(ty), _, pos) ->
+      (*  If the term has a type annotation, attempt to unify it with the
           type associated with the given symbol.  *)  
       let tm1 = Types.Molecule(Absyn.getTypeSymbolRawType typesym, []) in
-      let tm2 = Types.Molecule((Translate.translateType ty amodule), []) in
+      let tm2 = Types.Molecule((Translate.translateTypeAnnot ty amodule), []) in
       let result = (Types.unify tm1 tm2) in
       if result = Types.Success then
         (StackTerm(Term(makeVarFunc typesym pos, tm2)), fvs)
       else
         (idTypeError tm1 result pos;(StackError, fvs))
 
-  | Preabsyn.IdTerm(sym, None, k, pos) ->
-     (*  If the term has no given type, simply create a new type variable and
-         bind it.  *)
+  | Preabsyn.IdTerm(_, None, _, pos) ->
+     (*  If the term has no type annotation, simply create a 
+      *  new type variable and bind it.  *)
      let tm1 = Types.Molecule(Absyn.getTypeSymbolRawType typesym, []) in
-     (StackTerm(Term(makeVarFunc typesym pos, tm1)), fvs)
+       (StackTerm(Term(makeVarFunc typesym pos, tm1)), fvs)
   | _ -> Errormsg.impossible (Preabsyn.getTermPos term) 
                              "Parse.varToOpTerm: invalid term"
 
@@ -1084,39 +1078,31 @@ and newParseState stack =
 
 (**********************************************************************
 *makeAbstraction:
-* Given the body of an abstraction and its type and the list of variables 
-* that are abstracted, returns a pair of the abstracted term and its type.
+* Given the body of an abstraction and its type and the variable abstracted, 
+* returns a pair of the abstracted term and its type.
 * Abstractions in the returned form are over exactly one variable, i.e. 
 * abstraction over a list of variables has to be converted into a sequence of 
 * abstractions. Notice also that the convention when a list of variables is 
 * used is that the closest abstracted variable appears first, i.e. 
 * (lam x lam y t) would have its list of variables as [y,x] and not [x,y]
 **********************************************************************)
-and makeAbstraction termmol bvs pos =
+and makeAbstraction termmol bv pos =
   (********************************************************************
   *makeTerm:
   ********************************************************************)
-  let rec makeTerm currentterm bvs =
-    match bvs with
-      [] -> currentterm
-    | bv::bvs' ->
-        let term' = Absyn.AbstractionTerm(
-          Absyn.NestedAbstraction(bv, currentterm),
-          pos) in
-        (makeTerm term' bvs')
+  let makeTerm currentterm bv =
+    Absyn.AbstractionTerm(
+      Absyn.NestedAbstraction(bv, currentterm),
+      pos) 
   in
 
-  if (List.length bvs) == 0 then
-    (Errormsg.impossible Errormsg.none
-      "Parse.makeType: invalid number of bvs.")
-  else
-    let term = getTermTerm termmol in
-    let term' = makeTerm term bvs in
-    
-    let mol = getTermMolecule termmol in
-    let bvtypes = List.rev_map (Absyn.getTypeSymbolType) bvs in
-    let ty' = Absyn.makeArrowType (Types.getMoleculeType mol) bvtypes in
-    let env' = Types.getMoleculeEnvironment mol in
+  let term = getTermTerm termmol in
+  let term' = makeTerm term bv in
+
+  let mol = getTermMolecule termmol in
+  let bvtype = Absyn.getTypeSymbolType bv in
+  let ty' = Absyn.makeArrowType (Types.getMoleculeType mol) [bvtype] in
+  let env' = Types.getMoleculeEnvironment mol in
     Term(term', Types.Molecule(ty', env'))
 
 (**********************************************************************
@@ -1418,9 +1404,9 @@ and normalizeTerm term =
 * Gets a term in curried and named form but with no nested abstractions. 
 * 
 * Returns the term converted into de Bruijn representation with applications in 
-* curried form and with closedness annotations and the sets of free term and type
-* variables in the term (indicated by unique Absyn.atypesymbol cells in one case
-* and Absyn.atype cells of the form:
+* curried form and with closedness annotations and the sets of free term and 
+* type variables in the term (indicated by unique Absyn.atypesymbol cells 
+* in one case * and Absyn.atype cells of the form:
 *   Absyn.TypeVarType(Absyn.BindableTypeVar(ref NONE))
 * in the other case.
 *
@@ -1459,8 +1445,9 @@ and fixTerm term =
   in
 
   (*  un-curry applications generating a head, arg list pair to be fixed before
-      being put together using a first-order like application. Wonder why this was
-      not already done in the call to removeNestedAbstractions in translateTerm *)
+      being put together using a first-order like application. 
+      Wonder why this was not already done in the call to 
+      removeNestedAbstractions in translateTermTopLevel *)
   let rec unCurryTopLevelApps appterm args =
     match appterm with
         (Absyn.CurriedApplication(f,a)) -> 
@@ -1469,7 +1456,8 @@ and fixTerm term =
                 unCurryTopLevelApps appterm' (a::args)
             | _ -> (f, a :: args))
       | _ -> Errormsg.impossible Errormsg.none
-          "Parse.fixTerm.unCurryTopLevelApps: found non-Curried form of application"
+          ("Parse.fixTerm.unCurryTopLevelApps: " ^ 
+             "found non-Curried form of application")
   in
 
   (* the main function in fixTerm. Like fixTerm except that it adds the 
@@ -1554,7 +1542,7 @@ let unitTests () =
   in
 
   let test t =
-    let (t',_,_,_) = Option.get (translateTerm t absyn) in
+    let (t',_,_,_) = Option.get (translateTermTopLevel t absyn) in
     let _ = Errormsg.log Errormsg.none 
       ("Preabsyn Term: " ^ (Preabsyn.string_of_term t)) in
     let _ = Errormsg.log Errormsg.none 

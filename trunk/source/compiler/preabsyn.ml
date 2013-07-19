@@ -26,7 +26,6 @@
 type symbol = Symbol.symbol
 type pos = Errormsg.pos
 
-(* Kinds of Identifiers *)
 type pidkind =
   | CVID
   | ConstID
@@ -42,13 +41,10 @@ type pfixitykind =
   | Postfix of pos
   | Postfixl of pos
     
-(* Symbols *)
 type psymbol = Symbol of symbol * pidkind * pos
 
-(* Type Symbols *)
-and ptypesymbol = TypeSymbol of (symbol * ptype option * pidkind * pos)
+and ptypesymbol = TypeSymbol of (symbol * ptype option * pos)
 
-(* Types *)
 and ptype =
   | Atom of symbol * pidkind * pos
   | App of ptype * ptype * pos
@@ -59,12 +55,11 @@ and ptypeabbrev = TypeAbbrev of psymbol * psymbol list * ptype * pos
 
 and pboundterm = BoundTerm of ptypesymbol list * pterm list
 
-(* Terms *)
 and pterm =
   | SeqTerm of pterm list * pos
   | ListTerm of pterm list * pos
   | ConsTerm of pterm list * pterm * pos
-  | LambdaTerm of ptypesymbol list * pterm list * pos
+  | LambdaTerm of ptypesymbol * pterm list * pos
   | IdTerm of (symbol * ptype option * pidkind * pos)
   | RealTerm of float * pos
   | IntTerm of int * pos
@@ -73,20 +68,12 @@ and pterm =
   
 and pclause = Clause of pterm
 
-(* Constants *)
 and pconstant = Constant of psymbol list * ptype option * pos
 
-(* Kinds *)
 and pkind = Kind of psymbol list * int option * pos
 
-(* Fixity *)
 and pfixity = Fixity of psymbol list * pfixitykind * int * pos
 
-(********************************************************************
-* Module:
-*  This type stores information about a preabsyn module.
-*  See interface for details.
-********************************************************************)
 type pmodule =
   | Module of string * pconstant list * pconstant list * 
       pconstant list * pconstant list * pconstant list * pfixity list *
@@ -95,6 +82,8 @@ type pmodule =
   | Signature of string * pconstant list * pconstant list *
       pconstant list * pkind list *
       ptypeabbrev list * pfixity list * psymbol list * psymbol list
+
+
 
 let string_of_pos pos = Errormsg.string_of_pos pos
 
@@ -107,13 +96,11 @@ and string_of_typesymbollist list =
   map_with_commas string_of_typesymbol list
 
 and string_of_typesymbol = function
-  | TypeSymbol(tsym, Some t, idk, pos) ->
+  | TypeSymbol(tsym, Some t, pos) ->
       "TypeSymbol(" ^ (Symbol.name tsym) ^ ", " ^
-        (string_of_type t) ^ ", " ^ (string_of_idkind idk) ^ ", " ^
-        (string_of_pos pos) ^ ")"
-  | TypeSymbol(tsym, None, idk, pos) ->
-      "TypeSymbol(" ^ (Symbol.name tsym) ^ ", " ^
-        (string_of_idkind idk) ^ ", " ^ (string_of_pos pos) ^ ")"
+        (string_of_type t) ^ ", " ^ (string_of_pos pos) ^ ")"
+  | TypeSymbol(tsym, None, pos) ->
+      "TypeSymbol(" ^ (Symbol.name tsym) ^ ", " ^ (string_of_pos pos) ^ ")"
 
 and string_of_term = function
   | SeqTerm(tlist, pos) ->
@@ -140,7 +127,7 @@ and string_of_term = function
   | StringTerm(s, pos) ->
       "StringTerm(" ^ s ^ ", " ^ (string_of_pos pos) ^ ")"
   | LambdaTerm(lt, t, pos) ->
-      "LambdaTerm([" ^ (string_of_typesymbollist lt) ^ "], " ^
+      "LambdaTerm([" ^ (string_of_typesymbol lt) ^ "], " ^
         (string_of_termlist t) ^ ", " ^ (string_of_pos pos) ^ ")"
   | ErrorTerm ->
       "Error"
@@ -227,8 +214,8 @@ let printPreAbsyn m out =
   let output_list f list = List.iter (fun t -> output_line (f t)) list in
     match m with
       | Module(name, gconstants, lconstants, cconstants, uconstants,
-               econstants, fixities, gkinds, lkinds, tabbrevs, clauses, accummod,
-               accumsig, usesig, impmods) ->
+               econstants, fixities, gkinds, lkinds, tabbrevs, clauses, 
+               accummod, accumsig, usesig, impmods) ->
           output_line ("Module: " ^ name) ;
           output_line "Constants:" ;
           output_list string_of_constant gconstants ;

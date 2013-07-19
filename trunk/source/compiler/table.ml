@@ -59,7 +59,7 @@ let empty = SymbolTable.empty
 
 let printTable toStringFunc table =
   let printFunc s ent =
-    print_endline (toStringFunc ent)
+    print_endline (toStringFunc s ent)
   in
   SymbolTable.iter printFunc table
 

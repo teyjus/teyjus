@@ -34,6 +34,46 @@ type pidkind =
   | AVID        (* Anonymous variable i.e. an underscore *)
   | VarID       (* Free variable, starting with an underscore *)
 
+(* Symbols *)
+type psymbol = Symbol of symbol * pidkind * pos
+
+(* Types *)
+type ptype =
+  | Atom of symbol * pidkind * pos
+  | App of ptype * ptype * pos
+  | Arrow of ptype * ptype * pos
+  | ErrorType
+
+(* Type Symbols for abstracted variables 
+* The optional type represents the possible type annotation *)
+type ptypesymbol = TypeSymbol of (symbol * ptype option * pos)
+
+type ptypeabbrev = TypeAbbrev of psymbol * psymbol list * ptype * pos
+
+(* Terms *)
+type pterm =
+  | SeqTerm of pterm list * pos
+  | ListTerm of pterm list * pos
+  | ConsTerm of pterm list * pterm * pos
+  | LambdaTerm of ptypesymbol * pterm list * pos
+  | IdTerm of (symbol * ptype option * pidkind * pos)
+  | RealTerm of float * pos
+  | IntTerm of int * pos
+  | StringTerm of string * pos
+  | ErrorTerm
+
+type pboundterm = BoundTerm of ptypesymbol list * pterm list
+
+
+type pclause = Clause of pterm
+
+(* Constants *)
+type pconstant = Constant of psymbol list * ptype option * pos
+
+(* Kinds *)
+type pkind = Kind of psymbol list * int option * pos
+
+(* Fixity *)
 type pfixitykind =
   | Infix of pos
   | Infixl of pos
@@ -43,45 +83,7 @@ type pfixitykind =
   | Postfix of pos
   | Postfixl of pos
 
-(* Symbols *)
-type psymbol = Symbol of symbol * pidkind * pos
-
-(* Type Symbols *)
-and ptypesymbol = TypeSymbol of (symbol * ptype option * pidkind * pos)
-
-(* Types *)
-and ptype =
-  | Atom of symbol * pidkind * pos
-  | App of ptype * ptype * pos
-  | Arrow of ptype * ptype * pos
-  | ErrorType
-
-and ptypeabbrev = TypeAbbrev of psymbol * psymbol list * ptype * pos
-
-and pboundterm = BoundTerm of ptypesymbol list * pterm list
-
-(* Terms *)
-and pterm =
-  | SeqTerm of pterm list * pos
-  | ListTerm of pterm list * pos
-  | ConsTerm of pterm list * pterm * pos
-  | LambdaTerm of ptypesymbol list * pterm list * pos
-  | IdTerm of (symbol * ptype option * pidkind * pos)
-  | RealTerm of float * pos
-  | IntTerm of int * pos
-  | StringTerm of string * pos
-  | ErrorTerm
-
-and pclause = Clause of pterm
-
-(* Constants *)
-and pconstant = Constant of psymbol list * ptype option * pos
-
-(* Kinds *)
-and pkind = Kind of psymbol list * int option * pos
-
-(* Fixity *)
-and pfixity = Fixity of psymbol list * pfixitykind * int * pos
+type pfixity = Fixity of psymbol list * pfixitykind * int * pos
 
 (********************************************************************
  * Module:
@@ -138,3 +140,4 @@ val getModuleClauses : pmodule -> pclause list
 val getClauseTerm : pclause -> pterm
 
 val string_of_term : pterm -> string
+val string_of_type : ptype -> string
