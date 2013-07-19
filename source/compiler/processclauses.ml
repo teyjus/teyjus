@@ -148,20 +148,23 @@ let rec transType tyExp =
     Absyn.TypeVarType(typeVarInfo) -> 
       (* it is assumed the typeVarInfo here must take form of BindableTypeVar*)
       (match (!typeVarInfo) with 
-  Absyn.BindableTypeVar(binding) ->
-    if Option.isNone (!binding) then (*actually a free var *)
-      let tyVarData =
-        match gListFind tyExp tyVars with
-    None -> (*not encountered yet *)
-      let varData = Absyn.makeNewTypeVariableData () in
-      gListAdd tyExp varData tyVars; (* add into tyVars *)
-      varData
-        | Some(varData) -> varData
-      in
-      Absyn.makeNewTypeVariable tyVarData
-    else (transType (Option.get (!binding))) (* a type reference *)
-      | _ -> Errormsg.impossible 
-      Errormsg.none "transType: invalid type expression")
+         | Absyn.BindableTypeVar(binding) ->
+             if Option.isNone (!binding) then (*actually a free var *)
+               let tyVarData =
+                 match gListFind tyExp tyVars with
+                   | None -> (* not encountered yet *)
+                       let varData = Absyn.makeNewTypeVariableData () in
+                         gListAdd tyExp varData tyVars; (* add into tyVars *)
+                         varData
+                   | Some(varData) -> varData
+               in
+                 Absyn.makeNewTypeVariable tyVarData
+             else 
+               (* It seems that this situation never happens, possibly
+                * due to a previous call to dereferenceType *)
+               transType (Option.get (!binding)) (* a type reference *)
+         | _ -> Errormsg.impossible 
+                  Errormsg.none "transType: invalid type expression")
   | Absyn.ArrowType(arg, target) ->
     Absyn.ArrowType(transType arg, transType target)
   | Absyn.ApplicationType(kind, args) ->
@@ -687,7 +690,7 @@ and processImpClause clauseTerm clauseDefs varInits tyVarInits impGoal =
   gListsSet ltVars ltyVars lqVars lhqVars;   (* recover global lists    *)   
   setEmbedded lembedded;                     (* recover embedded flag   *)
   let (fvMaps, tyfvMaps, newVarInits, newTyVarInits) = 
-  mapFreeVars fvAssoc tyfvAssoc varInits tyVarInits
+    mapFreeVars fvAssoc tyfvAssoc varInits tyVarInits
   in
   let fvMaps'   = Absyn.TermVarMap(fvMaps)   in
   let tyfvMaps' = Absyn.TypeVarMap(tyfvMaps) in
@@ -747,39 +750,41 @@ and mapFreeVars fvs tyfvs varInits tyVarInits =
     match fvs with
       [] -> (fvMaps, varInits, globalTyVars)
     | ((tysy, toVarData) :: rest) ->	
-  (* collect global type variables *)
-  let newGlobalTyVars = 
-    Types.freeTypeVars (Absyn.getTypeSymbolType tysy) globalTyVars
-  in
-  (* collect var map and var init *)
-  let (fromVarData, newVarInits) =
-    match gListFind tysy qVars with
-      Some(qVarData) -> (qVarData, varInits) (* body quantified     *)
-    | None ->
-        match gListFind tysy hqVars with
-    Some(hqVarInfo) ->                 (* exp head quantified *)
-      (match (!hqVarInfo) with  
-        Some(hqVarData) -> (hqVarData, varInits)
-      | None -> (*exp head quant with first occ in embedded cl:*)
-                      (*should be initiated*)
-          let hqVarData = Absyn.makeNewVariableData () in
-          hqVarInfo := Some(hqVarData); (*update hqVars *)
-          (hqVarData, (hqVarData :: varInits)))
-        | None -> 
-      (* implicitly quantified at head of top-level clause or    *)
-      (* implicitly/explicitly quantified in embedding context of*)
-      (* embedded clauses.                                       *)
-      match gListFind tysy tVars with
-        Some(varData) -> (varData, varInits)
-      | None -> 
-          let varData = Absyn.makeNewVariableData () in
-          gListAdd tysy varData tVars; (*update tyVars*)
-          (varData, 
-           if not (isEmbedded ()) then (varData :: varInits )
-           else varInits)
-  in
-  collectVarMaps rest ((fromVarData, toVarData)::fvMaps) newVarInits
-    newGlobalTyVars
+        (* collect global type variables *)
+        let newGlobalTyVars = 
+          Types.freeTypeVars (Absyn.getTypeSymbolType tysy) globalTyVars
+        in
+        (* collect var map and var init *)
+        let (fromVarData, newVarInits) =
+          match gListFind tysy qVars with
+              Some(qVarData) -> (qVarData, varInits) (* body quantified     *)
+            | None ->
+                match gListFind tysy hqVars with
+                    Some(hqVarInfo) ->       (* exp head quantified *)
+                      (match (!hqVarInfo) with  
+                           Some(hqVarData) -> (hqVarData, varInits)
+                         | None -> 
+                             (*exp head quant with first occ in embedded cl:*)
+                             (*should be initiated*)
+                             let hqVarData = Absyn.makeNewVariableData () in
+                               hqVarInfo := Some(hqVarData); (*update hqVars *)
+                               (hqVarData, (hqVarData :: varInits)))
+                  | None -> 
+                      (* implicitly quantified at head of top-level clause or
+                       * implicitly/explicitly quantified in embedding
+                       * context of embedded clauses. *) 
+                       match gListFind tysy tVars with
+                          Some(varData) -> (varData, varInits)
+                        | None -> 
+                            let varData = Absyn.makeNewVariableData () in
+                              gListAdd tysy varData tVars; (*update tyVars*)
+                              (varData, 
+                               if not (isEmbedded ()) then 
+                                 (varData :: varInits )
+                               else varInits)
+        in
+          collectVarMaps rest ((fromVarData, toVarData)::fvMaps) newVarInits
+            newGlobalTyVars
   in
   
   (******************************************************************)
@@ -802,32 +807,32 @@ and mapFreeVars fvs tyfvs varInits tyVarInits =
   (*     those newly created type variable data in the previous step*)
   (******************************************************************)
   let rec collectTyVarMaps typeVars globalTyVars tyVarMaps tyVarInits =
-  match typeVars with
-    [] -> (tyVarMaps, tyVarInits)
-  | ((tyVar, toTyVarData)::rest) ->
-    if (List.mem tyVar globalTyVars) then
-      let (fromTyVarData, newTyVarInits) =
-      match gListFind tyVar tyVars with
-        Some(tyVarData) -> (tyVarData, tyVarInits)
-      | None -> (* global, but not encountered outside yet *)
-        let tyVarData = Absyn.makeNewTypeVariableData () in
-        gListAdd tyVar tyVarData tyVars; (*update tyVars *)
-        (tyVarData, tyVarData :: tyVarInits)
-      in
-      collectTyVarMaps rest globalTyVars 
-      ((fromTyVarData, toTyVarData) :: tyVarMaps) newTyVarInits
-    else (* not really global *)
-      collectTyVarMaps rest globalTyVars tyVarMaps tyVarInits
+    match typeVars with
+        [] -> (tyVarMaps, tyVarInits)
+      | ((tyVar, toTyVarData)::rest) ->
+          if (List.mem tyVar globalTyVars) then
+            let (fromTyVarData, newTyVarInits) =
+              match gListFind tyVar tyVars with
+                  Some(tyVarData) -> (tyVarData, tyVarInits)
+                | None -> (* global, but not encountered outside yet *)
+                    let tyVarData = Absyn.makeNewTypeVariableData () in
+                      gListAdd tyVar tyVarData tyVars; (*update tyVars *)
+                      (tyVarData, tyVarData :: tyVarInits)
+            in
+              collectTyVarMaps rest globalTyVars 
+                ((fromTyVarData, toTyVarData) :: tyVarMaps) newTyVarInits
+          else (* not really global *)
+            collectTyVarMaps rest globalTyVars tyVarMaps tyVarInits
   in
 
   (* function body of mapFreeVars *)
   let (fvMaps, newVarInits, globalTyVars) = 
-  collectVarMaps fvs [] varInits [] 
+    collectVarMaps fvs [] varInits [] 
   in
   let (tyFvMaps, newTyVarInits) = 
-  collectTyVarMaps tyfvs globalTyVars [] tyVarInits 
+    collectTyVarMaps tyfvs globalTyVars [] tyVarInits 
   in
-  (fvMaps, tyFvMaps, newVarInits, newTyVarInits)
+    (fvMaps, tyFvMaps, newVarInits, newTyVarInits)
 
 (****************************************************************************)
 (*      PROCESS TOP LEVEL (INCLUDING ANONYMOUS) CLAUSES                     *)
@@ -898,7 +903,7 @@ let processClauses amod clTerms newClTerms closeddefs =
       (* abstract syntax.                                                   *)
       let () = Errormsg.log Errormsg.none 
                  "Procesclauses.processClauses: processed clauses" in
-    Absyn.Module(modname, modimps, modaccs, ctable, ktable, atable, !modStr, 
-                   gkinds, lkinds, gconsts, lconsts, hconsts, skels, hskels, 
-           ref (Absyn.PreClauseBlocks(Absyn.Definitions(newClDefs))))
+        Absyn.Module(modname, modimps, modaccs, ctable, ktable, atable, !modStr, 
+                     gkinds, lkinds, gconsts, lconsts, hconsts, skels, hskels, 
+                     ref (Absyn.PreClauseBlocks(Absyn.Definitions(newClDefs))))
   | _ -> Errormsg.impossible Errormsg.none "processClauses: invalid module"

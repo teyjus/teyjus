@@ -37,7 +37,7 @@ let buildQueryTerm query amod =
   else
   let preTerm = Option.get preTerm in
 	(* parse to abstract syntax *)
-	let result = Parse.translateTerm preTerm amod in
+	let result = Parse.translateTermTopLevel preTerm amod in
 	if Option.isNone result then
 	  false
 	else
@@ -96,7 +96,7 @@ let readTerm term amod =
   else
     let preTerm = Option.get preTerm in
     (* parse to abstract syntax *)
-    let result = Parse.translateTerm preTerm amod in
+    let result = Parse.translateTermTopLevel preTerm amod in
     if Option.isNone result then
       0
     else

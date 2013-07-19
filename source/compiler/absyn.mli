@@ -48,6 +48,9 @@ and atypevar =
 
 (****************************************************************************
 *Type Var Information:
+* Bindable seems to correspond to a type cell whose actual contents is given 
+* by a reference to something else; i.e. it is more like "bound" than 
+* "bindable".
 *****************************************************************************)
 and atypevarinfo =
     BindableTypeVar of atype option ref
@@ -333,7 +336,10 @@ val getTypeFreeVariableFirstRef : atype -> bool option ref
 val getTypeFreeVariableFirst : atype -> bool
 val setTypeFreeVariableFirst : atype -> bool -> unit
 val isTypeFreeVariable : atype -> bool
+
+(* Creates a BindableTypeVar *)
 val makeTypeVariable : unit -> atype
+
 val makeNewTypeVariable : atypevar -> atype 
 
 val getSkeletonVariableIndex : atype -> int

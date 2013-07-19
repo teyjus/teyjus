@@ -18,17 +18,10 @@
 * You should have received a copy of the GNU General Public License
 * along with Teyjus.  If not, see <http://www.gnu.org/licenses/>.
 ****************************************************************************)
-(*****************************************************************************
-*Absyn:
-* The abstract syntax representation.
-*****************************************************************************)
+
 type pos = Errormsg.pos
 type symbol = Symbol.symbol
 
-(*****************************************************************************
-*Kinds:
-* (symbol, arity, index, position)
-*****************************************************************************)
 type akindtype =
     LocalKind
   | GlobalKind
@@ -36,27 +29,15 @@ type akindtype =
 
 and akind = Kind of (symbol * int option * int ref * akindtype * pos)
 
-(*****************************************************************************
-*Type Variable Data:
-* (firstuse, lastuse, perm, safety, heapvar, offset, firstgoal, lastgoal)
-*****************************************************************************)
 and atypevar = 
   TypeVar of (atype option ref * atype option ref * bool ref * bool ref * 
 				bool ref * int option ref * int ref * int ref)
 
-(****************************************************************************
-*Type Var Information:
-     Bindable seems to correspond to a type cell whose actual contents is given by a 
-     reference to something else; i.e. it is more like "bound" than "bindable".
-*****************************************************************************)
 and atypevarinfo =
 	BindableTypeVar of atype option ref
   |	FreeTypeVar of (atypevar option ref * bool option ref)
 
 
-(*****************************************************************************
-*Type:
-*****************************************************************************)
 and atype = 
     SkeletonVarType of (int ref)
   | TypeVarType of (atypevarinfo ref)
@@ -411,10 +392,12 @@ let rec dereferenceType ty =
       (match !r with
         BindableTypeVar(tr) ->
           (match !tr with
-            Some(t) -> dereferenceType t
+            Some(t) -> 
+              dereferenceType t
           | None -> ty)
       | FreeTypeVar(_) ->
-          Errormsg.impossible Errormsg.none "dereferenceType: Invalid type variable")
+          Errormsg.impossible Errormsg.none 
+            "dereferenceType: Invalid type variable")
   | TypeSetType(_,_,r) ->
       (match !r with
         Some(ty') -> dereferenceType ty'
@@ -567,12 +550,13 @@ let isConstantType = function
 
 (* type reference                   *)
 let getTypeVariableReference = function
-  TypeVarType(info) ->
-    (match !info with
-      BindableTypeVar(r) -> r
-    | _ -> (Errormsg.impossible Errormsg.none 
-                                "getTypeVariableReference: invalid type variable info"))
-| _ -> (Errormsg.impossible Errormsg.none "getTypeVariableReference: invalid type")
+  | TypeVarType(info) ->
+      (match !info with
+         | BindableTypeVar(r) -> r
+         | _ -> Errormsg.impossible Errormsg.none 
+                   "getTypeVariableReference: invalid type variable info")
+  | _ -> Errormsg.impossible Errormsg.none 
+            "getTypeVariableReference: invalid type"
 
 let isVariableType = function
   TypeVarType(r) ->
@@ -580,10 +564,10 @@ let isVariableType = function
       BindableTypeVar(tr) ->
         (match !tr with
           Some(t) -> (Errormsg.impossible Errormsg.none 
-                                          "Asyn.isVariableType: bound variable")
+                        "Absyn.isVariableType: bound variable")
         | None -> true)
     | _ ->  (Errormsg.impossible Errormsg.none 
-                                "Absyn.isVariableType: type variable info"))
+               "Absyn.isVariableType: type variable info"))
 | _ -> false
 
 
@@ -635,11 +619,13 @@ let makeNewTypeVariable varData =
 (* type skeleton variable            *)
 let getSkeletonVariableIndex = function
   SkeletonVarType(i) -> !i
-| _ -> (Errormsg.impossible Errormsg.none "getSkeletonVariableIndex: invalid type")
+| _ -> (Errormsg.impossible Errormsg.none 
+          "getSkeletonVariableIndex: invalid type")
 
 let getSkeletonVariableIndexRef = function
   SkeletonVarType(i) -> i
-| _ -> (Errormsg.impossible Errormsg.none "getSkeletonVariableIndex: invalid type")
+| _ -> (Errormsg.impossible Errormsg.none 
+          "getSkeletonVariableIndex: invalid type")
 
 let isSkeletonVariableType = function
   SkeletonVarType(_) -> true
@@ -653,7 +639,7 @@ let rec makeTypeEnvironment i =
     | i' ->
         if i' < 0 then
           Errormsg.impossible Errormsg.none 
-                              "Absyn.makeTypeEnvironment: invalid environment size"
+            "Absyn.makeTypeEnvironment: invalid environment size"
         else
           (makeTypeVariable ()) :: (makeTypeEnvironment (i - 1))
 

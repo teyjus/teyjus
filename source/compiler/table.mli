@@ -31,4 +31,4 @@ val iter : (SymbolTable.key -> 'a -> unit) -> 'a SymbolTable.t -> unit
 val fold : (SymbolTable.key -> 'a -> 'b -> 'b) -> 'a SymbolTable.t -> 'b -> 'b
 val empty : 'a symboltable
 
-val printTable : ('a -> string) -> 'a SymbolTable.t -> unit 
+val printTable : (Symbol.symbol -> 'a -> string) -> 'a SymbolTable.t -> unit 

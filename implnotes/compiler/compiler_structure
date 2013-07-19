@@ -248,7 +248,7 @@ information and the type environment size of the constant has to be adjusted
 to the number of necessary type variables. 
 The following points should be noted with regard to the adjustment of type
 skeletons:
-1. Only the indexes of type skeleton variables may be changed; the over all
+1. Only the indexes of type skeleton variables may be changed; the overall
    structure of a type skeleton should remain the same as before.
 2. The indexes of type skeleton variables should be adjusted into a form that
    the unnecessary variables have their indexes larger than the (new) type 

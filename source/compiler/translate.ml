@@ -27,26 +27,11 @@ let getFromTable check t =
   let r = Table.fold (fun _ el l -> if (check el) then el::l else l) t [] in
     List.rev r
 
-(*  TypeAndBindings Accessors *)
-let getTypeAndBindingsType =
-  fun t ->
-    (match t with
-      TypeAndBindings(t, _) -> t)   
-
-let getTypeAndBindingsBindings = function
-  TypeAndBindings(_, bs) -> bs
-
 type typeandenvironment =
   TypeAndEnvironment of (Absyn.atype * int)
 
-(*  TypeAndEnvironment Accessors  *)
-let getTypeAndEnvironmentType = function
-  TypeAndEnvironment(t, _) -> t
-    
-let getTypeAndEnvironmentSize = function
-  TypeAndEnvironment(_, i) -> i
-
 let typeSkeletonIndex = ref 0
+
 
 (* The next three functions can be passed as an argument to rationalizeType *)
 
@@ -83,14 +68,13 @@ let rationalizeVar sym symtable _ =
 *rationalizeType:
 * Rationalizes a type.
 *********************************************************************)
-let rec rationalizeType
-  ty vartable kindtable typeabbrevtable transvarfunc =
+let rec rationalizeType ty vartable kindtable typeabbrevtable transvarfunc =
     
   (******************************************************************
   *translateArrow:
   * Translate an arrow from preabsyn to absyn.
   ******************************************************************)
-  let translateArrow = function Preabsyn.Arrow(l,r,p) ->
+  let translateArrow = function Preabsyn.Arrow(l, r, _) ->
     let TypeAndBindings(l', ls) = rationalizeType l vartable kindtable 
                                     typeabbrevtable transvarfunc in
     let TypeAndBindings(r', rs) = rationalizeType r ls kindtable 
@@ -208,12 +192,7 @@ let rec rationalizeType
 
     | Preabsyn.ErrorType -> TypeAndBindings(Absyn.ErrorType, vartable)
 
-(**********************************************************************
-*translateType:
-* Translate a preabsyn representation of a type into an absyn type.
-**********************************************************************)
-and translateType ty amodule =
-
+and translateTypeAnnot ty amodule =
   let TypeAndBindings(t, _) = 
     rationalizeType ty Table.empty
       (Absyn.getModuleKindTable amodule) 
@@ -232,7 +211,7 @@ and translateTypeSkeleton ty kindtable typeabbrevtable =
   *translateArrow:
   * Translate an arrow, with a check to ensure that
   *********************************************************************)
-  let translateArrow = function Preabsyn.Arrow(l,r,pos) ->
+  let translateArrow = function Preabsyn.Arrow(l, r, pos) ->
     (*******************************************************************
     *getTarget:
     * Get the target of an arrow type.
@@ -295,19 +274,20 @@ and translateTypeSkeleton ty kindtable typeabbrevtable =
     (*  Rebuild the arrow type as absyn *)
     buildArrow target' args'
     
-  | t -> invalid_arg "Types.translateArrow: invalid type"
+  | _ -> invalid_arg "Types.translateArrow: invalid type"
   in
   
   let _ = typeSkeletonIndex := 0 in
   
   match ty with
-    Preabsyn.Arrow(l,r,pos) ->
-      TypeAndEnvironment(translateArrow ty, !typeSkeletonIndex)
+    Preabsyn.Arrow(_, _, _) ->
+      let arr = translateArrow ty in
+        TypeAndEnvironment(arr, !typeSkeletonIndex)
   | _ ->
-    let TypeAndBindings(t, ts) =
+    let TypeAndBindings(t, bs) =
       rationalizeType ty Table.empty kindtable typeabbrevtable 
                       rationalizeSkeletonVar in
-    TypeAndEnvironment(t, !typeSkeletonIndex) 
+      TypeAndEnvironment(t, !typeSkeletonIndex) 
 
 (**********************************************************************
 *translateFixities:
@@ -589,23 +569,22 @@ and translateConstant c clist kindtable typeabbrevtable buildconstant =
   ********************************************************************)
   let rec enter = fun names ty tyskel esize clist ->
     match names with
-      Preabsyn.Symbol(name,_,p)::ns ->
+      Preabsyn.Symbol(name, _, p)::ns ->
         let clist' = (buildconstant name ty tyskel esize p) :: clist in
-        (enter ns ty tyskel esize clist')
+          (enter ns ty tyskel esize clist')
     | [] -> clist
   in
   
   match c with
-    Preabsyn.Constant(names, Some t, pos) ->
+    Preabsyn.Constant(names, Some t, _) ->
       let TypeAndEnvironment(tyskel, size) = 
-              translateTypeSkeleton t kindtable 
-                                    typeabbrevtable in
+              translateTypeSkeleton t kindtable typeabbrevtable in
       (* let ty = translateType' t kindtable typeabbrevtable in 
         If necessary, translateType' was removed in commit 1067 *)
         (enter names [tyskel] 
                      (ref(Some(Absyn.Skeleton(tyskel, ref None, ref false))))
                      size clist)
-  | Preabsyn.Constant(names, None, pos) ->
+  | Preabsyn.Constant(names, None, _) ->
       (enter names [] (ref None) 0 clist)
 
 (********************************************************************
@@ -669,7 +648,7 @@ and translateTypeAbbrev abbrev abbrevtable kindtable =
   let symtable = buildTable args 0 in
   
   (*  Translate the type body *)
-  let TypeAndBindings(bodytype,bindings) =
+  let TypeAndBindings(bodytype, _) =
     (rationalizeType ty symtable kindtable abbrevtable
                      rationalizeTypeAbbrevVar)
   in

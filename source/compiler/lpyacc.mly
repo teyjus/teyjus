@@ -135,6 +135,9 @@ let makeTuple ?ty (name, kind) =
       
 let makeConst ?ty sym =
   IdTerm(Symbol.symbol sym, ty, ConstID, getPos 1)
+
+let makeTS (sym, typ_opt, _, pos) = 
+  TypeSymbol(sym, typ_opt, pos) 
       
 let makeModule () =
   reverseResults () ;
@@ -408,7 +411,7 @@ abstterm:
   | atomterm                 { $1 }
       
   | typedid INFIXLAMBDA term
-      { LambdaTerm([TypeSymbol $1], List.rev $3, getPos 1) }
+      { LambdaTerm(makeTS $1, List.rev $3, getPos 1) }
 
 arglist:
   | tok                      { $1 :: [] }
