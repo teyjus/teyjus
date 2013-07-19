@@ -297,7 +297,7 @@ signdecls:
 
 signdecl:
   | KIND idlist kind PERIOD
-      { globalKinds := Kind($2, Some ($3 - 1), getPos 1) :: !globalKinds }
+      { globalKinds := Kind($2, Some $3, getPos 1) :: !globalKinds }
 
   | TYPE idlist type PERIOD
       { globalConstants := Constant($2, Some $3, getPos 1) :: !globalConstants }
@@ -347,7 +347,7 @@ modsigndecl:
       { localKinds := Kind($2, None, getPos 1) :: !localKinds }
 
   | LOCALKIND idlist kind PERIOD
-      { localKinds := Kind($2, Some ($3 - 1), getPos 1) :: !localKinds }
+      { localKinds := Kind($2, Some $3, getPos 1) :: !localKinds }
 
   | CLOSED idlist PERIOD
       { closedConstants := Constant($2, None, getPos 1) :: !closedConstants }
@@ -357,7 +357,7 @@ modsigndecl:
 
 kind:
   | kind_arrow                { $1 }
-  | paren_type                { 1 }
+  | paren_type                { 0 }
 
 kind_arrow:
   | LPAREN kind_arrow RPAREN      { $2 }

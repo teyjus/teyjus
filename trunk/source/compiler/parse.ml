@@ -25,7 +25,8 @@ type symbol = Symbol.symbol
 type ptvarlist = Absyn.atypesymbol list
 type ptterm = Term of (Absyn.aterm * Types.typemolecule)
 
-(*  Functions indicating what to do when a new constant or kind is encountered. *)
+(* Functions indicating what to do when a new constant 
+* or kind is encountered. *)
 type ptnewconstant = symbol -> Absyn.aconstant Table.SymbolTable.t 
                             -> Absyn.aconstant Table.SymbolTable.t
 type ptnewkind = symbol -> int -> pos -> Absyn.akind Table.SymbolTable.t 
@@ -229,7 +230,7 @@ let stackTop = function
 
 let rec translateClause term amodule =
   let previous = !Errormsg.anyErrors in
-  let () = Errormsg.anyErrors := false in
+  let _ = Errormsg.anyErrors := false in
   
   let (tty, _) = parseTerm false false term [] [] amodule in
   let term' = getTermTerm tty in
@@ -244,7 +245,7 @@ let rec translateClause term amodule =
      (Absyn.string_of_term_ast term'')) in
   
   (*  Ensure that the term is valid and is of the correct type. *)                        
-  let () = if term'' <> Absyn.errorTerm then
+  let _ = if term'' <> Absyn.errorTerm then
     (*  Make sure it is of type o.  *)
     let boolkind = Pervasive.kbool in
     let booltype = Types.makeKindMolecule boolkind in
@@ -354,9 +355,8 @@ and parseTerm parsingtoplevel inlist term fvs bvs amodule =
       (* Corresponds to x\ t. Mode should switch to non-list in parsing t *)
       let bbv = parseTypeSymbol b amodule in
       let (tty, fvs') = 
-        parseTerms parsingtoplevel false t fvs (bbv :: bvs)
-                   amodule newStack 
-      in (makeAbstraction tty bbv pos, fvs')
+        parseTerms parsingtoplevel false t fvs (bbv :: bvs) amodule newStack in
+        (makeAbstraction tty bbv pos, fvs')
   
   | Preabsyn.IntTerm(i, pos) -> 
            (makeType (Absyn.IntTerm(i,  pos)) 

@@ -317,13 +317,13 @@ and translateFixities fixities constants =
       ****************************************************************)
       let getFixity k =
         match k with
-          Preabsyn.Infix(p) -> Absyn.Infix
-        | Preabsyn.Infixl(p) -> Absyn.Infixl
-        | Preabsyn.Infixr(p) -> Absyn.Infixr
-        | Preabsyn.Prefix(p) -> Absyn.Prefix
-        | Preabsyn.Prefixr(p) -> Absyn.Prefixr
-        | Preabsyn.Postfix(p) -> Absyn.Postfix
-        | Preabsyn.Postfixl(p) -> Absyn.Postfixl
+          Preabsyn.Infix(_) -> Absyn.Infix
+        | Preabsyn.Infixl(_) -> Absyn.Infixl
+        | Preabsyn.Infixr(_) -> Absyn.Infixr
+        | Preabsyn.Prefix(_) -> Absyn.Prefix
+        | Preabsyn.Prefixr(_) -> Absyn.Prefixr
+        | Preabsyn.Postfix(_) -> Absyn.Postfix
+        | Preabsyn.Postfixl(_) -> Absyn.Postfixl
       in
       
       (****************************************************************
@@ -335,13 +335,13 @@ and translateFixities fixities constants =
       ****************************************************************)
       let checkFixityArity k ta =
         match k with
-          Preabsyn.Infix(p)
-        | Preabsyn.Infixl(p)
-        | Preabsyn.Infixr(p) -> ta >= 2
-        | Preabsyn.Prefix(p)
-        | Preabsyn.Prefixr(p)
-        | Preabsyn.Postfix(p)
-        | Preabsyn.Postfixl(p) -> ta = 1
+          Preabsyn.Infix(_)
+        | Preabsyn.Infixl(_)
+        | Preabsyn.Infixr(_) -> ta >= 2
+        | Preabsyn.Prefix(_)
+        | Preabsyn.Prefixr(_)
+        | Preabsyn.Postfix(_)
+        | Preabsyn.Postfixl(_) -> ta = 1
       in
             
       match syms with
@@ -1768,7 +1768,8 @@ and translateModule mod' ktable ctable atable =
  
   (*  Get the pieces of the module  *)
   match mod' with
-    Preabsyn.Module(name, gconsts, lconsts, cconsts, uconsts, econsts, fixities,
+    Preabsyn.Module(name, gconsts, lconsts, cconsts, uconsts, 
+                    econsts, fixities,
                     gkinds, lkinds, tabbrevs, clauses, accummods,
                     accumsigs, usesigs, impmods) ->
       (*  Translate the accumulated signatures  *)
@@ -1868,8 +1869,9 @@ and translateModule mod' ktable ctable atable =
 
         let amod =
           Absyn.Module(name, imps, accums, ref ctable, ref ktable,
-          atable, [], globalkinds, localkinds, globalconstants, localconstants,
-          ref [], skeletons, ref [], ref(Absyn.ClauseBlocks([]))) in
+                       atable, [], globalkinds, localkinds, globalconstants, 
+                       localconstants, ref [], skeletons, ref [], 
+                       ref(Absyn.ClauseBlocks([]))) in
           let _ = Errormsg.log Errormsg.none
             "Translate.translateModule: Translated module." in
         amod

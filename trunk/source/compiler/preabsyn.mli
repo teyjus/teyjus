@@ -48,29 +48,68 @@ type ptype =
 * The optional type represents the possible type annotation *)
 type ptypesymbol = TypeSymbol of (symbol * ptype option * pos)
 
+(* Type abbreviations 
+ * For instance, 
+ * typeabbrev   (bar A)   list A -> list A
+ * will be represented as 
+ * TypeAbbrev(bar, [Symbol(A, CVID,_)], "list A -> list A",_)
+ * where "list A -> list A" is the ptype representation of list A -> list A
+ * All the symbols appearing in the ptype should be present in the
+ * list of psymbols *)
 type ptypeabbrev = TypeAbbrev of psymbol * psymbol list * ptype * pos
 
 (* Terms *)
 type pterm =
-  | SeqTerm of pterm list * pos
+    (* A sequence of any terms *)
+  | SeqTerm of pterm list * pos 
+    (* The usual prolog list notation *)
   | ListTerm of pterm list * pos
-  | ConsTerm of pterm list * pterm * pos
+    (* ConsTerm(x,y,_) represents the prolog list notation  [x|y] *)
+  | ConsTerm of pterm list * pterm * pos  
+    (* LambdaTerm(x, t,_) represents x\ t 
+    * The list here is just a sequence of terms. 
+    * It will be translated as a single absyn term *) 
   | LambdaTerm of ptypesymbol * pterm list * pos
+   (* The optional type is the possible type annotation *)
   | IdTerm of (symbol * ptype option * pidkind * pos)
   | RealTerm of float * pos
   | IntTerm of int * pos
   | StringTerm of string * pos
   | ErrorTerm
 
-type pboundterm = BoundTerm of ptypesymbol list * pterm list
-
-
+(* Every clause (terminated by a period) in the module file 
+ * is encapsulated in a SeqTerm and then in a Clause. 
+ * The list of all clauses is stocked in the Module datatype *)
 type pclause = Clause of pterm
 
-(* Constants *)
+(* Constants 
+ * There are different kind of constants. They are already classified
+ * during the parsing and stored in the different list of the module datatype
+ * (see below for the different kinds) 
+ *
+ * A declaration like:
+ * type a, b, c o 
+ * will be represented as
+ * Constant(["a";"b";"c"], Some("o"),_)
+ * where "X" is the correct translation of X.
+ * The optional type is  set to None when this is a closed, exportdef or useonly
+ * declaration alone (the type is declared somewhere else), e.g.
+ * type p o.
+ * exportdef p. *)
 type pconstant = Constant of psymbol list * ptype option * pos
 
-(* Kinds *)
+(* Kinds 
+* There are different categories of kinds. They are already classified
+ * during the parsing and stored in the different list of the module datatype
+ * (see below for the different kinds) 
+ *
+ * The integer is the arity of the kind. E.g the kind declaration
+ * kind foo type -> type
+ * will be represented as Kind(_, Some 1, _) 
+ * The optional integer is set to None when declaring that a kind is local
+ * after its declaration, e.g.
+ * kind foo type.
+ * localkind foo. *)
 type pkind = Kind of psymbol list * int option * pos
 
 (* Fixity *)
@@ -83,11 +122,15 @@ type pfixitykind =
   | Postfix of pos
   | Postfixl of pos
 
+(* The position used is the one of pfixitykind *)
 type pfixity = Fixity of psymbol list * pfixitykind * int * pos
 
 (********************************************************************
  * Module:
  *  This type stores information about a preabsyn module.
+ * The pidkind of used, accmulated, imported modules or signatures
+ * are not used. 
+                                                                   
  *  Module:
  *   Name: string
  *   Global Constants: pconstant list
@@ -125,13 +168,14 @@ type pfixity = Fixity of psymbol list * pfixitykind * int * pos
 type pmodule =
   | Module of string * pconstant list * pconstant list * 
       pconstant list * pconstant list * pconstant list * pfixity list *
-      pkind list * pkind list * ptypeabbrev list * pclause list * psymbol list *
-      psymbol list * psymbol list * psymbol list
+      pkind list * pkind list * ptypeabbrev list * pclause list * 
+      psymbol list * psymbol list * psymbol list * psymbol list
   | Signature of string * pconstant list * pconstant list *
       pconstant list * pkind list *
       ptypeabbrev list * pfixity list * psymbol list * psymbol list
 
 val printPreAbsyn : pmodule -> out_channel -> unit
+
 
 (* Accessors *)
 val getFixityPos : pfixitykind -> pos
