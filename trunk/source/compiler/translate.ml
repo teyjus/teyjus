@@ -456,13 +456,12 @@ and translateKind = fun kind buildkind klist ->
   (********************************************************************
   *addKind:
   * Given appropriate kind information, uses the kind building function
-  * passed to translateKind to construct a kind, and then adds it to the
-  * list.
+  * passed to translateKind to construct a kind, and then adds it to the list.
   ********************************************************************)
   let rec addKind = fun syms a pos result ->
     (match syms with
       [] -> result
-    | Preabsyn.Symbol(sym,_,_)::ss -> 
+    | Preabsyn.Symbol(sym, _, _)::ss -> 
         let result' = (buildkind sym a pos) :: result in
         (addKind ss a pos result'))
   in
@@ -1474,7 +1473,7 @@ and translateModule mod' ktable ctable atable =
             Some Absyn.Kind(s', Some a', m, Absyn.GlobalKind, p') ->
               (Table.add s 
                  (Absyn.Kind(s', Some a', m,Absyn.LocalKind, p')) ktable)
-          | Some Absyn.Kind(s', Some a', m, Absyn.LocalKind, p') ->
+          | Some Absyn.Kind(_, Some _, _, Absyn.LocalKind, _) ->
               ktable
           | Some k ->
               (Errormsg.impossible (Absyn.getKindPos k) "invalid kind type ")

@@ -389,6 +389,7 @@ let rec occursCheck var skel bindings =
 *unbindVariables:
 * Goes through a list of variables and changes their references to
 * indicate that they are not bound.
+* This is only useful at the top level
 **********************************************************************)
 let rec unbindVariables = function
   [] -> ()
