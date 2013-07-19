@@ -1237,16 +1237,16 @@ let rec getTermApplicationHeadAndArguments term =
   | _ -> (term, [])
 
 let getTermApplicationHead t =
-  let (f,_) = getTermApplicationHeadAndArguments t in
-  f
+  let (f, _) = getTermApplicationHeadAndArguments t in
+    f
 
 let getTermApplicationArguments t =
-  let (_,args) = getTermApplicationHeadAndArguments t in
-  args
+  let (_, args) = getTermApplicationHeadAndArguments t in
+    args
  
 let getTermApplicationArity t = 
   let (_,args) = getTermApplicationHeadAndArguments t in
-  List.length args
+    List.length args
 
 (* Converts an absyn term to a string representation. *)
 let rec string_of_term_ast term =
@@ -1256,25 +1256,24 @@ let rec string_of_term_ast term =
   | StringTerm(StringLiteral(s),_) -> "\"" ^ (String.escaped s) ^ "\""
   | StringTerm(StringData(s,_,_),_) -> "\"" ^ (String.escaped s) ^ "\""
   | ConstantTerm(c,tl,_) -> 
-      let tlstr = "[" ^ (String.concat "," (List.map string_of_type_ast tl)) ^ "]" in
-      if (getConstantType c = HiddenConstant) then
-        "hc: " ^ (getConstantPrintName c) ^ tlstr
-      else (getConstantPrintName c) ^ tlstr
+      let tlstr = 
+        "[" ^ (String.concat "," (List.map string_of_type_ast tl)) ^ "]" in
+        if (getConstantType c = HiddenConstant) then
+          "hc: " ^ (getConstantPrintName c) ^ tlstr
+        else (getConstantPrintName c) ^ tlstr
   | FreeVarTerm(NamedFreeVar(s),_) -> 
-      "fv: " ^ 
-      (Symbol.name (getTypeSymbolSymbol s))
+      "fv: " ^ (Symbol.name (getTypeSymbolSymbol s))
   | BoundVarTerm(NamedBoundVar(s),_) ->
-      "bv: " ^
-      (Symbol.name (getTypeSymbolSymbol s))
+      "bv: " ^ (Symbol.name (getTypeSymbolSymbol s))
   | BoundVarTerm(DBIndex(i),_) -> "#" ^ string_of_int i
   | AbstractionTerm(NestedAbstraction(_),_) ->
       let aterm = getTermAbstractionBody term in
       let avar = getTermAbstractionVar term in
-      (getTypeSymbolName avar) ^ "\\" ^ (string_of_term_ast aterm)
+        (getTypeSymbolName avar) ^ "\\" ^ (string_of_term_ast aterm)
   | AbstractionTerm(UNestedAbstraction(_),_) ->
       let aterm = getTermAbstractionBody term in
       let avars = getTermAbstractionVars term in
-      "(" ^ (String.concat " " (List.map (getTypeSymbolName) avars)) 
+        "(" ^ (String.concat " " (List.map (getTypeSymbolName) avars)) 
         ^ ")\\ " ^ (string_of_term_ast aterm)
   | ApplicationTerm(FirstOrderApplication(h,args,_),_) ->
       let s =
@@ -1300,7 +1299,8 @@ and string_of_term term =
     let opprec = getConstantPrec op in
     let paren = needsParens opfix opprec context fix prec in
     let result = (getConstantPrintName op) ^ " " ^
-      (string_of_term' (List.hd args) RightTermContext opfix opprec bindings tab)
+      (string_of_term' 
+         (List.hd args) RightTermContext opfix opprec bindings tab)
     in
 
     if paren then

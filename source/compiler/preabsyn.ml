@@ -18,19 +18,44 @@
 * You should have received a copy of the GNU General Public License
 * along with Teyjus.  If not, see <http://www.gnu.org/licenses/>.
 ****************************************************************************)
-(**********************************************************************
-*Preabsyn Module:
-* The prebstract syntax for Teyjus.
-**********************************************************************)
 
 type symbol = Symbol.symbol
 type pos = Errormsg.pos
 
 type pidkind =
-  | CVID
-  | ConstID
-  | AVID
-  | VarID
+  | CVID        
+  | ConstID     
+  | AVID        
+  | VarID       
+
+type psymbol = Symbol of symbol * pidkind * pos
+
+type ptype =
+  | Atom of symbol * pidkind * pos
+  | App of ptype * ptype * pos
+  | Arrow of ptype * ptype * pos
+  | ErrorType
+
+type ptypesymbol = TypeSymbol of (symbol * ptype option * pos)
+
+type ptypeabbrev = TypeAbbrev of psymbol * psymbol list * ptype * pos
+
+type pterm =
+  | SeqTerm of pterm list * pos 
+  | ListTerm of pterm list * pos
+  | ConsTerm of pterm list * pterm * pos  
+  | LambdaTerm of ptypesymbol * pterm list * pos
+  | IdTerm of (symbol * ptype option * pidkind * pos)
+  | RealTerm of float * pos
+  | IntTerm of int * pos
+  | StringTerm of string * pos
+  | ErrorTerm
+
+type pclause = Clause of pterm
+
+type pconstant = Constant of psymbol list * ptype option * pos
+
+type pkind = Kind of psymbol list * int option * pos
 
 type pfixitykind =
   | Infix of pos
@@ -40,49 +65,17 @@ type pfixitykind =
   | Prefixr of pos
   | Postfix of pos
   | Postfixl of pos
-    
-type psymbol = Symbol of symbol * pidkind * pos
 
-and ptypesymbol = TypeSymbol of (symbol * ptype option * pos)
-
-and ptype =
-  | Atom of symbol * pidkind * pos
-  | App of ptype * ptype * pos
-  | Arrow of ptype * ptype * pos
-  | ErrorType
-
-and ptypeabbrev = TypeAbbrev of psymbol * psymbol list * ptype * pos
-
-and pboundterm = BoundTerm of ptypesymbol list * pterm list
-
-and pterm =
-  | SeqTerm of pterm list * pos
-  | ListTerm of pterm list * pos
-  | ConsTerm of pterm list * pterm * pos
-  | LambdaTerm of ptypesymbol * pterm list * pos
-  | IdTerm of (symbol * ptype option * pidkind * pos)
-  | RealTerm of float * pos
-  | IntTerm of int * pos
-  | StringTerm of string * pos
-  | ErrorTerm
-  
-and pclause = Clause of pterm
-
-and pconstant = Constant of psymbol list * ptype option * pos
-
-and pkind = Kind of psymbol list * int option * pos
-
-and pfixity = Fixity of psymbol list * pfixitykind * int * pos
+type pfixity = Fixity of psymbol list * pfixitykind * int * pos
 
 type pmodule =
   | Module of string * pconstant list * pconstant list * 
       pconstant list * pconstant list * pconstant list * pfixity list *
-      pkind list * pkind list * ptypeabbrev list * pclause list * psymbol list *
-      psymbol list * psymbol list * psymbol list
+      pkind list * pkind list * ptypeabbrev list * pclause list * 
+      psymbol list * psymbol list * psymbol list * psymbol list
   | Signature of string * pconstant list * pconstant list *
       pconstant list * pkind list *
       ptypeabbrev list * pfixity list * psymbol list * psymbol list
-
 
 
 let string_of_pos pos = Errormsg.string_of_pos pos
@@ -91,9 +84,6 @@ let map_with_commas f list = String.concat ", " (List.map f list)
   
 let rec string_of_termlist list =
   map_with_commas string_of_term list
-
-and string_of_typesymbollist list =
-  map_with_commas string_of_typesymbol list
 
 and string_of_typesymbol = function
   | TypeSymbol(tsym, Some t, pos) ->
@@ -132,11 +122,6 @@ and string_of_term = function
   | ErrorTerm ->
       "Error"
         
-and string_of_boundterm = function
-  | BoundTerm(tysy, tl) ->
-      "BoundTerm([" ^ (string_of_typesymbollist tysy) ^
-        "], [" ^ (string_of_termlist tl) ^ "])"
-
 and string_of_idkind = function
   | CVID -> "CVID"
   | ConstID -> "ConstID"
@@ -233,7 +218,8 @@ let printPreAbsyn m out =
           output_line "Fixities:" ;
           output_list string_of_fixity fixities
             
-      | Signature(name, gconstants, _,_, gkinds, tabbrevs, fixities, accumsig, usig) ->
+      | Signature(name, gconstants, _, _, gkinds, tabbrevs, 
+                  fixities, accumsig, usig) ->
           output_line ("Signature: " ^ name) ;
           output_line "Constants:" ;
           output_list string_of_constant gconstants ;
