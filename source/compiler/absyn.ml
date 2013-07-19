@@ -340,7 +340,8 @@ let getTypeVariableDataOffset v =
   if (Option.isSome r) then
     Option.get r
   else
-    Errormsg.impossible Errormsg.none "Absyn.getTypeVariableDataOffset: invalid type variable"
+    Errormsg.impossible Errormsg.none 
+      "Absyn.getTypeVariableDataOffset: invalid type variable"
 
 let setTypeVariableDataOffset v o =
   (getTypeVariableDataOffsetRef v) := Some o
@@ -371,7 +372,8 @@ let getTypeVariableDataLastUse v =
   if Option.isSome r then
     Option.get r
   else
-    Errormsg.impossible Errormsg.none "Absyn.getTypeVariableDataLastUse: invalid type variable"
+    Errormsg.impossible Errormsg.none 
+      "Absyn.getTypeVariableDataLastUse: invalid type variable"
 
 
 (* first use *)
@@ -494,7 +496,7 @@ let rec getArrowTypeArguments ty =
   match ty with
     ArrowType(_) -> get' ty
   | t -> Errormsg.impossible Errormsg.none 
-                             ("getArrowTypeArguments: invalid type: " ^ (string_of_type t))
+           ("getArrowTypeArguments: invalid type: " ^ (string_of_type t))
 
 let rec getArrowTypeArity ty =
   match ty with
@@ -535,12 +537,12 @@ let makeTypeSetVariable def tl = TypeSetType(def, ref tl, ref None)
 let getTypeArguments = function
   ApplicationType(_, args) -> args
 | t -> (Errormsg.impossible Errormsg.none 
-                            ("getTypeArguments: invalid type: " ^ (string_of_type t)))
+          ("getTypeArguments: invalid type: " ^ (string_of_type t)))
 
 let getTypeKind = function
   ApplicationType(k,_) -> k
 | t -> (Errormsg.impossible Errormsg.none 
-                            ("getTypeKind: invalid type: " ^ (string_of_type t)))
+          ("getTypeKind: invalid type: " ^ (string_of_type t)))
 
 
 let isConstantType = function
@@ -579,20 +581,20 @@ let getTypeFreeVariableVariableData = function
         (match !varDataRef with
            Some(varData) -> varData
          | None -> (Errormsg.impossible Errormsg.none 
-                                        "getTypeFreeVariableVariableData: varData"))
+                      "getTypeFreeVariableVariableData: varData"))
      | _ -> (Errormsg.impossible Errormsg.none 
-                                 "getTypeFreeVariableVariableData: bound variable"))
+               "getTypeFreeVariableVariableData: bound variable"))
  |_ -> (Errormsg.impossible Errormsg.none 
-                            "getTypeFreeVariableVariableData: not a type variable")
+          "getTypeFreeVariableVariableData: not a type variable")
 
 let getTypeFreeVariableFirstRef = function
   TypeVarType(r) ->
 	(match !r with
 	  FreeTypeVar(_, firstRef) -> firstRef
 	|  _ -> (Errormsg.impossible Errormsg.none 
-                                     "getTypeFreeVariableFirstRef: bound variable"))
+            "getTypeFreeVariableFirstRef: bound variable"))
   |_ -> (Errormsg.impossible Errormsg.none 
-                             "getTypeFreeVariableFirstRef: not a type variable")
+           "getTypeFreeVariableFirstRef: not a type variable")
 
 let getTypeFreeVariableFirst var = 
   let r = !(getTypeFreeVariableFirstRef var) in
@@ -600,7 +602,7 @@ let getTypeFreeVariableFirst var =
     Option.get r
   else
     Errormsg.impossible Errormsg.none 
-                        "Absyn.getTypeFreeVariableFirst: invalid variable"
+      "Absyn.getTypeFreeVariableFirst: invalid variable"
 
 let setTypeFreeVariableFirst var first = 
                      (getTypeFreeVariableFirstRef var) := Some(first)
@@ -995,7 +997,7 @@ let getTypeSymbolRawType s =
   let get' = function
       Some(t) -> t
     | _ -> Errormsg.impossible Errormsg.none 
-                               "getTypeSymbolRawType: type symbol has no type"
+             "getTypeSymbolRawType: type symbol has no type"
   in
   
   match s with
@@ -1019,9 +1021,8 @@ let getTypeSymbolHiddenConstantRef tsym =
 let getTypeSymbolHiddenConstant tsym =
   let get' = function
       Some(c) -> c
-    | None -> Errormsg.impossible 
-                   Errormsg.none 
-                   "Absyn.getTypeSymbolHiddenConstant: type symbol has no constant"
+    | None -> Errormsg.impossible Errormsg.none 
+                "Absyn.getTypeSymbolHiddenConstant: type symbol has no constant"
   in  
   get' !(getTypeSymbolHiddenConstantRef tsym)
 

@@ -34,12 +34,24 @@ type akindtype =
   | GlobalKind
   | PervasiveKind
     
-(* (symbol, arity, index, kindtype, position) *)
+(* Kind(symbol, arity, index, kindtype, position) 
+*
+* The arity preserved when translating from the preabsract syntax.
+* It is set to None if the kind declaration and its local declaration 
+* are separated.
+* After mergeGlobalKinds, no kind arity equals None (otherwise this would
+* mean that a non existing kind is declared to be local) 
+* 
+* The index is set to 0 until the code generation. At this point a unique
+* index will be assigned to each kind *)
 and akind = Kind of (symbol * int option * int ref * akindtype * pos) 
 
 (*****************************************************************************
 *Type Variable Data:
 * (firstuse, lastuse, perm, safety, heapvar, offset, firstgoal, lastgoal)
+*
+* These informations will be used during variables annotation. 
+* Until this step, all references are useless and invalid.
 *****************************************************************************)
 and atypevar = 
   TypeVar of (atype option ref * atype option ref * bool ref * bool ref * 
@@ -48,9 +60,12 @@ and atypevar =
 
 (****************************************************************************
 *Type Var Information:
-* Bindable seems to correspond to a type cell whose actual contents is given 
-* by a reference to something else; i.e. it is more like "bound" than 
-* "bindable".
+* A BindableTypeVar is a type variable which, when set to None,
+* can be bound during unification to any other type (including another
+* BindableTypeVar)
+* When they are created, they are thus set to None.
+* If durin an unification at top level a BindableTypeVar is bound and then
+* an error occurs, it has to be reset to None 
 *****************************************************************************)
 and atypevarinfo =
     BindableTypeVar of atype option ref
