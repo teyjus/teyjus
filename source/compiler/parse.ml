@@ -353,7 +353,7 @@ and parseTerm parsingtoplevel inlist term fvs bvs amodule =
 
   | Preabsyn.LambdaTerm(b, t, pos) ->
       (* Corresponds to x\ t. Mode should switch to non-list in parsing t *)
-      let bbv = parseTypeSymbol b amodule in
+      let bbv = parseAbstractedSymbol b amodule in
       let (tty, fvs') = 
         parseTerms parsingtoplevel false t fvs (bbv :: bvs) amodule newStack in
         (makeAbstraction tty bbv pos, fvs')
@@ -371,7 +371,7 @@ and parseTerm parsingtoplevel inlist term fvs bvs amodule =
                      "string" (Absyn.getModuleKindTable amodule) pos,
             fvs)
 
-  | Preabsyn.IdTerm(sym, ty, idkind, pos) ->
+  | Preabsyn.IdTerm(_, _, _, pos) ->
       let (op', fvs') = translateId parsingtoplevel inlist term fvs bvs amodule
       in
       (match op' with
@@ -457,12 +457,12 @@ and parseTerms parsingtoplevel inlist terms fvs bvs amodule stack =
 *parseTypeSymbol:
 * Parses a type symbol appearing in a lambda expression.
 **********************************************************************)
-and parseTypeSymbol tsym amodule =
+and parseAbstractedSymbol tsym amodule =
   match tsym with
-    | Preabsyn.TypeSymbol(sym, Some(t), _) -> 
+    | Preabsyn.AbstractedSymbol(sym, Some(t), _) -> 
         let t' = Translate.translateTypeAnnot t amodule in
           Absyn.BoundVar(sym, ref None, ref true, ref(Some t'))
-    | Preabsyn.TypeSymbol(sym, None, _) -> 
+    | Preabsyn.AbstractedSymbol(sym, None, _) -> 
         Absyn.BoundVar(sym, ref None, ref true,
                        ref(Some (Absyn.makeTypeVariable ())))
 
@@ -487,49 +487,52 @@ and parseTypeSymbol tsym amodule =
 *     with a capital it is treated as an unknown constant.
 **********************************************************************)
 and translateId parsingtoplevel inlist term fvs bvs amodule =
+  let translateFreeVar sym =  
+    let var = findVar fvs sym in
+       match var with
+           Some var' -> 
+             varToOpTerm term var' fvs bvs amodule (Absyn.makeFreeVarTerm)
+         | None ->
+             makeVarToOpTerm term fvs bvs amodule makeImplicitTypeSymbol
+  in
   match term with
-    Preabsyn.IdTerm(sym, ty, k, pos) ->
-     (match k with
-        Preabsyn.AVID ->       (*  _, i.e. an anonymous variable  *) 
+    Preabsyn.IdTerm(sym, _, k, pos) ->
+      (match k with
+         Preabsyn.AVID ->       (*  _, i.e. an anonymous variable  *) 
            (makeVarToOpTerm term fvs bvs amodule makeAnonymousTypeSymbol)
 
-      | Preabsyn.VarID ->      (* _ followed by name, i.e. a free variable *)
-          (let var = (findVar fvs sym) in
-             match var with
-               Some var' -> 
-                (varToOpTerm term var' fvs bvs amodule (Absyn.makeFreeVarTerm))
-             | None ->
-                (makeVarToOpTerm term fvs bvs amodule 
-                                 makeImplicitTypeSymbol))
+       | Preabsyn.VarID ->      (* _ followed by name, i.e. a free variable *)
+           translateFreeVar sym
 
-      | _ ->  (* begins with a letter; check for bound variable, defined 
-                 constant and free variable in that order *)
-         let bvar = (findVar bvs sym) in
-            match bvar with
-              Some bvar' ->     (* here we have a bound variable *)
-                (varToOpTerm term bvar' fvs bvs amodule (Absyn.makeBoundVarTerm))
+       | Preabsyn.ConstID ->
+          (match (findVar bvs sym) with
+               Some bvar' ->     (* here we have a bound variable *)
+                 (varToOpTerm term bvar' fvs bvs amodule 
+                    (Absyn.makeBoundVarTerm))
 
-            | None ->          (* Check next if declared constant *)
-                let o = (Table.find sym (Absyn.getModuleConstantTable amodule)) in
-                match o with
-                  Some c ->  (* Is a constant; commas may be list separators *)
-                    if c == Pervasive.andConstant && inlist then
-                      (constantToOpTerm parsingtoplevel term
-                                        Pervasiveutils.listSeparatorConstant 
-                                        fvs amodule)
-                    else (constantToOpTerm parsingtoplevel term c fvs amodule)
-                | None -> (* Not a constant; is an fv if it starts right *)
-                    if k = Preabsyn.CVID then
-                      let var = (findVar fvs sym) in
-                         match var with 
-                           Some var' -> (varToOpTerm term var' fvs bvs amodule 
-                                                     Absyn.makeFreeVarTerm)
-                         | None -> (makeVarToOpTerm term fvs bvs amodule
-                                                    makeImplicitTypeSymbol)
-                    else (* only remaining case is that of an unknown const *)
-	                    (Errormsg.error pos
-	                      ("undeclared constant '" ^ (Symbol.name sym) ^ "'");
-	                    (StackError, fvs)))
+             | None ->      (* Check next if declared constant *)
+                 (match 
+                   Table.find sym (Absyn.getModuleConstantTable amodule) with
+                     Some c ->  
+                       (* Is a constant; commas may be list separators *)
+                       if c == Pervasive.andConstant && inlist then
+                         (constantToOpTerm parsingtoplevel term
+                            Pervasiveutils.listSeparatorConstant 
+                            fvs amodule)
+                       else 
+                         (constantToOpTerm parsingtoplevel term c fvs amodule)
+                     | None -> 
+                         (Errormsg.error pos
+                            ("undeclared constant '" ^ (Symbol.name sym) ^ "'");
+                          (StackError, fvs))))
+         | Preabsyn.CVID -> 
+            match (findVar bvs sym) with
+               Some bvar' ->     (* here we have a bound variable *)
+                 (varToOpTerm term bvar' fvs bvs amodule 
+                    (Absyn.makeBoundVarTerm))
+             | None ->          
+                 translateFreeVar sym)
+
   | _ -> (Errormsg.impossible (Preabsyn.getTermPos term) 
                               "Parse.translateId: invalid term")
 
@@ -567,16 +570,21 @@ and makeImplicitTypeSymbol c sym ty =
 and makeAnonymousTypeSymbol c sym ty =
   Absyn.AnonymousImplicitVar(sym, ref c, ref false, ref (Some ty))
 
+(* The first time that this free variable (with or without type annotation) 
+* is met during the translation of the current clause *)
 and makeVarToOpTerm term fvs bvs amodule makeSymFunc =
   match term with
-    Preabsyn.IdTerm(sym, Some(ty), k, pos) ->
+    Preabsyn.IdTerm(sym, Some(ty), _, pos) ->
       (* There is a type annotation. We use it to generate the skeleton *)
       let skel = Translate.translateTypeAnnot ty amodule in
       let tmol = Types.Molecule(skel, []) in
       let typesym = makeSymFunc None sym skel in
       let fvs' = (add fvs sym typesym) in
         (StackTerm(Term(Absyn.makeFreeVarTerm typesym pos, tmol)), fvs')
-  | Preabsyn.IdTerm(sym, None, k, pos) ->
+  | Preabsyn.IdTerm(sym, None, _, pos) ->
+      (* There is no type annotation. This variable wil thus be bindable 
+       * during unification *)
+      let _ = Printf.printf "Sym = %s\n" (Symbol.name sym) in
       let skel = Absyn.makeTypeVariable () in
       let tmol = Types.Molecule(skel, []) in
       let typesym = makeSymFunc None sym skel in
@@ -585,6 +593,7 @@ and makeVarToOpTerm term fvs bvs amodule makeSymFunc =
   | _ -> Errormsg.impossible Errormsg.none 
                              "Parse.makeVarToOpTerm: invalid id term"
 
+(* We already met this variable *)
 and varToOpTerm term typesym fvs bvs amodule makeVarFunc =
   match term with
     Preabsyn.IdTerm(_, Some(ty), _, pos) ->

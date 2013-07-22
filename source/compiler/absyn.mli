@@ -64,8 +64,16 @@ and atypevar =
 * can be bound during unification to any other type (including another
 * BindableTypeVar)
 * When they are created, they are thus set to None.
-* If durin an unification at top level a BindableTypeVar is bound and then
+* They can be created when: 
+* If during an unification at top level a BindableTypeVar is bound and then
 * an error occurs, it has to be reset to None 
+* 
+* 
+* 
+* A FreeTypeVar 
+* 
+* 
+* 
 *****************************************************************************)
 and atypevarinfo =
     BindableTypeVar of atype option ref

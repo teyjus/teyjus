@@ -36,7 +36,7 @@ type ptype =
   | Arrow of ptype * ptype * pos
   | ErrorType
 
-type ptypesymbol = TypeSymbol of (symbol * ptype option * pos)
+type pabstractedsymbol = AbstractedSymbol of (symbol * ptype option * pos)
 
 type ptypeabbrev = TypeAbbrev of psymbol * psymbol list * ptype * pos
 
@@ -44,7 +44,7 @@ type pterm =
   | SeqTerm of pterm list * pos 
   | ListTerm of pterm list * pos
   | ConsTerm of pterm list * pterm * pos  
-  | LambdaTerm of ptypesymbol * pterm list * pos
+  | LambdaTerm of pabstractedsymbol * pterm list * pos
   | IdTerm of (symbol * ptype option * pidkind * pos)
   | RealTerm of float * pos
   | IntTerm of int * pos
@@ -85,12 +85,13 @@ let map_with_commas f list = String.concat ", " (List.map f list)
 let rec string_of_termlist list =
   map_with_commas string_of_term list
 
-and string_of_typesymbol = function
-  | TypeSymbol(tsym, Some t, pos) ->
-      "TypeSymbol(" ^ (Symbol.name tsym) ^ ", " ^
+and string_of_abstractedsymbol = function
+  | AbstractedSymbol(tsym, Some t, pos) ->
+      "AbstractedSymbol(" ^ (Symbol.name tsym) ^ ", " ^
         (string_of_type t) ^ ", " ^ (string_of_pos pos) ^ ")"
-  | TypeSymbol(tsym, None, pos) ->
-      "TypeSymbol(" ^ (Symbol.name tsym) ^ ", " ^ (string_of_pos pos) ^ ")"
+  | AbstractedSymbol(tsym, None, pos) ->
+      "AbstractedSymbol(" ^ (Symbol.name tsym) ^ ", " ^ 
+      (string_of_pos pos) ^ ")"
 
 and string_of_term = function
   | SeqTerm(tlist, pos) ->
@@ -117,7 +118,7 @@ and string_of_term = function
   | StringTerm(s, pos) ->
       "StringTerm(" ^ s ^ ", " ^ (string_of_pos pos) ^ ")"
   | LambdaTerm(lt, t, pos) ->
-      "LambdaTerm([" ^ (string_of_typesymbol lt) ^ "], " ^
+      "LambdaTerm([" ^ (string_of_abstractedsymbol lt) ^ "], " ^
         (string_of_termlist t) ^ ", " ^ (string_of_pos pos) ^ ")"
   | ErrorTerm ->
       "Error"
