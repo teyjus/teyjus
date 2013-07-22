@@ -27,10 +27,12 @@ type pos = Errormsg.pos
 
 (* Kinds of Identifiers 
  * CVID and VarID are only distinguished in the preabstract syntax.
+ * The only difference is that AVID cannot be bound.
  * After the function translateID in parse.ml they are both free variables *)
 type pidkind =
-  | CVID        (* Free variable, starting with an uppercase letter *)
-  | ConstID     (* A constant, lowercase *)
+  | CVID        (* Free variable (or bound variable), 
+                   starting with an uppercase letter *)
+  | ConstID     (* A constant (or bound variable), lowercase *)
   | AVID        (* Anonymous variable i.e. an underscore *)
   | VarID       (* Free variable, starting with an underscore *)
 
@@ -44,9 +46,13 @@ type ptype =
   | Arrow of ptype * ptype * pos
   | ErrorType
 
-(* Type Symbols for abstracted variables 
-* The optional type represents the possible type annotation *)
-type ptypesymbol = TypeSymbol of (symbol * ptype option * pos)
+(* Symbols for abstracted variables 
+* The optional type represents the possible type annotation 
+* The pabstractedsymbol of the term 
+* x : int \ t 
+* is 
+* AbstractedSymbol("x", Some(Atom(int, ConstID, _), _)) *)
+type pabstractedsymbol = AbstractedSymbol of (symbol * ptype option * pos)
 
 (* Type abbreviations 
  * For instance, 
@@ -69,7 +75,7 @@ type pterm =
     (* LambdaTerm(x, t,_) represents x\ t 
     * The list here is just a sequence of terms. 
     * It will be translated as a single absyn term *) 
-  | LambdaTerm of ptypesymbol * pterm list * pos
+  | LambdaTerm of pabstractedsymbol * pterm list * pos
    (* The optional type is the possible type annotation *)
   | IdTerm of (symbol * ptype option * pidkind * pos)
   | RealTerm of float * pos
