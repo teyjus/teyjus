@@ -27,8 +27,10 @@ type pos = Errormsg.pos
 
 (* Kinds of Identifiers 
  * CVID and VarID are only distinguished in the preabstract syntax.
- * The only difference is that AVID cannot be bound.
- * After the function translateID in parse.ml they are both free variables *)
+ * There are some subtle differences:
+ *   - VarID cannot be bound
+ *   - VarID cannot appear in type abbreviations
+ * After the function translateID in parse.ml they merged to the same datatype*)
 type pidkind =
   | CVID        (* Free variable (or bound variable), 
                    starting with an uppercase letter *)
@@ -36,7 +38,8 @@ type pidkind =
   | AVID        (* Anonymous variable i.e. an underscore *)
   | VarID       (* Free variable, starting with an underscore *)
 
-(* Symbols *)
+(* Symbols 
+* A symbol can represent the name of a term, type, module, signature *)
 type psymbol = Symbol of symbol * pidkind * pos
 
 (* Types *)
@@ -76,7 +79,8 @@ type pterm =
     * The list here is just a sequence of terms. 
     * It will be translated as a single absyn term *) 
   | LambdaTerm of pabstractedsymbol * pterm list * pos
-   (* The optional type is the possible type annotation *)
+   (* An IdTerm represents a term or type identifier.
+    * The optional type is the possible type annotation *)
   | IdTerm of (symbol * ptype option * pidkind * pos)
   | RealTerm of float * pos
   | IntTerm of int * pos
@@ -101,7 +105,9 @@ type pclause = Clause of pterm
  * The optional type is  set to None when this is a closed, exportdef or useonly
  * declaration alone (the type is declared somewhere else), e.g.
  * type p o.
- * exportdef p. *)
+ * exportdef p.
+ * Otherwise this is the type of the constant defined by the user or in the 
+ * pervasives *)
 type pconstant = Constant of psymbol list * ptype option * pos
 
 (* Kinds 

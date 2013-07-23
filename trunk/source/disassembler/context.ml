@@ -176,14 +176,15 @@ let printGlobalConst c =
   ((Absyn.getConstantName c) ^ " (" ^ 
    (Absyn.string_of_fixity (Absyn.getConstantFixity c)) ^ 
    ", precedence " ^ (string_of_int (Absyn.getConstantPrec c)) ^
-   ")\n    Env Size: " ^ (string_of_int (Absyn.getConstantTypeEnvSize false c)) ^
-   ", Type Skeleton: #" ^ 
+   ")\n    Env Size: " ^ (string_of_int (Absyn.getConstantTypeEnvSize false c)) 
+  ^ ", Type Skeleton: #" ^ 
    (string_of_int (Absyn.getSkeletonIndex (Absyn.getConstantSkeletonValue c))))
 
 let printLocalConst c =	
   (" (" ^ (Absyn.string_of_fixity (Absyn.getConstantFixity c)) ^ 
    ", precedence " ^ (string_of_int (Absyn.getConstantPrec c)) ^
-   ")\n    Env Size: " ^ (string_of_int (Absyn.getConstantTypeEnvSize false c)) ^
+   ")\n    Env Size: " ^ 
+   (string_of_int (Absyn.getConstantTypeEnvSize false c)) ^
    ", Type Skeleton: #" ^ 
    (string_of_int (Absyn.getSkeletonIndex (Absyn.getConstantSkeletonValue c))))
 

@@ -1027,8 +1027,10 @@ and normalizeClause clauseterm clauses uvs uvdefs embedded =
   | Absyn.FreeVarTerm(Absyn.NamedFreeVar(tsym), pos) ->
       (indeterminate tsym pos)
   | _ ->
-    (Errormsg.impossible (Absyn.getTermPos t) ("Clauses.normalizeClause: Invalid term type: " ^
-      (Absyn.string_of_term_ast t) ^ "; " ^ (Absyn.string_of_term_ast clauseterm)))
+    (Errormsg.impossible (Absyn.getTermPos t) 
+       ("Clauses.normalizeClause: Invalid term type: " ^
+      (Absyn.string_of_term_ast t) ^ "; " ^ 
+        (Absyn.string_of_term_ast clauseterm)))
 
 (**********************************************************************
 *translateClauses:
@@ -1208,7 +1210,9 @@ let linearizeClause clause =
         pos)
     in
     let uvs' = List.rev uvs in
-    let eqs = List.flatten (List.map (fun (_, (info, fvs)) -> List.map (equality info) (List.rev fvs)) uvs') in
+    let eqs = List.flatten 
+                (List.map (fun (_, (info, fvs)) -> 
+                             List.map (equality info) (List.rev fvs)) uvs') in
     match eqs with
       eq::eqs' ->
         let l = List.fold_right (conj pos) eqs' eq in
@@ -1220,12 +1224,16 @@ let linearizeClause clause =
   
   let (head, body) = getHeadAndBody clause in
   let pos = Absyn.getTermPos head in
-  let _ = Errormsg.log pos ("Clauses.linearizeClause: head " ^ (Absyn.string_of_term_ast head)) in
+  let _ = Errormsg.log pos 
+            ("Clauses.linearizeClause: head " ^ 
+             (Absyn.string_of_term_ast head)) in
   let _ = if Option.isSome body then
-    Errormsg.log pos ("Clauses.linearizeClause: body " ^ (Absyn.string_of_term_ast (Option.get body)))
+    Errormsg.log pos 
+      ("Clauses.linearizeClause: body " ^ 
+       (Absyn.string_of_term_ast (Option.get body)))
   in
   let (head', uvs) = linearizeHead head pos in
-  match equalities pos uvs body with
-      Some body' ->
-        imp head' body' pos
-    | None -> head'
+    match equalities pos uvs body with
+        Some body' ->
+          imp head' body' pos
+      | None -> head'

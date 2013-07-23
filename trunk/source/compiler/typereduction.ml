@@ -228,7 +228,8 @@ let reduceSkeletons amod =
 		else
           ()
       else
-		(Errormsg.impossible Errormsg.none "Typereduction.reduceConstant: invalid skeleton")
+		(Errormsg.impossible Errormsg.none 
+     "Typereduction.reduceConstant: invalid skeleton")
   in
   
   (*  Iterate over the constant table, destructively reducing each
@@ -320,7 +321,8 @@ let reducePredicates amod =
   let makeConstantNeededness sym constant =
     let neededness = Absyn.getConstantNeedednessRef constant in
     if Option.isNone (!neededness) then
-      let neededness' = Array.make (Absyn.getConstantTypeEnvSize false constant) false in
+      let neededness' = 
+        Array.make (Absyn.getConstantTypeEnvSize false constant) false in
       neededness := Some(neededness')
     else
       ()
@@ -350,7 +352,8 @@ let reducePredicates amod =
               let ty' = Absyn.dereferenceType ty in
               if Absyn.isVariableType ty' then
                 let tvar = Absyn.getTypeFreeVariableVariableData ty' in
-                let result = List.exists (function (_,tvar') -> (tvar == tvar')) tymap in
+                let result = List.exists 
+                               (function (_,tvar') -> (tvar == tvar')) tymap in
                 if result then
                   (Array.set neededness i true)
                 else
@@ -421,7 +424,8 @@ let reducePredicates amod =
             let result = mapi (checkTypeForVar index tvar) args in
             (List.exists ((==) true) result)
         | _ ->
-            (Errormsg.impossible Errormsg.none "Typereduction.checkTypeForVar: invalid type")
+            (Errormsg.impossible Errormsg.none 
+               "Typereduction.checkTypeForVar: invalid type")
     in
 
     (********************************************************************
@@ -469,7 +473,8 @@ let reducePredicates amod =
               (checkTerm tvar t1;
               checkTerm tvar t2)
           | Absyn.ErrorTerm ->
-              Errormsg.impossible Errormsg.none "Typereduction.checkTerm: invalid term"         
+              Errormsg.impossible Errormsg.none 
+                "Typereduction.checkTerm: invalid term"         
       in
       (List.iter (checkTerm tvar) terms)
     in
@@ -649,7 +654,8 @@ let reducePredicates amod =
                 Some i
               else
                 None
-          | _ -> Errormsg.impossible Errormsg.none "Typereduction.findType: invalid type"
+          | _ -> Errormsg.impossible Errormsg.none 
+                   "Typereduction.findType: invalid type"
       in
       
       match goal with
@@ -721,7 +727,9 @@ let reducePredicates amod =
   (*  Initialize the fixed-point data.  *)
   let cinfo = Absyn.getModuleClauses amod in
   let clauseblocks = Absyn.getClauseInfoClauseBlocks cinfo in
-  let clauses = List.flatten (List.map (fun cb -> (Absyn.getClauseBlockClauses cb)) clauseblocks) in
+  let clauses = 
+    List.flatten 
+      (List.map (fun cb -> (Absyn.getClauseBlockClauses cb)) clauseblocks) in
   let _ = List.iter initializeNeeded clauses in
   
   (*  Run the fixed-point algorithm to compute neededness.  *)

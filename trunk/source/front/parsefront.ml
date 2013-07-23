@@ -33,7 +33,10 @@ let writeLine oc s = output_string oc (s ^ "\n")
 
 let writeConst oc inSig isLocal c =
   let name = getConstantName c in
-  let ty = string_of_skeleton (getConstantSkeletonValue c) in
+(*  let ty = string_of_skeleton (getConstantSkeletonValue c) in*)
+  let tm = Types.makeConstantMolecule false c in
+  let tyStr = Types.string_of_typemolecule tm in 
+
   
   let hasFixity = (getConstantFixity c) <> NoFixity in
   let fixity = string_of_fixity (getConstantFixity c) in
@@ -53,7 +56,7 @@ let writeConst oc inSig isLocal c =
       (true, isExportDef, exportdef);
       (false, isClosed, closed)] in
 
-  writeLine oc ("type " ^ name ^ " " ^ ty ^ ".");
+  writeLine oc ("type " ^ name ^ " " ^ tyStr ^ ".");
   if hasFixity then writeLine oc (fixity ^ " " ^ name ^ " " ^ prec ^ ".");
   List.iter
     (fun (inSig', isIt, it) ->

@@ -158,9 +158,9 @@ let rec string_of_typemolecule = fun mol ->
   s
 
 and string_of_typemolecule' = fun mol bindings printpar ->
-  let Molecule(t,env) = (dereferenceMolecule mol) in
+  let Molecule(t, env) = (dereferenceMolecule mol) in
 
-  let rec string_of_skelvar i =
+  let string_of_skelvar i =
     let get i env =
       try
         let e = (List.nth env i) in
@@ -173,8 +173,9 @@ and string_of_typemolecule' = fun mol bindings printpar ->
                                             (string_of_int i)))
     in
     get i env
+  in
   
-  and string_of_var = fun bindings ->
+  let string_of_var = fun bindings ->
     let character i =
       if i>= 26 then
         (string_of_int i)
@@ -188,8 +189,9 @@ and string_of_typemolecule' = fun mol bindings printpar ->
       Not_found ->
         let i = List.length bindings in
         (character i, (t, i)::bindings)
+  in
   
-  and string_of_typeset ts bindings =
+  let string_of_typeset ts bindings =
     match ts with
       Absyn.TypeSetType(d, t, _) ->
         (match !t with
@@ -197,8 +199,9 @@ and string_of_typemolecule' = fun mol bindings printpar ->
         | _ -> string_of_typemolecule' (Molecule(d, env)) bindings printpar)
     | _ -> (Errormsg.impossible Errormsg.none "Types.string_of_typeset: \
                                                invalid typeset")
+  in
   
-  and string_of_args = fun args bindings ->
+  let rec string_of_args = fun args bindings ->
     match args with
       arg::args' ->
         let (arg', bindings') = 
@@ -207,8 +210,9 @@ and string_of_typemolecule' = fun mol bindings printpar ->
         let (args'', bindings'') = (string_of_args args' bindings') in
         (" " ^ arg' ^ args'', bindings'')
     | [] -> ("", bindings)
+  in
   
-  and string_of_type t =
+  let string_of_type_and_bindings t =
     match (Absyn.dereferenceType t) with
       Absyn.SkeletonVarType(i) -> (string_of_skelvar !i)
     | Absyn.TypeVarType(_) -> (string_of_var bindings)
@@ -232,7 +236,7 @@ and string_of_typemolecule' = fun mol bindings printpar ->
            else (l' ^ " -> " ^ r', bindings')
     | Absyn.ErrorType -> ("error", bindings)
   in
-  string_of_type t
+    string_of_type_and_bindings t
 
 (********************************************************************
 *getMoleculeListTypes;
@@ -275,22 +279,23 @@ let rec skeletonizeArgs args env index =
 (********************************************************************
 *skeletonize:
 * Primary skeletonization routine; recurses over structure of type.
+* There are no more TypeVarType after skeletonize
 ********************************************************************)
 and skeletonize ty env index =
   let ty' = Absyn.dereferenceType ty in
   match ty' with
     Absyn.TypeVarType(r) ->
-      (match !r with
-        Absyn.BindableTypeVar(_) ->
-          let ty'' = replaceType ty' env 0 in
-          if Option.isSome ty'' then
-            (Molecule(Option.get ty'', env), false, index)
-          else
-            let index' = index + 1 in
-              (Molecule(Absyn.SkeletonVarType(ref index), env @ [ty']), 
-               true, 
-               index')
-      | _ -> Errormsg.impossible Errormsg.none 
+      (match r with
+         | Absyn.BindableTypeVar(_) ->
+             let ty'' = replaceType ty' env 0 in
+               if Option.isSome ty'' then
+                 (Molecule(Option.get ty'', env), false, index)
+               else
+                 let index' = index + 1 in
+                   (Molecule(Absyn.SkeletonVarType(ref index), env @ [ty']), 
+                    true, 
+                    index')
+         | _ -> Errormsg.impossible Errormsg.none 
                                  "Types.skeletonizeType: \
                                   invalid type variable")
   | Absyn.ApplicationType(k, args) ->
@@ -335,8 +340,8 @@ let skeletonizeType ty =
     mol
 
 (**********************************************************************
-*skeletonizeMoleulce:
-* Converts a moleulce with free variables and skeleton variables
+*skeletonizeMolecule:
+* Converts a molecule with free variables and skeleton variables
 * into a type molecule with skeleton variables only.
 **********************************************************************)
 let skeletonizeMolecule tmol =
@@ -392,18 +397,18 @@ let rec occursCheck var skel bindings =
 * This is only useful at the top level
 **********************************************************************)
 let rec unbindVariables = function
-  [] -> ()
-| Absyn.TypeVarType(r)::vs ->
-    (match !r with
-      Absyn.BindableTypeVar(tr) ->
-        (tr := None;
-        unbindVariables vs)
-    | _ -> Errormsg.impossible Errormsg.none 
-                               "Types.unbindVariables: invalid type variable")
-| v::vs ->
-    (Errormsg.impossible Errormsg.none
-                         "Types.unbindVariables: \
-                          non-variable type encountered.")
+  | [] -> ()
+  | Absyn.TypeVarType(r)::vs ->
+      (match r with
+           Absyn.BindableTypeVar(tr) ->
+             (tr := None;
+              unbindVariables vs)
+         | _ -> Errormsg.impossible Errormsg.none 
+                  "Types.unbindVariables: invalid type variable")
+  | v::vs ->
+      (Errormsg.impossible Errormsg.none
+         "Types.unbindVariables: \
+         non-variable type encountered.")
     
 (**********************************************************************
 *bindVariable:
@@ -710,26 +715,26 @@ let checkApply fty argty term =
 let rec freeTypeVars tyexp tyfvs =
   match tyexp with
     | Absyn.TypeVarType(varInfo) ->
-	  (match (!varInfo) with 
-		Absyn.BindableTypeVar(binding) ->
-		  if Option.isNone (!binding) then (* type variable *)
-			(* whether the variable appears in the given var list *)
-			let rec isNewTyFv tyfvs =
-			  match tyfvs with
-				[] -> true
-			  | (tyfv :: rest) -> 
-				  if (tyfv == tyexp) then false
-				  else isNewTyFv rest
-			in
-			if (isNewTyFv tyfvs) then 
-              (tyexp::tyfvs)
-			else tyfvs
-		  else (* a type reference really *)
-              (* It seems that we are never in this situation,
-               * possibly due to a previous call to dereferenceType *)
-              freeTypeVars (Option.get (!binding)) tyfvs
-	  | _ -> Errormsg.impossible Errormsg.none 
-			             "freeTypeVars: invalid type expression")
+        (match (varInfo) with 
+           | Absyn.BindableTypeVar(binding) ->
+               if Option.isNone (!binding) then (* type variable *)
+                 (* whether the variable appears in the given var list *)
+                 let rec isNewTyFv tyfvs =
+                   match tyfvs with
+                       [] -> true
+                     | (tyfv :: rest) -> 
+                         if (tyfv == tyexp) then false
+                         else isNewTyFv rest
+                 in
+                   if (isNewTyFv tyfvs) then 
+                     (tyexp::tyfvs)
+                   else tyfvs
+               else (* a type reference really *)
+                 (* It seems that we are never in this situation,
+                  * possibly due to a previous call to dereferenceType *)
+                 freeTypeVars (Option.get (!binding)) tyfvs
+           | _ -> Errormsg.impossible Errormsg.none 
+                    "freeTypeVars: invalid type expression")
   | Absyn.ArrowType(arg, target) ->
 	  freeTypeVars target (freeTypeVars arg tyfvs)
   | Absyn.ApplicationType(kind, args) ->

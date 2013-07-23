@@ -147,7 +147,7 @@ let rec transType tyExp =
   match tyExp with 
     Absyn.TypeVarType(typeVarInfo) -> 
       (* it is assumed the typeVarInfo here must take form of BindableTypeVar*)
-      (match (!typeVarInfo) with 
+      (match (typeVarInfo) with 
          | Absyn.BindableTypeVar(binding) ->
              if Option.isNone (!binding) then (*actually a free var *)
                let tyVarData =
