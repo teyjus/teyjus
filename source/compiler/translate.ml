@@ -20,11 +20,10 @@
 ****************************************************************************)
 type pos = Errormsg.pos
 
-type typeandbindings =
-  TypeAndBindings of (Absyn.atype * Absyn.atype Table.symboltable)
 
 let getFromTable check t =
-  let r = Table.fold (fun _ el l -> if (check el) then el::l else l) t [] in
+  let r = Table.fold 
+            (fun _ el l -> if (check el) then el::l else l) t [] in
     List.rev r
 
 type typeandenvironment =
@@ -32,6 +31,10 @@ type typeandenvironment =
 
 let typeSkeletonIndex = ref 0
 
+
+(* Temporary data structure used internally in rationalizeType *)             
+type typeandbindings =
+  TypeAndBindings of (Absyn.atype * Absyn.atype Table.symboltable)
 
 (* The next three functions can be passed as an argument to rationalizeType *)
 
@@ -66,20 +69,27 @@ let rationalizeVar sym symtable _ =
 
 (********************************************************************
 *rationalizeType:
-* Rationalizes a type.
+* Rationalizes the type ty.
 *********************************************************************)
 let rec rationalizeType ty vartable kindtable typeabbrevtable transvarfunc =
+  let TypeAndBindings(ty, _) = 
+    rationalizeTypeAux ty vartable kindtable typeabbrevtable transvarfunc
+  in
+    ty
+
+
+and rationalizeTypeAux ty vartable kindtable typeabbrevtable transvarfunc =
     
   (******************************************************************
   *translateArrow:
   * Translate an arrow from preabsyn to absyn.
   ******************************************************************)
   let translateArrow = function Preabsyn.Arrow(l, r, _) ->
-    let TypeAndBindings(l', ls) = rationalizeType l vartable kindtable 
+    let TypeAndBindings(r', rs) = rationalizeTypeAux r vartable kindtable 
                                     typeabbrevtable transvarfunc in
-    let TypeAndBindings(r', rs) = rationalizeType r ls kindtable 
+    let TypeAndBindings(l', ls) = rationalizeTypeAux l rs kindtable 
                                     typeabbrevtable transvarfunc in
-      TypeAndBindings(Absyn.ArrowType(l', r'), rs)
+      TypeAndBindings(Absyn.ArrowType(l', r'), ls)
   | t -> invalid_arg "Types.translateArrow: invalid type"
   in
 
@@ -91,20 +101,23 @@ let rec rationalizeType ty vartable kindtable typeabbrevtable transvarfunc =
 
    (**************************************************************
     *getHeadAndArgsType:
-    * Gets the arguments as a list instead of a tree.
+    * Given a type application, gets the arguments as a list instead of a tree.
+    * Returns a triple containing
+    * (the head, the updated symbol table, the list of arguments)
     **************************************************************)
     let rec getHeadAndArgsType ty ts =
-            match ty with
-              Preabsyn.App(f, arg, _) ->
-                (* First take care of the leftmost argument to preserve the 
-                 * convention of writing type variables in alphabetic order
-                 * from left to right (eg. A -> B -> pair A B *)
-                let (head, ts', argtypes) = (getHeadAndArgsType f ts) in
-                let TypeAndBindings(argtype, ts'') = 
-                  rationalizeType arg ts' kindtable typeabbrevtable 
-                    transvarfunc in
-                  (head, ts'', argtypes @ [argtype])
-            | _ -> (ty, ts, [])
+      match ty with
+        | Preabsyn.App(f, arg, _) ->
+            (* First take care of the leftmost argument to preserve the 
+             * convention of writing type variables in alphabetic order
+             * from left to right (eg. A -> B -> pair A B *)
+            let (head, ts', argtypes) = (getHeadAndArgsType f ts) in
+            let TypeAndBindings(argtype, ts'') = 
+              rationalizeTypeAux arg ts' kindtable typeabbrevtable 
+                transvarfunc 
+            in
+              (head, ts'', argtypes @ [argtype])
+        | _ -> (ty, ts, [])
     in
 
     (* The main case for the application translation, when the head
@@ -112,7 +125,8 @@ let rec rationalizeType ty vartable kindtable typeabbrevtable transvarfunc =
     let const_app sym ts args  pos =
       match (Table.find sym vartable) with
            Some t ->
-             (Errormsg.error pos "found type variable, expected a constructor";
+             (Errormsg.error pos 
+                "found type variable, expected a constructor";
               TypeAndBindings(Absyn.ErrorType, vartable))
          | None ->
              match (Table.find sym kindtable) with
@@ -122,8 +136,7 @@ let rec rationalizeType ty vartable kindtable typeabbrevtable transvarfunc =
                          ("type constructor " ^ (Symbol.name sym) ^ 
                           " has arity " ^ 
                           (string_of_int (Absyn.getKindArity k)));
-                       TypeAndBindings(
-                         Absyn.ErrorType, vartable))
+                       TypeAndBindings(Absyn.ErrorType, vartable))
                     else
                       TypeAndBindings(Absyn.ApplicationType(k, args), ts)
                 | None ->
@@ -136,6 +149,7 @@ let rec rationalizeType ty vartable kindtable typeabbrevtable transvarfunc =
                             TypeAndBindings(Absyn.ErrorType, vartable))
     in
 
+      (* Main for translateApp *)
       match ty with 
         | Preabsyn.App(_, _ , p) ->
            let (head, ts, args) = getHeadAndArgsType ty vartable in
@@ -152,6 +166,7 @@ let rec rationalizeType ty vartable kindtable typeabbrevtable transvarfunc =
        | _ -> invalid_arg "Types.translateApp: invalid type"
   in  
 
+  (* Main for rationalizeTypeAux *)
   match ty with
     | Preabsyn.Atom(s, Preabsyn.AVID, pos) ->
         (transvarfunc s vartable pos)
@@ -165,7 +180,7 @@ let rec rationalizeType ty vartable kindtable typeabbrevtable transvarfunc =
         (match (Table.find s vartable) with
              Some t -> TypeAndBindings(t, vartable)
            | None -> transvarfunc s vartable pos)
-    | Preabsyn.Atom(s, _, pos) ->
+    | Preabsyn.Atom(s, Preabsyn.ConstID, pos) ->
         (match (Table.find s kindtable) with
              Some k ->
                if (Absyn.getKindArity k) <> 0 then
@@ -193,25 +208,24 @@ let rec rationalizeType ty vartable kindtable typeabbrevtable transvarfunc =
     | Preabsyn.ErrorType -> TypeAndBindings(Absyn.ErrorType, vartable)
 
 and translateTypeAnnot ty amodule =
-  let TypeAndBindings(t, _) = 
     rationalizeType ty Table.empty
       (Absyn.getModuleKindTable amodule) 
       (Absyn.getModuleTypeAbbrevTable amodule)
       rationalizeVar 
-  in
-    t
 
 (**********************************************************************
-*translateTypeSkeleton:
-* Translate a preabsyn representation of a type into an absyn type
+*translateConstantTypeSkeleton:
+* Translate a preabsyn representation of a constant's type into an absyn type
 * skeleton.
 **********************************************************************)
-and translateTypeSkeleton ty kindtable typeabbrevtable =
+and translateConstantTypeSkeleton ty kindtable typeabbrevtable =
+  (* Before removing this piece of code, be sure that the order
+   * in rationalizeType is OK *)
   (*********************************************************************
   *translateArrow:
   * Translate an arrow, with a check to ensure that
   *********************************************************************)
-  let translateArrow = function Preabsyn.Arrow(l, r, pos) ->
+ (* let translateArrow = function Preabsyn.Arrow(l, r, pos) ->
     (*******************************************************************
     *getTarget:
     * Get the target of an arrow type.
@@ -271,23 +285,18 @@ and translateTypeSkeleton ty kindtable typeabbrevtable =
     (*  Translate all of the arguments  *)
     let args' = translateArgs args ts in
       
-    (*  Rebuild the arrow type as absyn *)
-    buildArrow target' args'
+      (*  Rebuild the arrow type as absyn *)
+      buildArrow target' args'
     
   | _ -> invalid_arg "Types.translateArrow: invalid type"
   in
+  *)
   
   let _ = typeSkeletonIndex := 0 in
-  
-  match ty with
-    Preabsyn.Arrow(_, _, _) ->
-      let arr = translateArrow ty in
-        TypeAndEnvironment(arr, !typeSkeletonIndex)
-  | _ ->
-    let TypeAndBindings(t, bs) =
-      rationalizeType ty Table.empty kindtable typeabbrevtable 
-                      rationalizeSkeletonVar in
-      TypeAndEnvironment(t, !typeSkeletonIndex) 
+  let ty' =
+    rationalizeType ty Table.empty kindtable typeabbrevtable 
+      rationalizeSkeletonVar in
+    TypeAndEnvironment(ty', !typeSkeletonIndex) 
 
 (**********************************************************************
 *translateFixities:
@@ -476,7 +485,7 @@ and translateKind = fun kind buildkind klist ->
 * Constructs a function to build a constant of Global kind, and
 * translates all constants using it.
 **********************************************************************)
-and buildGlobalConstant = fun sym ty tyskel esize pos ->
+and buildGlobalConstant = fun sym tyskel esize pos ->
   Absyn.Constant(sym, ref Absyn.NoFixity, ref (-1), ref false, ref false,
                  ref false, ref true, ref false, ref false, tyskel,
                  ref esize, ref (Some(Array.make esize true)), 
@@ -489,7 +498,7 @@ and translateGlobalConstants clist kindtable typeabbrevtable =
 (**********************************************************************
 *translateLocalConstants:
 **********************************************************************)
-and buildLocalConstant sym ty tyskel esize pos =
+and buildLocalConstant sym tyskel esize pos =
   Absyn.Constant(sym, ref Absyn.NoFixity, ref (-1), ref false, ref false,
                  ref false, ref true, ref false, ref false, tyskel,
                  ref esize, ref (Some(Array.make esize true)), 
@@ -503,13 +512,12 @@ and translateLocalConstants clist kindtable typeabbrevtable =
 *translateUseOnlyConstants:
 **********************************************************************)
 and translateUseOnlyConstants owner clist kindtable typeabbrevtable =
-  let constantType = Absyn.GlobalConstant in
-  let buildConstant = fun sym ty tyskel esize pos ->
+  let buildConstant = fun sym tyskel esize pos ->
     Absyn.Constant(sym, ref Absyn.NoFixity, ref (-1), ref false, ref true,
                    ref true, ref true, ref false, ref false, tyskel,
                    ref esize, ref (Some(Array.make esize true)), 
                    ref (Some(Array.make esize true)),
-                   ref None, ref constantType, ref 0, pos)
+                   ref None, ref Absyn.GlobalConstant, ref 0, pos)
   in
   translateConstants clist kindtable typeabbrevtable buildConstant
 
@@ -517,13 +525,12 @@ and translateUseOnlyConstants owner clist kindtable typeabbrevtable =
 *translateExportdefConstants:
 **********************************************************************)
 and translateExportdefConstants owner clist kindtable typeabbrevtable =
-  let constantType = Absyn.GlobalConstant in
-  let buildConstant = fun sym ty tyskel esize pos ->
+  let buildConstant = fun sym tyskel esize pos ->
     Absyn.Constant(sym, ref Absyn.NoFixity, ref (-1), ref true, ref false,
                    ref (not owner), ref true, ref false, ref false, tyskel,
                    ref esize, ref (Some(Array.make esize true)), 
                    ref (Some(Array.make esize true)),
-                   ref None, ref constantType, ref 0, pos)
+                   ref None, ref Absyn.GlobalConstant, ref 0, pos)
   in
   translateConstants clist kindtable typeabbrevtable buildConstant
 
@@ -531,7 +538,7 @@ and translateExportdefConstants owner clist kindtable typeabbrevtable =
 *translateClosedConstants:
 **********************************************************************)
 and translateClosedConstants clist kindtable typeabbrevtable =
-  let buildConstant = fun sym ty tyskel esize pos ->
+  let buildConstant = fun sym tyskel esize pos ->
     Absyn.Constant(sym, ref Absyn.NoFixity, ref (-1), ref false, ref false,
                    ref false, ref true, ref false, ref false, tyskel,
                    ref esize, ref (Some(Array.make esize true)), 
@@ -542,10 +549,19 @@ and translateClosedConstants clist kindtable typeabbrevtable =
 
 (********************************************************************
 *translateConstants:
-* Translates a list of constant declarations in preabsyn
-* representation into a constant table.
+* Translates the list clist of constant declarations in preabsyn
+* representation into an absyn constant list.
+*
+* buildConstant is a function which builds a constant
+* according to its classification (local/global/useonly/expordef)
+*
+* kindtable and typeabbrevtable will be used later to detect clashes
+* or eventually merge multiple declarations
 ********************************************************************)
 and translateConstants clist kindtable typeabbrevtable buildconstant =
+(*  List.map *)
+(*    (fun const ->*)
+(*       (translateConstant const result kindtable typeabbrevtable buildconstant)*)
   let rec translate' clist result =
     match clist with
       c::cs ->
@@ -560,50 +576,60 @@ and translateConstants clist kindtable typeabbrevtable buildconstant =
 *translateConstant:
 * Translate a preabsyn constant into an absyn constant and enter it
 * into a table.
+*
+* We can have several resulting constants since a single preabsyn constant
+* may carry several symbols (as in the declaration: type p, q o.)
 **********************************************************************)
 and translateConstant c clist kindtable typeabbrevtable buildconstant =
   (********************************************************************
   *translate':
   * Enter all names into table.
+  *
   ********************************************************************)
-  let rec enter = fun names ty tyskel esize clist ->
+  let rec enter names tyskel esize clist =
     match names with
       Preabsyn.Symbol(name, _, p)::ns ->
-        let clist' = (buildconstant name ty tyskel esize p) :: clist in
-          (enter ns ty tyskel esize clist')
+        let clist' = (buildconstant name tyskel esize p) :: clist in
+          (enter ns tyskel esize clist')
     | [] -> clist
   in
   
   match c with
-    Preabsyn.Constant(names, Some t, _) ->
-      let TypeAndEnvironment(tyskel, size) = 
-              translateTypeSkeleton t kindtable typeabbrevtable in
+    | Preabsyn.Constant(names, Some t, _) ->
+      (* A regular constant declaration *)
+      let TypeAndEnvironment(ty, size) = 
+        translateConstantTypeSkeleton t kindtable typeabbrevtable in
       (* let ty = translateType' t kindtable typeabbrevtable in 
         If necessary, translateType' was removed in commit 1067 *)
-        (enter names [tyskel] 
-                     (ref(Some(Absyn.Skeleton(tyskel, ref None, ref false))))
+        (enter names (ref(Some(Absyn.Skeleton(ty, ref None, ref false))))
                      size clist)
-  | Preabsyn.Constant(names, None, _) ->
-      (enter names [] (ref None) 0 clist)
+    | Preabsyn.Constant(names, None, _) ->
+        (* This just a closed/exportdef or useonly declaration *) 
+        (enter names (ref None) 0 clist)
 
 (********************************************************************
 *translateTypeAbbrevs:
 * Translates a list of type abbreviations in preabsyn representation
 * into a type abbreviation table.
+* Abbreviations are merged one by one during calls to translateTypeAbbrev
 ********************************************************************)
 and translateTypeAbbrevs tabbrevs kindtable =
   let rec translate' tlist abbrevtable =
     match tlist with
-      [] -> abbrevtable
-    | t::ts ->
-        let abbrevtable' = translateTypeAbbrev t abbrevtable kindtable in
-           translate' ts abbrevtable'
+      | [] -> abbrevtable
+      | t::ts ->
+          let abbrevtable' = translateTypeAbbrev t abbrevtable kindtable in
+            translate' ts abbrevtable'
   in
-  translate' tabbrevs Table.empty
+    translate' tabbrevs Table.empty
 
 (********************************************************************
 *translateTypeAbbrev:
 * Translate a type abbreviation from preabsyn to absyn.
+* abbrev is the preabsyn abbreviation to translate and to merge
+* into abbrevtable.
+* The kinds table kindtable from the module is used to detect clashes
+* between type abbreviations and kind declarations
 ********************************************************************)
 and translateTypeAbbrev abbrev abbrevtable kindtable =
   let Preabsyn.TypeAbbrev(name, arglist, ty, pos) = abbrev in
@@ -612,8 +638,8 @@ and translateTypeAbbrev abbrev abbrevtable kindtable =
   *getName:
   ****************************************************************)
   let getName = function
-    Preabsyn.Symbol(n,Preabsyn.ConstID,p) -> n
-  | Preabsyn.Symbol(n,k,p) ->
+    Preabsyn.Symbol(n, Preabsyn.ConstID, _) -> n
+  | Preabsyn.Symbol(n, _, p) ->
       (Errormsg.error p "expected type abbreviation name";
       n)
   in
@@ -623,8 +649,8 @@ and translateTypeAbbrev abbrev abbrevtable kindtable =
   ****************************************************************)
   let rec checkArgs = function
     [] -> []
-  | Preabsyn.Symbol(n,Preabsyn.CVID,p)::ss -> n::(checkArgs ss)
-  | Preabsyn.Symbol(n,k,p)::ss ->
+  | Preabsyn.Symbol(n, Preabsyn.CVID, _)::ss -> n::(checkArgs ss)
+  | Preabsyn.Symbol(_, _, p)::_ ->
       (Errormsg.error p "expected type abbreviation argument name";
       [])
   in
@@ -643,30 +669,30 @@ and translateTypeAbbrev abbrev abbrevtable kindtable =
   let abbrevname = getName name in
   let args = checkArgs arglist in
   
-  (*  Build a symbol table of the args  *)
+  (*  Build a symbol table of the args  
+  * All the variables appearing in the abbreviated type are in this table *)
   let symtable = buildTable args 0 in
   
-  (*  Translate the type body *)
-  let TypeAndBindings(bodytype, _) =
-    (rationalizeType ty symtable kindtable abbrevtable
-                     rationalizeTypeAbbrevVar)
-  in
+  (*  Translate the type body i.e. the abbreviated type *)
+  let bodytype =
+    rationalizeType ty symtable kindtable abbrevtable
+                     rationalizeTypeAbbrevVar in
   
   (* GN, Aug 23, 2012: We assume here that kindtable contains ALL the kind 
      declarations pertinent to the present module/signature and we check for
      clashes with this when populating the type abbreviations table. *)
-    let kindInTab = Table.find abbrevname kindtable in
-          (match kindInTab with
-             Some (Absyn.Kind(_,_,_,_,p')) -> 
-                    (Errormsg.error pos ("type abbreviation name '" ^
-                                        (Symbol.name abbrevname) ^ 
-                                        "' clashes with kind name" ^
-                                        (Errormsg.see p' "kind declaration"));
-                    abbrevtable)
-           | None -> 
-              (mergeTypeAbbrev abbrevname 
-                   (Absyn.TypeAbbrev(abbrevname, args, bodytype, pos))
-                    abbrevtable))
+  let kindInTab = Table.find abbrevname kindtable in
+    (match kindInTab with
+         Some (Absyn.Kind(_, _, _, _, p')) -> 
+           (Errormsg.error pos ("type abbreviation name '" ^
+                                (Symbol.name abbrevname) ^ 
+                                "' clashes with kind name" ^
+                                (Errormsg.see p' "kind declaration"));
+            abbrevtable)
+       | None -> 
+           (mergeTypeAbbrev abbrevname 
+              (Absyn.TypeAbbrev(abbrevname, args, bodytype, pos))
+              abbrevtable))
 
 (********************************************************************
 *translateTypeAbbrevCall:
@@ -714,27 +740,28 @@ and translateTypeAbbrevCall abbrev args vartable pos =
 *mergeTypeAbbrev:
 ******************************************************************)
 and mergeTypeAbbrev sym tabbrev table =
-     let Absyn.TypeAbbrev(s, args, ty, p) = tabbrev in
-     match (Table.find sym table) with
-      Some Absyn.TypeAbbrev(s', args', ty', p') ->
-        (* GN, Aug 20, 2012: should not be checking name identity here since *)
-        (* different abbrev presentations could use different names *)
-        (* if args <> args' then *)
-         if (List.length args) <> (List.length args') 
-         then (Errormsg.error p 
-                 ("conflict in argument numbers for type abbreviation" ^
-                 (Errormsg.see p' "type abbreviation declaration"));
-               table)
-       (* GN, Aug 20, 2012: 
-        * May be better not to rely on OCaml's equality here! *)
-         else if ty <> ty' then
-               (Errormsg.error p 
-                      ("conflict in type for type abbreviation" ^
-                      (Errormsg.see p' "type abbreviation declaration"));
+  let Absyn.TypeAbbrev(s, args, ty, p) = tabbrev in
+    match (Table.find sym table) with
+      | Some Absyn.TypeAbbrev(s', args', ty', p') ->
+          (* GN, Aug 20, 2012: should not be checking name identity here 
+          * since different abbrev presentations could use different names 
+          * if args <> args' then *)
+          if (List.length args) <> (List.length args') then 
+            (Errormsg.error p 
+               ("conflict in argument numbers for type abbreviation" ^
+                (Errormsg.see p' "type abbreviation declaration"));
                 table)
-              else table
-    | None ->
-      (Table.add sym tabbrev table)
+          (* GN, Aug 20, 2012: 
+           * May be better not to rely on OCaml's equality here! *)
+          else if ty <> ty' then
+            (Errormsg.error p 
+               ("conflict in type for type abbreviation" ^
+                (Errormsg.see p' "type abbreviation declaration"));
+             table)
+          else 
+            table
+      | None ->
+          (Table.add sym tabbrev table)
 
 
 (******************************************************************
@@ -747,10 +774,9 @@ and mergeTypeAbbrevs t1 t2 ktable =
               (match kindInTab with
                   Some (Absyn.Kind(_,_,_,_,p')) -> 
                       (Errormsg.error (Absyn.getTypeAbbrevPos abbrev)
-                                      ("type abbreviation name '" ^
-                                          (Symbol.name sym) ^ 
-                                          "' clashes with kind name" ^
-                                          (Errormsg.see p' "kind declaration"));
+                         ("type abbreviation name '" ^ (Symbol.name sym) ^ 
+                          "' clashes with kind name" ^
+                          (Errormsg.see p' "kind declaration"));
                        abbtab)
                 | None -> (mergeTypeAbbrev sym abbrev abbtab)))
        t1 t2)
@@ -1118,8 +1144,8 @@ let copyExportdef generalCopier owner currentConstant newConstant =
   if owner then
     let edref = Absyn.getConstantExportDefRef currentConstant in
     let nodefsref = Absyn.getConstantNoDefsRef currentConstant in
-    (edref := true;
-    nodefsref := not owner)
+      (edref := true;
+       nodefsref := not owner)
   else
     ()
 
@@ -1131,8 +1157,8 @@ let copyUseonly generalCopier owner currentConstant newConstant =
     let uoref = Absyn.getConstantUseOnlyRef currentConstant in
     let nodefsref = Absyn.getConstantNoDefsRef currentConstant in
     (Errormsg.log Errormsg.none "setting useonly";
-    uoref := true;
-    nodefsref := true)
+     uoref := true;
+     nodefsref := true)
   else
     ()
 
@@ -1170,9 +1196,6 @@ let rec translate mod' sig' =
 *   a tuple of the updated constant, kind and abbreviation tables.
 **********************************************************************)
 and translateSignature s owner accumOrUse generalCopier =
-  let ktable = Pervasive.pervasiveKinds in
-  let ctable = Pervasive.pervasiveConstants in 
-  let atable = Pervasive.pervasiveTypeAbbrevs in
   match s with
     Preabsyn.Module(_) ->
       (Errormsg.impossible
@@ -1319,7 +1342,10 @@ and translateSignature s owner accumOrUse generalCopier =
   (*  Process accumulated signatures: *)
   let sigs = processSigs accumsigs in
   let acctables = translateAccumSigs sigs in
-  let (ktable, ctable) = mergeKindandConstTables ktable ctable acctables in
+  
+  let (ktable, ctable) = 
+    mergeKindandConstTables Pervasive.pervasiveKinds 
+      Pervasive.pervasiveConstants acctables in
   
   (*  Process used signatures:  *)
   let sigs = processSigs usesigs in
@@ -1337,14 +1363,14 @@ and translateSignature s owner accumOrUse generalCopier =
   (*  Process type abbreviations  *)
   let atable' = translateTypeAbbrevs tabbrevs ktable in
   let atable = 
-         let mergeTypeAbbrevs' t1 t2 = mergeTypeAbbrevs t2 t1 ktable in
-         let acctypeabbrevtabs = (List.map (fun (_,_,t) -> t) acctables) in
-         let usetypeabbrevtabs = (List.map (fun (_,_,t) -> t) usetables) in
-           (List.fold_left mergeTypeAbbrevs'  
-                 (List.fold_left mergeTypeAbbrevs' 
-                                 (mergeTypeAbbrevs' atable' atable)
-                                 acctypeabbrevtabs)
-                 usetypeabbrevtabs) in
+    let mergeTypeAbbrevs' t1 t2 = mergeTypeAbbrevs t2 t1 ktable in
+    let acctypeabbrevtabs = (List.map (fun (_, _, t) -> t) acctables) in
+    let usetypeabbrevtabs = (List.map (fun (_, _, t) -> t) usetables) in
+      (List.fold_left mergeTypeAbbrevs'  
+         (List.fold_left mergeTypeAbbrevs' 
+            (mergeTypeAbbrevs' atable' Pervasive.pervasiveTypeAbbrevs)
+            acctypeabbrevtabs)
+         usetypeabbrevtabs) in
   
   (*  Translate constants *)
   let constantlist = 
@@ -1379,8 +1405,8 @@ and translateSignature s owner accumOrUse generalCopier =
   (*  Translate fixities *)
   let ctable = translateFixities fixities ctable in
  
-  (Absyn.Signature(name, kindRenaming, constRenaming),
-  (ktable,ctable,atable))
+    (Absyn.Signature(name, kindRenaming, constRenaming),
+     (ktable, ctable, atable))
 
 (**********************************************************************
 *translateModule:
@@ -1865,7 +1891,6 @@ and translateModule mod' ktable ctable atable =
         let skeletons = (List.fold_left (getSkeleton) [] globalconstants) in
         let skeletons = 
           (List.fold_left (getSkeleton) skeletons localconstants) in
-
         let amod =
           Absyn.Module(name, imps, accums, ref ctable, ref ktable,
                        atable, [], globalkinds, localkinds, globalconstants, 

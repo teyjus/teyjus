@@ -64,7 +64,13 @@ and atypevar =
 * can be bound during unification to any other type (including another
 * BindableTypeVar)
 * When they are created, they are thus set to None.
-* They can be created when: 
+* They can be created during translation from preabsyn to absyn syntax:
+* - a lambda expression does not  have any type annotation. In this case
+*  a type variable is created to denote the type of this abstracted variable
+* - translation of a free variable (capital letter or underscore followed
+*   by some lettres) or an anonymous _without_ a type annotation
+* They are also used later 
+* 
 * If during an unification at top level a BindableTypeVar is bound and then
 * an error occurs, it has to be reset to None 
 * 
@@ -85,7 +91,7 @@ and atypevarinfo =
 *****************************************************************************)
 and atype = 
     SkeletonVarType of (int ref)
-  | TypeVarType of (atypevarinfo ref)
+  | TypeVarType of (atypevarinfo)
   |	ArrowType of (atype * atype)
   | ApplicationType of (akind * atype list)
   | TypeSetType of (atype * atype list ref * atype option ref)

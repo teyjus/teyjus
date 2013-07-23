@@ -141,7 +141,7 @@ let loadModule modName =
     (* impossible to fail: any failure should be caught by the c loader  *)
     (* already                                                           *)
     let amod = Loadmodtab.loadModuleTable ((!path) ^ modName) in
-    enterModuleTable amod index
+      enterModuleTable amod index
 		 
 		 
 (* load module *)

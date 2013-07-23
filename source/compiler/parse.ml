@@ -455,7 +455,7 @@ and parseTerms parsingtoplevel inlist terms fvs bvs amodule stack =
 
 (**********************************************************************
 *parseTypeSymbol:
-* Parses a type symbol appearing in a lambda expression.
+* Parses a symbol appearing in a lambda expression (the x of x\ t).
 **********************************************************************)
 and parseAbstractedSymbol tsym amodule =
   match tsym with
@@ -552,7 +552,6 @@ and constantToOpTerm parsingtoplevel term constant fvs amodule =
       let tm1 = Types.makeConstantMolecule parsingtoplevel constant in
       let tm2 = 
         Types.Molecule((Translate.translateTypeAnnot ty amodule), []) in
-      
       let result = (Types.unify tm1 tm2) in
       if result = Types.Success then
         (make' tm1 pos)
@@ -582,9 +581,8 @@ and makeVarToOpTerm term fvs bvs amodule makeSymFunc =
       let fvs' = (add fvs sym typesym) in
         (StackTerm(Term(Absyn.makeFreeVarTerm typesym pos, tmol)), fvs')
   | Preabsyn.IdTerm(sym, None, _, pos) ->
-      (* There is no type annotation. This variable wil thus be bindable 
+      (* There is no type annotation. This variable will thus be bindable 
        * during unification *)
-      let _ = Printf.printf "Sym = %s\n" (Symbol.name sym) in
       let skel = Absyn.makeTypeVariable () in
       let tmol = Types.Molecule(skel, []) in
       let typesym = makeSymFunc None sym skel in

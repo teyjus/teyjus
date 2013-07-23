@@ -40,7 +40,7 @@ and atypevarinfo =
 
 and atype = 
     SkeletonVarType of (int ref)
-  | TypeVarType of (atypevarinfo ref)
+  | TypeVarType of (atypevarinfo)
   | ArrowType of (atype * atype)
   | ApplicationType of (akind * atype list)
   | TypeSetType of (atype * atype list ref * atype option ref)
@@ -390,27 +390,26 @@ let makeNewTypeVariableData () =
 (* dereference a type *)
 let rec dereferenceType ty =
   match ty with
-    TypeVarType(r) ->
-      (match !r with
-        BindableTypeVar(tr) ->
-          (match !tr with
-            Some(t) -> 
-              dereferenceType t
-          | None -> ty)
-      | FreeTypeVar(_) ->
-          Errormsg.impossible Errormsg.none 
-            "dereferenceType: Invalid type variable")
-  | TypeSetType(_,_,r) ->
-      (match !r with
-        Some(ty') -> dereferenceType ty'
-      | None -> ty)
-  | _ -> ty
+    | TypeVarType(BindableTypeVar(tr)) ->
+        (match !tr with
+             Some(t) -> 
+               dereferenceType t
+           | None -> ty)
+    | TypeVarType(FreeTypeVar(_)) ->
+        Errormsg.impossible Errormsg.none 
+          "dereferenceType: Invalid type variable"
+    | TypeSetType(_, _, r) ->
+        (match !r with
+             Some(ty') -> dereferenceType ty'
+           | None -> ty)
+    | _ -> ty
 
 and types_equal t1 t2 =
   let t1 = dereferenceType t1 in
   let t2 = dereferenceType t2 in
   match (t1,t2) with
-      ArrowType(l1,r1), ArrowType(l2,r2) -> (types_equal l1 l2) && (types_equal r1 r2)
+      ArrowType(l1,r1), ArrowType(l2,r2) -> 
+        (types_equal l1 l2) && (types_equal r1 r2)
     | TypeVarType(_), TypeVarType(_) -> true
     | ApplicationType(k1,args1), ApplicationType(k2,args2) ->
         (kinds_equal k1 k2) && (List.for_all2 types_equal args1 args2)
@@ -424,8 +423,12 @@ and types_equal t1 t2 =
 and string_of_type_ast ty =
   let ty' = dereferenceType ty in
   match ty' with
-      ArrowType(t1, t2) -> "(" ^ (string_of_type_ast t1) ^ " -> " ^ (string_of_type_ast t2) ^ ")"
-    | TypeVarType(r) ->
+      ArrowType(t1, t2) -> "(" ^ (string_of_type_ast t1) ^ " -> " 
+      ^ (string_of_type_ast t2) ^ ")"
+    | TypeVarType(BindableTypeVar(r)) ->
+        let i : int = (Obj.magic r) in
+        "'" ^ (string_of_int i)
+    | TypeVarType(FreeTypeVar(r, _)) ->
         let i : int = (Obj.magic r) in
         "'" ^ (string_of_int i)
     | ApplicationType(kind, tlist) ->
@@ -454,9 +457,12 @@ and string_of_type ty =
         ArrowType(t1, t2) ->
           let s = (str true t1) ^ " -> " ^ (str false t2) in
           parens s
-      | TypeVarType(r) ->
+      | TypeVarType(BindableTypeVar(r)) ->
           let i : int = (Obj.magic r) in
-          "_" ^ (string_of_int i)
+            "_" ^ (string_of_int i)
+      | TypeVarType(FreeTypeVar(r, _)) ->
+          let i : int = (Obj.magic r) in
+            "_" ^ (string_of_int i)
       | ApplicationType(kind, tlist) ->
           if (List.length tlist) > 0 then
             let args = String.concat " " (List.map (str true) tlist) in
@@ -553,7 +559,7 @@ let isConstantType = function
 (* type reference                   *)
 let getTypeVariableReference = function
   | TypeVarType(info) ->
-      (match !info with
+      (match info with
          | BindableTypeVar(r) -> r
          | _ -> Errormsg.impossible Errormsg.none 
                    "getTypeVariableReference: invalid type variable info")
@@ -562,7 +568,7 @@ let getTypeVariableReference = function
 
 let isVariableType = function
   TypeVarType(r) ->
-    (match !r with
+    (match r with
       BindableTypeVar(tr) ->
         (match !tr with
           Some(t) -> (Errormsg.impossible Errormsg.none 
@@ -575,8 +581,8 @@ let isVariableType = function
 
 (* type variable                    *)
 let getTypeFreeVariableVariableData = function
-  TypeVarType(r) ->
-    (match !r with
+  | TypeVarType(r) ->
+    (match r with
       FreeTypeVar(varDataRef, _) -> 
         (match !varDataRef with
            Some(varData) -> varData
@@ -584,15 +590,15 @@ let getTypeFreeVariableVariableData = function
                       "getTypeFreeVariableVariableData: varData"))
      | _ -> (Errormsg.impossible Errormsg.none 
                "getTypeFreeVariableVariableData: bound variable"))
- |_ -> (Errormsg.impossible Errormsg.none 
+  |_ -> (Errormsg.impossible Errormsg.none 
           "getTypeFreeVariableVariableData: not a type variable")
 
 let getTypeFreeVariableFirstRef = function
-  TypeVarType(r) ->
-	(match !r with
-	  FreeTypeVar(_, firstRef) -> firstRef
-	|  _ -> (Errormsg.impossible Errormsg.none 
-            "getTypeFreeVariableFirstRef: bound variable"))
+  | TypeVarType(r) ->
+      (match r with
+         | FreeTypeVar(_, firstRef) -> firstRef
+         |  _ -> (Errormsg.impossible Errormsg.none 
+                    "getTypeFreeVariableFirstRef: bound variable"))
   |_ -> (Errormsg.impossible Errormsg.none 
            "getTypeFreeVariableFirstRef: not a type variable")
 
@@ -608,50 +614,48 @@ let setTypeFreeVariableFirst var first =
                      (getTypeFreeVariableFirstRef var) := Some(first)
 
 let isTypeFreeVariable = function
-  TypeVarType(r) ->
-    (match !r with
-      FreeTypeVar(_) -> true
-    | _ -> false)
+  | TypeVarType(FreeTypeVar(_)) -> true
   | _ -> false
 
-let makeTypeVariable () = TypeVarType(ref (BindableTypeVar(ref None)))
+let makeTypeVariable () = TypeVarType(BindableTypeVar(ref None))
 let makeNewTypeVariable varData =
-  TypeVarType (ref (FreeTypeVar(ref (Some varData), ref None)))
+  TypeVarType (FreeTypeVar(ref (Some varData), ref None))
 
 (* type skeleton variable            *)
 let getSkeletonVariableIndex = function
-  SkeletonVarType(i) -> !i
-| _ -> (Errormsg.impossible Errormsg.none 
-          "getSkeletonVariableIndex: invalid type")
+  | SkeletonVarType(i) -> !i
+  | _ -> (Errormsg.impossible Errormsg.none 
+            "getSkeletonVariableIndex: invalid type")
 
 let getSkeletonVariableIndexRef = function
-  SkeletonVarType(i) -> i
-| _ -> (Errormsg.impossible Errormsg.none 
-          "getSkeletonVariableIndex: invalid type")
+  | SkeletonVarType(i) -> i
+  | _ -> (Errormsg.impossible Errormsg.none 
+            "getSkeletonVariableIndex: invalid type")
 
 let isSkeletonVariableType = function
-  SkeletonVarType(_) -> true
-| _ -> false
+    SkeletonVarType(_) -> true
+  | _ -> false
 
 
-(* make type environment             *)
+(* make type environment  *)
 let rec makeTypeEnvironment i =
-  match i with
-      0 -> []
-    | i' ->
-        if i' < 0 then
-          Errormsg.impossible Errormsg.none 
-            "Absyn.makeTypeEnvironment: invalid environment size"
-        else
-          (makeTypeVariable ()) :: (makeTypeEnvironment (i - 1))
+  if i < 0 then
+    Errormsg.impossible Errormsg.none 
+      "Absyn.makeTypeEnvironment: invalid environment size"
+  else 
+    let rec aux i = match i with
+      |  0 -> []
+      | i' -> (makeTypeVariable ()) :: (makeTypeEnvironment (i - 1))
+    in 
+      aux i
 
 let getApplicationTypeHead = function
-    ApplicationType(k,_) -> k
+    ApplicationType(k, _) -> k
   | _ -> Errormsg.impossible Errormsg.none 
                              "Absyn.getApplicationTypeHead: invalid type"
 
 let getApplicationTypeArgs = function
-    ApplicationType(_,args) -> args
+    ApplicationType(_, args) -> args
   | _ -> Errormsg.impossible Errormsg.none 
                              "Absyn.getApplicationTypeArgs: invalid type"
 
@@ -1816,58 +1820,63 @@ let getGoalEnvAssocNthEnvSize gespList n =
 (*  amodule:                                                             *)
 (*************************************************************************)
 let getModuleName = function
-  Module(name,_,_,_,_,_,_,_,_,_,_,_,_,_,_) -> name
-| Signature(_) -> Errormsg.impossible Errormsg.none "getModuleName: not a module"
-| ErrorModule -> Errormsg.impossible Errormsg.none "getModuleName: invalid module"
+    Module(name,_,_,_,_,_,_,_,_,_,_,_,_,_,_) -> name
+  | Signature(_) -> Errormsg.impossible Errormsg.none 
+                      "getModuleName: not a module"
+  | ErrorModule -> Errormsg.impossible Errormsg.none 
+                     "getModuleName: invalid module"
 
 let setModuleName md name = match md with
-  Module(_,a,b,c,d,e,f,g,h,i,j,k,l,m,n) -> Module(name,a,b,c,d,e,f,g,h,i,j,k,l,m,n)
-| Signature(_) -> Errormsg.impossible Errormsg.none "getModuleName: not a module"
-| ErrorModule -> Errormsg.impossible Errormsg.none "getModuleName: invalid module"
+    Module(_,a,b,c,d,e,f,g,h,i,j,k,l,m,n) -> 
+      Module(name,a,b,c,d,e,f,g,h,i,j,k,l,m,n)
+  | Signature(_) -> Errormsg.impossible Errormsg.none 
+                      "getModuleName: not a module"
+  | ErrorModule -> Errormsg.impossible Errormsg.none 
+                     "getModuleName: invalid module"
 
 let getModuleGlobalKindsList = function
-  Module(_,_,_,_,_,_,_,gkinds,_,_,_,_,_,_,_) -> gkinds
-| Signature(_) -> Errormsg.impossible Errormsg.none 
-                                      "getModuleGlobalKindList: not a module"
-| ErrorModule -> Errormsg.impossible Errormsg.none 
-                                     "getModuleGlobalKindList: invalid module"
+    Module(_,_,_,_,_,_,_,gkinds,_,_,_,_,_,_,_) -> gkinds
+      | Signature(_) -> Errormsg.impossible Errormsg.none 
+                          "getModuleGlobalKindList: not a module"
+  | ErrorModule -> Errormsg.impossible Errormsg.none 
+                     "getModuleGlobalKindList: invalid module"
 
 let getModuleGlobalConstantsList = function
-  Module(_,_,_,_,_,_,_,_,_,gconsts,_,_,_,_,_) -> gconsts
-| Signature(_) -> Errormsg.impossible Errormsg.none 
-                                      "getModuleGlobalConstList: not a module"
-| ErrorModule -> Errormsg.impossible Errormsg.none 
-                                     "getModuleGlobalConstList: invalid module"
+    Module(_,_,_,_,_,_,_,_,_,gconsts,_,_,_,_,_) -> gconsts
+  | Signature(_) -> Errormsg.impossible Errormsg.none 
+                      "getModuleGlobalConstList: not a module"
+  | ErrorModule -> Errormsg.impossible Errormsg.none 
+                     "getModuleGlobalConstList: invalid module"
 
 let getModuleLocalConstantsList = function
-  Module(_,_,_,_,_,_,_,_,_,_,lconsts,_,_,_,_) -> lconsts
-| Signature(_) -> Errormsg.impossible 
-                    Errormsg.none 
-                    "getModuleLocalConstantsList: not a module"
-| ErrorModule -> Errormsg.impossible 
-                   Errormsg.none 
-                   "getModuleLocalConstantsList: invalid module"
+    Module(_,_,_,_,_,_,_,_,_,_,lconsts,_,_,_,_) -> lconsts
+  | Signature(_) -> Errormsg.impossible 
+                      Errormsg.none 
+                      "getModuleLocalConstantsList: not a module"
+  | ErrorModule -> Errormsg.impossible 
+                     Errormsg.none 
+                     "getModuleLocalConstantsList: invalid module"
 
 let getModuleHiddenConstantsRef = function
-  Module(_,_,_,_,_,_,_,_,_,_,_,hcs,_,_,_) -> hcs
-| Signature(_) -> Errormsg.impossible Errormsg.none 
-                                      "getModuleHiddenConstantsRef: not a module"
-| ErrorModule -> Errormsg.impossible Errormsg.none 
-                                     "getModuleHiddenConstantsRef: invalid module"
+    Module(_,_,_,_,_,_,_,_,_,_,_,hcs,_,_,_) -> hcs
+  | Signature(_) -> Errormsg.impossible Errormsg.none 
+                      "getModuleHiddenConstantsRef: not a module"
+  | ErrorModule -> Errormsg.impossible Errormsg.none 
+                     "getModuleHiddenConstantsRef: invalid module"
 
 let getModuleHiddenConstantSkeletonsRef = function
-  Module(_,_,_,_,_,_,_,_,_,_,_,_,_,hs,_) -> hs
-| Signature(_) -> Errormsg.impossible Errormsg.none 
-                                      "getModuleHiddenConstantSkeletonsRef: not a module"
-| ErrorModule -> Errormsg.impossible Errormsg.none 
-                                     "getModuleHiddenConstantSkeletonsRef: invalid module"
+    Module(_,_,_,_,_,_,_,_,_,_,_,_,_,hs,_) -> hs
+  | Signature(_) -> Errormsg.impossible Errormsg.none 
+                      "getModuleHiddenConstantSkeletonsRef: not a module"
+  | ErrorModule -> Errormsg.impossible Errormsg.none 
+                     "getModuleHiddenConstantSkeletonsRef: invalid module"
 
 let getModuleHiddenConstantSkeletons = function
   Module(_,_,_,_,_,_,_,_,_,_,_,_,_,hs,_) -> !hs
 | Signature(_) -> Errormsg.impossible Errormsg.none 
-                                      "getModuleHiddenConstantSkeletons: not a module"
+                    "getModuleHiddenConstantSkeletons: not a module"
 | ErrorModule -> Errormsg.impossible Errormsg.none 
-                                     "getModuleHiddenConstantSkeletons: invalid module"
+                   "getModuleHiddenConstantSkeletons: invalid module"
 
 let getModuleConstantTable = function
   Module(_,_,_,ctable,_,_,_,_,_,_,_,_,_,_,_) -> !ctable
@@ -1893,35 +1902,34 @@ let getModuleTypeAbbrevTable = function
 let getModuleClausesRef = function
   Module(_,_,_,_,_,_,_,_,_,_,_,_,_,_,c) -> c
 | Signature(_) -> Errormsg.impossible Errormsg.none 
-                                      "getModuleClausesRef: argument is a signature"
+                    "getModuleClausesRef: argument is a signature"
 | ErrorModule -> Errormsg.impossible Errormsg.none 
-                                     "getModuleClausesRef: argument is invalid"
+                   "getModuleClausesRef: argument is invalid"
 
 let getModuleClauses amod = !(getModuleClausesRef amod)
 let setModuleClauses amod cls = (getModuleClausesRef amod) := cls
 
 let getSignatureGlobalKindsList = function
-  Signature(_,kl,_) -> kl
+  Signature(_, kl, _) -> kl
 | Module(_) -> Errormsg.impossible Errormsg.none 
-                                   "getSignatureGlobalKindsList: argument is a module"
+                 "getSignatureGlobalKindsList: argument is a module"
 | ErrorModule -> Errormsg.impossible Errormsg.none 
-                                     "getSignatureGlobalKindsList: argument invalid"
+                   "getSignatureGlobalKindsList: argument invalid"
   
   
 let getSignatureGlobalConstantsList = function
   Signature(_,_,cl) -> cl
-| Module(_) -> Errormsg.impossible 
-                          Errormsg.none 
-                          "getSignatureGlobalConstantsList: argument is a module"
-| ErrorModule -> Errormsg.impossible 
-                          Errormsg.none 
-                          "getSignatureGlobalConstantsList: argument invalid"
+| Module(_) -> Errormsg.impossible Errormsg.none 
+                 "getSignatureGlobalConstantsList: argument is a module"
+| ErrorModule -> Errormsg.impossible Errormsg.none 
+                   "getSignatureGlobalConstantsList: argument invalid"
 
 let getSignatureName = function
   Signature(n,_,_) -> n
 | Module(_) -> Errormsg.impossible Errormsg.none 
-                                   "getSignatureName: argument is a module"
-| ErrorModule -> Errormsg.impossible Errormsg.none "getSignatureName: argument invalid"  
+                 "getSignatureName: argument is a module"
+| ErrorModule -> Errormsg.impossible Errormsg.none 
+                   "getSignatureName: argument invalid"  
 
 (*************************************************************************)
 (*  aclauseinfo:                                                         *)
