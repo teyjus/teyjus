@@ -234,17 +234,14 @@ let reduceSkeletons amod =
   
   (*  Iterate over the constant table, destructively reducing each
       constant's skeleton.  *)
-  let _ = Errormsg.log Errormsg.none "Typereduction.reduceSkeletons: reducing skeletons..." in
+  let _ = Errormsg.log Errormsg.none 
+            "Typereduction.reduceSkeletons: reducing skeletons..." in
   let ctable = Absyn.getModuleConstantTable amod in
   let _ = Table.iter reduceConstant ctable in
-  let _ = Errormsg.log Errormsg.none "Typereduction.reduceSkeletons: reduced skeletons" in
-  amod
+  let _ = Errormsg.log Errormsg.none 
+            "Typereduction.reduceSkeletons: reduced skeletons" in
+    amod
 
-(**********************************************************************
-*reducePredicates:
-* Populates each constant's neededness vector with the correct
-* information.
-**********************************************************************)
 let reducePredicates amod =
   (****************************************************************
   *getIndex:

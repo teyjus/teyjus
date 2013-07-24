@@ -630,11 +630,11 @@ let rec unify (tm1 : typemolecule) (tm2 : typemolecule) =
 let clashError = fun fargty argty term ->
   let (expected, bindings) = string_of_typemolecule' fargty [] false in
   let (actual, _) = string_of_typemolecule' argty bindings false in
-  
-  Errormsg.error (Absyn.getTermPos term) ("clash in operator and operand types" ^
-    (Errormsg.info ("expected operand type: " ^ expected)) ^
-    (Errormsg.info ("actual operand type: " ^ actual)) ^
-    (Errormsg.info ("in expression: " ^ (Absyn.string_of_term term))))
+    Errormsg.error (Absyn.getTermPos term) 
+      ("clash in operator and operand types" ^
+       (Errormsg.info ("expected operand type: " ^ expected)) ^
+       (Errormsg.info ("actual operand type: " ^ actual)) ^
+       (Errormsg.info ("in expression: " ^ (Absyn.string_of_term term))))
 
 (**********************************************************************
 *occursCheckError:

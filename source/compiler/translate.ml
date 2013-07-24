@@ -69,14 +69,25 @@ let rationalizeVar sym symtable _ =
 
 (********************************************************************
 *rationalizeType:
-* Rationalizes the type ty.
+* Rationalizes the type ty i.e. translates a preabsyn ptype to an absyn atype
+*
+* - vartable is the current table associating symbols to absyn types
+*    * when rationalalizing a type, vartable is originally empty
+*    * for a type abbreviation, it is initialized with all the variables
+*      declared as appearing in the abbreviated type
+*      For instance, when rationalizing 
+*      typeabbrev (bar A B) (list A) -> (list B)
+*      vartable will be initialized to the table associating A and B to two
+*      BindableVarType
+*   While recursively rationalizing the type, the vartable will grow
+*
+*
 *********************************************************************)
 let rec rationalizeType ty vartable kindtable typeabbrevtable transvarfunc =
   let TypeAndBindings(ty, _) = 
     rationalizeTypeAux ty vartable kindtable typeabbrevtable transvarfunc
   in
     ty
-
 
 and rationalizeTypeAux ty vartable kindtable typeabbrevtable transvarfunc =
     

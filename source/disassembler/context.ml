@@ -350,7 +350,7 @@ let printRenamingTables renamings header =
 (*               INSTRUCTIONS     		                       *)
 (***************************************************************)
 let printInstructions instructions =
-  let rec printLabel label =
+  let printLabel label =
 	let numberWS = 20 - String.length label in
 	let rec mkWS number =
 	  if number = numberWS then ""
