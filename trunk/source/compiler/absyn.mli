@@ -64,11 +64,14 @@ and atypevar =
 * can be bound during unification to any other type (including another
 * BindableTypeVar)
 * When they are created, they are thus set to None.
-* They can be created during translation from preabsyn to absyn syntax:
-* - a lambda expression does not  have any type annotation. In this case
+* They can be created during translation from preabsyn to absyn syntax and
+* come from:
+* - a lambda expression which does not have any type annotation. In this case
 *  a type variable is created to denote the type of this abstracted variable
-* - translation of a free variable (capital letter or underscore followed
-*   by some lettres) or an anonymous _without_ a type annotation
+* - a free variable (capital letter or underscore followed
+*   by some lettres) or an anonymous, _without_ a type annotation.
+*   The creation is only performed when the variable is met for the first time.
+*
 * They are also used later 
 * 
 * If during an unification at top level a BindableTypeVar is bound and then

@@ -914,7 +914,8 @@ and etaFluffQuantifier term arg =
       (Absyn.getTermAbstractionBody arg, Absyn.getTermAbstractionVar arg)
   | _ ->
       let tenv = Absyn.getTermMoleculeEnv term in
-      let tsym = Absyn.BoundVar(Symbol.generate (), ref None, 
+      let sym = Symbol.generate () in
+      let tsym = Absyn.BoundVar(sym, ref None, 
                                 ref true, ref(Some(List.hd tenv))) in
       let bvterm = Absyn.BoundVarTerm(Absyn.NamedBoundVar(tsym), 
                                       Errormsg.none) in

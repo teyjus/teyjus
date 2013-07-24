@@ -35,8 +35,6 @@ type ptnewkind = symbol -> int -> pos -> Absyn.akind Table.SymbolTable.t
 (*  Term Accessors  *)
 let getTermTerm = function Term(t, _) -> t
 let getTermMolecule = function Term(_, mol) -> mol
-let getFixedTermTerm = function Term(t, _) -> t
-let getFixedTermTypeMolecule = function Term(_, mol) -> mol
 
 let errorTerm = Term(Absyn.errorTerm, Types.errorMolecule)
 
@@ -158,40 +156,31 @@ let idTypeError tmol result pos =
     Errormsg.info ("Type previously determined for variable: " 
                            ^ (Types.string_of_typemolecule tmol))
   in
-  
   match result with
-    Types.Success -> Errormsg.impossible 
-                         Errormsg.none 
-                         "Parse.idTypeError: unexpected unification result"
+    Types.Success -> 
+      Errormsg.impossible Errormsg.none 
+        "Parse.idTypeError: unexpected unification result"
   | Types.OccursCheckFailure -> 
-                   Errormsg.error 
-                         pos 
-                         ("circularity discovered during type matching" ^ info)
+      Errormsg.error pos ("circularity discovered during type matching" ^ info)
   | Types.ClashFailure -> 
-                   Errormsg.error 
-                         pos 
-                         ("incompatibility discovered during type matching" 
-                              ^ info)
+      Errormsg.error 
+        pos ("incompatibility discovered during type matching" ^ info)
 
 let constantTypeError tmol result pos =
   let info =
     Errormsg.info ("Type previously defined or determined for constant: " 
-                              ^ (Types.string_of_typemolecule tmol))
+                   ^ (Types.string_of_typemolecule tmol))
   in
   
   match result with
-    Types.Success -> Errormsg.impossible 
-                       Errormsg.none 
+    Types.Success -> Errormsg.impossible Errormsg.none 
                        "Parse.constantTypeError: unexpected unification result"
   | Types.OccursCheckFailure -> 
-                       Errormsg.error 
-                         pos 
+                       Errormsg.error pos 
                          ("circularity discovered during type matching" ^ info)
   | Types.ClashFailure -> 
-                    Errormsg.error 
-                         pos 
-                         ("incompatibility discovered during type matching" 
-                                   ^ info)
+                    Errormsg.error pos 
+                      ("incompatibility discovered during type matching" ^ info)
 
 (**********************************************************************
 *makeType:
@@ -341,7 +330,7 @@ and parseTerm parsingtoplevel inlist term fvs bvs amodule =
       (*  Corresponds to an expression of the form [e1,...,en]. Parsing context
           becomes that of a list. A cons and nil to be inserted at end *)
       let terms' = terms @ [listSeparatorIdTerm; nilIdTerm] in
-      (parseTerms parsingtoplevel true terms' fvs bvs amodule newStack) 
+        (parseTerms parsingtoplevel true terms' fvs bvs amodule newStack) 
 
   | Preabsyn.ConsTerm(headterms, tailterm, pos) ->
       (*  Corresponds to [e1,...,en | e0]. A comma at the top level in e0 
@@ -493,13 +482,13 @@ and translateId parsingtoplevel inlist term fvs bvs amodule =
            Some var' -> 
              varToOpTerm term var' fvs bvs amodule (Absyn.makeFreeVarTerm)
          | None ->
-             makeVarToOpTerm term fvs bvs amodule makeImplicitTypeSymbol
+             makeVarToOpTerm term fvs amodule makeImplicitTypeSymbol
   in
   match term with
-    Preabsyn.IdTerm(sym, _, k, pos) ->
+      Preabsyn.IdTerm(sym, _, k, pos) ->
       (match k with
          Preabsyn.AVID ->       (*  _, i.e. an anonymous variable  *) 
-           (makeVarToOpTerm term fvs bvs amodule makeAnonymousTypeSymbol)
+           (makeVarToOpTerm term fvs amodule makeAnonymousTypeSymbol)
 
        | Preabsyn.VarID ->      (* _ followed by name, i.e. a free variable *)
            translateFreeVar sym
@@ -571,13 +560,13 @@ and makeAnonymousTypeSymbol c sym ty =
 
 (* The first time that this free variable (with or without type annotation) 
 * is met during the translation of the current clause *)
-and makeVarToOpTerm term fvs bvs amodule makeSymFunc =
+and makeVarToOpTerm term fvs amodule makeSymFunc =
   match term with
-    Preabsyn.IdTerm(sym, Some(ty), _, pos) ->
+    Preabsyn.IdTerm(sym, Some(pty), _, pos) ->
       (* There is a type annotation. We use it to generate the skeleton *)
-      let skel = Translate.translateTypeAnnot ty amodule in
-      let tmol = Types.Molecule(skel, []) in
-      let typesym = makeSymFunc None sym skel in
+      let aty = Translate.translateTypeAnnot pty amodule in
+      let tmol = Types.Molecule(aty, []) in
+      let typesym = makeSymFunc None sym aty in
       let fvs' = (add fvs sym typesym) in
         (StackTerm(Term(Absyn.makeFreeVarTerm typesym pos, tmol)), fvs')
   | Preabsyn.IdTerm(sym, None, _, pos) ->
@@ -591,24 +580,31 @@ and makeVarToOpTerm term fvs bvs amodule makeSymFunc =
   | _ -> Errormsg.impossible Errormsg.none 
                              "Parse.makeVarToOpTerm: invalid id term"
 
-(* We already met this variable *)
-and varToOpTerm term typesym fvs bvs amodule makeVarFunc =
+(* We already met the symbol of the variable term. 
+*   - typesym : the atypesymbol that we previously associated 
+*     to the term's symbol  
+*   - fvs : the current free variables, just passed to the StackTerm structure
+*   - amodule : the current module. Will be useful if there is a type 
+*     annotation. In this case we will need the module's kinds and type
+*     abbreviations to translate the annotation.
+*)
+and varToOpTerm term typesym fvs _ amodule makeVarFunc =
+  let tm1 = Types.Molecule(Absyn.getTypeSymbolRawType typesym, []) in
   match term with
     Preabsyn.IdTerm(_, Some(ty), _, pos) ->
       (*  If the term has a type annotation, attempt to unify it with the
-          type associated with the given symbol.  *)  
-      let tm1 = Types.Molecule(Absyn.getTypeSymbolRawType typesym, []) in
-      let tm2 = Types.Molecule((Translate.translateTypeAnnot ty amodule), []) in
+          previously associated type  *)  
+      let tm2 = 
+        Types.Molecule((Translate.translateTypeAnnot ty amodule), []) in
       let result = (Types.unify tm1 tm2) in
       if result = Types.Success then
         (StackTerm(Term(makeVarFunc typesym pos, tm2)), fvs)
       else
-        (idTypeError tm1 result pos;(StackError, fvs))
+        (idTypeError tm1 result pos; (StackError, fvs))
 
   | Preabsyn.IdTerm(_, None, _, pos) ->
      (*  If the term has no type annotation, simply create a 
       *  new type variable and bind it.  *)
-     let tm1 = Types.Molecule(Absyn.getTypeSymbolRawType typesym, []) in
        (StackTerm(Term(makeVarFunc typesym pos, tm1)), fvs)
   | _ -> Errormsg.impossible (Preabsyn.getTermPos term) 
                              "Parse.varToOpTerm: invalid term"
@@ -1421,7 +1417,7 @@ and normalizeTerm term =
 **********************************************************************)
 and fixTerm term =
   (* checks appearances of :- and => embedded in terms *)
-  let rec checkIllegalConstant c pos =
+  let checkIllegalConstant c pos =
     if ((c = Pervasive.implConstant) || (c = Pervasive.colondashConstant)) then
       Errormsg.error pos ("Symbol " ^ (Absyn.getConstantPrintName c) ^
         " is not permitted within terms")
@@ -1478,7 +1474,7 @@ and fixTerm term =
       | Absyn.ConstantTerm(c,tenv,p) -> 
           (* collect type variables in (needed components of) type environment 
              and check constant is legal here *)
-          let () = checkIllegalConstant c p in
+          let _ = checkIllegalConstant c p in
           let neededtenv = 
             trunclist tenv (Absyn.getConstantTypeEnvSize false c) in
             (Absyn.ConstantTerm(c,neededtenv,p),fvars,

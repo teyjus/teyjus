@@ -22,14 +22,6 @@
 (*   parse a query and create relevant structures onto simulator heap      *)
 (***************************************************************************)
 let buildQueryTerm query amod =
-  let isBooleanType ty = 
-	match ty with
-	  Absyn.ApplicationType(k, _) ->
-		if Pervasive.iskbool k then true
-		else false
-	| _ -> false
-  in
-
   (* parse the query to pre abstract syntax *)
   let preTerm = Compile.compileString query in
   if Option.isNone preTerm then
@@ -44,19 +36,25 @@ let buildQueryTerm query amod =
 	  let (term, tymol, fvars, tyfvars) = Option.get result in
 	  (* check whether the query has boolean type *)
 	  let ty = Types.getMoleculeType tymol in
-	  if (isBooleanType ty) then
-	    (* create the term and type onto simulator heap top *)
-		  (Ccode_stubs.setTypeAndTermLocation ();
-		   Readterm.readTermAndType term tymol fvars tyfvars;
-		   true)
-	  else 
-            (prerr_endline ("Error: expecting query term of type: o" ^
-                            (Errormsg.info ("encountered term: " ^ 
-                                            (Absyn.string_of_term term))) ^
-                            (Errormsg.info ("of type: " ^ 
-                                           (Types.string_of_typemolecule tymol)
-                            )));
-             false)
+        match ty with
+          | Absyn.ApplicationType(k, _) when (Pervasive.iskbool k) ->
+              (* create the term and type onto simulator heap top *)
+              (Ccode_stubs.setTypeAndTermLocation ();
+               Readterm.readTermAndType term tymol fvars tyfvars;
+               true)
+          | Absyn.SkeletonVarType(_) ->
+              prerr_endline ("Error: Ill-formed goal: "  ^
+                               "uninstantiated variable as head.");
+              false
+          | _ -> 
+              prerr_endline 
+                 ("Error: expecting query term of type: o" ^
+                  (Errormsg.info ("encountered term: " ^ 
+                                  (Absyn.string_of_term term))) ^
+                  (Errormsg.info ("of type: " ^ 
+                                  (Types.string_of_typemolecule tymol)
+                  )));
+               false
 	  
 (***************************************************************************)
 (*    invoke the simulator to solve a query                                *)

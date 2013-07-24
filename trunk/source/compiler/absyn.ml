@@ -1594,11 +1594,13 @@ let rec sameTermStructure t1 t2 =
 	  if (c == c') then true else false
   | (FreeVarTerm(NamedFreeVar(tsym),_), FreeVarTerm(NamedFreeVar(tsym'),_)) ->
 	  if (tsym == tsym') then true else false
-  | (BoundVarTerm(NamedBoundVar(tsym),_), BoundVarTerm(NamedBoundVar(tsym'),_)) ->
+  | (BoundVarTerm(NamedBoundVar(tsym),_), 
+     BoundVarTerm(NamedBoundVar(tsym'),_)) ->
 	  if (tsym == tsym') then true else false
   | (AbstractionTerm(UNestedAbstraction(tsyms, nabs, body),_), 
 	 AbstractionTerm(UNestedAbstraction(tsyms', nabs', body'),_)) ->
-	   ((nabs = nabs') && (sameTSyms tsyms tsyms') && (sameTermStructure body body'))
+      ((nabs = nabs') && 
+       (sameTSyms tsyms tsyms') && (sameTermStructure body body'))
   | (AbstractionTerm(UNestedAbstraction(tsyms, nabs, body),_),
 	 AbstractionTerm(NestedAbstraction(tsym, body'),_)) ->
 	   let (body'', tsyms'') = collectUnNestedAbst t2 [] in
@@ -1609,7 +1611,8 @@ let rec sameTermStructure t1 t2 =
 	   ((sameTSyms tsyms tsyms'') && (sameTermStructure body body'))
   | (ApplicationTerm(FirstOrderApplication(h, args, arity),_), 
 	 ApplicationTerm(FirstOrderApplication(h', args', arity'),_)) ->
-	   (arity = arity') && (sameTermStructure h h') && (sameTermStructureList args args')
+      (arity = arity') && 
+      (sameTermStructure h h') && (sameTermStructureList args args')
   | _ -> 
 	  false
 
