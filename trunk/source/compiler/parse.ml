@@ -1125,11 +1125,10 @@ and makeApply f arg =
     Absyn.CurriedApplication(getTermTerm f, getTermTerm arg),
     Absyn.getTermPos (getTermTerm f)) in
   let ty = Types.checkApply (getTermMolecule f) (getTermMolecule arg) term in
-  
-  if ty = Types.errorMolecule then
-    errorTerm
-  else
-    Term(term, ty)
+    if ty = Types.errorMolecule then
+      errorTerm
+    else
+      Term(term, ty)
 
 (**********************************************************************
 *makeBinaryApply:

@@ -79,8 +79,8 @@ type pterm =
     * The list here is just a sequence of terms. 
     * It will be translated as a single absyn term *) 
   | LambdaTerm of pabstractedsymbol * pterm list * pos
-   (* An IdTerm represents a term or type identifier.
-    * The optional type is the possible type annotation *)
+   (* An IdTerm is any identifier (constant, kind, term, ...) 
+    * with an optional type denoting the possible type annotation *)
   | IdTerm of (symbol * ptype option * pidkind * pos)
   | RealTerm of float * pos
   | IntTerm of int * pos

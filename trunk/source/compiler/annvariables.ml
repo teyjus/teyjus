@@ -126,9 +126,7 @@ let isCrossGoal gNumber = not (gNumber = getGoalNum ())
 (* check whether it is the first occurrence of a type variable, in *)
 (* which case, the first goal number field contains a zero         *)
 (*******************************************************************)
-let firstEncounteredTypeVar var =
-  match var with
-	Absyn.TypeVar(_, _, _, _, _, _, firstgoal, _) -> (!firstgoal) = 0
+let firstEncounteredTypeVar var = Absyn.getTypeVariableDataFirstGoal var = 0
 
 
 (*******************************************************************)
@@ -827,24 +825,24 @@ and processVarMaps tmVarMaps tyVarMaps fvs tyfvs =
 		(* treat fromVarData *)
 		(if firstEncounteredTypeVar fromVarData then (* first encountered *)
 		  initTypeVarData fromVarData true false false None
-		else Absyn.setTypeVariableDataPerm fromVarData true);
-		
-        (* treat toVarData *)
-		Absyn.setTypeVariableDataSafety toVarData true;
-		Absyn.setTypeVariableDataHeapVar toVarData true;
-		let firstuse = Absyn.getTypeVariableDataFirstUseOpt toVarData in
-		(if (Option.isSome firstuse) then
-		  Absyn.setTypeFreeVariableFirst (Option.get firstuse) false
-		else ());
-		(* process others *)
-		processTyVarMaps rest (fromVarData :: tyfvs)
+		else 
+          Absyn.setTypeVariableDataPerm fromVarData true);
+          (* treat toVarData *)
+          Absyn.setTypeVariableDataSafety toVarData true;
+          Absyn.setTypeVariableDataHeapVar toVarData true;
+          let firstuse = Absyn.getTypeVariableDataFirstUseOpt toVarData in
+            (if (Option.isSome firstuse) then
+               Absyn.setTypeFreeVariableFirst (Option.get firstuse) false
+             else ());
+            (* process others *)
+            processTyVarMaps rest (fromVarData :: tyfvs)
   in
   
   let (Absyn.TermVarMap(tmVars)) = tmVarMaps in
   let (Absyn.TypeVarMap(tyVars)) = tyVarMaps in
   let fvs' = processTmVarMaps tmVars fvs in
   let tyfvs' = processTyVarMaps tyVars tyfvs in
-  (fvs', tyfvs')
+    (fvs', tyfvs')
 
 (*****************************************************************************)
 (*                   PROCESS TOP LEVEL DEFINITIONS                           *)

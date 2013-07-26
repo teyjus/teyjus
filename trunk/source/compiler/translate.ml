@@ -32,40 +32,15 @@ type typeandenvironment =
 let typeSkeletonIndex = ref 0
 
 
+
+
+
+
+
 (* Temporary data structure used internally in rationalizeType *)             
 type typeandbindings =
   TypeAndBindings of (Absyn.atype * Absyn.atype Table.symboltable)
 
-(* The next three functions can be passed as an argument to rationalizeType *)
-
-(**********************************************************************
-*rationalizeTypeAbbrevVar:
-* Used when translating a type variable while translating a typeabbrev
-* into abstract syntax.
-**********************************************************************)
-let rationalizeTypeAbbrevVar sym symtable p =
-  (Errormsg.error p ("unbound variable " ^ (Symbol.name sym) ^ 
-                     " in type abbreviation");
-   TypeAndBindings(Absyn.ErrorType, symtable))
-
-(**********************************************************************
-*rationalizeSkeletonVar:
-* Used when translating a type variable while translating a type into
-* a type skeleton. 
-**********************************************************************)
-let rationalizeSkeletonVar sym symtable _ =
-    let t = Absyn.SkeletonVarType(ref !typeSkeletonIndex) in
-      (typeSkeletonIndex := !typeSkeletonIndex + 1;
-       TypeAndBindings(t, (Table.add sym t symtable)))
-
-(**********************************************************************
-*rationalizeVar:
-* Used when translating a type variable while translating a type into
-* an absyn type.
-**********************************************************************)
-let rationalizeVar sym symtable _ =
-  let t = Absyn.makeTypeVariable () in
-    TypeAndBindings(t, (Table.add sym t symtable))
 
 (********************************************************************
 *rationalizeType:
@@ -219,6 +194,10 @@ and rationalizeTypeAux ty vartable kindtable typeabbrevtable transvarfunc =
     | Preabsyn.ErrorType -> TypeAndBindings(Absyn.ErrorType, vartable)
 
 and translateTypeAnnot ty amodule =
+  let rationalizeVar sym symtable _ =
+    let t = Absyn.makeTypeVariable () in
+      TypeAndBindings(t, (Table.add sym t symtable)) 
+  in
     rationalizeType ty Table.empty
       (Absyn.getModuleKindTable amodule) 
       (Absyn.getModuleTypeAbbrevTable amodule)
@@ -304,6 +283,11 @@ and translateConstantTypeSkeleton ty kindtable typeabbrevtable =
   *)
   
   let _ = typeSkeletonIndex := 0 in
+  let rationalizeSkeletonVar sym symtable _ =
+    let t = Absyn.SkeletonVarType(ref !typeSkeletonIndex) in
+      (typeSkeletonIndex := !typeSkeletonIndex + 1;
+       TypeAndBindings(t, (Table.add sym t symtable)))
+  in
   let ty' =
     rationalizeType ty Table.empty kindtable typeabbrevtable 
       rationalizeSkeletonVar in
@@ -595,7 +579,6 @@ and translateConstant c clist kindtable typeabbrevtable buildconstant =
   (********************************************************************
   *translate':
   * Enter all names into table.
-  *
   ********************************************************************)
   let rec enter names tyskel esize clist =
     match names with
@@ -683,8 +666,15 @@ and translateTypeAbbrev abbrev abbrevtable kindtable =
   (*  Build a symbol table of the args  
   * All the variables appearing in the abbreviated type are in this table *)
   let symtable = buildTable args 0 in
-  
+
   (*  Translate the type body i.e. the abbreviated type *)
+  let rationalizeTypeAbbrevVar sym symtable p =
+    (* All variables appearing in the abbreviated type have to already
+    * be in the table *)
+    (Errormsg.error p ("unbound variable " ^ (Symbol.name sym) ^ 
+                       " in type abbreviation");
+     TypeAndBindings(Absyn.ErrorType, symtable))
+  in
   let bodytype =
     rationalizeType ty symtable kindtable abbrevtable
                      rationalizeTypeAbbrevVar in
