@@ -1469,19 +1469,19 @@ let genHeadTyVarsCode tyargs regNum neededness =
       let lastUse = (Absyn.getTypeVariableDataLastUse varData) == var in
       let needed  = (Array.get neededness index) in
       match (Absyn.getTypeFreeVariableFirst var), 
-	(Absyn.getTypeVariableDataPerm varData) 
+	        (Absyn.getTypeVariableDataPerm varData) 
       with
-	true,   true  -> (* first occurrence of a permanent variable *)
-	  genHeadFirstPermTypeVar varData 
+      |  true,   true  -> (* first occurrence of a permanent variable *)
+	    genHeadFirstPermTypeVar varData 
 	    (Absyn.getTypeVariableDataOffset varData) needed
       | true,   false -> (* first occurrence of a temporay variable *)
-	  genHeadFirstTempTypeVar varData lastUse needed
+	    genHeadFirstTempTypeVar varData lastUse needed
       | false,  true  -> (* subsequent occurrence of a permanent variable *)
-	  genHeadSubPermTypeVar varData 
+	    genHeadSubPermTypeVar varData 
 	    (Absyn.getTypeVariableDataOffset varData) needed
       | false,  false -> (* subsequent occurrence of a tempory variable *)
-	  genHeadSubTempTypeVar varData 
-	    (Absyn.getTypeVariableDataOffset varData) lastUse needed	
+	    genHeadSubTempTypeVar varData 
+	      (Absyn.getTypeVariableDataOffset varData) lastUse needed	
     in	  
     (* function body of genHeadTyVarsCode *)
     match tyargs with
@@ -1664,19 +1664,24 @@ let setUpGoalArgs goal chunk last hasenv =
   let assignRegUnNeeded var =
     let varData = Absyn.getTypeFreeVariableVariableData var in
     let lastUse = (Absyn.getTypeVariableDataLastUse varData) == var in
-    if (Absyn.getTypeVariableDataPerm varData) then () (*nothing to do w perm*)
+    if (Absyn.getTypeVariableDataPerm varData) then 
+      (*nothing to do w perm*)
+      ()
     else 
       let mychunk = List.tl chunk in
       let mylowval = Registers.getNumGoalArgs () in
       if (Absyn.getTypeFreeVariableFirst var) then (* first appearence *)
-	if lastUse then ()
-	else let _ = Registers.assignTyReg varData false mychunk mylowval in ()
+        if lastUse then 
+          ()
+        else 
+          let _ = Registers.assignTyReg varData false mychunk mylowval in ()
       else
-	if lastUse then  
-	  let regNum = Absyn.getTypeVariableDataOffset varData in
-	  Registers.mkRegFree regNum;
-	  Registers.markUnusedReg regNum
-	else ()
+        if lastUse then  
+	      let regNum = Absyn.getTypeVariableDataOffset varData in
+	        Registers.mkRegFree regNum;
+	        Registers.markUnusedReg regNum
+	    else 
+          ()
   in
 
   (* pair up the type arguments with registers, resolving conflicts if   *)

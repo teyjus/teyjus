@@ -52,10 +52,11 @@ and akind = Kind of (symbol * int option * int ref * akindtype * pos)
 *
 * These informations will be used during variables annotation. 
 * Until this step, all references are useless and invalid.
+* Fields are filled in Annvariables.initTypeVarData
 *****************************************************************************)
 and atypevar = 
   TypeVar of (atype option ref * atype option ref * bool ref * bool ref * 
-				bool ref * int option ref * int ref * int ref)
+              bool ref * int option ref * int ref * int ref)
 
 
 (****************************************************************************
@@ -67,22 +68,30 @@ and atypevar =
 * They can be created during translation from preabsyn to absyn syntax and
 * come from:
 * - a lambda expression which does not have any type annotation. In this case
-*  a type variable is created to denote the type of this abstracted variable
-* - a free variable (capital letter or underscore followed
+*   a type variable is created to denote the type of this abstracted variable
+* - a free term variable (capital letter or underscore followed
 *   by some lettres) or an anonymous, _without_ a type annotation.
 *   The creation is only performed when the variable is met for the first time.
-*
-* They are also used later 
+*   In this case a type variable is created to denote the type of this 
+*   term variable
+* - a type annotation of some term. In this case, all the variables appearing 
+*   inside the type are translated as BindableTypeVar.
+* They can also be used later when checking that an application 
+* f t is well typed: if f has as typa variable X, then an arrow type 
+* is created with two BindableTypeVar.
 * 
 * If during an unification at top level a BindableTypeVar is bound and then
 * an error occurs, it has to be reset to None 
 * 
 * 
-* 
-* A FreeTypeVar 
-* 
-* 
-* 
+* FreeTypeVar are created only in Processclauses.transtype
+* At this point, all BindableTypeVar are translated into FreeTypeVar,
+* which is a form suitable for variable annotation.
+* The first field represents all the information needed for the annotation,
+* including the reference to the type.   
+* The second field indicates if it is the first occurence of this variable.
+* Initially, the second field is set to None until we know if it is the first
+* or not.
 *****************************************************************************)
 and atypevarinfo =
     BindableTypeVar of atype option ref
@@ -91,6 +100,16 @@ and atypevarinfo =
 
 (*****************************************************************************
 *Type:
+* There are two places where preabsyn ptypes are translated in atype:
+* - In the translation of the declaration of a constant's type.
+*   In this case, every absyn type is formed of Application, Arrow 
+*   and SkeletonVarType. The SkeletonVarType is just a convenient way to name
+*   the different identifiers appearing in the preabsyn.
+* - In the translation of a type annotation.
+*   In this case every absyn type is formed of Application, Arrow and 
+*   TypeVarType(BindableTypeVar()) 
+*
+*
 *****************************************************************************)
 and atype = 
     SkeletonVarType of (int ref)
@@ -323,6 +342,8 @@ val makeLocalKind : symbol -> int -> int -> akind
 (*************************************************************************)
 (*  atypevar:                                                            *)
 (*************************************************************************)
+val getTypeVariableDataFirstGoal : atypevar -> int
+val setTypeVariableDataFirstGoal : atypevar -> int -> unit
 val getTypeVariableDataLastGoal : atypevar -> int
 val setTypeVariableDataLastGoal : atypevar -> int -> unit
 val getTypeVariableDataOffset : atypevar -> int

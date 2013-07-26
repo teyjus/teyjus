@@ -279,14 +279,14 @@ let rec skeletonizeArgs args env index =
 (********************************************************************
 *skeletonize:
 * Primary skeletonization routine; recurses over structure of type.
-* There are no more TypeVarType after skeletonize
 ********************************************************************)
 and skeletonize ty env index =
   let ty' = Absyn.dereferenceType ty in
   match ty' with
     Absyn.TypeVarType(r) ->
       (match r with
-         | Absyn.BindableTypeVar(_) ->
+           (* The reference is always set to None at this point *)
+         | Absyn.BindableTypeVar(r) when r = ref None ->
              let ty'' = replaceType ty' env 0 in
                if Option.isSome ty'' then
                  (Molecule(Option.get ty'', env), false, index)
@@ -296,8 +296,7 @@ and skeletonize ty env index =
                     true, 
                     index')
          | _ -> Errormsg.impossible Errormsg.none 
-                                 "Types.skeletonizeType: \
-                                  invalid type variable")
+                  "Types.skeletonize: invalid type variable")
   | Absyn.ApplicationType(k, args) ->
       let (argmols, env', newvars, index') = skeletonizeArgs args env index in
       let args' = getMoleculeListTypes argmols in
@@ -317,20 +316,15 @@ and skeletonize ty env index =
        newvars || newvars', index'')
   | Absyn.TypeSetType(_) ->
       (Errormsg.impossible Errormsg.none 
-                           "Types.skeletonizeType: invalid type set")
+                           "Types.skeletonize: invalid type set")
   | _ -> (Molecule(ty', env), false, index)
 
 
-(**********************************************************************
-*skeletonizeType:
-* Converts a type with free variables into a type molecule with
-* skeleton variables.
-**********************************************************************)
 let skeletonizeType ty =
   let _ = Errormsg.log Errormsg.none ("Types.skeletonizeType: " ^ 
                                       (Absyn.string_of_type_ast ty)) in
   let (mol, _, index) = skeletonize ty [] 0 in
-  
+
   if index > Pervasiveutils.maxSkeletonIndex then
     (Errormsg.error Errormsg.none
                     "Unable to skeletonize type: \
@@ -652,15 +646,17 @@ let occursCheckError = fun fargty argty term ->
 
 (**********************************************************************
 *checkApply:
-* Check an application between a function and an argument.
+* Check an application between a function and an argument i.e. if the
+* application is well-typed 
+* -  term is the term application, used to display error messages
 **********************************************************************)
 let checkApply fty argty term =
   (********************************************************************
-  *unify':
+  *runUnify:
   * Attempt to unify the first argument of an application with the first
-  * expected argument.  Calls necessary error functions.
+  * expected argument. Calls necessary error functions.
   ********************************************************************)
-  let unify' farg arg result =
+  let runUnify farg arg result =
     match (unify farg arg) with
       Success -> result
     | OccursCheckFailure -> (occursCheckError farg arg term; errorMolecule)
@@ -674,41 +670,44 @@ let checkApply fty argty term =
   if fskel = Absyn.errorType then
     errorMolecule
   else
-    (*  Check the function isn't an arrow type and isn't a type variable (and
-        so cannot be instantiated to an arrow type).  *)
-    if not ((Absyn.isVariableType fskel) || (Absyn.isArrowType fskel)) then
-      let (operator, _) = string_of_typemolecule' fty [] false in
-      (Errormsg.error (Absyn.getTermPos term) ("operator is not a function" ^
-        (Errormsg.info ("operator type: " ^ operator)) ^
-        (Errormsg.info 
-           ("in expression: " ^ (Absyn.string_of_term term) ^ ".")));
-      errorMolecule)
     
-    (*  Check if the function is a variable... *)
-    else if (Absyn.isVariableType fskel) then
+    (*  The function's type is a variable *)
+    if (Absyn.isVariableType fskel) then
       let fargskel = Absyn.makeTypeVariable () in
       let fargty = Molecule(fargskel, []) in
       let targskel = Absyn.makeTypeVariable () in
       let targty = Molecule(targskel, []) in
       let fty = (Absyn.makeArrowType targskel [fargskel]) in
+        (* Replace the current type variable with an arrow and two
+        * type variables, X -> Y *)
         ((Absyn.getTypeVariableReference fskel) := (Some(fty));
-         (unify' fargty argty targty))
+         (* This can only success *)
+         (runUnify fargty argty targty))
 
-    (*  Otherwise just check like normal. Function is an arrow type.*)
-    else
+    (*  The function's type is an arrow *)
+    else if (Absyn.isArrowType fskel) then
       let fenv = getMoleculeEnvironment fty in
       let argskels = (Absyn.getArrowTypeArguments fskel) in
       let targskel = (Absyn.getArrowTypeTarget fskel) in
       let fargty = Molecule(List.hd argskels, fenv) in
       let numargs = (List.length argskels) - 1 in
-      
-      if (numargs) > 0 then
-        (unify' fargty 
-                argty 
-                (Molecule((Absyn.makeArrowType targskel (List.tl argskels)), 
-                          fenv)))
-      else
-        (unify' fargty argty (Molecule(targskel, fenv)))
+        if (numargs) > 0 then
+          (runUnify fargty argty 
+             (Molecule((Absyn.makeArrowType targskel (List.tl argskels)), 
+                       fenv)))
+        else
+          (runUnify fargty argty (Molecule(targskel, fenv)))
+
+    (* If the type is neither a variable or an arrow type, there is no hope *)
+    else 
+      let (operator, _) = string_of_typemolecule' fty [] false in
+        (Errormsg.error 
+           (Absyn.getTermPos term) 
+           ("operator is not a function" ^ 
+            (Errormsg.info ("operator type: " ^ operator)) ^
+            (Errormsg.info 
+               ("in expression: " ^ (Absyn.string_of_term term) ^ ".")));
+         errorMolecule)
 
 (* Produce a list of type variables that appear free in the given type *)
 (* expression and are new to the given list of type variables.         *)

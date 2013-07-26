@@ -322,13 +322,13 @@ let kinds_equal k1 k2 =
 
 (* last goal *)
 let getTypeVariableDataLastGoalRef = function
-  TypeVar(fu, lu, p, s, h, o, fg, lg) -> lg
+  TypeVar(_, _, _, _, _, _, _, lg) -> lg
 let getTypeVariableDataLastGoal v = !(getTypeVariableDataLastGoalRef v)
 let setTypeVariableDataLastGoal v o = (getTypeVariableDataLastGoalRef v) := o
 
 (* first goal *)
 let getTypeVariableDataFirstGoalRef = function
-  TypeVar(fu, lu, p, s, h, o, fg, lg) -> fg
+  TypeVar(_, _, _, _, _, _, fg, _) -> fg
 let getTypeVariableDataFirstGoal v = !(getTypeVariableDataFirstGoalRef v)
 let setTypeVariableDataFirstGoal v o = (getTypeVariableDataFirstGoalRef v) := o
 
@@ -611,7 +611,7 @@ let getTypeFreeVariableFirst var =
       "Absyn.getTypeFreeVariableFirst: invalid variable"
 
 let setTypeFreeVariableFirst var first = 
-                     (getTypeFreeVariableFirstRef var) := Some(first)
+  (getTypeFreeVariableFirstRef var) := Some(first)
 
 let isTypeFreeVariable = function
   | TypeVarType(FreeTypeVar(_)) -> true

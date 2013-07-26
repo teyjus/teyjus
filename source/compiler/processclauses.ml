@@ -163,10 +163,12 @@ let rec transType tyExp =
                (* It seems that this situation never happens, possibly
                 * due to a previous call to dereferenceType *)
                transType (Option.get (!binding)) (* a type reference *)
-         | _ -> Errormsg.impossible 
+         | _ -> 
+             (* Originally absyn types do not contain any FreeTypeVar *)
+             Errormsg.impossible 
                   Errormsg.none "transType: invalid type expression")
   | Absyn.ArrowType(arg, target) ->
-    Absyn.ArrowType(transType arg, transType target)
+      Absyn.ArrowType(transType arg, transType target)
   | Absyn.ApplicationType(kind, args) ->
       Absyn.ApplicationType(kind, List.map transType args)
   | _ -> Errormsg.impossible Errormsg.none "transType: invalid type expression"
@@ -226,7 +228,8 @@ and transTermConst c tyenv =
     else 
       match l with
         (h::t) -> (h::(trunclist t (n-1)))
-      | _ -> Errormsg.impossible Errormsg.none "Parse.trunclist: invalid arguments."
+      | _ -> Errormsg.impossible Errormsg.none 
+               "Parse.trunclist: invalid arguments."
   in
   let skeletonNeededness = 
   Option.get (Absyn.getConstantSkeletonNeededness c) 
@@ -259,25 +262,26 @@ and transTermConst c tyenv =
 (**************************************************************************)
 and transTermVar tysy =
   match gListFind tysy qVars with
-    Some(qVarData) ->  qVarData (* body quantified *)
-  | None -> 
+    | Some(qVarData) ->  qVarData (* body quantified *)
+    | None -> 
       match gListFind tysy hqVars with
-  Some(hqVar) ->          (* exp head quant *)
-    (match !hqVar with
-      Some(hqVarData) -> hqVarData 
-    | None ->   (*exp head quant; but first encountered *)
-        let hqVarData = Absyn.makeNewVariableData () in
-        hqVar := Some(hqVarData);      (* update hqVars *)
-        hqVarData)
-      | None -> (* implicitly quantified at head of top-level clause or     *) 
-    (* implicitly/explicitly quantified in embedding context of *)
-          (* embedded clauses.                                        *)
-    match (gListFind tysy tVars) with
-      Some(varData) -> varData
-    | None -> (* first encountered *)
-        let myVarData = Absyn.makeNewVariableData () in
-        gListAdd tysy myVarData tVars; (*add into tVars*)
-        myVarData
+        | Some(hqVar) ->          (* exp head quant *)
+            (match !hqVar with
+               | Some(hqVarData) -> hqVarData 
+               | None ->   (*exp head quant; but first encountered *)
+                   let hqVarData = Absyn.makeNewVariableData () in
+                     hqVar := Some(hqVarData);      (* update hqVars *)
+                     hqVarData)
+        | None -> 
+            (* implicitly quantified at head of top-level clause or   *) 
+            (* implicitly/explicitly quantified in embedding context of *)
+            (* embedded clauses.                                        *)
+            match (gListFind tysy tVars) with
+                Some(varData) -> varData
+              | None -> (* first encountered *)
+                  let myVarData = Absyn.makeNewVariableData () in
+                    gListAdd tysy myVarData tVars; (*add into tVars*)
+                    myVarData
       
 (**************************************************************************)
 (* transform free variables:                                              *)
@@ -287,10 +291,11 @@ and transTermVar tysy =
 (**************************************************************************)
 and transTermFreeVar var =
   match var with
-  Absyn.NamedFreeVar(tysy) ->
-    Absyn.FreeVarTerm(Absyn.FreeVar(transTermVar tysy, ref None), 
+    | Absyn.NamedFreeVar(tysy) ->
+        Absyn.FreeVarTerm(Absyn.FreeVar(transTermVar tysy, ref None), 
             Errormsg.none)
-  | _ -> Errormsg.impossible Errormsg.none "transTermFreeVar: invalid var rep"
+    | _ -> Errormsg.impossible Errormsg.none 
+             "transTermFreeVar: invalid var rep"
 
 (***************************************************************************)
 (* transform bound variables:                                              *)
@@ -460,7 +465,8 @@ let rec processClause clauseTerm =
         in
         (preClause, freeVars, freeTyVars, collectHQVars (!hqVars))
   | t ->
-      (Errormsg.impossible (Absyn.getTermPos t) "Processclauses.processClause: invalid clause term.")
+      (Errormsg.impossible (Absyn.getTermPos t) 
+         "Processclauses.processClause: invalid clause term.")
 
 (***************************************************************************)
 (* process clause head:                                                    *)
@@ -549,8 +555,10 @@ and processAtomicGoal gltm head args arity =
     Absyn.FreeVarTerm(Absyn.NamedFreeVar(_), _) -> (* free var head *)
       Absyn.AtomicGoal(Pervasive.solveConstant, 1, 1, [(transTerm [] gltm)],[])
   | Absyn.ConstantTerm(pred, tyenv, _) ->
-      Absyn.AtomicGoal(pred, arity + (Absyn.getConstantTypeEnvSize false pred), arity,
-           List.map (transTerm []) args, List.map transType tyenv)
+      Absyn.AtomicGoal(pred, 
+                       arity + (Absyn.getConstantTypeEnvSize false pred),
+                       arity,
+                       List.map (transTerm []) args, List.map transType tyenv)
   | _ -> Errormsg.impossible Errormsg.none "processAtomicGoal: invalid pred"
   
 
