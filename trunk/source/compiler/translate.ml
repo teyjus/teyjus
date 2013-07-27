@@ -788,7 +788,7 @@ and mergeTypeAbbrevs t1 t2 ktable =
 **********************************************************************)
 and compareConstants c1 c2 =
   let name = Absyn.getConstantName c1 in
-  
+
   let fix = Absyn.getConstantFixity c1 in
   let fix' = Absyn.getConstantFixity c2 in
   

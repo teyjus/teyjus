@@ -114,6 +114,9 @@ let getStackState = function Stack(_,state,_,_) -> state
 let getStackPrec = function Stack(_,_,prec,_) -> prec
 let getStackFixity = function Stack(_,_,_,fix) -> fix
 
+let printStack stack =
+  ()
+
 let contains env v =
   let find tsym =
     (Symbol.equal (Absyn.getTypeSymbolSymbol tsym) v)
