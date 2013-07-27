@@ -1,0 +1,2 @@
+sig multiple_constants.
+
