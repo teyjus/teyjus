@@ -140,11 +140,19 @@ type pfixity = Fixity of psymbol list * pfixitykind * int * pos
 (********************************************************************
  * Module:
  *  This type stores information about a preabsyn module.
- * The pidkind of used, accmulated, imported modules or signatures
+ * The pidkind of used, accumulated, imported modules or signatures
  * are not used. 
                                                                    
  *  Module:
  *   Name: string
+ *
+ *
+ * Notice that constants declared in the .mod file without a keyword other than
+ * type are stored in the global constants list. This is only later, 
+ * at the level of absyn syntax, that the local/exportdef/useonly
+ * constants list will be filled with the set of global constants/...
+ * appearing in the module but not in the signature.
+ *
  *   Global Constants: pconstant list
  *   Local Constants: pconstant list
  *   Closed Constants: pconstant list
