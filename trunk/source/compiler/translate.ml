@@ -916,7 +916,7 @@ and checkPrec = fun f1 f2 ->
 and mergeConstants clist ctable f =
   let merge table constant =
     let sym = Absyn.getConstantSymbol constant in
-    let constant' = Table.find sym ctable in
+    let constant' = Table.find sym table in
     (f constant' constant table)
   in
   List.fold_left merge ctable clist
