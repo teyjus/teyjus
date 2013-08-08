@@ -926,10 +926,10 @@ and mergeConstants clist ctable f =
 * Checks that the constant already existed.
 **********************************************************************)
 and previouslyExists =
-  fun currentConstant newConstant ->
+  fun currentConstant _ ->
     if Option.isSome currentConstant then
       let c = Option.get currentConstant in
-      not(Absyn.getConstantRedefinable c)
+        not (Absyn.getConstantRedefinable c)
     else
       false
 
@@ -938,7 +938,7 @@ and previouslyExists =
 * Ensures that the new constant has a skeleton.
 **********************************************************************)
 and hasSkeleton =
-  fun currentConstant newConstant ->
+  fun _ newConstant ->
     Option.isSome (Absyn.getConstantSkeleton newConstant)
 
 (**********************************************************************
@@ -1252,7 +1252,7 @@ and translateSignature s owner accumOrUse generalCopier =
   * be verified that they compare (same fixity, precedence, type,
   * etc.)  
   ******************************************************************)
-  let mergeConstants clist ctable copier =
+  let mergeSigConstants clist ctable copier =
     let merge ctable c =
       let s = Absyn.getConstantSymbol c in
       let pos = Absyn.getConstantPos c in
@@ -1305,7 +1305,7 @@ and translateSignature s owner accumOrUse generalCopier =
       let kinds = getFromTable (fun _ -> true) ktable' in
       let constants = getFromTable (fun _ -> true) ctable' in
       let (ktable'') = mergeKinds kinds ktable in
-      let (ctable'') = mergeConstants constants ctable generalCopier in
+      let (ctable'') = mergeSigConstants constants ctable generalCopier in
       (ktable'', ctable'')
     in
     List.fold_left mergeTable (ktable, ctable) tables
@@ -1384,14 +1384,14 @@ and translateSignature s owner accumOrUse generalCopier =
       translateUseOnlyConstants owner econsts ktable atable
   in
   
-  let ctable = mergeConstants constantlist ctable generalCopier in
+  let ctable = mergeSigConstants constantlist ctable generalCopier in
   let ctable =
-    mergeConstants uconstantlist ctable (copyUseonly generalCopier owner)
+    mergeSigConstants uconstantlist ctable (copyUseonly generalCopier owner)
   in
       
   let ecopier = if accumOrUse then copyExportdef else copyUseonly in
   let ctable =
-    mergeConstants econstantlist ctable (ecopier generalCopier owner)
+    mergeSigConstants econstantlist ctable (ecopier generalCopier owner)
   in
 
   (*  Normalizing.  *)
@@ -1556,9 +1556,14 @@ and translateModule mod' ktable ctable atable =
 
   (********************************************************************
   *mergeLocalConstants:
+  * Remember that local constants declared in two steps like:
+  *   type foo o.
+  *   local foo.
+  * appear both in the global and the local constants lists (of the module) .
+  *
   * Merge the local constants in the module into the constant table.
   * If a constant is declared as local and has no declared type then
-  * the constant must already exist as a global.  If the type is
+  * the constant must also exist as a global.  If the type is
   * declared then it must either match an existing global declaration
   * or there must not be any global declaration.
   ********************************************************************)
