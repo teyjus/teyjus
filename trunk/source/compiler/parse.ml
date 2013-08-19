@@ -487,8 +487,9 @@ and translateId parsingtoplevel inlist term fvs bvs amodule =
          | None ->
              makeVarToOpTerm term fvs amodule makeImplicitTypeSymbol
   in
-  (* Check that in a given type, there are no bound type variables *)
-  let freeTypeVariables optTyp =
+  (* Check that in a given type, there are neither bound type variables 
+  * nor type variables used as well as term variables *)
+  let checkTypeVariables optTyp =
     let rec aux typ = match typ with
       | Preabsyn.Atom(sym, _, pos) -> 
           (match (findVar bvs sym) with
@@ -496,6 +497,12 @@ and translateId parsingtoplevel inlist term fvs bvs amodule =
                  Errormsg.error pos 
                    ("The type variable '" ^ (Symbol.name sym) ^ 
                     "' cannot be bound")
+             | None -> ()) ;
+          (match (findVar fvs sym) with
+             | Some _ -> 
+                 Errormsg.error pos 
+                   ("The type variable '" ^ (Symbol.name sym) ^ 
+                    "' is already used as a term variable")
              | None -> ())
       | Preabsyn.App(t1, t2, _) 
       | Preabsyn.Arrow(t1, t2, _) ->
@@ -512,7 +519,7 @@ and translateId parsingtoplevel inlist term fvs bvs amodule =
 
   match term with
       Preabsyn.IdTerm(sym, optTyp, k, pos) ->
-        freeTypeVariables optTyp; 
+        checkTypeVariables optTyp; 
       (match k with
          Preabsyn.AVID ->       (*  _, i.e. an anonymous variable  *) 
            (makeVarToOpTerm term fvs amodule makeAnonymousTypeSymbol)

@@ -47,7 +47,7 @@ type typeandbindings =
 * Rationalizes the type ty i.e. translates a preabsyn ptype to an absyn atype
 *
 * - vartable is the current table associating symbols to absyn types
-*    * when rationalalizing a type, vartable is originally empty
+*    * when rationalizing a type, vartable is originally empty
 *    * for a type abbreviation, it is initialized with all the variables
 *      declared as appearing in the abbreviated type
 *      For instance, when rationalizing 
