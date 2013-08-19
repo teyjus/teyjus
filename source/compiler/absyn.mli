@@ -488,6 +488,7 @@ val makeAnonymousConstant : int -> askeleton -> aconstant
 val makeHiddenConstant : askeleton -> int -> aconstant
 val makeConstantTerm : aconstant -> atype list -> pos -> aterm
 (*  val makeConstantType : aconstant -> atype *)
+val string_of_constant: aconstant -> string                                                           
 
 (*************************************************************************)
 (*  atypesymbol:                                                         *)
