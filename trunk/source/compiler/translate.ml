@@ -32,15 +32,8 @@ type typeandenvironment =
 let typeSkeletonIndex = ref 0
 
 
-
-
-
-
-
-(* Temporary data structure used internally in rationalizeType *)             
 type typeandbindings =
   TypeAndBindings of (Absyn.atype * Absyn.atype Table.symboltable)
-
 
 (********************************************************************
 *rationalizeType:
@@ -59,21 +52,15 @@ type typeandbindings =
 *
 *********************************************************************)
 let rec rationalizeType ty vartable kindtable typeabbrevtable transvarfunc =
-  let TypeAndBindings(ty, _) = 
-    rationalizeTypeAux ty vartable kindtable typeabbrevtable transvarfunc
-  in
-    ty
-
-and rationalizeTypeAux ty vartable kindtable typeabbrevtable transvarfunc =
     
   (******************************************************************
   *translateArrow:
   * Translate an arrow from preabsyn to absyn.
   ******************************************************************)
   let translateArrow = function Preabsyn.Arrow(l, r, _) ->
-    let TypeAndBindings(r', rs) = rationalizeTypeAux r vartable kindtable 
+    let TypeAndBindings(r', rs) = rationalizeType r vartable kindtable 
                                     typeabbrevtable transvarfunc in
-    let TypeAndBindings(l', ls) = rationalizeTypeAux l rs kindtable 
+    let TypeAndBindings(l', ls) = rationalizeType l rs kindtable 
                                     typeabbrevtable transvarfunc in
       TypeAndBindings(Absyn.ArrowType(l', r'), ls)
   | t -> invalid_arg "Types.translateArrow: invalid type"
@@ -99,7 +86,7 @@ and rationalizeTypeAux ty vartable kindtable typeabbrevtable transvarfunc =
              * from left to right (eg. A -> B -> pair A B *)
             let (head, ts', argtypes) = (getHeadAndArgsType f ts) in
             let TypeAndBindings(argtype, ts'') = 
-              rationalizeTypeAux arg ts' kindtable typeabbrevtable 
+              rationalizeType arg ts' kindtable typeabbrevtable 
                 transvarfunc 
             in
               (head, ts'', argtypes @ [argtype])
@@ -152,7 +139,7 @@ and rationalizeTypeAux ty vartable kindtable typeabbrevtable transvarfunc =
        | _ -> invalid_arg "Types.translateApp: invalid type"
   in  
 
-  (* Main for rationalizeTypeAux *)
+  (* Main for rationalizeType *)
   match ty with
     | Preabsyn.Atom(s, Preabsyn.AVID, pos) ->
         (transvarfunc s vartable pos)
@@ -193,12 +180,12 @@ and rationalizeTypeAux ty vartable kindtable typeabbrevtable transvarfunc =
 
     | Preabsyn.ErrorType -> TypeAndBindings(Absyn.ErrorType, vartable)
 
-and translateTypeAnnot ty amodule =
+and translateTypeAnnot ty table amodule =
   let rationalizeVar sym symtable _ =
     let t = Absyn.makeTypeVariable () in
       TypeAndBindings(t, (Table.add sym t symtable)) 
   in
-    rationalizeType ty Table.empty
+    rationalizeType ty table 
       (Absyn.getModuleKindTable amodule) 
       (Absyn.getModuleTypeAbbrevTable amodule)
       rationalizeVar 
@@ -288,7 +275,7 @@ and translateConstantTypeSkeleton ty kindtable typeabbrevtable =
       (typeSkeletonIndex := !typeSkeletonIndex + 1;
        TypeAndBindings(t, (Table.add sym t symtable)))
   in
-  let ty' =
+  let TypeAndBindings(ty', _) = 
     rationalizeType ty Table.empty kindtable typeabbrevtable 
       rationalizeSkeletonVar in
     TypeAndEnvironment(ty', !typeSkeletonIndex) 
@@ -675,7 +662,7 @@ and translateTypeAbbrev abbrev abbrevtable kindtable =
                        " in type abbreviation");
      TypeAndBindings(Absyn.ErrorType, symtable))
   in
-  let bodytype =
+  let TypeAndBindings(bodytype, _) = 
     rationalizeType ty symtable kindtable abbrevtable
                      rationalizeTypeAbbrevVar in
   
