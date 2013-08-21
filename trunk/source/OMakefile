@@ -197,6 +197,11 @@ if $(mem $(SYSNAME), Darwin)
     INC_C[] += $(INC)/byteswap $(INC)/search
     export
 
+if $(mem $(SYSNAME), OpenBSD)
+    INC_C[] += $(INC)/search
+    export
+
+
 ############################################################
 # Generated Files
 #

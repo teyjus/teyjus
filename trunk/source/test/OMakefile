@@ -1,5 +1,10 @@
 DIFF = diff --strip-trailing-cr
 
+if $(mem $(SYSNAME), OpenBSD)
+    DIFF = gdiff --strip-trailing-cr
+    export
+
+
 ############################################################
 # Rules for compiling and linking Lambda Prolog code
 #
