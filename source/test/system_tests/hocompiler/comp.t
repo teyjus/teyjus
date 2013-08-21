@@ -10,6 +10,11 @@ my $ans;
 my $PT = "hocompiler";
 my $DIFF = "diff --strip-trailing-cr";
 
+if($^O eq 'openbsd'){{
+    $DIFF = "gdiff --strip-trailing-cr";
+}}
+
+
 
 ############################################
 ############################################
