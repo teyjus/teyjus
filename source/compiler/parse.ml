@@ -507,9 +507,9 @@ and translateId parsingtoplevel inlist term fvs bvs bdgs amodule =
           (match (findVar fvs sym) with
              | Some _ -> 
                  Errormsg.error pos 
-                   ("The type variable '" ^ (Symbol.name sym) ^ 
-                    "' is already used as a term variable")
-             | None -> ())
+                   ("The term variable '" ^ (Symbol.name sym) ^ 
+                    "' cannot also be used as a type variable")
+             | None -> ()) 
       | Preabsyn.App(t1, t2, _) 
       | Preabsyn.Arrow(t1, t2, _) ->
           aux t1; aux t2
@@ -522,10 +522,21 @@ and translateId parsingtoplevel inlist term fvs bvs bdgs amodule =
             aux typ
         | None -> ()
   in
+  (* Check that the current term variable is not already used as a type 
+   * variable *)
+  let checkClashTypeTermVariables sym pos = 
+    match (Table.find sym bdgs) with
+      | Some(_) -> 
+          Errormsg.error pos 
+            ("The type variable '" ^ (Symbol.name sym) ^ 
+             "' cannot also be used as a term variable")
+      | None -> ()
+  in
 
   match term with
       Preabsyn.IdTerm(sym, optTyp, k, pos) ->
         checkTypeVariables optTyp; 
+        checkClashTypeTermVariables sym pos; 
       (match k with
          Preabsyn.AVID ->       (*  _, i.e. an anonymous variable  *) 
            (makeVarToOpTerm term fvs bdgs amodule makeAnonymousTypeSymbol)
