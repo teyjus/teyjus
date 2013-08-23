@@ -190,7 +190,9 @@ rule initial = parse
 | "%"             {comment1 lexbuf}
 
 | "/*"            {commentLev := 1; comment2 lexbuf}
-| _ as c          {raise (Failure("Invalid token: " ^ string_of_char c));}
+| _ as c          {Errormsg.error lexbuf.lex_curr_p 
+                     ("Invalid token: " ^ (string_of_char c)); 
+                     STRLIT(extractCurrentString lexbuf.lex_curr_p)}
 | eof             {EOF}
 
 (**********************************************************************
@@ -225,7 +227,8 @@ and stringstate = parse
 | "\\" FCHAR      {strflush1 lexbuf}
 | "\\\n"          {incrline lexbuf; strflush1 lexbuf}
 | "\\c"           {strflush2 lexbuf}
-| "\\" _          {Errormsg.error lexbuf.lex_curr_p "Illegal escape character in string";
+| "\\" _          {Errormsg.error lexbuf.lex_curr_p 
+                    "Illegal escape character in string";
                    stringstate lexbuf}
 | eof             {Errormsg.error lexbuf.lex_curr_p
                      "String not closed at end-of-file";
