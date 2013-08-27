@@ -940,7 +940,7 @@ and stackOperation parsingtoplevel o amodule stack =
       else
         let pos = getStackItemPos (stackTop stack) in
         (Errormsg.error pos 
-          ("missing left argument for " ^
+          ("missing right argument for " ^
           (String.lowercase (Absyn.string_of_fixity fixity)) ^
           " operator");
         raise TermException)
