@@ -29,6 +29,19 @@ open Absyn
  * in P.
 *)
 
+(* TODO:
+ * Have a nice translation for 
+ type foo A -> B -> o.
+ type bar A -> o.
+
+
+ foo A  B :- bar (A,B).
+ bar A :- A, true. 
+Currently variables are embeded inside lists whereas it seems that 
+should not be the case.
+*)
+
+
 
 (* Some kinds needed for the constant we introduce *)
 let o_type = Absyn.makeKindType Pervasive.kbool
@@ -253,8 +266,6 @@ let rec explicit_term term add_sing top_level =
                 ConstantTerm(forall_constant, typ_const, pos_const), 
                 args_exp, List.length args_exp), pos)  in
               term_exp
-
-      (* term_to_string *)
 
       (* Any other predicate *)
       | ApplicationTerm(
