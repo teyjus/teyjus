@@ -29,11 +29,20 @@
 * produces absyn module and signature representations containing the
 * kind and constant tables.
 **********************************************************************)
-val translate : Preabsyn.pmodule -> Preabsyn.pmodule -> (Absyn.amodule * Absyn.amodule)
+val translate : Preabsyn.pmodule -> Preabsyn.pmodule -> 
+                (Absyn.amodule * Absyn.amodule)
+
+
+(* Data structure used in rationalizeType *)             
+type typeandbindings =
+  TypeAndBindings of (Absyn.atype * Absyn.atype Table.symboltable)
 
 (**********************************************************************
 *translateType:
-* Given a preabsyn type and an absyn module containing kind and constant
+* Given a preabsyn type (used as a type annotation),
+* atble containing bindings for type annotation
+* and an absyn module containing kind and constant
 * tables, produces an absyn representation of the type.
 **********************************************************************)
-val translateType : Preabsyn.ptype -> Absyn.amodule -> Absyn.atype
+val translateTypeAnnot : Preabsyn.ptype -> Absyn.atype Table.symboltable -> 
+                         Absyn.amodule -> typeandbindings 

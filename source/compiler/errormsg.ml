@@ -58,14 +58,8 @@ let string_of_pos pos =
 *printPosition:
 *  Prints position information.
 ********************************************************************)
-let rec printPosition = fun p ->
+let printPosition = fun p ->
   prerr_string (string_of_pos p)
-
-(********************************************************************
-*reset:
-* Just resets the error message module.
-********************************************************************)
-let reset () = anyErrors := false
 
 (********************************************************************
 *info:

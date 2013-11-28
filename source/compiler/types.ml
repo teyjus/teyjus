@@ -21,9 +21,6 @@
 type typemolecule =
   Molecule of (Absyn.atype * Absyn.atype list)
 
-type typeandenvironment =
-  TypeAndEnvironment of (Absyn.atype * Absyn.atype list)
-
 type variablebindings = (Absyn.atype * int) list
 
 (*  The error molecule. *)
@@ -124,7 +121,7 @@ let dereferenceMolecule (Molecule(t, env)) =
   *get:
   * Gets the ith type from the type environment.
   ********************************************************************)
-  let rec get i env =
+  let get i env =
     try
       List.nth env i
     with
@@ -161,10 +158,10 @@ let rec string_of_typemolecule = fun mol ->
   s
 
 and string_of_typemolecule' = fun mol bindings printpar ->
-  let Molecule(t,env) = (dereferenceMolecule mol) in
+  let Molecule(t, env) = (dereferenceMolecule mol) in
 
-  let rec string_of_skelvar i =
-    let rec get i env =
+  let string_of_skelvar i =
+    let get i env =
       try
         let e = (List.nth env i) in
         string_of_typemolecule' (Molecule(Absyn.dereferenceType e, env)) 
@@ -176,8 +173,9 @@ and string_of_typemolecule' = fun mol bindings printpar ->
                                             (string_of_int i)))
     in
     get i env
+  in
   
-  and string_of_var = fun bindings ->
+  let string_of_var = fun bindings ->
     let character i =
       if i>= 26 then
         (string_of_int i)
@@ -186,13 +184,14 @@ and string_of_typemolecule' = fun mol bindings printpar ->
     in
     try
       let i = List.assq t bindings in
-      ("'" ^ (character i), bindings)
+      (character i, bindings)
     with
       Not_found ->
         let i = List.length bindings in
-        ("'" ^ (character i), (t, i)::bindings)
+        (character i, (t, i)::bindings)
+  in
   
-  and string_of_typeset ts bindings =
+  let string_of_typeset ts bindings =
     match ts with
       Absyn.TypeSetType(d, t, _) ->
         (match !t with
@@ -200,8 +199,9 @@ and string_of_typemolecule' = fun mol bindings printpar ->
         | _ -> string_of_typemolecule' (Molecule(d, env)) bindings printpar)
     | _ -> (Errormsg.impossible Errormsg.none "Types.string_of_typeset: \
                                                invalid typeset")
+  in
   
-  and string_of_args = fun args bindings ->
+  let rec string_of_args = fun args bindings ->
     match args with
       arg::args' ->
         let (arg', bindings') = 
@@ -210,8 +210,9 @@ and string_of_typemolecule' = fun mol bindings printpar ->
         let (args'', bindings'') = (string_of_args args' bindings') in
         (" " ^ arg' ^ args'', bindings'')
     | [] -> ("", bindings)
+  in
   
-  and string_of_type t =
+  let string_of_type_and_bindings t =
     match (Absyn.dereferenceType t) with
       Absyn.SkeletonVarType(i) -> (string_of_skelvar !i)
     | Absyn.TypeVarType(_) -> (string_of_var bindings)
@@ -235,7 +236,7 @@ and string_of_typemolecule' = fun mol bindings printpar ->
            else (l' ^ " -> " ^ r', bindings')
     | Absyn.ErrorType -> ("error", bindings)
   in
-  string_of_type t
+    string_of_type_and_bindings t
 
 (********************************************************************
 *getMoleculeListTypes;
@@ -283,21 +284,23 @@ and skeletonize ty env index =
   let ty' = Absyn.dereferenceType ty in
   match ty' with
     Absyn.TypeVarType(r) ->
-      (match !r with
-        Absyn.BindableTypeVar(_) ->
-          let ty'' = replaceType ty' env 0 in
-          if Option.isSome ty'' then
-            (Molecule(Option.get ty'', env), false, index)
-          else
-            let index' = index + 1 in
-            (Molecule(Absyn.SkeletonVarType(ref index), env @ [ty']), true, index')
-      | _ -> Errormsg.impossible Errormsg.none 
-                                 "Types.skeletonizeType: \
-                                  invalid type variable")
+      (match r with
+           (* The reference is always set to None at this point *)
+         | Absyn.BindableTypeVar(r) when r = ref None ->
+             let ty'' = replaceType ty' env 0 in
+               if Option.isSome ty'' then
+                 (Molecule(Option.get ty'', env), false, index)
+               else
+                 let index' = index + 1 in
+                   (Molecule(Absyn.SkeletonVarType(ref index), env @ [ty']), 
+                    true, 
+                    index')
+         | _ -> Errormsg.impossible Errormsg.none 
+                  "Types.skeletonize: invalid type variable")
   | Absyn.ApplicationType(k, args) ->
       let (argmols, env', newvars, index') = skeletonizeArgs args env index in
       let args' = getMoleculeListTypes argmols in
-      (Molecule(Absyn.ApplicationType(k, args'), env'), newvars, index')
+        (Molecule(Absyn.ApplicationType(k, args'), env'), newvars, index')
   | Absyn.ArrowType(_) ->
       let targty = Absyn.getArrowTypeTarget ty' in
       let argtys = Absyn.getArrowTypeArguments ty' in
@@ -313,20 +316,15 @@ and skeletonize ty env index =
        newvars || newvars', index'')
   | Absyn.TypeSetType(_) ->
       (Errormsg.impossible Errormsg.none 
-                           "Types.skeletonizeType: invalid type set")
+                           "Types.skeletonize: invalid type set")
   | _ -> (Molecule(ty', env), false, index)
 
 
-(**********************************************************************
-*skeletonizeType:
-* Converts a type with free variables into a type molecule with
-* skeleton variables.
-**********************************************************************)
 let skeletonizeType ty =
   let _ = Errormsg.log Errormsg.none ("Types.skeletonizeType: " ^ 
                                       (Absyn.string_of_type_ast ty)) in
   let (mol, _, index) = skeletonize ty [] 0 in
-  
+
   if index > Pervasiveutils.maxSkeletonIndex then
     (Errormsg.error Errormsg.none
                     "Unable to skeletonize type: \
@@ -336,8 +334,8 @@ let skeletonizeType ty =
     mol
 
 (**********************************************************************
-*skeletonizeMoleulce:
-* Converts a moleulce with free variables and skeleton variables
+*skeletonizeMolecule:
+* Converts a molecule with free variables and skeleton variables
 * into a type molecule with skeleton variables only.
 **********************************************************************)
 let skeletonizeMolecule tmol =
@@ -390,20 +388,21 @@ let rec occursCheck var skel bindings =
 *unbindVariables:
 * Goes through a list of variables and changes their references to
 * indicate that they are not bound.
+* This is only useful at the top level
 **********************************************************************)
 let rec unbindVariables = function
-  [] -> ()
-| Absyn.TypeVarType(r)::vs ->
-    (match !r with
-      Absyn.BindableTypeVar(tr) ->
-        (tr := None;
-        unbindVariables vs)
-    | _ -> Errormsg.impossible Errormsg.none 
-                               "Types.unbindVariables: invalid type variable")
-| v::vs ->
-    (Errormsg.impossible Errormsg.none
-                         "Types.unbindVariables: \
-                          non-variable type encountered.")
+  | [] -> ()
+  | Absyn.TypeVarType(r)::vs ->
+      (match r with
+           Absyn.BindableTypeVar(tr) ->
+             (tr := None;
+              unbindVariables vs)
+         | _ -> Errormsg.impossible Errormsg.none 
+                  "Types.unbindVariables: invalid type variable")
+  | v::vs ->
+      (Errormsg.impossible Errormsg.none
+         "Types.unbindVariables: \
+         non-variable type encountered.")
     
 (**********************************************************************
 *bindVariable:
@@ -413,8 +412,8 @@ let bindVariable = fun var mol bindings ->
   let ty = (getMoleculeType mol) in
   try 
     let t = (occursCheck var ty (getMoleculeEnvironment mol)) in
-    (Absyn.getTypeVariableReference var := Some(t);
-    var :: bindings)
+      (Absyn.getTypeVariableReference var := Some(t);
+       var :: bindings)
   with
     UnifyException(OccursCheckFailure) ->
       (unbindVariables bindings; raise (UnifyException(OccursCheckFailure)))
@@ -625,11 +624,11 @@ let rec unify (tm1 : typemolecule) (tm2 : typemolecule) =
 let clashError = fun fargty argty term ->
   let (expected, bindings) = string_of_typemolecule' fargty [] false in
   let (actual, _) = string_of_typemolecule' argty bindings false in
-  
-  Errormsg.error (Absyn.getTermPos term) ("clash in operator and operand types" ^
-    (Errormsg.info ("expected operand type: " ^ expected)) ^
-    (Errormsg.info ("actual operand type: " ^ actual)) ^
-    (Errormsg.info ("in expression: " ^ (Absyn.string_of_term term))))
+    Errormsg.error (Absyn.getTermPos term) 
+      ("clash in operator and operand types" ^
+       (Errormsg.info ("expected operand type: " ^ expected)) ^
+       (Errormsg.info ("actual operand type: " ^ actual)) ^
+       (Errormsg.info ("in expression: " ^ (Absyn.string_of_term term))))
 
 (**********************************************************************
 *occursCheckError:
@@ -644,17 +643,20 @@ let occursCheckError = fun fargty argty term ->
     (Errormsg.info ("operand type: " ^ operand)) ^
     (Errormsg.info ("in expression: " ^ (Absyn.string_of_term term))))
 
+
 (**********************************************************************
 *checkApply:
-* Check an application between a function and an argument.
+* Check an application between a function and an argument i.e. if the
+* application is well-typed 
+* -  term is the term application, used to display error messages
 **********************************************************************)
 let checkApply fty argty term =
   (********************************************************************
-  *unify':
+  *runUnify:
   * Attempt to unify the first argument of an application with the first
-  * expected argument.  Calls necessary error functions.
+  * expected argument. Calls necessary error functions.
   ********************************************************************)
-  let unify' farg arg result =
+  let runUnify farg arg result =
     match (unify farg arg) with
       Success -> result
     | OccursCheckFailure -> (occursCheckError farg arg term; errorMolecule)
@@ -668,63 +670,70 @@ let checkApply fty argty term =
   if fskel = Absyn.errorType then
     errorMolecule
   else
-    (*  Check the function isn't an arrow type and isn't a type variable (and
-        so cannot be instantiated to an arrow type).  *)
-    if not ((Absyn.isVariableType fskel) || (Absyn.isArrowType fskel)) then
-      let (operator, _) = string_of_typemolecule' fty [] false in
-      (Errormsg.error (Absyn.getTermPos term) ("operator is not a function" ^
-        (Errormsg.info ("operator type: " ^ operator)) ^
-        (Errormsg.info ("in expression: " ^ (Absyn.string_of_term term) ^ ".")));
-      errorMolecule)
     
-    (*  Check if the function is a variable... *)
-    else if (Absyn.isVariableType fskel) then
+    (*  The function's type is a variable *)
+    if (Absyn.isVariableType fskel) then
       let fargskel = Absyn.makeTypeVariable () in
       let fargty = Molecule(fargskel, []) in
       let targskel = Absyn.makeTypeVariable () in
       let targty = Molecule(targskel, []) in
       let fty = (Absyn.makeArrowType targskel [fargskel]) in
-      ((Absyn.getTypeVariableReference fskel) := (Some(fty));
-      (unify' fargty argty targty))
+        (* Replace the current type variable with an arrow and two
+        * type variables, X -> Y *)
+        ((Absyn.getTypeVariableReference fskel) := (Some(fty));
+         (* This can only success *)
+         (runUnify fargty argty targty))
 
-    (*  Otherwise just check like normal. Function is an arrow type.*)
-    else
+    (*  The function's type is an arrow *)
+    else if (Absyn.isArrowType fskel) then
       let fenv = getMoleculeEnvironment fty in
       let argskels = (Absyn.getArrowTypeArguments fskel) in
       let targskel = (Absyn.getArrowTypeTarget fskel) in
       let fargty = Molecule(List.hd argskels, fenv) in
       let numargs = (List.length argskels) - 1 in
-      
-      if (numargs) > 0 then
-        (unify' fargty 
-                argty 
-                (Molecule((Absyn.makeArrowType targskel (List.tl argskels)), 
-                          fenv)))
-      else
-        (unify' fargty argty (Molecule(targskel, fenv)))
+        if (numargs) > 0 then
+          (runUnify fargty argty 
+             (Molecule((Absyn.makeArrowType targskel (List.tl argskels)), 
+                       fenv)))
+        else
+          (runUnify fargty argty (Molecule(targskel, fenv)))
+
+    (* If the type is neither a variable or an arrow type, there is no hope *)
+    else 
+      let (operator, _) = string_of_typemolecule' fty [] false in
+        (Errormsg.error 
+           (Absyn.getTermPos term) 
+           ("operator is not a function" ^ 
+            (Errormsg.info ("operator type: " ^ operator)) ^
+            (Errormsg.info 
+               ("in expression: " ^ (Absyn.string_of_term term) ^ ".")));
+         errorMolecule)
 
 (* Produce a list of type variables that appear free in the given type *)
 (* expression and are new to the given list of type variables.         *)
 let rec freeTypeVars tyexp tyfvs =
   match tyexp with
-	Absyn.TypeVarType(varInfo) ->
-	  (match (!varInfo) with 
-		Absyn.BindableTypeVar(binding) ->
-		  if Option.isNone (!binding) then (* type variable *)
-			(* whether the variable appears in the given var list *)
-			let rec isNewTyFv tyfvs =
-			  match tyfvs with
-				[] -> true
-			  | (tyfv :: rest) -> 
-				  if (tyfv == tyexp) then false
-				  else isNewTyFv rest
-			in
-			if (isNewTyFv tyfvs) then (tyexp::tyfvs)
-			else tyfvs
-		  else (* a type reference really *)
-			freeTypeVars (Option.get (!binding)) tyfvs
-	  | _ -> Errormsg.impossible Errormsg.none 
-			             "freeTypeVars: invalid type expression")
+    | Absyn.TypeVarType(varInfo) ->
+        (match (varInfo) with 
+           | Absyn.BindableTypeVar(binding) ->
+               if Option.isNone (!binding) then (* type variable *)
+                 (* whether the variable appears in the given var list *)
+                 let rec isNewTyFv tyfvs =
+                   match tyfvs with
+                       [] -> true
+                     | (tyfv :: rest) -> 
+                         if (tyfv == tyexp) then false
+                         else isNewTyFv rest
+                 in
+                   if (isNewTyFv tyfvs) then 
+                     (tyexp::tyfvs)
+                   else tyfvs
+               else (* a type reference really *)
+                 (* It seems that we are never in this situation,
+                  * possibly due to a previous call to dereferenceType *)
+                 freeTypeVars (Option.get (!binding)) tyfvs
+           | _ -> Errormsg.impossible Errormsg.none 
+                    "freeTypeVars: invalid type expression")
   | Absyn.ArrowType(arg, target) ->
 	  freeTypeVars target (freeTypeVars arg tyfvs)
   | Absyn.ApplicationType(kind, args) ->

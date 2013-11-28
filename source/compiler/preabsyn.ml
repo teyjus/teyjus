@@ -18,20 +18,44 @@
 * You should have received a copy of the GNU General Public License
 * along with Teyjus.  If not, see <http://www.gnu.org/licenses/>.
 ****************************************************************************)
-(**********************************************************************
-*Preabsyn Module:
-* The prebstract syntax for Teyjus.
-**********************************************************************)
 
 type symbol = Symbol.symbol
 type pos = Errormsg.pos
 
-(* Kinds of Identifiers *)
 type pidkind =
-  | CVID
-  | ConstID
-  | AVID
-  | VarID
+  | CVID        
+  | ConstID     
+  | AVID        
+  | VarID       
+
+type psymbol = Symbol of symbol * pidkind * pos
+
+type ptype =
+  | Atom of symbol * pidkind * pos
+  | App of ptype * ptype * pos
+  | Arrow of ptype * ptype * pos
+  | ErrorType
+
+type pabstractedsymbol = AbstractedSymbol of (symbol * ptype option * pos)
+
+type ptypeabbrev = TypeAbbrev of psymbol * psymbol list * ptype * pos
+
+type pterm =
+  | SeqTerm of pterm list * pos 
+  | ListTerm of pterm list * pos
+  | ConsTerm of pterm list * pterm * pos  
+  | LambdaTerm of pabstractedsymbol * pterm list * pos
+  | IdTerm of (symbol * ptype option * pidkind * pos)
+  | RealTerm of float * pos
+  | IntTerm of int * pos
+  | StringTerm of string * pos
+  | ErrorTerm
+
+type pclause = Clause of pterm
+
+type pconstant = Constant of psymbol list * ptype option * pos
+
+type pkind = Kind of psymbol list * int option * pos
 
 type pfixitykind =
   | Infix of pos
@@ -41,60 +65,18 @@ type pfixitykind =
   | Prefixr of pos
   | Postfix of pos
   | Postfixl of pos
-    
-(* Symbols *)
-type psymbol = Symbol of symbol * pidkind * pos
 
-(* Type Symbols *)
-and ptypesymbol = TypeSymbol of (symbol * ptype option * pidkind * pos)
+type pfixity = Fixity of psymbol list * pfixitykind * int * pos
 
-(* Types *)
-and ptype =
-  | Atom of symbol * pidkind * pos
-  | App of ptype * ptype * pos
-  | Arrow of ptype * ptype * pos
-  | ErrorType
-
-and ptypeabbrev = TypeAbbrev of psymbol * psymbol list * ptype * pos
-
-and pboundterm = BoundTerm of ptypesymbol list * pterm list
-
-(* Terms *)
-and pterm =
-  | SeqTerm of pterm list * pos
-  | ListTerm of pterm list * pos
-  | ConsTerm of pterm list * pterm * pos
-  | LambdaTerm of ptypesymbol list * pterm list * pos
-  | IdTerm of (symbol * ptype option * pidkind * pos)
-  | RealTerm of float * pos
-  | IntTerm of int * pos
-  | StringTerm of string * pos
-  | ErrorTerm
-  
-and pclause = Clause of pterm
-
-(* Constants *)
-and pconstant = Constant of psymbol list * ptype option * pos
-
-(* Kinds *)
-and pkind = Kind of psymbol list * int option * pos
-
-(* Fixity *)
-and pfixity = Fixity of psymbol list * pfixitykind * int * pos
-
-(********************************************************************
-* Module:
-*  This type stores information about a preabsyn module.
-*  See interface for details.
-********************************************************************)
 type pmodule =
   | Module of string * pconstant list * pconstant list * 
       pconstant list * pconstant list * pconstant list * pfixity list *
-      pkind list * pkind list * ptypeabbrev list * pclause list * psymbol list *
-      psymbol list * psymbol list * psymbol list
+      pkind list * pkind list * ptypeabbrev list * pclause list * 
+      psymbol list * psymbol list * psymbol list * psymbol list
   | Signature of string * pconstant list * pconstant list *
       pconstant list * pkind list *
       ptypeabbrev list * pfixity list * psymbol list * psymbol list
+
 
 let string_of_pos pos = Errormsg.string_of_pos pos
 
@@ -103,17 +85,13 @@ let map_with_commas f list = String.concat ", " (List.map f list)
 let rec string_of_termlist list =
   map_with_commas string_of_term list
 
-and string_of_typesymbollist list =
-  map_with_commas string_of_typesymbol list
-
-and string_of_typesymbol = function
-  | TypeSymbol(tsym, Some t, idk, pos) ->
-      "TypeSymbol(" ^ (Symbol.name tsym) ^ ", " ^
-        (string_of_type t) ^ ", " ^ (string_of_idkind idk) ^ ", " ^
-        (string_of_pos pos)
-  | TypeSymbol(tsym, None, idk, pos) ->
-      "TypeSymbol(" ^ (Symbol.name tsym) ^ ", " ^
-        (string_of_idkind idk) ^ ", " ^ (string_of_pos pos)
+and string_of_abstractedsymbol = function
+  | AbstractedSymbol(tsym, Some t, pos) ->
+      "AbstractedSymbol(" ^ (Symbol.name tsym) ^ ", " ^
+        (string_of_type t) ^ ", " ^ (string_of_pos pos) ^ ")"
+  | AbstractedSymbol(tsym, None, pos) ->
+      "AbstractedSymbol(" ^ (Symbol.name tsym) ^ ", " ^ 
+      (string_of_pos pos) ^ ")"
 
 and string_of_term = function
   | SeqTerm(tlist, pos) ->
@@ -140,16 +118,11 @@ and string_of_term = function
   | StringTerm(s, pos) ->
       "StringTerm(" ^ s ^ ", " ^ (string_of_pos pos) ^ ")"
   | LambdaTerm(lt, t, pos) ->
-      "LambdaTerm(" ^ (string_of_typesymbollist lt) ^ ", " ^
+      "LambdaTerm([" ^ (string_of_abstractedsymbol lt) ^ "], " ^
         (string_of_termlist t) ^ ", " ^ (string_of_pos pos) ^ ")"
   | ErrorTerm ->
       "Error"
         
-and string_of_boundterm = function
-  | BoundTerm(tysy, tl) ->
-      "BoundTerm([" ^ (string_of_typesymbollist tysy) ^
-        "], [" ^ (string_of_termlist tl) ^ "])"
-
 and string_of_idkind = function
   | CVID -> "CVID"
   | ConstID -> "ConstID"
@@ -227,8 +200,8 @@ let printPreAbsyn m out =
   let output_list f list = List.iter (fun t -> output_line (f t)) list in
     match m with
       | Module(name, gconstants, lconstants, cconstants, uconstants,
-               econstants, fixities, gkinds, lkinds, tabbrevs, clauses, accummod,
-               accumsig, usesig, impmods) ->
+               econstants, fixities, gkinds, lkinds, tabbrevs, clauses, 
+               accummod, accumsig, usesig, impmods) ->
           output_line ("Module: " ^ name) ;
           output_line "Constants:" ;
           output_list string_of_constant gconstants ;
@@ -246,7 +219,8 @@ let printPreAbsyn m out =
           output_line "Fixities:" ;
           output_list string_of_fixity fixities
             
-      | Signature(name, gconstants, _,_, gkinds, tabbrevs, fixities, accumsig, usig) ->
+      | Signature(name, gconstants, _, _, gkinds, tabbrevs, 
+                  fixities, accumsig, usig) ->
           output_line ("Signature: " ^ name) ;
           output_line "Constants:" ;
           output_list string_of_constant gconstants ;
@@ -280,9 +254,7 @@ let getClauseTerm = function
   Clause(t) -> t
 
 let getModuleClauses = function
-  | Module(name, gconsts, lconsts, cconsts, uconsts, econsts, fixities,
-      gkinds, lkinds, tabbrevs, clauses, accummods,
-      accumsigs, usesigs, impmods) -> clauses
+  | Module(_, _, _, _, _, _, _, _, _, _, clauses, _, _, _, _) -> clauses
   | _ ->
       Errormsg.impossible Errormsg.none
         "Preabsyn.getModuleClauses: invalid module"

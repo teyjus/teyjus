@@ -22,7 +22,6 @@
 * Compile
 **********************************************************************)
 exception Exception
-open Lexing
 open Lpyacc
 
 (******************************************************************
@@ -31,10 +30,30 @@ open Lpyacc
 * everywhere a file is opened.
 ******************************************************************)
 let openFile fname f =
+  (* Writing those few lines avoid linking with Str module *)
+  let rec split_char sep str =
+    try
+      let i = String.index str sep in
+        String.sub str 0 i :: split_char sep (String.sub str (i+1)
+              (String.length str - i - 1))
+     with Not_found -> [str] in
   try 
     let inchannel = f fname in
-    inchannel
-  with Sys_error(s) -> (prerr_endline s; exit 1)
+      inchannel
+  with Sys_error(s) -> 
+    try
+      let tjpath = Sys.getenv "TJPATH" in
+      let dirs = split_char ':' tjpath in
+      try
+        let dir = List.find 
+          (fun dir -> Sys.file_exists (Filename.concat dir fname)) dirs in
+          let inchannel = f (Filename.concat dir fname) in
+            inchannel
+      with Not_found -> (* The file does not exist in TJPATH *)
+        (prerr_endline s; exit 1)
+    with Not_found -> (* TJPATH is not defined *)
+      (prerr_endline s; exit 1)
+
 
 (******************************************************************
 *compile:

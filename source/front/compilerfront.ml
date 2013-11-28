@@ -34,7 +34,7 @@ let compile basename outfile =
       
   (* Construct an absyn module.  At this point only the module's *)
   (* constant, kind, and type abbrev information is valid.       *)
-  let (absyn, sigabsyn) = Translate.translate modresult sigresult in
+  let (absyn, _) = Translate.translate modresult sigresult in
   let _ = abortOnError () in
 
   (* Get the list of clauses and new clauses. *)
@@ -81,7 +81,7 @@ let outputName = ref ""
 
 let setPath path =
   print_string "not implemented\n"
-  
+
 let specList = dualArgs
   [("-o", "--output", Arg.Set_string outputName,
     " Specifies the name of the output bytecode file") ;
@@ -101,3 +101,4 @@ let _ =
     outputName := Bytecode.makeByteCodeFileName !inputName ;
   
   compile !inputName !outputName
+

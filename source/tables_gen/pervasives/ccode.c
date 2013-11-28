@@ -713,10 +713,6 @@ char* C_mkConstIndexType(char* body)
 #define C_CONSTDATA_TAB_DEC \
 "//pervasive const data table (array)                                          \nextern PERV_ConstData    PERV_constDataTab[PERV_CONST_NUM]; \n\n"
 
-//PERV_getConstData
-#define C_GETCONSTDATA_DEC  \
-"//pervasive const data access function                                        \nPERV_ConstData PERV_getConstData(int index);  \n\n"
-
 //PERV_copyConstDataTab
 #define C_COPYCONSTDATATAB_DEC \
 "//pervasive const table copy function (used in module space initialization)   \n//this functiion relies on the assumption that the pervasive kind data         \n//has the same structure as that of the run-time kind symbol table entries.    \nvoid PERV_copyConstDataTab(PERV_ConstData* dst); \n\n"
@@ -736,7 +732,7 @@ char*  C_mkConstH(char* constIndexType, char* numConsts, char* property)
 {
     size_t length = strlen(C_CONST_COMMENTS) + strlen(constIndexType) + 
         strlen(numConsts) + strlen(C_CONSTDATA_TYPE) + 
-        strlen(C_CONSTDATA_TAB_DEC) + strlen(C_GETCONSTDATA_DEC) + 
+        strlen(C_CONSTDATA_TAB_DEC) + 
         strlen(C_COPYCONSTDATATAB_DEC) + strlen(property) +
         strlen(C_ISLS_ISPS_DEC) + strlen(C_LOGICSYMB_DEC) + 
         strlen(C_PREDBUILTIN_DEC);
@@ -747,7 +743,6 @@ char*  C_mkConstH(char* constIndexType, char* numConsts, char* property)
     strcat(constH, numConsts);
     strcat(constH, C_CONSTDATA_TYPE);
     strcat(constH, C_CONSTDATA_TAB_DEC);
-    strcat(constH, C_GETCONSTDATA_DEC);
     strcat(constH, C_COPYCONSTDATATAB_DEC);
     strcat(constH, property);
     strcat(constH, C_ISLS_ISPS_DEC);
@@ -848,10 +843,6 @@ char* C_mkConstTab(char* body)
     return constTab;
 }
 
-//PERV_getConstData
-#define C_GETCONSTDATA_DEF \
-"PERV_ConstData PERV_getConstData(int index)                                   \n{                                                                              \n        return PERV_constDataTab[index];                                       \n}                                                                          \n\n"
-
 //PERV_copyConstDataTab
 #define C_COPYCONSTDATATAB_DEF \
 "void PERV_copyConstDataTab(PERV_ConstData* dst)                               \n{                                                                              \n    //this way of copy relies on the assumption that the pervasive kind data   \n    //has the same structure as that of the run-time kind symbol table entries.\n    memcpy((void*)dst, (void*)PERV_constDataTab,                               \n           sizeof(PERV_ConstData) * PERV_CONST_NUM);                           \n}                                                                          \n\n"
@@ -875,14 +866,13 @@ char* C_mkConstTab(char* body)
 char* C_mkConstC(char* constTab)
 {
     size_t length = strlen(C_CONST_COMMENTS) + strlen(constTab) +
-        strlen(C_GETCONSTDATA_DEF) + strlen(C_COPYCONSTDATATAB_DEF) +
+        strlen(C_COPYCONSTDATATAB_DEF) +
         strlen(C_ISLOGICSYMB_DEF) + strlen(C_ISPREDSYMB_DEF) + 
         strlen(C_LOGICSYMB_DEF) + strlen(C_PREDBUILTIN_DEF);
     char* constC = UTIL_mallocStr(length);
     
     strcpy(constC, C_CONST_COMMENTS);
     strcat(constC, constTab);               
-    strcat(constC, C_GETCONSTDATA_DEF);
     strcat(constC, C_COPYCONSTDATATAB_DEF);
     strcat(constC, C_ISLOGICSYMB_DEF);
     strcat(constC, C_ISPREDSYMB_DEF);

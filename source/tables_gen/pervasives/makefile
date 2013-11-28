@@ -4,7 +4,7 @@ perv_gen : lex.yy.c y.tab.h y.tab.c types.o pervgen-c.o op.o util.o pervgen-ocam
 	gcc -o perv_gen lex.yy.c y.tab.c types.o pervgen-c.o op.o util.o pervgen-ocaml.o ocamlcode.o ccode.o
 
 lex.yy.c : pervasives.l
-	flex pervasives.l
+	flex --nounput pervasives.l
 
 y.tab.c y.tab.h : pervasives.y
 	yacc -d pervasives.y

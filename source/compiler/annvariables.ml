@@ -76,7 +76,6 @@ let gListAppend vars varList = varList := (!varList @ vars)
 let qVars : Absyn.avar list ref = ref []
 let isQVar   var      = isMember var (!qVars)
 let addQVars var      = gListAdd var qVars
-let appQVars dataList = gListAppend dataList qVars 
 let getQVars ()       = !qVars
 let setQVars dataList = qVars := dataList		  
 
@@ -127,9 +126,7 @@ let isCrossGoal gNumber = not (gNumber = getGoalNum ())
 (* check whether it is the first occurrence of a type variable, in *)
 (* which case, the first goal number field contains a zero         *)
 (*******************************************************************)
-let firstEncounteredTypeVar var =
-  match var with
-	Absyn.TypeVar(_, _, _, _, _, _, firstgoal, _) -> (!firstgoal) = 0
+let firstEncounteredTypeVar var = Absyn.getTypeVariableDataFirstGoal var = 0
 
 
 (*******************************************************************)
@@ -342,13 +339,13 @@ let rec synthesizeTerms termList perm heapvar =
 (**************************************************************************)
 and synthesizeTerm term perm heapvar =
   match term with 
-	Absyn.ConstantTerm(_, tyenv, _, _) ->
+	Absyn.ConstantTerm(_, tyenv, _) ->
 	  synthesizeTypeArgs tyenv
-  | Absyn.FreeVarTerm(freeVarInfo, _, _) ->
+  | Absyn.FreeVarTerm(freeVarInfo, _) ->
 	  synthesizeFreeVarTerm term perm heapvar
-  | Absyn.AbstractionTerm(abstInfo, _, _) ->
+  | Absyn.AbstractionTerm(abstInfo, _) ->
 	  synthesizeAbstractionTerm abstInfo
-  | Absyn.ApplicationTerm(appInfo, _, _) ->
+  | Absyn.ApplicationTerm(appInfo, _) ->
 	  synthesizeApplicationTerm appInfo 
   | _ -> ()
 
@@ -374,10 +371,10 @@ and synthesizeApplicationTerm appInfo =
 			synthesizeAppArgs rest (term :: delayed)
 		| Absyn.FreeVarTerm(_) -> 
 			synthesizeAppArgs rest (term :: delayed)
-		| Absyn.AbstractionTerm(abstInfo, _, _) ->
+		| Absyn.AbstractionTerm(abstInfo, _) ->
 			synthesizeAbstractionTerm abstInfo;
 			synthesizeAppArgs rest delayed
-		| Absyn.ApplicationTerm(appInfo, _, _) ->
+		| Absyn.ApplicationTerm(appInfo, _) ->
 			synthesizeApplicationTerm appInfo;
 			synthesizeAppArgs rest delayed 
 		| _ -> synthesizeAppArgs rest delayed
@@ -442,10 +439,10 @@ let rec analyseAppArgs terms heaparg =
 	  [] -> analyseTerms (List.rev delayed)
 	| (term :: rest) ->
 	  match term with
-		Absyn.ConstantTerm(_, tyenv, _, _) ->
+		Absyn.ConstantTerm(_, tyenv, _) ->
 		  analyseTypeArgs tyenv true;
 		  analyseAppArgsAux  rest delayed
-	  | Absyn.FreeVarTerm(_, _, _) ->
+	  | Absyn.FreeVarTerm(_, _) ->
 		  analyseFreeVarTerm term heaparg;
 		  analyseAppArgsAux rest delayed 
 	  | Absyn.AbstractionTerm(_) ->
@@ -466,9 +463,9 @@ and analyseTerms terms =
 	[] -> ()
   | (term :: rest) ->
 	  (match term with
-		Absyn.AbstractionTerm(abstInfo, _, _) -> 
+		Absyn.AbstractionTerm(abstInfo, _) -> 
 		  synthesizeAbstractionTerm abstInfo
-	  | Absyn.ApplicationTerm(applInfo, _, _) -> 
+	  | Absyn.ApplicationTerm(applInfo, _) -> 
 		  analyseApplicationTerm applInfo
 	  | _ -> Errormsg.impossible Errormsg.none "analyseTerms: invalid term");
 	  analyseTerms rest
@@ -481,7 +478,7 @@ and analyseTerms terms =
 and analyseApplicationTerm applInfo =
   match applInfo with
 	Absyn.FirstOrderApplication(
-	  Absyn.ConstantTerm(_, tyenv, _, _), args, _) ->
+	  Absyn.ConstantTerm(_, tyenv, _), args, _) ->
 		analyseTypeArgs tyenv true;
 		analyseAppArgs args true
   | _ -> synthesizeApplicationTerm applInfo 			
@@ -793,7 +790,7 @@ and processImpGoal clDefs body last cutVarRef =
 (***********************************************************************)  
 and processEmbeddedClause clause fvs tyfvs =
   (* process the embedded clause *)
-  let (lqVars, lhqVars, lexpqVars, lclVars, lembedded, lgoalNum) =
+  let (lqVars, lhqVars, _, lclVars, lembedded, lgoalNum) =
 	(getQVars (), getHQVars (), getExpQVars (), getClVars (), 
 	 isEmbedded (), getGoalNum ())
   in  
@@ -828,24 +825,24 @@ and processVarMaps tmVarMaps tyVarMaps fvs tyfvs =
 		(* treat fromVarData *)
 		(if firstEncounteredTypeVar fromVarData then (* first encountered *)
 		  initTypeVarData fromVarData true false false None
-		else Absyn.setTypeVariableDataPerm fromVarData true);
-		
-        (* treat toVarData *)
-		Absyn.setTypeVariableDataSafety toVarData true;
-		Absyn.setTypeVariableDataHeapVar toVarData true;
-		let firstuse = Absyn.getTypeVariableDataFirstUseOpt toVarData in
-		(if (Option.isSome firstuse) then
-		  Absyn.setTypeFreeVariableFirst (Option.get firstuse) false
-		else ());
-		(* process others *)
-		processTyVarMaps rest (fromVarData :: tyfvs)
+		else 
+          Absyn.setTypeVariableDataPerm fromVarData true);
+          (* treat toVarData *)
+          Absyn.setTypeVariableDataSafety toVarData true;
+          Absyn.setTypeVariableDataHeapVar toVarData true;
+          let firstuse = Absyn.getTypeVariableDataFirstUseOpt toVarData in
+            (if (Option.isSome firstuse) then
+               Absyn.setTypeFreeVariableFirst (Option.get firstuse) false
+             else ());
+            (* process others *)
+            processTyVarMaps rest (fromVarData :: tyfvs)
   in
   
   let (Absyn.TermVarMap(tmVars)) = tmVarMaps in
   let (Absyn.TypeVarMap(tyVars)) = tyVarMaps in
   let fvs' = processTmVarMaps tmVars fvs in
   let tyfvs' = processTyVarMaps tyVars tyfvs in
-  (fvs', tyfvs')
+    (fvs', tyfvs')
 
 (*****************************************************************************)
 (*                   PROCESS TOP LEVEL DEFINITIONS                           *)

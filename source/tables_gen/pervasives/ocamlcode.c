@@ -1400,7 +1400,7 @@ char* OC_mkFixedMLI()
 /* functions for making the fixed part of pervasive.ml                       */
 /*****************************************************************************/
 #define TERM_DEFS \
-"let andTerm = Absyn.ConstantTerm(andConstant, [], false, Errormsg.none)       \nlet implicationTerm = Absyn.ConstantTerm(implConstant, [], false, Errormsg.none)\n"
+"let andTerm = Absyn.ConstantTerm(andConstant, [], Errormsg.none)       \nlet implicationTerm = Absyn.ConstantTerm(implConstant, [], Errormsg.none)\n"
 
 #define PERV_ISPERV_DEF \
 "let isPerv const =                                                            \n  let constCat = Absyn.getConstantType(const) in                                \n  match constCat with                                                          \n   Absyn.PervasiveConstant(_) -> true                                        \n  | _ -> false                                                                 \n"

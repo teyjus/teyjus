@@ -20,9 +20,9 @@ tigcompile FI FO  :-
   genout Strs OS,  % produce .asciz lines
   output OS "\n\n\t.align 4",
   output OS "\nmain:\n",
-  output OS "\n\tsave %%sp,-200,%%sp",
+  output OS "\n\tsave %sp,-200,%sp",
   genout I6 OS,
-  output OS "\n\n\tmov 1, %%g1\n\tta 0\n",
+  output OS "\n\n\tmov 1, %g1\n\tta 0\n",
   print "\nAssembly code written to file.\n",
 %sysprops,
   close_out OS.
@@ -42,9 +42,6 @@ tigcompile FI FO  :-
 % uncomment to trace:
 % genout A B :- printterm std_out A, print " <--\n", fail.
 
-% problem with printing "%":
-% obviously % is interpreted as in C strings!
-% solution is to print "%%":
 genout [] OS.
 genout [nullop|I] OS :-
   output OS "\n\tnop", genout I OS.
@@ -106,10 +103,10 @@ local transop string -> string -> o.
 transtore nullstore "".  
 transtore (slabel S) S.
 transtore (reg R N) S :-
-  S1 is ("%%" ^ R), SN is (int_to_string N),
+  S1 is ("%" ^ R), SN is (int_to_string N),
   S is (S1 ^ SN).
 
-transtore (sreg R) S :- S is ("%%" ^ R).
+transtore (sreg R) S :- S is ("%" ^ R).
 transtore (conststore N) SN :- SN is (int_to_string N).
 transtore (indirect A (conststore B)) SI :-  B > 0,
   transtore A SA, SB is (int_to_string B),

@@ -135,6 +135,9 @@ let makeTuple ?ty (name, kind) =
       
 let makeConst ?ty sym =
   IdTerm(Symbol.symbol sym, ty, ConstID, getPos 1)
+
+let makeAbsSymbol (sym, typ_opt, _, pos) = 
+  AbstractedSymbol(sym, typ_opt, pos) 
       
 let makeModule () =
   reverseResults () ;
@@ -154,18 +157,25 @@ let makeSignature () =
     clearResults ();
     s
 
+(********************************************************************
+*errorEof:
+* Prints an error occuring before the end of the file, 
+* along with the line and character position.
+********************************************************************)
+let errorEof pos msg =
+    Errormsg.error {pos with pos_lnum = pos.pos_lnum - 1} msg
+
 %}
 
 
 %token MODULE END IMPORT ACCUMULATE ACCUMSIG USESIG LOCAL
 %token LOCALKIND CLOSED SIG KIND TYPE TYPEABBREV EXPORTDEF
 %token USEONLY INFIXL INFIX INFIXR PREFIX PREFIXR
-%token POSTFIX POSTFIXL LAMBDA FORALL FORSOME COLONDASH
+%token POSTFIX POSTFIXL COLONDASH
 %token IMPLIES INFIXLAMBDA TYARROW CUT PI SIGMA COMMA
 %token SEMICOLON AMPAND RDIVIDE NILLIST LISTCONS EQUAL
 %token PLUS MINUS TIMES LESS LEQ GTR GEQ UMINUS PERIOD
 %token LPAREN RPAREN LBRACK RBRACK COLON VBAR
-%token SIGSTART MODSTART TERMSTART
 %token EOF
 
 %token <(string * Preabsyn.pidkind)> ID SYID VID UPCID
@@ -223,15 +233,11 @@ modheader:
             ("Expected module name '" ^ basename () ^
             "', found module name '" ^ (getIDName $2) ^ "'.") }
 
-  | error PERIOD              { genericError "module header" }
-
 sigheader:
   | SIG tok PERIOD
       { if getIDName $2 <> basename () then
           Errormsg.error (getPos 2)
             ("Expected signature name '" ^ basename () ^ "'.") }
-
-  | error PERIOD              { genericError "signature header" }
 
 modend:
   |                           {  }
@@ -258,8 +264,6 @@ modpreamble:
   | modpreamble USESIG cvidlist PERIOD
       { useSigList := $3 @ !useSigList }
 
-  | error PERIOD              { genericError "preamble" }
-
 sigpreamble:
   |                           {  }
 
@@ -268,8 +272,6 @@ sigpreamble:
 
   | sigpreamble ACCUMSIG cvidlist PERIOD
       { accumulatedSigList := $3 @ !accumulatedSigList }
-
-  | error PERIOD              { genericError "preamble" }
 
 cvidlist:
   | tok                       { (makeSymbol $1) :: [] }
@@ -294,68 +296,80 @@ signdecls:
   | signdecls signdecl        {  }
 
 signdecl:
-  | KIND idlist kind PERIOD
-      { globalKinds := Kind($2, Some ($3 - 1), getPos 1) :: !globalKinds }
+  | signdeclaux EOF           { Errormsg.error (getPos 1)
+                                "Type declaration never terminated" }  
+  | error EOF                 { errorEof (getPos 1)
+                                 "Incorrect type declaration never terminated" }
+  | error PERIOD              { genericError "type" }
+  | signdeclaux PERIOD        {  }
 
-  | TYPE idlist type PERIOD
+signdeclaux:
+  | KIND idlist kind
+      { globalKinds := Kind($2, Some $3, getPos 1) :: !globalKinds }
+
+  | TYPE idlist type
       { globalConstants := Constant($2, Some $3, getPos 1) :: !globalConstants }
 
-  | TYPEABBREV LPAREN tok arglist RPAREN type PERIOD
+  | TYPEABBREV LPAREN tok arglist RPAREN type
       { globalTypeAbbrevs :=
           TypeAbbrev(makeSymbol $3, (List.map makeSymbol $4), $6, getPos 1) ::
             !globalTypeAbbrevs }
 
- | TYPEABBREV LPAREN tok RPAREN type PERIOD
+ | TYPEABBREV LPAREN tok RPAREN type
       { globalTypeAbbrevs :=
           TypeAbbrev(makeSymbol $3, [], $5, getPos 1) :: !globalTypeAbbrevs }
 
-  | TYPEABBREV tok type PERIOD
+  | TYPEABBREV tok type
       { globalTypeAbbrevs :=
           TypeAbbrev(makeSymbol $2, [], $3, getPos 1) :: !globalTypeAbbrevs }
 
-  | fixity idlist INTLIT PERIOD
+  | fixity idlist INTLIT
       { if $3 < 0 || $3 > maxPrecedence then
           Errormsg.error (getPos 1)
             ("Precedence must be between 0 and " ^ (string_of_int $3) ^ ".")
         else
           fixityList := Fixity($2, $1, $3, getFixityPos $1) :: !fixityList }
 
-  | EXPORTDEF idlist PERIOD
+  | EXPORTDEF idlist
       { exportList := Constant($2, None, getPos 1) :: !exportList }
 
-  | EXPORTDEF idlist type PERIOD
+  | EXPORTDEF idlist type
       { exportList := Constant($2, Some $3, getPos 1) :: !exportList }
 
-  | USEONLY idlist PERIOD
+  | USEONLY idlist
       { useOnlyList := Constant($2, None, getPos 1) :: !useOnlyList }
 
-  | USEONLY idlist type PERIOD
+  | USEONLY idlist type
       { useOnlyList := Constant($2, Some $3, getPos 1) :: !useOnlyList }
 
 modsigndecl:
-  | signdecl {  }
+  | modsigndeclaux EOF          {Errormsg.error (getPos 1)
+                                   "Type declaration never terminated" }
+  | modsigndeclaux PERIOD       {}
+  | signdeclaux PERIOD {  }
 
-  | LOCAL idlist PERIOD
+modsigndeclaux:
+  | LOCAL idlist 
       { localConstants := Constant($2, None, getPos 1) :: !localConstants }
 
-  | LOCAL idlist type PERIOD
+  | LOCAL idlist type 
       { localConstants := Constant($2, Some $3, getPos 1) :: !localConstants }
 
-  | LOCALKIND idlist PERIOD
+  | LOCALKIND idlist 
       { localKinds := Kind($2, None, getPos 1) :: !localKinds }
 
-  | LOCALKIND idlist kind PERIOD
-      { localKinds := Kind($2, Some ($3 - 1), getPos 1) :: !localKinds }
+  | LOCALKIND idlist kind 
+      { localKinds := Kind($2, Some $3, getPos 1) :: !localKinds }
 
-  | CLOSED idlist PERIOD
+  | CLOSED idlist 
       { closedConstants := Constant($2, None, getPos 1) :: !closedConstants }
 
-  | CLOSED idlist type PERIOD
+  | CLOSED idlist type 
       { closedConstants := Constant($2, Some $3, getPos 1) :: !closedConstants }
 
 kind:
   | kind_arrow                { $1 }
-  | paren_type                { 1 }
+  | paren_type                { 0 }
 
 kind_arrow:
   | LPAREN kind_arrow RPAREN      { $2 }
@@ -397,8 +411,8 @@ parseModClause:
                                  "Clause never terminated" ;
                                ErrorTerm }
 
-  | error EOF                { Errormsg.error (getPos 1)
-                                 "Clause never terminated" ;
+  | error EOF                { errorEof (getPos 1)
+                                 "Incorrect clause never terminated" ;
                                ErrorTerm }
 
 term:
@@ -409,7 +423,7 @@ abstterm:
   | atomterm                 { $1 }
       
   | typedid INFIXLAMBDA term
-      { LambdaTerm([TypeSymbol $1], List.rev $3, getPos 1) }
+      { LambdaTerm(makeAbsSymbol $1, List.rev $3, getPos 1) }
 
 arglist:
   | tok                      { $1 :: [] }

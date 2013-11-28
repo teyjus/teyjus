@@ -20,95 +20,49 @@
 ****************************************************************************)
 type pos = Errormsg.pos
 
-type typemolecule =
-  Molecule of (Absyn.atype * Absyn.atype list * bool)
-
-type typeandbindings =
-  TypeAndBindings of (Absyn.atype * Absyn.atype Table.symboltable)
 
 let getFromTable check t =
-  let r = Table.fold (fun _ el l -> if (check el) then el::l else l) t [] in
-  List.rev r
-
-(*  TypeAndBindings Accessors *)
-let getTypeAndBindingsType =
-  fun t ->
-    (match t with
-      TypeAndBindings(t, _) -> t)   
-
-let getTypeAndBindingsBindings = function
-  TypeAndBindings(_, bs) -> bs
+  let r = Table.fold 
+            (fun _ el l -> if (check el) then el::l else l) t [] in
+    List.rev r
 
 type typeandenvironment =
   TypeAndEnvironment of (Absyn.atype * int)
 
-(*  TypeAndEnvironment Accessors  *)
-let getTypeAndEnvironmentType = function
-  TypeAndEnvironment(t, _) -> t
-    
-let getTypeAndEnvironmentSize = function
-  TypeAndEnvironment(_, i) -> i
-
-type argstypes =
-  ArgsTypes of (int * Absyn.atype list * Absyn.atype list)
-
-
-(*  Unification results *)
-type unifyresult =
-    OccursCheckFailure
-  | ClashFailure
-  | Success
-
 let typeSkeletonIndex = ref 0
 
-(**********************************************************************
-*rationalizeTypeAbbrevVar:
-* Used when translating a type variable while translating a typeabbrev
-* into abstract syntax.
-**********************************************************************)
-let rationalizeTypeAbbrevVar sym symtable p =
-  (Errormsg.error p ("unbound variable " ^ (Symbol.name sym) ^ 
-                     " in type abbreviation");
-  TypeAndBindings(Absyn.ErrorType, symtable))
 
-(**********************************************************************
-*rationalizeSkeletonVar:
-* Used when translating a type variable while translating a type into
-* a type skeleton. 
-**********************************************************************)
-let rationalizeSkeletonVar sym symtable p =
-    let t = Absyn.SkeletonVarType(ref !typeSkeletonIndex) in
-    (typeSkeletonIndex := !typeSkeletonIndex + 1;
-    TypeAndBindings(t, (Table.add sym t symtable)))
-
-(**********************************************************************
-*rationalizeVar:
-* Used when translating a type variable while translating a type into
-* an absyn type.
-**********************************************************************)
-let rationalizeVar sym symtable p =
-  let t = Absyn.makeTypeVariable () in
-  TypeAndBindings(t, (Table.add sym t symtable))
+type typeandbindings =
+  TypeAndBindings of (Absyn.atype * Absyn.atype Table.symboltable)
 
 (********************************************************************
 *rationalizeType:
-* Rationalizes a type.
+* Rationalizes the type ty i.e. translates a preabsyn ptype to an absyn atype
+*
+* - vartable is the current table associating symbols to absyn types
+*    * when rationalizing a type, vartable is originally empty
+*    * for a type abbreviation, it is initialized with all the variables
+*      declared as appearing in the abbreviated type
+*      For instance, when rationalizing 
+*      typeabbrev (bar A B) (list A) -> (list B)
+*      vartable will be initialized to the table associating A and B to two
+*      BindableVarType
+*   While recursively rationalizing the type, the vartable will grow
+*
+*
 *********************************************************************)
-let rec rationalizeType
-  ty vartable kindtable typeabbrevtable newsymfunc transvarfunc =
+let rec rationalizeType ty vartable kindtable typeabbrevtable transvarfunc =
     
   (******************************************************************
   *translateArrow:
   * Translate an arrow from preabsyn to absyn.
   ******************************************************************)
-  let rec translateArrow = function Preabsyn.Arrow(l,r,p) ->
-    let TypeAndBindings(l', ls) = rationalizeType l vartable kindtable 
-                                                  typeabbrevtable newsymfunc 
-                                                  transvarfunc in
-    let TypeAndBindings(r', rs) = rationalizeType r ls kindtable typeabbrevtable 
-                                                  newsymfunc transvarfunc in
-
-    TypeAndBindings(Absyn.ArrowType(l', r'), rs)
+  let translateArrow = function Preabsyn.Arrow(l, r, _) ->
+    let TypeAndBindings(r', rs) = rationalizeType r vartable kindtable 
+                                    typeabbrevtable transvarfunc in
+    let TypeAndBindings(l', ls) = rationalizeType l rs kindtable 
+                                    typeabbrevtable transvarfunc in
+      TypeAndBindings(Absyn.ArrowType(l', r'), ls)
   | t -> invalid_arg "Types.translateArrow: invalid type"
   in
 
@@ -120,133 +74,135 @@ let rec rationalizeType
 
    (**************************************************************
     *getHeadAndArgsType:
-    * Gets the arguments as a list instead of a tree.
+    * Given a type application, gets the arguments as a list instead of a tree.
+    * Returns a triple containing
+    * (the head, the updated symbol table, the list of arguments)
     **************************************************************)
-    let rec getHeadAndArgsType t ts =
-            match t with
-              Preabsyn.App(f,arg,p') ->
-                let TypeAndBindings(argtype, ts') = 
-                       rationalizeType arg ts kindtable typeabbrevtable 
-                                       newsymfunc transvarfunc in
-                let (head, ts'', argtypes) = (getHeadAndArgsType f ts') in
-                  (head, ts'', argtype :: argtypes)
-            | _ -> (t, ts, [])
+    let rec getHeadAndArgsType ty ts =
+      match ty with
+        | Preabsyn.App(f, arg, _) ->
+            (* First take care of the leftmost argument to preserve the 
+             * convention of writing type variables in alphabetic order
+             * from left to right (eg. A -> B -> pair A B *)
+            let (head, ts', argtypes) = (getHeadAndArgsType f ts) in
+            let TypeAndBindings(argtype, ts'') = 
+              rationalizeType arg ts' kindtable typeabbrevtable 
+                transvarfunc 
+            in
+              (head, ts'', argtypes @ [argtype])
+        | _ -> (ty, ts, [])
     in
 
-     match ty with 
-       Preabsyn.App(f,t,p) ->
-
-          let (head, ts, args) = getHeadAndArgsType ty vartable in
-          (match head with
-            Preabsyn.Atom(sym,k,p) ->
-                (match k with
-                  Preabsyn.VarID ->
-                    (Errormsg.error p "found type variable, expected a constructor";
-                    TypeAndBindings(Absyn.ErrorType, vartable))
-                | Preabsyn.AVID ->
-                    (Errormsg.error p "found type variable, expected a constructor";
-                     TypeAndBindings(Absyn.ErrorType, vartable))
-                | Preabsyn.CVID ->
-                    (Errormsg.error p "found type variable, expected a constructor";
-                     TypeAndBindings(Absyn.ErrorType, vartable))
-                | _ ->
-                  (match (Table.find sym vartable) with
-                    Some t ->
-                      (Errormsg.error p "found type variable, expected a constructor";
-                       TypeAndBindings(Absyn.ErrorType, vartable))
-                  | None ->
-                      (match (Table.find sym kindtable) with
-                        Some k ->
-                          if (Absyn.getKindArity k) <> (List.length args) then
-                            (Errormsg.error p ("type constructor " ^ (Symbol.name sym) ^
-                                               " has arity " ^ 
-                                               (string_of_int (Absyn.getKindArity k)));
-                             TypeAndBindings(Absyn.ErrorType, vartable))
-                          else
-                             TypeAndBindings(Absyn.ApplicationType(k, args), ts)
-                      | None ->
-                            (match (Table.find sym typeabbrevtable) with
-                              Some t ->
-                                (translateTypeAbbrevCall t args ts p)
-                            | None ->
-                              (Errormsg.error p ("undeclared constructor " ^ 
-                                                 (Symbol.name sym));
-                               TypeAndBindings(Absyn.ErrorType, vartable))))))
-          | _ ->  
-             (Errormsg.error p "expected a constructor");
+    (* The main case for the application translation, when the head
+     * is a constant *)
+    let const_app sym ts args  pos =
+      match (Table.find sym vartable) with
+           Some t ->
+             (Errormsg.error pos 
+                "found type variable, expected a constructor";
               TypeAndBindings(Absyn.ErrorType, vartable))
-     | t -> invalid_arg "Types.translateApp: invalid type"
+         | None ->
+             match (Table.find sym kindtable) with
+                  Some k ->
+                    if (Absyn.getKindArity k) <> (List.length args) then
+                      (Errormsg.error pos 
+                         ("type constructor " ^ (Symbol.name sym) ^ 
+                          " has arity " ^ 
+                          (string_of_int (Absyn.getKindArity k)));
+                       TypeAndBindings(Absyn.ErrorType, vartable))
+                    else
+                      TypeAndBindings(Absyn.ApplicationType(k, args), ts)
+                | None ->
+                    match (Table.find sym typeabbrevtable) with
+                         Some t ->
+                           (translateTypeAbbrevCall t args ts pos)
+                       | None ->
+                           (Errormsg.error pos 
+                              ("undeclared constructor " ^ (Symbol.name sym));
+                            TypeAndBindings(Absyn.ErrorType, vartable))
+    in
+
+      (* Main for translateApp *)
+      match ty with 
+        | Preabsyn.App(_, _ , p) ->
+           let (head, ts, args) = getHeadAndArgsType ty vartable in
+             (match head with
+                | Preabsyn.Atom(sym, Preabsyn.ConstID, p) ->
+                    const_app sym ts args p
+                | Preabsyn.Atom(_, _, p) ->
+                    (Errormsg.error p 
+                       "found type variable, expected a constructor";
+                     TypeAndBindings(Absyn.ErrorType, vartable))
+                | _ ->  
+                    (Errormsg.error p "expected a constructor");
+                    TypeAndBindings(Absyn.ErrorType, vartable))
+       | _ -> invalid_arg "Types.translateApp: invalid type"
   in  
 
+  (* Main for rationalizeType *)
   match ty with
-    Preabsyn.Atom(s, Preabsyn.AVID, pos) ->
-      (transvarfunc s vartable pos)
-  | Preabsyn.Atom(s, Preabsyn.VarID, pos) ->
-      (****************************************************************
-      * If the variable is in the variable table, just return the type
-      * associated with it.  Otherwise, create a new one.
-      ****************************************************************)
-      (match (Table.find s vartable) with
-        Some t -> TypeAndBindings(t, vartable)
-      | None -> transvarfunc s vartable pos)
-  | Preabsyn.Atom(s, Preabsyn.CVID, pos) ->
-      (match (Table.find s vartable) with
-        Some t -> TypeAndBindings(t, vartable)
-      | None -> transvarfunc s vartable pos)
-  | Preabsyn.Atom(s, _, pos) ->
-      (match (Table.find s kindtable) with
-        Some k ->
-          if (Absyn.getKindArity k) <> 0 then
-            (Errormsg.error pos ("expected a sort but found type constructor of arity " ^
-              (string_of_int (Absyn.getKindArity k)));
-            TypeAndBindings(Absyn.ErrorType, vartable))
-          else
-            TypeAndBindings(Absyn.ApplicationType(k, []), vartable)
-      | None ->
-         (match (Table.find s typeabbrevtable) with
-            Some t ->
-              (translateTypeAbbrevCall t [] vartable pos)
-          | None ->
-            (Errormsg.error pos ("undeclared constant '" ^ (Symbol.name s) ^ "'");
-            TypeAndBindings(Absyn.ErrorType, vartable))))
-      
-  | Preabsyn.App(f, t, p) ->
-      translateApp ty
+    | Preabsyn.Atom(s, Preabsyn.AVID, pos) ->
+        (transvarfunc s vartable pos)
+    | Preabsyn.Atom(s, Preabsyn.VarID, pos) ->
+        (* If the variable is in the variable table, just return the 
+         * type associated with it.  Otherwise, create a new one. *)
+        (match (Table.find s vartable) with
+          | Some t -> TypeAndBindings(t, vartable)
+          | None -> transvarfunc s vartable pos)
+    | Preabsyn.Atom(s, Preabsyn.CVID, pos) ->
+        (match (Table.find s vartable) with
+             Some t -> TypeAndBindings(t, vartable)
+           | None -> transvarfunc s vartable pos)
+    | Preabsyn.Atom(s, Preabsyn.ConstID, pos) ->
+        (match (Table.find s kindtable) with
+             Some k ->
+               if (Absyn.getKindArity k) <> 0 then
+                 (Errormsg.error pos ("expected a sort but found type " ^ 
+                                      "constructor of arity " ^
+                                      (string_of_int (Absyn.getKindArity k)));
+                  TypeAndBindings(Absyn.ErrorType, vartable))
+               else
+                 TypeAndBindings(Absyn.ApplicationType(k, []), vartable)
+           | None ->
+               (match (Table.find s typeabbrevtable) with
+                    Some t ->
+                      (translateTypeAbbrevCall t [] vartable pos)
+                  | None ->
+                      (Errormsg.error pos 
+                         ("undeclared constant '" ^ (Symbol.name s) ^ "'");
+                       TypeAndBindings(Absyn.ErrorType, vartable))))
 
-  | Preabsyn.Arrow(l, r, p) ->
-      translateArrow ty
+    | Preabsyn.App(_, _, _) ->
+        translateApp ty
 
-  | Preabsyn.ErrorType -> TypeAndBindings(Absyn.ErrorType, vartable)
+    | Preabsyn.Arrow(_, _, _) ->
+        translateArrow ty
 
-(**********************************************************************
-*translateType:
-* Translate a preabsyn representation of a type into an absyn type.
-**********************************************************************)
-and translateType ty amodule =
-  let newSymFunc () = () in
+    | Preabsyn.ErrorType -> TypeAndBindings(Absyn.ErrorType, vartable)
 
-  let TypeAndBindings(t, _) = (rationalizeType ty Table.empty
-    (Absyn.getModuleKindTable amodule) (Absyn.getModuleTypeAbbrevTable amodule)
-    newSymFunc rationalizeVar) in
-  t
-
-and translateType' ty kindtable typeabbrevtable =
-  let newSymFunc () = () in
-  let TypeAndBindings(t, _) = (rationalizeType ty Table.empty
-    kindtable typeabbrevtable newSymFunc rationalizeVar) in
-  t
+and translateTypeAnnot ty table amodule =
+  let rationalizeVar sym symtable _ =
+    let t = Absyn.makeTypeVariable () in
+      TypeAndBindings(t, (Table.add sym t symtable)) 
+  in
+    rationalizeType ty table 
+      (Absyn.getModuleKindTable amodule) 
+      (Absyn.getModuleTypeAbbrevTable amodule)
+      rationalizeVar 
 
 (**********************************************************************
-*translateTypeSkeleton:
-* Translate a preabsyn representation of a type into an absyn type
+*translateConstantTypeSkeleton:
+* Translate a preabsyn representation of a constant's type into an absyn type
 * skeleton.
 **********************************************************************)
-and translateTypeSkeleton ty kindtable typeabbrevtable newsymfunc =
+and translateConstantTypeSkeleton ty kindtable typeabbrevtable =
+  (* Before removing this piece of code, be sure that the order
+   * in rationalizeType is OK *)
   (*********************************************************************
   *translateArrow:
   * Translate an arrow, with a check to ensure that
   *********************************************************************)
-  let translateArrow = function Preabsyn.Arrow(l,r,pos) ->
+ (* let translateArrow = function Preabsyn.Arrow(l, r, pos) ->
     (*******************************************************************
     *getTarget:
     * Get the target of an arrow type.
@@ -277,7 +233,7 @@ and translateTypeSkeleton ty kindtable typeabbrevtable newsymfunc =
         arg::rest ->
           let TypeAndBindings(t, ts') =
             rationalizeType arg ts kindtable typeabbrevtable 
-                            newsymfunc rationalizeSkeletonVar in
+                            rationalizeSkeletonVar in
           t::(translateArgs rest ts')
       | [] -> []
     in
@@ -297,31 +253,32 @@ and translateTypeSkeleton ty kindtable typeabbrevtable newsymfunc =
     (*  Get the argument and target parts *)
     let target = getTarget r in
     let args = getArgs ty in
-    
+
     (*  First translate the target.  *)
     let TypeAndBindings(target', ts) =
       rationalizeType target Table.empty kindtable typeabbrevtable 
-                      newsymfunc rationalizeSkeletonVar in
+                      rationalizeSkeletonVar in
 
     (*  Translate all of the arguments  *)
     let args' = translateArgs args ts in
+      
+      (*  Rebuild the arrow type as absyn *)
+      buildArrow target' args'
     
-    (*  Rebuild the arrow type as absyn *)
-    buildArrow target' args'
-    
-  | t -> invalid_arg "Types.translateArrow: invalid type"
+  | _ -> invalid_arg "Types.translateArrow: invalid type"
   in
+  *)
   
   let _ = typeSkeletonIndex := 0 in
-  
-  match ty with
-    Preabsyn.Arrow(l,r,pos) ->
-      TypeAndEnvironment(translateArrow ty, !typeSkeletonIndex)
-  | _ ->
-    let TypeAndBindings(t, ts) =
-      rationalizeType ty Table.empty kindtable typeabbrevtable 
-                      newsymfunc rationalizeSkeletonVar in
-    TypeAndEnvironment(t, !typeSkeletonIndex) 
+  let rationalizeSkeletonVar sym symtable _ =
+    let t = Absyn.SkeletonVarType(ref !typeSkeletonIndex) in
+      (typeSkeletonIndex := !typeSkeletonIndex + 1;
+       TypeAndBindings(t, (Table.add sym t symtable)))
+  in
+  let TypeAndBindings(ty', _) = 
+    rationalizeType ty Table.empty kindtable typeabbrevtable 
+      rationalizeSkeletonVar in
+    TypeAndEnvironment(ty', !typeSkeletonIndex) 
 
 (**********************************************************************
 *translateFixities:
@@ -351,13 +308,13 @@ and translateFixities fixities constants =
       ****************************************************************)
       let getFixity k =
         match k with
-          Preabsyn.Infix(p) -> Absyn.Infix
-        | Preabsyn.Infixl(p) -> Absyn.Infixl
-        | Preabsyn.Infixr(p) -> Absyn.Infixr
-        | Preabsyn.Prefix(p) -> Absyn.Prefix
-        | Preabsyn.Prefixr(p) -> Absyn.Prefixr
-        | Preabsyn.Postfix(p) -> Absyn.Postfix
-        | Preabsyn.Postfixl(p) -> Absyn.Postfixl
+          Preabsyn.Infix(_) -> Absyn.Infix
+        | Preabsyn.Infixl(_) -> Absyn.Infixl
+        | Preabsyn.Infixr(_) -> Absyn.Infixr
+        | Preabsyn.Prefix(_) -> Absyn.Prefix
+        | Preabsyn.Prefixr(_) -> Absyn.Prefixr
+        | Preabsyn.Postfix(_) -> Absyn.Postfix
+        | Preabsyn.Postfixl(_) -> Absyn.Postfixl
       in
       
       (****************************************************************
@@ -369,13 +326,13 @@ and translateFixities fixities constants =
       ****************************************************************)
       let checkFixityArity k ta =
         match k with
-          Preabsyn.Infix(p)
-        | Preabsyn.Infixl(p)
-        | Preabsyn.Infixr(p) -> ta >= 2
-        | Preabsyn.Prefix(p)
-        | Preabsyn.Prefixr(p)
-        | Preabsyn.Postfix(p)
-        | Preabsyn.Postfixl(p) -> ta = 1
+          Preabsyn.Infix(_)
+        | Preabsyn.Infixl(_)
+        | Preabsyn.Infixr(_) -> ta >= 2
+        | Preabsyn.Prefix(_)
+        | Preabsyn.Prefixr(_)
+        | Preabsyn.Postfix(_)
+        | Preabsyn.Postfixl(_) -> ta = 1
       in
             
       match syms with
@@ -391,45 +348,53 @@ and translateFixities fixities constants =
               if Option.isSome skel then
                 let t' = Absyn.getSkeletonType (Option.get skel) in
                 if not (checkFixityArity k (Absyn.getArrowTypeArity t')) then
-                  (Errormsg.error pos ("declared fixity is incompatible with declared type arity" ^
-                    (Errormsg.see pos' "constant declaration"));
+                  (Errormsg.error pos 
+                     ("declared fixity is incompatible with " ^ 
+                      "declared type arity" ^
+                      (Errormsg.see pos' "constant declaration"));
                   addFixities syms' k prec pos ctable)
                 else if not (checkPrec !prec' prec) then
                   (Errormsg.error pos
-                    ("constant " ^ (Symbol.name sym) ^ " already declared with precedence " ^
-                    (string_of_int !prec') ^
-                    (Errormsg.see pos' "constant declaration"));
+                     ("constant " ^ (Symbol.name sym) ^ 
+                      " already declared with precedence " ^
+                      (string_of_int !prec') ^
+                      (Errormsg.see pos' "constant declaration"));
                   addFixities syms' k prec pos ctable)
                 else if not (checkFixity !fix (getFixity k)) then
                   (Errormsg.error pos
-                    ("constant " ^ (Symbol.name sym) ^ " already declared with fixity " ^
-                    (Absyn.string_of_fixity !fix) ^
-                    (Errormsg.see pos' "constant declaration"));
+                     ("constant " ^ (Symbol.name sym) ^ 
+                      " already declared with fixity " ^
+                      (Absyn.string_of_fixity !fix) ^
+                      (Errormsg.see pos' "constant declaration"));
                   addFixities syms' k prec pos ctable)
                 else
                   (fix := (getFixity k);
                   prec' := prec;
                   addFixities syms' k prec pos ctable)
               else
+                (* No skeleton *)
                 if not (checkPrec !prec' prec) then
                   (Errormsg.error pos
-                    ("constant " ^ (Symbol.name sym) ^ " already declared with precedence " ^
-                    (string_of_int !prec') ^
-                    (Errormsg.see pos' "constant declaration"));
+                     ("constant " ^ (Symbol.name sym) ^ 
+                      " already declared with precedence " ^
+                      (string_of_int !prec') ^
+                      (Errormsg.see pos' "constant declaration"));
                   addFixities syms' k prec pos ctable)
                 else if not (checkFixity !fix (getFixity k)) then
                   (Errormsg.error pos
-                    ("constant " ^ (Symbol.name sym) ^ " already declared with fixity " ^
-                    (Absyn.string_of_fixity !fix) ^
-                    (Errormsg.see pos' "constant declaration"));
+                     ("constant " ^ (Symbol.name sym) ^ 
+                      " already declared with fixity " ^
+                      (Absyn.string_of_fixity !fix) ^
+                      (Errormsg.see pos' "constant declaration"));
                   ctable)
                 else
                   (fix := (getFixity k);
                   prec' := prec;
                   addFixities syms' k prec pos ctable)
           | None ->
-              (Errormsg.error pos ("fixity declaration: undeclared constant " ^
-                (Symbol.name sym));
+              (Errormsg.error pos 
+                 ("fixity declaration: undeclared constant " ^ 
+                  (Symbol.name sym));
               addFixities syms' k prec pos ctable))
     in
     match f with
@@ -482,13 +447,12 @@ and translateKind = fun kind buildkind klist ->
   (********************************************************************
   *addKind:
   * Given appropriate kind information, uses the kind building function
-  * passed to translateKind to construct a kind, and then adds it to the
-  * list.
+  * passed to translateKind to construct a kind, and then adds it to the list.
   ********************************************************************)
   let rec addKind = fun syms a pos result ->
     (match syms with
       [] -> result
-    | Preabsyn.Symbol(sym,_,_)::ss -> 
+    | Preabsyn.Symbol(sym, _, _)::ss -> 
         let result' = (buildkind sym a pos) :: result in
         (addKind ss a pos result'))
   in
@@ -503,11 +467,12 @@ and translateKind = fun kind buildkind klist ->
 * Constructs a function to build a constant of Global kind, and
 * translates all constants using it.
 **********************************************************************)
-and buildGlobalConstant = fun sym ty tyskel esize pos ->
+and buildGlobalConstant = fun sym tyskel esize pos ->
   Absyn.Constant(sym, ref Absyn.NoFixity, ref (-1), ref false, ref false,
-    ref false, ref true, ref false, ref false, tyskel,
-    ref esize, ref (Some(Array.make esize true)), ref (Some(Array.make esize true)),
-    ref None, ref Absyn.GlobalConstant, ref 0, pos)
+                 ref false, ref true, ref false, ref false, tyskel,
+                 ref esize, ref (Some(Array.make esize true)), 
+                 ref (Some(Array.make esize true)),
+                 ref None, ref Absyn.GlobalConstant, ref 0, pos)
 
 and translateGlobalConstants clist kindtable typeabbrevtable =
   translateConstants clist kindtable typeabbrevtable buildGlobalConstant
@@ -515,11 +480,12 @@ and translateGlobalConstants clist kindtable typeabbrevtable =
 (**********************************************************************
 *translateLocalConstants:
 **********************************************************************)
-and buildLocalConstant sym ty tyskel esize pos =
+and buildLocalConstant sym tyskel esize pos =
   Absyn.Constant(sym, ref Absyn.NoFixity, ref (-1), ref false, ref false,
-    ref false, ref true, ref false, ref false, tyskel,
-    ref esize, ref (Some(Array.make esize true)), ref (Some(Array.make esize true)),
-    ref None, ref Absyn.LocalConstant, ref 0, pos)
+                 ref false, ref true, ref false, ref false, tyskel,
+                 ref esize, ref (Some(Array.make esize true)), 
+                 ref (Some(Array.make esize true)),
+                 ref None, ref Absyn.LocalConstant, ref 0, pos)
     
 and translateLocalConstants clist kindtable typeabbrevtable =
   translateConstants clist kindtable typeabbrevtable buildLocalConstant
@@ -528,12 +494,12 @@ and translateLocalConstants clist kindtable typeabbrevtable =
 *translateUseOnlyConstants:
 **********************************************************************)
 and translateUseOnlyConstants owner clist kindtable typeabbrevtable =
-  let constantType = Absyn.GlobalConstant in
-  let buildConstant = fun sym ty tyskel esize pos ->
+  let buildConstant = fun sym tyskel esize pos ->
     Absyn.Constant(sym, ref Absyn.NoFixity, ref (-1), ref false, ref true,
-      ref true, ref true, ref false, ref false, tyskel,
-      ref esize, ref (Some(Array.make esize true)), ref (Some(Array.make esize true)),
-      ref None, ref constantType, ref 0, pos)
+                   ref true, ref true, ref false, ref false, tyskel,
+                   ref esize, ref (Some(Array.make esize true)), 
+                   ref (Some(Array.make esize true)),
+                   ref None, ref Absyn.GlobalConstant, ref 0, pos)
   in
   translateConstants clist kindtable typeabbrevtable buildConstant
 
@@ -541,12 +507,12 @@ and translateUseOnlyConstants owner clist kindtable typeabbrevtable =
 *translateExportdefConstants:
 **********************************************************************)
 and translateExportdefConstants owner clist kindtable typeabbrevtable =
-  let constantType = Absyn.GlobalConstant in
-  let buildConstant = fun sym ty tyskel esize pos ->
+  let buildConstant = fun sym tyskel esize pos ->
     Absyn.Constant(sym, ref Absyn.NoFixity, ref (-1), ref true, ref false,
-      ref (not owner), ref true, ref false, ref false, tyskel,
-      ref esize, ref (Some(Array.make esize true)), ref (Some(Array.make esize true)),
-      ref None, ref constantType, ref 0, pos)
+                   ref (not owner), ref true, ref false, ref false, tyskel,
+                   ref esize, ref (Some(Array.make esize true)), 
+                   ref (Some(Array.make esize true)),
+                   ref None, ref Absyn.GlobalConstant, ref 0, pos)
   in
   translateConstants clist kindtable typeabbrevtable buildConstant
 
@@ -554,25 +520,36 @@ and translateExportdefConstants owner clist kindtable typeabbrevtable =
 *translateClosedConstants:
 **********************************************************************)
 and translateClosedConstants clist kindtable typeabbrevtable =
-  let buildConstant = fun sym ty tyskel esize pos ->
+  let buildConstant = fun sym tyskel esize pos ->
     Absyn.Constant(sym, ref Absyn.NoFixity, ref (-1), ref false, ref false,
-      ref false, ref true, ref false, ref false, tyskel,
-      ref esize, ref (Some(Array.make esize true)), ref (Some(Array.make esize true)),
-      ref None, ref Absyn.GlobalConstant, ref 0, pos)
+                   ref false, ref true, ref false, ref false, tyskel,
+                   ref esize, ref (Some(Array.make esize true)), 
+                   ref (Some(Array.make esize true)),
+                   ref None, ref Absyn.GlobalConstant, ref 0, pos)
   in
   translateConstants clist kindtable typeabbrevtable buildConstant
 
 (********************************************************************
 *translateConstants:
-* Translates a list of constant declarations in preabsyn
-* representation into a constant table.
+* Translates the list clist of constant declarations in preabsyn
+* representation into an absyn constant list.
+*
+* buildConstant is a function which builds a constant
+* according to its classification (local/global/useonly/expordef)
+*
+* kindtable and typeabbrevtable will be used later to detect clashes
+* or eventually merge multiple declarations
 ********************************************************************)
 and translateConstants clist kindtable typeabbrevtable buildconstant =
+(*  List.map *)
+(*    (fun const ->*)
+(*       (translateConstant const result kindtable typeabbrevtable buildconstant)*)
   let rec translate' clist result =
     match clist with
       c::cs ->
-        let result' = (translateConstant c result kindtable typeabbrevtable buildconstant) in
-        translate' cs result'
+        let result' = (translateConstant c result kindtable 
+             typeabbrevtable buildconstant) in
+          translate' cs result'
     | [] -> result
   in
   translate' clist []
@@ -581,53 +558,59 @@ and translateConstants clist kindtable typeabbrevtable buildconstant =
 *translateConstant:
 * Translate a preabsyn constant into an absyn constant and enter it
 * into a table.
+*
+* We can have several resulting constants since a single preabsyn constant
+* may carry several symbols (as in the declaration: type p, q o.)
 **********************************************************************)
 and translateConstant c clist kindtable typeabbrevtable buildconstant =
   (********************************************************************
   *translate':
   * Enter all names into table.
   ********************************************************************)
-  let rec enter = fun names ty tyskel esize clist ->
+  let rec enter names tyskel esize clist =
     match names with
-      Preabsyn.Symbol(name,_,p)::ns ->
-        let clist' = (buildconstant name ty tyskel esize p) :: clist in
-        (enter ns ty tyskel esize clist')
+      Preabsyn.Symbol(name, _, p)::ns ->
+        let clist' = (buildconstant name tyskel esize p) :: clist in
+          (enter ns tyskel esize clist')
     | [] -> clist
   in
   
-  let rec newSymFunc = fun () -> ()
-  in
-
   match c with
-    Preabsyn.Constant(names, Some t, pos) ->
-      let TypeAndEnvironment(tyskel, size) = 
-              translateTypeSkeleton t kindtable 
-                                    typeabbrevtable newSymFunc in
-      (* let ty = translateType' t kindtable typeabbrevtable in *)
-        (enter names [tyskel] 
-                     (ref(Some(Absyn.Skeleton(tyskel, ref None, ref false))))
+    | Preabsyn.Constant(names, Some t, _) ->
+      (* A regular constant declaration *)
+      let TypeAndEnvironment(ty, size) = 
+        translateConstantTypeSkeleton t kindtable typeabbrevtable in
+      (* let ty = translateType' t kindtable typeabbrevtable in 
+        If necessary, translateType' was removed in commit 1067 *)
+        (enter names (ref(Some(Absyn.Skeleton(ty, ref None, ref false))))
                      size clist)
-  | Preabsyn.Constant(names, None, pos) ->
-      (enter names [] (ref None) 0 clist)
+    | Preabsyn.Constant(names, None, _) ->
+        (* This just a closed/exportdef or useonly declaration *) 
+        (enter names (ref None) 0 clist)
 
 (********************************************************************
 *translateTypeAbbrevs:
 * Translates a list of type abbreviations in preabsyn representation
 * into a type abbreviation table.
+* Abbreviations are merged one by one during calls to translateTypeAbbrev
 ********************************************************************)
 and translateTypeAbbrevs tabbrevs kindtable =
   let rec translate' tlist abbrevtable =
     match tlist with
-      [] -> abbrevtable
-    | t::ts ->
-        let abbrevtable' = translateTypeAbbrev t abbrevtable kindtable in
-           translate' ts abbrevtable'
+      | [] -> abbrevtable
+      | t::ts ->
+          let abbrevtable' = translateTypeAbbrev t abbrevtable kindtable in
+            translate' ts abbrevtable'
   in
-  translate' tabbrevs Table.empty
+    translate' tabbrevs Table.empty
 
 (********************************************************************
 *translateTypeAbbrev:
 * Translate a type abbreviation from preabsyn to absyn.
+* abbrev is the preabsyn abbreviation to translate and to merge
+* into abbrevtable.
+* The kinds table kindtable from the module is used to detect clashes
+* between type abbreviations and kind declarations
 ********************************************************************)
 and translateTypeAbbrev abbrev abbrevtable kindtable =
   let Preabsyn.TypeAbbrev(name, arglist, ty, pos) = abbrev in
@@ -636,8 +619,8 @@ and translateTypeAbbrev abbrev abbrevtable kindtable =
   *getName:
   ****************************************************************)
   let getName = function
-    Preabsyn.Symbol(n,Preabsyn.ConstID,p) -> n
-  | Preabsyn.Symbol(n,k,p) ->
+    Preabsyn.Symbol(n, Preabsyn.ConstID, _) -> n
+  | Preabsyn.Symbol(n, _, p) ->
       (Errormsg.error p "expected type abbreviation name";
       n)
   in
@@ -647,8 +630,8 @@ and translateTypeAbbrev abbrev abbrevtable kindtable =
   ****************************************************************)
   let rec checkArgs = function
     [] -> []
-  | Preabsyn.Symbol(n,Preabsyn.CVID,p)::ss -> n::(checkArgs ss)
-  | Preabsyn.Symbol(n,k,p)::ss ->
+  | Preabsyn.Symbol(n, Preabsyn.CVID, _)::ss -> n::(checkArgs ss)
+  | Preabsyn.Symbol(_, _, p)::_ ->
       (Errormsg.error p "expected type abbreviation argument name";
       [])
   in
@@ -663,36 +646,41 @@ and translateTypeAbbrev abbrev abbrevtable kindtable =
         (Table.add sym (Absyn.SkeletonVarType(ref i)) (buildTable ss (i + 1)))
   in
   
-  let newSymFunc () = () in
-  
   (*  Get the name and arguments  *)
   let abbrevname = getName name in
   let args = checkArgs arglist in
   
-  (*  Build a symbol table of the args  *)
+  (*  Build a symbol table of the args  
+  * All the variables appearing in the abbreviated type are in this table *)
   let symtable = buildTable args 0 in
-  
-  (*  Translate the type body *)
-  let TypeAndBindings(bodytype,bindings) =
-    (rationalizeType ty symtable kindtable abbrevtable newSymFunc
-                     rationalizeTypeAbbrevVar)
+
+  (*  Translate the type body i.e. the abbreviated type *)
+  let rationalizeTypeAbbrevVar sym symtable p =
+    (* All variables appearing in the abbreviated type have to already
+    * be in the table *)
+    (Errormsg.error p ("unbound variable " ^ (Symbol.name sym) ^ 
+                       " in type abbreviation");
+     TypeAndBindings(Absyn.ErrorType, symtable))
   in
+  let TypeAndBindings(bodytype, _) = 
+    rationalizeType ty symtable kindtable abbrevtable
+                     rationalizeTypeAbbrevVar in
   
   (* GN, Aug 23, 2012: We assume here that kindtable contains ALL the kind 
      declarations pertinent to the present module/signature and we check for
      clashes with this when populating the type abbreviations table. *)
-    let kindInTab = Table.find abbrevname kindtable in
-          (match kindInTab with
-             Some (Absyn.Kind(_,_,_,_,p')) -> 
-                    (Errormsg.error pos ("type abbreviation name '" ^
-                                        (Symbol.name abbrevname) ^ 
-                                        "' clashes with kind name" ^
-                                        (Errormsg.see p' "kind declaration"));
-                    abbrevtable)
-           | None -> 
-              (mergeTypeAbbrev abbrevname 
-                   (Absyn.TypeAbbrev(abbrevname, args, bodytype, pos))
-                    abbrevtable))
+  let kindInTab = Table.find abbrevname kindtable in
+    (match kindInTab with
+         Some (Absyn.Kind(_, _, _, _, p')) -> 
+           (Errormsg.error pos ("type abbreviation name '" ^
+                                (Symbol.name abbrevname) ^ 
+                                "' clashes with kind name" ^
+                                (Errormsg.see p' "kind declaration"));
+            abbrevtable)
+       | None -> 
+           (mergeTypeAbbrev abbrevname 
+              (Absyn.TypeAbbrev(abbrevname, args, bodytype, pos))
+              abbrevtable))
 
 (********************************************************************
 *translateTypeAbbrevCall:
@@ -740,26 +728,28 @@ and translateTypeAbbrevCall abbrev args vartable pos =
 *mergeTypeAbbrev:
 ******************************************************************)
 and mergeTypeAbbrev sym tabbrev table =
-     let Absyn.TypeAbbrev(s, args, ty, p) = tabbrev in
-     match (Table.find sym table) with
-      Some Absyn.TypeAbbrev(s', args', ty', p') ->
-        (* GN, Aug 20, 2012: should not be checking name identity here since *)
-        (* different abbrev presentations could use different names *)
-        (* if args <> args' then *)
-         if (List.length args) <> (List.length args') 
-         then (Errormsg.error p 
-                 ("conflict in argument numbers for type abbreviation" ^
-                 (Errormsg.see p' "type abbreviation declaration"));
-               table)
-       (* GN, Aug 20, 2012: May be better not to rely on OCaml's equality here! *)
-         else if ty <> ty' then
-               (Errormsg.error p 
-                      ("conflict in type for type abbreviation" ^
-                      (Errormsg.see p' "type abbreviation declaration"));
+  let Absyn.TypeAbbrev(s, args, ty, p) = tabbrev in
+    match (Table.find sym table) with
+      | Some Absyn.TypeAbbrev(s', args', ty', p') ->
+          (* GN, Aug 20, 2012: should not be checking name identity here 
+          * since different abbrev presentations could use different names 
+          * if args <> args' then *)
+          if (List.length args) <> (List.length args') then 
+            (Errormsg.error p 
+               ("conflict in argument numbers for type abbreviation" ^
+                (Errormsg.see p' "type abbreviation declaration"));
                 table)
-              else table
-    | None ->
-      (Table.add sym tabbrev table)
+          (* GN, Aug 20, 2012: 
+           * May be better not to rely on OCaml's equality here! *)
+          else if ty <> ty' then
+            (Errormsg.error p 
+               ("conflict in type for type abbreviation" ^
+                (Errormsg.see p' "type abbreviation declaration"));
+             table)
+          else 
+            table
+      | None ->
+          (Table.add sym tabbrev table)
 
 
 (******************************************************************
@@ -772,10 +762,9 @@ and mergeTypeAbbrevs t1 t2 ktable =
               (match kindInTab with
                   Some (Absyn.Kind(_,_,_,_,p')) -> 
                       (Errormsg.error (Absyn.getTypeAbbrevPos abbrev)
-                                      ("type abbreviation name '" ^
-                                          (Symbol.name sym) ^ 
-                                          "' clashes with kind name" ^
-                                          (Errormsg.see p' "kind declaration"));
+                         ("type abbreviation name '" ^ (Symbol.name sym) ^ 
+                          "' clashes with kind name" ^
+                          (Errormsg.see p' "kind declaration"));
                        abbtab)
                 | None -> (mergeTypeAbbrev sym abbrev abbtab)))
        t1 t2)
@@ -786,7 +775,7 @@ and mergeTypeAbbrevs t1 t2 ktable =
 **********************************************************************)
 and compareConstants c1 c2 =
   let name = Absyn.getConstantName c1 in
-  
+
   let fix = Absyn.getConstantFixity c1 in
   let fix' = Absyn.getConstantFixity c2 in
   
@@ -806,64 +795,23 @@ and compareConstants c1 c2 =
       (Errormsg.see p' "constant declaration"));
     false)
   else if not (checkPrec prec prec') then
-    (Errormsg.error p ("constant '" ^ name ^ "' already declared with precedence" ^
-      (string_of_int prec') ^ (Errormsg.see p' "constant declaration"));
-    false)
+    (Errormsg.error p 
+       ("constant '" ^ name ^ "' already declared with precedence" ^
+        (string_of_int prec') ^ (Errormsg.see p' "constant declaration"));
+     false)
   else if (Option.isSome skel) && (Option.isSome skel') then
     let t1 = Absyn.getSkeletonType (Option.get skel) in
     let t2 = Absyn.getSkeletonType (Option.get skel') in
     if not (Absyn.types_equal t1 t2) then
-      (Errormsg.error p ("constant '" ^ name ^ "' declared with incompatible type '" ^
-        (Absyn.string_of_skeleton (Option.get skel)) ^ "'" ^
-        (Errormsg.see p' ("constant declaration with type '" ^ (Absyn.string_of_skeleton (Option.get skel')) ^ "'")));
+      (Errormsg.error p 
+         ("constant '" ^ name ^ "' declared with incompatible type '" ^
+          (Absyn.string_of_skeleton (Option.get skel)) ^ "'" ^
+          (Errormsg.see p' 
+             ("constant declaration with type '" ^ 
+              (Absyn.string_of_skeleton (Option.get skel')) ^ "'")));
       false)
     else
       true
-  else
-    true
-
-(**********************************************************************
-*compareAccumConstants:
-* Determines whether two constants are defined in compatible ways.
-**********************************************************************)
-and compareAccumConstants c1 c2 =
-  let name = Absyn.getConstantName c1 in
-
-  let fix = Absyn.getConstantFixity c1 in
-  let fix' = Absyn.getConstantFixity c2 in
-  
-  let prec = Absyn.getConstantPrec c1 in
-  let prec' = Absyn.getConstantPrec c2 in
-  
-  let skel = Absyn.getConstantSkeleton c1 in
-  let skel' = Absyn.getConstantSkeleton c2 in
-  
-  let p = Absyn.getConstantPos c1 in
-  let p' = Absyn.getConstantPos c2 in
-    
-  (*
-  let ed = Absyn.getConstantExportDef c1 in
-  let ed' = Absyn.getConstantExportDef c2 in
-  *)
-  if not (checkFixity fix fix') then
-    (Errormsg.error p ("constant already declared with fixity " ^
-      (Absyn.string_of_fixity fix') ^
-      (Errormsg.see p' "constant declaration"));
-    false)
-  else if not (checkPrec prec prec') then
-    (Errormsg.error p ("constant already declared with precedence" ^
-    (string_of_int prec'));
-    false)
-  else if (Option.isSome skel) && (Option.isSome skel') then
-    let t1 = Absyn.getSkeletonType (Option.get skel) in
-    let t2 = Absyn.getSkeletonType (Option.get skel') in
-    if not (Absyn.types_equal t1 t2) then
-      (Errormsg.error p ("constant '" ^ name ^ "' declared with incompatible type '" ^
-        (Absyn.string_of_skeleton (Option.get skel)) ^ "'" ^
-        (Errormsg.see p' ("constant declaration with type '" ^ (Absyn.string_of_skeleton (Option.get skel')) ^ "'")));
-      false)
-    else
-      true  
   else
     true
 
@@ -903,7 +851,8 @@ and checkConstantBodies ktable ctable =
           (Errormsg.error p
             ("constant '" ^ name ^ "' declared as both exportdef and useonly");
           result := false)
-        else if (Absyn.getConstantUseOnly c) || (Absyn.getConstantExportDef c) then
+        else if (Absyn.getConstantUseOnly c) || 
+                (Absyn.getConstantExportDef c) then
           let sort = if (Absyn.getConstantUseOnly c) 
                      then "useonly" 
                      else "exportdef" in
@@ -915,7 +864,8 @@ and checkConstantBodies ktable ctable =
             ()
           else
             (Errormsg.error p
-              ("constant '" ^ name ^ "' declared as " ^ sort ^ " without target type 'o'");
+              ("constant '" ^ name ^ "' declared as " ^ sort ^ 
+               " without target type 'o'");
             result := false)   
         else
           ()
@@ -953,33 +903,20 @@ and checkPrec = fun f1 f2 ->
 and mergeConstants clist ctable f =
   let merge table constant =
     let sym = Absyn.getConstantSymbol constant in
-    let constant' = Table.find sym ctable in
+    let constant' = Table.find sym table in
     (f constant' constant table)
   in
   List.fold_left merge ctable clist
-
-(**********************************************************************
-*mergeKinds:
-* Merges a list of kinds into a table of kinds, based on the
-* options specified.
-**********************************************************************)
-and mergeKinds klist ktable f =
-  let merge table kind =
-    let sym = Absyn.getKindSymbol kind in
-    let kind' = Table.find sym ktable in
-    (f kind' kind ktable)
-  in
-  List.fold_left merge ktable klist
 
 (**********************************************************************
 *previouslyExists:
 * Checks that the constant already existed.
 **********************************************************************)
 and previouslyExists =
-  fun currentConstant newConstant ->
+  fun currentConstant _ ->
     if Option.isSome currentConstant then
       let c = Option.get currentConstant in
-      not(Absyn.getConstantRedefinable c)
+        not (Absyn.getConstantRedefinable c)
     else
       false
 
@@ -988,7 +925,7 @@ and previouslyExists =
 * Ensures that the new constant has a skeleton.
 **********************************************************************)
 and hasSkeleton =
-  fun currentConstant newConstant ->
+  fun _ newConstant ->
     Option.isSome (Absyn.getConstantSkeleton newConstant)
 
 (**********************************************************************
@@ -1000,7 +937,8 @@ and mustCompare =
     if (Option.isSome currentConstant) then
       compareConstants (Option.get currentConstant) newConstant
     else
-      Errormsg.impossible Errormsg.none "Translate.mustCompare: invalid constant"
+      Errormsg.impossible Errormsg.none 
+        "Translate.mustCompare: invalid constant"
 
 (**********************************************************************
 *ifThenElse:
@@ -1027,22 +965,6 @@ and error s = fun currentConstant newConstant ctable ->
     (Errormsg.error p s';
     ctable)
 
-and log s = fun currentConstant newConstant ctable ->
-  let p = Absyn.getConstantPos newConstant in
-  let s' = "constant '" ^ (Absyn.getConstantPrintName newConstant) ^ "' " ^ s in
-  if Option.isSome currentConstant then
-    let p' = Absyn.getConstantPos (Option.get currentConstant) in
-    (Errormsg.log p
-      (s' ^ (Errormsg.see p' "constant declaration"));
-    ctable)
-  else
-    (Errormsg.log p s';
-    ctable)
-
-and orElse left right =
-  fun currentConstant newConstant ->
-    (left currentConstant newConstant) || (right currentConstant newConstant)
-
 and andAlso args =
   fun currentConstant newConstant ->
     let forall f = (f currentConstant newConstant) in
@@ -1062,17 +984,6 @@ and doesNot test =
   fun currentConstant newConstant ->
     not (test currentConstant newConstant)
 
-(**********************************************************************
-*copySkeleton:
-* Copies the skeleton from the new constant to the old.
-**********************************************************************)
-and copySkeleton =
-  fun currentConstant newConstant ctable ->
-    let skelref = Absyn.getConstantSkeletonRef currentConstant in
-    let newskel = Absyn.getConstantSkeleton newConstant in
-    (skelref := newskel;
-    ctable)
-  
 (**********************************************************************
 *enterConstant:
 **********************************************************************)
@@ -1111,10 +1022,6 @@ and hasCurrentConstantExportdef v =
     else
       Errormsg.impossible Errormsg.none
         "Translate.hasCurrentConstantExportdef: invalid current constant"
-
-and noAction =
-  fun currentConstant newConstant ctable ->
-    ctable
 
 and setCurrentConstantClosed v =
   fun currentConstant newConstant ctable ->
@@ -1175,7 +1082,8 @@ and copyConstant =
       let edref = Absyn.getConstantExportDefRef currentConstant in
       let closedref = Absyn.getConstantClosedRef currentConstant in
       (Errormsg.log Errormsg.none
-        ("set exportdef '" ^ (Absyn.getConstantPrintName newConstant) ^ "' to " ^ (string_of_bool !edref));
+        ("set exportdef '" ^ (Absyn.getConstantPrintName newConstant) ^ 
+         "' to " ^ (string_of_bool !edref));
       tyref := Absyn.getConstantType newConstant;
       skelref := Absyn.getConstantSkeleton newConstant;
       uoref := Absyn.getConstantUseOnly newConstant;
@@ -1196,12 +1104,12 @@ and copyConstant =
 * in translateModule.
 **********************************************************************)
 let copy currentConstant newConstant =
-  let () = Errormsg.log Errormsg.none
+  let _ = Errormsg.log Errormsg.none
     ("copying constant '" ^ (Absyn.getConstantPrintName newConstant) ^ "'") in
   let skelref = Absyn.getConstantSkeletonRef currentConstant in
   let sizeref = Absyn.getConstantTypeEnvSizeRef currentConstant in
   let tref = Absyn.getConstantTypeRef currentConstant in
-  let () = tref := Absyn.getConstantType newConstant in
+  let _ = tref := Absyn.getConstantType newConstant in
   if (Option.isNone !skelref) then
     (sizeref := Absyn.getConstantTypeEnvSize false newConstant;
     skelref := Absyn.getConstantSkeleton newConstant)
@@ -1209,36 +1117,36 @@ let copy currentConstant newConstant =
     ()
 
 let copyAccum currentConstant newConstant =
-  let () = Errormsg.log Errormsg.none
+  let _ = Errormsg.log Errormsg.none
     ("copying accum '" ^ (Absyn.getConstantPrintName newConstant) ^ "'") in
 
   let currentType = Absyn.getConstantType currentConstant in
-  let () = copy currentConstant newConstant in
+  let _ = copy currentConstant newConstant in
   (Absyn.getConstantTypeRef currentConstant) := currentType
 
 let copyExportdef generalCopier owner currentConstant newConstant =
-  let () = Errormsg.log Errormsg.none
+  let _ = Errormsg.log Errormsg.none
     ("copying exportdef '" ^ (Absyn.getConstantPrintName newConstant) ^ "'") in
-  let () = generalCopier currentConstant newConstant in
+  let _ = generalCopier currentConstant newConstant in
   
   if owner then
     let edref = Absyn.getConstantExportDefRef currentConstant in
     let nodefsref = Absyn.getConstantNoDefsRef currentConstant in
-    (edref := true;
-    nodefsref := not owner)
+      (edref := true;
+       nodefsref := not owner)
   else
     ()
 
 let copyUseonly generalCopier owner currentConstant newConstant =
-  let () = Errormsg.log Errormsg.none
+  let _ = Errormsg.log Errormsg.none
     ("copying useonly '" ^ (Absyn.getConstantPrintName newConstant) ^ "'") in
-  let () = generalCopier currentConstant newConstant in
+  let _ = generalCopier currentConstant newConstant in
   if owner then
     let uoref = Absyn.getConstantUseOnlyRef currentConstant in
     let nodefsref = Absyn.getConstantNoDefsRef currentConstant in
     (Errormsg.log Errormsg.none "setting useonly";
-    uoref := true;
-    nodefsref := true)
+     uoref := true;
+     nodefsref := true)
   else
     ()
 
@@ -1250,8 +1158,7 @@ let copyUseonly generalCopier owner currentConstant newConstant =
 **********************************************************************)
 let rec translate mod' sig' =
     let (asig, (ktable, ctable, atable)) =
-      translateSignature sig' true true Pervasive.pervasiveKinds
-        Pervasive.pervasiveConstants Pervasive.pervasiveTypeAbbrevs copy in
+      translateSignature sig' true true copy in
     let amod = translateModule mod' ktable ctable atable in
     (amod, asig)
 
@@ -1269,9 +1176,6 @@ let rec translate mod' sig' =
 *     due to an accum_sig, and so is treated normally.  If false, the
 *     signature is being parsed due to a use_sig, and so exportdef
 *     constants should be marked as useonly instead of exportdef.
-*   ktable: the kind table
-*   ctable: the constant table
-*   tabbrevtable: the type abbreviation table
 *   generalCopier: the copier to use to move information back into
 *     the symbol table when translating a constant that already
 *     exists therein.
@@ -1279,16 +1183,16 @@ let rec translate mod' sig' =
 *   an absyn signature
 *   a tuple of the updated constant, kind and abbreviation tables.
 **********************************************************************)
-and translateSignature s owner accumOrUse ktable ctable atable generalCopier =
+and translateSignature s owner accumOrUse generalCopier =
   match s with
     Preabsyn.Module(_) ->
       (Errormsg.impossible
         Errormsg.none
         "Translate.translateSignature: expected Preabsyn.Signature.")
   | Preabsyn.Signature(name, gconsts, uconsts, econsts, gkinds, tabbrevs,
-      fixities,accumsigs,usesigs) ->
+      fixities, accumsigs, usesigs) ->
 
-  let () = Errormsg.log Errormsg.none ("translating signature '" ^ name ^ "'") in
+  let _ = Errormsg.log Errormsg.none ("translating signature '" ^ name ^ "'") in
   
   (******************************************************************
   *mergeKinds:
@@ -1306,10 +1210,11 @@ and translateSignature s owner accumOrUse ktable ctable atable generalCopier =
                              Table.add s kind ktable
 	   | Some (Absyn.Kind(s', Some a', _, Absyn.GlobalKind, p')) ->
 	       if a <> a' 
-               then (Errormsg.error p ("kind '" ^ (Symbol.name s) ^ 
-                                          "' already declared with arity " ^
-		                          (string_of_int a') ^ 
-                                          (Errormsg.see p' "kind declaration"));
+               then (Errormsg.error p 
+                       ("kind '" ^ (Symbol.name s) ^ 
+                        "' already declared with arity " ^
+                        (string_of_int a') ^ 
+                        (Errormsg.see p' "kind declaration"));
                      ktable)
                else (*  Leave the existing global kind. *)
                      ktable
@@ -1334,7 +1239,7 @@ and translateSignature s owner accumOrUse ktable ctable atable generalCopier =
   * be verified that they compare (same fixity, precedence, type,
   * etc.)  
   ******************************************************************)
-  let mergeConstants clist ctable copier =
+  let mergeSigConstants clist ctable copier =
     let merge ctable c =
       let s = Absyn.getConstantSymbol c in
       let pos = Absyn.getConstantPos c in
@@ -1348,19 +1253,20 @@ and translateSignature s owner accumOrUse ktable ctable atable generalCopier =
             else 
               if Absyn.getConstantRedefinable c2 
               then (Table.add s c ctable)
-              else  (Errormsg.error pos ("redefinition of '" ^ (Symbol.name s) ^ 
-                                         "' is not allowed");
+              else  (Errormsg.error pos 
+                       ("redefinition of '" ^ (Symbol.name s) ^ 
+                        "' is not allowed");
                      ctable)
           else if not (compareConstants c c2) 
                then (*  Prints an error; no need to worry about the renaming as
                         we won't be compiling.  *)
                    ctable
-               else let () = copier c2 c in ctable
+               else let _ = copier c2 c in ctable
 
       | None -> (*  Not in the table, so put it in. *)
-          let () = copier c c in
+          let _ = copier c c in
           let t = if Absyn.isLocalConstant c then "local" else "global" in
-          let () = Errormsg.log pos (t ^" constant '" ^ (Symbol.name s) ^  
+          let _ = Errormsg.log pos (t ^" constant '" ^ (Symbol.name s) ^  
                                      "' not in table") in
             (Table.add s c ctable)
     in
@@ -1386,7 +1292,7 @@ and translateSignature s owner accumOrUse ktable ctable atable generalCopier =
       let kinds = getFromTable (fun _ -> true) ktable' in
       let constants = getFromTable (fun _ -> true) ctable' in
       let (ktable'') = mergeKinds kinds ktable in
-      let (ctable'') = mergeConstants constants ctable generalCopier in
+      let (ctable'') = mergeSigConstants constants ctable generalCopier in
       (ktable'', ctable'')
     in
     List.fold_left mergeTable (ktable, ctable) tables
@@ -1399,12 +1305,7 @@ and translateSignature s owner accumOrUse ktable ctable atable generalCopier =
   let rec translateSigs tables accum sigs = 
     match sigs with
       s::rest ->	
-        let (asig, table) =
-          translateSignature s owner accum
-            Pervasive.pervasiveKinds
-            Pervasive.pervasiveConstants
-            Pervasive.pervasiveTypeAbbrevs
-            generalCopier
+        let (asig, table) = translateSignature s owner accum generalCopier
         in
         (translateSigs (table::tables) accum rest)
     | [] ->
@@ -1429,7 +1330,10 @@ and translateSignature s owner accumOrUse ktable ctable atable generalCopier =
   (*  Process accumulated signatures: *)
   let sigs = processSigs accumsigs in
   let acctables = translateAccumSigs sigs in
-  let (ktable, ctable) = mergeKindandConstTables ktable ctable acctables in
+  
+  let (ktable, ctable) = 
+    mergeKindandConstTables Pervasive.pervasiveKinds 
+      Pervasive.pervasiveConstants acctables in
   
   (*  Process used signatures:  *)
   let sigs = processSigs usesigs in
@@ -1447,17 +1351,18 @@ and translateSignature s owner accumOrUse ktable ctable atable generalCopier =
   (*  Process type abbreviations  *)
   let atable' = translateTypeAbbrevs tabbrevs ktable in
   let atable = 
-         let mergeTypeAbbrevs' t1 t2 = mergeTypeAbbrevs t2 t1 ktable in
-         let acctypeabbrevtabs = (List.map (fun (_,_,t) -> t) acctables) in
-         let usetypeabbrevtabs = (List.map (fun (_,_,t) -> t) usetables) in
-           (List.fold_left mergeTypeAbbrevs'  
-                 (List.fold_left mergeTypeAbbrevs' 
-                                 (mergeTypeAbbrevs' atable' atable)
-                                 acctypeabbrevtabs)
-                 usetypeabbrevtabs) in
+    let mergeTypeAbbrevs' t1 t2 = mergeTypeAbbrevs t2 t1 ktable in
+    let acctypeabbrevtabs = (List.map (fun (_, _, t) -> t) acctables) in
+    let usetypeabbrevtabs = (List.map (fun (_, _, t) -> t) usetables) in
+      (List.fold_left mergeTypeAbbrevs'  
+         (List.fold_left mergeTypeAbbrevs' 
+            (mergeTypeAbbrevs' atable' Pervasive.pervasiveTypeAbbrevs)
+            acctypeabbrevtabs)
+         usetypeabbrevtabs) in
   
   (*  Translate constants *)
-  let constantlist = translateConstants gconsts ktable atable buildGlobalConstant in
+  let constantlist = 
+    translateConstants gconsts ktable atable buildGlobalConstant in
   let uconstantlist = translateUseOnlyConstants owner uconsts ktable atable in
   let econstantlist =
     if accumOrUse then
@@ -1466,28 +1371,30 @@ and translateSignature s owner accumOrUse ktable ctable atable generalCopier =
       translateUseOnlyConstants owner econsts ktable atable
   in
   
-  let ctable = mergeConstants constantlist ctable generalCopier in
+  let ctable = mergeSigConstants constantlist ctable generalCopier in
   let ctable =
-    mergeConstants uconstantlist ctable (copyUseonly generalCopier owner)
+    mergeSigConstants uconstantlist ctable (copyUseonly generalCopier owner)
   in
       
   let ecopier = if accumOrUse then copyExportdef else copyUseonly in
   let ctable =
-    mergeConstants econstantlist ctable (ecopier generalCopier owner)
+    mergeSigConstants econstantlist ctable (ecopier generalCopier owner)
   in
 
   (*  Normalizing.  *)
   let ctable = normalizeTable ktable ctable in
   
   (*  Renaming. *)
-  let kindRenaming = getFromTable (fun k -> not (Absyn.isPervasiveKind k)) ktable in
-  let constRenaming = getFromTable (fun c -> not (Absyn.isPervasiveConstant c)) ctable in
+  let kindRenaming = 
+    getFromTable (fun k -> not (Absyn.isPervasiveKind k)) ktable in
+  let constRenaming = 
+    getFromTable (fun c -> not (Absyn.isPervasiveConstant c)) ctable in
   
   (*  Translate fixities *)
   let ctable = translateFixities fixities ctable in
  
-  (Absyn.Signature(name, kindRenaming, constRenaming),
-  (ktable,ctable,atable))
+    (Absyn.Signature(name, kindRenaming, constRenaming),
+     (ktable, ctable, atable))
 
 (**********************************************************************
 *translateModule:
@@ -1501,7 +1408,8 @@ and translateSignature s owner accumOrUse ktable ctable atable generalCopier =
 * during renaming).  Finally, it verifies that constants have bodies.
 **********************************************************************)
 and translateModule mod' ktable ctable atable =
-  let _ = Errormsg.log Errormsg.none "Translate.translateModule: Translating module..." in
+  let _ = Errormsg.log 
+            Errormsg.none "Translate.translateModule: Translating module..." in
   (******************************************************************
   *getSkeleton:
   * Used when folding over the constant lists to get all constant
@@ -1558,24 +1466,28 @@ and translateModule mod' ktable ctable atable =
           (match (Table.find s ktable) with
             Some Absyn.Kind(s', Some a', _, Absyn.GlobalKind, p') ->
               if a <> a' then
-                (Errormsg.error p ("kind already declared with arity " ^ (string_of_int a));
+                (Errormsg.error 
+                   p ("kind already declared with arity " ^ (string_of_int a));
                  ktable)
               else
                 (Table.add s kind ktable)
           | Some Absyn.Kind(s', Some a', _, Absyn.LocalKind, p') ->
               if a <> a' then
-                (Errormsg.error p ("kind already declared with arity " ^ (string_of_int a));
+                (Errormsg.error 
+                   p ("kind already declared with arity " ^ (string_of_int a));
                  ktable)
               else
                 ktable
           | Some k ->
-              (Errormsg.impossible Errormsg.none "Translate.translateModule: invalid kind")
+              (Errormsg.impossible 
+                 Errormsg.none "Translate.translateModule: invalid kind")
           | None -> (Table.add s kind ktable))
       | Absyn.Kind(s, None, _, Absyn.LocalKind, p) ->
           (match (Table.find s ktable) with
             Some Absyn.Kind(s', Some a', m, Absyn.GlobalKind, p') ->
-              (Table.add s (Absyn.Kind(s', Some a', m,Absyn.LocalKind, p')) ktable)
-          | Some Absyn.Kind(s', Some a', m, Absyn.LocalKind, p') ->
+              (Table.add s 
+                 (Absyn.Kind(s', Some a', m,Absyn.LocalKind, p')) ktable)
+          | Some Absyn.Kind(_, Some _, _, Absyn.LocalKind, _) ->
               ktable
           | Some k ->
               (Errormsg.impossible (Absyn.getKindPos k) "invalid kind type ")
@@ -1583,7 +1495,8 @@ and translateModule mod' ktable ctable atable =
               (Errormsg.error p ("undeclared kind " ^ (Symbol.name s));
                ktable))
       | _ ->
-          (Errormsg.impossible Errormsg.none "Translate.translateModule: invalid kind")
+          (Errormsg.impossible 
+             Errormsg.none "Translate.translateModule: invalid kind")
     in
     (List.fold_left merge kt klist)
   in
@@ -1601,32 +1514,43 @@ and translateModule mod' ktable ctable atable =
           (match (Table.find s ktable) with
               Some Absyn.Kind(s',Some a',_,Absyn.GlobalKind, p') ->
                 if a <> a' then
-                  (Errormsg.error p ("kind already declared with arity " ^ (string_of_int a) ^
-                                     (Errormsg.see p' "kind declaration"));
+                  (Errormsg.error 
+                     p ("kind already declared with arity " ^ (string_of_int a)
+                        ^ (Errormsg.see p' "kind declaration"));
                    ktable)
                 else
                   ktable	      
             | Some Absyn.Kind(s',Some a',_,Absyn.LocalKind, p') ->
 	              if a <> a' then
-                  (Errormsg.error p ("kind already declared with arity " ^ (string_of_int a) ^
-                                     (Errormsg.see p' "kind declaration"));
+                  (Errormsg.error 
+                     p ("kind already declared with arity " ^ (string_of_int a)
+                        ^ (Errormsg.see p' "kind declaration"));
                    ktable)
                 else
                   ktable
-            | Some k ->  (Errormsg.impossible (Absyn.getKindPos k) "invalid kind type ")
+            | Some k ->  
+                (Errormsg.impossible (Absyn.getKindPos k) "invalid kind type ")
             | None ->
-              (Table.add s (Absyn.Kind(s, Some a, m,Absyn.LocalKind, p)) ktable))
-      | Absyn.Kind(_,_,_,Absyn.PervasiveKind,_) -> ktable (*  Don't add pervasives. *)
-      | _ -> Errormsg.impossible Errormsg.none "Non-global kind encountered in mergeGlobalKinds"
+              (Table.add s 
+                 (Absyn.Kind(s, Some a, m,Absyn.LocalKind, p)) ktable))
+      | Absyn.Kind(_,_,_,Absyn.PervasiveKind,_) -> 
+          ktable (*  Don't add pervasives. *)
+      | _ -> Errormsg.impossible 
+               Errormsg.none "Non-global kind encountered in mergeGlobalKinds"
     in
     (List.fold_left merge kt klist)
   in
 
   (********************************************************************
   *mergeLocalConstants:
+  * Remember that local constants declared in two steps like:
+  *   type foo o.
+  *   local foo.
+  * appear both in the global and the local constants lists (of the module) .
+  *
   * Merge the local constants in the module into the constant table.
   * If a constant is declared as local and has no declared type then
-  * the constant must already exist as a global.  If the type is
+  * the constant must also exist as a global.  If the type is
   * declared then it must either match an existing global declaration
   * or there must not be any global declaration.
   ********************************************************************)
@@ -1680,13 +1604,16 @@ and translateModule mod' ktable ctable atable =
             [previouslyExists; hasCurrentConstantType Absyn.GlobalConstant;
             hasCurrentConstantUseonly true; hasCurrentConstantExportdef false])
           (success)
-          (error "declared as useonly without corresponding declaration in signature"))
+          (error ("declared as useonly without corresponding" ^
+                    " declaration in signature")))
         (ifThenElse
           (andAlso
             [previouslyExists; hasCurrentConstantType Absyn.GlobalConstant;
-            hasCurrentConstantUseonly true; hasCurrentConstantExportdef false; mustCompare])
+            hasCurrentConstantUseonly true; hasCurrentConstantExportdef false; 
+            mustCompare])
           (success)
-          (error "declared as useonly without corresponding declaration in signature"))
+          (error ("declared as useonly without corresponding" ^ 
+                 "declaration in signature")))
     in    
     mergeConstants clist ctable f
   in
@@ -1703,14 +1630,16 @@ and translateModule mod' ktable ctable atable =
             [previouslyExists; hasCurrentConstantType Absyn.GlobalConstant;
             hasCurrentConstantUseonly false; hasCurrentConstantExportdef true])
           (success)
-          (error "declared as exportdef without corresponding declaration in signature"))
+          (error ("declared as exportdef without corresponding " ^
+                  " declaration in signature")))
         (ifThenElse
           (andAlso
             [previouslyExists; hasCurrentConstantType Absyn.GlobalConstant;
             hasCurrentConstantUseonly false; hasCurrentConstantExportdef true;
             mustCompare])
           (success)
-          (error "declared as exportdef without corresponding declaration in signature"))
+          (error ("declared as exportdef without corresponding " ^ 
+                  "declaration in signature")))
     in    
     mergeConstants clist ctable f
   in
@@ -1737,7 +1666,7 @@ and translateModule mod' ktable ctable atable =
   ******************************************************************)
   let processSignatures sigs = 
     List.map
-      (fun (Preabsyn.Symbol(accum,_,_)) ->
+      (fun (Preabsyn.Symbol(accum, _, _)) ->
         Compile.compileSignature (Symbol.name accum))
       sigs
   in
@@ -1814,15 +1743,9 @@ and translateModule mod' ktable ctable atable =
     match l with
         [] -> (sigs, tables)
       | l'::ls ->
-          let (asig, table) = 
-            translateSignature l' false true
-              Pervasive.pervasiveKinds
-              Pervasive.pervasiveConstants
-              Pervasive.pervasiveTypeAbbrevs
-              copier
-          in
+          let (asig, table) = translateSignature l' false true copier in
           let s = make asig in
-          translateMods make copier (s::sigs) (table::tables) ls
+            translateMods make copier (s::sigs) (table::tables) ls
   in
 
   (********************************************************************
@@ -1830,7 +1753,7 @@ and translateModule mod' ktable ctable atable =
   ********************************************************************)
   let translateAccumSigs sigs =
     let make asig = asig in
-    translateMods make copyAccum [] [] sigs
+      translateMods make copyAccum [] [] sigs
   in
   
   (********************************************************************
@@ -1838,7 +1761,7 @@ and translateModule mod' ktable ctable atable =
   ********************************************************************)
   let translateUseSigs sigs =
     let make asig = asig in
-    translateMods make (copyUseonly copyAccum false) [] [] sigs
+      translateMods make (copyUseonly copyAccum false) [] [] sigs
   in
   
   (********************************************************************
@@ -1848,7 +1771,7 @@ and translateModule mod' ktable ctable atable =
     let make asig =
       Absyn.AccumulatedModule(Absyn.getSignatureName asig, asig)
     in
-    translateMods make copyAccum [] [] accums
+      translateMods make copyAccum [] [] accums
   in
   
   (********************************************************************
@@ -1858,12 +1781,13 @@ and translateModule mod' ktable ctable atable =
     let make asig =
       Absyn.ImportedModule(Absyn.getSignatureName asig, asig)
     in
-    translateMods make copyAccum [] [] imps
+      translateMods make copyAccum [] [] imps
   in
  
   (*  Get the pieces of the module  *)
   match mod' with
-    Preabsyn.Module(name, gconsts, lconsts, cconsts, uconsts, econsts, fixities,
+    Preabsyn.Module(name, gconsts, lconsts, cconsts, uconsts, 
+                    econsts, fixities,
                     gkinds, lkinds, tabbrevs, clauses, accummods,
                     accumsigs, usesigs, impmods) ->
       (*  Translate the accumulated signatures  *)
@@ -1882,8 +1806,10 @@ and translateModule mod' ktable ctable atable =
       let impmods' = processSignatures impmods in
       let (imps, imptables) = translateImpMods impmods' in
 
-      let (ktable, ctable) = mergeKindandConstTables ktable ctable accsigstables in
-      let (ktable, ctable) = mergeKindandConstTables ktable ctable usesigstables in
+      let (ktable, ctable) = 
+        mergeKindandConstTables ktable ctable accsigstables in
+      let (ktable, ctable) = 
+        mergeKindandConstTables ktable ctable usesigstables in
       let (ktable, ctable) = mergeKindandConstTables ktable ctable acctables in
       let (ktable, ctable) = mergeKindandConstTables ktable ctable imptables in
 
@@ -1900,8 +1826,10 @@ and translateModule mod' ktable ctable atable =
       let atable' = translateTypeAbbrevs tabbrevs ktable in
       let atable = 
          let mergeTypeAbbrevs' t1 t2 = mergeTypeAbbrevs t2 t1 ktable in
-         let accsigstypeabbrevtabs = (List.map (fun (_,_,t) -> t) accsigstables) in
-         let usesigstypeabbrevtabs = (List.map (fun (_,_,t) -> t) usesigstables) in
+         let accsigstypeabbrevtabs = 
+           (List.map (fun (_,_,t) -> t) accsigstables) in
+         let usesigstypeabbrevtabs = 
+           (List.map (fun (_,_,t) -> t) usesigstables) in
          let accstypeabbrevtabs = (List.map (fun (_,_,t) -> t) acctables) in
          let impstypeabbrevtabs = (List.map (fun (_,_,t) -> t) imptables) in
            (List.fold_left mergeTypeAbbrevs'  
@@ -1944,27 +1872,31 @@ and translateModule mod' ktable ctable atable =
       let localkinds = Table.fold (getLocalKind) ktable [] in
       
       (*  Get local and global constant lists.  *)
-      let globalconstants = Table.fold (getConstant Absyn.GlobalConstant) ctable [] in
-      let localconstants = Table.fold (getConstant Absyn.LocalConstant) ctable [] in
+      let globalconstants = 
+        Table.fold (getConstant Absyn.GlobalConstant) ctable [] in
+      let localconstants = 
+        Table.fold (getConstant Absyn.LocalConstant) ctable [] in
       
       (*  Verify that all constants have a body, and
           all kinds have an arity.  *)
       if (checkConstantBodies ktable ctable) && (checkKindArities ktable) then
         (*  Get constant skeletons. *)
         let skeletons = (List.fold_left (getSkeleton) [] globalconstants) in
-        let skeletons = (List.fold_left (getSkeleton) skeletons localconstants) in
-
+        let skeletons = 
+          (List.fold_left (getSkeleton) skeletons localconstants) in
         let amod =
           Absyn.Module(name, imps, accums, ref ctable, ref ktable,
-          atable, [], globalkinds, localkinds, globalconstants, localconstants,
-          ref [], skeletons, ref [], ref(Absyn.ClauseBlocks([]))) in
+                       atable, [], globalkinds, localkinds, globalconstants, 
+                       localconstants, ref [], skeletons, ref [], 
+                       ref(Absyn.ClauseBlocks([]))) in
           let _ = Errormsg.log Errormsg.none
             "Translate.translateModule: Translated module." in
         amod
       else
         Absyn.ErrorModule
   | Preabsyn.Signature _ ->
-      invalid_arg "Types.translateModule: attempted to translate Preabsyn.Signature()"
+      invalid_arg 
+        "Types.translateModule: attempted to translate Preabsyn.Signature()"
 
 (******************************************************************
 *normalizeTable:
@@ -1983,9 +1915,11 @@ and normalizeTable ktable ctable =
       | Absyn.ApplicationType(k,args) ->
           let ko = Table.find (Absyn.getKindSymbol k) ktable in
           if Option.isSome ko then
-            Absyn.ApplicationType(Option.get ko, List.map (normalizeType ktable) args)
+            Absyn.ApplicationType(Option.get ko, 
+                                  List.map (normalizeType ktable) args)
           else
-            Errormsg.impossible Errormsg.none "Translate.normalizeType: invalid kind"
+            Errormsg.impossible 
+              Errormsg.none "Translate.normalizeType: invalid kind"
       | t' -> t'
   in
 
@@ -1993,13 +1927,14 @@ and normalizeTable ktable ctable =
   *normalizeConstant:
   ******************************************************************)
   let normalizeConstant ktable sym c =
-    let Absyn.Constant(_, f, p, ed, uo, nd, c, tp, red, skel, tes, skelneed, need, ci, ct, i, pos) = c in
+    let Absyn.Constant(_, f, p, ed, uo, nd, c, tp, red, 
+                       skel, tes, skelneed, need, ci, ct, i, pos) = c in
     if Option.isSome !skel then
-      let Absyn.Skeleton(ty,p,b) = (Option.get !skel) in
+      let Absyn.Skeleton(ty, p, b) = (Option.get !skel) in
       let ty' = normalizeType ktable ty in
-      skel := Some(Absyn.Skeleton(ty',p,b))
+        skel := Some(Absyn.Skeleton(ty',p,b))
     else
       ()
   in
-  (Table.iter (normalizeConstant ktable) ctable;
-  ctable)
+    (Table.iter (normalizeConstant ktable) ctable;
+     ctable)

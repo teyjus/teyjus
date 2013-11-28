@@ -48,9 +48,6 @@ let find =
 let add = fun k v table ->
   (SymbolTable.add k v table)
 
-let remove = fun k table ->
-  (SymbolTable.remove k table)
-
 let iter = fun f table ->
   (SymbolTable.iter f table)
 
@@ -62,7 +59,7 @@ let empty = SymbolTable.empty
 
 let printTable toStringFunc table =
   let printFunc s ent =
-    print_endline (toStringFunc ent)
+    print_endline (toStringFunc s ent)
   in
   SymbolTable.iter printFunc table
 

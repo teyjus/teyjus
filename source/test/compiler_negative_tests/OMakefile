@@ -1,0 +1,16 @@
+SUBDIRS = $(glob D, *)
+OMakeFlags(-o 0)
+
+.SUBDIRS: $(SUBDIRS)
+	# Handle only one file so far
+	FILE = $(rootname $(glob *.mod))
+	# An external script is used because I don't know how to redirect stderr on /dev/null
+	# with OMake
+	RES =  $(shell-code ./run_test $(FILE))
+	.PHONY:compiler-negative-test
+	compiler-negative-test:	
+		if $(equal $(RES), 1) 
+			echo "Test $(FILE) OK"
+		else
+			echo "Test compiler_negative_tests/$(FILE) failed (Compilation succeeded whereas it should not)"
+			exit 1

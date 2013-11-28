@@ -96,7 +96,8 @@ let solveQueries () =
         | "y" -> true
         | "n" -> false
         | _ ->
-            print_endline "\nSorry, only options are `y' or `n'.\nLet's try it again:";
+            print_endline ("\nSorry, only options are `y' or `n'.\n" ^ 
+                           "Let's try it again:");
             moreAnswers ()
     in
 
@@ -114,21 +115,21 @@ let solveQueries () =
   in
   
   (* solve one query *)
-  let rec solveQuery query =
-   if Query.buildQueryTerm query (Module.getCurrentModule ()) then 
+  let solveQuery query =
+    if Query.buildQueryTerm query (Module.getCurrentModule ()) then 
       if !batch then
         solveQueryBatch ()
       else
         solveQueryInteract ()
     else
-     prerr_endline "";
+      prerr_endline "";
     Module.cleanModule (); 
     Front.simulatorReInit false ;
     Module.initModuleContext ()
       
   in
 
-  let rec interactSolveQuery queries modName =
+  let interactSolveQuery queries modName =
     (* first solve queries input through the command line *)
     List.iter solveQuery queries;
 
@@ -136,8 +137,7 @@ let solveQueries () =
     while true do   
       print_string ("[" ^ modName ^"] ?- ");
       let query = read_line () in
-
-      solveQuery query  
+        solveQuery query  
     done
   in
 
@@ -167,7 +167,7 @@ let solveQueries () =
 * Main entrypoint; sets up the simulator based on command line
 * arguments, loads the secified module, and then starts the interactive loop.
 **********************************************************************)
-let main =
+let _ =
   Arg.parse (Arg.align specList) (setInputName ~filter:getModName) usageMsg ;
 
   try 

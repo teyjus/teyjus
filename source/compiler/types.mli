@@ -77,7 +77,7 @@ val string_of_typemolecule  : typemolecule -> string
 (**********************************************************************
 *makeConstantMolecule:
 * Given an absyn constant, produces a type molecule with a valid type
-* environment corresponding to the type of the constatnt. The boolean
+* environment corresponding to the type of the constant. The boolean
 * flag indicates whether to search the given constant's type to determine
 * the maximum skeleton size (true), or to use the entry in the absyn
 * constant (false).  Searching should only be done when the constant has
@@ -140,5 +140,6 @@ val getNewVarsInTypeMol : typemolecule -> Absyn.atype list -> Absyn.atype list
 * type returned depends on the type set and its default.
 **********************************************************************)
 val replaceTypeSetType : Absyn.atype -> Absyn.atype
+
 
 val unitTests : unit -> unit
