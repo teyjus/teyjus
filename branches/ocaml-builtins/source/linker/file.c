@@ -35,14 +35,31 @@ char* LK_FILE_ByteCodeExt=".lpo";
 int LK_FILE_OpenInput(char* modname, char* extension)
 {
   int fd;
+  char* tjpath; 
   char* buf=(char *)EM_malloc(strlen(modname)+strlen(extension)+1);
   sprintf(buf,"%s%s",modname,extension);
   
   fd=open(buf,O_RDONLY|O_BINARY,0000);
   if(fd==-1)
   {
-    bad("Couldn't open file %s for reading.\n",buf); 
-    EM_THROW(LK_LinkError);
+    /* Very restrictive hack:
+     * - works with only one directory in TJPATH
+     * - works only on Unix
+     * To be fixed with C, or, better, rewrite all the linker in OCaml
+     * to do this easily */
+    tjpath=getenv("TJPATH");
+    if (tjpath == NULL) {
+      bad("Couldn't open file %s for reading.\n",buf); 
+      EM_THROW(LK_LinkError);
+    } else {
+      buf=(char *)EM_malloc(strlen(modname)+strlen(extension)+strlen(tjpath)+2);
+      sprintf(buf,"%s/%s%s",tjpath,modname,extension);
+      fd=open(buf,O_RDONLY|O_BINARY,0000);
+      if (fd==-1) {
+        bad("Couldn't open file %s for reading.\n",buf); 
+        EM_THROW(LK_LinkError);
+      }
+    }
   }
   return fd;
 }

@@ -96,18 +96,6 @@ let findModule modName =
   findModuleAux 0
 
 
-(* remove a module of given name from the module table                 *)
-let removeModule modName =
-  let rec removeModuleAux ind =
-	if (ind = numberofModules) then ()
-	else
-	  let ModuleTableEntry(name, amod) = Array.get moduleTables ind in
-	  if name = modName then Array.set moduleTables ind errorModule 
-	  else
-		removeModuleAux (ind + 1)
-  in
-  removeModuleAux 0  
-
 (* asking for a slot in the global module table:                       *)
 (* if a module of the same name is in the table, the index of this     *)
 (* module will be returned; otherwise, the index of the first free     *)
@@ -126,7 +114,6 @@ let currentModule = ref Absyn.ErrorModule
 
 let setCurrentModule modtab = currentModule := modtab
 let getCurrentModule ()     = !currentModule
-let initCurrentModule () = setCurrentModule Absyn.ErrorModule
 
 
 (***************************************************************************)
@@ -154,7 +141,7 @@ let loadModule modName =
     (* impossible to fail: any failure should be caught by the c loader  *)
     (* already                                                           *)
     let amod = Loadmodtab.loadModuleTable ((!path) ^ modName) in
-    enterModuleTable amod index
+      enterModuleTable amod index
 		 
 		 
 (* load module *)

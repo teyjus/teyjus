@@ -28,26 +28,70 @@ type symbol = Symbol.symbol
 
 (*****************************************************************************
 *Kinds:
-* (symbol, arity, index, position)
 *****************************************************************************)
 type akindtype =
     LocalKind
   | GlobalKind
   | PervasiveKind
-
+    
+(* Kind(symbol, arity, index, kindtype, position) 
+*
+* The arity preserved when translating from the preabsract syntax.
+* It is set to None if the kind declaration and its local declaration 
+* are separated.
+* After mergeGlobalKinds, no kind arity equals None (otherwise this would
+* mean that a non existing kind is declared to be local) 
+* 
+* The index is set to 0 until the code generation. At this point a unique
+* index will be assigned to each kind *)
 and akind = Kind of (symbol * int option * int ref * akindtype * pos) 
 
 (*****************************************************************************
 *Type Variable Data:
 * (firstuse, lastuse, perm, safety, heapvar, offset, firstgoal, lastgoal)
+*
+* These informations will be used during variables annotation. 
+* Until this step, all references are useless and invalid.
+* Fields are filled in Annvariables.initTypeVarData
 *****************************************************************************)
 and atypevar = 
   TypeVar of (atype option ref * atype option ref * bool ref * bool ref * 
-				bool ref * int option ref * int ref * int ref)
+              bool ref * int option ref * int ref * int ref)
 
 
 (****************************************************************************
 *Type Var Information:
+* A BindableTypeVar is a type variable which, when set to None,
+* can be bound during unification to any other type (including another
+* BindableTypeVar)
+* When they are created, they are thus set to None.
+* They can be created during translation from preabsyn to absyn syntax and
+* come from:
+* - a lambda expression which does not have any type annotation. In this case
+*   a type variable is created to denote the type of this abstracted variable
+* - a free term variable (capital letter or underscore followed
+*   by some lettres) or an anonymous, _without_ a type annotation.
+*   The creation is only performed when the variable is met for the first time.
+*   In this case a type variable is created to denote the type of this 
+*   term variable
+* - a type annotation of some term. In this case, all the variables appearing 
+*   inside the type are translated as BindableTypeVar.
+* They can also be used later when checking that an application 
+* f t is well typed: if f has as typa variable X, then an arrow type 
+* is created with two BindableTypeVar.
+* 
+* If during an unification at top level a BindableTypeVar is bound and then
+* an error occurs, it has to be reset to None 
+* 
+* 
+* FreeTypeVar are created only in Processclauses.transtype
+* At this point, all BindableTypeVar are translated into FreeTypeVar,
+* which is a form suitable for variable annotation.
+* The first field represents all the information needed for the annotation,
+* including the reference to the type.   
+* The second field indicates if it is the first occurence of this variable.
+* Initially, the second field is set to None until we know if it is the first
+* or not.
 *****************************************************************************)
 and atypevarinfo =
     BindableTypeVar of atype option ref
@@ -56,10 +100,20 @@ and atypevarinfo =
 
 (*****************************************************************************
 *Type:
+* There are two places where preabsyn ptypes are translated in atype:
+* - In the translation of the declaration of a constant's type.
+*   In this case, every absyn type is formed of Application, Arrow 
+*   and SkeletonVarType. The SkeletonVarType is just a convenient way to name
+*   the different identifiers appearing in the preabsyn.
+* - In the translation of a type annotation.
+*   In this case every absyn type is formed of Application, Arrow and 
+*   TypeVarType(BindableTypeVar()) 
+*
+*
 *****************************************************************************)
 and atype = 
     SkeletonVarType of (int ref)
-  | TypeVarType of (atypevarinfo ref)
+  | TypeVarType of (atypevarinfo)
   |	ArrowType of (atype * atype)
   | ApplicationType of (akind * atype list)
   | TypeSetType of (atype * atype list ref * atype option ref)
@@ -182,14 +236,14 @@ and aapplicationinfo =
 *Terms:
 *****************************************************************************)
 and aterm =
-    IntTerm of (int * bool * pos)
-  | RealTerm of (float * bool * pos)
-  | StringTerm of (astringinfo * bool * pos)
-  | ConstantTerm of (aconstant * atype list * bool * pos)
-  | FreeVarTerm of (afreevarinfo * bool * pos)
-  | BoundVarTerm of (aboundvarinfo * bool * pos)
-  | AbstractionTerm of (aabstractioninfo * bool * pos)
-  | ApplicationTerm of (aapplicationinfo * bool * pos)
+    IntTerm of (int * pos)
+  | RealTerm of (float * pos)
+  | StringTerm of (astringinfo * pos)
+  | ConstantTerm of (aconstant * atype list * pos)
+  | FreeVarTerm of (afreevarinfo * pos)
+  | BoundVarTerm of (aboundvarinfo * pos)
+  | AbstractionTerm of (aabstractioninfo * pos)
+  | ApplicationTerm of (aapplicationinfo * pos)
   | ErrorTerm
 
 (*****************************************************************************
@@ -212,17 +266,19 @@ and ahcvarassoc = HCVarAssocs of ((avar * aconstant) list)
 
 (**********************************************************************
 *Clauses:
-* (head, args, tyargs, numargs, numtargs, body, offset, varmap, tyvarmap
-* gesplist, cutvar, hasenv, impmods)
+* (predicate, term args, type args, number term args, number type args, 
+* term variable map, type variable map, logic variables, offset,  
+* [body, gesplist, cut var, hasenv,] 
+* imported modules)
 **********************************************************************)
 and aclause = 
     Fact of (aconstant * aterm list * atype list * int * int * 
-			   atermvarmap * atypevarmap * avar list * int option ref * 
-			   aimportedmodule list)
-  | Rule of (aconstant * aterm list * atype list * int * int * atermvarmap *
-			      atypevarmap * avar list * int option ref * agoal * 
-              agoalenvassoc ref * avar option ref * bool ref * 
-			      aimportedmodule list)
+             atermvarmap * atypevarmap * avar list * int option ref * 
+             aimportedmodule list)
+  | Rule of (aconstant * aterm list * atype list * int * int * 
+             atermvarmap * atypevarmap * avar list * int option ref * 
+             agoal * agoalenvassoc ref * avar option ref * bool ref * 
+             aimportedmodule list)
 
 (* Goal number and environment size association list*)
 and agoalenvassoc =  GoalEnvAssoc of ((int * int) list)
@@ -238,7 +294,7 @@ and aclausesblock = (aclause list ref * bool ref * int ref * int option ref)
 
 (*****************************************************************************
 *Modules:
-* (modname, imported, accumulated, kind table, constant table,
+* (modname, imported, accumulated, constant table, kind table,
 * type abbre table, string list, global kind list, local kind list,
 * global constant list, local constant list, hidden constant list,
 * skeleton list, hskeleton list, clauses blocks list)
@@ -286,6 +342,8 @@ val makeLocalKind : symbol -> int -> int -> akind
 (*************************************************************************)
 (*  atypevar:                                                            *)
 (*************************************************************************)
+val getTypeVariableDataFirstGoal : atypevar -> int
+val setTypeVariableDataFirstGoal : atypevar -> int -> unit
 val getTypeVariableDataLastGoal : atypevar -> int
 val setTypeVariableDataLastGoal : atypevar -> int -> unit
 val getTypeVariableDataOffset : atypevar -> int
@@ -331,7 +389,10 @@ val getTypeFreeVariableFirstRef : atype -> bool option ref
 val getTypeFreeVariableFirst : atype -> bool
 val setTypeFreeVariableFirst : atype -> bool -> unit
 val isTypeFreeVariable : atype -> bool
+
+(* Creates a BindableTypeVar *)
 val makeTypeVariable : unit -> atype
+
 val makeNewTypeVariable : atypevar -> atype 
 
 val getSkeletonVariableIndex : atype -> int
@@ -423,10 +484,11 @@ val makeGlobalConstant : symbol -> afixity -> int -> bool -> bool -> int
   -> askeleton -> int -> aconstant
 val makeLocalConstant : symbol -> afixity -> int -> int -> askeleton ->
   int -> aconstant
-val makeAnonymousConstant : int -> aconstant
+val makeAnonymousConstant : int -> askeleton -> aconstant
 val makeHiddenConstant : askeleton -> int -> aconstant
 val makeConstantTerm : aconstant -> atype list -> pos -> aterm
 (*  val makeConstantType : aconstant -> atype *)
+val string_of_constant: aconstant -> string                                                           
 
 (*************************************************************************)
 (*  atypesymbol:                                                         *)
@@ -570,6 +632,7 @@ val getModuleName : amodule -> string
 val setModuleName : amodule -> string -> amodule
 val getModuleGlobalKindsList : amodule -> akind list
 val getModuleGlobalConstantsList : amodule -> aconstant list
+val getModuleLocalConstantsList : amodule -> aconstant list
 val getModuleHiddenConstantsRef : amodule -> aconstant list ref
 val getModuleHiddenConstantSkeletonsRef : amodule -> askeleton list ref
 val getModuleHiddenConstantSkeletons : amodule -> askeleton list

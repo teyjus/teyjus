@@ -62,14 +62,36 @@ typedef unsigned __int64 u_int64_t;
 #include "byteswap.h"
 #include <stdint.h>                       // Defines __WORDSIZE
 
-#else
-// Other (linux, ...)
+#elif defined(__linux__)
+// Linux
+#  include <sys/types.h>
+#  include <unistd.h>
+#  include <endian.h>
+#  include <bits/wordsize.h>
+#  include <byteswap.h>
 
-#include <sys/types.h>
-#include <unistd.h>
-#include <endian.h>
-#include <bits/wordsize.h>
-#include <byteswap.h>
+#elif defined(__unix__)
+// Other Unix
+#  include <sys/param.h>
+#  if defined(BSD)
+// BSD (OpenBSD, FreeBSD, NetBSD, DragonFly BSD, ...)
+#    include <sys/types.h>
+#    include <unistd.h>
+#    include <sys/endian.h>
+// Use the functions from byteorder(3)
+#    define bswap_16(x) swap16(x)
+#    define bswap_32(x) swap32(x)
+#    define bswap_64(x) swap64(x)
+// __WORDSIZE is non-standard and should be inferred otherhow
+#    if defined(__x86_64__) || defined(__amd64__) || defined(__LP64__)
+#      define __WORDSIZE 64
+#    else
+#      define __WORDSIZE 32
+#    endif
+#  endif
+
+#else
+// Other (...?)
 
 #endif  // End platform check
 

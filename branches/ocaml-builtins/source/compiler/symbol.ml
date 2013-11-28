@@ -62,10 +62,12 @@ let symbolAlias s s' =
 let id (_, _, n) = n
 
 let currentId = ref 0
+
 let generateName s =
   let s' = s ^ "_gen_" ^ (string_of_int (!currentId)) in
+  let s'' = s ^ "g_gen_" ^ (string_of_int (!currentId)) in
   let _ = currentId := !currentId + 1 in
-  symbol s'
+    symbolAlias s' s''
 
 let generate () =
   generateName ""

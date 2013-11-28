@@ -528,7 +528,7 @@ let calculateIndexing clauses =
 		  let firstArgHead = termHead (List.hd (Absyn.getClauseTermArgs cl)) in
 		  let (constSwitch', intCls', realCls', strCls', nilCls', consCls') =
 			match firstArgHead with
-			  Absyn.ConstantTerm(c, _, _, _) ->
+			  Absyn.ConstantTerm(c, _,  _) ->
 				if (Pervasive.isnilConstant c) then
 				  (constSwitch, intCls, realCls, strCls, cl :: nilCls, consCls)
 				else if (Pervasive.isconsConstant c) then
@@ -736,7 +736,7 @@ let genSeqCode cls insts startLoc =
 (* if the sequence is of length > 1, a try/retry/trust sequence will be      *)
 (* generated.                                                                *)
 (*****************************************************************************)
-let rec genCodeTableEntry cls insts startLoc =
+let genCodeTableEntry cls insts startLoc =
   (* assume cls is not empty *)
   match cls with
 	[cl] -> (insts, startLoc, Absyn.getClauseOffset cl)
@@ -1028,7 +1028,7 @@ let genImpDefs defs insts startLoc =
 
   let rec genImpDefsAux defs insts startLoc extNum extPreds predNum predInfo =
 	(* generate code for one definition *)
-	let rec genImpDef pred clauseBlock insts startLoc extNum extPreds =
+	let genImpDef pred clauseBlock insts startLoc extNum extPreds =
       let (newExtPreds, newExtNum) =
 		if (Absyn.getClauseBlockClose clauseBlock) then (extPreds, extNum)
 		else
@@ -1174,10 +1174,11 @@ let generateModuleCode amod =
       let cgAccumulates = collectAccs modaccs in
       (* back patching "call" and "execute" instructions *)
       Clausegen.backPatch ();
-      let () = Errormsg.log Errormsg.none "Codegen.generateModuleCode: generated module code" in
-      Module(modname, cgGKinds, cgLKinds, cgGConsts, cgLConsts, cgHConsts,
-             cgDefs, cgGNonExpDefs, cgGExpDefs, cgLDefs, 
-             cgTySkels, cgStrings, cgImports, cgAccumulates, cgInstructions,
-             getHashTabs (), cgImpGoals)
+      let () = Errormsg.log Errormsg.none 
+                 "Codegen.generateModuleCode: generated module code" in
+        Module(modname, cgGKinds, cgLKinds, cgGConsts, cgLConsts, cgHConsts,
+               cgDefs, cgGNonExpDefs, cgGExpDefs, cgLDefs, 
+               cgTySkels, cgStrings, cgImports, cgAccumulates, cgInstructions,
+               getHashTabs (), cgImpGoals)
   | _ -> Errormsg.impossible Errormsg.none 
 	"genModuleCode: invalid input module"

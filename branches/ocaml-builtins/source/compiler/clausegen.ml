@@ -824,19 +824,19 @@ and genSTermCode regNum term chunk lowval last hasenv normalize =
 
   (* function body of genSTermCode *)
   match term with 
-	Absyn.IntTerm(i, _, _)             ->
+	Absyn.IntTerm(i, _)             ->
 	  ([Instr.Ins_put_integer (regNum, i)], Instr.getSize_put_integer, false)
-  | Absyn.RealTerm(r, _, _)            ->
+  | Absyn.RealTerm(r, _)            ->
 	  ([Instr.Ins_put_float(regNum, r)], Instr.getSize_put_float, false)
-  | Absyn.StringTerm(s, _, _)          ->
+  | Absyn.StringTerm(s, _)          ->
 	  ([Instr.Ins_put_string(regNum, Absyn.getStringInfoIndex s)],
 	   Instr.getSize_put_string, false)
   | Absyn.BoundVarTerm(_)              ->
 	  ([Instr.Ins_put_index(regNum, Absyn.getTermBoundVariableDBIndex term)],
 	   Instr.getSize_put_index,  false)
-  | Absyn.ConstantTerm(c, [], _, _)    -> 
+  | Absyn.ConstantTerm(c, [], _)    -> 
 	  genSTermCodeMConst c regNum 
-  | Absyn.ConstantTerm(c, tyenv, _, _) ->
+  | Absyn.ConstantTerm(c, tyenv, _) ->
 	  genSTermCodePConst c tyenv regNum
   | Absyn.FreeVarTerm(_)               ->
 	  let (inst, size) =
@@ -969,13 +969,13 @@ and genSTermCodesansReg term chunk lowval last hasenv normalize =
 
   (* function body of genSTermCodesansReg *)
   match term with 
-	Absyn.IntTerm(i, _, _)             ->
+	Absyn.IntTerm(i, _)             ->
 	  let regNum = Registers.getHighFreeReg () in
           ([Instr.Ins_put_integer (regNum, i)], Instr.getSize_put_integer, regNum, false)
-  | Absyn.RealTerm(r, _, _)            ->
+  | Absyn.RealTerm(r, _)            ->
 	  let regNum = Registers.getHighFreeReg () in
           ([Instr.Ins_put_float(regNum, r)], Instr.getSize_put_float, regNum, false)
-  | Absyn.StringTerm(s, _, _)          ->
+  | Absyn.StringTerm(s, _)          ->
 	  let regNum = Registers.getHighFreeReg () in
 	  ([Instr.Ins_put_string(regNum, Absyn.getStringInfoIndex s)],
 	   Instr.getSize_put_string, regNum, false)
@@ -983,9 +983,9 @@ and genSTermCodesansReg term chunk lowval last hasenv normalize =
 	  let regNum = Registers.getHighFreeReg () in
 	  ([Instr.Ins_put_index(regNum, Absyn.getTermBoundVariableDBIndex term)],
 	   Instr.getSize_put_index, regNum, false)
-  | Absyn.ConstantTerm(c, [], _, _)    -> 
+  | Absyn.ConstantTerm(c, [], _)    -> 
 	  genSTermCodeMConstsansReg c
-  | Absyn.ConstantTerm(c, tyenv, _, _) ->
+  | Absyn.ConstantTerm(c, tyenv, _) ->
 	  genSTermCodePConstsansReg c tyenv
   | Absyn.FreeVarTerm(_)               ->
 	  let regNum = Registers.getHighFreeReg () in
@@ -1127,19 +1127,19 @@ and genTermSettingCode regTermList chunk lowval hasenv =
 
 	(* function body of genTermSettingCodeTerm *)
 	match term with
-	  Absyn.IntTerm(i, _, _)          ->
+	  Absyn.IntTerm(i, _)          ->
 		([Instr.Ins_set_integer(i)], Instr.getSize_set_integer)
-	| Absyn.RealTerm(r, _, _)         ->
+	| Absyn.RealTerm(r, _)         ->
 		([Instr.Ins_set_float(r)], Instr.getSize_set_float)
-	| Absyn.StringTerm(s, _, _)       ->
+	| Absyn.StringTerm(s, _)       ->
 		([Instr.Ins_set_string(Absyn.getStringInfoIndex s)],
 		 Instr.getSize_set_string)
-	| Absyn.BoundVarTerm(_, _, _)     ->
+	| Absyn.BoundVarTerm(_, _)     ->
 		([Instr.Ins_set_index(Absyn.getTermBoundVariableDBIndex term)],
 		 Instr.getSize_set_index)
-	| Absyn.ConstantTerm(c, [], _, _) ->  
+	| Absyn.ConstantTerm(c, [], _) ->  
 		genSettingMConstCode c 
-	| Absyn.ConstantTerm(c, tys, _, _)->  
+	| Absyn.ConstantTerm(c, tys, _)->  
 		genSettingPConstCode c tys
 	| _  -> (* must be free variable then *) 
 		genSettingVarCode term 
@@ -1247,23 +1247,23 @@ let rec genATermsCode delayed chunk insts startLoc =
   (* for each pair in the delayed list *)
   let genATermCode regNum term =
 	match term with
-	  Absyn.IntTerm(i, _, _)           -> 
+	  Absyn.IntTerm(i, _)           -> 
 		Registers.markUnusedReg regNum;
 		(insts @ [Instr.Ins_get_integer(regNum, i)],
 		 startLoc + Instr.getSize_get_integer)		
-	| Absyn.RealTerm(r, _, _)          -> 
+	| Absyn.RealTerm(r, _)          -> 
 		Registers.markUnusedReg regNum;
 		(insts @ [Instr.Ins_get_float(regNum, r)],
 		 startLoc + Instr.getSize_get_float)
-	| Absyn.StringTerm(s, _, _)        -> 
+	| Absyn.StringTerm(s, _)        -> 
 		Registers.markUnusedReg regNum;
 		(insts @ [Instr.Ins_get_string(regNum, (Absyn.getStringInfoIndex s))],
 		 startLoc + Instr.getSize_get_string)
-	| Absyn.FreeVarTerm(_, _, _)       -> genATermCodeFreeVar term regNum 
-	| Absyn.ConstantTerm(c, [], _, _)  -> genATermCodeMConst c regNum
-	| Absyn.ConstantTerm(c, tys, _, _) -> 
+	| Absyn.FreeVarTerm(_, _)       -> genATermCodeFreeVar term regNum 
+	| Absyn.ConstantTerm(c, [], _)  -> genATermCodeMConst c regNum
+	| Absyn.ConstantTerm(c, tys, _) -> 
 		genATermCodePConst c tys regNum
-	| Absyn.ApplicationTerm(_, _, pos)   ->
+	| Absyn.ApplicationTerm(_, pos)   ->
 		let func = Absyn.getTermApplicationHead term in
 		if (Absyn.isTermFreeVariable func) then
 		  genATermCodeHigherOrder term regNum 
@@ -1379,18 +1379,18 @@ and genAStrTermArgsCode args chunk insts startLoc =
 	| (term :: rest) ->
 		let (newInsts, newStartLoc, newDelayed) =
 		  match term with
-			Absyn.IntTerm(i, _, _)           -> 
+			Absyn.IntTerm(i, _)           -> 
 			  (insts @ [Instr.Ins_unify_integer(i)],
 			   startLoc + Instr.getSize_unify_integer, delayed)
-		  | Absyn.RealTerm(r, _, _)          -> 
+		  | Absyn.RealTerm(r, _)          -> 
 			  (insts @ [Instr.Ins_unify_float(r)],
 			   startLoc + Instr.getSize_unify_float, delayed)
-		  | Absyn.StringTerm(s, _, _)        -> 
+		  | Absyn.StringTerm(s, _)        -> 
 			  (insts @ [Instr.Ins_unify_string(Absyn.getStringInfoIndex s)],
 			   startLoc + Instr.getSize_unify_string, delayed) 
-		  | Absyn.ConstantTerm(c, [], _, _)  ->  genAStrTermArgMConst c
-		  | Absyn.ConstantTerm(c, tys, _, _) ->  genAStrTermArgPConst c tys
-		  | Absyn.FreeVarTerm(_, _, _)       ->  genAStrTermArgVar term 
+		  | Absyn.ConstantTerm(c, [], _)  ->  genAStrTermArgMConst c
+		  | Absyn.ConstantTerm(c, tys, _) ->  genAStrTermArgPConst c tys
+		  | Absyn.FreeVarTerm(_, _)       ->  genAStrTermArgVar term 
 		  | _ -> 
 			  let regNum = Registers.getHighFreeReg () in
 			  (insts @ [Instr.Ins_unify_variable_t(regNum)],
@@ -1469,19 +1469,19 @@ let genHeadTyVarsCode tyargs regNum neededness =
       let lastUse = (Absyn.getTypeVariableDataLastUse varData) == var in
       let needed  = (Array.get neededness index) in
       match (Absyn.getTypeFreeVariableFirst var), 
-	(Absyn.getTypeVariableDataPerm varData) 
+	        (Absyn.getTypeVariableDataPerm varData) 
       with
-	true,   true  -> (* first occurrence of a permanent variable *)
-	  genHeadFirstPermTypeVar varData 
+      |  true,   true  -> (* first occurrence of a permanent variable *)
+	    genHeadFirstPermTypeVar varData 
 	    (Absyn.getTypeVariableDataOffset varData) needed
       | true,   false -> (* first occurrence of a temporay variable *)
-	  genHeadFirstTempTypeVar varData lastUse needed
+	    genHeadFirstTempTypeVar varData lastUse needed
       | false,  true  -> (* subsequent occurrence of a permanent variable *)
-	  genHeadSubPermTypeVar varData 
+	    genHeadSubPermTypeVar varData 
 	    (Absyn.getTypeVariableDataOffset varData) needed
       | false,  false -> (* subsequent occurrence of a tempory variable *)
-	  genHeadSubTempTypeVar varData 
-	    (Absyn.getTypeVariableDataOffset varData) lastUse needed	
+	    genHeadSubTempTypeVar varData 
+	      (Absyn.getTypeVariableDataOffset varData) lastUse needed	
     in	  
     (* function body of genHeadTyVarsCode *)
     match tyargs with
@@ -1664,19 +1664,24 @@ let setUpGoalArgs goal chunk last hasenv =
   let assignRegUnNeeded var =
     let varData = Absyn.getTypeFreeVariableVariableData var in
     let lastUse = (Absyn.getTypeVariableDataLastUse varData) == var in
-    if (Absyn.getTypeVariableDataPerm varData) then () (*nothing to do w perm*)
+    if (Absyn.getTypeVariableDataPerm varData) then 
+      (*nothing to do w perm*)
+      ()
     else 
       let mychunk = List.tl chunk in
       let mylowval = Registers.getNumGoalArgs () in
       if (Absyn.getTypeFreeVariableFirst var) then (* first appearence *)
-	if lastUse then ()
-	else let _ = Registers.assignTyReg varData false mychunk mylowval in ()
+        if lastUse then 
+          ()
+        else 
+          let _ = Registers.assignTyReg varData false mychunk mylowval in ()
       else
-	if lastUse then  
-	  let regNum = Absyn.getTypeVariableDataOffset varData in
-	  Registers.mkRegFree regNum;
-	  Registers.markUnusedReg regNum
-	else ()
+        if lastUse then  
+	      let regNum = Absyn.getTypeVariableDataOffset varData in
+	        Registers.mkRegFree regNum;
+	        Registers.markUnusedReg regNum
+	    else 
+          ()
   in
 
   (* pair up the type arguments with registers, resolving conflicts if   *)

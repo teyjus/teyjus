@@ -383,7 +383,6 @@ char *STREAM_string_getName(STREAML_Stream *inStream)
 /*                      OPENING                                              */
 WordPtr STREAM_open(char *inFilename, char *inMode, int inDoUsePaths)
 {
-    int  i;
     char *lFilename = NULL;
     FILE *lFile = NULL;
     //PATHS_Pathname *lPathname = NULL;
@@ -525,7 +524,7 @@ int STREAM_printf(WordPtr inStream, char *format, ...)
 }
 
 int STREAM_sans_printf(WordPtr outStream, char *str)
-{ STREAM_printf(outStream, "%s", str); }
+{ return STREAM_printf(outStream, "%s", str); }
 
 int STREAM_lookahead(WordPtr inStream, char *outChar)
 {
