@@ -205,6 +205,7 @@ and afreevarinfo =
     NamedFreeVar of (atypesymbol)
   | FreeVar of (avar * bool option ref)
 
+(* After Processclauses.transTermBoundVar, only the second category remains *)
 and aboundvarinfo =
     NamedBoundVar of (atypesymbol)
   | DBIndex of int
@@ -553,7 +554,7 @@ val isTermConstant     : aterm -> bool
 
 val getTermAbstractionVar : aterm -> atypesymbol
 val getTermAbstractionVars : aterm -> atypesymbol list
-val getTermAllAbstractionVars : aterm -> atypesymbol list
+val getTermAllAbstractionVars : atypesymbol list -> aterm -> atypesymbol list
 val getTermAbstractionBody : aterm -> aterm
 val getTermAbstractionNumberOfLambda : aterm -> int
 

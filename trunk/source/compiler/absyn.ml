@@ -1014,7 +1014,8 @@ let getTypeSymbolSymbol = function
   | AnonymousImplicitVar(s,_,_,_) -> s
   | BoundVar(s,_,_,_) -> s
 
-let getTypeSymbolName s = (Symbol.name (getTypeSymbolSymbol s))
+let getTypeSymbolName s = 
+  Symbol.name (getTypeSymbolSymbol s)
 
 let getTypeSymbolHiddenConstantRef tsym =
   match tsym with
@@ -1200,7 +1201,6 @@ let getTermPos = function
 | ApplicationTerm(_,p) -> p
 | ErrorTerm -> Errormsg.none
 
-(* abstraction term *)
 let getTermAbstractionVar = function
   AbstractionTerm(NestedAbstraction(v,_),_) -> v
 | _ -> Errormsg.impossible Errormsg.none "Absyn.getTermAbstractionVar: invalid term"
@@ -1209,11 +1209,45 @@ let getTermAbstractionVars = function
   AbstractionTerm(UNestedAbstraction(vars,_,_),_) -> vars
 | _ -> Errormsg.impossible Errormsg.none "Absyn.getTermAbstractionVars: invalid term"
 
-let getTermAllAbstractionVars t = match t with
-  AbstractionTerm(NestedAbstraction(_),_) -> [getTermAbstractionVar t]
-| AbstractionTerm(UNestedAbstraction(_),_) -> getTermAbstractionVars t
-| _ -> Errormsg.impossible (getTermPos t) "Absyn.getTermAbstractionVars': term not an abstraction"
-
+(* We also perform here renaming to always output meaningful terms *)
+let getTermAllAbstractionVars bindings t =
+  let setTypeSymbolSymbol typsym new_sym = 
+    match typsym with
+      |  ImplicitVar(s,c,b,a) -> ImplicitVar(new_sym,c,b,a)
+      | AnonymousImplicitVar(s,c,b,a) -> AnonymousImplicitVar(new_sym,c,b,a)
+      | BoundVar(s,c,b,a) -> BoundVar(new_sym,c,b,a)
+  in
+  (* We count the number of similar bound variables 
+   * to perform alpha renaming. This is an inefficient way but we only
+   * do that to output terms in error messages during the compilation. 
+   *
+   * We count occurences above the abstraction (the ones in bindings) 
+   * and the ones occuring the current abstraction (remember that a binder
+   * binds several variables). To handle this case, we add treated variables
+   * in bdgs while recurring *)
+  let rec aux bdgs avars = 
+    match avars with 
+      | [] -> []
+      | s::q -> 
+        let sym = getTypeSymbolSymbol s in
+        let nb_occ = 
+          List.length 
+            (List.find_all 
+              (fun x -> (getTypeSymbolName x) = (getTypeSymbolName s)) 
+              bdgs) in
+          if nb_occ > 0 then 
+            let new_name = (Symbol.name sym) ^ (string_of_int nb_occ) in
+            let new_s = setTypeSymbolSymbol s (Symbol.symbol (new_name)) in
+              (* The order in bindings matter for bound variables but not
+               * for the local use we make of it here; so we can just cons s *)
+              new_s::(aux (s::bdgs) q) 
+          else
+            s:: (aux (s::bdgs) q)
+  in match t with 
+  | AbstractionTerm(NestedAbstraction(_,_),_) -> aux bindings [getTermAbstractionVar t]
+  | AbstractionTerm(UNestedAbstraction(vars,_,_),_) -> aux bindings (getTermAbstractionVars t)
+  | _ -> Errormsg.impossible (getTermPos t) 
+           "Absyn.getTermAbstractionVars': term not a (valid) abstraction"
 
 let getTermAbstractionBody = function
   AbstractionTerm(NestedAbstraction(_,b),_) -> b
@@ -1443,7 +1477,7 @@ and string_of_term term =
   and string_of_abstraction term context fix prec bindings tab =
     let paren = needsParens lamFixity lamPrec context fix prec in
     let aterm = getTermAbstractionBody term in
-    let avars = getTermAllAbstractionVars term in
+    let avars = getTermAllAbstractionVars bindings term in
     let lambdas = (String.concat "\\ " (List.map getTypeSymbolName avars)) ^ "\\ " in
     let bindings' = List.rev_append avars bindings in
     let result = lambdas ^ (string_of_term' aterm RightTermContext lamFixity lamPrec bindings' tab) in
@@ -1460,15 +1494,17 @@ and string_of_term term =
     | StringTerm(StringData(s,_,_),_) -> "\"" ^ (String.escaped s) ^ "\""
     | ConstantTerm(c,_,_) -> (getConstantPrintName c)
     | FreeVarTerm(NamedFreeVar(s),_) -> Symbol.name (getTypeSymbolSymbol s)
-    | BoundVarTerm(NamedBoundVar(s),_) -> Symbol.name (getTypeSymbolSymbol s)
-    | BoundVarTerm(DBIndex(i),_) -> getTypeSymbolName (List.nth bindings (i - 1))
+    | BoundVarTerm(NamedBoundVar(s),_) -> 
+        Symbol.name (getTypeSymbolSymbol s)
+    | BoundVarTerm(DBIndex(i),_) -> 
+        getTypeSymbolName (List.nth bindings (i - 1)) 
     | ApplicationTerm(_) -> string_of_app term context fix prec bindings tab
     | AbstractionTerm(_) -> string_of_abstraction term context fix prec bindings tab
     | ErrorTerm -> "#error#"
     | _ -> Errormsg.impossible (getTermPos term) 
                                "string_of_term': unimplemented for this term"
   in
-  string_of_term' term WholeTermContext NoFixity 0 [] 0
+    string_of_term' term WholeTermContext NoFixity 0 [] 0
 
 (* free variable *)
 let getTermFreeVariableVariableData = function
