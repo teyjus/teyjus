@@ -102,7 +102,7 @@ let writeModule m clauses newclauses oc =
             FirstOrderApplication(h,[AbstractionTerm(_) as abs],_),
             _)
             when isConstant Pervasive.isallConstant h
-            ->  let vs = getTermAllAbstractionVars abs in
+            ->  let vs = getTermAllAbstractionVars [] abs in
                 if List.for_all isUniversal vs then
                   getActualClause (getTermAbstractionBody abs)
                 else

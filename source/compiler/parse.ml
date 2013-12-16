@@ -151,6 +151,17 @@ type environmententry =
 and environmentcell =
     EnvironmentCell of (Absyn.atypesymbol * environmententry ref)
 
+let rec environmententry_to_string entry = match entry with
+  | TermEntry(term) -> Absyn.string_of_term term
+  | SuspensionEntry(term, cell_list) -> 
+    "Susp(" ^ (Absyn.string_of_term term) ^ ", [" ^
+      (String.concat ", " (List.map environmentcell_to_string cell_list)) ^ "])"
+and environmentcell_to_string cell = match cell with 
+  | EnvironmentCell(typ_sym, entry_ref) ->
+      (Absyn.getTypeSymbolName typ_sym) ^ " -> " ^ 
+        (environmententry_to_string !entry_ref) 
+
+
 (**********************************************************************
 *Error functions.
 **********************************************************************)
@@ -280,6 +291,7 @@ and translateTermTopLevel term amodule =
                              ^ " : " 
                              ^ (Types.string_of_typemolecule mol')) in
   let term'' = removeOverloads term' in
+
   let term''' = removeNestedAbstractions (normalizeTerm term'') in
   let _ = Errormsg.log (Absyn.getTermPos term''') 
     ("parsed, normalized term: " ^ (Absyn.string_of_term_ast term''')) in
@@ -1426,11 +1438,16 @@ and normalizeTerm term =
           let sym = (Absyn.getTermAbstractionVar t') in
           let body = (Absyn.getTermAbstractionBody t') in
           let env' = makeSuspension sym r env (getEntrySuspensionEnv l') in
-          (normalize body env' whnf)
+          let result = normalize body env' whnf in
+            result
         else
           let l' = (getEntryTerm l') in
           let r' = (getEntryTerm (normalize r env false)) in
-          TermEntry(Absyn.ApplicationTerm(Absyn.CurriedApplication(l', r'), p))
+          let result = 
+            TermEntry(Absyn.ApplicationTerm(
+              Absyn.CurriedApplication(l', r'), p)
+            ) in
+            result
     
     | Absyn.AbstractionTerm(Absyn.NestedAbstraction(tsym, aterm), pos) ->
         if whnf then
@@ -1461,7 +1478,8 @@ and normalizeTerm term =
   in
 
   let result = normalize term emptyEnvironment false in
-  (getEntryTerm result)
+  let term = getEntryTerm result in
+    term
 
 (**********************************************************************
 * fixTerm:

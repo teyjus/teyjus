@@ -113,7 +113,7 @@ let buildTerm fvIndex tyfvIndex terms =
   let rec buildTermAux terms types =
 	match terms with
 	  [] -> buildType tyfvIndex types 
-  | (term :: rest) ->
+    | (term :: rest) ->
 	  let (restTerms, restTypes) =
 		match term with
 		  Absyn.IntTerm(i, _)             -> 
