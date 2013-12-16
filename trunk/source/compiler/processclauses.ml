@@ -314,19 +314,19 @@ and transTermFreeVar var =
 (***************************************************************************)
 and transTermBoundVar var bvs =
   match var with
-  Absyn.NamedBoundVar(tysy) ->
-    let rec ith tysys ind =
-    match tysys with
-      [] -> (ind, false)
-    | (tysy' :: rest) -> 
-      if (tysy' == tysy) then (ind, true)
-      else ith rest (ind + 1)
+  | Absyn.NamedBoundVar(tysy) ->
+    let rec ith tysys ind = match tysys with
+      |  [] -> (ind, false)
+      | (tysy' :: rest) -> 
+        if (tysy' == tysy) then 
+          (ind, true)
+        else ith rest (ind + 1)
     in
     let (dbInd, found) = ith bvs 1 in
-    if (found) then (* lambda-bound? *)
-    Absyn.BoundVarTerm(Absyn.DBIndex(dbInd), Errormsg.none)
-    else 
-    Absyn.FreeVarTerm(Absyn.FreeVar(transTermVar tysy, ref None), 
+      if (found) then (* lambda-bound? *)
+        Absyn.BoundVarTerm(Absyn.DBIndex(dbInd), Errormsg.none)
+      else 
+        Absyn.FreeVarTerm(Absyn.FreeVar(transTermVar tysy, ref None), 
               Errormsg.none)
   | _ -> Errormsg.impossible Errormsg.none "transTermBoundVar: invalid var rep"
     

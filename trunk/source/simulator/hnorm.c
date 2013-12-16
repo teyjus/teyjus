@@ -355,7 +355,7 @@ static DF_TermPtr HN_hnormApp(DF_TermPtr appPtr, Boolean whnf)
 }
 
 /* (weak) head normalize (explicit) suspension or implicit suspension
-   with a suspension term skeletion. The explicit suspension is destructivly
+   with a suspension term skeletion. The explicit suspension is destructively
    changed to its head normal form or weak head normal form in case
    that the whn is not an implicit susp itself (in which case the term
    skeleton must be an abstraction).
@@ -1029,7 +1029,7 @@ static DF_TermPtr HN_lnormApp(DF_TermPtr appPtr, Boolean whnf)
     return rtPtr;
 }
 
-/* Fuuly normlize or weak head normalize (explicit) suspension or implicit 
+/* Fully normalize or weak head normalize (explicit) suspension or implicit 
    suspension with a suspension term skeletion. The actions are the same
    as those in HN_hnormSusp except that HN_lnormDispatch is used as opposed
    to HN_hnormSusp with one exception: when the environment of the top-level
