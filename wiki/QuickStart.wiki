@@ -2,7 +2,7 @@
 
 = A Tutorial Introduction to Programming Using the Teyjus System =
 
-_Apologies for now, but coming soon._
+_While a tutorial with the following outline is planned, it does not currently exist.  The best source of information on how to use Teyjus can be found in the appendix of the book [https://sites.google.com/site/proghol/ "Programming with Higher-Order Logic"]._
 
 This wiki will assume a knowledge of Prolog and then will
 
