@@ -1,0 +1,102 @@
+COMPILER MODULE INTERFACES
+==========================
+
+Compiler structure:
+  The compiler is organized into a series of phases, with each phase
+  consuming the result of the previous phase as input, and producing
+  a result to be passed to the next phase.
+
+  1.  Preabstract Syntax Generation (module Compile)
+    The input to this phase is the filename of a module or signature.
+
+    The entry point to this phase is Compile.compile.
+
+    The result of this phase is a Preabsyn.pmodule structure containing
+    module or signature information.  The entire structure is valid.
+
+  2.  Preabsract Syntax Module Translation (module Translate)
+    The input to this phase is two Preabsyn.pmodules (the result of
+    phase 1), one for a module and one for its corresponding signature.
+
+    The entry point to this phase is Translate.translate.
+
+    The result of this phase is an Absyn.amodule structure.  The following
+    fields of that structure are valid for modules:
+      Module name
+      Import and accumulate lists
+      Kind table
+      Constant table
+      Type abbreviation table
+      Local and global kind lists
+      Local and global constant lists
+      Skeleton list
+    The following fields of the structure are valid for signatures:
+      Signature name
+      Kind and constant renaming information.
+      
+    There are also special considerations as to the validity of the fields
+    of constants and kinds at this point.  The following fields are valid:
+      Constants:
+        Symbol
+        Type (local, global, pervasive)
+        Exportdef, useonly
+        Redefinable
+        No definitions
+        Skeleton
+        Skeleton type environment size, without optimizations.
+      Kinds:
+        Symbol
+        Arity
+        Type (global, local, or pervasive)
+    
+
+  3.  Clause Translation (module Clauses)
+    The input to this phase is a Preabsyn.pmodule structure (the result
+    of phase 1) and an Absyn.amodule structure (the result of phase 2).
+    Both of these are expected to correspond to the same source code
+    module.
+
+    The entry point to this phase is Clauses.translateClauses.
+
+    The result of this phase is a 4-tuple containing the following
+    information:
+      The passed Absyn.amodule structure.  The following fields are valid
+      (in addition to the previously valid fields):
+        Hidden constants
+      A list of clauses.  These are in reverse (compared to source) order.
+      A list of new clauses.  These are in reverse order.
+      A list of closed definitions.  These are in reverse order.
+
+    There are also special considerations with respect to the properties
+    of clauses (abstract syntax terms).  Clauses have no overloaded
+    operators, and no nested abstractions.
+
+  4.  Type Skeleton Reduction  (module Typereduction)
+    The input to this phase is an Absyn.amodule structure (the result
+    of phase 3).
+
+    The entry point to this phase is Typereduction.reduceSkeletons.
+
+    The result of this phase is the passed Absyn.amodule structure.  Each
+    constant's skeleton is reduced, and the skeleton type environment
+    size has been updated to reflect it.
+
+  5.  Clause Processing (module Processclauses)
+    The input to this phase is an Absyn.amodule structure (the result
+    of phase 4).
+
+    The result of this phase is the passed Absyn.amodule structure.
+    The following fields are valid (in addition to the previously valid
+    fields):
+      Clause blocks
+
+  6.  Variable Annotation
+    The input to this phase is an Absyn.amodule structure (the result
+    of phase 4).
+    
+    
+  7.  Code Generation
+  8.  Writing to File
+
+  In addition to the various phases described above, there are various
+  additional modules used by the different phases.

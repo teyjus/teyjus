@@ -1,0 +1,33 @@
+new instructions
+
+try_else M,L1,L2
+
+This instruction precedes the code for the first clause defining a
+predicate defined by more than one clause and is responsible for
+setting up a choice point record. The record contains the following M
++ 12 cells: the first M argument registers, the contents of the cut
+choice point register B0, the contents of the environment pointer E,
+the contents of the continuation pointer CP, the current universe
+count UC, the contents of the code context register I, the contents of
+the clause implication point register CI, the contents of the live
+list beginning and end registers LLE and LL, the previous choice point
+B, the current heap pointer H, the current trail pointer TR and the
+address of the next clause given by L1. Finally B is set to point to the 
+newly created choice point and HB is set to the current top of heap 
+and execution continues with the instruction at L2
+
+retry N,L
+
+The purpose of this instruction is to reset the state using the
+information stored in the choice point pointed to by the B register,
+to change the next clause field to L1
+and to continue execution with the instruction at L2.  We assume that
+the procedure that initiates backtracking would have unwound the trail
+and set the TR register already. This instruction then resets the E,
+CP, UC, I, CI, LLE, LL, H, B0 and the first N argument registers from
+the relevant choice point fields. Further, it sets the HB register to
+the new value of the H register and it modifies the next clause field
+of the choice point to the next instruction in sequence. Finally, if
+the CI register points to an implication point, then it sets the CE
+register to the relevant value in the implication point and continues
+execution with the instruction at L..

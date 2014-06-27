@@ -1,0 +1,20 @@
+LocalCGeneratedFiles(y.tab.c y.tab.h lex.yy.c)
+
+y.tab.c y.tab.h: instrformats.y
+    $(YACC) -d instrformats.y
+
+lex.yy.c: instrformats.l y.tab.h
+    $(LEX) instrformats.l
+
+MAIN = instr_gen
+
+MAIN_FILES[] =
+    y.tab
+    lex.yy
+    instrgen-c
+    instrgen-ocaml
+    ../util/util
+
+LDFLAGS = -lm
+
+CProgram($(MAIN), $(MAIN_FILES))

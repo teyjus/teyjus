@@ -1,0 +1,16 @@
+% static scoping test
+let 
+   var a := 2
+   function f(x:int) : int = x+a
+       
+in
+
+   let var a := f(a)
+     in
+       printf("a in this scope is: %d\n",a);
+       printf("7 if static, 9 if dynamic: %d\n",f(5))
+     end   
+
+end
+
+$
