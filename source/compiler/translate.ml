@@ -1195,6 +1195,8 @@ and translateSignature s owner accumOrUse generalCopier =
   let _ = Errormsg.log Errormsg.none ("translating signature '" ^ name ^ "'") in
   
   let printRenamings total =
+    let scopeToString isKind =
+      if isKind then "kind " else "type " in
     let rec printaux lst =     
       match lst with
 	  [] -> ()
@@ -1202,9 +1204,11 @@ and translateSignature s owner accumOrUse generalCopier =
 	  match h with
 	      Preabsyn.InclusionStar ->
 		print_string "*"
-	    | Preabsyn.Inclusion (p) ->
+	    | Preabsyn.Inclusion (isKind, p) ->
+		print_string (scopeToString isKind);
 		print_string (Preabsyn.string_of_symbol p)
-	    | Preabsyn.RenamingPair (p1, p2) ->
+	    | Preabsyn.RenamingPair (isKind, p1, p2) ->
+		print_string (scopeToString isKind);
 		print_string ((Preabsyn.string_of_symbol p1) ^ " => " ^ (Preabsyn.string_of_symbol p2));
 	  print_string ", "; printaux t in
       let f (signame, rens) =

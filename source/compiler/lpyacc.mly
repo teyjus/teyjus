@@ -301,8 +301,10 @@ renamings:
   | renaming COMMA renamings	{ $1 :: $3 }
 
 renaming:
-  | tok				{ Inclusion (makeSymbol $1) }
-  | tok IMPLIES tok 		{ RenamingPair (makeSymbol $1, makeSymbol $3) } 
+  | KIND tok			{ Inclusion (true, makeSymbol $2) }
+  | TYPE tok			{ Inclusion (false, makeSymbol $2) }
+  | KIND tok IMPLIES tok 	{ RenamingPair (true, makeSymbol $2, makeSymbol $4) } 
+  | TYPE tok IMPLIES tok 	{ RenamingPair (false, makeSymbol $2, makeSymbol $4) } 
   | TIMES 			{ InclusionStar }
 
 idlist:

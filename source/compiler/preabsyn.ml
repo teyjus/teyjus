@@ -41,8 +41,8 @@ type pabstractedsymbol = AbstractedSymbol of (symbol * ptype option * pos)
 type ptypeabbrev = TypeAbbrev of psymbol * psymbol list * ptype * pos
 
 type renamingdirective = 
-  | RenamingPair of psymbol * psymbol
-  | Inclusion of psymbol
+  | RenamingPair of bool * psymbol * psymbol
+  | Inclusion of bool * psymbol
   | InclusionStar
 
 type pterm =
