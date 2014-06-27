@@ -40,6 +40,11 @@ type pabstractedsymbol = AbstractedSymbol of (symbol * ptype option * pos)
 
 type ptypeabbrev = TypeAbbrev of psymbol * psymbol list * ptype * pos
 
+type renamingdirective = 
+  | RenamingPair of psymbol * psymbol
+  | Inclusion of psymbol
+  | InclusionStar
+
 type pterm =
   | SeqTerm of pterm list * pos 
   | ListTerm of pterm list * pos
@@ -75,7 +80,8 @@ type pmodule =
       psymbol list * psymbol list * psymbol list * psymbol list
   | Signature of string * pconstant list * pconstant list *
       pconstant list * pkind list *
-      ptypeabbrev list * pfixity list * psymbol list * psymbol list
+      ptypeabbrev list * pfixity list * psymbol list *
+      psymbol list * (psymbol * renamingdirective list) list
 
 
 let string_of_pos pos = Errormsg.string_of_pos pos
@@ -220,7 +226,7 @@ let printPreAbsyn m out =
           output_list string_of_fixity fixities
             
       | Signature(name, gconstants, _, _, gkinds, tabbrevs, 
-                  fixities, accumsig, usig) ->
+                  fixities, accumsig, usig, _) ->
           output_line ("Signature: " ^ name) ;
           output_line "Constants:" ;
           output_list string_of_constant gconstants ;

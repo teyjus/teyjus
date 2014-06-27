@@ -1190,9 +1190,27 @@ and translateSignature s owner accumOrUse generalCopier =
         Errormsg.none
         "Translate.translateSignature: expected Preabsyn.Signature.")
   | Preabsyn.Signature(name, gconsts, uconsts, econsts, gkinds, tabbrevs,
-      fixities, accumsigs, usesigs) ->
+      fixities, accumsigs, usesigs, renamings) ->
 
   let _ = Errormsg.log Errormsg.none ("translating signature '" ^ name ^ "'") in
+  
+  let printRenamings total =
+    let rec printaux lst =     
+      match lst with
+	  [] -> ()
+	| (h :: t) ->
+	  match h with
+	      Preabsyn.InclusionStar ->
+		print_string "*"
+	    | Preabsyn.Inclusion (p) ->
+		print_string (Preabsyn.string_of_symbol p)
+	    | Preabsyn.RenamingPair (p1, p2) ->
+		print_string ((Preabsyn.string_of_symbol p1) ^ " => " ^ (Preabsyn.string_of_symbol p2));
+	  print_string ", "; printaux t in
+      let f (signame, rens) =
+        print_string ((Preabsyn.string_of_symbol signame) ^ "{"); printaux rens; print_string "}\n"
+      in List.map f total
+  in		
   
   (******************************************************************
   *mergeKinds:
@@ -1312,6 +1330,8 @@ and translateSignature s owner accumOrUse generalCopier =
         tables
   in
   
+  let _ = printRenamings renamings in
+   
   (******************************************************************
   *translateAccumSigs:
   * Translate all accumulated signatures.  Just reads the signature

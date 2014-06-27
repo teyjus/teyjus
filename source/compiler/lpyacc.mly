@@ -70,6 +70,7 @@ let globalKinds = ref []
 let localKinds = ref []
 
 let globalTypeAbbrevs = ref []
+let renamingList = ref []
 
 let fixityList = ref []
 
@@ -90,6 +91,7 @@ let reverseResults () =
   localKinds := !localKinds;
 
   globalTypeAbbrevs := List.rev !globalTypeAbbrevs;
+  renamingList := !renamingList;
 
   fixityList := List.rev !fixityList
 
@@ -110,6 +112,7 @@ let clearResults () =
   localKinds := [];
 
   globalTypeAbbrevs := [];
+  renamingList := [];
 
   fixityList := []
 
@@ -153,7 +156,7 @@ let makeSignature () =
   reverseResults ();
   let s = Signature(basename (), !globalConstants, !useOnlyList, !exportList,
                     !globalKinds, !globalTypeAbbrevs, !fixityList,
-                    !accumulatedSigList, !useSigList) in
+                    !accumulatedSigList, !useSigList, !renamingList) in
     clearResults ();
     s
 
@@ -175,7 +178,7 @@ let errorEof pos msg =
 %token IMPLIES INFIXLAMBDA TYARROW CUT PI SIGMA COMMA
 %token SEMICOLON AMPAND RDIVIDE NILLIST LISTCONS EQUAL
 %token PLUS MINUS TIMES LESS LEQ GTR GEQ UMINUS PERIOD
-%token LPAREN RPAREN LBRACK RBRACK COLON VBAR
+%token LPAREN RPAREN LBRACK RBRACK LCURLY RCURLY COLON VBAR
 %token EOF
 
 %token <(string * Preabsyn.pidkind)> ID SYID VID UPCID
@@ -194,6 +197,7 @@ let errorEof pos msg =
 %type <Preabsyn.pfixitykind> fixity
 %type <Preabsyn.pterm list> term
 %type <Preabsyn.pterm> abstterm atomterm constvar typedconst
+%type <Preabsyn.renamingdirective> renaming
 
 %type <(string * Preabsyn.pidkind)> tok
 %type <(Symbol.symbol * Preabsyn.ptype option * Preabsyn.pidkind * pos)>
@@ -225,6 +229,11 @@ tok:
   | UPCID                     { $1 }
   | SYID                      { $1 }
   | VID                       { $1 }
+
+signame:
+  | ID                        { $1 }
+  | UPCID                     { $1 }
+  | SYID                      { $1 }
 
 modheader:
   | MODULE tok PERIOD
@@ -274,11 +283,27 @@ sigpreamble:
       { accumulatedSigList := $3 @ !accumulatedSigList }
 
 cvidlist:
-  | tok                       { (makeSymbol $1) :: [] }
-  | cvidlist COMMA ID         { (makeSymbol $3) :: $1 }
-  | cvidlist COMMA UPCID      { (makeSymbol $3) :: $1 }
-  | cvidlist COMMA SYID       { (makeSymbol $3) :: $1 }
+  | qualifiedsigname 	
+	{ (makeSymbol $1) :: [] }
+  | cvidlist COMMA qualifiedsigname
+	{ (makeSymbol $3) :: $1 }
 
+qualifiedsigname:
+  | signame
+	{ $1 }
+  | signame LCURLY renamings RCURLY
+	{ renamingList := ((makeSymbol $1), $3) :: !renamingList;
+	  $1 }
+
+renamings:
+  | 				{ [] }
+  | renaming			{ [$1] }
+  | renaming COMMA renamings	{ $1 :: $3 }
+
+renaming:
+  | tok				{ Inclusion (makeSymbol $1) }
+  | tok IMPLIES tok 		{ RenamingPair (makeSymbol $1, makeSymbol $3) } 
+  | TIMES 			{ InclusionStar }
 
 idlist:
   | ID                        { (makeSymbol $1) :: [] }

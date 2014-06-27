@@ -49,6 +49,11 @@ type ptype =
   | Arrow of ptype * ptype * pos
   | ErrorType
 
+type renamingdirective = 
+  | RenamingPair of psymbol * psymbol
+  | Inclusion of psymbol
+  | InclusionStar
+
 (* Symbols for abstracted variables 
 * The optional type represents the possible type annotation 
 * The pabstractedsymbol of the term 
@@ -192,7 +197,8 @@ type pmodule =
       psymbol list * psymbol list * psymbol list * psymbol list
   | Signature of string * pconstant list * pconstant list *
       pconstant list * pkind list *
-      ptypeabbrev list * pfixity list * psymbol list * psymbol list
+      ptypeabbrev list * pfixity list * psymbol list *
+      psymbol list * (psymbol * renamingdirective list) list
 
 val printPreAbsyn : pmodule -> out_channel -> unit
 
@@ -203,5 +209,6 @@ val getTermPos : pterm -> pos
 val getModuleClauses : pmodule -> pclause list
 val getClauseTerm : pclause -> pterm
 
+val string_of_symbol: psymbol -> string
 val string_of_term : pterm -> string
 val string_of_type : ptype -> string

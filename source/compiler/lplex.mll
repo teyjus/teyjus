@@ -171,6 +171,8 @@ rule initial = parse
 | ")"           {RPAREN}
 | "["           {LBRACK}
 | "]"           {RBRACK}
+| "{"           {LCURLY}
+| "}"           {RCURLY}
 | ":"           {COLON}
 | "|"           {VBAR}
 

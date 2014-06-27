@@ -100,7 +100,7 @@ let rec sig_deps signame =
     | Not_found ->
         H.add sig_deps_table signame Computing ;
         match compile_signature signame with
-          | Preabsyn.Signature(_, _, _, _, _, _, _, accum_sigs, use_sigs) ->
+          | Preabsyn.Signature(_, _, _, _, _, _, _, accum_sigs, use_sigs, _) ->
               let direct_deps =
                 List.map psymbol_to_name (accum_sigs @ use_sigs)
               in
