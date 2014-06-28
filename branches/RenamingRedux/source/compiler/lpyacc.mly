@@ -283,29 +283,29 @@ sigpreamble:
       { accumulatedSigList := $3 @ !accumulatedSigList }
 
 cvidlist:
-  | qualifiedsigname 	
-	{ (makeSymbol $1) :: [] }
+  | qualifiedsigname 
+    { (makeSymbol $1) :: [] }
   | cvidlist COMMA qualifiedsigname
-	{ (makeSymbol $3) :: $1 }
+    { (makeSymbol $3) :: $1 }
 
 qualifiedsigname:
   | signame
-	{ $1 }
+    { $1 }
   | signame LCURLY renamings RCURLY
-	{ renamingList := ((makeSymbol $1), $3) :: !renamingList;
-	  $1 }
+    { renamingList := ((makeSymbol $1), $3) :: !renamingList;
+      $1 }
 
 renamings:
-  | 				{ [] }
-  | renaming			{ [$1] }
-  | renaming COMMA renamings	{ $1 :: $3 }
+  |                          { [] }
+  | renaming                 { [$1] }
+  | renaming COMMA renamings { $1 :: $3 }
 
 renaming:
-  | KIND tok			{ Inclusion (true, makeSymbol $2) }
-  | TYPE tok			{ Inclusion (false, makeSymbol $2) }
-  | KIND tok IMPLIES tok 	{ RenamingPair (true, makeSymbol $2, makeSymbol $4) } 
-  | TYPE tok IMPLIES tok 	{ RenamingPair (false, makeSymbol $2, makeSymbol $4) } 
-  | TIMES 			{ InclusionStar }
+  | KIND tok             { IncludeKind (makeSymbol $2) }
+  | TYPE tok             { IncludeType (makeSymbol $2) }
+  | KIND tok IMPLIES tok { RenameKind (makeSymbol $2, makeSymbol $4) } 
+  | TYPE tok IMPLIES tok { RenameType (makeSymbol $2, makeSymbol $4) } 
+  | TIMES                { IncludeAll }
 
 idlist:
   | ID                        { (makeSymbol $1) :: [] }

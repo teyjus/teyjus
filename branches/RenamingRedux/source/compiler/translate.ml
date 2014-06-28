@@ -1194,28 +1194,56 @@ and translateSignature s owner accumOrUse generalCopier =
 
   let _ = Errormsg.log Errormsg.none ("translating signature '" ^ name ^ "'") in
   
+  (* let printRenamings total = *)
+  (*   let scopeToString isKind = *)
+  (*     if isKind then "kind " else "type " in *)
+  (*   let rec printaux lst =      *)
+  (*     match lst with *)
+  (*     [] -> () *)
+  (*   | (h :: t) -> *)
+  (*     match h with *)
+  (*         Preabsyn.InclusionStar -> *)
+  (*   print_string "*" *)
+  (*       | Preabsyn.Inclusion (isKind, p) -> *)
+  (*   print_string (scopeToString isKind); *)
+  (*   print_string (Preabsyn.string_of_symbol p) *)
+  (*       | Preabsyn.RenamingPair (isKind, p1, p2) -> *)
+  (*   print_string (scopeToString isKind); *)
+  (*   print_string ((Preabsyn.string_of_symbol p1) ^ " => " ^ (Preabsyn.string_of_symbol p2)); *)
+  (*     print_string ", "; printaux t in *)
+  (*     let f (signame, rens) = *)
+  (*       print_string ((Preabsyn.string_of_symbol signame) ^ "{"); printaux rens; print_string "}\n" *)
+  (*     in List.map f total *)
+  (* in *)
   let printRenamings total =
-    let scopeToString isKind =
-      if isKind then "kind " else "type " in
     let rec printaux lst =     
       match lst with
-	  [] -> ()
-	| (h :: t) ->
-	  match h with
-	      Preabsyn.InclusionStar ->
-		print_string "*"
-	    | Preabsyn.Inclusion (isKind, p) ->
-		print_string (scopeToString isKind);
-		print_string (Preabsyn.string_of_symbol p)
-	    | Preabsyn.RenamingPair (isKind, p1, p2) ->
-		print_string (scopeToString isKind);
-		print_string ((Preabsyn.string_of_symbol p1) ^ " => " ^ (Preabsyn.string_of_symbol p2));
-	  print_string ", "; printaux t in
-      let f (signame, rens) =
-        print_string ((Preabsyn.string_of_symbol signame) ^ "{"); printaux rens; print_string "}\n"
-      in List.map f total
-  in		
-  
+    [] -> ()
+  | (h :: t) ->
+     (match h with
+         Preabsyn.IncludeAll -> print_string "*"
+       | Preabsyn.IncludeKind p -> 
+         let pstr = (Preabsyn.string_of_symbol p) in
+         print_string ("kind " ^ pstr)
+       | Preabsyn.IncludeType p ->
+         let pstr = (Preabsyn.string_of_symbol p) in
+         print_string ("type " ^ pstr)
+       | Preabsyn.RenameKind (p1, p2) ->
+         let p1str = Preabsyn.string_of_symbol p1 in
+         let p2str = Preabsyn.string_of_symbol p2 in
+         print_string ("kind " ^ p1str  ^ " => " ^ p2str);
+         print_string ", "; printaux t
+       | Preabsyn.RenameType (p1, p2) ->
+         let p1str = Preabsyn.string_of_symbol p1 in
+         let p2str = Preabsyn.string_of_symbol p2 in
+         print_string ("kind " ^ p1str  ^ " => " ^ p2str);
+         print_string ", "; printaux t)
+    in
+    let f (signame, rens) =
+      print_string ((Preabsyn.string_of_symbol signame) ^ "{"); printaux rens; print_string "}\n"
+    in List.map f total
+  in
+
   (******************************************************************
   *mergeKinds:
   * Adds the kinds from one signature into the kinds of all signatures.
@@ -1226,12 +1254,12 @@ and translateSignature s owner accumOrUse generalCopier =
         Absyn.Kind(s, Some a, _, Absyn.GlobalKind, p) ->
           (*  If the kind is already in the table, match the arity.
               Otherwise, add it to the table. *)
-	        let kindInTab = Table.find s ktable in
+        let kindInTab = Table.find s ktable in
           (match kindInTab with
              Some (Absyn.Kind(s', Some a', _, Absyn.PervasiveKind, p')) ->
                              Table.add s kind ktable
-	   | Some (Absyn.Kind(s', Some a', _, Absyn.GlobalKind, p')) ->
-	       if a <> a' 
+            | Some (Absyn.Kind(s', Some a', _, Absyn.GlobalKind, p')) ->
+              if a <> a' 
                then (Errormsg.error p 
                        ("kind '" ^ (Symbol.name s) ^ 
                         "' already declared with arity " ^
@@ -1326,7 +1354,7 @@ and translateSignature s owner accumOrUse generalCopier =
   ******************************************************************)
   let rec translateSigs tables accum sigs = 
     match sigs with
-      s::rest ->	
+      s::rest ->
         let (asig, table) = translateSignature s owner accum generalCopier
         in
         (translateSigs (table::tables) accum rest)
@@ -1543,9 +1571,9 @@ and translateModule mod' ktable ctable atable =
                         ^ (Errormsg.see p' "kind declaration"));
                    ktable)
                 else
-                  ktable	      
+                  ktable      
             | Some Absyn.Kind(s',Some a',_,Absyn.LocalKind, p') ->
-	              if a <> a' then
+              if a <> a' then
                   (Errormsg.error 
                      p ("kind already declared with arity " ^ (string_of_int a)
                         ^ (Errormsg.see p' "kind declaration"));
