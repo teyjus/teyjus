@@ -49,11 +49,13 @@ type ptype =
   | Arrow of ptype * ptype * pos
   | ErrorType
 
-(* The boolean states whether the renaming is for a kind declaration *)
+(* Renaming directives *)
 type renamingdirective = 
-  | RenamingPair of bool * psymbol * psymbol
-  | Inclusion of bool * psymbol
-  | InclusionStar
+  | RenameKind  of psymbol * psymbol
+  | RenameType  of psymbol * psymbol
+  | IncludeType of psymbol
+  | IncludeKind of psymbol
+  | IncludeAll
 
 (* Symbols for abstracted variables 
 * The optional type represents the possible type annotation 
