@@ -40,11 +40,6 @@ type pabstractedsymbol = AbstractedSymbol of (symbol * ptype option * pos)
 
 type ptypeabbrev = TypeAbbrev of psymbol * psymbol list * ptype * pos
 
-(* type renamingdirective =  *)
-(*   | RenamingPair of bool * psymbol * psymbol *)
-(*   | Inclusion of bool * psymbol *)
-(*   | InclusionStar *)
-
 type renamingdirective = 
   | RenameKind  of psymbol * psymbol
   | RenameType  of psymbol * psymbol
@@ -271,3 +266,18 @@ let getModuleClauses = function
   | _ ->
       Errormsg.impossible Errormsg.none
         "Preabsyn.getModuleClauses: invalid module"
+
+let getModuleName m =
+    match m with
+        Module(name,_,_,_,_,_,_,_,_,_,_,_,_,_,_) -> name
+          | _ -> Errormsg.impossible Errormsg.none 
+              "Preabsyn.getModuleName: invalid module"
+
+let getSignatureName s =
+    match s with
+        Signature(name,_,_,_,_,_,_,_,_,_) -> name
+          | _ -> Errormsg.impossible Errormsg.none
+              "Preabsyn.getSignatureName: invalid signature"
+
+let getSymbol = function | Symbol(s,_,_) -> s              
+let getSymbolPos = function | Symbol(_,_,p) -> p              
