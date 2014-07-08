@@ -215,3 +215,9 @@ val getClauseTerm : pclause -> pterm
 val string_of_symbol: psymbol -> string
 val string_of_term : pterm -> string
 val string_of_type : ptype -> string
+
+val getModuleName : pmodule -> string
+val getSignatureName : pmodule -> string
+val getSymbol : psymbol -> symbol
+val getSymbolPos : psymbol -> pos
+
