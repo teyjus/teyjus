@@ -84,7 +84,7 @@ void MCSTR_subString(MCSTR_Str loc, MCSTR_Str str, int startPos, int length)
     char* fromPtr = ((char*)(str + 1))+startPos;
     char* toPtr   = (char*)(loc + 1);
     
-    *((int *)loc) = (length + 1);
+    *((int *)loc) = (length);
     while (length > 0) {
       *toPtr++ = *fromPtr++;
       length--;
