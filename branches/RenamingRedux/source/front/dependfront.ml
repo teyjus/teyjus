@@ -63,7 +63,7 @@ let rec lpo_deps modname =
         H.add lpo_deps_table modname Computing ;
         match compile_module modname with
           | Preabsyn.Module(_, _, _, _, _, _, _, _, _, _, _,
-                            accum_mods, accum_sigs, use_sigs, import_mods) ->
+                            accum_mods, accum_sigs, use_sigs, import_mods, _) ->
               let direct_deps =
                 List.map psymbol_to_name (accum_mods @ import_mods)
               in
@@ -118,7 +118,7 @@ let root_sig_deps modname =
   let sig_deps_from_mod =
     match compile_module modname with
       | Preabsyn.Module(_, _, _, _, _, _, _, _, _, _, _,
-                        accum_mods, accum_sigs, use_sigs, import_mods) ->
+                        accum_mods, accum_sigs, use_sigs, import_mods, _) ->
           let direct_deps =
             List.map psymbol_to_name
               (accum_mods @ accum_sigs @ use_sigs @ import_mods)

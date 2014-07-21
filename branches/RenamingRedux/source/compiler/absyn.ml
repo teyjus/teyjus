@@ -229,7 +229,7 @@ and amodule =
       atypeabbrev Table.SymbolTable.t * astringinfo list * akind list *
       akind list * aconstant list * aconstant list * aconstant list ref *
       askeleton list * askeleton list ref * aclauseinfo ref)
-  | Signature of (string * akind list * aconstant list)
+  | Signature of (string * akind list * aconstant list * akind list * aconstant list)
   | ErrorModule
 
 and aimportedmodule = 
@@ -1949,22 +1949,35 @@ let getModuleClauses amod = !(getModuleClausesRef amod)
 let setModuleClauses amod cls = (getModuleClausesRef amod) := cls
 
 let getSignatureGlobalKindsList = function
-  Signature(_, kl, _) -> kl
+  Signature(_, kl, _, _, _) -> kl
 | Module(_) -> Errormsg.impossible Errormsg.none 
                  "getSignatureGlobalKindsList: argument is a module"
 | ErrorModule -> Errormsg.impossible Errormsg.none 
                    "getSignatureGlobalKindsList: argument invalid"
   
+let getSignatureOmittedKindsList = function
+  Signature(_, _, _, kl, _) -> kl
+| Module(_) -> Errormsg.impossible Errormsg.none 
+                 "getSignatureGlobalKindsList: argument is a module"
+| ErrorModule -> Errormsg.impossible Errormsg.none 
+                   "getSignatureGlobalKindsList: argument invalid"
   
 let getSignatureGlobalConstantsList = function
-  Signature(_,_,cl) -> cl
+  Signature(_,_,cl,_, _) -> cl
+| Module(_) -> Errormsg.impossible Errormsg.none 
+                 "getSignatureGlobalConstantsList: argument is a module"
+| ErrorModule -> Errormsg.impossible Errormsg.none 
+                   "getSignatureGlobalConstantsList: argument invalid"
+
+let getSignatureOmittedConstantsList = function
+  Signature(_,_,_,_,cl) -> cl
 | Module(_) -> Errormsg.impossible Errormsg.none 
                  "getSignatureGlobalConstantsList: argument is a module"
 | ErrorModule -> Errormsg.impossible Errormsg.none 
                    "getSignatureGlobalConstantsList: argument invalid"
 
 let getSignatureName = function
-  Signature(n,_,_) -> n
+  Signature(n,_,_,_,_) -> n
 | Module(_) -> Errormsg.impossible Errormsg.none 
                  "getSignatureName: argument is a module"
 | ErrorModule -> Errormsg.impossible Errormsg.none 
