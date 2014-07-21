@@ -387,11 +387,16 @@ let assignStringIndex strs =
 (****************************************************************************)
 (*                      COLLECT RENAMING INFORMATION                        *) 
 (* collect renaming information for imported and accumulated modules        *)
+(* including kinds and constants that were omitted due to renaming          *)
 (****************************************************************************)
 let collectRenamingInfo amod =
   (* function body of collectRenamingInfo *)
   let gkinds = Absyn.getSignatureGlobalKindsList amod in
+  let okinds = Absyn.getSignatureOmittedKindsList amod in
+  let gkinds = gkinds @ okinds in
   let gconsts = Absyn.getSignatureGlobalConstantsList amod in
+  let oconsts = Absyn.getSignatureOmittedConstantsList amod in
+  let gconsts = gconsts @ oconsts in
   RenamingInfo(Absyn.getSignatureName amod, 
 	       KindList(List.rev gkinds, List.length gkinds),
 	       ConstantList(List.rev gconsts, List.length gconsts))
@@ -1123,7 +1128,31 @@ let collectClosedConstsInAccs accs =
 
   
 
+let getOmittedKinds imps accums = 
+  let kinds = List.fold_left
+      (fun l a -> 
+        (match a with 
+          ( Absyn.AccumulatedModule(_, Absyn.Signature(_,_,_,k,_))) -> l@k
+          | _ -> l)) [] accums in 
+  let kinds = List.fold_left
+      (fun l a -> 
+        (match a with 
+          ( Absyn.ImportedModule(_, Absyn.Signature(_,_,_,k,_))) -> l@k 
+          | _ -> l)) kinds imps in 
+  kinds
 
+let getOmittedConsts imps accums = 
+  let consts = List.fold_left
+      (fun l a -> 
+        (match a with 
+          ( Absyn.AccumulatedModule(_, Absyn.Signature(_,_,_,_,c))) -> l@c 
+          | _ -> l)) [] accums in 
+  let consts = List.fold_left
+      (fun l a -> 
+        (match a with 
+          ( Absyn.ImportedModule(_, Absyn.Signature(_,_,_,_,c))) -> l@c 
+          | _ -> l)) consts imps in 
+  consts
   
 
 
@@ -1140,9 +1169,12 @@ let generateModuleCode amod =
       (* collect local constants appearing in acc modules for the use   *)
       (* generating instructions.                                       *)
       collectClosedConstsInAccs modaccs;
-      
+
+      let okinds = getOmittedKinds modimps modaccs in
+      let oconsts = getOmittedConsts modimps modaccs in
+
       (* assign indexes to global and local kinds *)				   
-      let (cgGKinds, cgLKinds) = assignKindIndex gkinds lkinds in
+      let (cgGKinds, cgLKinds) = assignKindIndex gkinds (lkinds@okinds) in
       (* 1) assign indexes to global, local and hidden constants;   *)
       (* 2) gather predicates have definitions in this module;      *)
       (* 3) gather predicates whose previous defintions may be      *)
@@ -1151,11 +1183,14 @@ let generateModuleCode amod =
       (* 5) gather local predicates                                 *)
       let (cgGConsts, cgLConsts, cgHConsts, cgDefs, cgGNonExpDefs, 
         cgGExpDefs, cgLDefs) = 
-        assignConstIndex (List.rev gconsts) (List.rev lconsts)
+        assignConstIndex (List.rev gconsts) ((List.rev lconsts)@oconsts)
           (List.rev (!hconsts))
       in
+
+      let oskels = List.fold_left (fun l c -> (Absyn.getConstantSkeletonValue c)::l) [] oconsts in
+
       (* merge type skeletons and those of hidden constants; assign indexes *)
-      let cgTySkels = assignSkelIndex skels !hskels in 
+      let cgTySkels = assignSkelIndex (skels@oskels) !hskels in 
       (* assign indexes to strings *)
       let cgStrings = assignStringIndex modstr in
       (* generate code for top-level predicate defintions *)

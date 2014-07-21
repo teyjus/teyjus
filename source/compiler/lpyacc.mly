@@ -148,7 +148,7 @@ let makeModule () =
                  !closedConstants, !useOnlyList, !exportList, !fixityList,
                  !globalKinds, !localKinds, !globalTypeAbbrevs,
                  !clauseList, !accumulatedModList, !accumulatedSigList,
-                 !useSigList, !importedModList) in
+                 !useSigList, !importedModList, !renamingList) in
     clearResults () ;
     m
 

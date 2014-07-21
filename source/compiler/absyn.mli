@@ -306,7 +306,7 @@ and amodule =
       atypeabbrev Table.SymbolTable.t * astringinfo list * akind list *
       akind list * aconstant list * aconstant list * aconstant list ref *
       askeleton list * askeleton list ref * aclauseinfo ref)
-  | Signature of (string * akind list * aconstant list)
+  | Signature of (string * akind list * aconstant list * akind list * aconstant list)
   | ErrorModule
 
 and aimportedmodule = 
@@ -647,7 +647,9 @@ val setModuleClauses : amodule -> aclauseinfo -> unit
 
 val getSignatureName : amodule -> string
 val getSignatureGlobalKindsList : amodule -> akind list
+val getSignatureOmittedKindsList : amodule -> akind list
 val getSignatureGlobalConstantsList : amodule -> aconstant list
+val getSignatureOmittedConstantsList : amodule -> aconstant list
 
 (*************************************************************************)
 (*  aclauseinfo:                                                         *)
