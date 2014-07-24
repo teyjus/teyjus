@@ -1518,13 +1518,13 @@ and translateSignature s owner accumOrUse generalCopier renameopt =
       Absyn.ArrowType(t1,t2) ->
         Absyn.ArrowType(renameType t1 renameopt, renameType t2 renameopt)
     | Absyn.TypeSetType(t1,a,b) ->
-        let a' = ref (List.map (fun x -> renameType x renameopt) !a) in
-        let b' =
+        let _ = a := (List.map (fun x -> renameType x renameopt) !a) in
+        let _ = b :=
           (match !b with
-            None -> ref None
-          | Some t -> ref (Some (renameType t renameopt)) )
+            None -> None
+          | Some t -> (Some (renameType t renameopt)) )
         in
-        Absyn.TypeSetType(renameType t1 renameopt, a', b')
+        Absyn.TypeSetType(renameType t1 renameopt, a, b)
     | Absyn.ApplicationType(Absyn.Kind(s,a,b,c,d),t2) -> 
          (match (renameKind s renameopt) with 
           Some s -> Absyn.ApplicationType(Absyn.Kind(s,a,b,c,d), 
@@ -1534,9 +1534,9 @@ and translateSignature s owner accumOrUse generalCopier renameopt =
     | (Absyn.TypeVarType (Absyn.BindableTypeVar a)) as t ->
         (match !a with
            None -> t
-         | Some a -> 
-             let a' = ref (Some (renameType a renameopt)) in
-             Absyn.TypeVarType(Absyn.BindableTypeVar a') )
+         | Some a' -> 
+             let _ = a := (Some (renameType a' renameopt)) in
+             Absyn.TypeVarType(Absyn.BindableTypeVar a) )
     | t' -> t'
   in
 
@@ -1581,11 +1581,11 @@ and translateSignature s owner accumOrUse generalCopier renameopt =
           | (h::t) ->
             let Absyn.Constant(symbol,a1,a2,a3,a4,a5,a6,a7,a8,
                                a9,a10,a11,a12,a13,a14,a15,a16) = h in
-            let a9 = 
+            let _ = a9 := 
              (match !a9 with
-                None -> ref None
+                None -> None
               | Some (Absyn.Skeleton (t,a,b)) -> 
-                  ref (Some (Absyn.Skeleton(renameType t ren,a,b)))) 
+                  (Some (Absyn.Skeleton(renameType t ren,a,b)))) 
             in
               (match (renameConst symbol ren) with 
                 None -> 
@@ -2118,12 +2118,11 @@ and translateModule mod' ktable ctable atable =
           let constRenaming' = List.map renameConst constRenaming in
           let okindlist' = List.map 
           (fun (Absyn.Kind(a,b,c,_,d)) -> Absyn.Kind(a,b,c,Absyn.LocalKind,d)) okindlist in
-          let oconstlist' = List.map 
+          let _ = List.iter 
           (fun (Absyn.Constant(s,a1,a2,a3,a4,a5,a6,a7,a8,
-                               a9,a10,a11,a12,a13,_,a15,a16)) -> 
-                Absyn.Constant(s,a1,a2,a3,a4,a5,a6,a7,a8,
-                               a9,a10,a11,a12,a13,ref Absyn.LocalConstant,a15,a16)) oconstlist in
-          Absyn.Signature(name, kindRenaming', constRenaming',okindlist',oconstlist')
+                               a9,a10,a11,a12,a13,constType,a15,a16)) ->
+                                constType := Absyn.LocalConstant) oconstlist in
+          Absyn.Signature(name, kindRenaming', constRenaming',okindlist',oconstlist)
       | _ ->
           Errormsg.impossible Errormsg.none
             "Translate.updateRenaming: invalid signature"
