@@ -40,12 +40,16 @@ type pabstractedsymbol = AbstractedSymbol of (symbol * ptype option * pos)
 
 type ptypeabbrev = TypeAbbrev of psymbol * psymbol list * ptype * pos
 
-type renamingdirective = 
-  | RenameKind  of psymbol * psymbol
+type renamingdirective =
+    RenameKind  of psymbol * psymbol
   | RenameType  of psymbol * psymbol
   | IncludeType of psymbol
   | IncludeKind of psymbol
-  | IncludeAll
+
+type renamingdirectives =
+    IncludeAll
+  | SelectOf of renamingdirective list
+  | InclusiveSelect of renamingdirective list
 
 type pterm =
   | SeqTerm of pterm list * pos 
@@ -80,11 +84,11 @@ type pmodule =
       pconstant list * pconstant list * pconstant list * pfixity list *
       pkind list * pkind list * ptypeabbrev list * pclause list * 
       psymbol list * psymbol list * psymbol list * psymbol list *
-      (psymbol * renamingdirective list) list
+      (psymbol * renamingdirectives) list
   | Signature of string * pconstant list * pconstant list *
       pconstant list * pkind list *
       ptypeabbrev list * pfixity list * psymbol list *
-      psymbol list * (psymbol * renamingdirective list) list
+      psymbol list * (psymbol * renamingdirectives) list
 
 
 let string_of_pos pos = Errormsg.string_of_pos pos

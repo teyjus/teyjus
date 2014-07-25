@@ -70,9 +70,13 @@ let globalKinds = ref []
 let localKinds = ref []
 
 let globalTypeAbbrevs = ref []
+
+let auxRenamingList = ref []
 let renamingList = ref []
 
 let fixityList = ref []
+
+let inclusiveRenaming = ref false
 
 let reverseResults () =
   importedModList := List.rev !importedModList;
@@ -112,6 +116,7 @@ let clearResults () =
   localKinds := [];
 
   globalTypeAbbrevs := [];
+
   renamingList := [];
 
   fixityList := []
@@ -141,7 +146,19 @@ let makeConst ?ty sym =
 
 let makeAbsSymbol (sym, typ_opt, _, pos) = 
   AbstractedSymbol(sym, typ_opt, pos) 
-      
+
+let makeRenamingDirective = 
+  let inclusive = !inclusiveRenaming in
+  let directives = !auxRenamingList in
+  (inclusiveRenaming := false);
+  (auxRenamingList := []);
+  if directives = [] 
+    then IncludeAll
+    else
+      if inclusive
+      then InclusiveSelect directives
+      else SelectOf directives
+
 let makeModule () =
   reverseResults () ;
   let m = Module(basename (), !globalConstants, !localConstants,
@@ -197,7 +214,7 @@ let errorEof pos msg =
 %type <Preabsyn.pfixitykind> fixity
 %type <Preabsyn.pterm list> term
 %type <Preabsyn.pterm> abstterm atomterm constvar typedconst
-%type <Preabsyn.renamingdirective> renaming
+%type <unit> renaming
 
 %type <(string * Preabsyn.pidkind)> tok
 %type <(Symbol.symbol * Preabsyn.ptype option * Preabsyn.pidkind * pos)>
@@ -292,20 +309,29 @@ qualifiedsigname:
   | signame
     { $1 }
   | signame LCURLY renamings RCURLY
-    { renamingList := ((makeSymbol $1), $3) :: !renamingList;
+    { renamingList := ((makeSymbol $1), makeRenamingDirective) :: !renamingList;
       $1 }
 
 renamings:
-  |                          { [] }
-  | renaming                 { [$1] }
-  | renaming COMMA renamings { $1 :: $3 }
+  |                          { }
+  | renaming                 { }
+  | renaming COMMA renamings { }
 
 renaming:
-  | KIND tok             { IncludeKind (makeSymbol $2) }
-  | TYPE tok             { IncludeType (makeSymbol $2) }
-  | KIND tok IMPLIES tok { RenameKind (makeSymbol $2, makeSymbol $4) } 
-  | TYPE tok IMPLIES tok { RenameType (makeSymbol $2, makeSymbol $4) } 
-  | TIMES                { IncludeAll }
+  | KIND tok 
+        { auxRenamingList :=
+            IncludeKind(makeSymbol $2) :: !auxRenamingList }
+  | TYPE tok 
+        { auxRenamingList :=
+            IncludeType(makeSymbol $2) :: !auxRenamingList }
+  | KIND tok IMPLIES tok
+        { auxRenamingList :=
+            RenameKind(makeSymbol $2, makeSymbol $4) :: !auxRenamingList } 
+  | TYPE tok IMPLIES tok
+        { auxRenamingList :=
+            RenameType(makeSymbol $2, makeSymbol $4) :: !auxRenamingList } 
+  | TIMES 
+        { inclusiveRenaming := false }
 
 idlist:
   | ID                        { (makeSymbol $1) :: [] }

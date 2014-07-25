@@ -1162,11 +1162,11 @@ let copyUseonly generalCopier owner currentConstant newConstant =
 * expand this list to contain all kinds and constants from the current
 * signature that are not explicitly included or renamed already.
 **********************************************************************)
-let expandRenaming ktable klist ctable clist tabbrevs renameopt all =
-  if not all then renameopt else
-    let ren = if Option.isSome renameopt 
-              then Option.get renameopt 
-              else [] in
+let expandRenaming ktable klist ctable clist tabbrevs renaming =
+  match renaming with 
+    Preabsyn.IncludeAll
+  | Preabsyn.SelectOf _ -> renaming
+  | Preabsyn.InclusiveSelect renamings ->
     let klist = 
       List.fold_left (fun l (Preabsyn.Kind(kl,_,_)) -> kl@l) [] klist in
     let klist = 
@@ -1189,14 +1189,14 @@ let expandRenaming ktable klist ctable clist tabbrevs renameopt all =
 
     let ren' = List.fold_left 
               (fun l (Preabsyn.Symbol(s,a,b)) ->
-                if List.exists (isRenameKind s) ren
+                if List.exists (isRenameKind s) renamings
                 then l
                 else (Preabsyn.IncludeKind(Preabsyn.Symbol(s,a,b)))::l)
-              ren klist
+              renamings klist
     in
     let ren' = Table.fold 
               (fun s _ l ->
-                if List.exists (isRenameKind s) ren
+                if List.exists (isRenameKind s) renamings
                 then l
                 else (Preabsyn.IncludeKind(
                         Preabsyn.Symbol(s,Preabsyn.ConstID,Errormsg.none)))::l)
@@ -1204,19 +1204,19 @@ let expandRenaming ktable klist ctable clist tabbrevs renameopt all =
     in
     let ren' = List.fold_left 
               (fun l (Preabsyn.Symbol(s,a,b)) ->
-                if List.exists (isRenameType s) ren
+                if List.exists (isRenameType s) renamings
                 then l
                 else (Preabsyn.IncludeType(Preabsyn.Symbol(s,a,b)))::l)
               ren' clist
     in
     let ren' = Table.fold 
               (fun s _ l ->
-                if List.exists (isRenameType s) ren
+                if List.exists (isRenameType s) renamings
                 then l
                 else (Preabsyn.IncludeType(
                         Preabsyn.Symbol(s,Preabsyn.ConstID,Errormsg.none)))::l)
               ctable ren'
-    in Some ren'
+    in Preabsyn.InclusiveSelect ren'
 
 (**********************************************************************
 *checkRenaming:
@@ -1224,10 +1224,11 @@ let expandRenaming ktable klist ctable clist tabbrevs renameopt all =
 * actually kinds/types in the accumulated signature. Also checks that no
 * two kinds/symbols are renamed to the same name and vice versa.
 **********************************************************************)
-let checkRenaming kindtable kindlist constanttable constantlist tabbrevs renameopt =
-  match renameopt with
-    None -> ()
-  | Some ren ->
+let checkRenaming kindtable kindlist constanttable constantlist tabbrevs renaming =
+  match renaming with
+    Preabsyn.IncludeAll -> ()
+  | Preabsyn.InclusiveSelect renamings 
+  | Preabsyn.SelectOf renamings ->
       let printErrorMsg k str msg =
         if msg then
             (Errormsg.error (Preabsyn.getSymbolPos k)
@@ -1289,10 +1290,9 @@ let checkRenaming kindtable kindlist constanttable constantlist tabbrevs renameo
           else 
             (if List.exists (function s -> Symbol.equal s t1) (accFromC@accToC)
             then printErrorMsg t1' "type" false
-            else check rest (accFromK,t1::accFromC) (accToK,t1::accToC))
-         | _::rest -> check rest (accFromK,accFromC) (accToK,accToC) )
+            else check rest (accFromK,t1::accFromC) (accToK,t1::accToC)))
       in
-      check ren ([],[]) ([],[])
+      check renamings ([],[]) ([],[])
 
 (**********************************************************************
 *translate:
@@ -1302,7 +1302,7 @@ let checkRenaming kindtable kindlist constanttable constantlist tabbrevs renameo
 **********************************************************************)
 let rec translate mod' sig' =
     let (asig, (ktable, ctable, atable)) =
-      translateSignature sig' true true copy None in
+      translateSignature sig' true true copy Preabsyn.IncludeAll in
     let amod = translateModule mod' ktable ctable atable in
     (amod, asig)
 
@@ -1327,7 +1327,7 @@ let rec translate mod' sig' =
 *   an absyn signature
 *   a tuple of the updated constant, kind and abbreviation tables.
 **********************************************************************)
-and translateSignature s owner accumOrUse generalCopier renameopt =
+and translateSignature s owner accumOrUse generalCopier renaming =
   match s with
     Preabsyn.Module(_) ->
       (Errormsg.impossible
@@ -1449,9 +1449,9 @@ and translateSignature s owner accumOrUse generalCopier renameopt =
   ******************************************************************)
   let rec getRenaming name renamings =
     match renamings with
-      [] -> None
+      [] -> Preabsyn.IncludeAll
     | ((h,l)::t) -> 
-        if (name = Symbol.name (Preabsyn.getSymbol h)) then (Some l)
+        if (name = Symbol.name (Preabsyn.getSymbol h)) then l
         else getRenaming name t
   in
 
@@ -1474,8 +1474,8 @@ and translateSignature s owner accumOrUse generalCopier renameopt =
   *renameKind:
   * Renames a symbol using kind renaming directives. 
   ******************************************************************)
-  let rec renameKind symbol renaming =
-    (match renaming with
+  let rec renameKind symbol renamings =
+    (match renamings with
       [] -> None
     | (Preabsyn.IncludeKind (Preabsyn.Symbol(s,_,_)))::rest -> 
         if (Symbol.equal s symbol) then
@@ -1493,8 +1493,8 @@ and translateSignature s owner accumOrUse generalCopier renameopt =
   *renameConst:
   * Renames a symbol using type renaming directives. 
   ******************************************************************)
-  let rec renameConst symbol renaming =
-    (match renaming with
+  let rec renameConst symbol renamings =
+    (match renamings with
       [] -> None
     | (Preabsyn.IncludeType (Preabsyn.Symbol(s,_,_)))::rest -> 
         if (Symbol.equal s symbol) then
@@ -1513,29 +1513,29 @@ and translateSignature s owner accumOrUse generalCopier renameopt =
   *renameType:
   * Recursively renames a type in abstract syntax (atype). 
   ******************************************************************)
-  let rec renameType t renameopt =
+  let rec renameType t renaming =
     match t with
       Absyn.ArrowType(t1,t2) ->
-        Absyn.ArrowType(renameType t1 renameopt, renameType t2 renameopt)
+        Absyn.ArrowType(renameType t1 renaming, renameType t2 renaming)
     | Absyn.TypeSetType(t1,a,b) ->
-        let _ = a := (List.map (fun x -> renameType x renameopt) !a) in
+        let _ = a := (List.map (fun x -> renameType x renaming) !a) in
         let _ = b :=
           (match !b with
             None -> None
-          | Some t -> (Some (renameType t renameopt)) )
+          | Some t -> (Some (renameType t renaming)) )
         in
-        Absyn.TypeSetType(renameType t1 renameopt, a, b)
+        Absyn.TypeSetType(renameType t1 renaming, a, b)
     | Absyn.ApplicationType(Absyn.Kind(s,a,b,c,d),t2) -> 
-         (match (renameKind s renameopt) with 
+         (match (renameKind s renaming) with 
           Some s -> Absyn.ApplicationType(Absyn.Kind(s,a,b,c,d), 
-                    (List.map (fun x -> renameType x renameopt) t2 ))
+                    (List.map (fun x -> renameType x renaming) t2 ))
         | None ->  Absyn.ApplicationType(Absyn.Kind(s,a,b,c,d), 
-                    (List.map (fun x -> renameType x renameopt) t2 )) )
+                    (List.map (fun x -> renameType x renaming) t2 )) )
     | (Absyn.TypeVarType (Absyn.BindableTypeVar a)) as t ->
         (match !a with
            None -> t
          | Some a' -> 
-             let _ = a := (Some (renameType a' renameopt)) in
+             let _ = a := (Some (renameType a' renaming)) in
              Absyn.TypeVarType(Absyn.BindableTypeVar a) )
     | t' -> t'
   in
@@ -1546,23 +1546,24 @@ and translateSignature s owner accumOrUse generalCopier renameopt =
   * Returns a tuple containing lists for the renamed kinds and the ones 
   * that were omitted. 
   ******************************************************************)
-  let applyKindRenaming kindlist renameopt =
-    let rec applyKindRenaming' kindlist renameopt renamedKinds omittedKinds =
-      match renameopt with
-        None -> (kindlist, [])
-      | Some ren ->
+  let applyKindRenaming kindlist renaming =
+    let rec applyKindRenaming' kindlist renaming renamedKinds omittedKinds =
+      match renaming with
+        Preabsyn.IncludeAll -> (kindlist, [])
+      | Preabsyn.SelectOf renamings 
+      | Preabsyn.InclusiveSelect renamings ->
           (match kindlist with
             [] -> (renamedKinds, omittedKinds)
-          | (h::t) ->
-              let Absyn.Kind(symbol,a,b,c,d) = h in
-              (match (renameKind symbol ren) with 
+          | (head :: tail) ->
+              let Absyn.Kind(symbol,a,b,c,d) = head in
+              (match (renameKind symbol renamings) with 
                 None ->
-                  applyKindRenaming' t renameopt renamedKinds (h::omittedKinds)
+                  applyKindRenaming' tail renaming renamedKinds (head :: omittedKinds)
               | Some s ->
                   let h = Absyn.Kind(s,a,b,c,d) in
-                  applyKindRenaming' t renameopt (h::renamedKinds) omittedKinds))
+                  applyKindRenaming' tail renaming (h::renamedKinds) omittedKinds))
     in
-      applyKindRenaming' kindlist renameopt [] []
+      applyKindRenaming' kindlist renaming [] []
   in
 
   (******************************************************************
@@ -1571,11 +1572,12 @@ and translateSignature s owner accumOrUse generalCopier renameopt =
   * Returns a tuple containing lists for the renamed constants and the ones 
   * that were omitted. 
   ******************************************************************)
-  let applyConstRenaming constlist renameopt =
-    let rec applyConstRenaming' constlist renameopt renamedConsts omittedConsts =
-      match renameopt with
-        None -> (constlist, [])
-      | Some ren ->
+  let applyConstRenaming constlist renaming =
+    let rec applyConstRenaming' constlist renaming renamedConsts omittedConsts =
+      match renaming with
+        Preabsyn.IncludeAll -> (constlist, [])
+      | Preabsyn.SelectOf renamings 
+      | Preabsyn.InclusiveSelect renamings ->
           (match constlist with
             [] -> (renamedConsts, omittedConsts)
           | (h::t) ->
@@ -1585,39 +1587,40 @@ and translateSignature s owner accumOrUse generalCopier renameopt =
              (match !a9 with
                 None -> None
               | Some (Absyn.Skeleton (t,a,b)) -> 
-                  (Some (Absyn.Skeleton(renameType t ren,a,b)))) 
+                  (Some (Absyn.Skeleton(renameType t renamings, a, b)))) 
             in
-              (match (renameConst symbol ren) with 
+              (match (renameConst symbol renamings) with 
                 None -> 
                   let h = Absyn.Constant(symbol,a1,a2,a3,a4,a5,a6,a7,a8,
                                          a9,a10,a11,a12,a13,a14,a15,a16) in
-                  applyConstRenaming' t renameopt renamedConsts (h::omittedConsts)
+                  applyConstRenaming' t renaming renamedConsts (h::omittedConsts)
               | Some s ->
                   let h = Absyn.Constant(s,a1,a2,a3,a4,a5,a6,a7,a8,
                                          a9,a10,a11,a12,a13,a14,a15,a16) in
-                  applyConstRenaming' t renameopt (h::renamedConsts) omittedConsts)) 
+                  applyConstRenaming' t renaming (h::renamedConsts) omittedConsts)) 
     in
-      applyConstRenaming' constlist renameopt [] []
+      applyConstRenaming' constlist renaming [] []
   in
 
   (******************************************************************
   *applyTypeAbbrevRenaming:
   * Applies the renaming to a type abbreviation in abstract syntax.
   ******************************************************************)
-  let rec applyTypeAbbrevRenaming tabbrev renameopt =
-    match renameopt with
-      None -> Some tabbrev
-    | Some ren ->
+  let rec applyTypeAbbrevRenaming tabbrev renaming =
+    match renaming with
+      Preabsyn.IncludeAll -> Some tabbrev
+    | Preabsyn.SelectOf renamings
+    | Preabsyn.InclusiveSelect renamings ->
         let Absyn.TypeAbbrev (symbol, slist, ty, pos) = tabbrev in
-        (match renameKind symbol ren with
+        (match renameKind symbol renamings with
           None -> None
         | Some s ->
-            let ty = renameType ty ren in
+            let ty = renameType ty renamings in
             let rec renameSymbolList sl =
               (match sl with
                 [] -> []
               | h::t ->
-                  let h = renameKind h ren in
+                  let h = renameKind h renamings in
                   if (Option.isSome h)
                   then (Option.get h)::(renameSymbolList t)
                   else renameSymbolList t ) in
@@ -1653,19 +1656,15 @@ and translateSignature s owner accumOrUse generalCopier renameopt =
   let usetables = translateUseSigs sigs in
   let (ktable, ctable) = mergeKindandConstTables ktable ctable usetables in
 
-  let all = if Option.isSome renameopt 
-            then List.mem (Preabsyn.IncludeAll) (Option.get renameopt)
-            else false in
-
   (* If there's a 'star' (include all) in the renaming directives list,
    * expand it to include all kinds and constants from the current signature
    * that are not explicitly included or renamed already. *)
-  let renameopt = expandRenaming ktable gkinds ctable 
-                   (gconsts@uconsts@econsts) tabbrevs renameopt all in
+  let renaming = expandRenaming ktable gkinds ctable 
+                   (gconsts@uconsts@econsts) tabbrevs renaming in
 
   (* Check renaming, considering constants from the current module + accum/use signatures *)
   let () = checkRenaming ktable gkinds ctable 
-             (gconsts@uconsts@econsts) tabbrevs renameopt in
+             (gconsts@uconsts@econsts) tabbrevs renaming in
   
   let accumkinds = getFromTable (fun k -> not (Absyn.isPervasiveKind k)) ktable in
 
@@ -1673,7 +1672,7 @@ and translateSignature s owner accumOrUse generalCopier renameopt =
   let kindlist = translateKinds gkinds buildGlobalKind in
   let oldktable = mergeKinds (kindlist@accumkinds) Pervasive.pervasiveKinds in
   (* Rename kinds *)
-  let (kindlist, okindlist) = applyKindRenaming (kindlist@accumkinds) renameopt in
+  let (kindlist, okindlist) = applyKindRenaming (kindlist@accumkinds) renaming in
   let ktable = mergeKinds kindlist Pervasive.pervasiveKinds in
 
   (* GN, Aug 23, 2012: merging of type abbreviations tables should be 
@@ -1694,7 +1693,7 @@ and translateSignature s owner accumOrUse generalCopier renameopt =
   (* Rename type abbreviations *)
   let atable = Table.fold
           (fun k ta table ->
-              let ta' = applyTypeAbbrevRenaming ta renameopt in
+              let ta' = applyTypeAbbrevRenaming ta renaming in
               if Option.isSome(ta')
               then
                 let (Absyn.TypeAbbrev(s,_,_,_)) = Option.get ta' in 
@@ -1706,12 +1705,12 @@ and translateSignature s owner accumOrUse generalCopier renameopt =
   let constantlist = 
     translateConstants gconsts oldktable oldatable buildGlobalConstant in
   (* Rename constants *)
-  let (constantlist,oconstlist) = applyConstRenaming constantlist renameopt in
+  let (constantlist,oconstlist) = applyConstRenaming constantlist renaming in
 
   (*  Translate used constants *)
   let uconstantlist = translateUseOnlyConstants owner uconsts oldktable oldatable in
   (* Rename used constants *)
-  let (uconstantlist,ouconstlist) = applyConstRenaming uconstantlist renameopt in
+  let (uconstantlist,ouconstlist) = applyConstRenaming uconstantlist renaming in
 
   (*  Translate exportdef constants *)
   let econstantlist =
@@ -1721,11 +1720,11 @@ and translateSignature s owner accumOrUse generalCopier renameopt =
       translateUseOnlyConstants owner econsts oldktable oldatable
   in
   (* Rename exportdef constants *)
-  let (econstantlist,oeconstlist) = applyConstRenaming econstantlist renameopt in
+  let (econstantlist,oeconstlist) = applyConstRenaming econstantlist renaming in
 
   let accumconsts = getFromTable (fun k -> not (Absyn.isPervasiveConstant k)) ctable in
   (* Rename constants from accumulated signatures *)
-  let (accumconsts, oaconstlist) = applyConstRenaming accumconsts renameopt in
+  let (accumconsts, oaconstlist) = applyConstRenaming accumconsts renaming in
 
   let oconstlist = oconstlist @ ouconstlist @ oeconstlist @ oaconstlist in
 
@@ -2053,39 +2052,37 @@ and translateModule mod' ktable ctable atable =
 
 
   let revertKindSymbol k renaming =
-    if not (Option.isSome renaming) then k else
-    (let renaming = Option.get renaming in
-     if List.exists 
-        (function (Preabsyn.IncludeKind(Preabsyn.Symbol(s,_,_))) ->
+    match renaming with
+      [] -> k
+    | renamings ->
+        if List.exists 
+          (function (Preabsyn.IncludeKind(Preabsyn.Symbol(s,_,_))) ->
                    Symbol.equal s k | _ -> false) renaming 
-     then k
-     else
-       try
-       (match 
-         List.find 
-         (function (Preabsyn.RenameKind(_, Preabsyn.Symbol(s,_,_))) -> 
-                   Symbol.equal s k | _ -> false) renaming
-        with
-          Preabsyn.RenameKind(Preabsyn.Symbol(s,_,_), _) -> s
-        | _ -> k) with Not_found -> k)
+        then k
+        else
+         try
+           (match (List.find (function (Preabsyn.RenameKind(_, Preabsyn.Symbol(s,_,_))) -> 
+                   Symbol.equal s k | _ -> false) renaming) with
+              Preabsyn.RenameKind(Preabsyn.Symbol(s,_,_), _) -> s
+            | _ -> k)
+         with Not_found -> k
   in
 
-  let revertConstantSymbol c renaming =
-    if not (Option.isSome renaming) then c else
-    (let renaming = Option.get renaming in
+  let revertConstantSymbol c renaming=
+    match renaming with
+      [] -> c
+    | renamings ->
      if List.exists 
         (function (Preabsyn.IncludeType(Preabsyn.Symbol(s,_,_))) ->
-                   Symbol.equal s c | _ -> false) renaming 
+                   Symbol.equal s c | _ -> false) renamings 
      then c
      else
        try
-       (match 
-         List.find 
-         (function (Preabsyn.RenameType(_, Preabsyn.Symbol(s,_,_))) -> 
-                   Symbol.equal s c | _ -> false) renaming
-        with
-          Preabsyn.RenameType(Preabsyn.Symbol(s,_,_), _) -> s
-        | _ -> c) with Not_found -> c)
+         (match (List.find  (function (Preabsyn.RenameType(_, Preabsyn.Symbol(s,_,_))) -> 
+                   Symbol.equal s c | _ -> false) renamings) with
+            Preabsyn.RenameType(Preabsyn.Symbol(s,_,_), _) -> s
+          | _ -> c)
+       with Not_found -> c
   in
 
   (******************************************************************
@@ -2093,7 +2090,14 @@ and translateModule mod' ktable ctable atable =
   * Takes anything that is in the accumulated module that is in the
   * accumulating module and puts it in the renaming list.
   ******************************************************************)
-  let normalizeRenaming renamings ktable ctable atable asig =
+  let normalizeRenaming renaming ktable ctable atable asig =
+    let renamings = 
+      match renaming with
+        Preabsyn.IncludeAll -> []
+      | Preabsyn.SelectOf lst
+      | Preabsyn.InclusiveSelect lst -> lst
+    in
+
     let renameKind k =
       match Table.find (Absyn.getKindSymbol k) ktable with
           Some Absyn.Kind(ks, a, b, c, d) -> Absyn.Kind(revertKindSymbol ks renamings, a, b, c, d)
@@ -2111,7 +2115,7 @@ and translateModule mod' ktable ctable atable =
             Errormsg.impossible Errormsg.none
               "Translate.normalizeRenaming: invalid constant"
     in
-    
+
     match asig with
         Absyn.Signature(name,kindRenaming,constRenaming,okindlist,oconstlist) ->
           let kindRenaming' = List.map renameKind kindRenaming in
@@ -2135,9 +2139,9 @@ and translateModule mod' ktable ctable atable =
   ******************************************************************)
   let rec getRenaming name renamings =
     match renamings with
-      [] -> None
+      [] -> Preabsyn.IncludeAll
     | ((h,l)::t) ->
-        if (name = Symbol.name (Preabsyn.getSymbol h)) then (Some l)
+        if (name = Symbol.name (Preabsyn.getSymbol h)) then l
         else getRenaming name t
   in
   

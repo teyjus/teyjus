@@ -50,12 +50,16 @@ type ptype =
   | ErrorType
 
 (* Renaming directives *)
-type renamingdirective = 
-  | RenameKind  of psymbol * psymbol
+type renamingdirective =
+    RenameKind  of psymbol * psymbol
   | RenameType  of psymbol * psymbol
   | IncludeType of psymbol
   | IncludeKind of psymbol
-  | IncludeAll
+
+type renamingdirectives =
+    IncludeAll
+  | SelectOf of renamingdirective list
+  | InclusiveSelect of renamingdirective list
 
 (* Symbols for abstracted variables 
 * The optional type represents the possible type annotation 
@@ -198,11 +202,11 @@ type pmodule =
       pconstant list * pconstant list * pconstant list * pfixity list *
       pkind list * pkind list * ptypeabbrev list * pclause list * 
       psymbol list * psymbol list * psymbol list * psymbol list *
-      (psymbol * renamingdirective list) list
+      (psymbol * renamingdirectives) list
   | Signature of string * pconstant list * pconstant list *
       pconstant list * pkind list *
       ptypeabbrev list * pfixity list * psymbol list *
-      psymbol list * (psymbol * renamingdirective list) list
+      psymbol list * (psymbol * renamingdirectives) list
 
 val printPreAbsyn : pmodule -> out_channel -> unit
 
