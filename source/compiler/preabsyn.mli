@@ -201,12 +201,13 @@ type pmodule =
   | Module of string * pconstant list * pconstant list * 
       pconstant list * pconstant list * pconstant list * pfixity list *
       pkind list * pkind list * ptypeabbrev list * pclause list * 
-      psymbol list * psymbol list * psymbol list * psymbol list *
-      (psymbol * renamingdirectives) list
+      (psymbol * renamingdirectives) list * (psymbol * renamingdirectives) list *
+      (psymbol * renamingdirectives) list * (psymbol * renamingdirectives) list
   | Signature of string * pconstant list * pconstant list *
       pconstant list * pkind list *
-      ptypeabbrev list * pfixity list * psymbol list *
-      psymbol list * (psymbol * renamingdirectives) list
+      ptypeabbrev list * pfixity list * 
+      (psymbol * renamingdirectives) list *
+      (psymbol * renamingdirectives) list
 
 val printPreAbsyn : pmodule -> out_channel -> unit
 

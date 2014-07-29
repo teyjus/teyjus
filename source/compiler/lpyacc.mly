@@ -72,7 +72,6 @@ let localKinds = ref []
 let globalTypeAbbrevs = ref []
 
 let auxRenamingList = ref []
-let renamingList = ref []
 
 let fixityList = ref []
 
@@ -95,7 +94,6 @@ let reverseResults () =
   localKinds := !localKinds;
 
   globalTypeAbbrevs := List.rev !globalTypeAbbrevs;
-  renamingList := !renamingList;
 
   fixityList := List.rev !fixityList
 
@@ -116,8 +114,6 @@ let clearResults () =
   localKinds := [];
 
   globalTypeAbbrevs := [];
-
-  renamingList := [];
 
   fixityList := []
 
@@ -147,7 +143,7 @@ let makeConst ?ty sym =
 let makeAbsSymbol (sym, typ_opt, _, pos) = 
   AbstractedSymbol(sym, typ_opt, pos) 
 
-let makeRenamingDirective = 
+let makeRenamingDirective () = 
   let inclusive = !inclusiveRenaming in
   let directives = !auxRenamingList in
   (inclusiveRenaming := false);
@@ -165,7 +161,7 @@ let makeModule () =
                  !closedConstants, !useOnlyList, !exportList, !fixityList,
                  !globalKinds, !localKinds, !globalTypeAbbrevs,
                  !clauseList, !accumulatedModList, !accumulatedSigList,
-                 !useSigList, !importedModList, !renamingList) in
+                 !useSigList, !importedModList) in
     clearResults () ;
     m
 
@@ -173,7 +169,7 @@ let makeSignature () =
   reverseResults ();
   let s = Signature(basename (), !globalConstants, !useOnlyList, !exportList,
                     !globalKinds, !globalTypeAbbrevs, !fixityList,
-                    !accumulatedSigList, !useSigList, !renamingList) in
+                    !accumulatedSigList, !useSigList) in
     clearResults ();
     s
 
@@ -208,7 +204,8 @@ let errorEof pos msg =
 %type <unit> modheader sigheader
 %type <unit> modend sigend modpreamble modbody
 %type <unit> modsigndecl signdecls signdecl
-%type <Preabsyn.psymbol list> idlist cvidlist
+%type <Preabsyn.psymbol list> idlist 
+%type <(Preabsyn.psymbol * Preabsyn.renamingdirectives) list> cvidlist
 %type <int> kind
 %type <Preabsyn.ptype> type ctype prtype
 %type <Preabsyn.pfixitykind> fixity
@@ -301,16 +298,15 @@ sigpreamble:
 
 cvidlist:
   | qualifiedsigname 
-    { (makeSymbol $1) :: [] }
+    { $1 :: [] }
   | cvidlist COMMA qualifiedsigname
-    { (makeSymbol $3) :: $1 }
+    { $3 :: $1 }
 
 qualifiedsigname:
   | signame
-    { $1 }
+    { (makeSymbol $1, Preabsyn.IncludeAll) }
   | signame LCURLY renamings RCURLY
-    { renamingList := ((makeSymbol $1), makeRenamingDirective) :: !renamingList;
-      $1 }
+    { (makeSymbol $1, makeRenamingDirective ()) }
 
 renamings:
   |                          { }
@@ -319,19 +315,15 @@ renamings:
 
 renaming:
   | KIND tok 
-        { auxRenamingList :=
-            IncludeKind(makeSymbol $2) :: !auxRenamingList }
+        { auxRenamingList := IncludeKind(makeSymbol $2) :: !auxRenamingList }
   | TYPE tok 
-        { auxRenamingList :=
-            IncludeType(makeSymbol $2) :: !auxRenamingList }
+        { auxRenamingList := IncludeType(makeSymbol $2) :: !auxRenamingList }
   | KIND tok IMPLIES tok
-        { auxRenamingList :=
-            RenameKind(makeSymbol $2, makeSymbol $4) :: !auxRenamingList } 
+        { auxRenamingList := RenameKind(makeSymbol $2, makeSymbol $4) :: !auxRenamingList } 
   | TYPE tok IMPLIES tok
-        { auxRenamingList :=
-            RenameType(makeSymbol $2, makeSymbol $4) :: !auxRenamingList } 
+        { auxRenamingList := RenameType(makeSymbol $2, makeSymbol $4) :: !auxRenamingList } 
   | TIMES 
-        { inclusiveRenaming := false }
+        { inclusiveRenaming := true }
 
 idlist:
   | ID                        { (makeSymbol $1) :: [] }
