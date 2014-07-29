@@ -1334,7 +1334,7 @@ and translateSignature s owner accumOrUse generalCopier renaming =
         Errormsg.none
         "Translate.translateSignature: expected Preabsyn.Signature.")
   | Preabsyn.Signature(name, gconsts, uconsts, econsts, gkinds, tabbrevs,
-      fixities, accumsigs, usesigs, renamings) ->
+      fixities, accumsigs, usesigs) ->
 
   let _ = Errormsg.log Errormsg.none ("translating signature '" ^ name ^ "'") in
 
@@ -1423,8 +1423,8 @@ and translateSignature s owner accumOrUse generalCopier renaming =
   * preabsyn signatures.
   ******************************************************************)
   let rec processSigs = function
-    Preabsyn.Symbol(accum,_,_)::rest ->
-      (Compile.compileSignature (Symbol.name accum))::(processSigs rest)
+    (Preabsyn.Symbol(accum,_,_), renamings)::rest ->
+      (Compile.compileSignature (Symbol.name accum), renamings) ::(processSigs rest)
   | [] -> []
   in
  
@@ -1461,11 +1461,9 @@ and translateSignature s owner accumOrUse generalCopier renaming =
   ******************************************************************)
   let rec translateSigs tables accum sigs = 
     match sigs with
-      s::rest ->
-        let ren = getRenaming (Preabsyn.getSignatureName s) renamings in
-        let (asig, table) = translateSignature s owner accum generalCopier ren
-        in
-        (translateSigs (table::tables) accum rest)
+      (s, renamings) ::rest ->
+        let (asig, table) = translateSignature s owner accum generalCopier renamings
+        in (translateSigs (table::tables) accum rest)
     | [] ->
         tables
   in
@@ -1641,6 +1639,16 @@ and translateSignature s owner accumOrUse generalCopier renaming =
   * for accumulated signatures, but all exportdef constants are
   * switched to useonly.
   ******************************************************************)
+  (*let _ =
+    List.map (function (name, renamings) ->
+      print_string (Symbol.name (Preabsyn.getSymbol name) ^ ": ");
+      match renamings with
+        Preabsyn.IncludeAll -> print_string "Including all.\n"
+      | Preabsyn.SelectOf lst -> print_string ("Select Of " ^ 
+          (string_of_int (List.length lst)) ^ "\n")
+      | Preabsyn.InclusiveSelect lst -> print_string ("Select Of " ^ 
+          (string_of_int (List.length lst)) ^ "\n")) renamings in*)
+
   let rec translateUseSigs = translateSigs [] false in
   
   (*  Process accumulated signatures: *)
@@ -2026,8 +2034,8 @@ and translateModule mod' ktable ctable atable =
   ******************************************************************)
   let processSignatures sigs = 
     List.map
-      (fun (Preabsyn.Symbol(accum, _, _)) ->
-        Compile.compileSignature (Symbol.name accum))
+      (fun (Preabsyn.Symbol(accum, _, _), renamings) ->
+        (Compile.compileSignature (Symbol.name accum), renamings))
       sigs
   in
     
@@ -2117,7 +2125,7 @@ and translateModule mod' ktable ctable atable =
     in
 
     match asig with
-        Absyn.Signature(name,kindRenaming,constRenaming,okindlist,oconstlist) ->
+        Absyn.Signature(name, kindRenaming, constRenaming, okindlist, oconstlist) ->
           let kindRenaming' = List.map renameKind kindRenaming in
           let constRenaming' = List.map renameConst constRenaming in
           let okindlist' = List.map 
@@ -2145,19 +2153,15 @@ and translateModule mod' ktable ctable atable =
         else getRenaming name t
   in
   
-  let normalizeImports ktable ctable atable imps renamings =
-    let normalize (Absyn.ImportedModule(n,s)) =
-      Absyn.ImportedModule(n, normalizeRenaming
-                              (getRenaming n renamings)
-                              ktable ctable atable s)
+  let normalizeImports ktable ctable atable imps =
+    let normalize (Absyn.ImportedModule(n,s), renamings) =
+      Absyn.ImportedModule(n, normalizeRenaming renamings ktable ctable atable s)
     in
     List.map normalize imps
   in
-  let normalizeAccums ktable ctable atable accums renamings =
-    let normalize (Absyn.AccumulatedModule(n,s)) =
-      Absyn.AccumulatedModule(n, normalizeRenaming
-                                 (getRenaming n renamings) 
-                                 ktable ctable atable s)
+  let normalizeAccums ktable ctable atable accums =
+    let normalize (Absyn.AccumulatedModule(n,s), renamings) =
+      Absyn.AccumulatedModule(n, normalizeRenaming renamings ktable ctable atable s)
     in
     List.map normalize accums
   in
@@ -2167,50 +2171,49 @@ and translateModule mod' ktable ctable atable =
   * Generalizes processing of imported, used, and accumulated modules
   * and signatures.
   ******************************************************************)
-  let rec translateMods make copier sigs tables l renamings =
+  let rec translateMods make copier sigs tables l =
     match l with
         [] -> (sigs, tables)
-      | l'::ls ->
-          let ren = getRenaming (Preabsyn.getSignatureName l') renamings in
-          let (asig, table) = translateSignature l' false true copier ren in
+      | (l', renamings) ::ls ->
+          let (asig, table) = translateSignature l' false true copier renamings in
           let s = make asig in
-            translateMods make copier (s::sigs) (table::tables) ls renamings
+            translateMods make copier ((s, renamings) ::sigs) (table::tables) ls
   in
 
   (********************************************************************
   *translateAccumSigs:
   ********************************************************************)
-  let translateAccumSigs sigs renamings =
+  let translateAccumSigs sigs =
     let make asig = asig in
-      translateMods make copyAccum [] [] sigs renamings
+      translateMods make copyAccum [] [] sigs 
   in
   
   (********************************************************************
   *translateUseSigs:
   ********************************************************************)
-  let translateUseSigs sigs renamings =
+  let translateUseSigs sigs =
     let make asig = asig in
-      translateMods make (copyUseonly copyAccum false) [] [] sigs renamings
+      translateMods make (copyUseonly copyAccum false) [] [] sigs 
   in
   
   (********************************************************************
   *translateAccumMods:
   *********************************************************************)
-  let translateAccumMods accums renamings =
+  let translateAccumMods accums =
     let make asig =
       Absyn.AccumulatedModule(Absyn.getSignatureName asig, asig)
     in
-      translateMods make copyAccum [] [] accums renamings
+      translateMods make copyAccum [] [] accums
   in
   
   (********************************************************************
   *translateImpMods:
   ********************************************************************)
-  let translateImpMods imps renamings =
+  let translateImpMods imps =
     let make asig =
       Absyn.ImportedModule(Absyn.getSignatureName asig, asig)
     in
-      translateMods make copyAccum [] [] imps renamings
+      translateMods make copyAccum [] [] imps 
   in
 
   (*  Get the pieces of the module  *)
@@ -2218,22 +2221,22 @@ and translateModule mod' ktable ctable atable =
     Preabsyn.Module(name, gconsts, lconsts, cconsts, uconsts, 
                     econsts, fixities,
                     gkinds, lkinds, tabbrevs, clauses, accummods,
-                    accumsigs, usesigs, impmods, renamings) ->
+                    accumsigs, usesigs, impmods) ->
       (*  Translate the accumulated signatures  *)
       let accumsigs' = processSignatures accumsigs in
-      let (_, accsigstables) = translateAccumSigs accumsigs' renamings in
+      let (_, accsigstables) = translateAccumSigs accumsigs' in
       
       (*  Translate the used signatures *)
       let usesigs' = processSignatures usesigs in
-      let (_, usesigstables) = translateUseSigs usesigs' renamings in
+      let (_, usesigstables) = translateUseSigs usesigs' in
       
       (*  Translate the accumulated modules *)
       let accummods' = processSignatures accummods in
-      let (accums, acctables) = translateAccumMods accummods' renamings in
+      let (accums, acctables) = translateAccumMods accummods' in
 
       (*  Translate the imported modules  *)
       let impmods' = processSignatures impmods in
-      let (imps, imptables) = translateImpMods impmods' renamings in
+      let (imps, imptables) = translateImpMods impmods' in
       
       let (ktable, ctable) = 
         mergeKindandConstTables ktable ctable accsigstables in
@@ -2293,8 +2296,8 @@ and translateModule mod' ktable ctable atable =
       (*  Normalize the constant table.  This ensures that any kinds
           referred to in the constant table are correct.  *)
       let ctable = normalizeTable ktable ctable in
-      let imps = normalizeImports ktable ctable atable imps renamings in
-      let accums = normalizeAccums ktable ctable atable accums renamings in
+      let imps = normalizeImports ktable ctable atable imps in
+      let accums = normalizeAccums ktable ctable atable accums in
 
       (*  Get local and global kind lists.  *)
       let globalkinds = Table.fold (getGlobalKind) ktable [] in

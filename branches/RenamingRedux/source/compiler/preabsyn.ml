@@ -83,13 +83,13 @@ type pmodule =
   | Module of string * pconstant list * pconstant list * 
       pconstant list * pconstant list * pconstant list * pfixity list *
       pkind list * pkind list * ptypeabbrev list * pclause list * 
-      psymbol list * psymbol list * psymbol list * psymbol list *
-      (psymbol * renamingdirectives) list
+      (psymbol * renamingdirectives) list * (psymbol * renamingdirectives) list *
+      (psymbol * renamingdirectives) list * (psymbol * renamingdirectives) list
   | Signature of string * pconstant list * pconstant list *
       pconstant list * pkind list *
-      ptypeabbrev list * pfixity list * psymbol list *
-      psymbol list * (psymbol * renamingdirectives) list
-
+      ptypeabbrev list * pfixity list * 
+      (psymbol * renamingdirectives) list *
+      (psymbol * renamingdirectives) list
 
 let string_of_pos pos = Errormsg.string_of_pos pos
 
@@ -214,7 +214,7 @@ let printPreAbsyn m out =
     match m with
       | Module(name, gconstants, lconstants, cconstants, uconstants,
                econstants, fixities, gkinds, lkinds, tabbrevs, clauses, 
-               accummod, accumsig, usesig, impmods, _) ->
+               accummod, accumsig, usesig, impmods) ->
           output_line ("Module: " ^ name) ;
           output_line "Constants:" ;
           output_list string_of_constant gconstants ;
@@ -233,7 +233,7 @@ let printPreAbsyn m out =
           output_list string_of_fixity fixities
             
       | Signature(name, gconstants, _, _, gkinds, tabbrevs, 
-                  fixities, accumsig, usig, _) ->
+                  fixities, accumsig, usig) ->
           output_line ("Signature: " ^ name) ;
           output_line "Constants:" ;
           output_list string_of_constant gconstants ;
@@ -267,20 +267,20 @@ let getClauseTerm = function
   Clause(t) -> t
 
 let getModuleClauses = function
-  | Module(_, _, _, _, _, _, _, _, _, _, clauses, _, _, _, _, _) -> clauses
+  | Module(_, _, _, _, _, _, _, _, _, _, clauses, _, _, _, _) -> clauses
   | _ ->
       Errormsg.impossible Errormsg.none
         "Preabsyn.getModuleClauses: invalid module"
 
 let getModuleName m =
     match m with
-        Module(name,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_) -> name
+        Module(name,_,_,_,_,_,_,_,_,_,_,_,_,_,_) -> name
           | _ -> Errormsg.impossible Errormsg.none 
               "Preabsyn.getModuleName: invalid module"
 
 let getSignatureName s =
     match s with
-        Signature(name,_,_,_,_,_,_,_,_,_) -> name
+        Signature(name,_,_,_,_,_,_,_,_) -> name
           | _ -> Errormsg.impossible Errormsg.none
               "Preabsyn.getSignatureName: invalid signature"
 
