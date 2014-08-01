@@ -75,6 +75,10 @@ Accumulates/imports
 
   (4) generating dummy "try_me_else"            -- test21
   (5) accum_sig in modules                      -- test37
+  (6) basic inclusive property of renamings     -- test38
+  (7) testing include all (*) directive         -- test39
+  (8) testing renaming from one symbol to another
+                                                -- test40
 
 MISC
 ====
