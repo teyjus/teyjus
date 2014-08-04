@@ -51,6 +51,9 @@ let add = fun k v table ->
 let iter = fun f table ->
   (SymbolTable.iter f table)
 
+let mem = fun k table ->
+  (SymbolTable.mem k table)
+
 let fold = fun f v table ->
   (SymbolTable.fold f v table)
   

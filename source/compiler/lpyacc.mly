@@ -71,7 +71,8 @@ let localKinds = ref []
 
 let globalTypeAbbrevs = ref []
 
-let auxRenamingList = ref []
+let auxKindRenamingList = ref []
+let auxConstRenamingList = ref []
 
 let fixityList = ref []
 
@@ -145,15 +146,17 @@ let makeAbsSymbol (sym, typ_opt, _, pos) =
 
 let makeRenamingDirective () = 
   let inclusive = !inclusiveRenaming in
-  let directives = !auxRenamingList in
+  let kindDirectives = !auxKindRenamingList in
+  let constDirectives = !auxConstRenamingList in
   (inclusiveRenaming := false);
-  (auxRenamingList := []);
-  if directives = [] 
+  (auxKindRenamingList := []);
+  (auxConstRenamingList := []);
+  if kindDirectives = [] && constDirectives = []
     then IncludeAll
     else
       if inclusive
-      then InclusiveSelect directives
-      else SelectOf directives
+      then InclusiveSelect (kindDirectives, constDirectives)
+      else SelectOf (kindDirectives, constDirectives)
 
 let makeModule () =
   reverseResults () ;
@@ -315,13 +318,13 @@ renamings:
 
 renaming:
   | KIND tok 
-        { auxRenamingList := IncludeKind(makeSymbol $2) :: !auxRenamingList }
+        { auxKindRenamingList := IncludeKind(makeSymbol $2) :: !auxKindRenamingList }
   | TYPE tok 
-        { auxRenamingList := IncludeType(makeSymbol $2) :: !auxRenamingList }
+        { auxConstRenamingList := IncludeType(makeSymbol $2) :: !auxConstRenamingList }
   | KIND tok IMPLIES tok
-        { auxRenamingList := RenameKind(makeSymbol $2, makeSymbol $4) :: !auxRenamingList } 
+        { auxKindRenamingList := RenameKind(makeSymbol $2, makeSymbol $4) :: !auxKindRenamingList } 
   | TYPE tok IMPLIES tok
-        { auxRenamingList := RenameType(makeSymbol $2, makeSymbol $4) :: !auxRenamingList } 
+        { auxConstRenamingList := RenameType(makeSymbol $2, makeSymbol $4) :: !auxConstRenamingList } 
   | TIMES 
         { inclusiveRenaming := true }
 

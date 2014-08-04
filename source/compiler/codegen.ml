@@ -406,7 +406,7 @@ let collectImports imps =
   let rec collectImportsAux imps renamingInfo =
     match imps with
       [] -> (List.rev renamingInfo)
-    | (Absyn.ImportedModule(_, amod) :: rest) ->
+    | (Absyn.ImportedModule(amod) :: rest) ->
 	collectImportsAux rest ((collectRenamingInfo amod) :: renamingInfo)
   in 
   collectImportsAux imps []
@@ -415,7 +415,7 @@ let collectAccs accs =
   let rec collectAccsAux accs renamingInfo =
     match accs with
       [] -> (List.rev renamingInfo)
-    | (Absyn.AccumulatedModule(_, amod) :: rest) ->
+    | (Absyn.AccumulatedModule(amod) :: rest) ->
 	collectAccsAux rest ((collectRenamingInfo amod) :: renamingInfo)
   in 
   collectAccsAux accs []
@@ -1115,7 +1115,7 @@ let collectClosedConstsInAccs accs =
   let rec collectClosedConstsInAccsAux accs consts =
     match accs with
       [] -> List.rev consts
-    | (Absyn.AccumulatedModule(_, asig) :: rest) ->
+    | (Absyn.AccumulatedModule(asig) :: rest) ->
 	let consts' = 
 	  collectClosedConsts (Absyn.getSignatureGlobalConstantsList asig) consts
 	in
@@ -1128,34 +1128,38 @@ let collectClosedConstsInAccs accs =
 
   
 
+(****************************************************************************)
+(*  Collect global kinds that were omitted in acc modules.                  *)
+(****************************************************************************)
 let getOmittedKinds imps accums = 
   let kinds = List.fold_left
       (fun l a -> 
         (match a with 
-          ( Absyn.AccumulatedModule(_, Absyn.Signature(_,_,_,k,_))) -> l@k
+          ( Absyn.AccumulatedModule(Absyn.Signature(_,_,_,k,_,_))) -> l@k
           | _ -> l)) [] accums in 
   let kinds = List.fold_left
       (fun l a -> 
         (match a with 
-          ( Absyn.ImportedModule(_, Absyn.Signature(_,_,_,k,_))) -> l@k 
+          ( Absyn.ImportedModule(Absyn.Signature(_,_,_,k,_,_))) -> l@k 
           | _ -> l)) kinds imps in 
   kinds
 
+(****************************************************************************)
+(*  Collect global constants that were omitted in acc modules.              *)
+(****************************************************************************)
 let getOmittedConsts imps accums = 
   let consts = List.fold_left
       (fun l a -> 
         (match a with 
-          ( Absyn.AccumulatedModule(_, Absyn.Signature(_,_,_,_,c))) -> l@c 
+          ( Absyn.AccumulatedModule(Absyn.Signature(_,_,_,_,c,_))) -> l@c 
           | _ -> l)) [] accums in 
   let consts = List.fold_left
       (fun l a -> 
         (match a with 
-          ( Absyn.ImportedModule(_, Absyn.Signature(_,_,_,_,c))) -> l@c 
+          ( Absyn.ImportedModule(Absyn.Signature(_,_,_,_,c,_))) -> l@c 
           | _ -> l)) consts imps in 
   consts
   
-
-
 (*****************************************************************************)
 (*                CODE GENERATION FOR A MODULE                               *)
 (*****************************************************************************)
@@ -1183,7 +1187,7 @@ let generateModuleCode amod =
       (* 5) gather local predicates                                 *)
       let (cgGConsts, cgLConsts, cgHConsts, cgDefs, cgGNonExpDefs, 
         cgGExpDefs, cgLDefs) = 
-        assignConstIndex (List.rev gconsts) ((List.rev lconsts)@oconsts)
+        assignConstIndex (List.rev gconsts) (List.rev (lconsts@oconsts))
           (List.rev (!hconsts))
       in
 

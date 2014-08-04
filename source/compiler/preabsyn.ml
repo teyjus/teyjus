@@ -48,8 +48,8 @@ type renamingdirective =
 
 type renamingdirectives =
     IncludeAll
-  | SelectOf of renamingdirective list
-  | InclusiveSelect of renamingdirective list
+  | SelectOf of (renamingdirective list * renamingdirective list)
+  | InclusiveSelect of (renamingdirective list * renamingdirective list)
 
 type pterm =
   | SeqTerm of pterm list * pos 
