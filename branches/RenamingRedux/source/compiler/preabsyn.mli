@@ -58,8 +58,8 @@ type renamingdirective =
 
 type renamingdirectives =
     IncludeAll
-  | SelectOf of renamingdirective list
-  | InclusiveSelect of renamingdirective list
+  | SelectOf of (renamingdirective list * renamingdirective list)
+  | InclusiveSelect of (renamingdirective list * renamingdirective list)
 
 (* Symbols for abstracted variables 
 * The optional type represents the possible type annotation 
@@ -180,10 +180,10 @@ type pfixity = Fixity of psymbol list * pfixitykind * int * pos
  *
  *   Clauses: pterm list
  *
- *   Accumulated Modules: psymbol list
- *   Accumulated Signatures: psymbol list
- *   Used Signatures: psymbol list
- *   Imported Modules: psymbol list
+ *   Accumulated Modules (with renamings): (psymbol * renamingdirectives) list
+ *   Accumulated Signatures (with renamings): (psymbol * renamingdirectives) list
+ *   Used Signatures (with renamings): (psymbol * renamingdirectives) list
+ *   Imported Modules (with renamings): (psymbol * renamingdirectives) list
  *
  *  Signature:
  *   Name: string
@@ -194,8 +194,11 @@ type pfixity = Fixity of psymbol list * pfixitykind * int * pos
  *   Global Kinds: pkind list
  *
  *   Type Abbreviations: ptypeabbrevlist
+ *   
+ *   Fixities: pfixity list
  *
- *   Accumulated Signatures: psymbol list
+ *   Accumulated Signatures (with renamings): (psymbol * renamingdirectives) list
+ *   Use Only Signatures (with renamings): (psymbol * renamingdirectives) list
  ********************************************************************)
 type pmodule =
   | Module of string * pconstant list * pconstant list * 

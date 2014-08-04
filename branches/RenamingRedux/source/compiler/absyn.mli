@@ -299,6 +299,10 @@ and aclausesblock = (aclause list ref * bool ref * int ref * int option ref)
 * type abbre table, string list, global kind list, local kind list,
 * global constant list, local constant list, hidden constant list,
 * skeleton list, hskeleton list, clauses blocks list)
+*
+*Signatures:
+* (signame, global kinds, global constants, omitted kinds, omitted consts,
+* (kind renaming function, const renaming function))
 *****************************************************************************)
 and amodule = 
     Module of (string * aimportedmodule list * aaccumulatedmodule list *
@@ -306,14 +310,16 @@ and amodule =
       atypeabbrev Table.SymbolTable.t * astringinfo list * akind list *
       akind list * aconstant list * aconstant list * aconstant list ref *
       askeleton list * askeleton list ref * aclauseinfo ref)
-  | Signature of (string * akind list * aconstant list * akind list * aconstant list)
+  | Signature of (string * akind list * aconstant list * akind list * aconstant list *
+                  ((Symbol.symbol -> bool -> Symbol.symbol option) * 
+                  ((Symbol.symbol -> bool -> Symbol.symbol option))) )
   | ErrorModule
 
 and aimportedmodule = 
-  ImportedModule of (string * amodule)
+  ImportedModule of amodule
 
 and aaccumulatedmodule =
-  AccumulatedModule of (string * amodule)
+  AccumulatedModule of amodule
 
 and aclauseinfo = 
     ClauseBlocks of aclausesblock list
