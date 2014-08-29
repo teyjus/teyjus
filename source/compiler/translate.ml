@@ -1952,6 +1952,7 @@ and translateModule mod' ktable ctable atable =
           (fun (Absyn.Constant(s,a1,a2,a3,a4,a5,a6,a7,a8,
                                a9,a10,a11,a12,a13,constType,a15,a16)) ->
                                constType := Absyn.LocalConstant) oconstlist in
+          let oconstlist = normalizeList ktable okindlist' oconstlist in
           Absyn.Signature(name,kindRenaming',constRenaming',okindlist',oconstlist, renaming)
       | _ ->
           Errormsg.impossible Errormsg.none
