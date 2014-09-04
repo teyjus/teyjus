@@ -19,6 +19,7 @@ INC = $(dir include)
 #
 
 OCAMLINCLUDES += $(CMP) $(DIS) $(SIM) $(LOD)
+OCAMLFLAGS= -w -A
 CFLAGS += -g
 
 ############################################################
