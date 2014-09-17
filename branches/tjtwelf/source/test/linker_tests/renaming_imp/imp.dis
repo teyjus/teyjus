@@ -1,0 +1,51 @@
+Disassembling from bytecode file: imp.lpo
+Bytecode version: 2
+Module name: imp
+
+LABEL               INSTRUCTION              OPERANDS
+
+
+Global kind table:
+0: k/2
+1: j/1
+2: i/0
+
+Local kind table:
+0: /3
+
+Type skeleton table:
+0: A -> A -> A -> A
+1: A
+2: A -> A
+3: A -> A -> A
+
+Global constant table: 
+0: a (No Fixity, precedence 0)
+    Env Size: 1, Type Skeleton: #1
+1: b (No Fixity, precedence 0)
+    Env Size: 1, Type Skeleton: #2
+2: c (No Fixity, precedence 0)
+    Env Size: 1, Type Skeleton: #3
+
+Local constant table: 
+0:  (No Fixity, precedence 0)
+    Env Size: 1, Type Skeleton: #0
+
+Hidden constant table: 
+
+String table:
+
+Implication Tables:
+
+Hash tables:
+
+Module table:
+  Predicate definitions possibly extending previous ones: 0
+  Exportdef predicates: 0
+  Local predicates: 0
+  Find function type: hash
+  In-core table size: 0
+
+Accumulated tables:
+
+Imported tables:

@@ -1,0 +1,525 @@
+COMPILER ORGANIZATION
+=====================
+
+Phases of the compiler
+======================
+
+
+                   | source 
+                   | files
+                   |
+                   v
+    -----------------------------------
+   | A. preabstract syntax generation  |
+    -----------------------------------
+                   |
+                   v
+    ------------------------------------
+   | B. term processing:                |
+   |    .preterm to term                |
+   |     (with type checking)           |
+   |    .beta-normalization             |
+   |    .clause normalization & deorify |
+   -------------------------------------
+                   |
+                   v 
+    -----------------------------------
+   | C. declared type analysis         |
+    -----------------------------------
+                   |
+                   v
+    -----------------------------------
+   | D. clause processing              |
+    -----------------------------------
+                   |
+                   v
+    -----------------------------------------
+   | E. type optimization on predicate names |
+    -----------------------------------------
+                   | 
+                   v
+    -----------------------------------
+   | F. variable annotation            |
+    -----------------------------------
+                   |
+                   v
+    -------------------------------------
+   | G. code generation                  |
+    -------------------------------------
+                   | 
+                   v
+    -------------------------------------
+   | H. write bytecode file              |
+    -------------------------------------
+                   | bytecode 
+                   | file
+                   v  
+
+
+A. preabstract syntax generation
+================================
+This phase is responsible to collect initial information of a module from 
+source files including .mod and .sig files and .sig files of accumulated and 
+imported modules.
+
+Output:
+-------
+  1. Abstract syntax representation of the module being processed. The 
+     following information is contained:
+     a. module name;
+     b. kind symbol table, constants symbol table, type abbreviation table;
+     c. local and global kind lists, local and global constant lists;
+     d. type skeleton list;
+     e. import module list with each entry containing the name and a module
+        number of the imported module, lists of kinds and constants that
+        are global in the imported module;
+     f. accumulate module list with each entry containing the name of the
+        accumulated module, lists of kinds and constants that are global
+        in the imported module.
+  2. Preterm list for the clauses in this module.
+
+  ** Information that should be collected for each entry of the kind and 
+     constant symbol table is the following:
+
+     kind:
+     -----
+     a. kind category (local/global/pervasive)
+     b. arity
+     c. [index]: this field should be allocated, but left to be filled in
+                 during the code generation phase.
+  
+     constant:
+     ---------
+     a. constant category (local/global/pervasive) 
+        * Hidden constants and anonymous constants won't be entered into
+          symbol tables.
+        * For pervasive constants, an extra flag has to be used to indicate
+          whether the constant is re-definable. 
+     b. symbol
+     c. fixity
+     e. precedence
+     f. export def
+     g. use only
+     h. no defs
+     i. type skeleton
+     j. type environment size (without type optimization)
+     k. reducible 
+        * This field should be set to true for exportdef or local constants
+          that are marked as useonly in all imported and accumulated modules.
+     l. [closed]
+     m. [neededness]
+     n. [code info]
+     o. [index]
+        * The last four fields should be allocated, but left to be assigned
+          in later phases.   
+     
+     * There are two more fields type preserving and type environment appearing
+       in the old Teyjus implementation, but are not necessary to the current
+       version.
+
+
+B. term processing
+==================
+For each clause (in pre abstract syntax upon entering this phase), the 
+following things are carried out:
+1. translate the clause from its preterm representation to term representation
+   as well as type check;
+2. beta-normalize the resulted term;
+3. check whether the target type of the term is boolean;
+4. normalize and deorify         
+
+The internal modules are organized as the following:
+
+--For each clause (in pre abstract syntax)
+
+             |  preterm 
+             |  module.ktable, module.ctable
+             |  (if new constant and new kind are allowed, module.lklist)
+             v
+      -------------------------------------
+     | preterm to term and type checking   |
+      -------------------------------------
+             |  term:
+             |    - type checked;
+             |      type skeletons are associated with constant data and 
+             |      type environments are associated with constant occurrence; 
+             |      types are associated with variables (atysy)
+             | (if new kind and new constant are allowed:
+             |    - a list of new constants;
+             |    - module.ktable, module.ctable, module.lklist are updated ) 
+             v
+      ----------------------------------------------
+     | beta-normalization and target type checking  |
+      ----------------------------------------------
+             |  term:
+             |   - abstractions are represented in un-nested form: 
+             |      (binders: atysy list, nabs: int, body: aterm)
+             |   - target type: boolean 
+             |   - beta-normal form
+             v
+      -------------------------------------------
+     | clause normalization and deorification    |
+      -------------------------------------------      
+             |  term list:
+             |   - in "normalized and deorified" clause structure;
+             |   - in Bohem tree representation;
+             |   - universal variables (atysy) are associated by 
+             |     corresponding hidden constants (aconstant); 
+             |   - bound variables as predicate names (in clause head or 
+             |     atomic goal) are replaced by hidden constants or free 
+             |     variables;
+             |   - predicate constants are marked as closed or not;
+             |   - the definitions are closed for hidden constant predicate
+             |     names.
+             |
+             |  module:
+             |   - hidden constants introduced for (essential) universal
+             |     variables are collected into a hidden constants list and
+             |     the this list is added in the module abstract syntax
+             |     representation;
+             |   - a list of type skels for hidden constants is added;
+             |
+             |  new clauses list corresponding to those introduced in 
+             |  deorification in the structure of a term list.
+             |
+             |  a list of variables (atysy) have been encountered
+             |
+             v
+
+--end of for each clause
+
+If new constants are allowed, they are skeletonized after all terms are
+processed, and module.skellist and module.lconstlist should be updated.
+
+
+Clause normalization and deorification
+---------------------------------------
+The internal modules of clause normalization and deorification are as the
+follows:
+
+  clause normalization:
+  ---------------------
+  input:  1. term to be clause_normalized (aterm)
+          2. clause_normalized terms (aterm list)
+          3. a list of enclosing universal variables (atysy list)
+          4. embedded clause? (bool)
+ 
+  output: 1. term list (clause_normalized)
+             - bound variables as predicate names are replaced by hidden
+               constants;
+             - predicate constants are marked as closed or not
+          2. encountered variables (atysy list)
+          
+  deorification:
+  --------------
+  input:  1. normalized term to be deorified (aterm)
+          2. term list for already deorified terms (aterm list)
+          3. a list of free variables (atysy list)
+          4. a list of enclosing universal variables (atysy list)
+          5. an association list of universal variable and implication goals
+             (atysy, aterm list) list
+          6. deorify? (bool)
+ 
+  output: 1. term list (deorified)
+             - in Bohem tree representation;
+             - universal variables (atysy) are associated with corresponding 
+               hidden constants;
+             - bound variables as predicate names are replaced by hidden 
+               constants or free variables
+             - the definitions are closed for hidden constant predicate
+               names.
+          2. a list of free variables (atysy list)
+          3. association list of universal variable and implication goals
+             (atysy, aterm list) list
+          4. hidden constant list (aconstant list)
+          5. hskel list 
+          6. new clauses list (aterm list)
+          8. encountered variables (atysy list)
+     
+
+
+C. declared type analysis
+=========================    
+In this phase, type skeletons associated with constants in the symbol table
+are analyzed: type (skeleton) variables appearing in a non-variable target
+of a type skeleton should be marked as unnecessary; then the indexes of type 
+skeleton variables should be be adjusted according to such necessity 
+information and the type environment size of the constant has to be adjusted
+to the number of necessary type variables. 
+The following points should be noted with regard to the adjustment of type
+skeletons:
+1. Only the indexes of type skeleton variables may be changed; the overall
+   structure of a type skeleton should remain the same as before.
+2. The indexes of type skeleton variables should be adjusted into a form that
+   the unnecessary variables have their indexes larger than the (new) type 
+   environment size, and the adjustment should be decided purely from the 
+   structure of the type skeleton itself so that no extra information is needed
+   to ensure the consistency of such adjustment for the same constant across
+   modules that are compiled separately. (A way of doing this is to let the
+   two lists (necessary and unnecessary) of type variables preserve the 
+   original order in which they occur in the old type skeleton. For example,
+   the type skeleton: #1 -> #2 -> #3 -> #4 -> (pair #1 #4) should become
+   #3 -> #1 -> #2 -> #4 -> (pair #3 #4) after the adjustment.)
+
+
+As the output of this phase, the constant symbol table and the type skeleton
+list of this module should be modified. The mapping of type skeleton variable
+(indexes) in type skeletons and their association with constants should also
+be passed to the next phase for the adjustment of type environments associated
+with constant occurrences. It may be sensible to add an additional field
+to the constant definitions (aconstant) in the symbol table recording the
+mapping information.
+One more point to be noticed is that the type skeleton optimization needs not
+to be performed for the anonymous constants corresponding to the new clauses 
+produced by deorification in the previous case (which must have boolean target
+type).
+
+
+D. clause processing
+====================
+This phase is responsible to transform the term representations of the clauses
+in the module into their clause representations. 
+
+Clause structure
+----------------
+With regard to each clause, the following information is collected:
+ a. category indicating whether the clause has a body or not
+ b. predicate name (aconstant)
+ c. term argument list 
+ d. type argument list 
+ e. number of total arguments
+ f. number of term arguments
+ g. term variable mapping 
+ h. type variable mapping
+ i. imported modules
+ j. offset 
+ k. goal
+ l. goal environment association
+ m. cut var
+ n. has environment?
+ 
+Items from k to n are only relevant to rules (clauses having bodies);
+items g and h are only relevant to clauses embedded in implication goals;
+item i is only relevant to (non-anonymous) top-level clauses; 
+Fields for item j, l, m and n should be allocated at this stage, but left to be
+assigned later.
+
+Note that the codeInfo field of each predicate defined in this module
+should be entered in this phase as a clause block containing the list of 
+clauses defining it.
+
+Embedded clauses are processed in a way that is independent to their embedding
+context: it's like all free term and type variables in an embedded clause are 
+renamed. The connection between a free type/term variable in the enclosing 
+context and its "renamed" form in the embedded clause is recorded in the
+term variable mapping list and the type variable mapping list. 
+Note since there is no explicit quantification of type variables, we decide
+the scope of a type variable in the following way: for an embedded clause,
+if a free type variable occurs in the type association of one of its free
+term variable (which is quantified outside of the embedded clause), then
+the type variable is viewed as being quantified at the same place of that
+term variable; otherwise, the type variable is viewed as being implicitly
+quantified at the head of the embedded clause. Apparently, the later sort
+of type variables should not appear in the type variable mapping list 
+associated with the embedded clause, and in this sense, the scope of free
+type variables is reflected in the type variable mapping list which is
+consequently used in predicate name type optimization phase for the 
+neededness analysis.
+
+
+Goal structure
+--------------
+Goals can be classified into the following categories: atomic goal, and goal,
+some goal, all goal and imp goal. The information that should be collected 
+with each category is described below:
+
+1. Atomic goal:
+   a. category 
+   b. predicate name (aconstant)
+   c. number of total arguments
+   d. number of term arguments
+   e. term arguments
+   f. type arguments
+   
+   Note that flexible goals (with free variable as predicate name) of form 
+   (F a1 ... an) are translated into rigid ones of form (solve (F a1 ... an)) 
+   in this phase, where solve is a built-in constant.
+
+2. And goal:
+   a. category
+   b. left conjunctor (goal)
+   c. right conjunctor (goal)
+
+3. Some goal:
+   a. category
+   b. existential quantified variable (avar)
+   c. body (goal)
+
+4. All goal:
+   a. category
+   b. universal quantified variables and hidden constants association list
+      ((acontant * avar) list)
+   c. body (goal)
+
+   Note that the contiguous universal quantifiers at the top-level of an all
+   goal are collected together. For example, an all goal of form
+   (forall x1 (forall x2 ... (forall xn (body)))) is transformed into a 
+   unraveled structure of form (allgoal([x1', x2' ... xn'], body')) where
+   xi's are the association of the variable xi and its corresponding hidden
+   constant, and body' is the goal representation of body. 
+   (The hidden constant associated with each universal variable is assumed
+   to be generated in the clause normalization and deorification phase.)
+
+5. Implication goal:
+   a. category
+   b. embedded clause definitions
+   c. variable initializations
+   d. body (goal)
+
+   *Note that the embedded clause definitions correspond to the clause 
+    representations of the clauses appearing in the antecedent of the 
+    implication goal. They should be collected around their predicate names in 
+    the form of clauses blocks. The embedded clauses should not be entered 
+    into the clause block associated with the predicate name (aconstant).
+
+   *The variable initialization list corresponds to term variables that are 
+    bound outside of the embedded clause, more specifically, those implicitly
+    or explicitly universal quantified variables at the head of enclosing 
+    clauses, but have their first occurrences in the embedded clause.
+
+ 
+Term and type structure
+-----------------------
+The term and type arguments of clause heads and atomic goals should be 
+transformed into a "fixed" form. The difference between the fixed form of terms
+and the original term representation is as following:
+ 
+ Term:
+ -----
+   1. constant occurrence:
+      The type environment of a constant occurrence should be trimmed according
+      to the necessity information with regard to type skeleton variables 
+      provided by the previous type optimization phase.
+
+   2. strings:
+      The strings appearing in arguments are collected into the string data
+      list of the module; and an occurrence of a string is transformed into
+      a term referring to a corresponding string data in that list.
+
+   3. variables and variable occurrences:
+      a. Variables bound by abstractions appearing in arguments are transformed
+         into de Bruijn indexes.
+         Other sort of variables (explicit or implicit bound by formula level
+         quantifiers) are transformed into a nameless representation (from
+         atysy to avar). Note that at this phase, the relevant fields of such
+         a nameless representation are allocated but not assigned till the 
+		 later variable annotation phase.
+      b. Variable occurrences should be transformed into a term referring to
+         corresponding variable data (avar). In contrast to the existing 
+         Teyjus implementation, type environment is no longer associated with 
+         variable occurrences.
+
+   4. abstractions:
+      The list of binder names associated with an abstraction is removed.
+     
+ Type:
+ -----
+    1. type variables:
+       Type variables are type variable occurrences are separated in the new
+       type representation. Like term variables, fields of type variables 
+       (atypevar) are allocated but left un-assigned till the variable 
+       annotation phase.
+       
+    2. type references are removed.
+
+
+
+Output of the phase:
+--------------------
+    A refined module abstract syntax structure should be produced: 
+    1. clause representations of clause definitions of the module are added;
+    2. a string data list is added.
+  
+ 
+E. type optimization on predicate names
+=======================================
+In this phase, the neededness analysis should be performed on the clauses of
+this module, and as a result, the "neededness" vectors associated with
+relevant predicate names in the constant symbol table are filled in.
+
+Note that first, neededness analysis could only affect those predicate names 
+that are marked as reducible (including anonymous ones). For other predicate 
+names, all type variables are needed; second, the neededness vector of a 
+predicate name of an embedded clause definition should be initialized in the 
+way that is same as that for the top-level clauses except that for those
+type arguments (in fact, type variables) that are marked as false, an extra
+checking is made: if it appears in the type variable mapping list associated
+with the embedded clause, then its corresponding position in the neededness
+vector should be marked as true. This is different from (in fact, more precise
+than) the algorithm present in the "type optimization" paper.
+
+
+F. variable annotation 
+======================
+This phase is responsible for the following tasks:
+1. Decide the attributes (permanent/temporary, heapvar, safe and etc.) 
+   associated with term and type variables;
+2. Decide offsets for permanent variables;
+3. Decide the goal-env-association, cut var and has environment attributes
+   for rules.
+
+
+
+G. code generation
+==================
+
+Output
+------
+   1. the fields of the module are modified:
+      a. an index is assigned for each kindData by traversing over the global
+         and local kind lists;
+      b. an index is assigned for each constData by traversing over the global,
+         local and hidden constant lists;
+      c. the type skeleton list and hidden type skeleton list are merged,
+         and an index is assigned for each skeleton in the new list;
+      d. an index is assigned for each string in the string list;      
+
+   2. additional information to be used for write bytecode:
+      -  instrList with a sequence of instructions obtained from the clauses
+         list of the module (instr list)
+
+      -  importInfo obtained from the imported list
+         kind: (module name: string; module number: int; #kinds: int;
+                kinds: kindData list) list
+         constants: (module name: string; module number: int; #constants: int;
+                     constants: constData list) list
+
+      -  accumInfo obtained from the accumulated list
+         kind: (module name: string; #kinds: int; kinds: kindData list) list
+         constants: (module name: string; #constants: int; 
+                     constants: constData list) list
+         
+      -  impgoalCode
+         (#extendingPreds: int, extendingPreds: constData list, 
+          #preds: int, imppredInfo: (pred: constData, offset: int) list) list
+
+      -  predList (constData list)
+
+      -  extendingPredList (constData list)
+      -  #extendingPreds  (int)
+
+      -  chashtables
+         (tabSize: int; entry: (constData, index:int, codeloc:int) list) list 
+      -  hashtablenum  (int)
+
+      -  #defs    (int)
+      -  #strings (int) 
+      -  #tyskels (int)
+      -  #hconsts, #lconsts, #gconsts (int)
+      -  #lkinds, #gkinds (int)
+      -  codebytes   (int)
+      -  headerspace (int)
+      -  typebytes   (int)
+      -  stringbytes (int)
+
+   
