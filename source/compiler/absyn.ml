@@ -198,11 +198,11 @@ and ahcvarassoc = HCVarAssocs of ((avar * aconstant) list)
 and aclause = 
     Fact of (aconstant * aterm list * atype list * int * int * 
 			   atermvarmap * atypevarmap * avar list * int option ref * 
-			   aimportedmodule list)
+			   (aimportedmodule * akind list * aconstant list) list (* aimportedmodule list *))
   | Rule of (aconstant * aterm list * atype list * int * int * atermvarmap *
 			   atypevarmap * avar list * int option ref * agoal * 
                agoalenvassoc ref * avar option ref * bool ref * 
-			   aimportedmodule list)
+			   (aimportedmodule * akind list * aconstant list) list(* aimportedmodule list *))
 
 (* Goal number and environment size association list*)
 and agoalenvassoc =  GoalEnvAssoc of ((int * int) list)
@@ -222,16 +222,18 @@ and aclausesblock = (aclause list ref * bool ref * int ref * int option ref)
 * type abbre table, string list, global kind list, local kind list,
 * global constant list, local constant list, hidden constant list,
 * skeleton list, hskeleton list, clauses blocks list)
-*****************************************************************************)
+*
+*Signatures:
+* (signame, global kinds, global constants)
+* *****************************************************************************)
 and amodule = 
-    Module of (string * aimportedmodule list * aaccumulatedmodule list *
+    Module of (string * (aimportedmodule * akind list * aconstant list) list *
+      (aaccumulatedmodule * akind list * aconstant list) list *
       aconstant Table.SymbolTable.t ref * akind Table.SymbolTable.t ref *
       atypeabbrev Table.SymbolTable.t * astringinfo list * akind list *
       akind list * aconstant list * aconstant list * aconstant list ref *
       askeleton list * askeleton list ref * aclauseinfo ref)
-  | Signature of (string * akind list * aconstant list * akind list * aconstant list *
-                  ((Symbol.symbol -> bool -> Symbol.symbol option) * 
-                  ((Symbol.symbol -> bool -> Symbol.symbol option))) )
+  | Signature of (string * akind list * aconstant list)
   | ErrorModule
 
 and aimportedmodule = 
@@ -1951,35 +1953,21 @@ let getModuleClauses amod = !(getModuleClausesRef amod)
 let setModuleClauses amod cls = (getModuleClausesRef amod) := cls
 
 let getSignatureGlobalKindsList = function
-  Signature(_, kl, _, _, _, _) -> kl
-| Module(_) -> Errormsg.impossible Errormsg.none 
-                 "getSignatureGlobalKindsList: argument is a module"
-| ErrorModule -> Errormsg.impossible Errormsg.none 
-                   "getSignatureGlobalKindsList: argument invalid"
-  
-let getSignatureOmittedKindsList = function
-  Signature(_, _, _, kl, _, _) -> kl
+  Signature(_, kl, _) -> kl
 | Module(_) -> Errormsg.impossible Errormsg.none 
                  "getSignatureGlobalKindsList: argument is a module"
 | ErrorModule -> Errormsg.impossible Errormsg.none 
                    "getSignatureGlobalKindsList: argument invalid"
   
 let getSignatureGlobalConstantsList = function
-  Signature(_,_,cl,_, _, _) -> cl
-| Module(_) -> Errormsg.impossible Errormsg.none 
-                 "getSignatureGlobalConstantsList: argument is a module"
-| ErrorModule -> Errormsg.impossible Errormsg.none 
-                   "getSignatureGlobalConstantsList: argument invalid"
-
-let getSignatureOmittedConstantsList = function
-  Signature(_,_,_,_,cl,_) -> cl
+  Signature(_,_,cl) -> cl
 | Module(_) -> Errormsg.impossible Errormsg.none 
                  "getSignatureGlobalConstantsList: argument is a module"
 | ErrorModule -> Errormsg.impossible Errormsg.none 
                    "getSignatureGlobalConstantsList: argument invalid"
 
 let getSignatureName = function
-  Signature(n,_,_,_,_,_) -> n
+  Signature(n,_,_) -> n
 | Module(_) -> Errormsg.impossible Errormsg.none 
                  "getSignatureName: argument is a module"
 | ErrorModule -> Errormsg.impossible Errormsg.none 

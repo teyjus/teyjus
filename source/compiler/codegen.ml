@@ -115,7 +115,6 @@ and  cghashtab = ConstHashTab of int * (cghashtabentry list)
 (* hash table entry: (const category, index, code location )              *)
 and  cghashtabentry = ConstHashTabEntry of Absyn.aconstanttype * int * int
 
-
 (**************************************************************************)
 (* information for implication tables:                                    *)
 (*========================================================================*)
@@ -387,27 +386,24 @@ let assignStringIndex strs =
 (****************************************************************************)
 (*                      COLLECT RENAMING INFORMATION                        *) 
 (* collect renaming information for imported and accumulated modules        *)
-(* including kinds and constants that were omitted due to renaming          *)
 (****************************************************************************)
-let collectRenamingInfo amod =
+let collectRenamingInfo amod okinds oconsts = 
   (* function body of collectRenamingInfo *)
   let gkinds = Absyn.getSignatureGlobalKindsList amod in
-  let okinds = Absyn.getSignatureOmittedKindsList amod in
-  let gkinds = gkinds @ okinds in
+  let allkinds = okinds @ gkinds in
   let gconsts = Absyn.getSignatureGlobalConstantsList amod in
-  let oconsts = Absyn.getSignatureOmittedConstantsList amod in
-  let gconsts = gconsts @ oconsts in
+  let allconsts = oconsts @ gconsts in
   RenamingInfo(Absyn.getSignatureName amod, 
-	       KindList(List.rev gkinds, List.length gkinds),
-	       ConstantList(List.rev gconsts, List.length gconsts))
+	       KindList(List.rev allkinds, List.length allkinds),
+	       ConstantList(List.rev allconsts, List.length allconsts))
 
 
 let collectImports imps = 
   let rec collectImportsAux imps renamingInfo =
     match imps with
       [] -> (List.rev renamingInfo)
-    | (Absyn.ImportedModule(amod) :: rest) ->
-	collectImportsAux rest ((collectRenamingInfo amod) :: renamingInfo)
+    | ((Absyn.ImportedModule(amod), okinds, oconsts) :: rest) ->
+	collectImportsAux rest ((collectRenamingInfo amod okinds oconsts) :: renamingInfo)
   in 
   collectImportsAux imps []
 
@@ -415,8 +411,8 @@ let collectAccs accs =
   let rec collectAccsAux accs renamingInfo =
     match accs with
       [] -> (List.rev renamingInfo)
-    | (Absyn.AccumulatedModule(amod) :: rest) ->
-	collectAccsAux rest ((collectRenamingInfo amod) :: renamingInfo)
+    | ((Absyn.AccumulatedModule(amod), okinds, oconsts) :: rest) ->
+	collectAccsAux rest ((collectRenamingInfo amod okinds oconsts) :: renamingInfo)
   in 
   collectAccsAux accs []
 
@@ -1123,43 +1119,22 @@ let collectClosedConstsInAccs accs =
   in
 
   Clausegen.initAccConsts ();
+  let accs = List.fold_left (fun laccs (acc, _, _) -> laccs @ [acc]) [] accs in
   let consts = collectClosedConstsInAccsAux accs [] in
   Clausegen.setAccConsts consts
 
-  
+let collectOmittedElements imps accums =
+  let oimpkinds =
+    List.fold_left (fun lst (_, okindlist, _) -> (lst @ okindlist)) [] imps in
+  let oimpconsts =
+    List.fold_left (fun lst (_, _, oconstlist) -> (lst @ oconstlist)) [] imps in
+  let oaccumkinds =
+    List.fold_left (fun lst (_, okindlist, _) -> (lst @ okindlist)) [] accums in
+  let oaccumconsts =
+    List.fold_left (fun lst (_, _, oconstlist) -> (lst @ oconstlist)) [] accums in
+  (oimpkinds @ oaccumkinds, oimpconsts @ oaccumconsts)
 
-(****************************************************************************)
-(*  Collect global kinds that were omitted in acc modules.                  *)
-(****************************************************************************)
-let getOmittedKinds imps accums = 
-  let kinds = List.fold_left
-      (fun l a -> 
-        (match a with 
-          ( Absyn.AccumulatedModule(Absyn.Signature(_,_,_,k,_,_))) -> l@k
-          | _ -> l)) [] accums in 
-  let kinds = List.fold_left
-      (fun l a -> 
-        (match a with 
-          ( Absyn.ImportedModule(Absyn.Signature(_,_,_,k,_,_))) -> l@k 
-          | _ -> l)) kinds imps in 
-  kinds
 
-(****************************************************************************)
-(*  Collect global constants that were omitted in acc modules.              *)
-(****************************************************************************)
-let getOmittedConsts imps accums = 
-  let consts = List.fold_left
-      (fun l a -> 
-        (match a with 
-          ( Absyn.AccumulatedModule(Absyn.Signature(_,_,_,_,c,_))) -> l@c 
-          | _ -> l)) [] accums in 
-  let consts = List.fold_left
-      (fun l a -> 
-        (match a with 
-          ( Absyn.ImportedModule(Absyn.Signature(_,_,_,_,c,_))) -> l@c 
-          | _ -> l)) consts imps in 
-  consts
-  
 (*****************************************************************************)
 (*                CODE GENERATION FOR A MODULE                               *)
 (*****************************************************************************)
@@ -1174,11 +1149,11 @@ let generateModuleCode amod =
       (* generating instructions.                                       *)
       collectClosedConstsInAccs modaccs;
 
-      let okinds = getOmittedKinds modimps modaccs in
-      let oconsts = getOmittedConsts modimps modaccs in
+      let (okinds, oconsts) = collectOmittedElements modimps modaccs in
 
+      
       (* assign indexes to global and local kinds *)				   
-      let (cgGKinds, cgLKinds) = assignKindIndex gkinds (lkinds@okinds) in
+      let (cgGKinds, cgLKinds) = assignKindIndex gkinds (lkinds @ okinds) in
       (* 1) assign indexes to global, local and hidden constants;   *)
       (* 2) gather predicates have definitions in this module;      *)
       (* 3) gather predicates whose previous defintions may be      *)
@@ -1187,14 +1162,11 @@ let generateModuleCode amod =
       (* 5) gather local predicates                                 *)
       let (cgGConsts, cgLConsts, cgHConsts, cgDefs, cgGNonExpDefs, 
         cgGExpDefs, cgLDefs) = 
-        assignConstIndex (List.rev gconsts) (List.rev (lconsts@oconsts))
+        assignConstIndex (List.rev gconsts) (List.rev (lconsts @ oconsts))
           (List.rev (!hconsts))
       in
-
-      let oskels = List.fold_left (fun l c -> (Absyn.getConstantSkeletonValue c)::l) [] oconsts in
-
       (* merge type skeletons and those of hidden constants; assign indexes *)
-      let cgTySkels = assignSkelIndex (skels@oskels) !hskels in 
+      let cgTySkels = assignSkelIndex skels !hskels in 
       (* assign indexes to strings *)
       let cgStrings = assignStringIndex modstr in
       (* generate code for top-level predicate defintions *)
