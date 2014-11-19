@@ -274,12 +274,12 @@ and ahcvarassoc = HCVarAssocs of ((avar * aconstant) list)
 **********************************************************************)
 and aclause = 
     Fact of (aconstant * aterm list * atype list * int * int * 
-             atermvarmap * atypevarmap * avar list * int option ref * 
-             aimportedmodule list)
-  | Rule of (aconstant * aterm list * atype list * int * int * 
-             atermvarmap * atypevarmap * avar list * int option ref * 
-             agoal * agoalenvassoc ref * avar option ref * bool ref * 
-             aimportedmodule list)
+			   atermvarmap * atypevarmap * avar list * int option ref * 
+			   (aimportedmodule * akind list * aconstant list) list (* aimportedmodule list *))
+  | Rule of (aconstant * aterm list * atype list * int * int * atermvarmap *
+			   atypevarmap * avar list * int option ref * agoal * 
+               agoalenvassoc ref * avar option ref * bool ref * 
+			   (aimportedmodule * akind list * aconstant list) list(* aimportedmodule list *))
 
 (* Goal number and environment size association list*)
 and agoalenvassoc =  GoalEnvAssoc of ((int * int) list)
@@ -301,18 +301,16 @@ and aclausesblock = (aclause list ref * bool ref * int ref * int option ref)
 * skeleton list, hskeleton list, clauses blocks list)
 *
 *Signatures:
-* (signame, global kinds, global constants, omitted kinds, omitted consts,
-* (kind renaming function, const renaming function))
+* (signame, global kinds, global constants)
 *****************************************************************************)
 and amodule = 
-    Module of (string * aimportedmodule list * aaccumulatedmodule list *
+    Module of (string * (aimportedmodule * akind list * aconstant list) list *
+      (aaccumulatedmodule * akind list * aconstant list) list *
       aconstant Table.SymbolTable.t ref * akind Table.SymbolTable.t ref *
       atypeabbrev Table.SymbolTable.t * astringinfo list * akind list *
       akind list * aconstant list * aconstant list * aconstant list ref *
       askeleton list * askeleton list ref * aclauseinfo ref)
-  | Signature of (string * akind list * aconstant list * akind list * aconstant list *
-                  ((Symbol.symbol -> bool -> Symbol.symbol option) * 
-                  ((Symbol.symbol -> bool -> Symbol.symbol option))) )
+  | Signature of (string * akind list * aconstant list)
   | ErrorModule
 
 and aimportedmodule = 
@@ -617,7 +615,7 @@ val setClauseOffset : aclause -> int -> unit
 val getClauseGoal : aclause -> agoal
 val getClauseCutVarOption : aclause -> avar option
 val getClauseCutVar : aclause -> avar
-val getClauseImports : aclause -> aimportedmodule list
+val getClauseImports : aclause -> (aimportedmodule * akind list * aconstant list) list(* aimportedmodule list *)
 val getClauseGespList : aclause -> agoalenvassoc
 val setClauseGespList : aclause -> agoalenvassoc -> unit
 val getClauseHasEnv : aclause -> bool
@@ -653,9 +651,7 @@ val setModuleClauses : amodule -> aclauseinfo -> unit
 
 val getSignatureName : amodule -> string
 val getSignatureGlobalKindsList : amodule -> akind list
-val getSignatureOmittedKindsList : amodule -> akind list
 val getSignatureGlobalConstantsList : amodule -> aconstant list
-val getSignatureOmittedConstantsList : amodule -> aconstant list
 
 (*************************************************************************)
 (*  aclauseinfo:                                                         *)

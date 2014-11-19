@@ -5,7 +5,8 @@
 
 sig  poly_test.
 
-accum_sig polyinfer, polytypes.
+accum_sig polyinfer {type polyinfer => pinf,*}.
+accum_sig polytypes.
 
 type  poly_test  string -> poly -> o.
 

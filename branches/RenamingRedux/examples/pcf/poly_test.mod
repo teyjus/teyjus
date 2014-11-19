@@ -5,8 +5,9 @@
 
 module poly_test.
 
-accumulate polyinfer, examples. 
+accumulate polyinfer {type polyinfer => pinf,*}.
+accumulate examples.
 
 type poly_test  string -> poly -> o.
 
-poly_test String Ty :- prog String T, polyinfer T Ty.
+poly_test String Ty :- prog String T, pinf T Ty.

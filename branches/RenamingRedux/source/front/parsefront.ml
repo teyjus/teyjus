@@ -75,11 +75,11 @@ let writeKind oc isLocal k =
   ()
 
 let writeModule m clauses newclauses oc =  
-  let writeImp oc (ImportedModule(imod)) =
+  let writeImp oc (ImportedModule(imod), _, _) =
     let name = Absyn.getSignatureName imod in
     writeLine oc ("import " ^ name ^ ".")
   in
-  let writeAcc oc (AccumulatedModule(amod)) =
+  let writeAcc oc (AccumulatedModule(amod), _, _) =
     let name = Absyn.getSignatureName amod in
     writeLine oc ("accumulate " ^ name ^ ".")
   in

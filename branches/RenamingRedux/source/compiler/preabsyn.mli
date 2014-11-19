@@ -56,9 +56,10 @@ type renamingdirective =
   | IncludeType of psymbol
   | IncludeKind of psymbol
 
+(*  *)
 type renamingdirectives =
     IncludeAll
-  | SelectOf of (renamingdirective list * renamingdirective list)
+  | SelectOf        of (renamingdirective list * renamingdirective list)
   | InclusiveSelect of (renamingdirective list * renamingdirective list)
 
 (* Symbols for abstracted variables 
