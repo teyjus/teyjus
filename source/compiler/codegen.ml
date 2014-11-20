@@ -1134,6 +1134,13 @@ let collectOmittedElements imps accums =
     List.fold_left (fun lst (_, _, oconstlist) -> (lst @ oconstlist)) [] accums in
   (oimpkinds @ oaccumkinds, oimpconsts @ oaccumconsts)
 
+let print_aconst c =
+  let n = Symbol.name (Absyn.getConstantSymbol c) in
+  let cty = 
+    if Absyn.isGlobalConstant c then "Global" 
+    else if Absyn.isLocalConstant c then "Local" else "" 
+  in
+  Printf.printf "aconst: %s %s\n"  n cty
 
 (*****************************************************************************)
 (*                CODE GENERATION FOR A MODULE                               *)
@@ -1151,7 +1158,20 @@ let generateModuleCode amod =
 
       let (okinds, oconsts) = collectOmittedElements modimps modaccs in
 
-      
+      let () = print_endline "\nIn codgen:" in
+      let () = print_endline " oconsts:  " in
+      let () = List.iter print_aconst  oconsts  in
+      let () = print_endline "" in
+      let () = print_endline " gconsts:  " in
+      let () = List.iter print_aconst  gconsts  in
+      let () = print_endline "" in
+      let () = print_endline " lconsts:  " in
+      let () = List.iter print_aconst  lconsts  in
+      let () = print_endline "" in      
+      let () = print_endline " hconsts:  " in
+      let () = List.iter print_aconst  !hconsts  in
+      let () = print_endline "" in      
+
       (* assign indexes to global and local kinds *)				   
       let (cgGKinds, cgLKinds) = assignKindIndex gkinds (lkinds @ okinds) in
       (* 1) assign indexes to global, local and hidden constants;   *)
