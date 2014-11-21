@@ -1151,19 +1151,6 @@ let copyUseonly generalCopier owner currentConstant newConstant =
     ()
 
 
-(* for debugging *)
-let print_aconst c =
-  let n = Symbol.name (Absyn.getConstantSymbol c) in
-  Printf.printf "aconst: %s \n"  n
-
-let print_akind k =
-  let n = Symbol.name (Absyn.getKindSymbol k) in
-  Printf.printf "akind: %s\n"  n
-
-let print_sym s = 
-  let n = Symbol.name s in
-  Printf.printf "sym: %s\n" n
-
 (**********************************************************************
  * getRenamingFunction:
  * The renaming function doesn't need to know anything about tables,
@@ -1176,66 +1163,59 @@ let print_sym s =
  * that symbol or return 'Some s' where 's' is the renamed symbol.
  **********************************************************************)
 let getRenamingFunctions ktable ctable renamings = 
+  (* Check if old_sym is in tbl before adding (old_sym,new_sym) 
+   * to new_tbl. If old_sym does not exist raise an error with 
+   * the given message and position. *)
+  let add old_sym new_sym tbl new_tbl pos errormsg =
+    if Table.mem old_sym tbl
+    then Table.add old_sym new_sym new_tbl
+    else let () = Errormsg.error pos errormsg in
+      new_tbl
+  in
   let includeSym s _ tbl = Table.add s s tbl in
   let addRenaming tbl renaming =
     match renaming with
     | Preabsyn.IncludeKind psym ->
       let (Preabsyn.Symbol (sym,_,pos)) = psym in
-      print_string "InculdeKind "; print_sym sym;
-      if Table.mem sym ktable
-      then Table.add sym sym tbl
-      else 
-        let () = Errormsg.error pos
-            ("cannot include unknown kind: '" ^ (Symbol.name sym) ^ "'") in
-        tbl
+      print_string "InculdeKind "; Printf.printf "sym: %s\n" (Symbol.name sym);
+      add sym sym ktable tbl pos ("cannot include unknown kind: '" ^ 
+                                  (Symbol.name sym) ^ "'")
     | Preabsyn.RenameKind (old_psym,new_psym) ->
       let (Preabsyn.Symbol (old_sym,_,old_pos)) = old_psym in
       let (Preabsyn.Symbol (new_sym,_,new_pos)) = new_psym in
       Printf.printf "RenameKind sym: %s => %s\n" (Symbol.name old_sym) (Symbol.name new_sym); 
-      if Table.mem old_sym ktable
-      then Table.add old_sym new_sym tbl
-      else         
-        let () = Errormsg.error old_pos
-            ("cannot rename unknown kind: '" ^ (Symbol.name old_sym) ^ "'") in
-        tbl
+      add old_sym new_sym ktable tbl old_pos ("cannot rename unknown kind: '" ^
+                                          (Symbol.name old_sym) ^ "'")
     | Preabsyn.IncludeType psym -> 
       let (Preabsyn.Symbol (sym,_,pos)) = psym in
-      print_string "InculdeType "; print_sym sym;
-      if Table.mem sym ctable
-      then Table.add sym sym tbl 
-      else
-        let () = Errormsg.error pos 
-            ("cannot include unknown type: '" ^ (Symbol.name sym) ^ "'") in
-        tbl  
+      print_string "InculdeType "; Printf.printf "sym: %s\n" (Symbol.name sym);
+      add sym sym ctable tbl pos ("cannot include unknown type: '" ^ 
+                                  (Symbol.name sym) ^ "'")
     | Preabsyn.RenameType (old_psym,new_psym) -> 
       let (Preabsyn.Symbol (old_sym,_,old_pos)) = old_psym in
       let (Preabsyn.Symbol (new_sym,_,new_pos)) = new_psym in
       Printf.printf "RenameType sym: %s => %s\n" (Symbol.name old_sym) (Symbol.name new_sym); 
-      if Table.mem old_sym ctable
-      then Table.add old_sym new_sym tbl
-      else
-        let () = Errormsg.error old_pos
-            ("cannot rename unknown type: '" ^ (Symbol.name old_sym) ^ "'") in
-        tbl
+      add old_sym new_sym ctable tbl old_pos ("cannot rename unknown type: '" ^
+                                              (Symbol.name old_sym) ^ "'")
   in
   (* build lookup tables *)
   print_endline "renaming:";
   let (kRenamingTable,cRenamingTable) = 
     match renamings with
     | Preabsyn.IncludeAll -> 
-      let kTable = Table.fold includeSym ktable Table.empty in
-      let cTable = Table.fold includeSym ctable Table.empty in
-      kTable,cTable
+      let kRenamingTable = Table.fold includeSym ktable Table.empty in
+      let cRenamingTable = Table.fold includeSym ctable Table.empty in
+      kRenamingTable,cRenamingTable
     | Preabsyn.SelectOf (kindRenamings, typeRenamings) ->
-      let kTable = List.fold_left addRenaming Table.empty kindRenamings in
-      let cTable = List.fold_left addRenaming Table.empty typeRenamings in
-      kTable,cTable
+      let kRenamingTable = List.fold_left addRenaming Table.empty kindRenamings in
+      let cRenamingTable = List.fold_left addRenaming Table.empty typeRenamings in
+      kRenamingTable,cRenamingTable
     | Preabsyn.InclusiveSelect (kindRenamings, typeRenamings) ->
-      let kTable = Table.fold includeSym ktable Table.empty in
-      let cTable = Table.fold includeSym ctable Table.empty in
-      let kTable = List.fold_left addRenaming kTable  kindRenamings in
-      let cTable = List.fold_left addRenaming cTable typeRenamings in
-      kTable,cTable
+      let kRenamingTable = Table.fold includeSym ktable Table.empty in
+      let cRenamingTable = Table.fold includeSym ctable Table.empty in
+      let kRenamingTable = List.fold_left addRenaming kRenamingTable kindRenamings in
+      let cRenamingTable = List.fold_left addRenaming cRenamingTable typeRenamings in
+      kRenamingTable,cRenamingTable
   in
 
   let kRenamingFunc s = Table.find s kRenamingTable in
@@ -1571,14 +1551,6 @@ and translateSignature s owner accumOrUse generalCopier =
   let ctable =
     mergeSigConstants econstantlist ctable (ecopier generalCopier owner)
   in
-
-  (* debugging *)
-  print_endline "transig: ktable";  
-  List.iter print_akind 
-    (getFromTable (fun k -> not (Absyn.isPervasiveKind k)) ktable);
-  print_endline "transig: ctable";
-  List.iter print_aconst
-    (getFromTable (fun k -> not (Absyn.isPervasiveConstant k)) ctable);
 
   (*  Normalizing.  *)
   let ctable = normalizeTable ktable ctable in
@@ -1934,29 +1906,16 @@ and translateModule mod' ktable ctable atable =
     List.map normalize accums
   in
 
-  (* let rec gatherOmittedElements sigs tables elementContexts = *)
-  (*   match sigs with *)
-  (*     [] -> elementContexts *)
-  (*   | (sign :: restSigs) -> *)
-  (*     (match tables with *)
-  (*       (((ktable, ctable, _), (renameKind, renameConst)) :: restTables) -> *)
-  (*         let kinds = getFromTable (fun k -> not (Absyn.isPervasiveKind k)) ktable in *)
-  (*         let consts = getFromTable (fun c -> not (Absyn.isPervasiveConstant c)) ctable in *)
-  (*         let isOmitted renamingFunc symbolGetter element = *)
-  (*           (match (renamingFunc (symbolGetter element) false) with *)
-  (*             None -> true *)
-  (*           | Some _ -> false) in *)
-  (*         let komitted = List.filter (isOmitted renameKind Absyn.getKindSymbol) kinds in *)
-  (*         let comitted = List.filter (isOmitted renameConst Absyn.getConstantSymbol) consts in *)
-  (*         let comitted = normalizeList ktable komitted comitted in *)
-  (*         gatherOmittedElements restSigs restTables ((sign, komitted, comitted) :: elementContexts) *)
-  (*     | [] -> *)
-  (*       Errormsg.impossible Errormsg.none "Signature and table count mismatch.") in *)
   let gatherOmitted amods omittedTables ktable =
+    let makeLocal aconst =
+      let ct = Absyn.getConstantTypeRef aconst in
+      ct := Absyn.LocalConstant
+    in
     let rec gather amods omittedTables result =
       match (amods,omittedTables) with
       | (a::arest,(kOmitted,cOmitted)::trest) -> 
         let cOmitted = normalizeList ktable kOmitted cOmitted in
+        List.iter makeLocal cOmitted;
         gather arest trest ((a,kOmitted,cOmitted)::result)
       | _ -> result
     in
@@ -2009,38 +1968,7 @@ and translateModule mod' ktable ctable atable =
     let cOmitted = Table.fold (getOmittedElement isConst renameConst) ctable [] in
     kOmitted,cOmitted
   in
-  (* let getOmitted renamings ktable ctable = *)
-  (*   let rec aux renamings kOmitted cOmitted = *)
-  (*     match renamings with *)
-  (*     | [] -> kOmitted,cOmitted *)
-  (*     | renaming::rest -> *)
-  (*       (match renaming with  *)
-  (*        | Preabsyn.RenameKind (Preabsyn.Symbol(s,_,_),_) ->  *)
-  (*          let akind =  *)
-  (*            (match Table.find s ktable with *)
-  (*             | None -> Errormsg.impossible Errormsg.none "Renaming does not match table"  *)
-  (*             | Some a -> a) *)
-  (*          in *)
-  (*          aux rest (akind::kOmitted) cOmitted  *)
-  (*        | Preabsyn.IncludeKind s ->  *)
-  (*          aux rest kOmitted cOmitted *)
-  (*        | Preabsyn.RenameType  (Preabsyn.Symbol(s,_,_),_) -> *)
-  (*          let aconst =  *)
-  (*            match Table.find s ctable with *)
-  (*            | None -> Errormsg.impossible Errormsg.none "Renaming does not match table"  *)
-  (*            | Some a -> a *)
-  (*          in *)
-  (*          aux rest kOmitted (aconst::cOmitted) *)
-  (*        | Preabsyn.IncludeType s -> *)
-  (*          aux rest kOmitted cOmitted) *)
-  (*   in  *)
-  (*   match renamings with *)
-  (*   | Preabsyn.IncludeAll -> [],[] *)
-  (*   | Preabsyn.SelectOf (kRenaming,cRenamnig) -> *)
-  (*     aux (kRenaming @ cRenamnig) [] [] *)
-  (*   | Preabsyn.InclusiveSelect (kRenaming,cRenamnig) -> *)
-  (*     aux (kRenaming @ cRenamnig) [] [] *)
-  (* in *)
+
   let getOmittedConstants impOmitted accOmitted =
     let _,impConsts = List.split impOmitted in
     let _,accConsts = List.split accOmitted in
@@ -2124,6 +2052,7 @@ and translateModule mod' ktable ctable atable =
       let impmods' = processSignatures impmods in
       let (imps, imptables, impOmitted) = translateImpMods impmods' in
       let omittedconstants = getOmittedConstants impOmitted accOmitted in 
+      
 
 
       let (ktable, ctable) = 
@@ -2172,24 +2101,6 @@ and translateModule mod' ktable ctable atable =
       let econstlist = translateExportdefConstants true econsts ktable atable in
 
 
-      let () = print_endline "ctable:  " in
-      let () = List.iter print_aconst 
-          (getFromTable (fun c -> not (Absyn.isPervasiveConstant c)) ctable)
-      in
-      let () = print_endline "" in
-      let () = print_endline "ktable:  " in
-      let () = List.iter print_akind
-          (getFromTable (fun c -> not (Absyn.isPervasiveKind c)) ktable)
-      in
-      let () = print_endline "" in
-
-
-      let () = print_endline "omitted consts:  " in
-      let () = List.iter print_aconst omittedconstants in
-      let () = print_endline "" in
-
-
-
       (*  Merge all of the various constants into the constant table. *)
       let ctable = mergeGlobalConstants gconstlist ctable in
       let ctable = mergeLocalConstants lconstlist ctable in
@@ -2218,7 +2129,7 @@ and translateModule mod' ktable ctable atable =
         Table.fold (getConstant Absyn.GlobalConstant) ctable [] in
       let localconstants = 
         Table.fold (getConstant Absyn.LocalConstant) ctable [] in
-      
+
       (*  Verify that all constants have a body, and
           all kinds have an arity.  *)
       if (checkConstantBodies ktable ctable) && (checkKindArities ktable) then
