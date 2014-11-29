@@ -1158,20 +1158,6 @@ let generateModuleCode amod =
 
       let (okinds, oconsts) = collectOmittedElements modimps modaccs in
 
-      let () = print_endline "\nIn codgen:" in
-      let () = print_endline " oconsts:  " in
-      let () = List.iter print_aconst  oconsts  in
-      let () = print_endline "" in
-      let () = print_endline " gconsts:  " in
-      let () = List.iter print_aconst  gconsts  in
-      let () = print_endline "" in
-      let () = print_endline " lconsts:  " in
-      let () = List.iter print_aconst  lconsts  in
-      let () = print_endline "" in      
-      let () = print_endline " hconsts:  " in
-      let () = List.iter print_aconst  !hconsts  in
-      let () = print_endline "" in      
-
       (* assign indexes to global and local kinds *)				   
       let (cgGKinds, cgLKinds) = assignKindIndex gkinds (lkinds @ okinds) in
       (* 1) assign indexes to global, local and hidden constants;   *)
