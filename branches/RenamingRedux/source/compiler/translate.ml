@@ -1165,62 +1165,75 @@ let copyUseonly generalCopier owner currentConstant newConstant =
 let getRenamingFunctions ktable ctable renamings = 
   (* Check if old_sym is in tbl before adding (old_sym,new_sym) 
    * to new_tbl. If old_sym does not exist raise an error with 
-   * the given message and position. *)
-  let add old_sym new_sym tbl new_tbl pos errormsg =
+   * the given message and position. Uses a reverse copy of the 
+   * underlying hash table to check bijectivity *)
+  let add old_sym new_sym tbl (new_tbl, rev_tbl) pos errormsg =
     if Table.mem old_sym tbl
-    then Table.add old_sym new_sym new_tbl
+    then
+      (if not (Table.mem new_sym rev_tbl)
+      then (Table.add old_sym new_sym new_tbl, Table.add new_sym old_sym rev_tbl)
+      else 
+        let () = Errormsg.error pos "Clash detected" in
+        (new_tbl, rev_tbl))
     else let () = Errormsg.error pos errormsg in
-      new_tbl
+      (new_tbl, rev_tbl)
   in
-  let includeSym s _ tbl = Table.add s s tbl in
-  let addRenaming tbl renaming =
+
+  (* Adds the inclusion to the original and reverse table *)
+  let includeSym s _ (tbl, rev_tbl) = 
+    (Table.add s s tbl, Table.add s s rev_tbl) in
+
+  let addRenaming (tbl, rev_tbl) renaming =
     match renaming with
     | Preabsyn.IncludeKind psym ->
       let (Preabsyn.Symbol (sym,_,pos)) = psym in
-      print_string "InculdeKind "; Printf.printf "sym: %s\n" (Symbol.name sym);
-      add sym sym ktable tbl pos ("cannot include unknown kind: '" ^ 
-                                  (Symbol.name sym) ^ "'")
+      add sym sym ktable (tbl, rev_tbl) pos
+        ("Cannot include unknown kind: '" ^ (Symbol.name sym) ^ "'")
     | Preabsyn.RenameKind (old_psym,new_psym) ->
       let (Preabsyn.Symbol (old_sym,_,old_pos)) = old_psym in
       let (Preabsyn.Symbol (new_sym,_,new_pos)) = new_psym in
-      Printf.printf "RenameKind sym: %s => %s\n" (Symbol.name old_sym) (Symbol.name new_sym); 
-      add old_sym new_sym ktable tbl old_pos ("cannot rename unknown kind: '" ^
-                                          (Symbol.name old_sym) ^ "'")
+      add old_sym new_sym ktable (tbl, rev_tbl) old_pos 
+        ("Cannot rename unknown kind: '" ^ (Symbol.name old_sym) ^ "'")
     | Preabsyn.IncludeType psym -> 
       let (Preabsyn.Symbol (sym,_,pos)) = psym in
-      print_string "InculdeType "; Printf.printf "sym: %s\n" (Symbol.name sym);
-      add sym sym ctable tbl pos ("cannot include unknown type: '" ^ 
-                                  (Symbol.name sym) ^ "'")
+      add sym sym ctable (tbl, rev_tbl) pos 
+        ("Cannot include unknown type: '" ^ (Symbol.name sym) ^ "'")
     | Preabsyn.RenameType (old_psym,new_psym) -> 
       let (Preabsyn.Symbol (old_sym,_,old_pos)) = old_psym in
       let (Preabsyn.Symbol (new_sym,_,new_pos)) = new_psym in
-      Printf.printf "RenameType sym: %s => %s\n" (Symbol.name old_sym) (Symbol.name new_sym); 
-      add old_sym new_sym ctable tbl old_pos ("cannot rename unknown type: '" ^
-                                              (Symbol.name old_sym) ^ "'")
+      add old_sym new_sym ctable (tbl, rev_tbl) old_pos
+        ("Cannot rename unknown type: '" ^ (Symbol.name old_sym) ^ "'")
   in
   (* build lookup tables *)
-  print_endline "renaming:";
   let (kRenamingTable,cRenamingTable) = 
     match renamings with
     | Preabsyn.IncludeAll -> 
-      let kRenamingTable = Table.fold includeSym ktable Table.empty in
-      let cRenamingTable = Table.fold includeSym ctable Table.empty in
-      kRenamingTable,cRenamingTable
+      let (kRenamingTable, _) = 
+        Table.fold includeSym ktable (Table.empty, Table.empty) in
+      let (cRenamingTable, _) = 
+        Table.fold includeSym ctable (Table.empty, Table.empty) in
+      (kRenamingTable, cRenamingTable)
     | Preabsyn.SelectOf (kindRenamings, typeRenamings) ->
-      let kRenamingTable = List.fold_left addRenaming Table.empty kindRenamings in
-      let cRenamingTable = List.fold_left addRenaming Table.empty typeRenamings in
-      kRenamingTable,cRenamingTable
+      let (kRenamingTable, _) = List.fold_left addRenaming
+        (Table.empty, Table.empty) kindRenamings in
+      let (cRenamingTable, _) = List.fold_left addRenaming 
+        (Table.empty, Table.empty) typeRenamings in
+      (kRenamingTable, cRenamingTable)
     | Preabsyn.InclusiveSelect (kindRenamings, typeRenamings) ->
-      let kRenamingTable = Table.fold includeSym ktable Table.empty in
-      let cRenamingTable = Table.fold includeSym ctable Table.empty in
-      let kRenamingTable = List.fold_left addRenaming kRenamingTable kindRenamings in
-      let cRenamingTable = List.fold_left addRenaming cRenamingTable typeRenamings in
-      kRenamingTable,cRenamingTable
+      let (kRenamingTable, revKindRen) = 
+        Table.fold includeSym ktable (Table.empty, Table.empty) in
+      let (cRenamingTable, revConstRen) = 
+        Table.fold includeSym ctable (Table.empty, Table.empty) in
+      let (kRenamingTable, _) = List.fold_left addRenaming 
+        (kRenamingTable, revKindRen) kindRenamings in
+      let (cRenamingTable, _) = List.fold_left addRenaming
+        (cRenamingTable, revConstRen) typeRenamings in
+      (kRenamingTable, cRenamingTable)
   in
 
   let kRenamingFunc s = Table.find s kRenamingTable in
   let cRenamingFunc s = Table.find s cRenamingTable in
-  kRenamingFunc,cRenamingFunc
+    (kRenamingFunc, cRenamingFunc) 
 
 let applyRenamingFunctions asig (ktable,ctable,atable) (kRenamingFunc,cRenamingFunc) =
   (* helper functions *)
@@ -1263,7 +1276,6 @@ let applyRenamingFunctions asig (ktable,ctable,atable) (kRenamingFunc,cRenamingF
     | None -> None
     | Some (Absyn.Skeleton (ty,ind,adj)) ->
       let sk = Some (Absyn.Skeleton(renameType ty,ind,adj)) in
-      (* Printf.printf "%s: %s\n" (Symbol.name s) (Absyn.string_of_type ty); *)
       sk
   in
   let renameConst aconst =
