@@ -1205,37 +1205,39 @@ let getRenamingFunctions ktable ctable renamings =
         ("Cannot rename unknown type: '" ^ (Symbol.name old_sym) ^ "'")
   in
   (* build lookup tables *)
-  let (kRenamingTable,cRenamingTable) = 
+  let (kRenamingTable, revKindRenTable, cRenamingTable, revConstRenTable) = 
     match renamings with
     | Preabsyn.IncludeAll -> 
-      let (kRenamingTable, _) = 
+      let (kRenamingTable, kRevRenTable) = 
         Table.fold includeSym ktable (Table.empty, Table.empty) in
-      let (cRenamingTable, _) = 
+      let (cRenamingTable, cRevRenTable) = 
         Table.fold includeSym ctable (Table.empty, Table.empty) in
-      (kRenamingTable, cRenamingTable)
+      (kRenamingTable, kRevRenTable, cRenamingTable, cRevRenTable)
     | Preabsyn.SelectOf (kindRenamings, typeRenamings) ->
-      let (kRenamingTable, _) = List.fold_left addRenaming
+      let (kRenamingTable, kRevRenTable) = List.fold_left addRenaming
         (Table.empty, Table.empty) kindRenamings in
-      let (cRenamingTable, _) = List.fold_left addRenaming 
+      let (cRenamingTable, cRevRenTable) = List.fold_left addRenaming 
         (Table.empty, Table.empty) typeRenamings in
-      (kRenamingTable, cRenamingTable)
+      (kRenamingTable, kRevRenTable, cRenamingTable, cRevRenTable)
     | Preabsyn.InclusiveSelect (kindRenamings, typeRenamings) ->
       let (kRenamingTable, revKindRen) = 
         Table.fold includeSym ktable (Table.empty, Table.empty) in
       let (cRenamingTable, revConstRen) = 
         Table.fold includeSym ctable (Table.empty, Table.empty) in
-      let (kRenamingTable, _) = List.fold_left addRenaming 
+      let (kRenamingTable, kRevRenTable) = List.fold_left addRenaming 
         (kRenamingTable, revKindRen) kindRenamings in
-      let (cRenamingTable, _) = List.fold_left addRenaming
+      let (cRenamingTable, cRevRenTable) = List.fold_left addRenaming
         (cRenamingTable, revConstRen) typeRenamings in
-      (kRenamingTable, cRenamingTable)
+      (kRenamingTable, kRevRenTable, cRenamingTable, cRevRenTable)
   in
 
   let kRenamingFunc s = Table.find s kRenamingTable in
+  let kReverseFunc s = Table.find s revKindRenTable in
   let cRenamingFunc s = Table.find s cRenamingTable in
-    (kRenamingFunc, cRenamingFunc) 
+  let cReverseFunc s = Table.find s revConstRenTable in
+    ((kRenamingFunc, kReverseFunc), (cRenamingFunc, cReverseFunc)) 
 
-let applyRenamingFunctions asig (ktable,ctable,atable) (kRenamingFunc,cRenamingFunc) =
+let applyRenamingFunctions asig (ktable,ctable,atable) ((kRenamingFunc, _),(cRenamingFunc, _)) =
   (* helper functions *)
   let renameKind akind =
     let (Absyn.Kind (old_sym,ar,index,kty,pos)) = akind in
@@ -1918,27 +1920,27 @@ and translateModule mod' ktable ctable atable =
     List.map normalize accums
   in
 
-  let gatherOmitted amods omittedTables ktable =
+  let gatherRenamingData amods omittedTables revRenFuncs ktable =
     let makeLocal aconst =
       let ct = Absyn.getConstantTypeRef aconst in
       ct := Absyn.LocalConstant
     in
-    let rec gather amods omittedTables result =
-      match (amods,omittedTables) with
-      | (a::arest,(kOmitted,cOmitted)::trest) -> 
+    let rec gather amods omittedTables revRenFuncs result =
+      match (amods, omittedTables, revRenFuncs) with
+      | (a::arest, (kOmitted,cOmitted)::trest, rs::rrest) -> 
         let cOmitted = normalizeList ktable kOmitted cOmitted in
         List.iter makeLocal cOmitted;
-        gather arest trest ((a,kOmitted,cOmitted)::result)
+        gather arest trest rrest ((a,kOmitted,cOmitted,rs)::result)
       | _ -> result
     in
     if List.length amods = List.length omittedTables
-    then gather amods omittedTables []
+    then gather amods omittedTables revRenFuncs []
     else Errormsg.impossible Errormsg.none
         "Signature and table count mismatch." 
   in
 
 
-  let getOmitted (ktable,ctable) (kRenamingFunc,cRenamingFunc) =
+  let getOmitted (ktable,ctable) ((kRenamingFunc, _), (cRenamingFunc, _)) =
     let renameKind akind =
       let (Absyn.Kind (old_sym,ar,index,kty,pos)) = akind in
       match kRenamingFunc old_sym with
@@ -1963,10 +1965,7 @@ and translateModule mod' ktable ctable atable =
       then
         match rename ele with 
         | None -> ele::lst        (* if the element was not renamed, add to omitted *)
-        | Some (sym',ele') -> 
-          if sym = sym' 
-          then lst
-          else ele::lst       
+        | Some (sym',ele') -> lst
       else
         lst
     in
@@ -1992,18 +1991,19 @@ and translateModule mod' ktable ctable atable =
   * Generalizes processing of imported, used, and accumulated modules
   * and signatures.
   ******************************************************************)
-  let rec translateMods make copier sigs tables omittedTables l =
+  let rec translateMods make copier sigs tables omittedTables revRenamingFuncs l =
     match l with
-        [] -> (sigs, tables, omittedTables)
+        [] -> (sigs, tables, omittedTables, revRenamingFuncs)
       | (s, renamings) :: ls ->
           let (asig, (ktable, ctable, atable))  = translateSignature s false true copier in
           let renamingFuncs = getRenamingFunctions ktable ctable renamings in
           let (asig', (ktable',ctable',atable')) = 
             applyRenamingFunctions asig (ktable,ctable,atable) renamingFuncs in
+          let ((_, kRevRenFunc), (_, cRevRenFunc)) = renamingFuncs in
           let omitted = getOmitted (ktable,ctable) renamingFuncs in
           let s = make asig' in
-          translateMods make copier (s::sigs)
-            ((ktable', ctable', atable') :: tables) (omitted::omittedTables) ls
+          translateMods make copier (s::sigs) ((ktable', ctable', atable') :: tables)
+            (omitted::omittedTables) ((kRevRenFunc, cRevRenFunc) :: revRenamingFuncs) ls
   in
 
   (********************************************************************
@@ -2011,7 +2011,7 @@ and translateModule mod' ktable ctable atable =
   ********************************************************************)
   let translateAccumSigs sigs =
     let make asig = asig in
-      translateMods make copyAccum [] [] [] sigs
+    translateMods make copyAccum [] [] [] [] sigs
   in
   
   (********************************************************************
@@ -2019,7 +2019,7 @@ and translateModule mod' ktable ctable atable =
   ********************************************************************)
   let translateUseSigs sigs =
     let make asig = asig in
-      translateMods make (copyUseonly copyAccum false) [] [] [] sigs
+      translateMods make (copyUseonly copyAccum false) [] [] [] [] sigs
   in
   
   (********************************************************************
@@ -2029,7 +2029,7 @@ and translateModule mod' ktable ctable atable =
     let make asig =
       Absyn.AccumulatedModule(asig)
     in
-      translateMods make copyAccum [] [] [] accums
+      translateMods make copyAccum [] [] [] [] accums
   in
   
   (********************************************************************
@@ -2039,7 +2039,7 @@ and translateModule mod' ktable ctable atable =
     let make asig =
       Absyn.ImportedModule(asig)
     in
-      translateMods make copyAccum [] [] [] imps
+      translateMods make copyAccum [] [] [] [] imps
   in
 
   (*  Get the pieces of the module  *)
@@ -2050,22 +2050,20 @@ and translateModule mod' ktable ctable atable =
                     accumsigs, usesigs, impmods) ->
       (*  Translate the accumulated signatures  *)
       let accumsigs' = processSignatures accumsigs in
-      let (_, accsigstables,_) = translateAccumSigs accumsigs' in
+      let (_, accsigstables, _, _) = translateAccumSigs accumsigs' in
       
       (*  Translate the used signatures *)
       let usesigs' = processSignatures usesigs in
-      let (_, usesigstables,_) = translateUseSigs usesigs' in
+      let (_, usesigstables, _, _) = translateUseSigs usesigs' in
       
       (*  Translate the accumulated modules *)
       let accummods' = processSignatures accummods in
-      let (accums, acctables, accOmitted) = translateAccumMods accummods' in
+      let (accums, acctables, accOmitted, accRevRenFuncs) = translateAccumMods accummods' in
        
       (*  Translate the imported modules  *)
       let impmods' = processSignatures impmods in
-      let (imps, imptables, impOmitted) = translateImpMods impmods' in
+      let (imps, imptables, impOmitted, impRevRenFuncs) = translateImpMods impmods' in
       let omittedconstants = getOmittedConstants impOmitted accOmitted in 
-      
-
 
       let (ktable, ctable) = 
         mergeKindandConstTables ktable ctable accsigstables in
@@ -2129,8 +2127,8 @@ and translateModule mod' ktable ctable atable =
       let imps = normalizeImports ktable ctable atable imps in
       let accums = normalizeAccums ktable ctable atable accums in
 
-      let impdata = gatherOmitted imps impOmitted ktable in
-      let accdata = gatherOmitted accums accOmitted ktable in
+      let impdata = gatherRenamingData imps impOmitted impRevRenFuncs ktable in
+      let accdata = gatherRenamingData accums accOmitted accRevRenFuncs ktable in
 
       (*  Get local and global kind lists.  *)
       let globalkinds = Table.fold (getGlobalKind) ktable [] in

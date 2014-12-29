@@ -94,8 +94,8 @@ type cgpreds = PredList of Absyn.aconstant list * int
 (*========================================================================*)
 (* renaming lists: (modname, kinds renaming, constant renaming            *)
 (**************************************************************************)
-type cgrenaming = RenamingInfo of string * cgkinds * cgconsts
-
+type cgrenaming = RenamingInfo of string * cgkinds * cgconsts *
+        (Absyn.renaminglookup * Absyn.renaminglookup)
 
 (**************************************************************************)
 (* predicate instructions                                                 *)

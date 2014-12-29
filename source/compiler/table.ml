@@ -66,3 +66,15 @@ let printTable toStringFunc table =
   in
   SymbolTable.iter printFunc table
 
+let formatTable ignore_entry print_func table =
+  Format.printf "@[{";
+  let print_entry sym ent =
+    match (ignore_entry ent) with 
+      true -> ()
+    | false ->
+      Format.printf "%s: " (Symbol.name sym);
+      print_func ent;
+      Format.printf ", @," in
+  SymbolTable.iter print_entry table;
+  Format.printf "}@]"
+

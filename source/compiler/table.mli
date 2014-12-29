@@ -33,3 +33,5 @@ val fold : (SymbolTable.key -> 'a -> 'b -> 'b) -> 'a SymbolTable.t -> 'b -> 'b
 val empty : 'a symboltable
 
 val printTable : (Symbol.symbol -> 'a -> string) -> 'a SymbolTable.t -> unit 
+
+val formatTable : ('b -> bool) -> ('b -> unit) -> 'b SymbolTable.t -> unit

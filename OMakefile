@@ -4,6 +4,9 @@
 # Default target build programs and moves them to toplevel
 #
 
+NATIVE_ENABLED = false
+BYTE_ENABLED = true
+
 OCamlProgramCopy(all, ., source/tjcc)
 OCamlProgramCopy(all, ., source/tjsim)
 OCamlProgramCopy(all, ., source/tjlink)
