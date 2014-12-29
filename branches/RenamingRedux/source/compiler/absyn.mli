@@ -275,11 +275,11 @@ and ahcvarassoc = HCVarAssocs of ((avar * aconstant) list)
 and aclause = 
     Fact of (aconstant * aterm list * atype list * int * int * 
 			   atermvarmap * atypevarmap * avar list * int option ref * 
-			   (aimportedmodule * akind list * aconstant list) list (* aimportedmodule list *))
+			   aimpmoduleinfo list (* aimportedmodule list *))
   | Rule of (aconstant * aterm list * atype list * int * int * atermvarmap *
 			   atypevarmap * avar list * int option ref * agoal * 
                agoalenvassoc ref * avar option ref * bool ref * 
-			   (aimportedmodule * akind list * aconstant list) list(* aimportedmodule list *))
+			   aimpmoduleinfo list(* aimportedmodule list *))
 
 (* Goal number and environment size association list*)
 and agoalenvassoc =  GoalEnvAssoc of ((int * int) list)
@@ -293,6 +293,15 @@ and atypevarmap  = TypeVarMap of ((atypevar * atypevar) list)
 (* clauses block: (clauses, closed, offset, nextclause)*)
 and aclausesblock = (aclause list ref * bool ref * int ref * int option ref) 
 
+and renaminglookup =
+	(Table.SymbolTable.key -> Table.SymbolTable.key option)
+
+and aimpmoduleinfo = 
+      (aimportedmodule * akind list * aconstant list * (renaminglookup * renaminglookup))
+
+and aaccmoduleinfo = 
+      (aaccumulatedmodule * akind list * aconstant list * (renaminglookup * renaminglookup))
+
 (*****************************************************************************
 *Modules:
 * (modname, imported, accumulated, constant table, kind table,
@@ -304,8 +313,7 @@ and aclausesblock = (aclause list ref * bool ref * int ref * int option ref)
 * (signame, global kinds, global constants)
 *****************************************************************************)
 and amodule = 
-    Module of (string * (aimportedmodule * akind list * aconstant list) list *
-      (aaccumulatedmodule * akind list * aconstant list) list *
+    Module of (string * aimpmoduleinfo list * aaccmoduleinfo list  *
       aconstant Table.SymbolTable.t ref * akind Table.SymbolTable.t ref *
       atypeabbrev Table.SymbolTable.t * astringinfo list * akind list *
       akind list * aconstant list * aconstant list * aconstant list ref *
@@ -341,6 +349,9 @@ val isLocalKind : akind -> bool
 val isPervasiveKind : akind -> bool
 val string_of_kind : akind -> string
 val string_of_kind' : akind -> string
+val print_kind : akind -> unit
+val print_type : atype -> unit
+val print_constant : aconstant -> unit
 
 val makeGlobalKind : symbol -> int -> int -> akind
 val makeLocalKind : symbol -> int -> int -> akind
@@ -615,7 +626,7 @@ val setClauseOffset : aclause -> int -> unit
 val getClauseGoal : aclause -> agoal
 val getClauseCutVarOption : aclause -> avar option
 val getClauseCutVar : aclause -> avar
-val getClauseImports : aclause -> (aimportedmodule * akind list * aconstant list) list(* aimportedmodule list *)
+val getClauseImports : aclause -> aimpmoduleinfo list(* aimportedmodule list *)
 val getClauseGespList : aclause -> agoalenvassoc
 val setClauseGespList : aclause -> agoalenvassoc -> unit
 val getClauseHasEnv : aclause -> bool
@@ -672,3 +683,6 @@ val setClauseBlockOffset : aclausesblock -> int -> unit
 (* if the given clause has a body as CutFailGoal, then set the second   *)
 (* field true and add an empty list as the clauses list                 *)
 val makeNewClauseBlock : aclause -> bool -> aclausesblock
+
+val print_kind_table : akind Table.symboltable -> unit
+val print_const_table : aconstant Table.symboltable -> unit

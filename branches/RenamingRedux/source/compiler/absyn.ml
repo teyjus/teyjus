@@ -198,11 +198,11 @@ and ahcvarassoc = HCVarAssocs of ((avar * aconstant) list)
 and aclause = 
     Fact of (aconstant * aterm list * atype list * int * int * 
 			   atermvarmap * atypevarmap * avar list * int option ref * 
-			   (aimportedmodule * akind list * aconstant list) list (* aimportedmodule list *))
+			   aimpmoduleinfo list (* aimportedmodule list *))
   | Rule of (aconstant * aterm list * atype list * int * int * atermvarmap *
 			   atypevarmap * avar list * int option ref * agoal * 
                agoalenvassoc ref * avar option ref * bool ref * 
-			   (aimportedmodule * akind list * aconstant list) list(* aimportedmodule list *))
+			   aimpmoduleinfo list(* aimportedmodule list *))
 
 (* Goal number and environment size association list*)
 and agoalenvassoc =  GoalEnvAssoc of ((int * int) list)
@@ -216,6 +216,15 @@ and atypevarmap  = TypeVarMap of ((atypevar * atypevar) list)
 (* clauses block: (clauses, closed, offset, nextclause)*)
 and aclausesblock = (aclause list ref * bool ref * int ref * int option ref)
 
+and renaminglookup =
+	(Table.SymbolTable.key -> Table.SymbolTable.key option)
+
+and aimpmoduleinfo = 
+      (aimportedmodule * akind list * aconstant list * (renaminglookup * renaminglookup))
+
+and aaccmoduleinfo = 
+      (aaccumulatedmodule * akind list * aconstant list * (renaminglookup * renaminglookup))
+
 (*****************************************************************************
 *Modules:
 * (modname, imported, accumulated, constant table, kind table, 
@@ -227,8 +236,7 @@ and aclausesblock = (aclause list ref * bool ref * int ref * int option ref)
 * (signame, global kinds, global constants)
 * *****************************************************************************)
 and amodule = 
-    Module of (string * (aimportedmodule * akind list * aconstant list) list *
-      (aaccumulatedmodule * akind list * aconstant list) list *
+    Module of (string * aimpmoduleinfo list * aaccmoduleinfo list *
       aconstant Table.SymbolTable.t ref * akind Table.SymbolTable.t ref *
       atypeabbrev Table.SymbolTable.t * astringinfo list * akind list *
       akind list * aconstant list * aconstant list * aconstant list ref *
@@ -262,6 +270,10 @@ let string_of_kind' (Kind(n,_,_,cat,_))=
     GlobalKind -> "GK:" ^ (Symbol.name n) 
   | LocalKind -> "LK:" ^ (Symbol.name n) 
   | PervasiveKind -> "PK:" ^ (Symbol.name n) 
+
+let print_kind k =
+  let s = string_of_kind' k in
+  Format.fprintf Format.std_formatter "@[%s@]" s
 
 (* getKindType:                                   *)
 (*  Get a kind's type (Local, Global, Pervasive)  *)
@@ -486,6 +498,10 @@ and string_of_type ty =
       | ErrorType -> "ErrorType"
   in
   str false ty
+
+let print_type t =
+  let s = string_of_type t in
+  Format.fprintf Format.std_formatter "@[%s@]" s
 
 (* errorType *)
 let errorType = ErrorType
@@ -965,6 +981,25 @@ let getConstantRedefinable c =
   match t with
       PervasiveConstant(b) -> b
     | _ -> false
+
+let string_of_constant' c = 
+  let name = getConstantName c in
+  let scope =
+    match getConstantType c with
+        GlobalConstant -> "GC"
+      | LocalConstant -> "LC"
+      | PervasiveConstant(_) -> "PC"
+      | HiddenConstant -> "HC"
+      | AnonymousConstant -> "AC" in
+  let type_string = 
+    match (getConstantSkeleton c) with
+      Some s -> string_of_skeleton s
+    | None -> "" in
+  (scope ^ ": " ^ name ^ " (" ^ type_string ^ ")")
+
+let print_constant c =
+  let s = string_of_constant' c in
+  Format.fprintf Format.std_formatter "@[%s@]" s
 
 let makeGlobalConstant symbol fixity prec expDef useOnly tyEnvSize tySkel index =
   Constant(symbol, ref fixity, ref prec, ref expDef, ref useOnly, ref false,
@@ -2021,3 +2056,9 @@ let makeNewClauseBlock cl closed =
 	  else (ref [cl], ref closed, ref 0, ref None)
   | _ ->  (ref [cl], ref closed, ref 0, ref None)
 
+
+let print_const_table ctable =
+  Table.formatTable isPervasiveConstant print_constant ctable
+
+let print_kind_table ktable =
+  Table.formatTable isPervasiveKind print_kind ktable

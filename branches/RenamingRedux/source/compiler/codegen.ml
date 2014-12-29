@@ -93,7 +93,8 @@ type cgpreds = PredList of Absyn.aconstant list * int
 (*========================================================================*)
 (* renaming lists: (modname, kinds renaming, constant renaming            *)
 (**************************************************************************)
-type cgrenaming = RenamingInfo of string * cgkinds * cgconsts
+type cgrenaming = RenamingInfo of string * cgkinds * cgconsts *
+        (Absyn.renaminglookup * Absyn.renaminglookup)
 
 
 (**************************************************************************)
@@ -387,7 +388,7 @@ let assignStringIndex strs =
 (*                      COLLECT RENAMING INFORMATION                        *) 
 (* collect renaming information for imported and accumulated modules        *)
 (****************************************************************************)
-let collectRenamingInfo amod okinds oconsts = 
+let collectRenamingInfo amod okinds oconsts (kRevRenFunc, cRevRenFunc) = 
   (* function body of collectRenamingInfo *)
   let gkinds = Absyn.getSignatureGlobalKindsList amod in
   let allkinds = okinds @ gkinds in
@@ -395,15 +396,16 @@ let collectRenamingInfo amod okinds oconsts =
   let allconsts = oconsts @ gconsts in
   RenamingInfo(Absyn.getSignatureName amod, 
 	       KindList(List.rev allkinds, List.length allkinds),
-	       ConstantList(List.rev allconsts, List.length allconsts))
+	       ConstantList(List.rev allconsts, List.length allconsts),
+               (kRevRenFunc, cRevRenFunc))
 
 
 let collectImports imps = 
   let rec collectImportsAux imps renamingInfo =
     match imps with
       [] -> (List.rev renamingInfo)
-    | ((Absyn.ImportedModule(amod), okinds, oconsts) :: rest) ->
-	collectImportsAux rest ((collectRenamingInfo amod okinds oconsts) :: renamingInfo)
+    | ((Absyn.ImportedModule(amod), okinds, oconsts, revRenFuncs) :: rest) ->
+	collectImportsAux rest ((collectRenamingInfo amod okinds oconsts revRenFuncs) :: renamingInfo)
   in 
   collectImportsAux imps []
 
@@ -411,8 +413,8 @@ let collectAccs accs =
   let rec collectAccsAux accs renamingInfo =
     match accs with
       [] -> (List.rev renamingInfo)
-    | ((Absyn.AccumulatedModule(amod), okinds, oconsts) :: rest) ->
-	collectAccsAux rest ((collectRenamingInfo amod okinds oconsts) :: renamingInfo)
+    | ((Absyn.AccumulatedModule(amod), okinds, oconsts, revRenFuncs) :: rest) ->
+	collectAccsAux rest ((collectRenamingInfo amod okinds oconsts revRenFuncs) :: renamingInfo)
   in 
   collectAccsAux accs []
 
@@ -1119,19 +1121,19 @@ let collectClosedConstsInAccs accs =
   in
 
   Clausegen.initAccConsts ();
-  let accs = List.fold_left (fun laccs (acc, _, _) -> laccs @ [acc]) [] accs in
+  let accs = List.fold_left (fun laccs (acc, _, _, _) -> laccs @ [acc]) [] accs in
   let consts = collectClosedConstsInAccsAux accs [] in
   Clausegen.setAccConsts consts
 
 let collectOmittedElements imps accums =
   let oimpkinds =
-    List.fold_left (fun lst (_, okindlist, _) -> (lst @ okindlist)) [] imps in
+    List.fold_left (fun lst (_, okindlist, _, _) -> (lst @ okindlist)) [] imps in
   let oimpconsts =
-    List.fold_left (fun lst (_, _, oconstlist) -> (lst @ oconstlist)) [] imps in
+    List.fold_left (fun lst (_, _, oconstlist, _) -> (lst @ oconstlist)) [] imps in
   let oaccumkinds =
-    List.fold_left (fun lst (_, okindlist, _) -> (lst @ okindlist)) [] accums in
+    List.fold_left (fun lst (_, okindlist, _, _) -> (lst @ okindlist)) [] accums in
   let oaccumconsts =
-    List.fold_left (fun lst (_, _, oconstlist) -> (lst @ oconstlist)) [] accums in
+    List.fold_left (fun lst (_, _, oconstlist, _) -> (lst @ oconstlist)) [] accums in
   (oimpkinds @ oaccumkinds, oimpconsts @ oaccumconsts)
 
 let print_aconst c =

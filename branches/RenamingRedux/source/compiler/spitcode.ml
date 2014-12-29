@@ -274,9 +274,14 @@ let writeModDefsInfo nonExpDefs expDefs localDefs defs =
 let writeRenamingInfo renamingList = 
 
   let writeRenamingInfoOneMod renaming =
-	let writeRenamingKinds kinds =
+	let writeRenamingKinds kinds originalNameFunc =
           let writeRenamingKind kind =
-	    Bytecode.writeString (Absyn.getKindName kind);
+            let name = 
+              match originalNameFunc (Absyn.getKindSymbol kind) with
+                (* Omitted kind, same name *)
+                None -> Symbol.name (Absyn.getKindSymbol kind)
+              | Some sym -> Symbol.name sym in
+	    Bytecode.writeString name;
 	    writeKindIndex kind
 	  in
 
@@ -285,9 +290,14 @@ let writeRenamingInfo renamingList =
 	  map writeRenamingKind kindList
 	in
 	
-	let writeRenamingConsts consts =
+	let writeRenamingConsts consts originalNameFunc =
 	  let writeRenamingConst const =
-	    Bytecode.writeString (Absyn.getConstantName const);
+            let name = 
+              match originalNameFunc (Absyn.getConstantSymbol const) with
+                (* Omitted constant, same name *)
+                None -> Symbol.name (Absyn.getConstantSymbol const)
+              | Some sym -> Symbol.name sym in
+	    Bytecode.writeString name;
 	    writeConstIndex const;
 	  in
 
@@ -296,13 +306,13 @@ let writeRenamingInfo renamingList =
 	  map writeRenamingConst constList
 	in
 	
-	let Codegen.RenamingInfo(modName, kinds, consts) = renaming in
+	let Codegen.RenamingInfo(modName, kinds, consts, (kRevRenFunc, cRevRenFunc)) = renaming in
         (* <module name>*)
 	Bytecode.writeString modName;
         (* [kind renaming functions] *)
-	writeRenamingKinds kinds;
+	writeRenamingKinds kinds kRevRenFunc;
         (* [constant renaming functions] *)
-	writeRenamingConsts consts
+	writeRenamingConsts consts cRevRenFunc
   in
 
   let modNumber = List.length renamingList in

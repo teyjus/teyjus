@@ -160,6 +160,9 @@ let string_of_symbol = function
       "Symbol(" ^ (Symbol.name sym) ^ ", " ^ (string_of_idkind k) ^ ", " ^
         (string_of_pos pos) ^ ")"
 
+let print_symbol = fun (Symbol(s, _, _)) -> 
+  Format.printf "@[%s@]" (Symbol.name s)
+
 let string_of_symbollist list =
   map_with_commas string_of_symbol list
 
@@ -170,7 +173,7 @@ let string_of_constant = function
   | Constant(symlist, None, pos) ->
       "Constant(" ^ (string_of_symbollist symlist) ^
         ", " ^ (string_of_pos pos) ^ ")"
-        
+
 let string_of_typeabbrev = function
   | TypeAbbrev(name, arglist, ty, pos) ->
       "TypeAbbrev(" ^ (string_of_symbol name) ^

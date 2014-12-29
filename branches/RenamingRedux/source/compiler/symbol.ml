@@ -72,5 +72,6 @@ let generateName s =
 let generate () =
   generateName ""
 
+let print_symbol (s,_,_) = s
 
 let equal s1 s2 = (id s1) = (id s2)

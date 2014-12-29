@@ -223,6 +223,7 @@ val getModuleClauses : pmodule -> pclause list
 val getClauseTerm : pclause -> pterm
 
 val string_of_symbol: psymbol -> string
+val print_symbol: psymbol -> unit
 val string_of_term : pterm -> string
 val string_of_type : ptype -> string
 
