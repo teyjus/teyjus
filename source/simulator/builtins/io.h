@@ -26,11 +26,17 @@
 #ifndef IO_H
 #define IO_H
 
-
+typedef enum FINFO_Type {
+  FINFO_STDIN = 0,
+  FINFO_STDOUT,
+  FINFO_STDERR,
+  FINFO_FILE
+} FINFO_Type;
 
 typedef struct BIIO_finfo
 {
-  char * name;
+  FINFO_Type type; 
+  char * name;  // Relevant only if type = FINFO_FILE
 } BIIO_finfo;
 
 

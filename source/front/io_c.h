@@ -23,4 +23,5 @@ int FRONT_IO_readTermAndTypeFileId(char *fname);
 int FRONT_IO_open(char *fname, char *mode);
 int FRONT_IO_close(char *fname);
 char * FRONT_IO_inputLineStdin(void);
+char * FRONT_IO_inputNChars(char *fname, int num);
 

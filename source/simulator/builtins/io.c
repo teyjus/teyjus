@@ -42,7 +42,6 @@
 #include "../../system/stream.h"    
 #include "../../front/io_c.h" 
 
-
 /* unify types */
 static void BIIO_typesUnify(DF_TypePtr typ1, DF_TypePtr typ2)
 {
@@ -297,23 +296,36 @@ void BIIO_openStr()
  */
 void BIIO_input()
 {
-    /*  TODO 	
-    char*    buffer;
+    char     *buffer;
+    char     *fname;
     int      num, length, size;
-    WordPtr  stream;
+    DF_TermPtr  tmPtr;
+    WordPtr  finfo;
     MemPtr   strDataHead = AM_hreg;
     MemPtr   strData     = strDataHead + DF_STRDATA_HEAD_SIZE;
     MemPtr   nhreg;
     
-    num = BIIO_getIntegerFromTerm((DF_TermPtr)AM_reg(2)) + 1; % +1 for the null
-                                                                 character 
-    if (num <= 0) EM_error(BI_ERROR_NEGATIVE_VALUE, num);
+    num = BIIO_getIntegerFromTerm((DF_TermPtr)AM_reg(2)) + 1; 
+
+    /* At least 1 character has to be read so we can consider the empty
+     * string as an error from the OCaml part */
+    if (num <= 1) EM_error(BI_ERROR_NEGATIVE_VALUE, num);
     
-    stream = BIIO_getStreamFromTerm((DF_TermPtr)AM_reg(1));
+    tmPtr= ((DF_TermPtr)(AM_reg(1)));
+    HN_hnorm(tmPtr);
+    tmPtr = DF_termDeref(tmPtr);
+
+    finfo = BIIO_getFinfoFromTerm(tmPtr);
+    if (finfo != NULL) {
+        fname = ((BIIO_finfo*)finfo)->name;
+    }
     
-    buffer = (char*)EM_malloc(num);
-    if (STREAM_readCharacters(stream, num, buffer, FALSE) == -1)
+    buffer = FRONT_IO_inputNChars(fname, num);
+
+    if (buffer == "") {
+	// An error occured in the OCaml part while reading
         EM_error(BI_ERROR_READING_STREAM, (DF_TermPtr)AM_reg(1));
+    }
 
     length = strlen(buffer);
     size   = MCSTR_numWords(length);
@@ -322,12 +334,12 @@ void BIIO_input()
     AM_heapError(nhreg);
     DF_mkStrDataHead(strDataHead);
     MCSTR_toString((MCSTR_Str)strData, buffer, length);
-    free(buffer);
+    //free(buffer);
     AM_hreg = nhreg;
 
     DF_mkStr((MemPtr)AM_reg(1), (DF_StrDataPtr)strDataHead);
     DF_copyAtomic((DF_TermPtr)AM_reg(3), (MemPtr)AM_reg(2));
-    AM_preg = AM_eqCode; */
+    AM_preg = AM_eqCode; 
 }
 
 /* type    output   out_stream -> string -> o
