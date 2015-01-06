@@ -308,10 +308,14 @@ void BIIO_input()
     num = BIIO_getIntegerFromTerm((DF_TermPtr)AM_reg(2)) + 1; 
 
     /* At least 1 character has to be read so we can consider the empty
-     * string as an error from the OCaml part */
+     * string as an error from the OCaml part.
+     * If in the future this solution is not convenient, use
+     * aml_callback_exn (some doc available at:
+     * http://mirror.ocamlcore.org/caml.inria.fr/pub/ml-archives/caml-list/2006/05/097f63cfb39a80418f95c70c3c520aa8.en.html */
     if (num <= 1) EM_error(BI_ERROR_NEGATIVE_VALUE, num);
     
     tmPtr= ((DF_TermPtr)(AM_reg(1)));
+    // Necessary?
     HN_hnorm(tmPtr);
     tmPtr = DF_termDeref(tmPtr);
 

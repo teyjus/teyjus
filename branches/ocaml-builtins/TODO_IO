@@ -26,7 +26,13 @@ input_line
 -> Todo input_from a file
 
 input
--> TODO
+-> behavior OK when:
+  * reading less than the number of characters available
+  * reading more than the number of characters available 
+	(reads the max in this case)
+  * reading over multiple lines
+  * TODO: input several times on the same stream
+  * TODO: from std_in
 
 
 string_to_term
