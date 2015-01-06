@@ -1170,10 +1170,10 @@ let getRenamingFunctions ktable ctable renamings =
   let add old_sym new_sym tbl (new_tbl, rev_tbl) pos errormsg =
     if Table.mem old_sym tbl
     then
-      (if not (Table.mem new_sym rev_tbl)
+      (if (not (Table.mem new_sym rev_tbl)) (* or new_sym matches type/kind of old sym  *)
       then (Table.add old_sym new_sym new_tbl, Table.add new_sym old_sym rev_tbl)
       else 
-        let () = Errormsg.error pos "Clash detected" in
+        let () = Errormsg.error pos "Clash detected!!" in
         (new_tbl, rev_tbl))
     else let () = Errormsg.error pos errormsg in
       (new_tbl, rev_tbl)

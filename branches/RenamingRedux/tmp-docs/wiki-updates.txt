@@ -1,0 +1,11 @@
+Running list of what needs to be updated and/or added to the wiki.
+---
+
+
+  * We extended the renaming syntax with the '*' token that includes everything
+    not mentioned. Any renamings superceed the inclusion of the renamed
+    type/kind.
+
+  * An empty renaming should be ignored and print a warning message
+
+  * We should document how clashes are being handled
