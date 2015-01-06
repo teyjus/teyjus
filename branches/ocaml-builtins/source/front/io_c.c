@@ -18,6 +18,7 @@
 // along with Teyjus.  If not, see <http://www.gnu.org/licenses/>.          //
 //////////////////////////////////////////////////////////////////////////////
 
+#include <stdio.h>
 #include "io_c.h"
 #include "ocaml_wrap.h"
 
@@ -29,6 +30,11 @@ int FRONT_IO_readTermAndTypeStdin(void)
 int FRONT_IO_readTermAndTypeFileId(char *fname)
 {
   return ocaml_read_term_file_id(fname);
+}
+
+char * FRONT_IO_inputNChars(char *fname, int num)
+{
+  return ocaml_input_n_chars(fname, num);
 }
 
 int FRONT_IO_open(char *fname, char *mode)

@@ -21,7 +21,7 @@ INC = $(dir include)
 OCAMLOPTFLAGS = -g
 OCAML_NATIVE_LINK_FLAGS = -g
 OCAMLINCLUDES += $(CMP) $(DIS) $(SIM) $(LOD)
-CFLAGS += -g
+CFLAGS += -g -Werror
 
 ############################################################
 # Compilation files

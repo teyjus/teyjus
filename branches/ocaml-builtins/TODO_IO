@@ -24,3 +24,10 @@ input_line
   * reading something from the stdin arbitrary long and with any characters
   * trying to read something from stdout or stderr
 -> Todo input_from a file
+
+input
+-> TODO
+
+
+string_to_term
+-> TODO

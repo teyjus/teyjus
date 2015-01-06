@@ -1,0 +1,129 @@
+############################################################
+# Transferring IO management from the C to the OCaml part. #
+############################################################
+
+Goal: all IO operations are handled by front/io.ml and related files.
+This should reduce the number of bugs and remove some current limitations.
+
+
+Inpacted files:
+* The strict minimum should stay in simulator/io.c and most of the work
+  should be done in front/io.ml
+* The files system/stream* should disapear
+
+Unchanged IOPreds:
+- term_to_string
+- string_to_term
+
+
+###################
+# How to proceed? #
+###################
+
+The abstract machine manipulates the following structure 
+ (defined in simulator/builtins/io.h) instead of streams:
+
+typedef enum FINFO_Type {
+  FINFO_STDIN = 0,
+  FINFO_STDOUT,
+  FINFO_STDERR,
+  FINFO_FILE
+} FINFO_Type;
+
+typedef struct BIIO_finfo
+{
+  FINFO_Type type;
+  char * name; // Relevant only if type = FINFO_FILE
+} BIIO_finfo;
+
+The OCaml part keeps opened files in a hash table (hash of the absolute 
+path of the file) (defined in front/io.ml).
+It also keeps strings opened as streams.
+
+
+Where checks concerning pure IO like, do we have the right to open this file,
+the best place to do the job is of course in the OCaml part. 
+However how should we do with errors? 
+It seems better to use errors in the C part (defined in simulator/builtins/builtins.c)
+
+If the IO function called has a simple side effect, such as open, then we can
+transform it into a function returning a code to notify success or failure.
+For instance in io.c we call the open defined in the OCaml part and use the 
+messages defined in the simulator:
+if (FRONT_IO_open(fname, inMode) == -1)
+    EM_error(BI_ERROR_CANNOT_OPEN_STREAM, fname);
+
+However sometimes it is trickier when for an instance the OCaml part has to 
+return a string (as in the input predicate) and may also fail.
+It is more complex to return option types thus we will try to have some hacks. 
+
+########################
+# Where to check errors?
+########################
+
+All checks concerning Teyjus types are done within the C part like 
+if an instantiated stream provided by the user is of the correct type
+(for example if we have an in_stream for open_in and an out_stream for
+ open_out or open_append.)
+All checks to check if a variable is (un)instantiated are done 
+within the AM.
+Concerning memory checks:
+IO needs to do some memory allocations. Most of them are small, others can be 
+big (like opening a string as a stream.)
+It is not possible to have a fine grained memory management in OCaml. If there
+is no more memory available, Teyjus will just crash due to a fatal error from
+the OCaml side.
+
+
+
+##########################
+# The different predicates 
+##########################
+
+- open_in : string -> in_stream -> o
+
+the AM passes the string to OCaml and get as a return an int to notify
+success or failure (file does not exist or mode is incorrect both lead
+to BI_ERROR_CANNOT_OPEN_STREAM)
+
+- open_out, open_append : string -> out_stream -> o
+
+the AM passes the string to OCaml and get as a return an int to notify
+success or failure (file does not exist or mode is incorrect both lead
+to BI_ERROR_CANNOT_OPEN_STREAM)
+
+- open_string : string -> in_stream -> o
+
+the AM passes the string to OCaml. There are no possibilities
+of failing (except no more memory but the crash happens in the OCaml part).
+
+- close_in : in_stream -> o
+the AM passes the string to OCaml and get as a result an int to notify
+success or failure (if the stream was already closed) 
+
+- close_out : out_stream -> o
+the AM passes the string to OCaml and get as a result an int to notify
+success or failure (if the stream was already closed) 
+
+- input : in_stream -> int -> string -> o
+the AM checks that the number of chars is strictly greater than 0.
+If not, it throws an exception BI_ERROR_NOTSTRICTLYPOS_VALUE.
+OCaml returns an empty string if an error occured
+
+
+- output : out_stream -> string -> o
+the AM passes both the stream and the string to OCaml and gets an 
+int to notify success or failure
+
+input_line
+lookahead
+eof
+flush
+print
+read
+
+- printterm : out_stream -> A -> o
+ the string representation of the term is computed in simulator/printterm.c and then sent as a string to OCaml for printing 
+
+readterm : in_stream -> A -> o 
+The first argument must be instantiated to an open in_stream. A period terminated string is read in from the in_stream, this is parsed as a term and then unified with the second argument. Note: This predicate does not flush the input from the current line even when the input port is std_in.  

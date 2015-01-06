@@ -49,6 +49,17 @@ int ocaml_read_term_file_id(char *fname)
 			  	caml_copy_string(fname)));
 }
 
+char * ocaml_input_n_chars(char *fname, int n)
+{
+  static value *ocaml_input_n_chars_closure = NULL;
+  if (ocaml_input_n_chars_closure == NULL) 
+    ocaml_input_n_chars_closure =
+	    caml_named_value("ocaml_input_n_chars");
+  return String_val(caml_callback2(*ocaml_input_n_chars_closure, 
+			  	caml_copy_string(fname),
+ 				Val_int(n)));
+}
+
 int ocaml_open(char *str, char *mode)
 {
   static value *ocaml_open_closure = NULL;
