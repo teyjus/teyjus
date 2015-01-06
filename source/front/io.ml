@@ -47,8 +47,10 @@ let inputNChars fileId n =
 		| In(chan) -> 
 			begin
 				let pos = pos_in chan in
+				let buf = String.create n in
+				let _ = Printf.printf "The size of the buffer is %d\n" (in_channel_length chan) in
+				let _ = Printf.printf "Want to read %d chars starting from %d\n" n pos in
 				try 
-					let buf = "" in
 					let _ = really_input chan buf pos n in
 						buf
 				with
@@ -56,22 +58,25 @@ let inputNChars fileId n =
 						(* We want instead to read 
 						all the remaining 
 						characters and not n*)
+						Printf.printf "WWWW reaching end of file \n" (* TODO: remove *);
 						let _ = seek_in chan pos in
 						let m = in_channel_length chan in
 						(* Cannot fail *) 
-						let buf = "" in
 						let _ = really_input chan buf pos m in
 							buf 
 					| Invalid_argument "really_input" -> 
 						(* Should not be reached *)
-						Printf.printf "Invalid argument\n" ; ""
+						let str = input_line chan in 
+						let _ =	Printf.printf "input = %s" str in
+						Printf.eprintf 
+							"Teyjus encountered an internal error in inputNChars, please report a bug\n" ; 
+						raise Exit
 			end
 		| _ -> Printf.eprintf "The requested file is not opened for reading"; ""
 	with
 		| Not_found -> ""
 
 let openFile fname mode = 
-    Errormsg.error Errormsg.none "IMPOSSIBLE TO OPEN THE FILE\n";
     try
         match mode with
             | "r" -> 
