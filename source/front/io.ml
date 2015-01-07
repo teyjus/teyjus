@@ -47,18 +47,15 @@ let inputNChars fileId n =
 		| In(chan) -> 
 			begin
 				let pos = pos_in chan in
-				let buf = String.create n in
-				let _ = Printf.printf "The size of the buffer is %d\n" (in_channel_length chan) in
-				let _ = Printf.printf "Want to read %d chars starting from %d\n" n pos in
+				let buf = String.create (n-1) in
 				try 
-					let _ = really_input chan buf pos n in
+					let _ = really_input chan buf 0 (n-1) in
 						buf
 				with
 					| End_of_file ->
 						(* We want instead to read 
 						all the remaining 
 						characters and not n*)
-						Printf.printf "WWWW reaching end of file \n" (* TODO: remove *);
 						let _ = seek_in chan pos in
 						let m = in_channel_length chan in
 						(* Cannot fail *) 
@@ -66,15 +63,19 @@ let inputNChars fileId n =
 							buf 
 					| Invalid_argument "really_input" -> 
 						(* Should not be reached *)
-						let str = input_line chan in 
-						let _ =	Printf.printf "input = %s" str in
 						Printf.eprintf 
 							"Teyjus encountered an internal error in inputNChars, please report a bug\n" ; 
 						raise Exit
 			end
-		| _ -> Printf.eprintf "The requested file is not opened for reading"; ""
+		| _ -> 
+			(* This should not be reachable since the abstract 
+			machine has checked the type of the argument before
+			giving it to the OCaml part *)
+			""
 	with
-		| Not_found -> ""
+		| Not_found ->
+			(* Is it possible to reach this point ? *) 
+			""
 
 let openFile fname mode = 
     try

@@ -1,3 +1,11 @@
+To specify/change in the Wiki:
+- Several predicates (input, input_line) have a limitation.
+  They can only handle strings of size Sys.max_string_length 
+  (that is approx. 16M on a 32bits machine and 2^57 on a 64bits machine.)
+  Please report an issue if you need more than this.
+- The minimum number of characters to be read with the input predicate is now 1
+
+
 open_in
 -> behavior OK when:
   * opening a correct file
@@ -31,7 +39,7 @@ input
   * reading more than the number of characters available 
 	(reads the max in this case)
   * reading over multiple lines
-  * TODO: input several times on the same stream
+  * input several times on the same stream
   * TODO: from std_in
 
 
