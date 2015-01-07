@@ -1183,6 +1183,11 @@ let getRenamingFunctions ktable ctable renamings =
   let includeSym s _ (tbl, rev_tbl) = 
     (Table.add s s tbl, Table.add s s rev_tbl) in
 
+  let includeDefault s _ (tbl, rev_tbl) =
+    match (Table.mem s tbl) with
+      true -> (tbl, rev_tbl)
+    | false -> (Table.add s s tbl, Table.add s s rev_tbl) in
+
   let addRenaming (tbl, rev_tbl) renaming =
     match renaming with
     | Preabsyn.IncludeKind psym ->
@@ -1220,14 +1225,14 @@ let getRenamingFunctions ktable ctable renamings =
         (Table.empty, Table.empty) typeRenamings in
       (kRenamingTable, kRevRenTable, cRenamingTable, cRevRenTable)
     | Preabsyn.InclusiveSelect (kindRenamings, typeRenamings) ->
+      let (kRenamingTable, kRevRenTable) = List.fold_left addRenaming
+        (Table.empty, Table.empty) kindRenamings in
+      let (cRenamingTable, cRevRenTable) = List.fold_left addRenaming 
+        (Table.empty, Table.empty) typeRenamings in
       let (kRenamingTable, revKindRen) = 
-        Table.fold includeSym ktable (Table.empty, Table.empty) in
+        Table.fold includeDefault ktable (kRenamingTable, kRevRenTable) in
       let (cRenamingTable, revConstRen) = 
-        Table.fold includeSym ctable (Table.empty, Table.empty) in
-      let (kRenamingTable, kRevRenTable) = List.fold_left addRenaming 
-        (kRenamingTable, revKindRen) kindRenamings in
-      let (cRenamingTable, cRevRenTable) = List.fold_left addRenaming
-        (cRenamingTable, revConstRen) typeRenamings in
+        Table.fold includeDefault ctable (cRenamingTable, cRevRenTable) in
       (kRenamingTable, kRevRenTable, cRenamingTable, cRevRenTable)
   in
 
