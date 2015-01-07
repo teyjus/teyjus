@@ -252,7 +252,7 @@ let readString () =
   let rec readStringAux index =
 	if (index = length) then ()
 	else 
-	  (String.set myString index (input_char input);
+	  (Bytes.set myString index (input_char input);
 	   readStringAux (index + 1))
   in
   readStringAux 0;
@@ -265,7 +265,7 @@ let readLongString () =
   let rec readStringAux index =
 	if (index = length) then ()
 	else 
-	  (String.set myString index (input_char input);
+	  (Bytes.set myString index (input_char input);
 	   readStringAux (index + 1))
   in
   readStringAux 0;
