@@ -102,10 +102,11 @@ let openFile fname mode =
 let closeFile fname =
     try
 		let chan = Hashtbl.find htFiles fname in
-			Hashtbl.remove htFiles fname ;
 			(match chan with 
 				| In(chan) -> close_in chan  
-				| Out(chan) | OutApp(chan) -> close_out chan) ; 1
+				| Out(chan) | OutApp(chan) -> close_out chan) ; 
+			Hashtbl.remove htFiles fname ;
+			1
 	with
 		Not_found -> -1 
 
