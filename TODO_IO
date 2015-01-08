@@ -41,6 +41,7 @@ input
   * reading over multiple lines
   * input several times on the same stream
   * TODO: from std_in
+  * trying to read whereas the stream is closed
 
 
 string_to_term

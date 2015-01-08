@@ -315,9 +315,6 @@ void BIIO_input()
     if (num <= 1) EM_error(BI_ERROR_NEGATIVE_VALUE, num);
     
     tmPtr= ((DF_TermPtr)(AM_reg(1)));
-    // Necessary?
-    HN_hnorm(tmPtr);
-    tmPtr = DF_termDeref(tmPtr);
 
     finfo = BIIO_getFinfoFromTerm(tmPtr);
     if (finfo != NULL) {
@@ -326,9 +323,15 @@ void BIIO_input()
     
     buffer = FRONT_IO_inputNChars(fname, num);
 
-    if (buffer == "") {
-	// An error occured in the OCaml part while reading
-        EM_error(BI_ERROR_READING_STREAM, (DF_TermPtr)AM_reg(1));
+    if (strcmp(buffer, "") != 0) {
+	/* There were two kind of errors when IO was managed in C.
+	 * However the BI_ERROR_READING_STREAM was impossible to be thrown
+	 * since it required to input in a stream which didn't have the 
+	 * STREAML_readCharacters field. But since only in_stream are
+	 * given to STREAM_readCharacters, this is impossible. 
+	 * Conclusion: it's fine to have the empty string denoting the single
+	 * possible error: the stream is already closed */	 
+        EM_error(BI_ERROR_ILLEGAL_STREAM);
     }
 
     length = strlen(buffer);
