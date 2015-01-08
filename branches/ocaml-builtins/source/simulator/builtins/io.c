@@ -115,7 +115,7 @@ static int BIIO_getIntegerFromTerm(DF_TermPtr tmPtr)
     tmPtr = DF_termDeref(tmPtr);
     if (DF_isInt(tmPtr)) return DF_intValue(tmPtr);
 
-    EM_error(BI_ERROR_INTEGER_EXPECTED);
+    EM_error(BI_ERROR_INTEGER_EXPECTED, tmPtr);
 
     //Impossible to reach this point.
     return 0;
