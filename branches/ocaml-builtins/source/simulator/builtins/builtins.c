@@ -217,6 +217,10 @@ static MSG_Msg BI_errorMessages[BI_NUM_ERROR_MESSAGES] =
      BI_ERROR,
      "Substring indexing out of bound.",
      EM_NEWLINE, EM_QUERY, 0 },
+   { BI_ERROR_STANDARD_CLOSING,
+     BI_ERROR,
+     "Impossible to close the standard input.",
+     EM_NEWLINE, EM_QUERY, 0 },
 };
 
 /* handle the %B switch -- takes no arguments */
