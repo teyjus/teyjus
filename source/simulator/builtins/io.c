@@ -42,6 +42,21 @@
 #include "../../system/stream.h"    
 #include "../../front/io_c.h" 
 
+static BIIO_finfo BIIO_stdstreams[3] = {
+	{FINFO_STDIN, NULL},
+	{FINFO_STDOUT, NULL},
+	{FINFO_STDERR, NULL}
+};
+
+
+
+WordPtr FINFO_stdin  =  (WordPtr)&BIIO_stdstreams[0];
+WordPtr FINFO_stdout =  (WordPtr)&BIIO_stdstreams[1];
+WordPtr FINFO_stderr =  (WordPtr)&BIIO_stdstreams[2];
+
+
+
+
 /* unify types */
 static void BIIO_typesUnify(DF_TypePtr typ1, DF_TypePtr typ2)
 {
@@ -96,9 +111,9 @@ static WordPtr BIIO_getFinfoFromTerm(DF_TermPtr tmPtr)
         if (DF_isConst(tmPtr)) {
             cstInd = DF_constTabIndex(tmPtr);
             switch (cstInd) {
-            case PERV_STDIN_INDEX:  return NULL;
-            case PERV_STDOUT_INDEX: return NULL;
-            case PERV_STDERR_INDEX: return NULL;
+            case PERV_STDIN_INDEX:  return FINFO_stdin;
+            case PERV_STDOUT_INDEX: return FINFO_stdout;
+            case PERV_STDERR_INDEX: return FINFO_stderr;
             default: EM_error(BI_ERROR_NON_STREAM_TERM, tmPtr);
             }
         } else EM_error(BI_ERROR_NON_STREAM_TERM, tmPtr);
@@ -220,6 +235,8 @@ static void BIIO_doOpen(char *inMode)
     EM_error(BI_ERROR_CANNOT_OPEN_STREAM, fname);
  
   finfo = (BIIO_finfo *)EM_malloc(sizeof(BIIO_finfo));
+  //TODO: modify for standard streams
+  finfo->type = FINFO_FILE; 
   finfo->name = EM_strdup(fname); 
    
   BIIO_bindVarToFinfo(((DF_TermPtr)AM_reg(2)), (WordPtr)finfo);
@@ -240,6 +257,8 @@ static void BIIO_doClose()
   if (DF_isFV(tmPtr)) EM_error(BI_ERROR_UNBOUND_VARIABLE, "stream");
   
   finfo = BIIO_getFinfoFromTerm(tmPtr);
+  if (((BIIO_finfo*)finfo)->type != FINFO_FILE)
+    EM_error(BI_ERROR_STANDARD_CLOSING); 
   fname = ((BIIO_finfo*)finfo)->name;
 
   if (FRONT_IO_close(fname) == -1)
@@ -317,13 +336,12 @@ void BIIO_input()
     tmPtr= ((DF_TermPtr)(AM_reg(1)));
 
     finfo = BIIO_getFinfoFromTerm(tmPtr);
-    if (finfo != NULL) {
-        fname = ((BIIO_finfo*)finfo)->name;
-    }
+    //TODO: handle standard streams here
+    fname = ((BIIO_finfo*)finfo)->name;
     
     buffer = FRONT_IO_inputNChars(fname, num);
 
-    if (strcmp(buffer, "") != 0) {
+    if (strcmp(buffer, "") == 0) {
 	/* There were two kind of errors when IO was managed in C.
 	 * However the BI_ERROR_READING_STREAM was impossible to be thrown
 	 * since it required to input in a stream which didn't have the 

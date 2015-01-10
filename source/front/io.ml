@@ -71,10 +71,14 @@ let inputNChars fileId n =
 			(* This should not be reachable since the abstract 
 			machine has checked the type of the argument before
 			giving it to the OCaml part *)
-			""
+			Printf.eprintf 
+				"Teyjus encountered an internal error in inputNChars, please report a bug\n" ; 
+			raise Exit
 	with
 		| Not_found ->
-			(* Is it possible to reach this point ? *) 
+			(* The in_stream exists in the abstract machine but not 
+			in the OCaml part:
+			this means that the stream was closed in the meantime. *) 
 			""
 
 let openFile fname mode = 
