@@ -321,27 +321,26 @@ let assignSkelIndex skels hskels =
     match skels with
       [] -> (List.rev assigned, index)
     | (skel :: rest) ->
-		(* assign an index to skel: if appeared in skels, then use the index *)
+        (* assign an index to skel: if appeared in skels, then use the index *)
         (* recorded there, otherwise, use the index as the given argument and*)
         (* add skel to the "assigned" list.                                  *)
-		let rec mergeOrAssign skels =
-		  match skels with
-			[] -> 
-			  Absyn.setSkeletonNew skel true;
-			  Absyn.setSkeletonIndex skel index;
-			  (skel :: assigned, index + 1)
-		  | (skel' :: rest') ->
-			  if (skel' == skel) then (* already dealt with: remove *)		
-				(assigned, index)
-			  else
-				if (Types.equalMappedTypeSkels skel skel') then
-				  (Absyn.setSkeletonNew skel false;
-				   Absyn.setSkeletonIndex skel (Absyn.getSkeletonIndex skel');
-				   (assigned, index))
-				else mergeOrAssign rest' 
-		in
-		let (newAssigned, newIndex) = mergeOrAssign assigned in
-		assignSkelIndexAux rest newAssigned newIndex 
+        let rec mergeOrAssign skels =
+          match skels with
+            [] -> 
+              Absyn.setSkeletonNew skel true;
+              Absyn.setSkeletonIndex skel index;
+              (skel :: assigned, index + 1)
+        | (skel' :: rest') ->
+            if (skel' == skel) then (* already dealt with: remove *)		
+              (assigned, index)
+            else
+              if (Types.equalMappedTypeSkels skel skel') then
+                (Absyn.setSkeletonNew skel false;
+                   Absyn.setSkeletonIndex skel (Absyn.getSkeletonIndex skel'); (assigned, index))
+              else mergeOrAssign rest' 
+  in
+    let (newAssigned, newIndex) = mergeOrAssign assigned in
+    assignSkelIndexAux rest newAssigned newIndex 
   in
 
   (* function body of assignSkelIndex *)
