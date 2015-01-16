@@ -230,10 +230,16 @@ Microsoft Visual Studio 2008:
 
      use "omake system-test" under teyjus/source/test
 
+  4. io test:
+
+     use "omake io-test" under teyjus/source/test
+
      
-  4. all the above tests:
+  5. all the above tests:
 
      use "omake test" under teyjus/source/test
+
+     To run all tests (even if some fail, use "omake -k test" under teyjus/source/test)
 
 
              ---Windows: Microsoft Visual Studio 2008---

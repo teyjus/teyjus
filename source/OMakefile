@@ -312,4 +312,4 @@ if $(file-exists $(TST))
    .SUBDIRS: $(TST)
 
 .PHONY: test
-test: compiler-test compiler-negative-test linker-test system-test
+test: compiler-test compiler-negative-test linker-test io-test system-test 

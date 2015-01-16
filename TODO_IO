@@ -6,6 +6,9 @@ To specify/change in the Wiki:
 - The minimum number of characters to be read with the input predicate is now 1
 
 
+Have a way to test errors displayed on stderr. 
+Is Perl's Test the best solution in our case?
+
 open_in
 -> behavior OK when:
   * opening a correct file

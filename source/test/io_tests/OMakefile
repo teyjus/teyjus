@@ -1,0 +1,20 @@
+SUBDIRS = $(glob D, *)
+
+.PHONY: io-test 
+io-test: $(TJSIM)
+    perl harness
+
+.SUBDIRS: $(SUBDIRS)
+    # The default main file is the name of the test directory
+    MAIN = $(basename $(absname $(CWD)))
+
+    # The default root file can be overriden if the test directory contains
+    # a file named root.om with a line "MAIN = xxxx"
+    if $(file-exists main.om)
+        include main.om
+        export
+
+    FILES = $(rootname $(glob *.mod))
+
+    LPProgram($(MAIN), $(FILES))
+    io-test: $(MAIN).lp
