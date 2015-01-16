@@ -265,11 +265,11 @@ and aclauseinfo =
 let string_of_kind  (Kind(n,_,_,_,_))=
   (Symbol.name n)
 
-let string_of_kind' (Kind(n,_,_,cat,_))=
+let string_of_kind' (Kind(n,_,indexref,cat,_))=
   match cat with
-    GlobalKind -> "GK:" ^ (Symbol.name n) 
-  | LocalKind -> "LK:" ^ (Symbol.name n) 
-  | PervasiveKind -> "PK:" ^ (Symbol.name n) 
+    GlobalKind -> "GK:" ^ (Symbol.name n) ^ "[" ^ string_of_int !indexref ^ "]"
+  | LocalKind -> "LK:" ^ (Symbol.name n) ^ "[" ^ string_of_int !indexref ^ "]"
+  | PervasiveKind -> "PK:" ^ (Symbol.name n) ^ "[" ^ string_of_int !indexref ^ "]"
 
 let print_kind k =
   let s = string_of_kind' k in

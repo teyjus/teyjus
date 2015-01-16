@@ -108,9 +108,7 @@ let writeTypeSkels tyskels =
   in
 
   let writeOneTypeSkel tySkel =
-    if (Absyn.getSkeletonNew tySkel) then 
-		writeType (Absyn.getSkeletonType tySkel)
-    else ()
+    writeType (Absyn.getSkeletonType tySkel)
   in
 
   let Codegen.TypeSkeletonList(tySkelList, numTySkels) = tyskels in
