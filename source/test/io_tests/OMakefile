@@ -2,7 +2,7 @@ SUBDIRS = $(glob D, *)
 
 .PHONY: io-test 
 io-test: $(TJSIM)
-    perl harness
+    bash run_all.sh
 
 .SUBDIRS: $(SUBDIRS)
     # The default main file is the name of the test directory
