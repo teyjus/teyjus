@@ -1,2 +1,2 @@
 sig another.
-type test  in_stream -> o.
+type test o.

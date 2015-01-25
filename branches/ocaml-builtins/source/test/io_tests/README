@@ -1,0 +1,4 @@
+Perl's Test::More was a bit hard to test stderr thus switched to bash.
+
+There are however some issues: in every directory there must 
+be a .mod/.sig file even if this not required.
