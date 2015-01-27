@@ -1,0 +1,25 @@
+SUBDIRS = $(glob D, *)
+
+.SUBDIRS: $(SUBDIRS)
+    # The default main file is the name of the test directory
+    MAIN = $(basename $(absname $(CWD)))
+
+    # Here, main.om is expected to contain a line:
+    # 1) 'MAIN = x,y,..', a list of files specified to be equivalent
+    #    to the 'expected' module
+    if $(file-exists main.om)
+        include main.om
+        export
+
+    # This diff ignores the names of the modules
+    RENAMING-DIFF = $(DIFF) --ignore-matching-lines='^Module\|Disassem'
+
+    FILES = $(rootname $(glob *.mod))
+
+    %.dis: %.lpo $(TJDIS)
+        $(TJDIS) $< >$@
+
+    .PHONY: compiler-renaming-test
+    compiler-renaming-test: $(TJDIS) expected.dis $(addsuffix .dis, $(MAIN))
+        foreach(file, $(MAIN))
+            $(RENAMING-DIFF) expected.dis $(file).dis
