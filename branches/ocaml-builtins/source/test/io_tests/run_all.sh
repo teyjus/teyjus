@@ -2,18 +2,21 @@ SH=bash
 export TJSIM=../../../tjsim
 
 
+# WARNING: dirty hacks!
+# We assume that no more than 20 variables binding will be outputed by tjsim
+
 # Allow to test inputs given from stdin
 function gives_result_stdin {
 	# $1 : input from stdin
 	# $2 : query 
 	# $3 : expected result
 	# $4 : name of the test 
-	RES=`echo "$1" | "$TJSIM" --solve "$2" | sed -n '5 p'`
+	RES=`echo "$1" | "$TJSIM" --batch --solve "$2" | grep -A20 "The answer" | tail -n +2`
 	if [ "$RES" = "$3" ]; then
 		echo "$4" "success"
 		exit 0
 	else
-		RES=`echo "$1" | "$TJSIM" --solve "$2"`
+		RES=`echo "$1" | "$TJSIM" --batch --solve "$2"`
 		echo "$4 failure (the result $3 was expected but got $RES"
 		echo "" 
 		exit -1
@@ -24,7 +27,8 @@ function gives_result {
 	# $1 : query 
 	# $2 : expected result
 	# $3 : name of the test 
-	RES=`"$TJSIM" --batch --solve "$1" | sed -n '3 p'`
+	#RES=`"$TJSIM" --batch --solve "$1" | sed -n '3 p'`
+	RES=`"$TJSIM" --batch --solve "$1" | grep -A20 "The answer" | tail -n +2`
 	if [ "$RES" = "$2" ]; then
 		echo "$3" "success"
 		exit 0
