@@ -580,10 +580,6 @@ void BIIO_readTerm()
   HN_hnorm(tmPtr);
   tmPtr = DF_termDeref(tmPtr);
     
-  finfo = BIIO_getFinfoFromTerm(tmPtr);
-  if (finfo != NULL) {
-    fname = ((BIIO_finfo*)finfo)->name;
-  }
 
   typ  = (DF_TypePtr)(AM_hreg);
   RT_setTypeStart(AM_hreg);
@@ -593,10 +589,13 @@ void BIIO_readTerm()
   RT_setTermStart(AM_hreg);
   AM_hreg += DF_TM_ATOMIC_SIZE;
 
-  if (finfo == NULL) {
+  finfo = BIIO_getFinfoFromTerm(tmPtr);
+
+  if (((BIIO_finfo*)finfo)->type == FINFO_STDIN) {
       /* We read from the standard input */
       FRONT_IO_readTermAndTypeStdin();
   } else {
+    fname = ((BIIO_finfo*)finfo)->name;
     if ((FRONT_IO_readTermAndTypeFileId(fname)) == -1) {
       EM_THROW(EM_FAIL);	  
     } else {
