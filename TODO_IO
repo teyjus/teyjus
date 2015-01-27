@@ -4,21 +4,24 @@ To specify/change in the Wiki:
   (that is approx. 16M on a 32bits machine and 2^57 on a 64bits machine.)
   Please report an issue if you need more than this.
 - The minimum number of characters to be read with the input predicate is now 1
+- opening a file and binding it to two different variables lead to unspecified 
+  behavior (at some point this should be specified) 
 
 
-Have a way to test errors displayed on stderr. 
-Is Perl's Test the best solution in our case?
+=> Fails if one IO test fails (and provides a way to run all of them anyway)
+
+For all IO predicates, we should test what happens with an unbound variable
+if a variable of a given type is expected.
 
 open_in
 -> behavior OK when:
   * opening a correct file
   * opening an incorrect file
-  * opening two times the same file
+  * opening two times the same file (binding to same and diff variables)
 
 close_in
 -> behavior OK when:
   * closing an opened file
-  * closing a variable of an incorrect type (unbound, string, ...)
   * closing two times the same opened file
 
 read
