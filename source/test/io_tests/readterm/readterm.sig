@@ -1,3 +1,6 @@
 sig readterm.
 
-type test1 o.
+
+kind a type.
+type f a.
+type g a -> a.
