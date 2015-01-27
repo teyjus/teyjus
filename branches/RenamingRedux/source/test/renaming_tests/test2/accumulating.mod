@@ -1,3 +1,1 @@
 module accumulating.
-
-q r.
