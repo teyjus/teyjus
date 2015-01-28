@@ -43,12 +43,9 @@ type ptypeabbrev = TypeAbbrev of psymbol * psymbol list * ptype * pos
 type renamingdirective =
     RenameKind  of psymbol * psymbol
   | RenameType  of psymbol * psymbol
-  | IncludeType of psymbol
-  | IncludeKind of psymbol
 
 type renamingdirectives =
-    IncludeAll
-  | SelectOf of (renamingdirective list * renamingdirective list)
+    SelectOf of (renamingdirective list * renamingdirective list)
   | InclusiveSelect of (renamingdirective list * renamingdirective list)
 
 type pterm =
@@ -289,3 +286,6 @@ let getSignatureName s =
 
 let getSymbol = function | Symbol(s,_,_) -> s              
 let getSymbolPos = function | Symbol(_,_,p) -> p              
+
+let symbolEqual s1 s2 =
+  Symbol.equal (getSymbol s1) (getSymbol s2) 

@@ -151,12 +151,9 @@ let makeRenamingDirective () =
   (inclusiveRenaming := false);
   (auxKindRenamingList := []);
   (auxConstRenamingList := []);
-  if kindDirectives = [] && constDirectives = []
-    then IncludeAll
-    else
-      if inclusive
-      then InclusiveSelect (kindDirectives, constDirectives)
-      else SelectOf (kindDirectives, constDirectives)
+  if inclusive
+  then InclusiveSelect (kindDirectives, constDirectives)
+  else SelectOf (kindDirectives, constDirectives)
 
 let makeModule () =
   reverseResults () ;
@@ -307,7 +304,7 @@ cvidlist:
 
 qualifiedsigname:
   | signame
-    { (makeSymbol $1, Preabsyn.IncludeAll) }
+    { (makeSymbol $1, Preabsyn.InclusiveSelect([],[])) }
   | signame LCURLY renamings RCURLY
     { (makeSymbol $1, makeRenamingDirective ()) }
 
@@ -318,9 +315,9 @@ renamings:
 
 renaming:
   | KIND tok 
-        { auxKindRenamingList := IncludeKind(makeSymbol $2) :: !auxKindRenamingList }
+        { auxKindRenamingList := RenameKind(makeSymbol $2, makeSymbol $2) :: !auxKindRenamingList }
   | TYPE tok 
-        { auxConstRenamingList := IncludeType(makeSymbol $2) :: !auxConstRenamingList }
+        { auxConstRenamingList := RenameType(makeSymbol $2, makeSymbol $2) :: !auxConstRenamingList }
   | KIND tok IMPLIES tok
         { auxKindRenamingList := RenameKind(makeSymbol $2, makeSymbol $4) :: !auxKindRenamingList } 
   | TYPE tok IMPLIES tok

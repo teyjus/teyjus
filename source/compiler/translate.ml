@@ -1180,9 +1180,6 @@ let getRenamingFunctions ktable ctable renamings =
   in
 
   (* Adds the inclusion to the original and reverse table *)
-  let includeSym s _ (tbl, rev_tbl) = 
-    (Table.add s s tbl, Table.add s s rev_tbl) in
-
   let includeDefault s _ (tbl, rev_tbl) =
     match (Table.mem s tbl) with
       true -> (tbl, rev_tbl)
@@ -1190,35 +1187,25 @@ let getRenamingFunctions ktable ctable renamings =
 
   let addRenaming (tbl, rev_tbl) renaming =
     match renaming with
-    | Preabsyn.IncludeKind psym ->
-      let (Preabsyn.Symbol (sym,_,pos)) = psym in
-      add sym sym ktable (tbl, rev_tbl) pos
-        ("Cannot include unknown kind: '" ^ (Symbol.name sym) ^ "'")
     | Preabsyn.RenameKind (old_psym,new_psym) ->
       let (Preabsyn.Symbol (old_sym,_,old_pos)) = old_psym in
       let (Preabsyn.Symbol (new_sym,_,new_pos)) = new_psym in
+      let renstring = 
+        if (Symbol.equal old_sym new_sym) then "include" else "rename" in
       add old_sym new_sym ktable (tbl, rev_tbl) old_pos 
-        ("Cannot rename unknown kind: '" ^ (Symbol.name old_sym) ^ "'")
-    | Preabsyn.IncludeType psym -> 
-      let (Preabsyn.Symbol (sym,_,pos)) = psym in
-      add sym sym ctable (tbl, rev_tbl) pos 
-        ("Cannot include unknown type: '" ^ (Symbol.name sym) ^ "'")
+        ("Cannot " ^ renstring ^ " unknown kind: '" ^ (Symbol.name old_sym) ^ "'")
     | Preabsyn.RenameType (old_psym,new_psym) -> 
       let (Preabsyn.Symbol (old_sym,_,old_pos)) = old_psym in
       let (Preabsyn.Symbol (new_sym,_,new_pos)) = new_psym in
+      let renstring = 
+        if (Symbol.equal old_sym new_sym) then "include" else "rename" in
       add old_sym new_sym ctable (tbl, rev_tbl) old_pos
-        ("Cannot rename unknown type: '" ^ (Symbol.name old_sym) ^ "'")
+        ("Cannot " ^ renstring ^ " unknown type: '" ^ (Symbol.name old_sym) ^ "'")
   in
   (* build lookup tables *)
   let (kRenamingTable, revKindRenTable, cRenamingTable, revConstRenTable) = 
     match renamings with
-    | Preabsyn.IncludeAll -> 
-      let (kRenamingTable, kRevRenTable) = 
-        Table.fold includeSym ktable (Table.empty, Table.empty) in
-      let (cRenamingTable, cRevRenTable) = 
-        Table.fold includeSym ctable (Table.empty, Table.empty) in
-      (kRenamingTable, kRevRenTable, cRenamingTable, cRevRenTable)
-    | Preabsyn.SelectOf (kindRenamings, typeRenamings) ->
+      Preabsyn.SelectOf (kindRenamings, typeRenamings) ->
       let (kRenamingTable, kRevRenTable) = List.fold_left addRenaming
         (Table.empty, Table.empty) kindRenamings in
       let (cRenamingTable, cRevRenTable) = List.fold_left addRenaming 
@@ -1451,6 +1438,87 @@ and translateSignature s owner accumOrUse generalCopier =
     (List.fold_left merge ctable clist)
   in    
 
+  let sanitizeRenamings (accumsigs, usesigs) = 
+    let isEmpty (_, renaming) = 
+      match renaming with
+        Preabsyn.SelectOf([], []) -> true
+      | _ -> false in
+    let (emptyaccum, validaccum) = List.partition isEmpty  accumsigs in
+    let (emptyuse, validuse) = List.partition isEmpty  usesigs in
+    let warnEmpty (Preabsyn.Symbol(sym, _, pos), _) = 
+      let name = Symbol.name sym in
+      Errormsg.warning pos ("Ignoring empty accumulation of " ^ name ^ ".") in
+
+    List.iter warnEmpty emptyaccum;
+    List.iter warnEmpty emptyuse;
+
+    let duplicateRenaming oldStmt newStmt = 
+      match oldStmt with
+        Preabsyn.RenameType(old_sym, new_sym) ->
+          (match newStmt with
+            Preabsyn.RenameType(old_sym', new_sym') ->
+            ((Preabsyn.symbolEqual old_sym old_sym')
+              && (Preabsyn.symbolEqual new_sym new_sym')) 
+          | _ -> false)
+      | Preabsyn.RenameKind(old_sym, new_sym) ->
+          (match newStmt with
+            Preabsyn.RenameKind(old_sym', new_sym') ->
+            ((Preabsyn.symbolEqual old_sym old_sym')
+              && (Preabsyn.symbolEqual new_sym new_sym')) 
+          | _ -> false) in
+
+    let removeDuplicateKinds processed directive =
+      try
+        let duplicate = List.find (duplicateRenaming directive) processed in
+        let duppos = 
+          match duplicate with 
+            Preabsyn.RenameKind(sym, _) -> Preabsyn.getSymbolPos sym 
+          | _ -> Errormsg.none in
+        Errormsg.warning duppos "Ignoring duplicate renaming kind statement";
+        processed
+      with Not_found ->
+        (directive :: processed)
+    in
+
+    let removeDuplicateTypes processed directive =
+      try
+        let duplicate = List.find (duplicateRenaming directive) processed in
+        let duppos = 
+          match duplicate with 
+            Preabsyn.RenameType(sym, _) -> Preabsyn.getSymbolPos sym
+          | _ -> Errormsg.none in
+        Errormsg.warning duppos "Ignoring duplicate renaming type statement";
+        processed
+      with Not_found ->
+        (directive :: processed)
+    in
+
+    let removeDuplicates (signature, renamings) = 
+      match renamings with
+        Preabsyn.InclusiveSelect(kRenamings, cRenamings) ->
+          let newKRenamings = 
+            List.fold_left removeDuplicateKinds [] kRenamings in
+          let newCRenamings = 
+            List.fold_left removeDuplicateTypes [] cRenamings in
+          let newDirectives = 
+            Preabsyn.InclusiveSelect(newKRenamings, newCRenamings) in
+          (signature, newDirectives)
+      | Preabsyn.SelectOf(kRenamings, cRenamings) ->
+          let newKRenamings = 
+            List.fold_left removeDuplicateKinds [] kRenamings in
+          let newCRenamings = 
+            List.fold_left removeDuplicateTypes [] cRenamings in
+          let newDirectives = 
+            Preabsyn.SelectOf(newKRenamings, newCRenamings) in
+          (signature, newDirectives)
+    in
+
+    let validaccum = List.map removeDuplicates validaccum in
+    let validuse = List.map removeDuplicates validuse in
+
+    (validaccum, validuse) 
+  in
+
   (******************************************************************
   *processAccumSigs:
   * Convert a list of accumulated signature filenames into a list of
@@ -1511,6 +1579,8 @@ and translateSignature s owner accumOrUse generalCopier =
   * switched to useonly.
   ******************************************************************)
   let rec translateUseSigs = translateSigs [] false in
+
+  let (accumsigs, usesigs) = sanitizeRenamings (accumsigs, usesigs) in
   
   (*  Process accumulated signatures: *)
   let sigs = processSigs accumsigs in

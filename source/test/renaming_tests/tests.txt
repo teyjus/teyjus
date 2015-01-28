@@ -1,0 +1,24 @@
+Renaming tests, first set to establish invariants:
+
+First, that the processing of a signature/module is isolated from the rest,
+i.e. that the context the module is used in doesn't affect whether or not
+it'se well-formed.
+
+Secondly, that an inclusion statement, i.e. {type x} is just a special case of
+a renaming statement {type x => x}. Either we'll cover this with a test case
+or do some reasoning about the code.
+
+Then, we test that multiple redundant renaming statements are allowed by the
+compiler.
+
+We also specify that an empty renaming directive, i.e. in 
+  accum_sig m1 {}.
+corresponds to not accumulating the module at all. We'll then have a test case
+that checks this.
+
+Inclusion: with * symbol
+ - Equivalence to manual inclusion of all elements
+ - Name clashes output appropriate error messages
+
+Selective: no * symbol
+ - Check that omitted elements behave as expected
