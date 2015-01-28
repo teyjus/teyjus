@@ -53,13 +53,10 @@ type ptype =
 type renamingdirective =
     RenameKind  of psymbol * psymbol
   | RenameType  of psymbol * psymbol
-  | IncludeType of psymbol
-  | IncludeKind of psymbol
 
 (*  *)
 type renamingdirectives =
-    IncludeAll
-  | SelectOf        of (renamingdirective list * renamingdirective list)
+    SelectOf        of (renamingdirective list * renamingdirective list)
   | InclusiveSelect of (renamingdirective list * renamingdirective list)
 
 (* Symbols for abstracted variables 
@@ -229,6 +226,8 @@ val string_of_type : ptype -> string
 
 val getModuleName : pmodule -> string
 val getSignatureName : pmodule -> string
+
+val symbolEqual : psymbol -> psymbol -> bool
 val getSymbol : psymbol -> symbol
 val getSymbolPos : psymbol -> pos
 
