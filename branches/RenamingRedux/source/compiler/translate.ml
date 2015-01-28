@@ -1315,6 +1315,92 @@ let applyRenamingFunctions asig (ktable,ctable,atable) ((kRenamingFunc, _),(cRen
 
   ((Absyn.Signature(s,klist',clist')),(ktable',ctable',atable))
 
+let sanitizeRenamings (accumsigs, usesigs, accummods, impmods) = 
+  let isEmpty (_, renaming) = 
+    match renaming with
+      Preabsyn.SelectOf([], []) -> true
+    | _ -> false in
+  let (emptyaccumsigs, validaccumsigs) = List.partition isEmpty  accumsigs in
+  let (emptyusesigs, validusesigs) = List.partition isEmpty  usesigs in
+  let (emptyaccummods, validaccummods) = List.partition isEmpty accummods in
+  let (emptyimpmods, validimpmods) = List.partition isEmpty impmods in
+  let warnEmpty (Preabsyn.Symbol(sym, _, pos), _) = 
+    let name = Symbol.name sym in
+    Errormsg.warning pos ("Ignoring empty accumulation of " ^ name ^ ".") in
+
+  List.iter warnEmpty emptyaccumsigs;
+  List.iter warnEmpty emptyusesigs;
+  List.iter warnEmpty emptyaccummods;
+  List.iter warnEmpty emptyimpmods;
+
+  let duplicateRenaming oldStmt newStmt = 
+    match oldStmt with
+      Preabsyn.RenameType(old_sym, new_sym) ->
+        (match newStmt with
+          Preabsyn.RenameType(old_sym', new_sym') ->
+          ((Preabsyn.symbolEqual old_sym old_sym')
+            && (Preabsyn.symbolEqual new_sym new_sym')) 
+        | _ -> false)
+    | Preabsyn.RenameKind(old_sym, new_sym) ->
+        (match newStmt with
+          Preabsyn.RenameKind(old_sym', new_sym') ->
+          ((Preabsyn.symbolEqual old_sym old_sym')
+            && (Preabsyn.symbolEqual new_sym new_sym')) 
+        | _ -> false) in
+
+  let removeDuplicateKinds processed directive =
+    try
+      let duplicate = List.find (duplicateRenaming directive) processed in
+      let duppos = 
+        match duplicate with 
+          Preabsyn.RenameKind(sym, _) -> Preabsyn.getSymbolPos sym 
+        | _ -> Errormsg.none in
+      Errormsg.warning duppos "Ignoring duplicate renaming kind statement";
+      processed
+    with Not_found ->
+      (directive :: processed)
+  in
+
+  let removeDuplicateTypes processed directive =
+    try
+      let duplicate = List.find (duplicateRenaming directive) processed in
+      let duppos = 
+        match duplicate with 
+          Preabsyn.RenameType(sym, _) -> Preabsyn.getSymbolPos sym
+        | _ -> Errormsg.none in
+      Errormsg.warning duppos "Ignoring duplicate renaming type statement";
+      processed
+    with Not_found ->
+      (directive :: processed)
+  in
+
+  let removeDuplicates (signature, renamings) = 
+    match renamings with
+      Preabsyn.InclusiveSelect(kRenamings, cRenamings) ->
+        let newKRenamings = 
+          List.fold_left removeDuplicateKinds [] kRenamings in
+        let newCRenamings = 
+          List.fold_left removeDuplicateTypes [] cRenamings in
+        let newDirectives = 
+          Preabsyn.InclusiveSelect(newKRenamings, newCRenamings) in
+        (signature, newDirectives)
+    | Preabsyn.SelectOf(kRenamings, cRenamings) ->
+        let newKRenamings = 
+          List.fold_left removeDuplicateKinds [] kRenamings in
+        let newCRenamings = 
+          List.fold_left removeDuplicateTypes [] cRenamings in
+        let newDirectives = 
+          Preabsyn.SelectOf(newKRenamings, newCRenamings) in
+        (signature, newDirectives)
+  in
+
+  let validaccumsigs = List.map removeDuplicates validaccumsigs in
+  let validusesigs = List.map removeDuplicates validusesigs in
+  let validaccummods = List.map removeDuplicates validaccummods in
+  let validimpmods = List.map removeDuplicates validimpmods in
+
+  (validaccumsigs, validusesigs, validaccummods, validimpmods) 
+
 (**********************************************************************
 *translate:
 * Convert from a preabsyn module to an absyn module by translating the
@@ -1438,86 +1524,6 @@ and translateSignature s owner accumOrUse generalCopier =
     (List.fold_left merge ctable clist)
   in    
 
-  let sanitizeRenamings (accumsigs, usesigs) = 
-    let isEmpty (_, renaming) = 
-      match renaming with
-        Preabsyn.SelectOf([], []) -> true
-      | _ -> false in
-    let (emptyaccum, validaccum) = List.partition isEmpty  accumsigs in
-    let (emptyuse, validuse) = List.partition isEmpty  usesigs in
-    let warnEmpty (Preabsyn.Symbol(sym, _, pos), _) = 
-      let name = Symbol.name sym in
-      Errormsg.warning pos ("Ignoring empty accumulation of " ^ name ^ ".") in
-
-    List.iter warnEmpty emptyaccum;
-    List.iter warnEmpty emptyuse;
-
-    let duplicateRenaming oldStmt newStmt = 
-      match oldStmt with
-        Preabsyn.RenameType(old_sym, new_sym) ->
-          (match newStmt with
-            Preabsyn.RenameType(old_sym', new_sym') ->
-            ((Preabsyn.symbolEqual old_sym old_sym')
-              && (Preabsyn.symbolEqual new_sym new_sym')) 
-          | _ -> false)
-      | Preabsyn.RenameKind(old_sym, new_sym) ->
-          (match newStmt with
-            Preabsyn.RenameKind(old_sym', new_sym') ->
-            ((Preabsyn.symbolEqual old_sym old_sym')
-              && (Preabsyn.symbolEqual new_sym new_sym')) 
-          | _ -> false) in
-
-    let removeDuplicateKinds processed directive =
-      try
-        let duplicate = List.find (duplicateRenaming directive) processed in
-        let duppos = 
-          match duplicate with 
-            Preabsyn.RenameKind(sym, _) -> Preabsyn.getSymbolPos sym 
-          | _ -> Errormsg.none in
-        Errormsg.warning duppos "Ignoring duplicate renaming kind statement";
-        processed
-      with Not_found ->
-        (directive :: processed)
-    in
-
-    let removeDuplicateTypes processed directive =
-      try
-        let duplicate = List.find (duplicateRenaming directive) processed in
-        let duppos = 
-          match duplicate with 
-            Preabsyn.RenameType(sym, _) -> Preabsyn.getSymbolPos sym
-          | _ -> Errormsg.none in
-        Errormsg.warning duppos "Ignoring duplicate renaming type statement";
-        processed
-      with Not_found ->
-        (directive :: processed)
-    in
-
-    let removeDuplicates (signature, renamings) = 
-      match renamings with
-        Preabsyn.InclusiveSelect(kRenamings, cRenamings) ->
-          let newKRenamings = 
-            List.fold_left removeDuplicateKinds [] kRenamings in
-          let newCRenamings = 
-            List.fold_left removeDuplicateTypes [] cRenamings in
-          let newDirectives = 
-            Preabsyn.InclusiveSelect(newKRenamings, newCRenamings) in
-          (signature, newDirectives)
-      | Preabsyn.SelectOf(kRenamings, cRenamings) ->
-          let newKRenamings = 
-            List.fold_left removeDuplicateKinds [] kRenamings in
-          let newCRenamings = 
-            List.fold_left removeDuplicateTypes [] cRenamings in
-          let newDirectives = 
-            Preabsyn.SelectOf(newKRenamings, newCRenamings) in
-          (signature, newDirectives)
-    in
-
-    let validaccum = List.map removeDuplicates validaccum in
-    let validuse = List.map removeDuplicates validuse in
-
-    (validaccum, validuse) 
-  in
 
   (******************************************************************
   *processAccumSigs:
@@ -1580,7 +1586,8 @@ and translateSignature s owner accumOrUse generalCopier =
   ******************************************************************)
   let rec translateUseSigs = translateSigs [] false in
 
-  let (accumsigs, usesigs) = sanitizeRenamings (accumsigs, usesigs) in
+  let (accumsigs, usesigs, _, _) =
+    sanitizeRenamings (accumsigs, usesigs, [], []) in
   
   (*  Process accumulated signatures: *)
   let sigs = processSigs accumsigs in
@@ -2123,6 +2130,9 @@ and translateModule mod' ktable ctable atable =
                     econsts, fixities,
                     gkinds, lkinds, tabbrevs, clauses, accummods,
                     accumsigs, usesigs, impmods) ->
+      (* Sanitize accumulations / imports *)
+      let (accumsigs, usesigs, accummods, impmods) = 
+        sanitizeRenamings (accumsigs, usesigs, accummods, impmods) in
       (*  Translate the accumulated signatures  *)
       let accumsigs' = processSignatures accumsigs in
       let (_, accsigstables, _, _) = translateAccumSigs accumsigs' in
