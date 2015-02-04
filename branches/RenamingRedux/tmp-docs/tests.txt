@@ -1,0 +1,1 @@
+../source/test/renaming_tests/tests.txt

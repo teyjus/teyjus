@@ -1167,16 +1167,23 @@ let getRenamingFunctions ktable ctable renamings =
    * to new_tbl. If old_sym does not exist raise an error with 
    * the given message and position. Uses a reverse copy of the 
    * underlying hash table to check bijectivity *)
-  let add old_sym new_sym tbl (new_tbl, rev_tbl) pos errormsg =
-    if Table.mem old_sym tbl
-    then
-      (if (not (Table.mem new_sym rev_tbl)) (* or new_sym matches type/kind of old sym  *)
-      then (Table.add old_sym new_sym new_tbl, Table.add new_sym old_sym rev_tbl)
-      else 
-        let () = Errormsg.error pos "Clash detected!!" in
-        (new_tbl, rev_tbl))
-    else let () = Errormsg.error pos errormsg in
-      (new_tbl, rev_tbl)
+  let add old_sym new_sym tbl (new_tbl, rev_tbl) pos kindortype =
+    match (Table.find old_sym new_tbl) with
+      None ->
+        (match (Table.find new_sym rev_tbl) with
+          None ->
+            (Table.add old_sym new_sym new_tbl,
+             Table.add new_sym old_sym rev_tbl)
+        | Some(previous) ->
+            let msg = (kindortype ^ " " ^ (Symbol.name new_sym) ^ " is " ^
+              "already being renamed from " ^ (Symbol.name previous) ^ ".") in
+            let () = Errormsg.error pos msg in
+            (new_tbl, rev_tbl))
+    | Some(previous) ->
+        let msg = (kindortype ^ " " ^ (Symbol.name old_sym) ^
+          " has already been renamed to " ^ (Symbol.name previous)) in
+          let () = Errormsg.error pos msg in
+        (new_tbl, rev_tbl)
   in
 
   (* Adds the inclusion to the original and reverse table *)
@@ -1189,18 +1196,12 @@ let getRenamingFunctions ktable ctable renamings =
     match renaming with
     | Preabsyn.RenameKind (old_psym,new_psym) ->
       let (Preabsyn.Symbol (old_sym,_,old_pos)) = old_psym in
-      let (Preabsyn.Symbol (new_sym,_,new_pos)) = new_psym in
-      let renstring = 
-        if (Symbol.equal old_sym new_sym) then "include" else "rename" in
-      add old_sym new_sym ktable (tbl, rev_tbl) old_pos 
-        ("Cannot " ^ renstring ^ " unknown kind: '" ^ (Symbol.name old_sym) ^ "'")
+      let (Preabsyn.Symbol (new_sym,_,_)) = new_psym in
+      add old_sym new_sym ktable (tbl, rev_tbl) old_pos "kind"
     | Preabsyn.RenameType (old_psym,new_psym) -> 
       let (Preabsyn.Symbol (old_sym,_,old_pos)) = old_psym in
-      let (Preabsyn.Symbol (new_sym,_,new_pos)) = new_psym in
-      let renstring = 
-        if (Symbol.equal old_sym new_sym) then "include" else "rename" in
-      add old_sym new_sym ctable (tbl, rev_tbl) old_pos
-        ("Cannot " ^ renstring ^ " unknown type: '" ^ (Symbol.name old_sym) ^ "'")
+      let (Preabsyn.Symbol (new_sym,_,_)) = new_psym in
+      add old_sym new_sym ctable (tbl, rev_tbl) old_pos "type"
   in
   (* build lookup tables *)
   let (kRenamingTable, revKindRenTable, cRenamingTable, revConstRenTable) = 

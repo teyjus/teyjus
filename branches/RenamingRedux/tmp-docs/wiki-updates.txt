@@ -1,11 +1,43 @@
 Running list of what needs to be updated and/or added to the wiki.
 ---
+  * We define 'renaming' to be the act of moving a reference (represented by
+    its name) in some module to to a (possibly different) name an accumulating
+    context. For example, if some module m1 contains a statement of the form:
+    type a int -> o.
+    Some module could accumulate m1 with a statement like:
+    accumulate m1 {type a => b}.
+    So that if 'b' is visible in the modules signature, a query like:
+    [m2] ?- b X.
+    Would be equivalent to a query from m1:
+    [m1] ?- a X.
 
+  * Refer to the updated grammar in SigSyntax and ModSyntax for the exact
+    grammatical changes renaming brings in
 
   * We extended the renaming syntax with the '*' token that includes everything
-    not mentioned. Any renamings superceed the inclusion of the renamed
-    type/kind.
+    not mentioned. Any renamings superceed the implied inclusion of the renamed
+    type/kind. For example,
+    accum_sig m1 {*, kind a => b}.
+    will accumulate all kinds/constants in m1 with their original names, but
+    will rename the kind 'a' to 'b'. The '*' is a sytactic convenience for the
+    manual inclusion of all elements, and the statements:
+    accum_sig m1 {*}.
+    accum_sig m1.
+    Are defined to be equivalent by our specification.
 
-  * An empty renaming should be ignored and print a warning message
+  * An empty renaming directive following an accumulation statement
+    effectively nullifies the accumulation. Given the statement:
+    accum_sig m1 {}.
+    There is no content that needs to be accumulated, and thus the statement
+    is ignored, and a warning is issued by the compiler. 
 
-  * We should document how clashes are being handled
+  * The renaming function must be bijective in each of its namespaces: that
+    is, a given kind/constant can't be renamed to two different names, and two
+    different kinds/constants can't be renamed to the same name. I.e,
+    accum_sig m1 {kind a => c, kind a => b}.
+    accum_sig m1 {kind a => c, kind b => c}.
+    Are both disallowed according to our specification. 
+  
+  * Renaming will permit two duplicate statements, however. So a statement like
+    accum_sig m1 {kind a, kind a}.
+    will be allowed, but will give a warning.

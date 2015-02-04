@@ -1,0 +1,3 @@
+module accumulating.
+
+accumulate base {*}.

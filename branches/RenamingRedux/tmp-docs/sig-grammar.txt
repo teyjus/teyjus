@@ -1,0 +1,87 @@
+== A BNF Specification of Signature Syntax ==
+        
+{{{
+<Signature>    ::=   <SigHeader> <SigPreamble> <Sign-Decls> <SigEnd>
+
+<SigHeader>    ::=   'sig' <NameToken> '.'
+
+<SigEnd>       ::=   'end' | '$'                 % $ stands for eof
+
+<SigPreamble>  ::=   <Empty>
+                   | accum_sig <QualifiedSigs> '.' <SigPreamble>
+                   | use_sig <QualifiedSigs> '.' <SigPreamble>
+
+<QualifiedNames> ::= <QualifiedName>
+                   | <QualifiedName> ',' <QualifiedNames>
+
+<QualifiedName> ::=  <NameToken> 
+                     <NameToken> '{}'
+                   | <NameToken> '{' <Renamings> '}'
+
+<Renamings>    ::=   <Renaming>
+                   | <Renaming> ',' <Renamings>
+
+<Renaming>     ::=   'kind' <NameToken>
+                   | 'kind' <NameToken> '=>' <NameToken>
+                   | 'type' <NameToken> 
+                   | 'type' <NameToken> '=>' <NameToken>
+                   | '*'
+
+<Sign-Decls>   ::=   <Empty>
+                   | <Sign-Decl> <Sign-Decls>
+
+<Sign-Decl>    ::=   'kind'  <Ids>  <Kind> '.'
+                   | 'typeabbrev' <AbbrForm> <Type> '.'
+                   | 'type'  <Ids>  <Type> '.'
+                   | <Fixity> <Ids> <SmallInt> '.'
+                   | 'exportdef' <Ids> '.' 
+                   | 'exportdef' <Ids> <Type> '.'
+                   | 'useonly' <Ids> '.' 
+                   | 'useonly' <Ids> <Type> '.'
+
+<Ids>          ::=   <Id>
+                   | <Id> ',' <Ids>
+
+<Kind>         ::=   'type'
+                   | 'type' '->' <Kind>
+
+<AbbrForm>     ::=   <Id>
+                   | '(' <Id> <NamedVarList> ')'
+                   | '(' <AbbrForm> ')'
+
+<NamedVarList> ::=   <NamedVar>
+                   | <NamedVar> <NamedVarList>   
+
+<Type>         ::=   <CType> '->' <Type>
+                   | <CType>
+
+<CType>        ::=   <NameToken>
+                   | <TyCIdent> <CTypes>
+                   | '(' <Type> ')'
+
+<TyCIdent>     ::= <Id>
+
+<CTypes>       ::=   <CType>
+                   | <CType> <CTypes>
+
+<Fixity>       ::=   'infixl' | 'infixr' | 'infix'
+                   | 'prefix' | 'prefixr'
+                   | 'postfix' | 'postfixl'
+
+<NameToken>    ::=  { Any Teyjus token distinct from keywords,
+                        pseudo-keywords, integer, string and real
+                        literals }
+
+<Id>           ::=  { Like NameToken, except that the token should 
+                       also begin with something different from an 
+                       uppercase letter and _ }
+
+<NamedVar>     ::=  { Any named token that begins with an 
+                      uppercase letter }
+                       
+<SmallInt>     ::=  { Integer value between 0 and 255; i.e. unsigned 
+                     one byte number }
+
+<Empty>        ::=  { empty token sequence }
+}}}
+
