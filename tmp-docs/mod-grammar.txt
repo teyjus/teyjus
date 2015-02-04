@@ -1,0 +1,108 @@
+<Module>        ::=  <ModHeader> <ModPreamble> <ModBody> <ModEnd>
+
+<ModHeader>     ::=  'module' <NameToken> '.'
+
+<ModEnd>        ::=  '$'                        % $ stands for eof
+                   | 'end' 
+
+<ModPreamble>   ::=  <Empty>
+                   | 'import' <QualifiedNames> '.' <ModPreamble>
+                   | 'accumulate' <QualifiedNames> '.' <ModPreamble>
+                   | 'accum_sig' <QualifiedNames> '.' <ModPreamble>
+                   | 'use_sig' <QualifiedNames> '.' <ModPreamble>
+
+<ModBody>       ::=  <Empty> 
+                   | <ModSignDecl> <ModBody>
+                   | <ModClause> <ModBody>
+
+<ModSignDecl>   ::=  <Sign-Decl>
+                   | 'local' <Ids> '.'
+                   | 'local' <Ids> <Type> '.'
+                   | 'localkind' <Ids> '.'
+                   | 'localkind' <Ids> <Kind> '.'
+
+<ModClause>     ::=  <Clause> '.'
+
+<Clause>        ::=  <Atom>
+                   | <Clause> ':-' <Goal>
+                   | <Goal> '=>' <Clause>
+                   | <Clause> ',' <Clause>
+                   | <Clause> '&' <Clause>
+                   | <PiId> <TypedId> '\' <Clause>
+                   | <PiId> <CTerm>
+                   | '(' <Clause> ')'
+
+<Goal>          ::=  '!'
+                   | <PiId> <Term>
+                   | <PiId> <TypedId> '\' <Goal>
+                   | <SigmaId> <Term>
+                   | <SigmaId> <TypedId> '\' <Goal>
+                   | <Goal> ';' <Goal>
+                   | <Goal> ',' <Goal>
+                   | <Goal> '&' <Goal>
+                   | <Clause> '=>' <Goal>
+                   | <Atom>
+                   | <FlexAtom>
+                   | '(' <Goal> ')'
+
+
+<Atom>          ::=  <Term>    { the type of the term must be boolean
+                                 and its main functor must be a constant
+                                 or a variable bound by an enclosing
+                                 essential universal quantifier }
+
+<FlexAtom>      ::=  <TypedVar>
+                   | <FlexAtom> <AppTerm>
+                   | '(' <FlexAtom> ')'
+
+
+<CTerm>         ::=  <Term>    { The main functor of the term must be a 
+                                 constant or a variable bound by an
+                                 enclosing essential universal 
+                                 quantifier }
+
+<Term>          ::=  <Term> <TypedCIdent> <Term>   
+                   | <Term> <TypedCIdent>          
+                   | <TypedCIdent> <Term>          
+                   | <Term> <Term>
+                   | <TypedId> '\' <Term>
+                   | '[' ']'                    % Prolog list notation
+                   | '[' TermList ']'           % Prolog list notation
+                   | '[' TermList '|' Term ']'  % Prolog list notation
+                   | <TypedCIdent>
+                   | <TypedVar> 
+                   | <TypedId>
+                   | '(' <Term> ')'
+
+<TermList>      ::=  <Term>
+                   | <Term> ',' <TermList>
+
+<PiId>          ::=  'pi'
+                   | 'pi' ':' <Type>
+                   | '(' <PiId> ')'
+
+<SigmaId>       ::=  'sigma'
+                   | 'sigma' ':' <Type>
+                   | '(' <SigmaId> ')'
+
+<TypedId>       ::=  <AbsToken>
+                   | <AbsToken> ':' <Type>
+                   | '(' <TypedId> ')'
+
+<TypedVar>      ::=  <VIdent>
+                   | <VIdent> ':' <Type>
+                   | '(' <TypedVar> ')'
+
+<TypedCIdent>   ::=  <SpecialOp>
+                   | <Id>
+                   | <Id> ':' <Type>
+                   | '(' <TypedCIdent> ')'
+
+<SpecialOp>     ::=  { A pseudo keyword corresponding to one of the 
+                        overloaded operators }
+
+<AbsToken>      ::=  { A <NameToken> that does not begin with _ }
+
+<VIdent>        ::=  { A Teyjus token that begins with an uppercase
+                        letter or _ and that is not the variable bound
+                        by an enclosing abstraction }

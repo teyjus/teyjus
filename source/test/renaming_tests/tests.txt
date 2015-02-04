@@ -5,20 +5,26 @@ i.e. that the context the module is used in doesn't affect whether or not
 it'se well-formed.
 
 Secondly, that an inclusion statement, i.e. {type x} is just a special case of
-a renaming statement {type x => x}. Either we'll cover this with a test case
-or do some reasoning about the code.
+a renaming statement {type x => x}. The code has been changed so that an
+inclusion statement really is just a special case of a renaming statement.
+We also have a test case to enforce this specification (test 1).
 
 Then, we test that multiple redundant renaming statements are allowed by the
-compiler.
+compiler (test 4).
 
 We also specify that an empty renaming directive, i.e. in 
   accum_sig m1 {}.
-corresponds to not accumulating the module at all. We'll then have a test case
-that checks this.
+corresponds to not accumulating the module at all. (test 5)
 
 Inclusion: with * symbol
- - Equivalence to manual inclusion of all elements
- - Name clashes output appropriate error messages
+ - Equivalence to manual inclusion of all elements (test 3).
+ - Name clashes result in failed compilation (renaming_directive_clash,
+   in compiler_negative_tests)
 
 Selective: no * symbol
- - Check that omitted elements behave as expected
+ - Check that omitted elements behave as expected:
+  * Check that omitted constants are invisible to the top-level (test 8)
+ - Check that including an undefined type results in an error
+   (renaming_missing_source, in compiler_negative_tests)
+ - Check that the renaming function contains no clashes; i.e. is bijective,
+   and each case is disallowed by the compiler

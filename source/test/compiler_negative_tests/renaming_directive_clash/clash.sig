@@ -1,3 +1,3 @@
 sig clash.
 
-accum_sig base {kind a, type q => b, type r => b}.
+accum_sig base {kind a => c, kind b => c, type q => s, type r => s}.

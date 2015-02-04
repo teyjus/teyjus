@@ -16,6 +16,10 @@ SUBDIRS = $(glob D, *)
 
     FILES = $(rootname $(glob *.mod))
 
+    # Redirect warning messages to /dev/null
+    if $(file-exists /dev/null)
+      stderr = /dev/null
+
     %.dis: %.lpo $(TJDIS)
         $(TJDIS) $< >$@
 
