@@ -588,6 +588,7 @@ void BIIO_getEnv()
   if (!str) EM_error(BI_ERROR_UNBOUND_VARIABLE, "string");
 
   envstr = getenv(str);
+  if (envstr == NULL) EM_error(BI_ERROR_UNSET_ENV_VAR, str);
 
   length = strlen(envstr);
   size   = MCSTR_numWords(length);
