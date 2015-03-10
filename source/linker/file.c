@@ -48,6 +48,7 @@ int LK_FILE_OpenInput(char* modname, char* extension)
      * To be fixed with C, or, better, rewrite all the linker in OCaml
      * to do this easily */
     tjpath=getenv("TJPATH");
+    if (tjpath == NULL) tjpath=".";
     tjpath_=strdup(tjpath);
 
     dir=strtok(tjpath_,":");
