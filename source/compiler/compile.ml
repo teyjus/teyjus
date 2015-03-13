@@ -50,9 +50,9 @@ let openFile fname f =
           let inchannel = f (Filename.concat dir fname) in
             inchannel
       with Not_found -> (* The file does not exist in TJPATH *)
-        (prerr_endline s; exit 1)
+	(prerr_endline (s ^ "\nFile " ^ fname ^ " does not exist in TJPATH."); exit 1)
     with Not_found -> (* TJPATH is not defined *)
-      (prerr_endline s; exit 1)
+      (prerr_endline (s ^ "\nFile " ^ fname ^ " not found. Did you forget to set TJPATH?"); exit 1)
 
 
 (******************************************************************
