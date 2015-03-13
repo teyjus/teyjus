@@ -44,6 +44,33 @@ type status =
   | Computing
   | Computed of string list
 
+(*
+ * Takes a filename and returns the directory of TJPATH where the file is.
+ * Compatible with openFile in compile module 
+ *)
+let getPath filename =
+  (* Writing those few lines avoid linking with Str module *)
+  let rec split_char sep str =
+    try
+      let i = String.index str sep in
+        String.sub str 0 i :: split_char sep (String.sub str (i+1)
+              (String.length str - i - 1))
+     with Not_found -> [str] in
+  match Sys.file_exists filename with
+    | true -> ""
+    | false ->
+      try
+        let tjpath = Sys.getenv "TJPATH" in
+        let dirs = split_char ':' tjpath in
+        try match List.find (fun dir -> 
+          Sys.file_exists (Filename.concat dir filename)) dirs 
+        with
+          | d -> d
+	with Not_found -> (* The file does not exist in TJPATH *)
+	  (prerr_endline ("File " ^ filename ^ " does not exist in TJPATH."); exit 1)
+      with Not_found -> (* TJPATH is not defined *)
+	(prerr_endline ("File " ^ filename ^ " not found. Did you forget to set TJPATH?"); exit 1)
+
 
 (* Dependency of lp file on lpo files *)
 
@@ -79,7 +106,8 @@ let rec lpo_deps modname =
 
 let print_lpo_deps modname =
   let deps = lpo_deps modname in
-  let deps_str = String.concat " " (List.map (fun d -> d ^ ".lpo") deps) in
+  let deps_path = List.map (fun m -> getPath (m ^ ".mod")) deps in
+  let deps_str = String.concat " " (List.map2 (fun p d -> (Filename.concat p d) ^ ".lpo") deps_path deps) in
     Printf.printf "%s.lp: %s.lpo %s\n" modname modname deps_str
 
 
@@ -134,7 +162,8 @@ let root_sig_deps modname =
 
 let print_sig_deps signame =
   let deps = root_sig_deps signame in
-  let deps_str = String.concat " " (List.map (fun d -> d ^ ".sig") deps) in
+  let deps_path = List.map (fun m -> getPath (m ^ ".sig")) deps in
+  let deps_str = String.concat " " (List.map2 (fun p d -> (Filename.concat p d) ^ ".sig") deps_path deps) in
     Printf.printf "%s.lpo: %s.mod %s.sig %s\n" signame signame signame deps_str
 
       
