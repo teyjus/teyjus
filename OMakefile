@@ -30,7 +30,7 @@ BuildDist() =
     rm $(filter-proper-targets $(ls R, .))
 
     mkdir dist
-    cp README dist/
+    cp README.md dist/
     cp COPYING dist/
     cp OMakefile dist/
     cp OMakeroot dist/
@@ -51,7 +51,7 @@ dist:
     section
         BuildDist()
         cd dist && omake all
-        VERSION = $(shell dist/tjcc -v | perl -pe 's/Teyjus version //')
+        VERSION = $(shell ./tjcc -v | perl -pe 's/Teyjus version //')
         BuildDist()
         rm -f dist.tar.gz
         mv dist teyjus
