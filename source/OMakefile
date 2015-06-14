@@ -187,6 +187,11 @@ PAR_MAIN = $(FNT)/parsefront
 # Platform specific changes
 #
 
+if $(mem $(SYSNAME), Linux)
+    YACC = bison -by
+    LEX = flex
+    export
+
 if $(mem $(OSTYPE), Cygwin Win32)
     YACC = bison -by
     LEX = flex
