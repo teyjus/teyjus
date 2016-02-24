@@ -215,11 +215,14 @@ and stringstate = parse
 | "\\\""        {addChar '"'; stringstate lexbuf}
 | "\"\""        {addChar '"'; stringstate lexbuf}
 
-| "\\^"['@'-'z'] as text            {addControl text; stringstate lexbuf}
-| "\\" OCTAL as text                {addOctal text; stringstate lexbuf}
-| "\\" (OCTAL OCTAL OCTAL) as text  {addOctal text; stringstate lexbuf}
-| "\\x" HEX as text                 {addHex text; stringstate lexbuf}
-| "\\x" (HEX HEX) as text           {addHex text; stringstate lexbuf}
+| "\\^" (['@'-'z'] as text)         {addControl (String.make 1 text);
+                                     stringstate lexbuf}
+| "\\" (OCTAL as text)              {addOctal (String.make 1 text);
+                                     stringstate lexbuf}
+| "\\" (OCTAL OCTAL OCTAL as text)  {addOctal text; stringstate lexbuf}
+| "\\x" (HEX as text)               {addHex (String.make 1 text);
+                                     stringstate lexbuf}
+| "\\x" (HEX HEX as text)           {addHex text; stringstate lexbuf}
 
 | "\\x" _         {Errormsg.error lexbuf.lex_curr_p 
                     "Illegal hex character specification";
