@@ -1,14 +1,14 @@
 (** Provides symbol tables. *)
 
-(** Describe an ordering for {!Symbol.symbol}. *)
+(** Describe an ordering for {!Symb.symbol}. *)
 module OrderedType =
 struct
-  type t = Symbol.symbol
+  type t = Symb.symbol
 
   (** Order using less-than on integer identifier from symbol. *)
   let compare s1 s2 =
-    let id1 = Symbol.id s1 in
-    let id2 = Symbol.id s2 in
+    let id1 = Symb.id s1 in
+    let id2 = Symb.id s2 in
     if (id1 < id2) 
       then -1    
       else if (id1 > id2)

@@ -92,7 +92,7 @@ struct
           | _ -> tm
       in
       let newclause = walk_clause c in
-      match (Symboltable.lookup typedecls (Symbol.symbol targettype)) with
+      match (Symboltable.lookup typedecls (Symb.symbol targettype)) with
           Some(Lpabsyn.TypeDec(_,_,clauses)) -> clauses := List.append (!clauses) [ref newclause]
         | None -> ()
     in
@@ -103,7 +103,7 @@ struct
        based on the LF type. *)
     let _ = 
       List.iter (fun c -> perClause typedecls' !c) 
-                (match (Symboltable.lookup typedecls' (Symbol.symbol "hastype")) with
+                (match (Symboltable.lookup typedecls' (Symb.symbol "hastype")) with
                      None -> 
                        ((Errormsg.error Errormsg.none 
                                         "predicate 'hastype' was not found in symboltable.");
@@ -111,7 +111,7 @@ struct
                   | Some(Lpabsyn.TypeDec(_,_,clauses)) ->
                       !clauses)
      in
-     let typedecls'' = Symboltable.remove typedecls' (Symbol.symbol "hastype") in
+     let typedecls'' = Symboltable.remove typedecls' (Symb.symbol "hastype") in
      Lpsig.Signature(name,kinds,typedecls'')
 end
 
