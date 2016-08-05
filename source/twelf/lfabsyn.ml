@@ -38,46 +38,46 @@ and id =
 
 
 
-let rec print_typefam (TypeFam(id,k,_,_,_,_,_)) =
-  (print_id id) ^ " : " ^ (print_kind k) ^ "."
+let rec string_of_typefam (TypeFam(id,k,_,_,_,_,_)) =
+  (string_of_id id) ^ " : " ^ (string_of_kind k) ^ "."
 
-and print_obj (Object(id,ty,_,_,_,_)) =
-  (print_id id) ^ " : " ^ (print_typ ty) ^ "."
+and string_of_obj (Object(id,ty,_,_,_,_)) =
+  (string_of_id id) ^ " : " ^ (string_of_typ ty) ^ "."
 
-and print_kind k =
+and string_of_kind k =
   match k with
       PiKind(id,ty,body,_) -> 
-        "({ " ^ (print_id id) ^ " : " ^ (print_typ ty) ^ "} " ^ (print_kind body) ^ ")"
+        "({ " ^ (string_of_id id) ^ " : " ^ (string_of_typ ty) ^ "} " ^ (string_of_kind body) ^ ")"
     | ImpKind(ty,body,_) -> 
-        "(" ^ (print_typ ty) ^ " -> " ^ (print_kind body) ^ ")"
+        "(" ^ (string_of_typ ty) ^ " -> " ^ (string_of_kind body) ^ ")"
     | Type(_) -> "type"
 
-and print_typ ty =
+and string_of_typ ty =
   match ty with
       PiType(id,t1,t2,_) -> 
-        "({ " ^ (print_id id) ^ " : " ^ (print_typ t1) ^ "} " ^ (print_typ t2) ^ ")"
+        "({ " ^ (string_of_id id) ^ " : " ^ (string_of_typ t1) ^ "} " ^ (string_of_typ t2) ^ ")"
     | AppType(t,tms,_) ->
         let tmlist =
-          List.fold_left (fun s tm -> s ^ " " ^ (print_term tm)) "" tms
+          List.fold_left (fun s tm -> s ^ " " ^ (string_of_term tm)) "" tms
         in
-        "(" ^ (print_id t) ^ " " ^ tmlist ^ ")"
+        "(" ^ (string_of_id t) ^ " " ^ tmlist ^ ")"
     | ImpType(t1,t2,_) ->
-        "(" ^ (print_typ t1) ^ " -> " ^ (print_typ t2) ^ ")"
+        "(" ^ (string_of_typ t1) ^ " -> " ^ (string_of_typ t2) ^ ")"
     | IdType(id,_) ->
-        print_id id
+        string_of_id id
 
-and print_term tm =
+and string_of_term tm =
   match tm with
       AbsTerm(id,ty,body,_) -> 
-        "([" ^ (print_id id) ^ " : " ^ (print_typ ty) ^"] " ^ (print_term body) ^ ")"
+        "([" ^ (string_of_id id) ^ " : " ^ (string_of_typ ty) ^"] " ^ (string_of_term body) ^ ")"
     | AppTerm(head, tms,_) -> 
         let tmlist = 
-          List.fold_left (fun s t -> s ^ " " ^ (print_term t)) "" tms
+          List.fold_left (fun s t -> s ^ " " ^ (string_of_term t)) "" tms
         in
-        "(" ^ (print_id head) ^ " " ^ tmlist ^ ")"
-    | IdTerm(id,_) -> print_id id
+        "(" ^ (string_of_id head) ^ " " ^ tmlist ^ ")"
+    | IdTerm(id,_) -> string_of_id id
 
-and print_id id =
+and string_of_id id =
   match id with
       Const(n,_)
     | Var(n,_) -> n
@@ -105,8 +105,8 @@ let get_id_pos id =
       Const(_,p) -> p
     | Var(_,p) -> p
 
-let get_typefam_name (TypeFam(name,_,_,_,_,_,_)) = print_id name
-let get_obj_name (Object(name,_,_,_,_,_)) = print_id name
+let get_typefam_name (TypeFam(name,_,_,_,_,_,_)) = string_of_id name
+let get_obj_name (Object(name,_,_,_,_,_)) = string_of_id name
 
 let get_typefam_kind (TypeFam(_,k,_,_,_,_,_)) = k
 let get_obj_typ (Object(_,t,_,_,_,_)) = t

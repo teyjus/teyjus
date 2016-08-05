@@ -44,12 +44,12 @@ and id =
   | Const of (string * pos)
   | Var of (string * pos)
 
-val print_typefam : typefam -> string
-val print_obj : obj -> string
-val print_kind : kind -> string
-val print_typ : typ -> string
-val print_term : term -> string
-val print_id : id -> string
+val string_of_typefam : typefam -> string
+val string_of_obj : obj -> string
+val string_of_kind : kind -> string
+val string_of_typ : typ -> string
+val string_of_term : term -> string
+val string_of_id : id -> string
 
 val get_typefam_pos : typefam -> pos
 val get_obj_pos : obj -> pos
