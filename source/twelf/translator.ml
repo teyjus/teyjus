@@ -26,9 +26,9 @@ let lftypeType = Lpabsyn.ConstType(lftype, [])
 let lfobjType = Lpabsyn.ConstType(lfobj, [])
 let initkinddecls = 
       Symboltable.insert (Symboltable.insert (Symboltable.empty)
-                                             (Symbol.symbol lfobjStr)
+                                             (Symb.symbol lfobjStr)
                                              (Lpabsyn.Kind(lfobj, 0)))
-                         (Symbol.symbol lftypeStr)
+                         (Symb.symbol lftypeStr)
                          (Lpabsyn.Kind(lftype, 0))
 
 let istypeStr = "istype"
@@ -39,9 +39,9 @@ let istypeClauses = ref []
 let hastypeClauses = ref []
 let inittypedecls =
       Symboltable.insert (Symboltable.insert (Symboltable.empty)
-                                             (Symbol.symbol istypeStr)
+                                             (Symb.symbol istypeStr)
                                              (Lpabsyn.TypeDec(istype, Lpabsyn.ImpType(lftypeType, oType), istypeClauses)))
-                         (Symbol.symbol hastypeStr)
+                         (Symb.symbol hastypeStr)
                          (Lpabsyn.TypeDec(hastype, Lpabsyn.ImpType(lfobjType, Lpabsyn.ImpType(lftypeType,oType)), hastypeClauses))
 
 (* Generate unique names for variables generated during 
@@ -244,7 +244,7 @@ struct
                                " is not a constant.")); name in
       let typedecls' =
             Symboltable.insert typedecls 
-                               (Symbol.symbol lpname)
+                               (Symb.symbol lpname)
                                (Lpabsyn.TypeDec(lpid, (flatten_kind kind), ref []))
       in
       (* make istype clause for type, put in istypeClauses *)
@@ -266,7 +266,7 @@ struct
           let newClause = ref ((encode_type ty) (Lpabsyn.IdTerm(objlpid))) in
           let typedecls' =
             (Symboltable.insert typedecls
-                               (Symbol.symbol objlpname)
+                               (Symb.symbol objlpname)
                                (Lpabsyn.TypeDec(objlpid, (flatten_type ty), ref [])))
           in
           (hastypeClauses := List.append (!hastypeClauses) [newClause];
@@ -441,7 +441,7 @@ struct
                                " is not a constant.")); name in
       let typedecls' =
             Symboltable.insert typedecls 
-                               (Symbol.symbol lpname)
+                               (Symb.symbol lpname)
                                (Lpabsyn.TypeDec(lpid, (flatten_kind kind), ref []))
       in
       (* make istype clause for type, put in istypeClauses *)
@@ -463,7 +463,7 @@ struct
           let newClause = ref ((encode_type ty) (Lpabsyn.IdTerm(objlpid))) in
           let typedecls' =
             (Symboltable.insert typedecls
-                               (Symbol.symbol objlpname)
+                               (Symb.symbol objlpname)
                                (Lpabsyn.TypeDec(objlpid, (flatten_type ty), ref [])))
           in
           (hastypeClauses := List.append (!hastypeClauses) [newClause];
