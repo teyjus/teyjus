@@ -11,7 +11,7 @@ sig
   val set : bool -> unit
 
   (** Run the optimization over the given LP signature. *)
-  val run_optimization : Lpsig.signature -> Lpsig.signature
+  val run_optimization : Absyn.amodule -> Absyn.amodule
 end
 
 (** Use specialized predicates for each LF type. Removes the hastype 

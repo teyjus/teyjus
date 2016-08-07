@@ -4,7 +4,7 @@ module type Optimization =
 sig
   val get : unit -> bool
   val set : bool -> unit
-  val run_optimization : Lpsig.signature -> Lpsig.signature
+  val run_optimization : Absyn.amodule -> Absyn.amodule
 end
 
 module Specialize : Optimization =
@@ -115,6 +115,24 @@ struct
      Lpsig.Signature(name,kinds,typedecls'')
 end
 
+
+module Swap : Optimization =
+struct
+  let run = ref false
+
+  let get () = !run
+
+  let set v = run := v
+
+  let run_optimization (Absyn.Module(modname,_,_,constants,_,_,_,_,_,_,_,_,_,_,_)) =
+    (* for each predicate in the constant table alter its type
+       so that the first argument becomes the final argument. *)
+    (* then look for any uses of the predicate and move first 
+       argument to last position. *)
+    Table.fold ( ) (!constants) (!constants)
+end
+
+(**
 module Swap : Optimization =
 struct
   let run = ref false
@@ -221,3 +239,4 @@ struct
     let _ = Symboltable.iter alteredtypes alterTerms in
     Lpsig.Signature(name, kinds, alteredtypes)
 end
+*)

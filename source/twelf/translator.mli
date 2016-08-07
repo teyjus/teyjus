@@ -4,7 +4,7 @@
 module type Translator =
 sig
   (** Translate the given LF signature into an LP signature. *)
-  val translate : Lfsig.signature -> Lpsig.signature
+  val translate : Lfsig.signature -> Absyn.amodule
 end
 
 (** An implementation of the basic, naive translation from LF to 
