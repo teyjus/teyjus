@@ -124,12 +124,19 @@ struct
 
   let set v = run := v
 
-  let run_optimization (Absyn.Module(modname,_,_,constants,_,_,_,_,_,_,_,_,_,_,_)) =
+  let changeType symb (Absyn.Constant()) constants =
+
+  let changeTerm (clauselstref, closed, offset, next) clauselst =
+		       
+  let run_optimization (Absyn.Module(modname,a,b,constants,c,d,e,f,g,h,i,j,k,l,clauseref)) =
     (* for each predicate in the constant table alter its type
        so that the first argument becomes the final argument. *)
     (* then look for any uses of the predicate and move first 
        argument to last position. *)
-    Table.fold ( ) (!constants) (!constants)
+    let constants' = Table.fold changeType (!constants) (!constants) in
+    let Absyn.ClauseBlocks(clauses) = !clauseref in
+    let clauses' = List.fold_left changeTerm clauses [] in
+    Absyn.Module(modname,a,b,constants',c,d,e,f,g,h,i,j,k,l,ref Absyn.ClauseBlocks(clauses')),
 end
 
 (**
