@@ -19,5 +19,5 @@ let set_mapping (lf_to_lp, lp_to_lf) lfs lps =
 
 let string_of_metadata (lf_to_lp, _) =
   let string_of_entry lfs lps str =
-    str ^ "(" ^ (Symb.name lfs) ^ ", " ^ (Symbol.name lps) ^ ")\n" 
+    str  ^ (Symb.name lfs) ^ " " ^ (Symbol.name lps) ^ "\n" 
   in Symboltable.fold lf_to_lp string_of_entry "" 
