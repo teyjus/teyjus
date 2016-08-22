@@ -13,6 +13,7 @@ type typefam = TypeFam of (id * kind * fixity * assoc * int * (obj ref) list ref
      in file) *)
 and obj = Object of (id * typ * fixity * assoc * int * pos)
 
+and query = Query of (id * typ list) * id * typ
 
 and fixity =
     Infix
@@ -43,6 +44,7 @@ and term =
 and id =
   | Const of (string * pos)
   | Var of (string * pos)
+  | LogicVar of (string * pos)
 
 val string_of_typefam : typefam -> string
 val string_of_obj : obj -> string
@@ -50,6 +52,7 @@ val string_of_kind : kind -> string
 val string_of_typ : typ -> string
 val string_of_term : term -> string
 val string_of_id : id -> string
+val string_of_query : query -> string
 
 val get_typefam_pos : typefam -> pos
 val get_obj_pos : obj -> pos

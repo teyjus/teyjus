@@ -3,7 +3,22 @@
 module type Translator =
 sig
   val translate : Lfsig.signature -> Absyn.amodule
+
+  val translate_query : Lfabsyn.query -> Metadata.metadata -> (Absyn.aterm * Types.typemolecule * Absyn.atypesymbol list * Absyn.atype list)
 end
+
+let currentTranslation = ref "naive"
+let set_translation s =
+  match s with
+      "naive" 
+    | "optimized" ->
+        currentTranslation = ref s; true
+    | _ -> Errormsg.warning Errormsg.none ("Invalid translation: " ^ s);
+           false
+let get_translation () =
+  match (!currentTranslation) with
+      "naive" -> NaiveTranslation
+    | "optimized" -> OptimizedTranslation
 
 (* Generate unique names for variables generated during 
    translation. *)
@@ -82,16 +97,22 @@ let rec encode_term constants metadata t =
 				Errormsg.none)
       | Lfabsyn.IdTerm(id,_) ->
 	  let s = Metadata.getLP metadata (Symb.symbol (Lfabsyn.string_of_id id)) in
-	  let c = Table.find s constants in
-	  match c with
-              Some(const) ->
+          match id with
+              Lfabsyn.Const(_,_) ->
+                let c = Option.get (Table.find s constants) in
                 Absyn.ConstantTerm(const, [], Errormsg.none)
-	    | None ->
-                Absyn.BoundVarTerm(Absyn.NamedBoundVar(Absyn.BoundVar(Symbol.symbol (Symb.name s),
-								      ref None,
-								      ref false,
-								      ref None)),
-				   Errormsg.none)
+            | Lfabsyn.Var(_,_) ->
+                Absyn.makeBoundVarTerm (Absyn.BoundVar(Symbol.symbol (Symb.name s),
+                                                       ref None,
+                                                       ref false,
+                                                       ref None))
+                                       Errormsg.none
+            | Lfabsyn.LogicVar(_,_) ->
+                Absyn.makeFreeVarTerm (Absyn.ImplicitVar(Symbol.symbol (Symb.name s),
+                                                         ref None,
+                                                         ref false,
+                                                         ref None))
+                                      Errormsg.none
 
 (** Encode an LF kind as a clause.
       @returns a function that when applied to the encoding of an LF 
@@ -320,7 +341,20 @@ let process strictness metadata constants clauses types =
   in
   Table.fold perType types []
     
-		   
+(* Generates a term from a clause. 
+   Used for translating queries. *)
+let term_of_clause clause =
+  match clause with
+      Absyn.Fact(p, tms, _, ntms, _, _,_,_,_,_) ->
+        Absyn.ApplicationTerm(Absyn.FirstOrderApplication(Absyn.ConstantTerm(p,[],Errormsg.none),tms,0), Errormsg.none)
+    | Absyn.Rule(p, tms, _, ntms, _, _,_,_,_,g,_,_,_,_) ->	   
+        Errormsg.error (Absyn.getConstantPos p) 
+                       ("Invalid translated clause: " ^ 
+                          (Absyn.string_of_constant) ^ 
+                          (List.fold_left (fun s t -> s ^ " " ^ (string_of_term t)) " " tms) ^
+                          "\nImplication not allowed in terms.");
+        Absyn.ErrorTerm
+
 module NaiveTranslation : Translator =
 struct
   let translate (Lfsig.Signature(name,types)) =
@@ -330,6 +364,27 @@ struct
     let clauses = Absyn.ClauseBlocks(process false metadata constants types) in
     Absyn.Module("top", [], ref constants, ref kinds, Table.empty,
 	         [], [], [], [], [], ref [], [], ref [], ref clauses)
+
+  let translate_query (Lfabsyn.Query(vars, pt, ty)) metadata =
+    let constTab = Absyn.getModuleConstantTable (Absyn.getCurrentModule ()) in
+    let enc_type = encode_type false constTab  metadata in
+    let make_var (Lfabsyn.Var(n,_), t) =
+      (Absyn.FreeVarTerm(Absyn.NamedFreeVar(Absyn.ImplicitVar(Symbol.symbol n, ref None, ref false, ref Some(flatten_type ty))), 
+                         Errormsg.none),
+       enc_type ty)
+    in
+    let lp_vars = List.map make_var vars in
+    let add_term tm (vartm, encty) =
+      Absyn.ApplicationTerm(
+        Absyn.FirstOrderApplication(
+          Option.get (Table.find (Symbol.symbol ",") constTab), 
+          [tm, term_of_clause (encty vartm)], 
+          0), 
+        Errormsg.none)
+    let (pfvar, c) = make_var (pt, ty) in
+    let qterm = List.fold_left add_term (term_of_clause (c pfvar)) lp_vars in
+    let tymol = Types.Molecule(o, []) in
+    (qterm, tymol, [], [])
 end
 
 module OptimizedTranslation : Translator =
@@ -358,4 +413,26 @@ struct
 	           [], [], [], [], [], ref [], [], ref [], clauses) in
     run_optimizations mod
     
+
+  let translate_query (Lfabsyn.Query(vars, pt, ty)) metadata =
+    let constTab = Absyn.getModuleConstantTable (Absyn.getCurrentModule ()) in
+    let enc_type = encode_type true constTab  metadata in
+    let vars' = List.filter (fun (id,typ) -> not (Strictness.appears_strict id ty)) vars in
+    let make_var (Lfabsyn.Var(n,_), t) =
+      (Absyn.FreeVarTerm(Absyn.NamedFreeVar(Absyn.ImplicitVar(Symbol.symbol n, ref None, ref false, ref Some(flatten_type ty))), 
+                         Errormsg.none),
+       enc_type ty)
+    in
+    let lp_vars = List.map make_var vars' in
+    let add_term tm (vartm, encty) =
+      Absyn.ApplicationTerm(
+        Absyn.FirstOrderApplication(
+          Option.get (Table.find (Symbol.symbol ",") constTab), 
+          [tm, term_of_clause (encty vartm)], 
+          0), 
+        Errormsg.none)
+    let (pfvar, c) = make_var (pt, ty) in
+    let qterm = List.fold_left add_term (term_of_clause (c pfvar)) lp_vars in
+    let tymol = Types.Molecule(o, []) in
+    (qterm, tymol, [], [])
 end

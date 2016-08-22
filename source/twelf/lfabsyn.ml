@@ -6,6 +6,8 @@ type typefam = TypeFam of (id * kind * fixity * assoc * int * (obj ref) list ref
 
 and obj = Object of (id * typ * fixity * assoc * int * pos)
 
+and query = Query of (id * typ list) * id * typ
+
 and fixity =
     Infix
   | Prefix
@@ -35,7 +37,7 @@ and term =
 and id =
   | Const of (string * pos)
   | Var of (string * pos)
-
+  | LogicVar of (string * pos)
 
 
 let rec string_of_typefam (TypeFam(id,k,_,_,_,_,_)) =
@@ -80,7 +82,11 @@ and string_of_term tm =
 and string_of_id id =
   match id with
       Const(n,_)
-    | Var(n,_) -> n
+    | Var(n,_) 
+    | LogicVar(n,_) -> n
+
+let string_of_query (Query(_,id,ty)) =
+  (string_of_id id) ^ " : " ^ (string_of_typ ty)
 
 let get_typefam_pos (TypeFam(_,_,_,_,_,_,p)) = p
 let get_obj_pos (Object(_,_,_,_,_,p)) = p
@@ -104,6 +110,7 @@ let get_id_pos id =
   match id with
       Const(_,p) -> p
     | Var(_,p) -> p
+    | LogicVar(_,p) -> p
 
 let get_typefam_name (TypeFam(name,_,_,_,_,_,_)) = string_of_id name
 let get_obj_name (Object(name,_,_,_,_,_)) = string_of_id name
