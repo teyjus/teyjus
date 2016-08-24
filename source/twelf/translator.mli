@@ -4,9 +4,14 @@
 module type Translator =
 sig
   (** Translate the given LF signature into an LP signature. *)
-  val translate : Lfsig.signature -> Absyn.amodule
+  val translate : Lfsig.signature -> 
+                    (Metadata.metadata * 
+                      Absyn.akind Table.SymbolTable.t * 
+                      Absyn.aconstant Table.SymbolTable.t * 
+                      Absyn.aterm list)
 
-  val translate_query : Lfabsyn.query -> Metadata.metadata -> (Absyn.aterm * Types.typemolecule * Absyn.atypesymbol list * Absyn.atype list)
+  val translate_query : Lfabsyn.query -> Metadata.metadata -> 
+                          Absyn.aconstant Table.SymbolTable.t -> Absyn.aterm
 end
 
 val get_translation : unit -> Translator
