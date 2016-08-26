@@ -474,7 +474,7 @@ struct
     let clauses = process false metadata constants types in
     (metadata, kinds, constants, clauses)
 
-  let translate_query (Lfabsyn.Query(vars, pt, ty)) metadata constTab =
+  let translate_query (Lfabsyn.Query(vars, pt, ty)) metadata kindTab constTab =
     let enc_type = encode_type_positive false metadata constTab in
     let make_var (Lfabsyn.Var(n,_), t) =
       (Absyn.FreeVarTerm(Absyn.NamedFreeVar(Absyn.ImplicitVar(Symbol.symbol n, ref None, ref false, ref Some(flatten_type ty))), 
@@ -491,8 +491,7 @@ struct
         Errormsg.none)
     let (pfvar, c) = make_var (pt, ty) in
     let qterm = List.fold_left add_term (c pfvar) lp_vars in
-    let tymol = Types.Molecule(Pervasive.kbool, []) in
-    (qterm, tymol, [], [])
+    (qterm, List.map (fun (x,y) -> Absyn.getTermFreeVariableTypeSymbol x) lp_vars)
 end
 
 module OptimizedTranslation : Translator =
@@ -510,6 +509,19 @@ struct
         else specialized
     in
     swapped
+
+  let optimize tm =
+    let specialized =
+      if (Optimization.Specialize.get ())
+        then Optimization.Specialize.optimize tm
+        else tm
+    in
+    let swapped =
+      if (Optimization.Swap.get ())
+        then Optimization.Swap.optimize specialized
+        else specialized
+    in
+    swapped
       
   let translate (Lfsig.Signature(name, types)) =
     let metadata = initialize_metadata types in
@@ -520,7 +532,7 @@ struct
     run_optimizations mod
     
 
-  let translate_query (Lfabsyn.Query(vars, pt, ty)) metadata constTab =
+  let translate_query (Lfabsyn.Query(vars, pt, ty)) metadata kindTab constTab =
     let enc_type = encode_type_positive true metadata constTab in
     let make_var (Lfabsyn.Var(n,_), t) =
       (Absyn.FreeVarTerm(Absyn.NamedFreeVar(Absyn.ImplicitVar(Symbol.symbol n, ref None, ref false, ref Some(flatten_type ty))), 
@@ -537,5 +549,5 @@ struct
         Errormsg.none)
     let (pfvar, c) = make_var (pt, ty) in
     let qterm = List.fold_left add_term (c pfvar) lp_vars in
-    optimize qterm
+    (optimize qterm, List.map (fun (x,y) -> Absyn.getTermFreeVariableTypeSymbol x) lp_vars) 
 end

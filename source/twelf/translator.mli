@@ -10,8 +10,9 @@ sig
                       Absyn.aconstant Table.SymbolTable.t * 
                       Absyn.aterm list)
 
-  val translate_query : Lfabsyn.query -> Metadata.metadata -> 
-                          Absyn.aconstant Table.SymbolTable.t -> Absyn.aterm
+  val translate_query : Lfabsyn.query -> Metadata.metadata ->
+                          Absyn.akind Table.SymbolTable.t ->  
+                          Absyn.aconstant Table.SymbolTable.t -> (Absyn.aterm, Absyn.atypesymbol list)
 end
 
 val get_translation : unit -> Translator
