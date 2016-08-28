@@ -4,7 +4,17 @@ module type Optimization =
 sig
   val get : unit -> bool
   val set : bool -> unit
-  val run_optimization : Absyn.amodule -> Absyn.amodule
+  val run_optimization : (Metadata.metadata * 
+                            Absyn.akind Table.SymbolTable.t * 
+                            Absyn.aconstant Table.SymbolTable.t * 
+                            Absyn.aterm list) -> 
+                                                 (Metadata.metadata * 
+                                                    Absyn.akind Table.SymbolTable.t * 
+                                                    Absyn.aconstant Table.SymbolTable.t * 
+                                                    Absyn.aterm list)
+
+  val optimize : Absyn.aterm -> Absyn.aterm
+
 end
 
 module Specialize : Optimization =
@@ -15,106 +25,96 @@ struct
 
   let set v = run := v
  
-  let run_optimization (Lpsig.Signature(name, kinds, types)) = 
+
+
+  let rec optimize tm =
+    (** NOTE: This optimization assumes that the translation and
+              any other optimizations ensure that all predicates appear
+              as first order applications and are supplied with all
+              of their term arguments. *)
+    match tm with
+        Absyn.AbstractionTerm(abstm, p) ->
+          let abstm' =
+            (match abstm with
+                 Absyn.NestedAbstraction(ty,tm) ->
+                   Absyn.NestedAbstraction(ty,optimize tm)
+               | Absyn.UNestedAbstraction(tys,i,tm) ->
+                   Absyn.UNestedAbstraction(tys,i,optimize tm))
+          in Absyn.AbstractionTerm(abstm', p)
+      | Absyn.ApplicationTerm(Absyn.FirstOrderApplication(Absyn.ConstantTerm(c,_,_),[lfterm;lftype],_),_) 
+          when Absyn.getConstantName c = "hastype" ->
+          (match lftype with
+               Absyn.ApplicationTerm(Absyn.FirstOrderApplication(targetty, tyargs,i),p) ->
+                 Absyn.ApplicationTerm(Absyn.FirstOrderApplication(targetty, (lfterm :: tyargs), i + 1),p)
+             | Absyn.ConstantTerm(_,_,p) ->
+                 Absyn.ApplicationTerm(Absyn.FirstOrderApplication(lftype, [lfterm], 1),p))
+      | Absyn.ApplicationTerm(apptm,p) ->
+          let apptm' =
+            (match apptm with
+                 Absyn.FirstOrderApplication(head,tms,i) ->
+                   Absyn.FirstOrderApplication(optimize head, List.map optimize tms, i)
+               | Absyn.CurriedApplication(t1,t2) -> 
+                   Absyn.CurriedApplication(optimize t1, optimize t2))
+          in Absyn.ApplicationTerm(apptm',p)
+      | _ -> tm
+
+  let run_optimization (metadata, kinds, constants, terms) = 
     (* for each constant that is an lf-type, modify the type.
        ( A -> lftype  ===> lf-obj -> A -> o )
        then go through each clause with 'hastype', modify it, and 
        move it to the correct predicate *)
-
-    (* Modify the types *)
-    let alterTypes symb (Lpabsyn.TypeDec(id,ty,clauses)) typedecls =
-      let rec is_type ty =
-        match ty with
-            Lpabsyn.ImpType(t1,t2) -> is_type t2
-          | Lpabsyn.ConstType(Lpabsyn.Const("lf_type"), []) -> true
-          | _ -> false
-      in
-      if (is_type ty)
-        then
-          let rec change ty =
+    match (Table.find (Symbol.symbol "lf_type") kinds), (Table.find (Symbol.symbol "lf_object") kinds) with
+        (Some(lftype), Some(lfobj)) ->
+          let rec isLFtype ty =
             match ty with
-                Lpabsyn.ImpType(t1, t2) -> Lpabsyn.ImpType(t1, change t2)
-              | Lpabsyn.ConstType(Lpabsyn.Const("lf_type"), []) -> 
-                  Lpabsyn.ConstType(Lpabsyn.Const("o"), [])
-              | _ -> 
-                  (Errormsg.error Errormsg.none
-                                  ("This should not have happened. The type " ^
-                                     (Lpabsyn.print_type ty) ^
-                                     "should have target type lf_type");
-                    ty)
+                Absyn.ArrowType(t1,t2) -> isLFtype t2
+              | Absyn.ApplicationType(lftype, _) -> true
+              | _ -> false
           in
-          let newty = Lpabsyn.ImpType(Lpabsyn.ConstType(Lpabsyn.Const("lf_obj"),[]),(change ty)) in
-          Symboltable.insert (Symboltable.remove typedecls symb) 
-                             symb
-                             (Lpabsyn.TypeDec(id,newty,clauses))
-        else typedecls
-    in
-    (* modify the clauses *)
-    let perClause typedecls ((Lpabsyn.Clause(head, goals)) as c) =
-      let targettype = 
-        match head with
-            Lpabsyn.Head(Lpabsyn.Const("hastype"), [_;Lpabsyn.IdTerm(Lpabsyn.Const(name))])
-          | Lpabsyn.Head(Lpabsyn.Const("hastype"), [_;Lpabsyn.AppTerm(Lpabsyn.Const(name),_)]) ->
-              name
-          | _ -> 
-              (Errormsg.error Errormsg.none
-                              ("Found non-hastype clause: " ^ (Lpabsyn.print_clause c));
-              "hastype")
-      in
-      let rec walk_clause (Lpabsyn.Clause(head, goals)) =
-        let head' = walk_head head in
-        let goals' = List.map walk_goal goals in
-        Lpabsyn.Clause(head', goals')
-      and walk_head head =
-        match head with
-            Lpabsyn.Head(Lpabsyn.Const("hastype"), [trm; Lpabsyn.AppTerm(tpconst, args)]) ->
-              Lpabsyn.Head(tpconst, (trm :: args))
-          | Lpabsyn.Head(Lpabsyn.Const("hastype"), [trm; Lpabsyn.IdTerm(tpconst)]) ->
-              Lpabsyn.Head(tpconst, [trm])
-          | _ -> head
-      and walk_goal goal =
-        match goal with
-            Lpabsyn.Atom(tm) -> Lpabsyn.Atom(walk_term tm)
-          | Lpabsyn.ImpGoal(c,g) ->
-              Lpabsyn.ImpGoal(walk_clause c, walk_goal g)
-          | Lpabsyn.Conjunction(g1,g2) -> 
-              Lpabsyn.Conjunction(walk_goal g1, walk_goal g2)
-          | Lpabsyn.Disjunction(g1,g2) ->
-              Lpabsyn.Disjunction(walk_goal g1, walk_goal g2)
-          | Lpabsyn.Universal(id,ty,body) ->
-              Lpabsyn.Universal(id,ty, walk_goal body)
-          | Lpabsyn.Existential(id,ty,body) ->
-              Lpabsyn.Existential(id,ty, walk_goal body)
-      and walk_term tm =
-        match tm with
-            Lpabsyn.AppTerm(Lpabsyn.Const("hastype"),[trm; Lpabsyn.AppTerm(tpconst, args)]) ->
-              Lpabsyn.AppTerm(tpconst, (trm :: args))
-          | _ -> tm
-      in
-      let newclause = walk_clause c in
-      match (Symboltable.lookup typedecls (Symb.symbol targettype)) with
-          Some(Lpabsyn.TypeDec(_,_,clauses)) -> clauses := List.append (!clauses) [ref newclause]
-        | None -> ()
-    in
-    (* Alter the type of each constant corresponding to an LF type so
-       that it is a predicate. *) 
-    let typedecls' = Symboltable.fold types alterTypes types in
-    (* For each clause we must modify to use the specialized predicate 
-       based on the LF type. *)
-    let _ = 
-      List.iter (fun c -> perClause typedecls' !c) 
-                (match (Symboltable.lookup typedecls' (Symb.symbol "hastype")) with
-                     None -> 
-                       ((Errormsg.error Errormsg.none 
-                                        "predicate 'hastype' was not found in symboltable.");
-                        [])
-                  | Some(Lpabsyn.TypeDec(_,_,clauses)) ->
-                      !clauses)
-     in
-     let typedecls'' = Symboltable.remove typedecls' (Symb.symbol "hastype") in
-     Lpsig.Signature(name,kinds,typedecls'')
-end
+          let changeType symb (Absyn.Constant(s,x1,x2,x3,x4,x5,x6,x7,x8,skel,x9,x10,x11,x12,x13,x14,x15)) constants =
+            (match !skel with
+                 Some(Absyn.Skeleton(ty,y1,y2)) ->
+                   if (isLFtype ty)
+                   then
+                     let rec alterTarget t =
+                       match t with
+                            Absyn.ArrowType(lastarg,Absyn.ApplicationType(_,_)) ->
+                              Absyn.ArrowType(lastarg,Absyn.ApplicationType(Pervasive.kbool,[]))
+                          | Absyn.ArrowType(t1, t2) -> 
+                              Absyn.ArrowType(t1, alterTarget t2)
+                          | _ ->
+                              Errormsg.error Errormsg.none 
+                                             ("Ill-formed type for LP constant: '" ^ (Symbol.printName s) ^ 
+                                                 " : " ^ (Absyn.string_of_type ty) ^ "'");
+                              Absyn.ErrorType
+                     in
+                     let ty' = Absyn.ArrowType(Absyn.ApplicationType(lfobj,[]), alterTarget ty) in
+                     let constants' = 
+                       Table.add symb 
+                                 (Absyn.Constant(s,x1,x2,x3,x4,x5,x6,x7,x8,ref (Some(Absyn.Skeleton(ty',y1,y2))),
+                                                   x9,x10,x11,x12,x13,x14,x15))
+                                 constants in
+                     constants'
+                   else
+                     constants
+               | None ->
+                   Errormsg.error Errormsg.none ("No type provided for LP constant '" ^ (Symbol.printName s) ^ "'");
+                   constants)
+          in
+          let constants' = Table.fold changeType constants constants in
+          let terms' = List.map optimize terms in
+          (metadata, kinds, constants', terms')
+      | (Some(lftype),None) ->
+          Errormsg.error Errormsg.none "Could not find kind 'lf_object' in kind table.";
+          (metadata, kinds, constants, terms)
+      | (None,Some(lfobj)) ->
+          Errormsg.error Errormsg.none "Could not find kind 'lf_type' in kind table.";
+          (metadata, kinds, constants, terms)
+      | (None,None) ->
+          Errormsg.error Errormsg.none "Could not find kinds 'lf_object' or 'lf_type' in kind table.";
+          (metadata, kinds, constants, terms)
 
+end
 
 module Swap : Optimization =
 struct
@@ -124,126 +124,89 @@ struct
 
   let set v = run := v
 
-  let changeType symb (Absyn.Constant()) constants =
+  let rec predicate ty =
+    match ty with
+        Absyn.ArrowType(t1,t2) -> (predicate t2)
+      | Absyn.ApplicationType(k, []) when k = Pervasive.kbool -> true
+      | _ -> false
 
-  let changeTerm (clauselstref, closed, offset, next) clauselst =
-		       
-  let run_optimization (Absyn.Module(modname,a,b,constants,c,d,e,f,g,h,i,j,k,l,clauseref)) =
+  let swapType symb (Absyn.Constant(s,x1,x2,x3,x4,x5,x6,x7,x8,skel,x9,x10,x11,x12,x13,x14,x15)) constants =
+    match !skel with
+        Some(Absyn.Skeleton(ty,y1,y2)) ->
+          if (predicate ty)
+          then
+            let rec swapType firstarg t =
+              (match t with
+                    Absyn.ArrowType(lastarg, (Absyn.ApplicationType(k,l) as o))
+                      when k = Pervasive.kbool ->
+                      Absyn.ArrowType(lastarg, (Absyn.ArrowType(firstarg, o)))
+                  | Absyn.ArrowType(t1, t2) -> 
+                      Absyn.ArrowType(t1, swapType firstarg t2)
+                  | _ ->
+                      Errormsg.error Errormsg.none 
+                                     ("Ill-formed type for LP constant: '" ^ (Symbol.printName s) ^ 
+                                         " : " ^ (Absyn.string_of_type ty) ^ "'");
+                      Absyn.ErrorType)
+            in
+            let ty' = 
+              (match ty with
+                   Absyn.ApplicationType(k,_) when k = Pervasive.kbool -> ty
+                 | Absyn.ArrowType(firstarg,t2) -> 
+                     swapType firstarg t2 )in
+            let constants' = 
+              Table.add symb  
+                        (Absyn.Constant(s,x1,x2,x3,x4,x5,x6,x7,x8,ref (Some(Absyn.Skeleton(ty',y1,y2))),
+                                          x9,x10,x11,x12,x13,x14,x15))
+                        constants in
+            constants'
+          else
+            constants
+      | None ->
+          Errormsg.error Errormsg.none ("No type provided for LP constant '" ^ (Symbol.printName s) ^ "'");
+          constants
+    
+  let rec optimize tm =
+    match tm with
+        Absyn.AbstractionTerm(abs,p) ->
+          let abs' =
+            (match abs with
+                 Absyn.NestedAbstraction(tysymb,body) ->
+                   Absyn.NestedAbstraction(tysymb, optimize body)
+               | Absyn.UNestedAbstraction(tysymbs,i,body) ->
+                   Absyn.UNestedAbstraction(tysymbs,i, optimize body))
+          in
+          Absyn.AbstractionTerm(abs',p)
+      | Absyn.ApplicationTerm(apptm, p) ->
+        (*** NOTE: at this point we depend on the translation (and any other optimizations) 
+                   to maintain that first order applications are always used for predicates
+                   and that they always appear with a full list of arguments. *)
+          let apptm' =
+            (match apptm with
+                 Absyn.FirstOrderApplication(Absyn.ConstantTerm(c,_,_)as head,tms,i) ->
+                   let tms' = 
+                     List.map optimize
+                              (if (predicate (Absyn.getSkeletonType (Absyn.getConstantSkeletonValue c))) 
+                               then
+                                 List.append (List.tl tms) [List.hd tms]
+                               else
+                                 tms) 
+                   in
+                   Absyn.FirstOrderApplication(head,tms',i)
+               | Absyn.FirstOrderApplication(head, tms, i) ->
+                   Absyn.FirstOrderApplication(optimize head, List.map optimize tms, i)
+               | Absyn.CurriedApplication(t1,t2) -> 
+                   Absyn.CurriedApplication(optimize t1, optimize t2)) 
+          in
+          Absyn.ApplicationTerm(apptm',p)
+      | _ -> tm
+
+  let run_optimization (metadata, kinds, constants, terms) =
     (* for each predicate in the constant table alter its type
        so that the first argument becomes the final argument. *)
     (* then look for any uses of the predicate and move first 
        argument to last position. *)
-    let constants' = Table.fold changeType (!constants) (!constants) in
-    let Absyn.ClauseBlocks(clauses) = !clauseref in
-    let clauses' = List.fold_left changeTerm clauses [] in
-    Absyn.Module(modname,a,b,constants',c,d,e,f,g,h,i,j,k,l,ref Absyn.ClauseBlocks(clauses')),
+    
+    let constants' = Table.fold swapType constants constants in
+    let terms' = List.map optimize terms in
+    (metadata, kinds, constants', terms')
 end
-
-(**
-module Swap : Optimization =
-struct
-  let run = ref false
-
-  let get () = !run
-
-  let set v = run := v
-
-  let run_optimization (Lpsig.Signature(name, kinds, types)) =
-    (* for each entry in the type table (that is a predicate) 
-       move the first argument to the last. Then for any use
-       of the predicate move the first argument to the last. *)
-    let preds = ref [] in
-    let rec predicate ty =
-      match ty with
-          Lpabsyn.ImpType(t1,t2) -> predicate t2
-        | Lpabsyn.ConstType(Lpabsyn.Const("o"), []) -> true
-        | _ -> false
-    in
-    (* modify the types *)
-    let alterTypes symb (Lpabsyn.TypeDec(id, ty, clauses)) typedecls =
-      if (predicate ty)
-        then
-          match ty with
-              Lpabsyn.ConstType(Lpabsyn.Const("o"), []) -> typedecls
-            | Lpabsyn.ImpType(_, Lpabsyn.ConstType(Lpabsyn.Const("o"), [])) -> typedecls
-            | Lpabsyn.ImpType(firstarg, (Lpabsyn.ImpType(nextarg, rest) as body)) ->
-                let rec move firstarg t =
-                  match t with
-                      Lpabsyn.ImpType(finalarg, Lpabsyn.ConstType(Lpabsyn.Const("o"), [])) ->
-                        Lpabsyn.ImpType(finalarg, 
-                                        Lpabsyn.ImpType(firstarg, 
-                                                        Lpabsyn.ConstType(Lpabsyn.Const("o"), [])))
-                    | Lpabsyn.ImpType(l, r) ->
-                        Lpabsyn.ImpType(l, move firstarg r)
-                    | _ -> (Errormsg.error Errormsg.none
-                                  ("This shouldn't happen. Already checked if " ^ 
-                                   (Lpabsyn.print_type ty) ^ 
-                                   " was a prediate type but it does not have the correct form.");
-                           t)
-                in 
-                let _ = preds := (id :: (!preds)) in
-                Symboltable.insert (Symboltable.remove types symb)
-                                     symb 
-                                     (Lpabsyn.TypeDec(id, (move firstarg body), clauses))
-                                   
-            | _ -> (Errormsg.error Errormsg.none
-                                   ("This shouldn't happen. Already checked if " ^ 
-                                    (Lpabsyn.print_type ty) ^ 
-                                    " was a prediate type but it does not have the correct form.");
-                   typedecls)
-        else types
-    in
-    (* modify the terms *)
-    let alterTerms symb (Lpabsyn.TypeDec(id, ty, clauses)) =
-      let rec walk_term tm =
-        match tm with
-            Lpabsyn.AppTerm(id, tms) ->
-              let tms' = List.map walk_term tms in 
-              if (List.mem id !preds)
-                then
-                  Lpabsyn.AppTerm(id, List.append (List.tl tms') [List.hd tms'])
-                else
-                  Lpabsyn.AppTerm(id, tms')
-          | Lpabsyn.AbsTerm(id, ty, tm) ->
-              Lpabsyn.AbsTerm(id, ty, walk_term tm)
-          | Lpabsyn.IdTerm(id) -> tm
-      and walk_type ty =
-        match ty with
-            Lpabsyn.ImpType(t1,t2) -> 
-              Lpabsyn.ImpType(walk_type t1, walk_type t2)
-          | Lpabsyn.ConstType(id,tms) ->
-              Lpabsyn.ConstType(id, List.map walk_term tms)
-          | Lpabsyn.VarType(_) -> ty
-      in
-      let rec walk_clause (Lpabsyn.Clause(Lpabsyn.Head(id, tms), goals)) =
-        let tms' = List.map walk_term tms in
-        let head' = if (List.mem id !preds)
-                     then Lpabsyn.Head(id, List.append (List.tl tms') [List.hd tms'])
-                     else Lpabsyn.Head(id, tms') in
-        let goals' = List.map walk_goal goals in
-        Lpabsyn.Clause(head', goals')
-      and walk_goal g =
-        match g with
-            Lpabsyn.Atom(tm) -> Lpabsyn.Atom(walk_term tm)
-          | Lpabsyn.ImpGoal(c, g) -> 
-              Lpabsyn.ImpGoal(walk_clause c, walk_goal g)
-          | Lpabsyn.Conjunction(g1,g2) -> 
-              Lpabsyn.Conjunction(walk_goal g1, walk_goal g2)
-          | Lpabsyn.Disjunction(g1,g2) -> 
-              Lpabsyn.Disjunction(walk_goal g1, walk_goal g2)
-          | Lpabsyn.Universal(id, ty, g) -> 
-              Lpabsyn.Universal(id, walk_type ty, walk_goal g)
-          | Lpabsyn.Existential(id, ty, g) -> 
-              Lpabsyn.Existential(id, walk_type ty, walk_goal g)
-      
-      in
-      clauses := List.map (fun c -> ref (walk_clause !c)) !clauses
-    in
-    (* First we change the type of each predicate. *)
-    let alteredtypes = Symboltable.fold types alterTypes types in
-    (* Next we walk through to swap the location of terms which are
-      arguments to the modified predicates. *)
-    let _ = Symboltable.iter alteredtypes alterTerms in
-    Lpsig.Signature(name, kinds, alteredtypes)
-end
-*)

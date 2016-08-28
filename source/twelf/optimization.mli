@@ -11,7 +11,17 @@ sig
   val set : bool -> unit
 
   (** Run the optimization over the given LP signature. *)
-  val run_optimization : Absyn.amodule -> Absyn.amodule
+  val run_optimization : (Metadata.metadata * 
+                            Absyn.akind Table.SymbolTable.t * 
+                            Absyn.aconstant Table.SymbolTable.t * 
+                            Absyn.aterm list) -> 
+                                                 (Metadata.metadata * 
+                                                    Absyn.akind Table.SymbolTable.t * 
+                                                    Absyn.aconstant Table.SymbolTable.t * 
+                                                    Absyn.aterm list)
+
+  (** Run the optimization on the given query. *)
+  val optimize : Absyn.aterm -> Absyn.aterm
 end
 
 (** Use specialized predicates for each LF type. Removes the hastype 
