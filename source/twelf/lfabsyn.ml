@@ -6,7 +6,7 @@ type typefam = TypeFam of (id * kind * fixity * assoc * int * (obj ref) list ref
 
 and obj = Object of (id * typ * fixity * assoc * int * pos)
 
-and query = Query of (id * typ list) * id * typ
+and query = Query of (id * typ) list * id * typ
 
 and fixity =
     Infix

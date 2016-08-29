@@ -7,9 +7,9 @@ let path  = ref "./"
 let load_module name =
   Front.systemInit  !heapSize ;
   Module.setPath    !path;
-  Module.moduleLoad !name;
+  Module.moduleLoad name;
   Front.simulatorInit () ;
-  Module.moduleInstall !name ;
+  Module.moduleInstall name ;
   Module.initModuleContext () ;
   Module.getCurrentModule ()
 
@@ -22,10 +22,10 @@ let load_metadata name =
     try
       while true do
         let line = input_line in_chann in
-        let [fst; snd] = Str.split (regexp " ") line in
+        let [fst; snd] = Str.split (Str.regexp " ") line in
         metadata := Metadata.set_mapping (!metadata) (Symb.symbol fst) (Symbol.symbol snd)
       done
-    with End_of_file -> close_in in_cann
+    with End_of_file -> close_in in_chann
   in !metadata
 
 let load name =

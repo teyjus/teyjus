@@ -1,6 +1,5 @@
 (** Descibes the abstract syntax representation for LF. *)
 
-{!Errormsg.pos}
 type pos = Errormsg.pos
 
 (** A type-level declaration. 
@@ -13,7 +12,7 @@ type typefam = TypeFam of (id * kind * fixity * assoc * int * (obj ref) list ref
      in file) *)
 and obj = Object of (id * typ * fixity * assoc * int * pos)
 
-and query = Query of (id * typ list) * id * typ
+and query = Query of (id * typ) list * id * typ
 
 and fixity =
     Infix

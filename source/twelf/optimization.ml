@@ -27,7 +27,7 @@ struct
  
 
 
-  let optimize tm =
+  let rec optimize tm =
     (** NOTE: This optimization assumes that the translation and
               any other optimizations ensure that all predicates appear
               as first order applications and are supplied with all
@@ -56,23 +56,23 @@ struct
                | Absyn.CurriedApplication(t1,t2) -> 
                    Absyn.CurriedApplication(optimize t1, optimize t2))
           in Absyn.ApplicationTerm(apptm',p)
-      | _ => tm
+      | _ -> tm
 
   let run_optimization (metadata, kinds, constants, terms) = 
     (* for each constant that is an lf-type, modify the type.
        ( A -> lftype  ===> lf-obj -> A -> o )
        then go through each clause with 'hastype', modify it, and 
        move it to the correct predicate *)
-    match (Table.find (Symbol.symbol "lf_type" kinds), Table.find (Symbol.symbol "lf_object" kinds)) with
+    match ((Table.find (Symbol.symbol "lf_type") kinds), (Table.find (Symbol.symbol "lf_object") kinds)) with
         (Some(lftype), Some(lfobj)) ->
-          let isLFtype ty =
+          let rec isLFtype ty =
             match ty with
                 Absyn.ArrowType(t1,t2) -> isLFtype t2
               | Absyn.ApplicationType(lftype, _) -> true
               | _ -> false
           in
-          let changeType symb Absyn.Constant(s,x1,x2,x3,x4,x5,x6,x7,x8,skel,x9,x10,x11,x12,x13,x14,x15) constants =
-            (match skel with
+          let changeType symb (Absyn.Constant(s,x1,x2,x3,x4,x5,x6,x7,x8,skel,x9,x10,x11,x12,x13,x14,x15)) constants =
+            (match !skel with
                  Some(Absyn.Skeleton(ty,y1,y2)) ->
                    if (isLFtype ty)
                    then
@@ -85,13 +85,13 @@ struct
                           | _ ->
                               Errormsg.error Errormsg.none 
                                              ("Ill-formed type for LP constant: '" ^ (Symbol.printName s) ^ 
-                                                 " : " ^ (string_of_type ty) ^ "'");
+                                                 " : " ^ (Absyn.string_of_type ty) ^ "'");
                               Absyn.ErrorType
                      in
                      let ty' = Absyn.ArrowType(Absyn.ApplicationType(lfobj,[]), alterTarget ty) in
                      let constants' = 
                        Table.add symb 
-                                 Absyn.Constant(s,x1,x2,x3,x4,x5,x6,x7,x8,ref Some(Absyn.Skeleton(ty',y1,y2)),x9,x10,x11,x12,x13,x14,x15) 
+                                 (Absyn.Constant(s,x1,x2,x3,x4,x5,x6,x7,x8,ref (Some(Absyn.Skeleton(ty',y1,y2))),x9,x10,x11,x12,x13,x14,x15)) 
                                  constants in
                      constants'
                    else
@@ -126,34 +126,37 @@ struct
   let rec predicate ty =
     match ty with
         Absyn.ArrowType(t1,t2) -> predicate t2
-      | Absyn.ApplicationType(Pervasive.kbool, _) -> true
+      | Absyn.ApplicationType(k, _) 
+          when k = Pervasive.kbool -> true
       | _ -> false
 
-  let swapType symb Absyn.Constant(s,x1,x2,x3,x4,x5,x6,x7,x8,skel,x9,x10,x11,x12,x13,x14,x15) constants =
-    match skel with
+  let swapType symb (Absyn.Constant(s,x1,x2,x3,x4,x5,x6,x7,x8,skel,x9,x10,x11,x12,x13,x14,x15)) constants =
+    match !skel with
         Some(Absyn.Skeleton(ty,y1,y2)) ->
           if (predicate ty)
           then
             let rec swapType firstarg t =
               match t with
-                   Absyn.ArrowType(lastarg,Absyn.ApplicationType(Pervasive.kbool,l) as o) ->
+                   Absyn.ArrowType(lastarg,(Absyn.ApplicationType(k,l) as o))
+                     when k = Pervasive.kbool ->
                      Absyn.ArrowType(lastarg,Absyn.ArrowType(firstarg, o))
                  | Absyn.ArrowType(t1, t2) -> 
                      Absyn.ArrowType(t1, swapType firstarg t2)
                  | _ ->
                      Errormsg.error Errormsg.none 
                                     ("Ill-formed type for LP constant: '" ^ (Symbol.printName s) ^ 
-                                        " : " ^ (string_of_type ty) ^ "'");
+                                        " : " ^ (Absyn.string_of_type ty) ^ "'");
                      Absyn.ErrorType
             in
             let ty' = 
               (match ty with
-                   Absyn.ApplicationType(Pervasive.kbool,_) -> ty
+                   Absyn.ApplicationType(k,_) 
+                     when k = Pervasive.kbool -> ty
                  | Absyn.ArrowType(firstarg,t2) -> 
-                     swapType firstarg t2 in
+                     swapType firstarg t2) in
             let constants' = 
               Table.add symb 
-                        Absyn.Constant(s,x1,x2,x3,x4,x5,x6,x7,x8,ref Some(Absyn.Skeleton(ty',y1,y2)),x9,x10,x11,x12,x13,x14,x15) 
+                        (Absyn.Constant(s,x1,x2,x3,x4,x5,x6,x7,x8,ref (Some(Absyn.Skeleton(ty',y1,y2))),x9,x10,x11,x12,x13,x14,x15)) 
                         constants in
             constants'
           else
@@ -204,6 +207,6 @@ struct
        argument to last position. *)
     
     let constants' = Table.fold swapType constants constants in
-    let terms' = List.map (optimize modified) terms in
+    let terms' = List.map optimize terms in
     (metadata, kinds, constants', terms')
 end
