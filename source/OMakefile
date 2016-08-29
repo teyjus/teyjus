@@ -13,13 +13,12 @@ LOD = $(dir loader)
 LNK = $(dir linker)
 TST = $(dir test)
 INC = $(dir include)
-LF = $(dir twelf)
 
 ############################################################
 # Compile flags
 #
 
-OCAMLINCLUDES += $(CMP) $(DIS) $(SIM) $(LOD) $(LF)
+OCAMLINCLUDES += $(CMP) $(DIS) $(SIM) $(LOD)
 OCAMLFLAGS= -w -A
 CFLAGS += -g
 
@@ -177,18 +176,6 @@ LNK_C[] =
 INC_C[] =
     $(INC)/obstack
 
-LF_ML[] =
-    $(LF)/symb
-    $(LF)/symboltable
-    $(LF)/lfabsyn
-    $(LF)/lfsig
-    $(LF)/metadata
-    $(LF)/strictness
-    $(LF)/optimization
-    $(LF)/translator
-    $(LF)/query
-    $(LF)/loader
-
 DIS_MAIN = $(FNT)/disassemblerfront
 CMP_MAIN = $(FNT)/compilerfront
 SIM_MAIN = $(FNT)/simulatorfront
@@ -196,7 +183,6 @@ LNK_MAIN = $(FNT)/linkerfront
 DEP_MAIN = $(FNT)/dependfront
 PAR_MAIN = $(FNT)/parsefront
 
-LF_MAIN = $(LF)/twelffront
 
 ############################################################
 # Platform specific changes
@@ -305,13 +291,6 @@ if $(not $(file-exists prebuilt))
     OCAML_CLIBS += liblink
     OCamlProgram(tjlink, $(LNK_MAIN) $(FNT_ML))
 
-  section
-    StaticCLibrary(libtwelf, \
-      $(SIM_C) $(SYS_C) $(TBL_C) $(FNT_C) $(LOD_C) $(LNK_C) $(INC_C))
-    OCAML_CLIBS += libtwelf
-    OCamlProgram(tjtwelf, \
-      $(LF_MAIN) $(LOD_ML) $(CMP_ML) $(FNT_ML) $(FNT_ML_TO_C) $(LF_ML))
-
 TJCC = $(CWD)/tjcc$(EXE)
 TJSIM = $(CWD)/tjsim$(EXE)
 TJDIS = $(CWD)/tjdis$(EXE)
@@ -319,10 +298,8 @@ TJLINK = $(CWD)/tjlink$(EXE)
 TJDEPEND = $(CWD)/tjdepend$(EXE)
 TJPARSE = $(CWD)/tjparse$(EXE)
 
-TJTWELF = $(CWD)/tjtwelf$(EXE)
-
 .PHONY: all
-all: $(TJCC) $(TJSIM) $(TJDIS) $(TJLINK) $(TJDEPEND) $(TJPARSE) $(TJTWELF)
+all: $(TJCC) $(TJSIM) $(TJDIS) $(TJLINK) $(TJDEPEND) $(TJPARSE)
 
 ############################################################
 # Testing Targets
