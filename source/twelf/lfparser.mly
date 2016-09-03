@@ -58,11 +58,11 @@ let reset () =
 
 %%
 parseQuery
-  : querybndrs type_item    {let (id,tm) = $2 in Lfabsyn.Query($1,id,tm)}
+  : querybndrs typing    {let (id,tm) = $2 in Lfabsyn.Query($1,id,tm)}
   ;
 
 querybndrs
-  : LABRACK type_item RABRACK querybndrs  {($2 :: $4)}
+  : LABRACK typing RABRACK querybndrs  {($2 :: $4)}
   |                                       {[]}
   ;
 
@@ -72,8 +72,8 @@ parse
   ;
 
 program
-  : declaration_list  {let result = Lfsig.Signature("", !declarations) in (reset (); result)}
-  |                   {(reset (); Lfsig.Signature("", Symboltable.empty)}
+  : declaration_list  {let result = Lfsig.Signature(ref [""], !declarations) in (reset (); result)}
+  |                   {(reset (); Lfsig.Signature(ref [""], Symboltable.empty))}
   ;
 
 declaration_list
@@ -81,9 +81,22 @@ declaration_list
   | declaration declaration_list       {()}
   ;
 
+typing
+  : id_term COLON type_tm    {($1, $3)}
+  ;
+
+kinding
+  : id_term COLON kind_tm    {($1, $3)}
+
+kind_tm
+  : LBRACE VARID COLON type_tm RBRACE kind_tm    {Lfabsyn.PiKind(Lfabsyn.Var($2,getPos 2), $4, $6, getPos 1)}
+  | TYPE                                         {Lfabsyn.Type(getPos 1)}
+  ;
+
 declaration
-  : TYPEC type_item obj_list  {let (id,k) = $2 in 
-                                    addDeclaration id (Lfabsyn.TypeFam(id,k,Lfabsyn.Prefix, Lfabsyn.None, 0, ref $3, get_pos 1))}
+  : TYPEC kinding DOT obj_list  {let (id,k) = $2 in 
+                                    addDeclaration (Lfabsyn.string_of_id id) 
+                                                   (Lfabsyn.TypeFam(id,k,Lfabsyn.Prefix, Lfabsyn.None, 0, ref $4, getPos 1))}
   ;
 
 obj_list
@@ -92,16 +105,7 @@ obj_list
   ;
 
 obj
-  : TERMC id_term COLON type_tm DOT           {Lfabsyn.Object($2,$4,Lfabsyn.Prefix,Lfabsyn.None,0,get_pos 1)}
-  ;
-
-type_item
-  : id_term COLON kind_tm DOT  {(Lfabsyn.IdTerm($1, getPos 1), $3)}
-  ;
-
-kind_tm
-  : LBRACE VARID COLON type_tm RBRACE kind_tm    {Lfabsyn.PiKind(Lfabsyn.Var($2,getPos 2), $4, $6, getPos 1)}
-  | TYPE                                         {Lfabsyn.Type(getPos 1)}
+  : TERMC typing DOT {let (id,t) = $2 in Lfabsyn.Object(id, t, Lfabsyn.Prefix, Lfabsyn.None, 0, getPos 1)}
   ;
 
 application_term
@@ -110,12 +114,12 @@ application_term
   ;
 
 prefix_term
-  : LBRACK id_term COLON type_tm RBRACK term  {Lfabsyn.AbsTerm($2, $4, $6, getPos 1)}
-  | application_term
+  : LBRACK typing RBRACK term                 {let (id,t) = $2 in Lfabsyn.AbsTerm(id,t,$4, getPos 1)}
+  | application_term                          {$1}
   ;
 
 term
-  : prefix_term
+  : prefix_term                        {$1}
   ;
 
 id_term
@@ -144,7 +148,7 @@ arrow_type
   ;
 
 prefix_type
-  : LBRACE id_term COLON type_tm RBRACE prefix_type  {Lfabsyn.PiType($2, $4, $6, getPos 1)}
+  : LBRACE typing RBRACE prefix_type  {let (id,t) = $2 in Lfabsyn.PiType(id, t, $4, getPos 1)}
   | arrow_type                              {$1}
   ;
 
