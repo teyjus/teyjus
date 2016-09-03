@@ -62,8 +62,8 @@ let appears_strict id ty =
   match id with
       Lfabsyn.Const(_,_) ->
         Errormsg.warning Errormsg.none 
-                         ("Checking strictness of a constant " ^ (Lfabsyn.print_id id) ^ 
-                          " in term " ^ (Lfabsyn.print_typ ty)); true
+                         ("Checking strictness of a constant " ^ (Lfabsyn.string_of_id id) ^ 
+                          " in term " ^ (Lfabsyn.string_of_typ ty)); true
     | Lfabsyn.Var(name,_) ->
         appears_strict_ty id ty []
         

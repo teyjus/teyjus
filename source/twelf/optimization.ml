@@ -63,7 +63,7 @@ struct
        ( A -> lftype  ===> lf-obj -> A -> o )
        then go through each clause with 'hastype', modify it, and 
        move it to the correct predicate *)
-    match (Table.find (Symbol.symbol "lf_type") kinds), (Table.find (Symbol.symbol "lf_object") kinds) with
+    match ((Table.find (Symbol.symbol "lf_type") kinds), (Table.find (Symbol.symbol "lf_object") kinds)) with
         (Some(lftype), Some(lfobj)) ->
           let rec isLFtype ty =
             match ty with
@@ -126,8 +126,9 @@ struct
 
   let rec predicate ty =
     match ty with
-        Absyn.ArrowType(t1,t2) -> (predicate t2)
-      | Absyn.ApplicationType(k, []) when k = Pervasive.kbool -> true
+        Absyn.ArrowType(t1,t2) -> predicate t2
+      | Absyn.ApplicationType(k, _) 
+          when k = Pervasive.kbool -> true
       | _ -> false
 
   let swapType symb (Absyn.Constant(s,x1,x2,x3,x4,x5,x6,x7,x8,skel,x9,x10,x11,x12,x13,x14,x15)) constants =

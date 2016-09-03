@@ -7,8 +7,8 @@ type signature = Signature of (string list ref* Lfabsyn.typefam Symboltable.tabl
    the corresponding objects in order *)
 let print_signature (Signature(files, types)) =
   let print_for_type symb (Lfabsyn.TypeFam(_,_,_,_,_,objs,_) as ty) str =
-    (Lfabsyn.print_typefam ty) ^ "\n" ^
-    (List.fold_left (fun str objref -> str ^ (Lfabsyn.print_obj !objref) ^ "\n" ) "" (!objs)) ^ str
+    (Lfabsyn.string_of_typefam ty) ^ "\n" ^
+    (List.fold_left (fun str objref -> str ^ (Lfabsyn.string_of_obj !objref) ^ "\n" ) "" (!objs)) ^ str
   in Symboltable.fold types print_for_type ""
 
 let get_filenames (Signature(files, types)) = (!files)

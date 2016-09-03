@@ -183,6 +183,7 @@ LNK_MAIN = $(FNT)/linkerfront
 DEP_MAIN = $(FNT)/dependfront
 PAR_MAIN = $(FNT)/parsefront
 
+
 ############################################################
 # Platform specific changes
 #
@@ -255,7 +256,7 @@ gen: $(INSTR_ML_FILES) $(PERV_ML_FILES) $(INSTR_C_FILES) $(PERV_C_FILES)
 # Include subdirectories
 #
 
-.SUBDIRS: compiler disassembler front include linker loader simulator system tables
+.SUBDIRS: compiler disassembler front include linker loader simulator system tables twelf
     if $(file-exists OMakefile)
         include OMakefile
 
@@ -289,7 +290,6 @@ if $(not $(file-exists prebuilt))
     StaticCLibrary(liblink, $(SIM_C) $(SYS_C) $(TBL_C) $(LNK_C) $(INC_C))
     OCAML_CLIBS += liblink
     OCamlProgram(tjlink, $(LNK_MAIN) $(FNT_ML))
-
 
 TJCC = $(CWD)/tjcc$(EXE)
 TJSIM = $(CWD)/tjsim$(EXE)

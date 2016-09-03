@@ -12,10 +12,10 @@ sig
 
   val translate_query : Lfabsyn.query -> Metadata.metadata ->
                           Absyn.akind Table.SymbolTable.t ->  
-                          Absyn.aconstant Table.SymbolTable.t -> (Absyn.aterm, Absyn.atypesymbol list)
+                          Absyn.aconstant Table.SymbolTable.t -> (Absyn.aterm * Absyn.atypesymbol list)
 end
 
-val get_translation : unit -> Translator
+val get_translation : unit -> string
 
 val set_translation : string -> bool
 

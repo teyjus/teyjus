@@ -13,3 +13,5 @@ val set_mapping : metadata -> Symb.symbol -> Symbol.symbol -> metadata
 
 (** Construct a string representation of the metadata for printing. *)
 val string_of_metadata : metadata -> string
+
+val empty : metadata
