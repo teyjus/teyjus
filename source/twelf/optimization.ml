@@ -189,7 +189,8 @@ struct
                  Absyn.FirstOrderApplication(Absyn.ConstantTerm(c,_,_)as head,tms,i) ->
                    let tms' = 
                      List.map optimize
-                              (if (predicate (Absyn.getSkeletonType (Absyn.getConstantSkeletonValue c))) 
+                              (if (not (Absyn.isPervasiveConstant c)) && 
+                                  (predicate (Absyn.getSkeletonType (Absyn.getConstantSkeletonValue c))) 
                                then
                                  List.append (List.tl tms) [List.hd tms]
                                else
