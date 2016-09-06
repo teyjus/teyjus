@@ -143,6 +143,9 @@ struct
                       Absyn.ArrowType(lastarg, (Absyn.ArrowType(firstarg, o)))
                   | Absyn.ArrowType(t1, t2) -> 
                       Absyn.ArrowType(t1, swapType firstarg t2)
+                  | Absyn.ApplicationType(k,_)
+                      when k = Pervasive.kbool ->
+                      ty
                   | _ ->
                       Errormsg.error Errormsg.none 
                                      ("Ill-formed type for LP constant: '" ^ (Symbol.printName s) ^ 

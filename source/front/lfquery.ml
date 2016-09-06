@@ -3,7 +3,8 @@ let submit_query query metadata kinds constants =
     match Translator.get_translation () with
         "naive" -> Translator.NaiveTranslation.translate_query query metadata kinds constants
       | "optimized" -> Translator.OptimizedTranslation.translate_query query metadata kinds constants in
-(*  Ccode_stubs.setTypeAndTermLocation (); *)
+  let _ = print_endline (Absyn.string_of_term term) in
+  Ccode_stubs.setTypeAndTermLocation (); 
   Readterm.readTermAndType term (Types.Molecule(Absyn.ApplicationType(Pervasive.kbool,[]),[])) fvars [];
   true
 

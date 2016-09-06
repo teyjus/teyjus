@@ -58,7 +58,7 @@ let reset () =
 
 %%
 parseQuery
-  : querybndrs typing    {let (id,tm) = $2 in Lfabsyn.Query($1,id,tm)}
+  : querybndrs typing END    {let (id,tm) = $2 in Lfabsyn.Query($1,id,tm)}
   ;
 
 querybndrs
@@ -97,6 +97,9 @@ declaration
   : TYPEC kinding DOT obj_list  {let (id,k) = $2 in 
                                     addDeclaration (Lfabsyn.string_of_id id) 
                                                    (Lfabsyn.TypeFam(id,k,Lfabsyn.Prefix, Lfabsyn.None, 0, ref $4, getPos 1))}
+  | TYPEC kinding DOT           {let (id,k) = $2 in 
+                                    addDeclaration (Lfabsyn.string_of_id id) 
+                                                   (Lfabsyn.TypeFam(id,k,Lfabsyn.Prefix, Lfabsyn.None, 0, ref [], getPos 1))}
   ;
 
 obj_list
@@ -108,9 +111,13 @@ obj
   : TERMC typing DOT {let (id,t) = $2 in Lfabsyn.Object(id, t, Lfabsyn.Prefix, Lfabsyn.None, 0, getPos 1)}
   ;
 
+ground_term
+  : id_term                     {Lfabsyn.IdTerm($1, getPos 1)}
+  | LPAREN term RPAREN          {$2}
+
 application_term
   : id_term tm_list             {Lfabsyn.AppTerm($1, $2, getPos 1)}
-  | id_term                     {Lfabsyn.IdTerm($1, getPos 1)}
+  | ground_term                 {$1}              
   ;
 
 prefix_term
@@ -128,23 +135,23 @@ id_term
   ;
 
 tm_list
-  : term tm_list                    {($1 :: $2)}
-  | term                            {[$1]}
+  : ground_term tm_list                    {($1 :: $2)}
+  | ground_term                            {[$1]}
+  ;
+
+ground_type
+  : id_term                     {Lfabsyn.IdType($1, getPos 1)}
+  | LPAREN type_tm RPAREN          {$2}
   ;
 
 application_type
   : id_term tm_list             {Lfabsyn.AppType($1, $2, getPos 1)}
-  | id_term                     {Lfabsyn.IdType($1, getPos 1)}
+  | ground_type                 {$1}
   ;
 
-rarrow_type
-  : rarrow_type REVERSE_ARROW application_type  {Lfabsyn.ImpType($3, $1, getPos 2)}
-  | application_type                            {$1}
-  ;
- 
 arrow_type
-  : rarrow_type ARROW arrow_type          {Lfabsyn.ImpType($1, $3, getPos 2)}
-  | rarrow_type                           {$1}
+  : application_type ARROW arrow_type          {Lfabsyn.ImpType($1, $3, getPos 2)}
+  | application_type                           {$1}
   ;
 
 prefix_type
@@ -155,5 +162,6 @@ prefix_type
 type_tm
   : prefix_type              {$1}
   ;
+
 
 %%
