@@ -79,8 +79,8 @@ rule initial = parse
 | ")"           {RPAREN}
 | "["           {LBRACK}
 | "]"           {RBRACK}
-| "<"           {LABRACK}
-| ">"           {RABRACK}
+| "<"           {LANGLE}
+| ">"           {RANGLE}
 
 | CONST as text {CONSTID text}
 | VAR as text   {VARID text}

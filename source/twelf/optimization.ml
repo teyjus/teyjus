@@ -17,6 +17,15 @@ sig
 
 end
 
+(* makeApp: takes a head term `h' and a list of argument terms `a1', `a2', ..., `an' 
+            and returns an application term `(((h a1) a2) ... an)'
+*)
+let makeApp h args =
+  List.fold_left (fun t a -> Absyn.ApplicationTerm(Absyn.CurriedApplication(t,a),Errormsg.none))
+                 h
+                 args
+
+
 module Specialize : Optimization =
 struct
   let run = ref false
@@ -29,9 +38,10 @@ struct
 
   let rec optimize tm =
     (** NOTE: This optimization assumes that the translation and
-              any other optimizations ensure that all predicates appear
-              as first order applications and are supplied with all
-              of their term arguments. *)
+              any other optimizations ensure that hastype predicates 
+              will be found applied to exactly 2 arguments: 
+              an encoded lf term and an encoded lf type. 
+              So, fo instance, it cannot be run after the `swap' optimization. *)
     match tm with
         Absyn.AbstractionTerm(abstm, p) ->
           let abstm' =
@@ -41,21 +51,28 @@ struct
                | Absyn.UNestedAbstraction(tys,i,tm) ->
                    Absyn.UNestedAbstraction(tys,i,optimize tm))
           in Absyn.AbstractionTerm(abstm', p)
-      | Absyn.ApplicationTerm(Absyn.FirstOrderApplication(Absyn.ConstantTerm(c,_,_),[lfterm;lftype],_),_) 
-          when Absyn.getConstantName c = "hastype" ->
-          (match lftype with
-               Absyn.ApplicationTerm(Absyn.FirstOrderApplication(targetty, tyargs,i),p) ->
-                 Absyn.ApplicationTerm(Absyn.FirstOrderApplication(targetty, (lfterm :: tyargs), i + 1),p)
-             | Absyn.ConstantTerm(_,_,p) ->
-                 Absyn.ApplicationTerm(Absyn.FirstOrderApplication(lftype, [lfterm], 1),p))
       | Absyn.ApplicationTerm(apptm,p) ->
-          let apptm' =
-            (match apptm with
-                 Absyn.FirstOrderApplication(head,tms,i) ->
-                   Absyn.FirstOrderApplication(optimize head, List.map optimize tms, i)
-               | Absyn.CurriedApplication(t1,t2) -> 
-                   Absyn.CurriedApplication(optimize t1, optimize t2))
-          in Absyn.ApplicationTerm(apptm',p)
+          let (h, args) = Absyn.getTermApplicationHeadAndArguments tm in
+          if (Absyn.isTermConstant h) && (Absyn.getConstantName (Absyn.getTermConstant h) = "hastype")
+            then
+            (match args with
+                 [lfterm; lftype] ->
+                   let (tyhead, tyargs) = Absyn.getTermApplicationHeadAndArguments lftype in
+                   makeApp tyhead (lfterm :: tyargs)
+               | _ -> 
+                   Errormsg.error Errormsg.none 
+                                 ("Error: hastype found with too many arguments in term: "^Absyn.string_of_term tm);
+                   Absyn.ErrorTerm)
+            else
+            let apptm' =
+              (match apptm with
+                   Absyn.CurriedApplication(l,r) -> 
+                     Absyn.CurriedApplication(optimize l, optimize r)
+                 | Absyn.FirstOrderApplication(h,tms,i) ->
+                     Absyn.FirstOrderApplication(optimize h, List.map optimize tms, i))
+            in
+            Absyn.ApplicationTerm(apptm',p)
+(*            makeApp h (List.map optimize args)*)
       | _ -> tm
 
   let run_optimization (metadata, kinds, constants, terms) = 
@@ -68,27 +85,34 @@ struct
           let rec isLFtype ty =
             match ty with
                 Absyn.ArrowType(t1,t2) -> isLFtype t2
-              | Absyn.ApplicationType(lftype, _) -> true
+              | Absyn.ApplicationType(ty, _)
+                  when ty = lftype -> true
               | _ -> false
           in
-          let changeType symb (Absyn.Constant(s,x1,x2,x3,x4,x5,x6,x7,x8,skel,x9,x10,x11,x12,x13,x14,x15)) constants =
+          let changeType symb (Absyn.Constant(s,x1,x2,x3,x4,x5,x6,x7,x8,
+                                              skel,x9,x10,x11,x12,x13,x14,x15)) constants =
             (match !skel with
                  Some(Absyn.Skeleton(ty,y1,y2)) ->
                    if (isLFtype ty)
                    then
                      let rec alterTarget t =
                        match t with
-                            Absyn.ArrowType(lastarg,Absyn.ApplicationType(_,_)) ->
-                              Absyn.ArrowType(lastarg,Absyn.ApplicationType(Pervasive.kbool,[]))
-                          | Absyn.ArrowType(t1, t2) -> 
+                            Absyn.ArrowType(t1, t2) -> 
                               Absyn.ArrowType(t1, alterTarget t2)
+                          | Absyn.ApplicationType(ty,_) 
+                              when ty = lftype ->
+                              Absyn.ApplicationType(Pervasive.kbool,[])
                           | _ ->
                               Errormsg.error Errormsg.none 
                                              ("Ill-formed type for LP constant: '" ^ (Symbol.printName s) ^ 
                                                  " : " ^ (Absyn.string_of_type ty) ^ "'");
                               Absyn.ErrorType
                      in
-                     let ty' = Absyn.ArrowType(Absyn.ApplicationType(lfobj,[]), alterTarget ty) in
+                     let ty' = 
+                       if (Symbol.printName s = "istype") 
+                         then
+                           ty
+                         else Absyn.ArrowType(Absyn.ApplicationType(lfobj,[]), alterTarget ty) in
                      let constants' = 
                        Table.add symb 
                                  (Absyn.Constant(s,x1,x2,x3,x4,x5,x6,x7,x8,ref (Some(Absyn.Skeleton(ty',y1,y2))),
@@ -184,25 +208,18 @@ struct
         (*** NOTE: at this point we depend on the translation (and any other optimizations) 
                    to maintain that first order applications are always used for predicates
                    and that they always appear with a full list of arguments. *)
-          let apptm' =
-            (match apptm with
-                 Absyn.FirstOrderApplication(Absyn.ConstantTerm(c,_,_)as head,tms,i) ->
-                   let tms' = 
-                     List.map optimize
-                              (if (not (Absyn.isPervasiveConstant c)) && 
-                                  (predicate (Absyn.getSkeletonType (Absyn.getConstantSkeletonValue c))) 
-                               then
-                                 List.append (List.tl tms) [List.hd tms]
-                               else
-                                 tms) 
-                   in
-                   Absyn.FirstOrderApplication(head,tms',i)
-               | Absyn.FirstOrderApplication(head, tms, i) ->
-                   Absyn.FirstOrderApplication(optimize head, List.map optimize tms, i)
-               | Absyn.CurriedApplication(t1,t2) -> 
-                   Absyn.CurriedApplication(optimize t1, optimize t2)) 
+          let (head,args) = Absyn.getTermApplicationHeadAndArguments tm in
+          let args' =
+            List.map optimize 
+                     (if (Absyn.isTermConstant head) &&
+                        (not (Absyn.isPervasiveConstant (Absyn.getTermConstant head))) && 
+                        (predicate (Absyn.getSkeletonType (Absyn.getConstantSkeletonValue (Absyn.getTermConstant head))))
+                      then
+                        List.append (List.tl args) [List.hd args]
+                      else
+                        args)
           in
-          Absyn.ApplicationTerm(apptm',p)
+          makeApp head args'
       | _ -> tm
 
   let run_optimization (metadata, kinds, constants, terms) =

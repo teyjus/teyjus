@@ -12,6 +12,7 @@ and fixity =
     Infix
   | Prefix
   | Postfix
+  | NoFixity
 
 and assoc =
     None

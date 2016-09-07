@@ -60,6 +60,14 @@ let hastype = Absyn.Constant(hastypeSymb, ref Absyn.NoFixity, ref 0, ref true, r
 									              Absyn.ApplicationType(Pervasive.kbool,[]))),
 					              ref None, ref false))),
 			     ref 0, ref None, ref None, ref None, ref Absyn.GlobalConstant, ref 0, Errormsg.none)
+
+(* makeApp: takes a head term `h' and a list of argument terms `a1', `a2', ..., `an' 
+            and returns an application term `(((h a1) a2) ... an)'
+*)
+let makeApp h args =
+  List.fold_left (fun t a -> Absyn.ApplicationTerm(Absyn.CurriedApplication(t,a),Errormsg.none))
+                 h
+                 args
 		      
 (** Flatten an LF kind into a simple type. *)
 let rec flatten_kind k =
@@ -94,11 +102,7 @@ let rec encode_term constants metadata tm =
       | Lfabsyn.AppTerm(head,tms,_) -> 
           let transhead = encode_term constants metadata (Lfabsyn.IdTerm(head, Errormsg.none)) in
           let transtms = List.map (encode_term constants metadata) tms in
-          let r =
-            List.fold_left (fun t s -> Absyn.ApplicationTerm(Absyn.CurriedApplication(t,s),Errormsg.none)) 
-                           (List.hd transtms) 
-                           (List.tl transtms)
-          in Absyn.ApplicationTerm(Absyn.CurriedApplication(transhead, r), Errormsg.none)
+          makeApp transhead transtms
       | Lfabsyn.IdTerm(id,_) ->
           match id with
               Lfabsyn.Const(_,_) ->
@@ -142,65 +146,33 @@ let rec encode_kind opt metadata consttbl k =
                                     ref None, ref false, ref (Some(flatten_type ty)))
           in
           let vartm = Absyn.makeBoundVarTerm (bvar) Errormsg.none in
-          let foapp = 
-            (match m with
-                 Absyn.ApplicationTerm(Absyn.FirstOrderApplication(h, tms, n), p) ->
-                   Absyn.ApplicationTerm(Absyn.FirstOrderApplication(h, (List.append tms [vartm]), n+1), p)
-               | _ ->
-                   Absyn.ApplicationTerm(Absyn.FirstOrderApplication(m, [vartm], 1), (Absyn.getTermPos m)))
-          in
-          let l = encode_type_positive opt metadata consttbl ty vartm in
-          let r = encode_kind opt metadata consttbl k foapp in
-          let bodytm = 
-            Absyn.ApplicationTerm(
-              Absyn.FirstOrderApplication(
-                Absyn.ConstantTerm(Pervasive.implConstant,[],Errormsg.none), 
-                [l; r], 2), 
-              Errormsg.none) in
+          let l = (encode_type_positive opt metadata consttbl ty) vartm in
+          let r = (encode_kind opt metadata consttbl k) (makeApp m [vartm]) in
+          let bodytm = makeApp (Absyn.ConstantTerm(Pervasive.implConstant,[],Errormsg.none)) [l;r] in
           let abstm =
             Absyn.AbstractionTerm(
               Absyn.NestedAbstraction(bvar, bodytm),
               Errormsg.none)
           in
-          Absyn.ApplicationTerm(
-            Absyn.FirstOrderApplication(
-              Absyn.ConstantTerm(Pervasive.allConstant,[],Errormsg.none), 
-              [abstm], 1), 
-            Errormsg.none)
+          makeApp (Absyn.ConstantTerm(Pervasive.allConstant,[],Errormsg.none)) [abstm]
     | Lfabsyn.ImpKind(l,r,_) ->
         fun m ->
           let bvar = Absyn.BoundVar(Symbol.symbol (newVar ()), 
                                     ref None, ref false, ref (Some(flatten_type l)))
           in
           let vartm = Absyn.makeBoundVarTerm bvar Errormsg.none in
-          let foapp = 
-            (match m with
-                 Absyn.ApplicationTerm(Absyn.FirstOrderApplication(h, tms, n), p) ->
-                   Absyn.ApplicationTerm(Absyn.FirstOrderApplication(h, (List.append tms [vartm]), n+1), p)
-               | _ ->
-                   Absyn.ApplicationTerm(Absyn.FirstOrderApplication(m, [vartm], 1), (Absyn.getTermPos m)))
-          in
-          let l' = encode_type_positive opt metadata consttbl l vartm in
-          let r' = encode_kind opt metadata consttbl k foapp in
-          let body = 
-            Absyn.ApplicationTerm(
-              Absyn.FirstOrderApplication(
-                Absyn.ConstantTerm(Pervasive.implConstant,[],Errormsg.none), 
-                [l'; r'], 2), 
-              Errormsg.none) in
+          let l' = (encode_type_positive opt metadata consttbl l) vartm in
+          let r' = (encode_kind opt metadata consttbl k) (makeApp m [vartm]) in
+          let body = makeApp (Absyn.ConstantTerm(Pervasive.implConstant,[],Errormsg.none)) [l';r'] in
           let abstm =
             Absyn.AbstractionTerm(
               Absyn.NestedAbstraction(bvar, body),
               Errormsg.none)
           in
-          Absyn.ApplicationTerm(
-            Absyn.FirstOrderApplication(
-              Absyn.ConstantTerm(Pervasive.allConstant,[],Errormsg.none), 
-              [abstm], 1), 
-            Errormsg.none)
+          makeApp (Absyn.ConstantTerm(Pervasive.allConstant,[],Errormsg.none)) [abstm]
     | Lfabsyn.Type(_) ->
         fun m ->
-          Absyn.ApplicationTerm(Absyn.FirstOrderApplication(Absyn.ConstantTerm(istype, [], Errormsg.none), [m], 1), Errormsg.none)
+          Absyn.ApplicationTerm(Absyn.CurriedApplication(Absyn.ConstantTerm(istype, [], Errormsg.none), m), Errormsg.none)
 		  
 (** Encode an LF type as a term repsenting a clause.
       @returns a function that when applied to the encoding of an LF 
@@ -214,70 +186,35 @@ and encode_type_negative opt metadata consttbl ty =
                                     ref None, ref false, ref (Some(flatten_type ty)))
           in
           let vartm = Absyn.makeBoundVarTerm bvar Errormsg.none in
-          let foapp = 
-            (match m with
-                 Absyn.ApplicationTerm(Absyn.FirstOrderApplication(h, tms, n), p) ->
-                   Absyn.ApplicationTerm(Absyn.FirstOrderApplication(h, (List.append tms [vartm]), n+1), p)
-               | _ ->
-                   Absyn.ApplicationTerm(Absyn.FirstOrderApplication(m, [vartm], 1), (Absyn.getTermPos m)))
-          in
-          let r = 
-            encode_type_negative opt metadata consttbl body foapp in
+          let r = (encode_type_negative opt metadata consttbl body) (makeApp m [vartm]) in
           let bodytm =
             if (opt && Strictness.appears_strict id body)
             then r
             else
-              let l = 
-                encode_type_positive opt metadata consttbl typ vartm in
-                Absyn.ApplicationTerm(
-                  Absyn.FirstOrderApplication(
-                    Absyn.ConstantTerm(Pervasive.implConstant, [], Errormsg.none), 
-                    [l;r], 2), 
-                  Errormsg.none) 
+              let l = (encode_type_positive opt metadata consttbl typ) vartm in 
+              makeApp (Absyn.ConstantTerm(Pervasive.implConstant, [], Errormsg.none)) [l;r]
           in
           let abstm =
             Absyn.AbstractionTerm(
               Absyn.NestedAbstraction(bvar, bodytm),
               Errormsg.none)
           in
-          Absyn.ApplicationTerm(
-            Absyn.FirstOrderApplication(
-              Absyn.ConstantTerm(Pervasive.allConstant, [], Errormsg.none), 
-              [abstm], 1), 
-            Errormsg.none)
+          makeApp (Absyn.ConstantTerm(Pervasive.allConstant, [], Errormsg.none)) [abstm]
     | Lfabsyn.ImpType(l,r,_) ->
         fun m ->
           let bvar = Absyn.BoundVar(Symbol.symbol (newVar ()), 
                                     ref None, ref false, ref (Some(flatten_type l)))
           in
           let vartm = Absyn.makeBoundVarTerm bvar Errormsg.none in
-          let foapp = 
-            (match m with
-                 Absyn.ApplicationTerm(Absyn.FirstOrderApplication(h, tms, n), p) ->
-                   Absyn.ApplicationTerm(Absyn.FirstOrderApplication(h, (List.append tms [vartm]), n+1), p)
-               | _ ->
-                   Absyn.ApplicationTerm(Absyn.FirstOrderApplication(m, [vartm], 1), (Absyn.getTermPos m)))
-          in
           let l' = encode_type_positive opt metadata consttbl l vartm in
-          let r' = 
-            encode_type_negative opt metadata consttbl r foapp in
-          let bodytm =
-            Absyn.ApplicationTerm(
-              Absyn.FirstOrderApplication(
-                Absyn.ConstantTerm(Pervasive.implConstant, [], Errormsg.none), 
-                [l';r'], 2), 
-              Errormsg.none) 
-          in
+          let r' = encode_type_negative opt metadata consttbl r (makeApp m [vartm]) in
+          let bodytm = makeApp (Absyn.ConstantTerm(Pervasive.implConstant, [], Errormsg.none)) [l';r'] in
           let abstm =
             Absyn.AbstractionTerm(
               Absyn.NestedAbstraction(bvar, bodytm),
               Errormsg.none)
           in
-          Absyn.ApplicationTerm(
-            Absyn.FirstOrderApplication(
-              Absyn.ConstantTerm(Pervasive.allConstant, [], Errormsg.none), 
-              [abstm], 1), 
-            Errormsg.none)
+          makeApp (Absyn.ConstantTerm(Pervasive.allConstant, [], Errormsg.none)) [abstm]
     | Lfabsyn.AppType(id,tms,_) ->
         fun m ->
           (match (Metadata.getLP metadata (Symb.symbol (Lfabsyn.string_of_id id))) with
@@ -285,15 +222,8 @@ and encode_type_negative opt metadata consttbl ty =
                  (match Table.find s consttbl with
                       Some(c) ->
                         let lptms = List.map (encode_term consttbl metadata) tms in
-                        let tytm = 
-                              Absyn.ApplicationTerm(
-                                Absyn.FirstOrderApplication(Absyn.ConstantTerm(c,[],Errormsg.none), lptms, List.length lptms), 
-                                Errormsg.none) in
-                        Absyn.ApplicationTerm(
-                          Absyn.FirstOrderApplication(
-                            Absyn.ConstantTerm(hastype, [], Errormsg.none), 
-                            [m;tytm], 2), 
-                          Errormsg.none)
+                        let tytm = makeApp (Absyn.ConstantTerm(c,[],Errormsg.none)) lptms in
+                        makeApp (Absyn.ConstantTerm(hastype, [], Errormsg.none)) [m;tytm]
                     | None ->
                         Errormsg.error Errormsg.none 
                                        ("No constant found for LP symbol: '" ^ (Symbol.printName s) ^ 
@@ -309,12 +239,7 @@ and encode_type_negative opt metadata consttbl ty =
           (match (Metadata.getLP metadata (Symb.symbol (Lfabsyn.string_of_id id))) with
                Some(s) ->
                  (match Table.find s consttbl with
-                      Some(c) ->
-                        Absyn.ApplicationTerm(
-                          Absyn.FirstOrderApplication(
-                            Absyn.ConstantTerm(hastype, [], Errormsg.none), 
-                            [m;Absyn.ConstantTerm(c,[],Errormsg.none)], 2), 
-                          Errormsg.none)
+                      Some(c) -> makeApp (Absyn.ConstantTerm(hastype, [], Errormsg.none)) [m;Absyn.ConstantTerm(c,[],Errormsg.none)]
                     | None ->
                         Errormsg.error Errormsg.none 
                                        ("No constant found for LP symbol: '" ^ (Symbol.printName s) ^ "'");
@@ -334,64 +259,28 @@ and encode_type_positive opt metadata consttbl ty =
                                     ref None, ref false, ref (Some(flatten_type ty)))
           in
           let vartm = Absyn.makeBoundVarTerm bvar Errormsg.none in
-          let foapp = 
-            (match m with
-                 Absyn.ApplicationTerm(Absyn.FirstOrderApplication(h, tms, n), p) ->
-                   Absyn.ApplicationTerm(Absyn.FirstOrderApplication(h, (List.append tms [vartm]), n+1), p)
-               | _ ->
-                   Absyn.ApplicationTerm(Absyn.FirstOrderApplication(m, [vartm], 1), (Absyn.getTermPos m)))
-          in
-          let l = 
-            encode_type_negative opt metadata consttbl typ vartm in
-          let r = 
-            encode_type_positive opt metadata consttbl body foapp in
-          let bodytm = 
-            Absyn.ApplicationTerm(
-              Absyn.FirstOrderApplication(
-                Absyn.ConstantTerm(Pervasive.implConstant, [], Errormsg.none), 
-                [l;r], 2), 
-              Errormsg.none) in
+          let l = (encode_type_negative opt metadata consttbl typ) vartm in
+          let r = (encode_type_positive opt metadata consttbl body) (makeApp m [vartm]) in
+          let bodytm = makeApp (Absyn.ConstantTerm(Pervasive.implConstant, [], Errormsg.none)) [l;r] in
           let abstm =
             Absyn.AbstractionTerm(
               Absyn.NestedAbstraction(bvar, bodytm),
               Errormsg.none)
           in
-          Absyn.ApplicationTerm(
-            Absyn.FirstOrderApplication(
-              Absyn.ConstantTerm(Pervasive.allConstant, [], Errormsg.none), 
-              [abstm], 1), 
-            Errormsg.none)
+          makeApp (Absyn.ConstantTerm(Pervasive.allConstant, [], Errormsg.none)) [abstm]
     | Lfabsyn.ImpType(l,r,_) ->
         fun m ->
           let bvar = Absyn.BoundVar(Symbol.symbol (newVar ()), ref None, ref false, ref (Some(flatten_type l))) in
           let vartm = Absyn.makeBoundVarTerm bvar Errormsg.none in
-          let foapp = 
-            (match m with
-                 Absyn.ApplicationTerm(Absyn.FirstOrderApplication(h, tms, n), p) ->
-                   Absyn.ApplicationTerm(Absyn.FirstOrderApplication(h, (List.append tms [vartm]), n+1), p)
-               | _ ->
-                   Absyn.ApplicationTerm(Absyn.FirstOrderApplication(m, [vartm], 1), (Absyn.getTermPos m)))
-          in
-          let l' = 
-            encode_type_negative opt metadata consttbl l vartm in
-          let r' = 
-            encode_type_positive opt metadata consttbl r foapp in
-          let bodytm = 
-            Absyn.ApplicationTerm(
-              Absyn.FirstOrderApplication(
-                Absyn.ConstantTerm(Pervasive.implConstant, [], Errormsg.none), 
-                [l';r'], 2), 
-              Errormsg.none) in
+          let l' = (encode_type_negative opt metadata consttbl l) vartm in
+          let r' = (encode_type_positive opt metadata consttbl r) (makeApp m [vartm]) in
+          let bodytm = makeApp (Absyn.ConstantTerm(Pervasive.implConstant, [], Errormsg.none)) [l';r'] in
           let abstm =
             Absyn.AbstractionTerm(
               Absyn.NestedAbstraction(bvar, bodytm),
               Errormsg.none)
           in
-          Absyn.ApplicationTerm(
-            Absyn.FirstOrderApplication(
-              Absyn.ConstantTerm(Pervasive.allConstant, [], Errormsg.none), 
-              [abstm], 1), 
-            Errormsg.none)
+          makeApp (Absyn.ConstantTerm(Pervasive.allConstant, [], Errormsg.none)) [abstm]
     | Lfabsyn.AppType(id,tms,_) ->
         fun m ->
           (match (Metadata.getLP metadata (Symb.symbol (Lfabsyn.string_of_id id))) with
@@ -399,15 +288,8 @@ and encode_type_positive opt metadata consttbl ty =
                  (match Table.find s consttbl with
                       Some(c) ->
                         let lptms = List.map (encode_term consttbl metadata) tms in
-                        let tytm = 
-                              Absyn.ApplicationTerm(
-                                Absyn.FirstOrderApplication(Absyn.ConstantTerm(c,[],Errormsg.none), lptms, List.length lptms), 
-                                Errormsg.none) in
-                        Absyn.ApplicationTerm(
-                          Absyn.FirstOrderApplication(
-                            Absyn.ConstantTerm(hastype, [], Errormsg.none), 
-                            [m;tytm], 2), 
-                          Errormsg.none)
+                        let tytm = makeApp (Absyn.ConstantTerm(c,[],Errormsg.none)) lptms in
+                        makeApp (Absyn.ConstantTerm(hastype, [], Errormsg.none)) [m;tytm]
                     | None ->
                         Errormsg.error Errormsg.none 
                                        ("No constant found for LP symbol: '" ^ (Symbol.printName s) ^ "'");
@@ -422,11 +304,7 @@ and encode_type_positive opt metadata consttbl ty =
                Some(s) ->
                  (match Table.find s consttbl with
                       Some(c) ->
-                        Absyn.ApplicationTerm(
-                          Absyn.FirstOrderApplication(
-                            Absyn.ConstantTerm(hastype, [], Errormsg.none), 
-                            [m;Absyn.ConstantTerm(c,[],Errormsg.none)], 2), 
-                          Errormsg.none)
+                        makeApp (Absyn.ConstantTerm(hastype, [], Errormsg.none)) [m;Absyn.ConstantTerm(c,[],Errormsg.none)]
                     | None ->
                         Errormsg.error Errormsg.none 
                                        ("No constant found for LP symbol: '" ^ (Symbol.printName s) ^ "'");
@@ -436,9 +314,10 @@ and encode_type_positive opt metadata consttbl ty =
                                 ("No mapping found for LF constant: '" ^ (Lfabsyn.string_of_id id) ^ "'");
                  Absyn.ErrorTerm)
 
-let trans_fixity fix assoc =
+let trans_fixity fix assoc = 
   match (fix, assoc) with
-      (Lfabsyn.Infix,Lfabsyn.Left) -> Absyn.Infixl
+      (Lfabsyn.NoFixity,_) -> Absyn.NoFixity
+    | (Lfabsyn.Infix,Lfabsyn.Left) -> Absyn.Infixl
     | (Lfabsyn.Infix,Lfabsyn.Right) -> Absyn.Infixr
     | (Lfabsyn.Infix,_) -> Absyn.Infix
     | (Lfabsyn.Prefix,Lfabsyn.Right) -> Absyn.Prefixr
@@ -519,8 +398,11 @@ let process strictness metadata constants types =
         Some(s) ->
           (match (Table.find s constants) with
                Some(c) ->
-                 let clause = encode_kind strictness metadata constants kind (Absyn.ConstantTerm(c, [], Errormsg.none)) in
-                 List.fold_left (fun c o -> perObj (!o) c) (List.append clauselst [clause]) (!objs)
+                 (* Taking out istype clauses for now. It is unclear how to deal with them 
+                    in the optimizations, or when they might be useful in this application. *)
+                 (*let clause = encode_kind strictness metadata constants kind (Absyn.ConstantTerm(c, [], Errormsg.none)) in
+                 List.fold_left (fun c o -> perObj (!o) c) (List.append clauselst [clause]) (!objs)*)
+                 List.fold_left (fun c o -> perObj (!o) c) clauselst (!objs)
              | None ->
                  Errormsg.error Errormsg.none 
                                 ("No constant found for LP symbol: '" ^ (Symbol.printName s) ^ 
@@ -551,13 +433,8 @@ struct
        enc_type t)
     in
     let lp_vars = List.map make_var vars in
-    let add_term tm (vartm, encty) =
-      Absyn.ApplicationTerm(
-        Absyn.FirstOrderApplication(
-          Absyn.ConstantTerm(Pervasive.andConstant,[],Errormsg.none), 
-          [tm; (encty vartm)], 
-          2), 
-        Errormsg.none) in 
+    let add_term tm (vartm, encty) = 
+          makeApp (Absyn.ConstantTerm(Pervasive.andConstant,[],Errormsg.none)) [tm; (encty vartm)] in 
     let (pfvar, c) = make_var (pt, ty) in
     let qterm = List.fold_left add_term (c pfvar) lp_vars in
     (qterm, (Absyn.getTermFreeVariableTypeSymbol pfvar :: 
@@ -604,19 +481,14 @@ struct
 
   let translate_query (Lfabsyn.Query(vars, pt, ty)) metadata kindTab constTab =
     let enc_type = encode_type_positive true metadata constTab in
-    let make_var (Lfabsyn.Var(n,_), t) =
+    let make_var (Lfabsyn.LogicVar(n,_), t) =
       (Absyn.FreeVarTerm(Absyn.NamedFreeVar(Absyn.ImplicitVar(Symbol.symbol n, ref None, ref false, ref (Some(flatten_type ty)))), 
                          Errormsg.none),
        enc_type t)
     in
     let lp_vars = List.map make_var vars in
     let add_term tm (vartm, encty) =
-      Absyn.ApplicationTerm(
-        Absyn.FirstOrderApplication(
-          Absyn.ConstantTerm(Pervasive.andConstant,[],Errormsg.none), 
-          [tm; (encty vartm)], 
-          2), 
-        Errormsg.none) in
+          makeApp (Absyn.ConstantTerm(Pervasive.andConstant,[],Errormsg.none)) [tm; (encty vartm)] in
     let (pfvar, c) = make_var (pt, ty) in
     let qterm = List.fold_left add_term (c pfvar) lp_vars in
     (optimize qterm, (Absyn.getTermFreeVariableTypeSymbol pfvar :: 

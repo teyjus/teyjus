@@ -46,7 +46,7 @@ let reset () =
 
 %token TYPEC TERMC
 %token TYPE KIND ARROW REVERSE_ARROW COLON DOT APP
-%token LPAREN RPAREN LBRACE RBRACE LBRACK RBRACK LABRACK RABRACK
+%token LPAREN RPAREN LBRACE RBRACE LBRACK RBRACK LANGLE RANGLE
 %token <string> VARID 
 %token <string> CONSTID
 %token END
@@ -58,11 +58,11 @@ let reset () =
 
 %%
 parseQuery
-  : querybndrs typing END    {let (id,tm) = $2 in Lfabsyn.Query($1,id,tm)}
+  : querybndrs DOT typing END    {let (id,tm) = $3 in Lfabsyn.Query($1,id,tm)}
   ;
 
 querybndrs
-  : LABRACK typing RABRACK querybndrs  {($2 :: $4)}
+  : LANGLE typing RANGLE querybndrs  {($2 :: $4)}
   |                                       {[]}
   ;
 
@@ -96,10 +96,10 @@ kind_tm
 declaration
   : TYPEC kinding DOT obj_list  {let (id,k) = $2 in 
                                     addDeclaration (Lfabsyn.string_of_id id) 
-                                                   (Lfabsyn.TypeFam(id,k,Lfabsyn.Prefix, Lfabsyn.None, 0, ref $4, getPos 1))}
+                                                   (Lfabsyn.TypeFam(id,k,Lfabsyn.NoFixity, Lfabsyn.None, 0, ref $4, getPos 1))}
   | TYPEC kinding DOT           {let (id,k) = $2 in 
                                     addDeclaration (Lfabsyn.string_of_id id) 
-                                                   (Lfabsyn.TypeFam(id,k,Lfabsyn.Prefix, Lfabsyn.None, 0, ref [], getPos 1))}
+                                                   (Lfabsyn.TypeFam(id,k,Lfabsyn.NoFixity, Lfabsyn.None, 0, ref [], getPos 1))}
   ;
 
 obj_list
@@ -108,12 +108,13 @@ obj_list
   ;
 
 obj
-  : TERMC typing DOT {let (id,t) = $2 in Lfabsyn.Object(id, t, Lfabsyn.Prefix, Lfabsyn.None, 0, getPos 1)}
+  : TERMC typing DOT {let (id,t) = $2 in Lfabsyn.Object(id, t, Lfabsyn.NoFixity, Lfabsyn.None, 0, getPos 1)}
   ;
 
 ground_term
   : id_term                     {Lfabsyn.IdTerm($1, getPos 1)}
   | LPAREN term RPAREN          {$2}
+  ;
 
 application_term
   : id_term tm_list             {Lfabsyn.AppTerm($1, $2, getPos 1)}
@@ -132,6 +133,7 @@ term
 id_term
   : VARID                              {Lfabsyn.Var($1, getPos 1)}
   | CONSTID                            {Lfabsyn.Const($1, getPos 1)}
+  | LANGLE VARID RANGLE  {Lfabsyn.LogicVar($2, getPos 2)}
   ;
 
 tm_list

@@ -58,7 +58,7 @@ let _ =
                  exit 1) in
   let _ = Translator.set_translation "optimized";
           Optimization.Swap.set true;
-          Optimization.Specialize.set false in
+          Optimization.Specialize.set true in
   let (metadata, kinds, constants, terms) = 
     match Translator.get_translation () with
         "optimized" -> Translator.OptimizedTranslation.translate sign 
@@ -69,6 +69,7 @@ let _ =
   let _ = output_files metadatastr sigstr modstr in
   let _ = compile_and_link () in
   let (currmod, md) = Loader.load "top" in
+  let fix = Absyn.getConstantFixity (Option.get (Table.find (Symbol.symbol "hastype") (Absyn.getModuleConstantTable currmod))) in
   let lfquery = 
     match Lfparse.parse_query "query.elf" with 
         Some(q) -> q
@@ -76,6 +77,6 @@ let _ =
                 exit 1
   in
   let _ = print_endline (Lfabsyn.string_of_query lfquery) in
-(*  let _ = Lfquery.submit_query lfquery md (Absyn.getModuleKindTable currmod) (Absyn.getModuleConstantTable currmod) in *)
+  let _ = Lfquery.submit_query lfquery md (Absyn.getModuleKindTable currmod) (Absyn.getModuleConstantTable currmod) in 
   print_string "done!\n";
   exit 1
