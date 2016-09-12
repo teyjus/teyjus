@@ -20,7 +20,7 @@ let rec appears_strict_ty id ty bndrs =
     | Lfabsyn.AppType(name, tms,_) ->
         let check =
           (match (name, id) with
-              (Lfabsyn.Var(v1,_), Lfabsyn.Var(v2,_)) when (v1 = v2)->
+              (Lfabsyn.Var(v1,_,_), Lfabsyn.Var(v2,_,_)) when (v1 = v2)->
                  check_args tms bndrs
              | _ -> false)
         in check ||
@@ -30,7 +30,7 @@ let rec appears_strict_ty id ty bndrs =
         (appears_strict_ty id r bndrs)
     | Lfabsyn.IdType(name,_) ->
         match (name, id) with
-            (Lfabsyn.Var(v1,_), Lfabsyn.Var(v2,_)) when (v1 = v2) ->
+            (Lfabsyn.Var(v1,_,_), Lfabsyn.Var(v2,_,_)) when (v1 = v2) ->
                true
            | _ ->
              false
@@ -44,14 +44,14 @@ and appears_strict_tm id tm bndrs =
     | Lfabsyn.AppTerm(name,tms,_) ->
         let check =
           (match (name, id) with
-              (Lfabsyn.Var(v1,_), Lfabsyn.Var(v2,_)) when (v1 = v2) ->
+              (Lfabsyn.Var(v1,_,_), Lfabsyn.Var(v2,_,_)) when (v1 = v2) ->
                  check_args tms bndrs
              | _ -> false)
         in check ||
            (List.exists (fun x -> appears_strict_tm id x bndrs) tms)
     | Lfabsyn.IdTerm(name,_) ->
         match (name, id) with
-            (Lfabsyn.Var(v1,_), Lfabsyn.Var(v2,_)) when (v1 = v2) ->
+            (Lfabsyn.Var(v1,_,_), Lfabsyn.Var(v2,_,_)) when (v1 = v2) ->
                true
            | _ ->
              false
@@ -64,5 +64,6 @@ let appears_strict id ty =
         Errormsg.warning Errormsg.none 
                          ("Attempting to check strictness of a constant " ^ (Lfabsyn.string_of_id id) ^ 
                           " in term " ^ (Lfabsyn.string_of_typ ty)); true
-    | Lfabsyn.Var(name,_) ->
+    | Lfabsyn.Var(name,_,_)
+    | Lfabsyn.LogicVar(name,_,_) ->
         appears_strict_ty id ty []

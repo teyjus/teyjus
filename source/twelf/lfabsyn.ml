@@ -37,8 +37,8 @@ and term =
 
 and id =
   | Const of (string * pos)
-  | Var of (string * pos)
-  | LogicVar of (string * pos)
+  | Var of (string * typ * pos)
+  | LogicVar of (string * typ * pos)
 
 
 let rec string_of_typefam (TypeFam(id,k,_,_,_,_,_)) =
@@ -83,8 +83,8 @@ and string_of_term tm =
 and string_of_id id =
   match id with
       Const(n,_)
-    | Var(n,_) 
-    | LogicVar(n,_) -> n
+    | Var(n,_,_) 
+    | LogicVar(n,_,_) -> n
 
 let string_of_query (Query(_,id,ty)) =
   (string_of_id id) ^ " : " ^ (string_of_typ ty)
@@ -110,11 +110,16 @@ let get_term_pos t =
 let get_id_pos id =
   match id with
       Const(_,p) -> p
-    | Var(_,p) -> p
-    | LogicVar(_,p) -> p
+    | Var(_,_,p) -> p
+    | LogicVar(_,_,p) -> p
 
 let get_typefam_name (TypeFam(name,_,_,_,_,_,_)) = string_of_id name
 let get_obj_name (Object(name,_,_,_,_,_)) = string_of_id name
+let get_id_name id =
+  match id with
+      Const(n,_) -> n
+    | Var(n,_,_) -> n
+    | LogicVar(n,_,_) -> n
 
 let get_typefam_kind (TypeFam(_,k,_,_,_,_,_)) = k
 let get_obj_typ (Object(_,t,_,_,_,_)) = t

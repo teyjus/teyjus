@@ -43,8 +43,8 @@ and term =
 
 and id =
   | Const of (string * pos)
-  | Var of (string * pos)
-  | LogicVar of (string * pos)
+  | Var of (string * typ * pos) 
+  | LogicVar of (string * typ * pos)
 
 val string_of_typefam : typefam -> string
 val string_of_obj : obj -> string
@@ -62,6 +62,7 @@ val get_term_pos : term -> pos
 
 val get_typefam_name : typefam -> string
 val get_obj_name : obj -> string
+val get_id_name : id -> string
 
 val get_typefam_kind : typefam -> kind
 val get_obj_typ : obj -> typ

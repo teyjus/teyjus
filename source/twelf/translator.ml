@@ -92,7 +92,7 @@ and flatten_type t =
 let rec encode_term constants metadata tm =
     match tm with
         Lfabsyn.AbsTerm(id,ty,t,_) ->
-          let s = Symbol.symbol (Lfabsyn.string_of_id id) in
+          let s = Symbol.symbol (Lfabsyn.get_id_name id) in
           Absyn.AbstractionTerm(Absyn.NestedAbstraction(Absyn.BoundVar(s,
                                                                        ref None,
 								       ref false,
@@ -106,7 +106,7 @@ let rec encode_term constants metadata tm =
       | Lfabsyn.IdTerm(id,_) ->
           match id with
               Lfabsyn.Const(_,_) ->
-                (match (Metadata.getLP metadata (Symb.symbol (Lfabsyn.string_of_id id))) with
+                (match (Metadata.getLP metadata (Symb.symbol (Lfabsyn.get_id_name id))) with
                      Some(s) ->
                        (match (Table.find s constants) with
                             Some(c) ->
@@ -121,17 +121,19 @@ let rec encode_term constants metadata tm =
                                       ("No mapping found for LF constant: '" ^ (Lfabsyn.string_of_id id) ^ 
                                            "' in LF term: '" ^ (Lfabsyn.string_of_term tm) ^ "'");
                        Absyn.ErrorTerm)
-            | Lfabsyn.Var(n,_) ->
+            | Lfabsyn.Var(n,t,_) ->
+                let t' = flatten_type t in
                 Absyn.makeBoundVarTerm (Absyn.BoundVar(Symbol.symbol n,
                                                        ref None,
                                                        ref false,
-                                                       ref None))
+                                                       ref (Some(t'))))
                                        Errormsg.none
-            | Lfabsyn.LogicVar(n,_) ->
+            | Lfabsyn.LogicVar(n,t,_) ->
+                let t' = flatten_type t in
                 Absyn.makeFreeVarTerm (Absyn.ImplicitVar(Symbol.symbol n,
                                                          ref None,
                                                          ref false,
-                                                         ref None))
+                                                         ref (Some(t'))))
                                       Errormsg.none
 
 (** Encode an LF kind as a term.
@@ -142,7 +144,7 @@ let rec encode_kind opt metadata consttbl k =
   match k with
       Lfabsyn.PiKind(id,ty,k,_) ->
         fun m ->
-          let bvar = Absyn.BoundVar(Symbol.symbol (Lfabsyn.string_of_id id), 
+          let bvar = Absyn.BoundVar(Symbol.symbol (Lfabsyn.get_id_name id), 
                                     ref None, ref false, ref (Some(flatten_type ty)))
           in
           let vartm = Absyn.makeBoundVarTerm (bvar) Errormsg.none in
@@ -182,7 +184,7 @@ and encode_type_negative opt metadata consttbl ty =
   match ty with
       Lfabsyn.PiType(id,typ,body,_) ->
         fun m ->
-          let bvar = Absyn.BoundVar(Symbol.symbol (Lfabsyn.string_of_id id), 
+          let bvar = Absyn.BoundVar(Symbol.symbol (Lfabsyn.get_id_name id), 
                                     ref None, ref false, ref (Some(flatten_type ty)))
           in
           let vartm = Absyn.makeBoundVarTerm bvar Errormsg.none in
@@ -217,7 +219,7 @@ and encode_type_negative opt metadata consttbl ty =
           makeApp (Absyn.ConstantTerm(Pervasive.allConstant, [], Errormsg.none)) [abstm]
     | Lfabsyn.AppType(id,tms,_) ->
         fun m ->
-          (match (Metadata.getLP metadata (Symb.symbol (Lfabsyn.string_of_id id))) with
+          (match (Metadata.getLP metadata (Symb.symbol (Lfabsyn.get_id_name id))) with
                Some(s) ->
                  (match Table.find s consttbl with
                       Some(c) ->
@@ -236,7 +238,7 @@ and encode_type_negative opt metadata consttbl ty =
                  Absyn.ErrorTerm)
     | Lfabsyn.IdType(id,_) ->
         fun m ->
-          (match (Metadata.getLP metadata (Symb.symbol (Lfabsyn.string_of_id id))) with
+          (match (Metadata.getLP metadata (Symb.symbol (Lfabsyn.get_id_name id))) with
                Some(s) ->
                  (match Table.find s consttbl with
                       Some(c) -> makeApp (Absyn.ConstantTerm(hastype, [], Errormsg.none)) [m;Absyn.ConstantTerm(c,[],Errormsg.none)]
@@ -255,7 +257,7 @@ and encode_type_positive opt metadata consttbl ty =
   match ty with
       Lfabsyn.PiType(id,typ,body,_) ->
         fun m ->
-          let bvar = Absyn.BoundVar(Symbol.symbol (Lfabsyn.string_of_id id), 
+          let bvar = Absyn.BoundVar(Symbol.symbol (Lfabsyn.get_id_name id), 
                                     ref None, ref false, ref (Some(flatten_type ty)))
           in
           let vartm = Absyn.makeBoundVarTerm bvar Errormsg.none in
@@ -283,7 +285,7 @@ and encode_type_positive opt metadata consttbl ty =
           makeApp (Absyn.ConstantTerm(Pervasive.allConstant, [], Errormsg.none)) [abstm]
     | Lfabsyn.AppType(id,tms,_) ->
         fun m ->
-          (match (Metadata.getLP metadata (Symb.symbol (Lfabsyn.string_of_id id))) with
+          (match (Metadata.getLP metadata (Symb.symbol (Lfabsyn.get_id_name id))) with
                Some(s) ->
                  (match Table.find s consttbl with
                       Some(c) ->
@@ -296,11 +298,11 @@ and encode_type_positive opt metadata consttbl ty =
                         Absyn.ErrorTerm)
              | None ->
                  Errormsg.error Errormsg.none 
-                                ("No mapping found for LF constant: '" ^ (Lfabsyn.string_of_id id) ^ "'");
+                                ("No mapping found for LF constant: '" ^ (Lfabsyn.get_id_name id) ^ "'");
                  Absyn.ErrorTerm)
     | Lfabsyn.IdType(id,_) ->
         fun m ->
-          (match (Metadata.getLP metadata (Symb.symbol (Lfabsyn.string_of_id id))) with
+          (match (Metadata.getLP metadata (Symb.symbol (Lfabsyn.get_id_name id))) with
                Some(s) ->
                  (match Table.find s consttbl with
                       Some(c) ->
@@ -334,7 +336,7 @@ let trans_fixity fix assoc =
 let initialize_metadata types =
   let perType symb (Lfabsyn.TypeFam(_,_,_,_,_,objs,_)) metadata =
     let perObj (Lfabsyn.Object(id,_,_,_,_,_)) metadata =
-      Metadata.new_mapping metadata (Symb.symbol (Lfabsyn.string_of_id id))
+      Metadata.new_mapping metadata (Symb.symbol (Lfabsyn.get_id_name id))
     in
     List.fold_left (fun m o -> perObj (!o) m) (Metadata.new_mapping metadata symb) (!objs)
   in
@@ -344,7 +346,7 @@ let initialize_metadata types =
 let initialize_constants metadata types=
   let perType symb (Lfabsyn.TypeFam(id,kind,fix,assoc,prec,objs,_)) constants =
     let perObj (Lfabsyn.Object(id, ty,fix,assoc,prec,_)) constants =
-      let s = Symb.symbol (Lfabsyn.string_of_id id) in
+      let s = Symb.symbol (Lfabsyn.get_id_name id) in
       let lpsymb = Option.get (Metadata.getLP metadata s) in
       let objconst =
         Absyn.Constant(lpsymb, ref (trans_fixity fix assoc), ref prec,
@@ -375,7 +377,7 @@ let initialize_constants metadata types=
 (* Process each type level declaration and each corresponding object level declaration. *)
 let process strictness metadata constants types =
   let perObj (Lfabsyn.Object(id,typ,_,_,_,_) as o) clauselst =
-    match (Metadata.getLP metadata (Symb.symbol (Lfabsyn.string_of_id id))) with
+    match (Metadata.getLP metadata (Symb.symbol (Lfabsyn.get_id_name id))) with
         Some(s) ->
           (match (Table.find s constants) with
                Some(c) ->
@@ -394,7 +396,7 @@ let process strictness metadata constants types =
           clauselst
   in
   let perType symb ((Lfabsyn.TypeFam(id,kind,_,_,_,objs,_)) as t) clauselst =
-    match (Metadata.getLP metadata (Symb.symbol (Lfabsyn.string_of_id id))) with
+    match (Metadata.getLP metadata (Symb.symbol (Lfabsyn.get_id_name id))) with
         Some(s) ->
           (match (Table.find s constants) with
                Some(c) ->
@@ -427,7 +429,7 @@ struct
 
   let translate_query (Lfabsyn.Query(vars, pt, ty)) metadata kindTab constTab =
     let enc_type = encode_type_positive false metadata constTab in
-    let make_var (Lfabsyn.Var(n,_), t) =
+    let make_var (Lfabsyn.LogicVar(n,_,_), t) =
       (Absyn.FreeVarTerm(Absyn.NamedFreeVar(Absyn.ImplicitVar(Symbol.symbol n, ref None, ref false, ref (Some(flatten_type ty)))), 
                          Errormsg.none),
        enc_type t)
@@ -481,7 +483,7 @@ struct
 
   let translate_query (Lfabsyn.Query(vars, pt, ty)) metadata kindTab constTab =
     let enc_type = encode_type_positive true metadata constTab in
-    let make_var (Lfabsyn.LogicVar(n,_), t) =
+    let make_var (Lfabsyn.LogicVar(n,_,_), t) =
       (Absyn.FreeVarTerm(Absyn.NamedFreeVar(Absyn.ImplicitVar(Symbol.symbol n, ref None, ref false, ref (Some(flatten_type ty)))), 
                          Errormsg.none),
        enc_type t)
