@@ -192,7 +192,30 @@ struct
       | None ->
           Errormsg.error Errormsg.none ("No type provided for LP constant '" ^ (Symbol.printName s) ^ "'");
           constants
-    
+
+  let changeTypes constants term =
+    let rec helper tm =
+      match tm with
+          Absyn.AbstractionTerm(Absyn.NestedAbstraction(tysymb, body),p) ->
+            Absyn.AbstractionTerm(Absyn.NestedAbstraction(tysymb, helper body),p)
+        | Absyn.AbstractionTerm(Absyn.UNestedAbstraction(tysymbs,i, body),p) ->
+            Absyn.AbstractionTerm(Absyn.UNestedAbstraction(tysymbs,i, helper body),p)
+        | Absyn.ApplicationTerm(Absyn.CurriedApplication(l,r),p) ->
+            Absyn.ApplicationTerm(Absyn.CurriedApplication(helper l, helper r),p)
+        | Absyn.ApplicationTerm(Absyn.FirstOrderApplication(h,tms,i),p) ->
+            Absyn.ApplicationTerm(Absyn.FirstOrderApplication(helper h, List.map helper tms, i),p)
+        | Absyn.ConstantTerm(c,env,p) 
+            when (not (Absyn.isPervasiveConstant c))->
+            (match Table.find (Absyn.getConstantSymbol c) constants with
+                 Some(c') ->Absyn.ConstantTerm(c',env,p)
+               | None ->Errormsg.error Errormsg.none
+                                       ("The constant "^(Absyn.string_of_constant c)^" was not found in constant table.");
+                 Absyn.ErrorTerm)
+        | _ -> tm
+    in
+    helper term   
+
+
   let rec optimize tm =
     match tm with
         Absyn.AbstractionTerm(abs,p) ->
@@ -209,6 +232,7 @@ struct
                    to maintain that first order applications are always used for predicates
                    and that they always appear with a full list of arguments. *)
           let (head,args) = Absyn.getTermApplicationHeadAndArguments tm in
+          let printbool c = if c then "true" else "false" in
           let args' =
             List.map optimize 
                      (if (Absyn.isTermConstant head) &&
@@ -229,6 +253,7 @@ struct
        argument to last position. *)
     
     let constants' = Table.fold swapType constants constants in
-    let terms' = List.map optimize terms in
-    (metadata, kinds, constants', terms')
+    let terms' = List.map (changeTypes constants') terms in
+    let terms'' = List.map optimize terms' in
+    (metadata, kinds, constants', terms'')
 end
