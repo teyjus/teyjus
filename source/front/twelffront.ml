@@ -49,6 +49,7 @@ let string_of_sig kinds constants terms =
 (** main *)
 let _ = 
   let _ = print_string "tjtwelf started!\n" in
+  (* parse LF signature *)
   let res = Lfparse.parse "test.elf" in
   let sign =
     (match res with
@@ -56,9 +57,11 @@ let _ =
                     s
        | None -> print_string "failed to parse.\n";
                  exit 1) in
+
+  (* translate LF sig and generate files. *)
   let _ = Translator.set_translation "optimized";
-          Optimization.Swap.set true;
-          Optimization.Specialize.set true in
+          Optimization.Swap.set false;
+          Optimization.Specialize.set false in
   let (metadata, kinds, constants, terms) = 
     match Translator.get_translation () with
         "optimized" -> Translator.OptimizedTranslation.translate sign 
@@ -67,16 +70,24 @@ let _ =
   let (sigstr, modstr) = string_of_sig kinds constants terms in
   let metadatastr = Metadata.string_of_metadata metadata in
   let _ = output_files metadatastr sigstr modstr in
+
+  (* compile and link LP module, load query state *)
   let _ = compile_and_link () in
   let (currmod, md) = Loader.load "top" in
-  let fix = Absyn.getConstantFixity (Option.get (Table.find (Symbol.symbol "hastype") (Absyn.getModuleConstantTable currmod))) in
+
+  (* parse LF query *)
   let lfquery = 
     match Lfparse.parse_query "query.elf" with 
         Some(q) -> q
       | None -> print_string "failed to parse query.\n";
                 exit 1
   in
-  let _ = print_endline (Lfabsyn.string_of_query lfquery) in
+  let _ = print_endline ("LF query: "^(Lfabsyn.string_of_query lfquery)) in
+
+  (* translate LF query into C representation*)
   let _ = Lfquery.submit_query lfquery md (Absyn.getModuleKindTable currmod) (Absyn.getModuleConstantTable currmod) in 
+
+  (* find a solution for query and print out. *)
+  let _ = Lfquery.solve_query (); Lfquery.show_answers () in
   print_string "done!\n";
   exit 1

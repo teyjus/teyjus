@@ -78,5 +78,19 @@ val translateClause : Preabsyn.pterm -> Absyn.amodule -> Absyn.aterm option
 **********************************************************************)
 val removeNestedAbstractions : Absyn.aterm -> Absyn.aterm
 
+(**********************************************************************
+* fixTerm:
+* Gets a term in curried and named form but with no nested abstractions. 
+* 
+* Returns the term converted into de Bruijn representation with applications in 
+* curried form and with closedness annotations and the sets of free term and 
+* type variables in the term (indicated by unique Absyn.atypesymbol cells 
+* in one case * and Absyn.atype cells of the form:
+*   Absyn.TypeVarType(Absyn.BindableTypeVar(ref NONE))
+* in the other case.
+*
+* Will flag a term as in error if implications occur in it.
+**********************************************************************)
+val fixTerm : Absyn.aterm -> Absyn.aterm * Absyn.atypesymbol list * Absyn.atype list
 
 val unitTests : unit -> unit

@@ -59,6 +59,7 @@ let reset () =
 %%
 parseQuery
   : querybndrs DOT typing END    {let (id,tm) = $3 in Lfabsyn.Query($1,id,tm)}
+  | typing END                   {let (id,tm) = $1 in Lfabsyn.Query([],id,tm)}
   ;
 
 querybndrs
