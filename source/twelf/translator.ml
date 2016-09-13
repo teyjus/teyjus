@@ -221,6 +221,11 @@ and encode_type_negative opt metadata consttbl vars ty =
           in
           makeApp (Absyn.ConstantTerm(Pervasive.allConstant, [], Errormsg.none)) [abstm]
     | Lfabsyn.AppType(id,tms,_) ->
+        let hastype =
+          (match Table.find (Symbol.symbol hastypeStr) consttbl with
+               Some(c) -> c
+             | None -> hastype)
+        in
         fun m ->
           (match (Metadata.getLP metadata (Symb.symbol (Lfabsyn.get_id_name id))) with
                Some(s) ->
@@ -240,6 +245,11 @@ and encode_type_negative opt metadata consttbl vars ty =
                                      "' in LF type: '" ^ (Lfabsyn.string_of_typ ty) ^ "'");
                  Absyn.ErrorTerm)
     | Lfabsyn.IdType(id,_) ->
+        let hastype =
+          (match Table.find (Symbol.symbol hastypeStr) consttbl with
+               Some(c) -> c
+             | None -> hastype)
+        in
         fun m ->
           (match (Metadata.getLP metadata (Symb.symbol (Lfabsyn.get_id_name id))) with
                Some(s) ->
@@ -290,6 +300,11 @@ and encode_type_positive opt metadata consttbl vars ty =
           in
           makeApp (Absyn.ConstantTerm(Pervasive.allConstant, [], Errormsg.none)) [abstm]
     | Lfabsyn.AppType(id,tms,_) ->
+        let hastype =
+          (match Table.find (Symbol.symbol hastypeStr) consttbl with
+               Some(c) -> c
+             | None -> hastype)
+        in
         fun m ->
           (match (Metadata.getLP metadata (Symb.symbol (Lfabsyn.get_id_name id))) with
                Some(s) ->
@@ -307,6 +322,11 @@ and encode_type_positive opt metadata consttbl vars ty =
                                 ("No mapping found for LF constant: '" ^ (Lfabsyn.get_id_name id) ^ "'");
                  Absyn.ErrorTerm)
     | Lfabsyn.IdType(id,_) ->
+        let hastype =
+          (match Table.find (Symbol.symbol hastypeStr) consttbl with
+               Some(c) -> c
+             | None -> hastype)
+        in
         fun m ->
           (match (Metadata.getLP metadata (Symb.symbol (Lfabsyn.get_id_name id))) with
                Some(s) ->
@@ -435,7 +455,7 @@ struct
 
   let translate_query (Lfabsyn.Query(vars, pt, ty)) metadata kindTab constTab =
     let makeAnd newtm tm =
-      makeApp (Absyn.ConstantTerm(Pervasive.andConstant,[],Errormsg.none)) [tm; newtm]
+      makeApp (Absyn.ConstantTerm(Pervasive.andConstant,[],Errormsg.none)) [newtm; tm]
     in
     let buildTerm pairs =
       let rec helper pairs typesymbTable (terms, typesymbs) =
