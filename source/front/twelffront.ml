@@ -75,19 +75,48 @@ let _ =
   let _ = compile_and_link () in
   let (currmod, md) = Loader.load "top" in
 
-  (* parse LF query *)
-  let lfquery = 
-    match Lfparse.parse_query "query.elf" with 
-        Some(q) -> q
-      | None -> print_string "failed to parse query.\n";
-                exit 1
+  (* Query solving interaction loop
+     (based on funciton from simulatorfront)
+     finds a solution for query and prints out. *)
+  let rec solveQueryInteract () =
+    let rec moreAnswers () =
+      print_string "\nMore solutions (y/n)? ";
+      match read_line () with
+        | "y" -> true
+        | "n" -> false
+        | _ ->
+            print_endline ("\nSorry, only options are `y' or `n'.\n" ^ 
+                           "Let's try it again:");
+            moreAnswers ()
+    in
+    if (Query.solveQuery ()) then
+      if (Query.queryHasVars ()) then
+        (Query.showAnswers ();
+         if (moreAnswers ()) then
+           solveQueryInteract ()
+         else
+           print_endline "\nyes\n")
+      else
+        print_endline "\nyes\n"
+    else
+      print_endline "\nno (more) solutions\n"
   in
-  let _ = print_endline ("LF query: "^(Lfabsyn.string_of_query lfquery)) in
-
-  (* translate LF query into C representation*)
-  let _ = Lfquery.submit_query lfquery md (Absyn.getModuleKindTable currmod) (Absyn.getModuleConstantTable currmod) in 
-
-  (* find a solution for query and print out. *)
-  let _ = Lfquery.solve_query (); Lfquery.show_answers () in
-  print_string "done!\n";
-  exit 1
+  let solveQuery queryfn =
+    (match Lfparse.parse_query queryfn with 
+         Some(lfquery) -> 
+           print_endline ("LF query: " ^ Lfabsyn.string_of_query lfquery);
+           if Lfquery.submit_query lfquery md (Absyn.getModuleKindTable currmod) (Absyn.getModuleConstantTable currmod) then 
+             solveQueryInteract ()
+           else
+             prerr_endline ""
+       | None -> print_string "failed to parse query.\n");
+    Module.cleanModule (); 
+    Front.simulatorReInit false ;
+    Module.initModuleContext ()  
+  in
+  (* enter interactive mode *)
+  while true do   
+    print_string ("[" ^ "top" ^"] ?- ");
+    let queryfn = read_line () in
+      solveQuery queryfn  
+  done

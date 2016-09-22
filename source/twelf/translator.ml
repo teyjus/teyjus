@@ -173,6 +173,11 @@ let rec encode_kind opt metadata consttbl vars k =
           in
           makeApp (Absyn.ConstantTerm(Pervasive.allConstant,[],Errormsg.none)) [abstm]
     | Lfabsyn.Type(_) ->
+        let istype =
+          (match Table.find (Symbol.symbol istypeStr) consttbl with
+               Some(c) -> c
+             | None -> istype)
+        in
         fun m ->
           Absyn.ApplicationTerm(Absyn.CurriedApplication(Absyn.ConstantTerm(istype, [], Errormsg.none), m), Errormsg.none)
 		  
