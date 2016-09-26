@@ -12,8 +12,11 @@ let rec set_mapping (lf_to_lp, lp_to_lf) lfs lps =
   (lf_to_lp', lp_to_lf')
 
 
+(** for now leaving this simple and always add 'lf_' to front of
+    name when translating to ensure no clashes with reserved 
+    identifiers in Teyjus. *)
 let new_mapping metadata lfs =
-  let lps = Symbol.generateName (Symb.name lfs) in
+  let lps = Symbol.symbol ("lf_"^(Symb.name lfs)) in
   set_mapping metadata lfs lps
 
 let string_of_metadata (lf_to_lp, _) =
