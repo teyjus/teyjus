@@ -192,6 +192,7 @@ LF_ML[] =
     $(LF)/strictness
     $(LF)/optimization
     $(LF)/translator
+    $(LF)/inverse
 
 DIS_MAIN = $(FNT)/disassemblerfront
 CMP_MAIN = $(FNT)/compilerfront
