@@ -8,6 +8,8 @@ and obj = Object of (id * typ * fixity * assoc * int * pos)
 
 and query = Query of (id * typ) list * id * typ
 
+and solution = (id * term) list * (term * term) list
+
 and fixity =
     Infix
   | Prefix
@@ -88,6 +90,35 @@ and string_of_id id =
 
 let string_of_query (Query(_,id,ty)) =
   (string_of_id id) ^ " : " ^ (string_of_typ ty)
+
+let string_of_solution (subst, disprs) =
+  let string_of_subst subst =
+    let rec string_of_subst_aux sub =
+      match sub with
+          ((id,tm) :: sub') ->
+            (string_of_id id) ^ " = " ^ (string_of_term tm) ^ "\n" ^ (string_of_subst_aux sub')
+        | [] -> ""
+    in
+    if subst = []
+    then 
+      ""
+    else
+      "The answer substitution:\n" ^ (string_of_subst_aux subst)
+  in
+  let string_of_disprs disprs =
+    let rec string_of_disprs_aux prs =
+      match prs with
+          ((t1,t2) :: prs') ->
+            "<" ^ (string_of_term t1) ^ ", " ^ (string_of_term t2) ^ ">\n" ^ (string_of_disprs_aux prs')
+        | [] -> ""
+    in
+    if disprs = []
+    then 
+      ""
+    else
+      "The remaining disagreement pairs list:\n" ^ (string_of_disprs_aux disprs)
+  in 
+  (string_of_subst subst) ^ "\n" ^ (string_of_disprs disprs)
 
 let get_typefam_pos (TypeFam(_,_,_,_,_,_,p)) = p
 let get_obj_pos (Object(_,_,_,_,_,p)) = p

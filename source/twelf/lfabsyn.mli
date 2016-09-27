@@ -14,6 +14,8 @@ and obj = Object of (id * typ * fixity * assoc * int * pos)
 
 and query = Query of (id * typ) list * id * typ
 
+and solution = (id * term) list * (term * term) list
+
 and fixity =
     Infix
   | Prefix
@@ -53,6 +55,7 @@ val string_of_typ : typ -> string
 val string_of_term : term -> string
 val string_of_id : id -> string
 val string_of_query : query -> string
+val string_of_solution : solution -> string
 
 val get_typefam_pos : typefam -> pos
 val get_obj_pos : obj -> pos

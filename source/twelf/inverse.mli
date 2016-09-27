@@ -8,6 +8,5 @@
 
 (** a solution consists of a substitution and a disagreement set. *)
 type lpsolution = (Absyn.atypesymbol * Absyn.aterm) list * (Absyn.aterm * Absyn.aterm) list
-type lfsolution = (Lfabsyn.id * Lfabsyn.term) list * (Lfabsyn.term * Lfabsyn.term) list
 
-val invert : Lfsig.signature -> Metadata.metadata -> Lfabsyn.typ Table.SymbolTable.t -> lpsolution -> lfsolution
+val invert : Lfsig.signature -> Metadata.metadata -> Lfabsyn.typ Table.SymbolTable.t -> lpsolution -> Lfabsyn.solution

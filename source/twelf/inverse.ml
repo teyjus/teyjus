@@ -1,8 +1,6 @@
 (** a solution consists of a substitution and a disagreement set. *)
 type lpsolution = (Absyn.atypesymbol * Absyn.aterm) list * (Absyn.aterm * Absyn.aterm) list
 
-type lfsolution = (Lfabsyn.id * Lfabsyn.term) list * (Lfabsyn.term * Lfabsyn.term) list
-
 let invert (Lfsig.Signature(_,types)) metadata fvars (subst, disprs) =
   (* collect all the object constants into a table for easy lookup
      ****Move this to somewhere else so it doesn't have to be done
