@@ -225,7 +225,7 @@ let invert (Lfsig.Signature(_,types)) metadata fvars (subst, disprs) =
                                       ("Error: invert_term: beta-redexes found in term when translating "^
                                        (Absyn.string_of_term lpterm)^" .");
                        (None, fvars''))
-      | Absyn.AbstractionTerm(Absyn.NestedAbstraction(tysymb,body),p) ->
+      | Absyn.AbstractionTerm(Absyn.NestedAbstraction(_,body),p) ->
           (** generate name for bound var
               add to bvars
               recurse to body of abstraction *)
