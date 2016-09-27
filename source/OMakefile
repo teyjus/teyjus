@@ -181,6 +181,7 @@ INC_C[] =
 LF_ML[] =
     $(LF)/symb
     $(LF)/symboltable
+    $(LF)/intmap
     $(LF)/lfabsyn
     $(LF)/lfsig
     $(LF)/lflexer
