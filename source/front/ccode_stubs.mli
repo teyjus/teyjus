@@ -62,3 +62,56 @@ external buildSortType  : int  -> int = "c_buildSortType"
 external buildStrType   : int  -> int -> int = "c_buildStrType"
 external buildFreeVarType : int -> int = "c_buildFreeVarType" 
 
+
+(* build (OCaml) term from C representation*)
+type tm_ptr
+  (* returns the number of variables that were in
+     the original query and need to be included in
+     the answer substitution *)
+external getNumQueryVars : unit -> int = "c_numQueryVars"
+
+  (* reset the free variable table to just the query vars. *)
+external resetFreeVarTab : unit -> unit = "c_resetFreeVarTab"
+
+  (* returns the term substituted for the variable 
+     at the given index in the free variable table. *)
+external getSubTerm : int -> tm_ptr = "c_getSubTerm"
+
+  (* returns the tag on the given term *)
+external getTermTag : tm_ptr -> int = "c_getTermTag"
+
+  (* return disagreement set as list*)
+external getDisSet : unit -> ((tm_ptr * tm_ptr) list) = "c_getDisSet"
+
+(* constants *)
+  (* returns the index into constant table of given constant term *)
+external getConstData : tm_ptr -> int = "c_getConstData"
+
+(* free variables *)
+  (* returns index into the free variable table if found,
+     else returns IO_freeVarTabTop *)
+external getFVarData : tm_ptr -> int = "c_getFVarData"
+
+  (* add the newly generated free variable name to the free var table in memory *)
+external setFVarTabName : int -> string -> unit = "c_setFVarName"
+
+(* bound variables *)
+  (* return de Bruijn index of given bound var term *)
+external getBVarData : tm_ptr -> int = "c_getBVarData"
+
+(* abstractions *)
+  (* returns tuple with the number of abstractions and body of abstraction *)
+external getAbsData : tm_ptr -> int * tm_ptr = "c_getAbsData"
+
+(* application *)
+  (* returns tuple of application head, argument list, and number of arguments *)
+external getAppData : tm_ptr -> tm_ptr * (tm_ptr list) * int = "c_getAppData"
+
+
+  (*** used to get the different tag values needed
+       for building a term ***)
+external getConstTag : unit -> int = "c_getConstTag"
+external getFVarTag : unit -> int = "c_getFVarTag"
+external getBVarTag : unit -> int = "c_getBVarTag"
+external getAbsTag : unit -> int = "c_getAbsTag"
+external getAppTag : unit -> int = "c_getAppTag"

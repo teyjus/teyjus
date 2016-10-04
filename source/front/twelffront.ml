@@ -59,7 +59,7 @@ let _ =
                  exit 1) in
 
   (* translate LF sig and generate files. *)
-  let _ = Translator.set_translation "optimized";
+  let _ = Translator.set_translation "naive";
           Optimization.Swap.set true;
           Optimization.Specialize.set true in
   let (metadata, kinds, constants, terms) = 
@@ -91,7 +91,8 @@ let _ =
     in
     if (Query.solveQuery ()) then
       if (Query.queryHasVars ()) then
-        (Query.showAnswers ();
+        (Lfquery.show_answers currmod sign md; 
+(*        (Query.showAnswers ();*)
          if (moreAnswers ()) then
            solveQueryInteract ()
          else

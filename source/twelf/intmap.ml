@@ -10,3 +10,7 @@ let find key table =
     Not_found -> None
 
 let add key value table = IntMap.add key value table
+
+let iter f table = IntMap.iter f table
+
+let fold f v table = IntMap.fold f v table

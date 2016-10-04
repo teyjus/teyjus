@@ -194,6 +194,7 @@ LF_ML[] =
     $(LF)/optimization
     $(LF)/translator
     $(LF)/inverse
+    $(FNT)/buildterm
 
 DIS_MAIN = $(FNT)/disassemblerfront
 CMP_MAIN = $(FNT)/compilerfront
@@ -315,7 +316,7 @@ if $(not $(file-exists prebuilt))
     StaticCLibrary(libtwelf, \
       $(SIM_C) $(SYS_C) $(TBL_C) $(FNT_C) $(LOD_C) $(LNK_C) $(INC_C))
     OCAML_CLIBS += libtwelf
-    OCAML_OTHER_LIBS += str
+    OCAML_OTHER_LIBS += str 
     OCamlProgram(tjtwelf, \
       $(LF_MAIN) $(LF_ML) $(LOD_ML) $(CMP_ML) $(FNT_ML) $(FNT_ML_TO_C))
 

@@ -18,9 +18,17 @@
 // along with Teyjus.  If not, see <http://www.gnu.org/licenses/>.          //
 //////////////////////////////////////////////////////////////////////////////
 #include <stdio.h>
-#include "../simulator/builtins/readterm.h"
+#include <string.h>
 #include "front_c.h"
 #include "query_c.h"
+#include "../simulator/abstmachine.h"
+#include "../simulator/builtins/builtins.h"
+#include "../simulator/dataformats.h"
+#include "../simulator/hnorm.h"
+#include "../simulator/io-datastructures.h"
+#include "../simulator/mcstring.h"
+#include "../simulator/mctypes.h"
+#include "../simulator/printterm.h"
 #include "caml/mlvalues.h"
 #include "caml/memory.h"
 #include "caml/alloc.h"
@@ -258,3 +266,182 @@ int c_buildFreeVarType(value index)
     CAMLreturn(Val_int(RT_buildFreeVarType(Int_val(index))));
 }
 
+/***************************************************************************/
+/*                           build (OCaml) term                            */
+/***************************************************************************/
+
+
+int c_numQueryVars(value unit)
+{
+    CAMLparam1(unit);
+    PRINT_setQueryFreeVariables();
+    CAMLreturn(Val_int(IO_freeVarTabTop));
+}
+
+value c_resetFreeVarTab(value unit)
+{
+  CAMLparam1(unit);
+  PRINT_resetFreeVarTab();
+  CAMLreturn(Val_unit);
+}
+
+value c_getSubTerm(value i)
+{
+    CAMLparam1 (i);
+    DF_TermPtr tm_ptr;
+    tm_ptr = IO_freeVarTab[Int_val(i)].rigdes;
+    HN_lnorm(tm_ptr);
+    PRINT_printTerm(tm_ptr);
+    CAMLreturn((value) tm_ptr);
+}
+
+int c_getTermTag(value i)
+{
+    CAMLparam1 (i);
+    DF_TermPtr tmptr = DF_termDeref((DF_TermPtr) i);
+    CAMLreturn(Val_int(DF_termTag(tmptr)));
+} 
+
+int c_getDisSet(value unit)
+{
+  CAMLparam1(unit);
+  CAMLlocal3(prs, pr, cons);
+
+  DF_DisPairPtr liveList = AM_llreg;
+  prs = Val_emptylist;    
+
+  while (DF_isNEmpDisSet(liveList)) {
+    cons = caml_alloc(2,0);
+    pr = caml_alloc(2,3);
+    Store_field(pr, 0, (value) DF_disPairFirstTerm(liveList));
+    Store_field(pr, 1, (value) DF_disPairSecondTerm(liveList));
+    Store_field(cons, 0, pr);
+    Store_field(cons, 1, prs);
+    prs = cons;
+    liveList = DF_disPairNext(liveList);
+  }
+
+  CAMLreturn(prs);
+}
+
+/* constants */
+int c_getConstData(value v)
+{
+  CAMLparam1(v);
+  DF_TermPtr tm_ptr = DF_termDeref((DF_TermPtr) v);
+  CAMLreturn(Val_int(DF_constTabIndex(tm_ptr)));
+}
+
+/* free variables */
+int c_getFVarData(value v)
+{
+  CAMLparam1(v);
+  DF_TermPtr tm_ptr = DF_termDeref((DF_TermPtr) v);
+  int fvind = 0;
+
+  IO_freeVarTab[IO_freeVarTabTop].rigdes = tm_ptr;
+  while (tm_ptr != IO_freeVarTab[fvind].rigdes) fvind++;
+  if ((fvind == IO_freeVarTabTop) && (IO_freeVarTabTop == IO_MAX_FREE_VARS)) {
+    EM_error(BI_ERROR_TYFVAR_CAP);
+  }
+  CAMLreturn(Val_int(fvind));
+}
+
+int c_setFVarName(value index, value name)
+{
+  CAMLparam2(index, name);
+  char* str = String_val(name);
+  int len = caml_string_length(name);
+
+  DF_StrDataPtr fvname = (DF_StrDataPtr) EM_malloc(sizeof(Word)*(MCSTR_numWords(len) + DF_STRDATA_HEAD_SIZE));
+  DF_mkStrDataHead((MemPtr)fvname);
+  MCSTR_toString((MemPtr)((MemPtr)fvname + DF_STRDATA_HEAD_SIZE), str, len);
+
+  IO_freeVarTab[Int_val(index)].varName = fvname;
+  IO_freeVarTabTop++;
+  CAMLreturn(Val_unit);
+}
+
+/* bound variables */
+int c_getBVarData(value v)
+{
+  CAMLparam1(v);
+  DF_TermPtr tm_ptr = DF_termDeref((DF_TermPtr) v);
+  CAMLreturn(Val_int(DF_bvIndex(tm_ptr)));
+}
+
+/* abstractions */
+value c_getAbsData(value v)
+{
+  CAMLparam1(v);
+  CAMLlocal1(res);
+  DF_TermPtr tm_ptr = DF_termDeref((DF_TermPtr) v);
+  res = caml_alloc(2,0);
+  Store_field(res, 0, Val_int(DF_lamNumAbs(tm_ptr)));
+  Store_field(res, 1, (value) (DF_lamBody(tm_ptr)));
+  CAMLreturn(res);
+}
+
+/* applications */
+value c_getAppData(value v)
+{
+  CAMLparam1(v);
+  CAMLlocal3(args, cons, res);
+  DF_TermPtr tm_ptr = DF_termDeref((DF_TermPtr) v);
+
+  int numArgs = DF_appArity(tm_ptr);
+  DF_TermPtr arg = DF_appArgs(tm_ptr);
+  int i;
+  
+  for(i = numArgs; i>0; i--){
+    arg++;
+  }
+
+  args = Val_emptylist;
+  for (i = numArgs; i > 0; i--){
+    arg--;
+    cons = caml_alloc(2,0);
+    Store_field(cons, 0, (value) arg);
+    Store_field(cons, 1, args);
+    args = cons;
+  }
+
+  res = caml_alloc(3,0);
+  DF_TermPtr head = DF_termDeref(DF_appFunc(tm_ptr));
+  Store_field(res, 0, (value) head);
+  Store_field(res, 1, args);
+  Store_field(res, 2, Val_int(numArgs));
+  CAMLreturn(res);
+}
+
+
+/* get the tag values for term categories */
+int c_getConstTag(value v)
+{
+  CAMLparam1 (v);
+  CAMLreturn(Val_int(DF_TM_TAG_CONST));
+}
+
+int c_getFVarTag(value v)
+{
+  CAMLparam1 (v);
+  CAMLreturn(Val_int(DF_TM_TAG_VAR));
+}
+
+int c_getBVarTag(value v)
+{
+  CAMLparam1(v);
+  CAMLreturn(Val_int(DF_TM_TAG_BVAR));
+}
+
+int c_getAbsTag(value v)
+{
+  CAMLparam1(v);
+  CAMLreturn(Val_int(DF_TM_TAG_LAM));
+}
+
+int c_getAppTag(value v)
+{
+  CAMLparam1(v);
+  CAMLreturn(Val_int(DF_TM_TAG_APP));
+}
