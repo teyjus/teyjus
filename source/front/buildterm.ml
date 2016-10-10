@@ -100,7 +100,7 @@ let rec build_term tmPtr freeVarTab constIdxMap =
 
 let build_subst lpmod freeVarTab constIdxMap = 
   let numfvars = Ccode_stubs.getNumQueryVars() in
-  let _ = print_endline ("There are "^(string_of_int numfvars)^" free variables.") in
+(*  let _ = print_endline ("There are "^(string_of_int numfvars)^" free variables.") in *)
   let rec build_subst_aux i freeVarTab =
     if i = numfvars
     then

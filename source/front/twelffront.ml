@@ -105,7 +105,7 @@ let _ =
   let solveQuery queryfn =
     (match Lfparse.parse_query queryfn with 
          Some(lfquery) -> 
-           print_endline ("LF query: " ^ Lfabsyn.string_of_query lfquery);
+(*           print_endline ("LF query: " ^ Lfabsyn.string_of_query lfquery);*)
            if Lfquery.submit_query lfquery md (Absyn.getModuleKindTable currmod) (Absyn.getModuleConstantTable currmod) then 
              solveQueryInteract ()
            else

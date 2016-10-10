@@ -132,8 +132,10 @@ let invert (Lfsig.Signature(_,types)) metadata fvars (subst, disprs) =
                | None ->
                    Errormsg.error Errormsg.none ("No mapping found for LP constant "^(Absyn.getConstantName c));
                    None)
+          (* I believe bdindex starts at 1,
+             but undexing into bvar list starts at 0. *)
         | Absyn.BoundVarTerm(Absyn.DBIndex(i),_) ->
-            Some(snd (List.nth bvars i))
+            Some(snd (List.nth bvars (i-1)))
         | Absyn.FreeVarTerm(Absyn.NamedFreeVar(tysymb),_) ->
             (match (Table.find (Absyn.getTypeSymbolSymbol tysymb) fvars) with
                  Some(ty) -> Some(ty)
@@ -164,8 +166,10 @@ let invert (Lfsig.Signature(_,types)) metadata fvars (subst, disprs) =
              | None ->
                  Errormsg.error Errormsg.none ("No mapping found for LP constant "^(Absyn.getConstantName c));
                  (None, fvars))
+        (* I believe bdindex starts at 1,
+             but undexing into bvar list starts at 0. *)
       | Absyn.BoundVarTerm(Absyn.DBIndex(i),p) ->
-          let (name, ty) = List.nth bvars i in
+          let (name, ty) = List.nth bvars (i-1) in
           (Some(Lfabsyn.IdTerm(Lfabsyn.Var(name, ty, p),p)), fvars)
       | Absyn.FreeVarTerm(Absyn.NamedFreeVar(tysymb), p) ->
           let (ty, fvars') =
