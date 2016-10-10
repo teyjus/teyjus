@@ -1,6 +1,29 @@
 (** a solution consists of a substitution and a disagreement set. *)
 type lpsolution = (Absyn.atypesymbol * Absyn.aterm) list * (Absyn.aterm * Absyn.aterm) list
 
+
+(** generate a new name for a bound variable.
+    checks for clashes with 
+      - constants in LF sig
+      - logic variables in query
+**)
+let bvar_namegen_count = ref 0
+let bvar_namegen_base = ref "X"
+let generate_name metadata fvars =
+  let isName name =
+    if (Metadata.isName metadata name)
+    then true
+    else Option.isSome (Table.find (Symbol.symbol name) fvars)
+  in
+  let rec generate_aux () =
+    let name = bvar_namegen_count := (!bvar_namegen_count) + 1;
+               (!bvar_namegen_base) ^ (string_of_int (!bvar_namegen_count)) in
+    if isName name
+    then generate_aux ()
+    else name
+  in
+  generate_aux ()
+
 let invert (Lfsig.Signature(_,types)) metadata fvars (subst, disprs) =
   (* collect all the object constants into a table for easy lookup
      ****Move this to somewhere else so it doesn't have to be done
@@ -17,9 +40,13 @@ let invert (Lfsig.Signature(_,types)) metadata fvars (subst, disprs) =
   let rec apply_subst lftype substitution =
     let rec sub_tm id tm t =
       match t with
-          Lfabsyn.AbsTerm(n,_,_,_) 
+          Lfabsyn.AbsTerm(n,ty,_,_) 
             when (Lfabsyn.get_id_name id) = (Lfabsyn.get_id_name n) ->
-            t
+            let newname = generate_name metadata fvars in
+            let Lfabsyn.AbsTerm(n',ty',body',p') = 
+              sub_tm id (Lfabsyn.IdTerm(Lfabsyn.Var(newname,ty,Errormsg.none),Errormsg.none)) t 
+            in
+            Lfabsyn.AbsTerm(n', subst id tm ty', sub_tm id tm body',p')
         | Lfabsyn.AbsTerm(n,ty,body,p) ->
             let ty' = subst id tm ty in
             let body' = sub_tm id tm body in
@@ -51,9 +78,13 @@ let invert (Lfsig.Signature(_,types)) metadata fvars (subst, disprs) =
        but is correct and will work. Should be fixed later though. *)
     and subst id tm ty =
       match ty with
-          Lfabsyn.PiType(n,_,_,_) 
+          Lfabsyn.PiType(n,t,_,_) 
             when (Lfabsyn.get_id_name id) = (Lfabsyn.get_id_name n) -> 
-            ty
+            let newname = generate_name metadata fvars in
+            let Lfabsyn.PiType(n',t',b',p') = 
+              subst n (Lfabsyn.IdTerm(Lfabsyn.Var(newname,t,Errormsg.none),Errormsg.none)) ty 
+            in
+            Lfabsyn.PiType(n', subst id tm t', subst id tm b', p')
         | Lfabsyn.PiType(n,t,b,p) ->
             Lfabsyn.PiType(n, subst id tm t, subst id tm b, p)
         | Lfabsyn.ImpType(l,r,p) ->
@@ -230,10 +261,31 @@ let invert (Lfsig.Signature(_,types)) metadata fvars (subst, disprs) =
           (** generate name for bound var
               add to bvars
               recurse to body of abstraction *)
-	  let Lfabsyn.PiType(id,ty,tybody,p) = apply_subst lftype subst in
-	  let bvars' = List.append [(Lfabsyn.get_id_name id, ty)] bvars in
-	  let (body', fvars') = invert_term fvars bvars' (tybody,[]) body in
-	  (Some(Lfabsyn.AbsTerm(id,ty,Option.get body',p)), fvars')
+          let bvar_name = generate_name metadata fvars in
+          (match apply_subst lftype subst with
+               Lfabsyn.PiType(id, ty, tybody, p) ->
+                 let bvars' = List.append [(bvar_name, ty)] bvars in
+                 let bvar_term = Lfabsyn.IdTerm(Lfabsyn.Var(bvar_name, ty, Errormsg.none), Errormsg.none) in
+	         let (body', fvars') = invert_term fvars bvars' (tybody,[id, bvar_term]) body in
+                 if (Option.isSome body')
+                 then
+  	           (Some(Lfabsyn.AbsTerm(Lfabsyn.Var(bvar_name, ty, Errormsg.none),ty,Option.get body',p)), fvars')
+                 else
+                   (*error, try to continue *)
+                   (None, fvars')
+             | Lfabsyn.ImpType(l, r, p) ->
+                 let bvars' = List.append [(bvar_name, l)] bvars in
+                 let bvar_term = Lfabsyn.IdTerm(Lfabsyn.Var(bvar_name, l, Errormsg.none), Errormsg.none) in
+                 let (body', fvars') = invert_term fvars bvars' (r, []) body in
+                 if (Option.isSome body')
+                 then
+                   (Some(Lfabsyn.AbsTerm(Lfabsyn.Var(bvar_name, l, Errormsg.none),l,Option.get body',p)), fvars')
+                 else
+                   (*error, try to continue *)
+                   (None, fvars')
+             | _ ->
+               Errormsg.error Errormsg.none ("Error: invert_term: Inverting abstraction with non-function type.");
+               (None, fvars))
   in
   (** first work through substitution, then disagreement pairs.
       assumption: order in the substitution is in dependency order.
