@@ -177,7 +177,7 @@ let invert (Lfsig.Signature(_,types)) metadata fvars (subst, disprs) =
                                     ("Error: invert_term: beta-redexes found in term when translating "^
                                      (Absyn.string_of_term lpterm)^" .");
                      (None, fvars'))
-          else
+          else (*not a new logic var*)
             let h_ty = get_type fvars bvars head in
             if Option.isNone h_ty
             then 
@@ -191,8 +191,11 @@ let invert (Lfsig.Signature(_,types)) metadata fvars (subst, disprs) =
 	        let trans_arg bty subst fvars arg =
                   (match bty with
 		       Lfabsyn.PiType(id,ty,body,_) ->
-  		         let (a',fvars') = (invert_term fvars bvars (ty, subst) arg) in
+  		         let (a',fvars') = invert_term fvars bvars (ty, subst) arg in
 		         (body, (id, Option.get a') :: subst, fvars', a')
+                     | Lfabsyn.ImpType(l,r,_) ->
+                         let (a', fvars') = invert_term fvars bvars (l, subst) arg in
+                         (r, subst, fvars', a')
 		     | _ -> 
                        Errormsg.error Errormsg.none ("Error: invert_term: Type of head does not match number of arguments.");
                        (bty, subst, fvars, None))
@@ -320,6 +323,9 @@ let invert (Lfsig.Signature(_,types)) metadata fvars (subst, disprs) =
                        else
                          (* something went wrong, but try to continue *)
                          (None, fvars', (body, sub))
+                   | Lfabsyn.ImpType(l,r,_) ->
+                       let (arg', fvars') = invert_term fvars [] (l, sub) arg in
+                         (arg', fvars', (r, sub))
                    | _ ->
                      Errormsg.error Errormsg.none 
                                     ("Error: trans_disprs: Type of head does not match number of arguments in term "^
@@ -374,6 +380,9 @@ let invert (Lfsig.Signature(_,types)) metadata fvars (subst, disprs) =
                        else
                          (* something went wrong, but try to continue *)
                          (None, fvars', (body, sub))
+                   | Lfabsyn.ImpType(l,r,_) ->
+                       let (arg', fvars') = invert_term fvars [] (l, sub) arg in
+                       (arg', fvars', (r, sub))
                    | _ ->
                      Errormsg.error Errormsg.none 
                                     ("Error: trans_disprs: Type of head does not match number of arguments in term "^
