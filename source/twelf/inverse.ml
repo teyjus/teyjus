@@ -8,12 +8,14 @@ type lpsolution = (Absyn.atypesymbol * Absyn.aterm) list * (Absyn.aterm * Absyn.
       - logic variables in query
 **)
 let bvar_namegen_count = ref 0
-let bvar_namegen_base = ref "X"
+ (* free vars must start with uppercase letter in twelf,
+    so we actually don't need to check against the fvars *)
+let bvar_namegen_base = ref "x"
 let generate_name metadata fvars =
-  let isName name =
-    if (Metadata.isName metadata name)
+  let isName name = Metadata.isName metadata name
+    (*if (Metadata.isName metadata name)
     then true
-    else Option.isSome (Table.find (Symbol.symbol name) fvars)
+    else Option.isSome (Table.find (Symbol.symbol name) fvars)*)
   in
   let rec generate_aux () =
     let name = bvar_namegen_count := (!bvar_namegen_count) + 1;
