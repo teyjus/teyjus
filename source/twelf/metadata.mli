@@ -2,6 +2,8 @@
 
 type metadata
 
+val isName : metadata -> string -> bool
+
 val getLP : metadata -> Symb.symbol -> Symbol.symbol option
 val getLF : metadata -> Symbol.symbol -> Symb.symbol option
 
