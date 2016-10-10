@@ -58,12 +58,12 @@ let reset () =
 
 %%
 parseQuery
-  : querybndrs DOT typing END    {let (id,tm) = $3 in Lfabsyn.Query($1,id,tm)}
-  | typing END                   {let (id,tm) = $1 in Lfabsyn.Query([],id,tm)}
+  : querybndrs DOT VARID COLON type_tm END    {Lfabsyn.Query($1,Lfabsyn.LogicVar($3, $5, getPos 3),$5)}
+  | VARID COLON type_tm END                   {Lfabsyn.Query([],Lfabsyn.LogicVar($1, $3, getPos 1),$3)}
   ;
 
 querybndrs
-  : LANGLE typing RANGLE querybndrs  {($2 :: $4)}
+  : LANGLE VARID COLON type_tm RANGLE querybndrs  {((Lfabsyn.LogicVar($2, $4, getPos 2), $4) :: $6)}
   |                                       {[]}
   ;
 
@@ -84,7 +84,6 @@ declaration_list
 
 typing
   : VARID COLON type_tm                   {(Lfabsyn.Var($1, $3, getPos 1), $3)}
-  | LANGLE VARID RANGLE COLON type_tm     {(Lfabsyn.LogicVar($2, $5, getPos 2), $5)}
   | CONSTID COLON type_tm                 {(Lfabsyn.Const($1, getPos 1), $3)}
   ;
 
