@@ -458,29 +458,21 @@ struct
     let clauses = process false metadata constants types in
     (metadata, kinds, constants, clauses)
 
-  let translate_query (Lfabsyn.Query(vars, pt, ty)) metadata kindTab constTab =
-    let makeAnd newtm tm =
-      makeApp (Absyn.ConstantTerm(Pervasive.andConstant,[],Errormsg.none)) [newtm; tm]
-    in
-    let buildTerm pairs =
-      let rec helper pairs typesymbTable (terms, typesymbs) =
-        match pairs with
-            ((Lfabsyn.LogicVar(n,_,_) as id,t)::pairs') ->
-              let typsymb = Absyn.ImplicitVar(Symbol.symbol n, 
-                                              ref None, 
-                                              ref true, 
-                                              ref (Some(flatten_type t))) 
-              in
-              let typesymbTable' = Table.add (Symbol.symbol n) typsymb typesymbTable in
-              let varterm = Absyn.makeFreeVarTerm typsymb Errormsg.none in
-              let enctype = (encode_type_positive false metadata constTab typesymbTable' t) varterm in
-              helper pairs' typesymbTable' (enctype :: terms, typsymb :: typesymbs)
-          | [] -> (terms, typesymbs)
+  let translate_query (Lfabsyn.Query(vars, Lfabsyn.LogicVar(pt,_,_), ty)) metadata kindTab constTab =
+    let get_fvars pairs =
+      let f (tysymbs, table) (Lfabsyn.LogicVar(n,_,_),t) =
+        let tysymb = Absyn.ImplicitVar(Symbol.symbol n, ref None, ref true, ref (Some(flatten_type t))) in
+        let table' = Table.add (Absyn.getTypeSymbolSymbol tysymb) tysymb table in
+        ((tysymb :: tysymbs), table')
       in
-      let (terms, fvars) = helper pairs Table.empty ([],[]) in
-      (List.fold_left makeAnd (List.hd terms) (List.tl terms), fvars) 
+      List.fold_left f ([], Table.empty) pairs
     in
-    buildTerm (List.append vars [(pt, ty)])
+    let (fvars, typesymbTable) = get_fvars vars in
+    let pt_typsymb = Absyn.ImplicitVar(Symbol.symbol pt, ref None, ref true, ref (Some(flatten_type ty))) in
+    let typesymbTable' = Table.add (Absyn.getTypeSymbolSymbol pt_typsymb) pt_typsymb typesymbTable in
+    let varterm = Absyn.makeFreeVarTerm pt_typsymb Errormsg.none in
+    let enctype =  (encode_type_positive false metadata constTab typesymbTable ty) varterm in
+    (enctype, List.append fvars [pt_typsymb])
 end
 
 module OptimizedTranslation : Translator =
