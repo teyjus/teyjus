@@ -472,7 +472,7 @@ struct
     let typesymbTable' = Table.add (Absyn.getTypeSymbolSymbol pt_typsymb) pt_typsymb typesymbTable in
     let varterm = Absyn.makeFreeVarTerm pt_typsymb Errormsg.none in
     let enctype =  (encode_type_positive false metadata constTab typesymbTable ty) varterm in
-    (enctype, List.append fvars [pt_typsymb])
+    (enctype, pt_typsymb :: fvars)
 end
 
 module OptimizedTranslation : Translator =

@@ -291,7 +291,7 @@ value c_getSubTerm(value i)
     DF_TermPtr tm_ptr;
     tm_ptr = IO_freeVarTab[Int_val(i)].rigdes;
     HN_lnorm(tm_ptr);
-    PRINT_printTerm(tm_ptr);
+    //    PRINT_printTerm(tm_ptr);
     CAMLreturn((value) tm_ptr);
 }
 
@@ -313,8 +313,12 @@ int c_getDisSet(value unit)
   while (DF_isNEmpDisSet(liveList)) {
     cons = caml_alloc(2,0);
     pr = caml_alloc(2,3);
-    Store_field(pr, 0, (value) DF_disPairFirstTerm(liveList));
-    Store_field(pr, 1, (value) DF_disPairSecondTerm(liveList));
+    DF_TermPtr tm1 = DF_disPairFirstTerm(liveList);
+    DF_TermPtr tm2 = DF_disPairSecondTerm(liveList);
+    HN_lnorm(tm1);
+    HN_lnorm(tm2);
+    Store_field(pr, 0, (value) tm1);
+    Store_field(pr, 1, (value) tm2);
     Store_field(cons, 0, pr);
     Store_field(cons, 1, prs);
     prs = cons;
