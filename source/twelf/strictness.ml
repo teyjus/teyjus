@@ -42,7 +42,7 @@ let rec appears_strict_ty id ty bndrs =
 and appears_strict_tm id tm bndrs =
   match tm with
       Lfabsyn.AbsTerm(name,ty,body,_) ->
-        false
+        appears_strict_tm id body (name :: bndrs)
     | Lfabsyn.AppTerm(name,tms,_) ->
         let check =
           (match (name, id) with
@@ -71,3 +71,4 @@ let appears_strict id ty =
     | Lfabsyn.Var(name,_,_)
     | Lfabsyn.LogicVar(name,_,_) ->
         appears_strict_ty id ty []
+      
