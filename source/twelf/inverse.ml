@@ -25,6 +25,8 @@ let generate_name metadata fvars =
     else name
   in
   generate_aux ()
+let reset_namegen_count () = bvar_namegen_count := 0
+
 
 let invert (Lfsig.Signature(_,types)) metadata fvars (subst, disprs) =
   (* collect all the object constants into a table for easy lookup
@@ -172,7 +174,7 @@ let invert (Lfsig.Signature(_,types)) metadata fvars (subst, disprs) =
           let (name, ty) = List.nth bvars (i-1) in
           (Some(Lfabsyn.IdTerm(Lfabsyn.Var(name, ty, p),p)), fvars)
       | Absyn.FreeVarTerm(Absyn.NamedFreeVar(tysymb), p) ->
-          let (ty, fvars') =
+          let (ty, fvars'') =
             (match (Table.find (Absyn.getTypeSymbolSymbol tysymb) fvars) with
                  Some(ty) ->
                    (ty, fvars)
@@ -181,7 +183,7 @@ let invert (Lfsig.Signature(_,types)) metadata fvars (subst, disprs) =
                    let fvars' = Table.add (Absyn.getTypeSymbolSymbol tysymb) ty fvars in
                    (ty, fvars'))
           in
-          (Some(Lfabsyn.IdTerm(Lfabsyn.LogicVar(Absyn.string_of_term lpterm, ty, p), p)), fvars')
+          (Some(Lfabsyn.IdTerm(Lfabsyn.LogicVar(Absyn.string_of_term lpterm, ty, p), p)), fvars'')
       | Absyn.ApplicationTerm(abstm,p) ->
           let (head, args) = Absyn.getTermApplicationHeadAndArguments lpterm in
           if (Absyn.isTermFreeVariable head && 
@@ -191,7 +193,7 @@ let invert (Lfsig.Signature(_,types)) metadata fvars (subst, disprs) =
 	    let target_ty = apply_subst lftype subst in
 	    (** new logic vars appear as patterns so args are all bound vars, and so types can be found by get_type *)
 	    let arg_tys = List.map (fun x -> Option.get (get_type fvars bvars x)) args in
-            (** again, because new logic vars appear as aptters no need to worry about changes to fvars while inverting args *)
+            (** again, because new logic vars appear as patterns no need to worry about changes to fvars while inverting args *)
 	    let args' = List.map2 (fun x y -> Option.get (fst (invert_term fvars bvars (x,[]) y))) arg_tys args in
 	    (** b/c all args are bound variables we know they are of the correct form when inverted *)
             let h_ty = 
@@ -199,21 +201,22 @@ let invert (Lfsig.Signature(_,types)) metadata fvars (subst, disprs) =
                                     Lfabsyn.PiType(id,ty,body,p)) 
                              target_ty 
                              (List.rev args') in
-	    let (h', fvars') = invert_term fvars bvars (h_ty, []) head in
+            let fvars' = Table.add (Absyn.getTypeSymbolSymbol (Absyn.getTermFreeVariableTypeSymbol head)) h_ty fvars in
+	    let (h', fvars'') = invert_term fvars' bvars (h_ty, []) head in
             if Option.isNone h'
             then
-              (None, fvars')
+              (None, fvars'')
             else
               (match Option.get h' with
                    Lfabsyn.IdTerm(id,_) ->
-   	             (Some(Lfabsyn.AppTerm(id, args',p)), fvars')
+   	             (Some(Lfabsyn.AppTerm(id, args',p)), fvars'')
                  | Lfabsyn.AppTerm(id,newargs,_) ->
-                     (Some(Lfabsyn.AppTerm(id, List.append newargs args',p)), fvars')
+                     (Some(Lfabsyn.AppTerm(id, List.append newargs args',p)), fvars'')
                  | Lfabsyn.AbsTerm(_,_,_,_) ->
                      Errormsg.error Errormsg.none
                                     ("Error: invert_term: beta-redexes found in term when translating "^
                                      (Absyn.string_of_term lpterm)^" .");
-                     (None, fvars'))
+                     (None, fvars''))
           else (*not a new logic var*)
             let h_ty = get_type fvars bvars head in
             if Option.isNone h_ty
@@ -355,8 +358,10 @@ let invert (Lfsig.Signature(_,types)) metadata fvars (subst, disprs) =
       if Option.isSome ty
       then (* simple case where one term is just a constant or free var *)
         let thetype = Option.get ty in
-        let (t1', fvars') = invert_term fvars [] (thetype,[]) t1 in
-        let (t2', fvars'') = invert_term fvars' [] (thetype,[]) t2 in
+        let (t1', fvars') = reset_namegen_count ();
+                            invert_term fvars [] (thetype,[]) t1 in
+        let (t2', fvars'') = reset_namegen_count ();
+                             invert_term fvars' [] (thetype,[]) t2 in
         ((t1',t2'), fvars'')
       else
         (* hasConstOrFreeVarHead : Absyn.aterm -> bool 
@@ -370,11 +375,13 @@ let invert (Lfsig.Signature(_,types)) metadata fvars (subst, disprs) =
               let (head, args) = Absyn.getTermApplicationHeadAndArguments t1 in
               (* this must work now because know the head is a constant or free var *)
               let h_ty = Option.get (get_type fvars [] head) in 
-              let (head', fvars') = invert_term fvars [] (h_ty, []) head in
+              let (head', fvars') = reset_namegen_count ();
+                                    invert_term fvars [] (h_ty, []) head in
               let trans_arg (bty, sub) fvars arg =
                 (match bty with
                      Lfabsyn.PiType(id,ty,body,p) ->
-                       let (arg', fvars') = invert_term fvars [] (ty, sub) arg in
+                       let (arg', fvars') = reset_namegen_count ();
+                                            invert_term fvars [] (ty, sub) arg in
                        if Option.isSome arg'
                        then
                          (arg', fvars', (body, ((id, Option.get arg')::sub)))
@@ -382,7 +389,8 @@ let invert (Lfsig.Signature(_,types)) metadata fvars (subst, disprs) =
                          (* something went wrong, but try to continue *)
                          (None, fvars', (body, sub))
                    | Lfabsyn.ImpType(l,r,_) ->
-                       let (arg', fvars') = invert_term fvars [] (l, sub) arg in
+                       let (arg', fvars') = reset_namegen_count ();
+                                            invert_term fvars [] (l, sub) arg in
                          (arg', fvars', (r, sub))
                    | _ ->
                      Errormsg.error Errormsg.none 
@@ -421,17 +429,20 @@ let invert (Lfsig.Signature(_,types)) metadata fvars (subst, disprs) =
                                          " Translation of constant or free var cannot be an abstraction.");
                          None)
               in
-              let (t2', fvars''') = invert_term fvars'' [] (term_ty, []) t2 in
+              let (t2', fvars''') = reset_namegen_count ();
+                                    invert_term fvars'' [] (term_ty, []) t2 in
               ((t1',t2'),fvars''')
           | (_,Absyn.ApplicationTerm(_,_)) when hasConstOrFreeVarHead t2 ->
               let (head, args) = Absyn.getTermApplicationHeadAndArguments t2 in
               (* this must work now because know the head is a constant or free var *)
               let h_ty = Option.get (get_type fvars [] head) in 
-              let (head', fvars') = invert_term fvars [] (h_ty, []) head in
+              let (head', fvars') = reset_namegen_count ();
+                                    invert_term fvars [] (h_ty, []) head in
               let trans_arg (bty, sub) fvars arg =
                 (match bty with
                      Lfabsyn.PiType(id,ty,body,p) ->
-                       let (arg', fvars') = invert_term fvars [] (ty, sub) arg in
+                       let (arg', fvars') = reset_namegen_count ();
+                                            invert_term fvars [] (ty, sub) arg in
                        if Option.isSome arg'
                        then
                          (arg', fvars', (body, ((id, Option.get arg')::sub)))
@@ -439,7 +450,8 @@ let invert (Lfsig.Signature(_,types)) metadata fvars (subst, disprs) =
                          (* something went wrong, but try to continue *)
                          (None, fvars', (body, sub))
                    | Lfabsyn.ImpType(l,r,_) ->
-                       let (arg', fvars') = invert_term fvars [] (l, sub) arg in
+                       let (arg', fvars') = reset_namegen_count ();
+                                            invert_term fvars [] (l, sub) arg in
                        (arg', fvars', (r, sub))
                    | _ ->
                      Errormsg.error Errormsg.none 
@@ -478,7 +490,8 @@ let invert (Lfsig.Signature(_,types)) metadata fvars (subst, disprs) =
                                          " Translation of constant or free var cannot be an abstraction.");
                          None)
               in
-              let (t1', fvars''') = invert_term fvars'' [] (term_ty, []) t1 in
+              let (t1', fvars''') = reset_namegen_count ();
+                                    invert_term fvars'' [] (term_ty, []) t1 in
               ((t1',t2'),fvars''')
           | _ ->
             Errormsg.error Errormsg.none 

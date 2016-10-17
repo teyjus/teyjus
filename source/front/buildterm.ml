@@ -1,5 +1,5 @@
 (* for generating names of new logic variables *)
-let newFVarBasename = ref "_T"
+let newFVarBasename = ref "X"
 let newFVarCounter = ref 0
 let set_newFV_basename name =
   if name = (!newFVarBasename)
@@ -66,7 +66,7 @@ let rec build_term tmPtr freeVarTab constIdxMap =
                  let tysymb = Absyn.ImplicitVar(Symbol.symbol name, ref None, ref true, ref None) in
                  let freeVarTab' = Intmap.add idx tysymb freeVarTab in
                  (Ccode_stubs.setFVarTabName idx name);
-                 (Absyn.FreeVarTerm(Absyn.NamedFreeVar(tysymb), Errormsg.none), freeVarTab))
+                 (Absyn.FreeVarTerm(Absyn.NamedFreeVar(tysymb), Errormsg.none), freeVarTab'))
       | t when t = tag_bvar -> 
           let idx = Ccode_stubs.getBVarData(tmPtr) in
           (Absyn.BoundVarTerm(Absyn.DBIndex(idx),Errormsg.none), freeVarTab)
@@ -89,7 +89,7 @@ let rec build_term tmPtr freeVarTab constIdxMap =
             List.fold_left (fun (args, fvtab) tmptr -> 
                               let (arg, fvtab') = build_term_aux tmptr fvtab in
                               (List.append args [arg], fvtab')) 
-                           ([], freeVarTab) 
+                           ([], freeVarTab') 
                            arg_tmptrs
           in
           (Absyn.ApplicationTerm(Absyn.FirstOrderApplication(head, args, numArgs), Errormsg.none), freeVarTab'')
@@ -108,7 +108,7 @@ let build_subst lpmod freeVarTab constIdxMap =
     else
       match Intmap.find i freeVarTab with
           Some(tysymb) ->
-            let (tm, freeVarTab') = set_newFV_basename (Absyn.getTypeSymbolName tysymb);
+            let (tm, freeVarTab') = (*set_newFV_basename (Absyn.getTypeSymbolName tysymb); *)
                                     build_term (Ccode_stubs.getSubTerm(i)) freeVarTab constIdxMap in
             let (rest, freeVarTab'') = build_subst_aux (i + 1) freeVarTab' in
             ((tysymb, tm) :: rest, freeVarTab'')
