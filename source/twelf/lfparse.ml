@@ -55,14 +55,23 @@ let parse filename =
     | Failure(s) -> (print_endline ("Error: " ^ s ^ "."); None)
 
 
-let parse_query filename =
+let parse_query string =
   try
-    let inchannel = (openFile filename open_in) in
-    let lexbuf = Lexing.from_channel inchannel in
-    let () = Lflexer.setFileName lexbuf filename in
-    let result = Lfparser.parseQuery Lflexer.initial lexbuf in
-    (closeFile inchannel close_in;
-     Some result)
+    if (Sys.file_exists string)
+    then
+      let inchannel = (openFile string open_in) in
+      let lexbuf = Lexing.from_channel inchannel in
+      let () = Lflexer.setFileName lexbuf string in
+      let result = Lfparser.parseQuery Lflexer.initial lexbuf in
+      let _ = closeFile inchannel close_in;
+              print_endline ("The query:\n"^(Lfabsyn.string_of_query result)^"\n") in
+      Some result
+    else
+      let lexbuf = Lexing.from_string string in
+      let result = Lfparser.parseQuery Lflexer.initial lexbuf in
+      let _ = print_endline ("The query:\n"^(Lfabsyn.string_of_query result)^"\n") in
+      Some result
   with
-      Parsing.Parse_error -> (print_endline "Error: syntax error."; None)
+      Parsing.Parse_error -> 
+        (print_endline "Error: syntax error."; None)
     | Failure(s) -> (print_endline ("Error: " ^ s ^ "."); None)    

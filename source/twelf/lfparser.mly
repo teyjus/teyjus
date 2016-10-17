@@ -58,8 +58,8 @@ let reset () =
 
 %%
 parseQuery
-  : querybndrs DOT VARID COLON type_tm END    {Lfabsyn.Query($1,Lfabsyn.LogicVar($3, $5, getPos 3),$5)}
-  | VARID COLON type_tm END                   {Lfabsyn.Query([],Lfabsyn.LogicVar($1, $3, getPos 1),$3)}
+  : querybndrs DOT VARID COLON type_tm DOT    {Lfabsyn.Query($1,Lfabsyn.LogicVar($3, $5, getPos 3),$5)}
+  | VARID COLON type_tm DOT                   {Lfabsyn.Query([],Lfabsyn.LogicVar($1, $3, getPos 1),$3)}
   ;
 
 querybndrs
