@@ -76,7 +76,7 @@ sig
 
 end  (* signature LEXER *)
 
-module Lexer : LEXER = functor (Stream' : Stream.STREAM) ->
+module LexerFunc : LEXER = functor (Stream' : Stream.STREAM) ->
 struct
   (* let module Stream = Stream' *)
   (*! structure Paths = Paths' !*)
@@ -537,6 +537,6 @@ end  (* functor Lexer *)
 
 
 
-module ALexer =
-  Lexer (Stream.BStream)
+module Lexer =
+  LexerFunc (Stream.Stream)
 

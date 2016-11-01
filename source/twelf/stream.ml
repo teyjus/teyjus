@@ -80,7 +80,7 @@ sig
   val tabulate : (int -> 'a) -> 'a stream
 end;;
 
-module Stream (BasicStream : BASIC_STREAM) : STREAM =
+module StreamFunc (BasicStream : BASIC_STREAM) : STREAM =
 struct
   include BasicStream
 
@@ -190,9 +190,9 @@ struct
 end;;
 
 (* structure Stream :> STREAM --- non-memoizing *)
-module BStream : STREAM =
-  Stream(BasicStream);;
+module Stream : STREAM =
+  StreamFunc(BasicStream);;
 
 (* structure MStream :> STREAM --- memoizing *)
 module MStream : STREAM =
-  Stream (BasicMemoStream);;
+  StreamFunc (BasicMemoStream);;

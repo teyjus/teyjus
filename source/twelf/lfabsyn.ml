@@ -2,6 +2,9 @@
 
 type pos = Errormsg.pos
 
+let maxPrec = 9999
+let minPrec = 0
+
 type typefam = TypeFam of (id * kind * fixity * assoc * int * (obj ref) list ref * pos)
 
 and obj = Object of (id * typ * fixity * assoc * int * pos)

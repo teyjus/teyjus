@@ -2,6 +2,9 @@
 
 type pos = Errormsg.pos
 
+val maxPrec : int
+val minPrec : int
+
 (** A type-level declaration. 
     (constant name, kind, fixity, associativity, precedence,
     associated object constants, location in file) *)
