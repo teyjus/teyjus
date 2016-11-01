@@ -14,7 +14,7 @@ sig
   (* Eager stream construction *)
   val empty : 'a stream
   val cons : 'a * 'a stream -> 'a stream
-end;;
+end
 
 module BasicStream : BASIC_STREAM =
 struct
@@ -26,7 +26,7 @@ struct
 
   let empty = Stream (fun () -> Empty)
   let cons (x, s) = Stream (fun () -> Cons (x, s))
-end;;
+end
 
 (* Note that this implementation is NOT semantically *)
 (* equivalent to the plain (non-memoizing) streams, since *)
@@ -52,7 +52,7 @@ struct
       
   let empty = Stream (fun () -> Empty)
   let cons (x, s) = Stream (fun () -> Cons (x, s))
-end;;
+end
 
 (* STREAM extends BASIC_STREAMS by operations *)
 (* definable without reference to the implementation *)
@@ -78,7 +78,7 @@ sig
   val toList : 'a stream -> 'a list
 
   val tabulate : (int -> 'a) -> 'a stream
-end;;
+end
 
 module StreamFunc (BasicStream : BASIC_STREAM) : STREAM =
 struct
@@ -187,12 +187,12 @@ struct
     let tabulate' f = Cons (f(0), tabulate (fun i -> f(i+1))) in
     delay (fun () -> tabulate' f)
 
-end;;
+end
 
 (* structure Stream :> STREAM --- non-memoizing *)
 module Stream : STREAM =
-  StreamFunc(BasicStream);;
+  StreamFunc(BasicStream)
 
 (* structure MStream :> STREAM --- memoizing *)
 module MStream : STREAM =
-  StreamFunc (BasicMemoStream);;
+  StreamFunc (BasicMemoStream)

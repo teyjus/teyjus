@@ -1,19 +1,5 @@
 (* This is taken from the Twelf implementation *)
 
-module type PARSE_TERM =
-sig
-
-  (*! structure Parsing : PARSING !*)
-
-  val parseQualId' : (string list * Parsing.Parsing.lexResult) Parsing.Parsing.parser
-  val parseTerm' : ExtSyn.term Parsing.Parsing.parser
-  val parseDec' : (string option * ExtSyn.term option) Parsing.Parsing.parser
-
-end  (* signature PARSE_TERM *)
-
-
-module ParseTerm : PARSE_TERM =
-struct
 
   (* Operators and atoms for operator precedence parsing *)
   type 'a operator =
@@ -37,13 +23,13 @@ struct
 
   let idToTerm args =
     match args with
-        (Lexer.Lexer.Lower, ids, name, r) -> ExtSyn.lcid (ids, name, r)
-      | (Lexer.Lexer.Upper, ids, name, r) -> ExtSyn.ucid (ids, name, r)
-      | (Lexer.Lexer.Quoted, ids, name, r) -> ExtSyn.quid (ids, name, r)
+        (Parsing.Parsing.Lexer'.Lower, ids, name, r) -> ExtSyn.lcid (ids, name, r)
+      | (Parsing.Parsing.Lexer'.Upper, ids, name, r) -> ExtSyn.ucid (ids, name, r)
+      | (Parsing.Parsing.Lexer'.Quoted, ids, name, r) -> ExtSyn.quid (ids, name, r)
 
   let isQuoted arg =
     match arg with
-        (Lexer.Lexer.Quoted) -> true
+        (Parsing.Parsing.Lexer'.Quoted) -> true
       | _ -> false
 
   type stack = (ExtSyn.term operator) list
@@ -57,10 +43,10 @@ struct
     module P :
       (sig
 	val reduce : stack -> stack
-        val reduceAll : Paths.Paths.region * stack -> ExtSyn.term
+        val reduceAll : Paths.region * stack -> ExtSyn.term
         val shiftAtom : ExtSyn.term * stack -> stack
-        val shift : Paths.Paths.region * opr * stack -> stack
-        val resolve : Paths.Paths.region * opr * stack -> stack
+        val shift : Paths.region * opr * stack -> stack
+        val resolve : Paths.region * opr * stack -> stack
       end) =
     struct
       (* Stack invariants, refinements of operator list *)
@@ -107,7 +93,7 @@ struct
 	      reduce (Atom(tm)::juxOp::p)
 	  | (tm, p) -> Atom(tm)::p
 
-      (* val shift : Paths.Paths.region * opr * <pStable> -> <p> *)
+      (* val shift : Paths.region * opr * <pStable> -> <p> *)
       let shift args =
         match args with
             (r, ((Atom _) as opr), ((Atom _::p') as p)) ->
@@ -142,7 +128,7 @@ struct
 	    Parsing.Parsing.error (r, "Leading postfix operator")
 	  | (r, opr, p) -> opr::p
 
-      (* val resolve : Paths.Paths.region * opr * <pStable> -> <p> *)
+      (* val resolve : Paths.region * opr * <pStable> -> <p> *)
       (* Decides, based on precedence of opr compared to the top of the
          stack whether to shift the new operator or reduce the stack
       *)
@@ -190,121 +176,119 @@ struct
     end  (* structure P *)
 
   (* parseQualifier' f = (ids, f')
-     pre: f begins with Lexer.Lexer.ID
+     pre: f begins with Parsing.Parsing.Lexer'.ID
      Note: precondition for recursive call is enforced by the lexer. *)
-  let rec parseQualId' (Stream.Stream.Cons ((Lexer.Lexer.ID (_, id) as t, r), s')) =
-      (match Stream.Stream.expose s' with
-           Stream.Stream.Cons ((Lexer.Lexer.PATHSEP, _), s'') ->
-             let ((ids, (t, r)), f') = parseQualId' (Stream.Stream.expose s'') in
+  let rec parseQualId' (Parsing.Parsing.Lexer'.Stream'.Cons ((Parsing.Parsing.Lexer'.ID (_, id) as t, r), s')) =
+      (match Parsing.Parsing.Lexer'.Stream'.expose s' with
+           Parsing.Parsing.Lexer'.Stream'.Cons ((Parsing.Parsing.Lexer'.PATHSEP, _), s'') ->
+             let ((ids, (t, r)), f') = parseQualId' (Parsing.Parsing.Lexer'.Stream'.expose s'') in
              ((id::ids, (t, r)), f')
          | f' -> (([], (t, r)), f'))
 
 
-  (* val parseExp : (Lexer.Lexer.token * Lexer.Lexer.region) Stream.Stream.stream * <p>
-                      -> ExtSyn.term * (Lexer.Lexer.token * Lexer.Lexer.region) Stream.Stream.front *)
-  let rec parseExp (s, p) = parseExp' (Stream.Stream.expose s, p)
+  (* val parseExp : (Parsing.Parsing.Lexer'.token * Parsing.Parsing.Lexer'.region) Parsing.Parsing.Lexer'.Stream'.stream * <p>
+                      -> ExtSyn.term * (Parsing.Parsing.Lexer'.token * Parsing.Parsing.Lexer'.region) Parsing.Parsing.Lexer'.Stream'.front *)
+  let rec parseExp (s, p) = parseExp' (Parsing.Parsing.Lexer'.Stream'.expose s, p)
   and parseExp' (f,p) =
     match (f,p) with
-        (Stream.Stream.Cons((Lexer.Lexer.ID _, r0), _), p) ->
-          let ((ids, (Lexer.Lexer.ID (idCase, name), r1)), f') = parseQualId' f in
-          let r = Paths.Paths.join (r0, r1) in
+        (Parsing.Parsing.Lexer'.Stream'.Cons((Parsing.Parsing.Lexer'.ID _, r0), _), p) ->
+          let ((ids, (Parsing.Parsing.Lexer'.ID (idCase, name), r1)), f') = parseQualId' f in
+          let r = Paths.join (r0, r1) in
           let tm = idToTerm (idCase, ids, name, r) in
           (* Currently, we cannot override fixity status of identifiers *)
           (* Thus isQuoted always returns false *)
           if isQuoted (idCase)
           then parseExp' (f', P.shiftAtom (tm, p))
           else parseExp' (f', P.shiftAtom (tm, p))
-      | (Stream.Stream.Cons((Lexer.Lexer.UNDERSCORE,r), s), p) ->
+      | (Parsing.Parsing.Lexer'.Stream'.Cons((Parsing.Parsing.Lexer'.UNDERSCORE,r), s), p) ->
           parseExp (s, P.shiftAtom (ExtSyn.omitted r, p))
-      | (Stream.Stream.Cons((Lexer.Lexer.TYPE,r), s), p) ->
+      | (Parsing.Parsing.Lexer'.Stream'.Cons((Parsing.Parsing.Lexer'.TYPE,r), s), p) ->
 	  parseExp (s, P.shiftAtom (ExtSyn.typ r, p))
-      | (Stream.Stream.Cons((Lexer.Lexer.COLON,r), s), p) ->
+      | (Parsing.Parsing.Lexer'.Stream'.Cons((Parsing.Parsing.Lexer'.COLON,r), s), p) ->
 	  parseExp (s, P.resolve (r, colonOp, p))
-      | (Stream.Stream.Cons((Lexer.Lexer.BACKARROW,r), s), p) ->
+      | (Parsing.Parsing.Lexer'.Stream'.Cons((Parsing.Parsing.Lexer'.BACKARROW,r), s), p) ->
 	  parseExp (s, P.resolve (r, backArrowOp, p))
-      | (Stream.Stream.Cons((Lexer.Lexer.ARROW,r), s), p) ->
+      | (Parsing.Parsing.Lexer'.Stream'.Cons((Parsing.Parsing.Lexer'.ARROW,r), s), p) ->
           parseExp (s, P.resolve (r, arrowOp, p))
-      | (Stream.Stream.Cons((Lexer.Lexer.LPAREN,r), s), p) ->
+      | (Parsing.Parsing.Lexer'.Stream'.Cons((Parsing.Parsing.Lexer'.LPAREN,r), s), p) ->
 	  decideRParen (r, parseExp (s, []), p)
-      | (Stream.Stream.Cons((Lexer.Lexer.RPAREN,r), s), p) ->
+      | (Parsing.Parsing.Lexer'.Stream'.Cons((Parsing.Parsing.Lexer'.RPAREN,r), s), p) ->
 	  (P.reduceAll (r, p), f)
-      | (Stream.Stream.Cons((Lexer.Lexer.LBRACE,r), s), p) ->
+      | (Parsing.Parsing.Lexer'.Stream'.Cons((Parsing.Parsing.Lexer'.LBRACE,r), s), p) ->
 	  decideRBrace (r, parseDec (s), p)
-      | (Stream.Stream.Cons((Lexer.Lexer.RBRACE,r), s), p) ->
+      | (Parsing.Parsing.Lexer'.Stream'.Cons((Parsing.Parsing.Lexer'.RBRACE,r), s), p) ->
           (P.reduceAll (r, p), f)
-      | (Stream.Stream.Cons((Lexer.Lexer.LBRACKET,r), s), p) ->
+      | (Parsing.Parsing.Lexer'.Stream'.Cons((Parsing.Parsing.Lexer'.LBRACKET,r), s), p) ->
           decideRBracket (r, parseDec (s), p)
-      | (Stream.Stream.Cons((Lexer.Lexer.RBRACKET,r), s), p) ->
+      | (Parsing.Parsing.Lexer'.Stream'.Cons((Parsing.Parsing.Lexer'.RBRACKET,r), s), p) ->
 	  (P.reduceAll (r, p), f)
-      | (Stream.Stream.Cons((Lexer.Lexer.DOT,r), s), p) ->
+      | (Parsing.Parsing.Lexer'.Stream'.Cons((Parsing.Parsing.Lexer'.DOT,r), s), p) ->
 	  (P.reduceAll (r, p), f)
-      | (Stream.Stream.Cons((Lexer.Lexer.EOF,r), s), p) ->
+      | (Parsing.Parsing.Lexer'.Stream'.Cons((Parsing.Parsing.Lexer'.EOF,r), s), p) ->
 	  (P.reduceAll (r, p), f)
-      | (Stream.Stream.Cons((t,r), s), p) ->
+      | (Parsing.Parsing.Lexer'.Stream'.Cons((t,r), s), p) ->
 	  (* possible error recovery: insert DOT *)
-	  Parsing.Parsing.error (r, "Unexpected token " ^ Lexer.Lexer.toString t
+	  Parsing.Parsing.error (r, "Unexpected token " ^ Parsing.Parsing.Lexer'.toString t
 			    ^ " found in expression")
 
-  and parseDec (s) = parseDec' (Stream.Stream.expose s)
+  and parseDec (s) = parseDec' (Parsing.Parsing.Lexer'.Stream'.expose s)
   and parseDec' args =
     match args with
-        (Stream.Stream.Cons ((Lexer.Lexer.ID (Lexer.Lexer.Quoted,name), r), s')) ->
+        (Parsing.Parsing.Lexer'.Stream'.Cons ((Parsing.Parsing.Lexer'.ID (Parsing.Parsing.Lexer'.Quoted,name), r), s')) ->
           (* cannot happen at present *)
 	  Parsing.Parsing.error (r, "Illegal bound quoted identifier " ^ name)
-      | (Stream.Stream.Cons ((Lexer.Lexer.ID (idCase,name), r), s')) ->
+      | (Parsing.Parsing.Lexer'.Stream'.Cons ((Parsing.Parsing.Lexer'.ID (idCase,name), r), s')) ->
         (* MKS: we have single file, so nothing would ever be in the table to lookup *)
-        parseDec1 (Some(name), Stream.Stream.expose s')
-      | (Stream.Stream.Cons ((Lexer.Lexer.UNDERSCORE, r), s')) ->
-          parseDec1 (None, Stream.Stream.expose s')
-      | (Stream.Stream.Cons ((Lexer.Lexer.EOF, r), s')) ->
+        parseDec1 (Some(name), Parsing.Parsing.Lexer'.Stream'.expose s')
+      | (Parsing.Parsing.Lexer'.Stream'.Cons ((Parsing.Parsing.Lexer'.UNDERSCORE, r), s')) ->
+          parseDec1 (None, Parsing.Parsing.Lexer'.Stream'.expose s')
+      | (Parsing.Parsing.Lexer'.Stream'.Cons ((Parsing.Parsing.Lexer'.EOF, r), s')) ->
 	  Parsing.Parsing.error (r, "Unexpected end of stream in declaration")
-      | (Stream.Stream.Cons ((t, r), s')) ->
-	  Parsing.Parsing.error (r, "Expected variable name, found token " ^ Lexer.Lexer.toString t)
+      | (Parsing.Parsing.Lexer'.Stream'.Cons ((t, r), s')) ->
+	  Parsing.Parsing.error (r, "Expected variable name, found token " ^ Parsing.Parsing.Lexer'.toString t)
 
   and parseDec1 args =
     match args with
-        (x, Stream.Stream.Cons((Lexer.Lexer.COLON, r), s')) ->
+        (x, Parsing.Parsing.Lexer'.Stream'.Cons((Parsing.Parsing.Lexer'.COLON, r), s')) ->
           let (tm, f'') = parseExp (s', []) in
           ((x, Some tm), f'') 
-      | (x, (Stream.Stream.Cons((Lexer.Lexer.RBRACE, _), _) as f)) ->
+      | (x, (Parsing.Parsing.Lexer'.Stream'.Cons((Parsing.Parsing.Lexer'.RBRACE, _), _) as f)) ->
           ((x, None), f)
-      | (x, (Stream.Stream.Cons ((Lexer.Lexer.RBRACKET, _), _) as f)) ->
+      | (x, (Parsing.Parsing.Lexer'.Stream'.Cons ((Parsing.Parsing.Lexer'.RBRACKET, _), _) as f)) ->
           ((x, None), f)
-      | (x, Stream.Stream.Cons ((t,r), s')) ->
+      | (x, Parsing.Parsing.Lexer'.Stream'.Cons ((t,r), s')) ->
 	  Parsing.Parsing.error (r, "Expected optional type declaration, found token "
-			    ^ Lexer.Lexer.toString t)
+			    ^ Parsing.Parsing.Lexer'.toString t)
 
   and decideRParen args =
     match args with
-        (r0, (tm, Stream.Stream.Cons((Lexer.Lexer.RPAREN,r), s)), p) ->
+        (r0, (tm, Parsing.Parsing.Lexer'.Stream'.Cons((Parsing.Parsing.Lexer'.RPAREN,r), s)), p) ->
           parseExp (s, P.shiftAtom(tm,p))
-      | (r0, (tm, Stream.Stream.Cons((_, r), s)), p) ->
-	  Parsing.Parsing.error (Paths.Paths.join(r0, r), "Unmatched open parenthesis")
+      | (r0, (tm, Parsing.Parsing.Lexer'.Stream'.Cons((_, r), s)), p) ->
+	  Parsing.Parsing.error (Paths.join(r0, r), "Unmatched open parenthesis")
 
   and decideRBrace args =
     match args with
-        (r0, ((x, yOpt), Stream.Stream.Cons ((Lexer.Lexer.RBRACE,r), s)), p) ->
+        (r0, ((x, yOpt), Parsing.Parsing.Lexer'.Stream'.Cons ((Parsing.Parsing.Lexer'.RBRACE,r), s)), p) ->
           let dec = (match yOpt with
-                         None -> ExtSyn.dec0 (x, Paths.Paths.join (r0, r))
-                       | Some y -> ExtSyn.dec (x, y, Paths.Paths.join (r0, r))) in
+                         None -> ExtSyn.dec0 (x, Paths.join (r0, r))
+                       | Some y -> ExtSyn.dec (x, y, Paths.join (r0, r))) in
 	  let (tm, f') = parseExp (s, []) in
 	  parseExp' (f', P.shiftAtom (ExtSyn.pi (dec, tm), p))
-      | (r0, (_, Stream.Stream.Cons ((_, r), s)), p) ->
-	  Parsing.Parsing.error (Paths.Paths.join(r0, r), "Unmatched open brace")
+      | (r0, (_, Parsing.Parsing.Lexer'.Stream'.Cons ((_, r), s)), p) ->
+	  Parsing.Parsing.error (Paths.join(r0, r), "Unmatched open brace")
 
   and decideRBracket args =
     match args with
-        (r0, ((x, yOpt), Stream.Stream.Cons ((Lexer.Lexer.RBRACKET,r), s)), p) ->
+        (r0, ((x, yOpt), Parsing.Parsing.Lexer'.Stream'.Cons ((Parsing.Parsing.Lexer'.RBRACKET,r), s)), p) ->
           let dec = (match yOpt with
-                         None -> ExtSyn.dec0 (x, Paths.Paths.join (r0, r))
-                       | Some y -> ExtSyn.dec (x, y, Paths.Paths.join (r0, r))) in
+                         None -> ExtSyn.dec0 (x, Paths.join (r0, r))
+                       | Some y -> ExtSyn.dec (x, y, Paths.join (r0, r))) in
 	  let(tm, f') = parseExp (s, []) in
 	  parseExp' (f', P.shiftAtom (ExtSyn.lam (dec, tm), p))
-      | (r0, (dec, Stream.Stream.Cons ((_, r), s)), p) ->
-	  Parsing.Parsing.error (Paths.Paths.join(r0, r), "Unmatched open bracket")
+      | (r0, (dec, Parsing.Parsing.Lexer'.Stream'.Cons ((_, r), s)), p) ->
+	  Parsing.Parsing.error (Paths.join(r0, r), "Unmatched open bracket")
 
 
 
   let parseTerm' = (fun f -> parseExp' (f, []))
-
-end  (* functor ParseTerm *)

@@ -1,9 +1,11 @@
 (* This is taken from the Twelf implementation *)
 
-module type LEXER = functor (Stream : Stream.STREAM) ->
+module type LEXER = 
 sig
   (* Stream is not memoizing for efficiency *)
   (* module Stream : STREAM *)
+  
+  module Stream' : Stream.STREAM
 
   (*! structure Paths : PATHS !*)
   type idCase =
@@ -64,8 +66,8 @@ sig
   exception Error of string
 
   (* lexer returns an infinite stream, terminated by EOF token *)
-  val lexStream : in_channel -> (token * Paths.Paths.region) Stream.stream
-  val lexTerminal : string * string -> (token * Paths.Paths.region) Stream.stream
+  val lexStream : in_channel -> (token * Paths.region) Stream'.stream
+  val lexTerminal : string * string -> (token * Paths.region) Stream'.stream
 
   val toString : token -> string
 
@@ -76,11 +78,14 @@ sig
 
 end  (* signature LEXER *)
 
-module LexerFunc : LEXER = functor (Stream' : Stream.STREAM) ->
+module LexerFunc (S : Stream.STREAM) : LEXER =  
 struct
   (* let module Stream = Stream' *)
-  (*! structure Paths = Paths' !*)
-  (* let module Paths = P *)
+  (*! structure Paths = Paths' !*)  
+
+  module Stream' : Stream.STREAM = S
+
+(* let module Paths = P *)
   type idCase =
       Upper				(* [A-Z]<id> or _<id> *)
     | Lower				(* any other <id> *)
@@ -138,7 +143,7 @@ struct
 
   exception Error of string
 
-  let error (r, msg) = raise (Error(Paths.Paths.wrap (r, msg)))
+  let error (r, msg) = raise (Error(Paths.wrap (r, msg)))
 
   (* isSym (c) = B iff c is a legal symbolic identifier constituent *)
   (* excludes quote character and digits, which are treated specially *)
@@ -191,7 +196,7 @@ struct
     let s = ref "" in			(* current string (line) *)
     let left = ref 0 in			(* position of first character in s *)
     let right = ref 0 in			(* position after last character in s *)
-    let _ = Paths.Paths.resetLines () in   	(* initialize line counter *)
+    let _ = Paths.resetLines () in   	(* initialize line counter *)
 
       (* neither lexer nor parser should ever try to look beyond EOF *)
     (* I think EOF is 26 is ASCII ... *)
@@ -213,7 +218,7 @@ struct
       else (s := nextLine;
         left := !right;
         right := !right + nextSize;
-        Paths.Paths.newLine (!left)) (* remember new line position *)
+        Paths.newLine (!left)) (* remember new line position *)
     in
       (* char (i) = character at position i
          Invariant: i >= !left
@@ -233,13 +238,13 @@ struct
     (* The remaining functions do not access the state or *)
     (* stream directly, using only functions char and string *)
 
-    let idToToken (idCase, Paths.Paths.Reg (i,j)) = stringToToken (idCase, string (i,j), Paths.Paths.Reg (i,j)) in
+    let idToToken (idCase, Paths.Reg (i,j)) = stringToToken (idCase, string (i,j), Paths.Reg (i,j)) in
 
     (* Quote characters are part of the name *)
     (* Treat quoted identifiers as lowercase, since they no longer *)
     (* override infix state.  Quoted identifiers are now only used *)
     (* inside pragmas *)
-    let qidToToken (Paths.Paths.Reg (i,j)) = (ID(Lower, string(i,j+1)), Paths.Paths.Reg (i,j+1)) in
+    let qidToToken (Paths.Reg (i,j)) = (ID(Lower, string(i,j+1)), Paths.Reg (i,j+1)) in
 
     (* The main lexing functions take a character c and the next
        input position i and return a token with its region
@@ -251,55 +256,55 @@ struct
     *)
     let rec lexInitial (args : (char * int))=
       match args with
-          (':', i) -> (COLON, Paths.Paths.Reg (i-1,i))
-        | ('.', i) -> (DOT, Paths.Paths.Reg (i-1,i))
-        | ('(', i) -> (LPAREN, Paths.Paths.Reg (i-1,i))
-        | (')', i) -> (RPAREN, Paths.Paths.Reg (i-1,i))
-        | ('[', i) -> (LBRACKET, Paths.Paths.Reg (i-1,i))
-        | (']', i) -> (RBRACKET, Paths.Paths.Reg (i-1,i))
-        | ('{', i) -> (LBRACE, Paths.Paths.Reg (i-1,i))
-        | ('}', i) -> (RBRACE, Paths.Paths.Reg (i-1,i))
+          (':', i) -> (COLON, Paths.Reg (i-1,i))
+        | ('.', i) -> (DOT, Paths.Reg (i-1,i))
+        | ('(', i) -> (LPAREN, Paths.Reg (i-1,i))
+        | (')', i) -> (RPAREN, Paths.Reg (i-1,i))
+        | ('[', i) -> (LBRACKET, Paths.Reg (i-1,i))
+        | (']', i) -> (RBRACKET, Paths.Reg (i-1,i))
+        | ('{', i) -> (LBRACE, Paths.Reg (i-1,i))
+        | ('}', i) -> (RBRACE, Paths.Reg (i-1,i))
         | ('%', i) -> lexPercent (char(i), i+1)
-        | ('_', i) -> lexID (Upper, Paths.Paths.Reg (i-1,i))
-        | ('\'', i) -> lexID (Lower, Paths.Paths.Reg (i-1,i)) (* lexQUID (i-1,i) *)
-        | ('\026', i) -> (EOF, Paths.Paths.Reg (i-1,i-1))
-        | ('"', i) -> lexString (Paths.Paths.Reg(i-1, i))
+        | ('_', i) -> lexID (Upper, Paths.Reg (i-1,i))
+        | ('\'', i) -> lexID (Lower, Paths.Reg (i-1,i)) (* lexQUID (i-1,i) *)
+        | ('\026', i) -> (EOF, Paths.Reg (i-1,i-1))
+        | ('"', i) -> lexString (Paths.Reg(i-1, i))
         | (c, i) ->
   	  if isSpace (c) then lexInitial (char (i),i+1)
-	  else if char_isUpper(c) then lexID (Upper, Paths.Paths.Reg (i-1,i))
- 	  else if isDigit(c) then lexID (Lower, Paths.Paths.Reg (i-1,i))
-	  else if isLower(c) then lexID (Lower, Paths.Paths.Reg (i-1,i))
-	  else if isSym(c) then lexID (Lower, Paths.Paths.Reg (i-1,i))
-	  else if isUTF8(c) then lexID (Lower, Paths.Paths.Reg (i-1,i))
-          else error (Paths.Paths.Reg (i-1,i), "Illegal character " ^ Char.escaped (c))
+	  else if char_isUpper(c) then lexID (Upper, Paths.Reg (i-1,i))
+ 	  else if isDigit(c) then lexID (Lower, Paths.Reg (i-1,i))
+	  else if isLower(c) then lexID (Lower, Paths.Reg (i-1,i))
+	  else if isSym(c) then lexID (Lower, Paths.Reg (i-1,i))
+	  else if isUTF8(c) then lexID (Lower, Paths.Reg (i-1,i))
+          else error (Paths.Reg (i-1,i), "Illegal character " ^ Char.escaped (c))
           (* recover by ignoring: lexInitial (char(i), i+1) *)
 
-    and lexID (idCase, Paths.Paths.Reg (i,j)) =
+    and lexID (idCase, Paths.Reg (i,j)) =
       let rec lexID' (j) =
         if isIdChar (char(j)) then lexID' (j+1)
  	else 
-          idToToken (idCase, Paths.Paths.Reg (i,j))
+          idToToken (idCase, Paths.Reg (i,j))
       in
       lexID' (j)
 
     (* lexQUID is currently not used --- no quoted identifiers *)
-    and lexQUID (Paths.Paths.Reg (i,j)) =
+    and lexQUID (Paths.Reg (i,j)) =
       if isSpace (char(j))
-      then error (Paths.Paths.Reg (i,j+1), "Whitespace in quoted identifier")
+      then error (Paths.Reg (i,j+1), "Whitespace in quoted identifier")
          (* recover by adding implicit quote? *)
          (* qidToToken (i, j) *)
-      else if isQuote (char(j)) then qidToToken (Paths.Paths.Reg (i,j))
-           else lexQUID (Paths.Paths.Reg (i, j+1)) 
+      else if isQuote (char(j)) then qidToToken (Paths.Reg (i,j))
+           else lexQUID (Paths.Reg (i, j+1)) 
 
     and lexPercent args =
       match args with
-          ('.', i) -> (EOF, Paths.Paths.Reg (i-2,i))
+          ('.', i) -> (EOF, Paths.Reg (i-2,i))
         | ('{', i) -> lexPercentBrace (char(i), i+1)
         | ('%', i) -> lexComment ('%', i)
         | (c, i) ->
-          if isIdChar(c) then lexPragmaKey (lexID (Quoted, Paths.Paths.Reg (i-1, i)))
+          if isIdChar(c) then lexPragmaKey (lexID (Quoted, Paths.Reg (i-1, i)))
 	  else if isSpace(c) then lexComment (c, i)
-	       else error (Paths.Paths.Reg (i-1, i), "Comment character `%' not followed by white space")
+	       else error (Paths.Reg (i-1, i), "Comment character `%' not followed by white space")
 
     and lexPragmaKey args =
       match args with
@@ -352,13 +357,13 @@ struct
           ('\n', i) -> lexInitial (char(i), i+1)
         | ('%', i) -> lexCommentPercent (char(i), i+1)
         | ('\026', i) ->
-            error (Paths.Paths.Reg (i-1, i-1), "Unclosed single-line comment at end of file")
+            error (Paths.Reg (i-1, i-1), "Unclosed single-line comment at end of file")
 	    (* recover: (EOF, (i-1,i-1)) *)
         | (c, i) -> lexComment (char(i), i+1)
 
     and lexCommentPercent args =
       match args with
-          ('.', i) -> (EOF, Paths.Paths.Reg (i-2, i))
+          ('.', i) -> (EOF, Paths.Reg (i-2, i))
         | (c, i) -> lexComment (c, i)
 
     and lexPercentBrace (c, i) = lexDComment (c, 1, i)
@@ -370,7 +375,7 @@ struct
         | ('%', l, i) -> lexDCommentPercent (char(i), l, i+1)
         | ('\026', l, i) ->
             (* pass comment beginning for error message? *)
-            error (Paths.Paths.Reg (i-1,i-1), "Unclosed delimited comment at end of file")
+            error (Paths.Reg (i-1,i-1), "Unclosed delimited comment at end of file")
 	    (* recover: (EOF, (i-1,i-1)) *)
         | (c, l, i) -> lexDComment (char(i), l, i+1)
 
@@ -378,7 +383,7 @@ struct
       match args with
           ('{', l, i) -> lexDComment (char(i), l+1, i+1)
         | ('.', l, i) ->
-            error (Paths.Paths.Reg (i-2, i), "Unclosed delimited comment at end of file token `%.'")
+            error (Paths.Reg (i-2, i), "Unclosed delimited comment at end of file token `%.'")
             (* recover: (EOF, (i-2,i)) *)
         | (c, l, i) -> lexDComment (c, l, i)
 
@@ -388,25 +393,25 @@ struct
         | ('%', l, i) -> lexDComment (char(i), l-1, i+1)
         | (c, l, i) -> lexDComment (c, l, i)
 
-    and lexString (Paths.Paths.Reg(i, j)) =
+    and lexString (Paths.Reg(i, j)) =
           (match char(j) with
-               ('"') -> (STRING (string (i, j+1)), Paths.Paths.Reg(i, j+1))
+               ('"') -> (STRING (string (i, j+1)), Paths.Reg(i, j+1))
              | ('\n') ->
-                  error (Paths.Paths.Reg (i-1, i-1), "Unclosed string constant at end of line")
+                  error (Paths.Reg (i-1, i-1), "Unclosed string constant at end of line")
 	          (* recover: (EOL, (i-1,i-1)) *)
              | ('\026') ->
-                  error (Paths.Paths.Reg (i-1, i-1), "Unclosed string constant at end of file")
+                  error (Paths.Reg (i-1, i-1), "Unclosed string constant at end of file")
                   (* recover: (EOF, (i-1,i-1)) *)
-             | _ -> lexString (Paths.Paths.Reg(i, j+1)))
+             | _ -> lexString (Paths.Reg(i, j+1)))
     in
     let rec lexContinue (j) = Stream'.delay (fun () -> lexContinue' (j))
     and lexContinue' (j) = lexContinue'' (lexInitial (char(j), j+1))
 
     and lexContinue'' mt =
       match mt with
-          (ID _, Paths.Paths.Reg (i,j)) ->
+          (ID _, Paths.Reg (i,j)) ->
             Stream'.Cons (mt, lexContinueQualId (j))
-        | (token, Paths.Paths.Reg (i,j)) ->
+        | (token, Paths.Reg (i,j)) ->
             Stream'.Cons (mt, lexContinue (j))
 
     and lexContinueQualId (j) =
@@ -414,8 +419,8 @@ struct
     and lexContinueQualId' (j) =
           if (Char.compare (char (j)) '.') = 0
           then if (isIdChar (char (j+1)))
-                then (Stream'.Cons((PATHSEP, Paths.Paths.Reg (j,j+1)), lexContinue (j+1)))
-                else (Stream'.Cons((DOT, Paths.Paths.Reg (j,j+1)), lexContinue (j+1)))
+                then (Stream'.Cons((PATHSEP, Paths.Reg (j,j+1)), lexContinue (j+1)))
+                else (Stream'.Cons((DOT, Paths.Reg (j,j+1)), lexContinue (j+1)))
           else lexContinue' (j)
 
   in

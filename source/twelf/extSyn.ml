@@ -1,21 +1,21 @@
   type term =				(* term *)
-     Typ of Paths.Paths.region
+     Typ of Paths.region
    | Arrow of term * term
    | Backarrow of term * term
    | Pi of dec * term
    | Lam of dec * term
    | App of term * term
    | Hastype of term * term
-   | Omitted of Paths.Paths.region
-   | Lcid of string list * string * Paths.Paths.region
-   | Ucid of string list * string * Paths.Paths.region
-   | Quid of string list * string * Paths.Paths.region
-   | Scon of string * Paths.Paths.region
-   | Evar of string * Paths.Paths.region
-   | Fvar of string * Paths.Paths.region
+   | Omitted of Paths.region
+   | Lcid of string list * string * Paths.region
+   | Ucid of string list * string * Paths.region
+   | Quid of string list * string * Paths.region
+   | Scon of string * Paths.region
+   | Evar of string * Paths.region
+   | Fvar of string * Paths.region
   and dec =				(* variable declaration *)
-     Dec of string option * term * Paths.Paths.region
-   | Dec0 of string option * Paths.Paths.region
+     Dec of string option * term * Paths.region
+   | Dec0 of string option * Paths.region
 
 
   let lcid (a,b,c) = Lcid(a,b,c) (* lower case id *)
