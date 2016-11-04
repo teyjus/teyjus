@@ -46,12 +46,25 @@ let string_of_sig kinds constants terms =
                               
   in (sigstr, modstr)
 
+(* parse the implicit LF signature *)
+let parse_sig filename =
+  try
+    let inchann = openFile filename open_in in
+    let parseStream = Parser.parseStream inchann in
+    closeFile inchann close_in
+  with
+    Failure(s) -> (print_endline ("Error: " ^ s ^ "."); None)
+
+(* parse the implicit LF query *)
+let parse_query () =
+Parser.parseTerminalQ("?- ", "   ")
+
 (** main *)
 let _ = 
   let _ = print_string "tjtwelf started!\n" in
   (* parse LF signature *)
-  let res = Lfparse.parse "test.elf" in
-  let sign =
+  let res = parse_sig "test.elf" in
+(*  let sign =
     (match res with
          Some(s) -> (*print_string (Lfsig.string_of_sig s); *)
                     s
@@ -121,3 +134,6 @@ let _ =
     let queryfn = read_line () in
       solveQuery queryfn  
   done
+
+*)
+exit 1

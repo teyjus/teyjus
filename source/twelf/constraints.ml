@@ -21,21 +21,23 @@
          of the form U = U' where G |- U == U' : V (mod beta/eta)
          Neither U nor U' needs to be a pattern
 	 *)
-  let simplify l =
+  let rec simplify l =
     match l with
         [] -> []
-      | ((ref IntSyn.Solved) :: cnstrs) =
+      | (r :: cnstrs) when (!r) = IntSyn.Solved ->
           simplify cnstrs
-      | ((Eqn as ref (IntSyn.Eqn (G, U1, U2))) :: cnstrs) =
-        if Conv.conv ((U1, IntSyn.id), (U2, IntSyn.id))
-        then simplify cnstrs
-        else Eqn :: (simplify cnstrs)
-      | ((FgnCnstr as ref (IntSyn.FgnCnstr csfc)) :: cnstrs) =
-        if IntSyn.FgnCnstrStd.Simplify.apply csfc ()
-        then simplify cnstrs
-        else FgnCnstr :: (simplify cnstrs)
+      | (c :: cnstrs) ->
+	  (match (!c) with 
+  	    IntSyn.Eqn(g,u1,u2) ->
+              if Conv.conv ((u1, IntSyn.id), (u2, IntSyn.id))
+              then simplify cnstrs
+              else c :: (simplify cnstrs)
+	  | (IntSyn.FgnCnstr (id,csfc)) ->
+              if IntSyn.FgnCnstrStd.Simplify.apply (id,csfc) ()
+              then simplify cnstrs
+              else c :: (simplify cnstrs))
 
-  let namesToString l =
+  let rec namesToString l =
     match l with
         (name :: []) -> name ^ "."
       | (name::names) -> name ^ ", " ^ namesToString names

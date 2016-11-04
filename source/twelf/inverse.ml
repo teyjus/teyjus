@@ -44,37 +44,37 @@ let invert (Lfsig.Signature(_,types)) metadata fvars (subst, disprs) =
   let rec apply_subst lftype substitution =
     let rec sub_tm id tm t =
       match t with
-          Lfabsyn.AbsTerm(n,ty,_,_) 
+          Lfabsyn.AbsTerm(n,ty,_) 
             when (Lfabsyn.get_id_name id) = (Lfabsyn.get_id_name n) ->
             let newname = generate_name metadata fvars in
-            let Lfabsyn.AbsTerm(n',ty',body',p') = 
-              sub_tm id (Lfabsyn.IdTerm(Lfabsyn.Var(newname,ty,Errormsg.none),Errormsg.none)) t 
+            let Lfabsyn.AbsTerm(n',ty',body') = 
+              sub_tm id (Lfabsyn.IdTerm(Lfabsyn.Var(newname,ty))) t 
             in
-            Lfabsyn.AbsTerm(n', subst id tm ty', sub_tm id tm body',p')
-        | Lfabsyn.AbsTerm(n,ty,body,p) ->
+            Lfabsyn.AbsTerm(n', subst id tm ty', sub_tm id tm body')
+        | Lfabsyn.AbsTerm(n,ty,body) ->
             let ty' = subst id tm ty in
             let body' = sub_tm id tm body in
-            Lfabsyn.AbsTerm(n,ty',body',p)
-        | Lfabsyn.AppTerm(head,args,p) ->
+            Lfabsyn.AbsTerm(n,ty',body')
+        | Lfabsyn.AppTerm(head,args) ->
             let args' = List.map (sub_tm id tm) args in
             if (Lfabsyn.get_id_name id) = (Lfabsyn.get_id_name head)
             then
               (match tm with
-                   Lfabsyn.IdTerm(ident,_) ->
-                     Lfabsyn.AppTerm(ident,args',p)
-                 | Lfabsyn.AppTerm(ident,newargs,_) ->
-                     Lfabsyn.AppTerm(ident, List.append newargs args',p)
-                 | Lfabsyn.AbsTerm(_,_,_,_) when (List.length args) = 0 ->
+                   Lfabsyn.IdTerm(ident) ->
+                     Lfabsyn.AppTerm(ident,args')
+                 | Lfabsyn.AppTerm(ident,newargs) ->
+                     Lfabsyn.AppTerm(ident, List.append newargs args')
+                 | Lfabsyn.AbsTerm(_,_,_) when (List.length args) = 0 ->
                      tm
-                 | Lfabsyn.AbsTerm(_,_,_,_) ->
+                 | Lfabsyn.AbsTerm(_,_,_) ->
                      Errormsg.error Errormsg.none 
                                     ("Error: apply_subst: creating beta-redex when substituting "^
                                      (Lfabsyn.string_of_term tm)^ " for "^(Lfabsyn.string_of_id id)^
                                      " in " ^ (Lfabsyn.string_of_term t));
                      t)
             else
-              Lfabsyn.AppTerm(head, args',p)
-        | Lfabsyn.IdTerm(n,_) ->
+              Lfabsyn.AppTerm(head, args')
+        | Lfabsyn.IdTerm(n) ->
             if (Lfabsyn.get_id_name id) = (Lfabsyn.get_id_name n)
             then tm
             else t
@@ -82,35 +82,35 @@ let invert (Lfsig.Signature(_,types)) metadata fvars (subst, disprs) =
        but is correct and will work. Should be fixed later though. *)
     and subst id tm ty =
       match ty with
-          Lfabsyn.PiType(n,t,_,_) 
+          Lfabsyn.PiType(n,t,_) 
             when (Lfabsyn.get_id_name id) = (Lfabsyn.get_id_name n) -> 
             let newname = generate_name metadata fvars in
-            let Lfabsyn.PiType(n',t',b',p') = 
-              subst n (Lfabsyn.IdTerm(Lfabsyn.Var(newname,t,Errormsg.none),Errormsg.none)) ty 
+            let Lfabsyn.PiType(n',t',b') = 
+              subst n (Lfabsyn.IdTerm(Lfabsyn.Var(newname,t))) ty 
             in
-            Lfabsyn.PiType(n', subst id tm t', subst id tm b', p')
-        | Lfabsyn.PiType(n,t,b,p) ->
-            Lfabsyn.PiType(n, subst id tm t, subst id tm b, p)
-        | Lfabsyn.ImpType(l,r,p) ->
-            Lfabsyn.ImpType(subst id tm l, subst id tm r, p)
-        | Lfabsyn.AppType(h,args,p) ->
+            Lfabsyn.PiType(n', subst id tm t', subst id tm b')
+        | Lfabsyn.PiType(n,t,b) ->
+            Lfabsyn.PiType(n, subst id tm t, subst id tm b)
+        | Lfabsyn.ImpType(l,r) ->
+            Lfabsyn.ImpType(subst id tm l, subst id tm r)
+        | Lfabsyn.AppType(h,args) ->
             let args' = List.map (sub_tm id tm) args in
             if (Lfabsyn.get_id_name id) = (Lfabsyn.get_id_name h)
             then
               (match tm with
-                   Lfabsyn.IdTerm(ident,_) ->
-                     Lfabsyn.AppType(ident,args',p)
-                 | Lfabsyn.AppTerm(ident,newargs,_) ->
-                     Lfabsyn.AppType(ident, List.append newargs args',p)
-                 | Lfabsyn.AbsTerm(_,_,_,_) ->
+                   Lfabsyn.IdTerm(ident) ->
+                     Lfabsyn.AppType(ident,args')
+                 | Lfabsyn.AppTerm(ident,newargs) ->
+                     Lfabsyn.AppType(ident, List.append newargs args')
+                 | Lfabsyn.AbsTerm(_,_,_) ->
                      Errormsg.error Errormsg.none 
                                     ("Error: apply_subst: creating beta-redex when substituting "^
                                      (Lfabsyn.string_of_term tm)^ " for "^(Lfabsyn.string_of_id id)^
                                      " in " ^ (Lfabsyn.string_of_typ ty));
                      ty)
             else
-              Lfabsyn.AppType(h,args',p)
-        | Lfabsyn.IdType(_,_) -> ty
+              Lfabsyn.AppType(h,args')
+        | Lfabsyn.IdType(_) -> ty
     in
     match substitution with
         ((id,tm) :: subs) ->
@@ -161,7 +161,7 @@ let invert (Lfsig.Signature(_,types)) metadata fvars (subst, disprs) =
           (match (Metadata.getLF metadata (Absyn.getConstantSymbol c)) with
                Some(symb) ->
                  (match (Symboltable.lookup constants symb) with
-                      Some(c') -> (Some(Lfabsyn.IdTerm(Lfabsyn.Const(Lfabsyn.get_obj_name c', p),p)), fvars)
+                      Some(c') -> (Some(Lfabsyn.IdTerm(Lfabsyn.Const(Lfabsyn.get_obj_name c'))), fvars)
                     | None ->
                         Errormsg.error Errormsg.none ("No entry found in LF signature for constant "^(Symb.printName symb));
                         (None, fvars))
@@ -172,7 +172,7 @@ let invert (Lfsig.Signature(_,types)) metadata fvars (subst, disprs) =
              but undexing into bvar list starts at 0. *)
       | Absyn.BoundVarTerm(Absyn.DBIndex(i),p) ->
           let (name, ty) = List.nth bvars (i-1) in
-          (Some(Lfabsyn.IdTerm(Lfabsyn.Var(name, ty, p),p)), fvars)
+          (Some(Lfabsyn.IdTerm(Lfabsyn.Var(name, ty))), fvars)
       | Absyn.FreeVarTerm(Absyn.NamedFreeVar(tysymb), p) ->
           let (ty, fvars'') =
             (match (Table.find (Absyn.getTypeSymbolSymbol tysymb) fvars) with
@@ -183,7 +183,7 @@ let invert (Lfsig.Signature(_,types)) metadata fvars (subst, disprs) =
                    let fvars' = Table.add (Absyn.getTypeSymbolSymbol tysymb) ty fvars in
                    (ty, fvars'))
           in
-          (Some(Lfabsyn.IdTerm(Lfabsyn.LogicVar(Absyn.string_of_term lpterm, ty, p), p)), fvars'')
+          (Some(Lfabsyn.IdTerm(Lfabsyn.LogicVar(Absyn.string_of_term lpterm, ty))), fvars'')
       | Absyn.ApplicationTerm(abstm,p) ->
           let (head, args) = Absyn.getTermApplicationHeadAndArguments lpterm in
           if (Absyn.isTermFreeVariable head && 
@@ -197,8 +197,8 @@ let invert (Lfsig.Signature(_,types)) metadata fvars (subst, disprs) =
 	    let args' = List.map2 (fun x y -> Option.get (fst (invert_term fvars bvars (x,[]) y))) arg_tys args in
 	    (** b/c all args are bound variables we know they are of the correct form when inverted *)
             let h_ty = 
-              List.fold_left (fun body (Lfabsyn.IdTerm((Lfabsyn.Var(_,ty,_) as id),_)) -> 
-                                    Lfabsyn.PiType(id,ty,body,p)) 
+              List.fold_left (fun body (Lfabsyn.IdTerm((Lfabsyn.Var(_,ty) as id))) -> 
+                                    Lfabsyn.PiType(id,ty,body)) 
                              target_ty 
                              (List.rev args') in
             let fvars' = Table.add (Absyn.getTypeSymbolSymbol (Absyn.getTermFreeVariableTypeSymbol head)) h_ty fvars in
@@ -208,11 +208,11 @@ let invert (Lfsig.Signature(_,types)) metadata fvars (subst, disprs) =
               (None, fvars'')
             else
               (match Option.get h' with
-                   Lfabsyn.IdTerm(id,_) ->
-   	             (Some(Lfabsyn.AppTerm(id, args',p)), fvars'')
-                 | Lfabsyn.AppTerm(id,newargs,_) ->
-                     (Some(Lfabsyn.AppTerm(id, List.append newargs args',p)), fvars'')
-                 | Lfabsyn.AbsTerm(_,_,_,_) ->
+                   Lfabsyn.IdTerm(id) ->
+   	             (Some(Lfabsyn.AppTerm(id, args')), fvars'')
+                 | Lfabsyn.AppTerm(id,newargs) ->
+                     (Some(Lfabsyn.AppTerm(id, List.append newargs args')), fvars'')
+                 | Lfabsyn.AbsTerm(_,_,_) ->
                      Errormsg.error Errormsg.none
                                     ("Error: invert_term: beta-redexes found in term when translating "^
                                      (Absyn.string_of_term lpterm)^" .");
@@ -230,10 +230,10 @@ let invert (Lfsig.Signature(_,types)) metadata fvars (subst, disprs) =
 	      let rec trans_args bty subst fvars args =
 	        let trans_arg bty subst fvars arg =
                   (match bty with
-		       Lfabsyn.PiType(id,ty,body,_) ->
+		       Lfabsyn.PiType(id,ty,body) ->
   		         let (a',fvars') = invert_term fvars bvars (ty, subst) arg in
 		         (body, (id, Option.get a') :: subst, fvars', a')
-                     | Lfabsyn.ImpType(l,r,_) ->
+                     | Lfabsyn.ImpType(l,r) ->
                          let (a', fvars') = invert_term fvars bvars (l, subst) arg in
                          (r, subst, fvars', a')
 		     | _ -> 
@@ -257,11 +257,11 @@ let invert (Lfsig.Signature(_,types)) metadata fvars (subst, disprs) =
                 (None, fvars'')
               else
                 (match Option.get head' with
-                     Lfabsyn.IdTerm(id,_) ->
-	               (Some(Lfabsyn.AppTerm(id, args',p)), fvars'')
-                   | Lfabsyn.AppTerm(id,newargs,_) ->
-                       (Some(Lfabsyn.AppTerm(id, List.append newargs args',p)), fvars'')
-                   | Lfabsyn.AbsTerm(_,_,_,_) ->
+                     Lfabsyn.IdTerm(id) ->
+	               (Some(Lfabsyn.AppTerm(id, args')), fvars'')
+                   | Lfabsyn.AppTerm(id,newargs) ->
+                       (Some(Lfabsyn.AppTerm(id, List.append newargs args')), fvars'')
+                   | Lfabsyn.AbsTerm(_,_,_) ->
                        Errormsg.error Errormsg.none
                                       ("Error: invert_term: beta-redexes found in term when translating "^
                                        (Absyn.string_of_term lpterm)^" .");
@@ -272,23 +272,23 @@ let invert (Lfsig.Signature(_,types)) metadata fvars (subst, disprs) =
               recurse to body of abstraction *)
           let bvar_name = generate_name metadata fvars in
           (match apply_subst lftype subst with
-               Lfabsyn.PiType(id, ty, tybody, p) ->
+               Lfabsyn.PiType(id, ty, tybody) ->
                  let bvars' = List.append [(bvar_name, ty)] bvars in
-                 let bvar_term = Lfabsyn.IdTerm(Lfabsyn.Var(bvar_name, ty, Errormsg.none), Errormsg.none) in
+                 let bvar_term = Lfabsyn.IdTerm(Lfabsyn.Var(bvar_name, ty)) in
 	         let (body', fvars') = invert_term fvars bvars' (tybody,[id, bvar_term]) body in
                  if (Option.isSome body')
                  then
-  	           (Some(Lfabsyn.AbsTerm(Lfabsyn.Var(bvar_name, ty, Errormsg.none),ty,Option.get body',p)), fvars')
+  	           (Some(Lfabsyn.AbsTerm(Lfabsyn.Var(bvar_name, ty),ty,Option.get body')), fvars')
                  else
                    (*error, try to continue *)
                    (None, fvars')
-             | Lfabsyn.ImpType(l, r, p) ->
+             | Lfabsyn.ImpType(l, r) ->
                  let bvars' = List.append [(bvar_name, l)] bvars in
-                 let bvar_term = Lfabsyn.IdTerm(Lfabsyn.Var(bvar_name, l, Errormsg.none), Errormsg.none) in
+                 let bvar_term = Lfabsyn.IdTerm(Lfabsyn.Var(bvar_name, l)) in
                  let (body', fvars') = invert_term fvars bvars' (r, []) body in
                  if (Option.isSome body')
                  then
-                   (Some(Lfabsyn.AbsTerm(Lfabsyn.Var(bvar_name, l, Errormsg.none),l,Option.get body',p)), fvars')
+                   (Some(Lfabsyn.AbsTerm(Lfabsyn.Var(bvar_name, l),l,Option.get body')), fvars')
                  else
                    (*error, try to continue *)
                    (None, fvars')
@@ -317,7 +317,7 @@ let invert (Lfsig.Signature(_,types)) metadata fvars (subst, disprs) =
           let (lftm, fvars') = invert_term fvars [] (ty, []) tm in
           if Option.isSome lftm 
           then
-            let id = Lfabsyn.LogicVar(Absyn.getTypeSymbolName tysymb, ty, Errormsg.none) in
+            let id = Lfabsyn.LogicVar(Absyn.getTypeSymbolName tysymb, ty) in
             (* this piece of the substitution may need to be applied to the types for other variables.
                note that we know the find will succeed because we are using table.fold over the free vars. *)
             let fvars'' = Table.fold (fun symb lftyp fvs -> Table.add symb 
@@ -379,7 +379,7 @@ let invert (Lfsig.Signature(_,types)) metadata fvars (subst, disprs) =
                                     invert_term fvars [] (h_ty, []) head in
               let trans_arg (bty, sub) fvars arg =
                 (match bty with
-                     Lfabsyn.PiType(id,ty,body,p) ->
+                     Lfabsyn.PiType(id,ty,body) ->
                        let (arg', fvars') = reset_namegen_count ();
                                             invert_term fvars [] (ty, sub) arg in
                        if Option.isSome arg'
@@ -388,7 +388,7 @@ let invert (Lfsig.Signature(_,types)) metadata fvars (subst, disprs) =
                        else
                          (* something went wrong, but try to continue *)
                          (None, fvars', (body, sub))
-                   | Lfabsyn.ImpType(l,r,_) ->
+                   | Lfabsyn.ImpType(l,r) ->
                        let (arg', fvars') = reset_namegen_count ();
                                             invert_term fvars [] (l, sub) arg in
                          (arg', fvars', (r, sub))
@@ -418,12 +418,12 @@ let invert (Lfsig.Signature(_,types)) metadata fvars (subst, disprs) =
                   None
                 else
                   (match Option.get head' with
-                       Lfabsyn.IdTerm(ident,p) ->
-                         Some(Lfabsyn.AppTerm(ident, args',p))
+                       Lfabsyn.IdTerm(ident) ->
+                         Some(Lfabsyn.AppTerm(ident, args'))
                      (* these two cases shouldn't happen, so maybe change to just an error? *)
-                     | Lfabsyn.AppTerm(ident,newargs,p) ->
-                         Some(Lfabsyn.AppTerm(ident, List.append newargs args', p))
-                     | Lfabsyn.AbsTerm(_,_,_,_) ->
+                     | Lfabsyn.AppTerm(ident,newargs) ->
+                         Some(Lfabsyn.AppTerm(ident, List.append newargs args'))
+                     | Lfabsyn.AbsTerm(_,_,_) ->
                          Errormsg.error Errormsg.none 
                                         ("Error: trans_disprs: This should not happen."^
                                          " Translation of constant or free var cannot be an abstraction.");
@@ -440,7 +440,7 @@ let invert (Lfsig.Signature(_,types)) metadata fvars (subst, disprs) =
                                     invert_term fvars [] (h_ty, []) head in
               let trans_arg (bty, sub) fvars arg =
                 (match bty with
-                     Lfabsyn.PiType(id,ty,body,p) ->
+                     Lfabsyn.PiType(id,ty,body) ->
                        let (arg', fvars') = reset_namegen_count ();
                                             invert_term fvars [] (ty, sub) arg in
                        if Option.isSome arg'
@@ -449,7 +449,7 @@ let invert (Lfsig.Signature(_,types)) metadata fvars (subst, disprs) =
                        else
                          (* something went wrong, but try to continue *)
                          (None, fvars', (body, sub))
-                   | Lfabsyn.ImpType(l,r,_) ->
+                   | Lfabsyn.ImpType(l,r) ->
                        let (arg', fvars') = reset_namegen_count ();
                                             invert_term fvars [] (l, sub) arg in
                        (arg', fvars', (r, sub))
@@ -479,12 +479,12 @@ let invert (Lfsig.Signature(_,types)) metadata fvars (subst, disprs) =
                   None
                 else
                   (match Option.get head' with
-                       Lfabsyn.IdTerm(ident,p) ->
-                         Some(Lfabsyn.AppTerm(ident, args',p))
+                       Lfabsyn.IdTerm(ident) ->
+                         Some(Lfabsyn.AppTerm(ident, args'))
                      (* these two cases shouldn't happen, so maybe change to just an error? *)
-                     | Lfabsyn.AppTerm(ident,newargs,p) ->
-                         Some(Lfabsyn.AppTerm(ident, List.append newargs args', p))
-                     | Lfabsyn.AbsTerm(_,_,_,_) ->
+                     | Lfabsyn.AppTerm(ident,newargs) ->
+                         Some(Lfabsyn.AppTerm(ident, List.append newargs args'))
+                     | Lfabsyn.AbsTerm(_,_,_) ->
                          Errormsg.error Errormsg.none 
                                         ("Error: trans_disprs: This should not happen."^
                                          " Translation of constant or free var cannot be an abstraction.");

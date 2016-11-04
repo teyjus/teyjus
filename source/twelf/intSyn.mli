@@ -127,7 +127,7 @@
     ConDec of string * mid option * int * status
                                         (* a : K : kind  or           *)
               * exp * uni	        (* c : A : type               *)
-  | ConDef of string * mid option * int	(* a = A : K : kind  or       *)
+(*  | ConDef of string * mid option * int	(* a = A : K : kind  or       *)
               * exp * exp * uni		(* d = M : A : type           *)
               * ancestor                (* Ancestor info for d or a   *)
   | AbbrevDef of string * mid option * int
@@ -139,7 +139,7 @@
                                         (* %block l = (l1 | ... | ln) *)
   | SkoDec of string * mid option * int	(* sa: K : kind  or           *)
               * exp * uni	        (* sc: A : type               *)
-
+	      *)
   and ancestor =			(* Ancestor of d or a         *)
     Anc of cid option * int * cid option (* head(expand(d)), height, head(expand[height](d)) *)
                                         (* NONE means expands to {x:A}B *)
@@ -157,31 +157,31 @@
   type dctx = dec ctx			(* G = . | G,D                *)
   type eclo = exp * sub   		(* Us = U[s]                  *)
   type bclo = block * sub   		(* Bs = B[s]                  *)
-  type cnstr = cnstr ref
+  type cnstrRef = cnstr ref
 
   exception Error of string		(* raised if out of space     *)
-(*
+
   (* standard operations on foreign expressions *)
   module FgnExpStd : sig
     (* convert to internal syntax *)
-    module ToInternal : FGN_OPN where type arg = unit
-                                where type result = exp
+    module ToInternal : (Fgnopn.FGN_OPN with type arg = unit
+                                        with type result = exp)
 
     (* apply function to subterms *)
-    module Map : FGN_OPN where type arg = exp -> exp
-	                 where type result = exp
+    module Map : (Fgnopn.FGN_OPN with type arg = exp -> exp
+	                         with type result = exp)
 
     (* apply function to subterms, for effect *)
-    module App : FGN_OPN where type arg = exp -> unit
-	                 where type result = unit
+    module App : (Fgnopn.FGN_OPN with type arg = exp -> unit
+	                         with type result = unit)
 
     (* test for equality *)
-    module EqualTo : FGN_OPN where type arg = exp
-                             where type result = bool
+    module EqualTo : (Fgnopn.FGN_OPN with type arg = exp
+                                     with type result = bool)
 
     (* unify with another term *)
-    module UnifyWith : FGN_OPN where type arg = dec ctx * exp
-                               where type result = fgnUnify
+    module UnifyWith : (Fgnopn.FGN_OPN with type arg = dec ctx * exp
+                                       with type result = fgnUnify)
 
     (* fold a function over the subterms *)
     val fold : (csid * fgnExp) -> (exp * 'a -> 'a) -> 'a -> 'a
@@ -190,24 +190,24 @@
   (* standard operations on foreign constraints *)
   module FgnCnstrStd : sig
     (* convert to internal syntax *)
-    module ToInternal : FGN_OPN where type arg = unit
-                                where type result = (dec ctx * exp) list
+    module ToInternal : Fgnopn.FGN_OPN with type arg = unit
+                                       with type result = (dec ctx * exp) list
 
     (* awake *)
-    module Awake : FGN_OPN where type arg = unit
-                           where type result = bool
+    module Awake : Fgnopn.FGN_OPN with type arg = unit
+                                  with type result = bool
 
     (* simplify *)
-    module Simplify : FGN_OPN where type arg = unit
-                              where type result = bool
+    module Simplify : Fgnopn.FGN_OPN with type arg = unit
+                                     with type result = bool
   end
-*)
+
   val conDecName   : conDec -> string
   val conDecParent : conDec -> mid option
   val conDecImp    : conDec -> int
   val conDecStatus : conDec -> status
   val conDecType   : conDec -> exp
-  val conDecBlock  : conDec -> dctx * dec list
+  (*  val conDecBlock  : conDec -> dctx * dec list *)
   val conDecUni    : conDec -> uni
 
   val strDecName   : strDec -> string
@@ -224,16 +224,16 @@
   val sgnStructLookup : mid -> strDec
 
   val constType   : cid -> exp		(* type of c or d             *)
-  val constDef    : cid -> exp		(* definition of d            *)
+  (* val constDef    : cid -> exp		(* definition of d            *) *)
   val constImp    : cid -> int
   val constStatus : cid -> status
   val constUni    : cid -> uni
-  val constBlock  : cid -> dctx * dec list
+  (*  val constBlock  : cid -> dctx * dec list *)
 
   (* Declaration Contexts *)
 
   val ctxDec    : dctx * int -> dec	(* get variable declaration   *)
-  val blockDec  : dctx * block * int -> dec 
+  (*  val blockDec  : dctx * block * int -> dec  *)
 
   (* Explicit substitutions *)
 
@@ -261,7 +261,7 @@
   (* Definition related functions *)
   val headOpt : exp -> head option
   val ancestor : exp -> ancestor
-  val defAncestor : cid -> ancestor
+  (*  val defAncestor : cid -> ancestor *)
 
   (* Type related functions *)
 

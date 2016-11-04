@@ -2,7 +2,7 @@ module type LEXER =
 sig
   (* Stream is not memoizing for efficiency *)
   (* module Stream : STREAM *)
-  module Stream' : Stream.STREAM
+  module Stream' : Tstream.STREAM
 
   (*! structure Paths : PATHS !*)
   type idCase =
@@ -75,7 +75,7 @@ sig
 
 end  (* signature LEXER *)
 
-module LexerFunc : functor (Stream' : Stream.STREAM) -> LEXER
+module LexerFunc : functor (Stream' : Tstream.STREAM) -> LEXER
 
 module Lexer : LEXER
 

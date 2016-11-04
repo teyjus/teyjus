@@ -58,12 +58,12 @@ let reset () =
 
 %%
 parseQuery
-  : querybndrs DOT VARID COLON type_tm DOT    {Lfabsyn.Query($1,Lfabsyn.LogicVar($3, $5, getPos 3),$5)}
-  | VARID COLON type_tm DOT                   {Lfabsyn.Query([],Lfabsyn.LogicVar($1, $3, getPos 1),$3)}
+  : querybndrs DOT VARID COLON type_tm DOT    {Lfabsyn.Query($1,Lfabsyn.LogicVar($3, $5),$5)}
+  | VARID COLON type_tm DOT                   {Lfabsyn.Query([],Lfabsyn.LogicVar($1, $3),$3)}
   ;
 
 querybndrs
-  : LANGLE VARID COLON type_tm RANGLE querybndrs  {((Lfabsyn.LogicVar($2, $4, getPos 2), $4) :: $6)}
+  : LANGLE VARID COLON type_tm RANGLE querybndrs  {((Lfabsyn.LogicVar($2, $4), $4) :: $6)}
   |                                       {[]}
   ;
 
@@ -83,26 +83,26 @@ declaration_list
   ;
 
 typing
-  : VARID COLON type_tm                   {(Lfabsyn.Var($1, $3, getPos 1), $3)}
-  | CONSTID COLON type_tm                 {(Lfabsyn.Const($1, getPos 1), $3)}
+  : VARID COLON type_tm                   {(Lfabsyn.Var($1, $3), $3)}
+  | CONSTID COLON type_tm                 {(Lfabsyn.Const($1), $3)}
   ;
 
 kinding
   : id_term COLON kind_tm    {($1, $3)}
 
 kind_tm
-  : LBRACE VARID COLON type_tm RBRACE kind_tm    {Lfabsyn.PiKind(Lfabsyn.Var($2, $4, getPos 2), $4, $6, getPos 1)}
-  | TYPE                                         {Lfabsyn.Type(getPos 1)}
+  : LBRACE VARID COLON type_tm RBRACE kind_tm    {Lfabsyn.PiKind(Lfabsyn.Var($2, $4), $4, $6)}
+  | TYPE                                         {Lfabsyn.Type}
   ;
 
 declaration
   : TYPEC kinding DOT obj_list  {let objs = $4 in
                                  let (id,k) = $2 in
                                     addDeclaration (Lfabsyn.get_id_name id) 
-                                                   (Lfabsyn.TypeFam(id,k,Lfabsyn.NoFixity, Lfabsyn.None, 0, ref objs, getPos 1))}
+                                                   (Lfabsyn.TypeFam(id,k,Lfabsyn.NoFixity, Lfabsyn.None, 0, ref objs, 0))}
   | TYPEC kinding DOT           {let (id,k) = $2 in 
                                     addDeclaration (Lfabsyn.get_id_name id) 
-                                                   (Lfabsyn.TypeFam(id,k,Lfabsyn.NoFixity, Lfabsyn.None, 0, ref [], getPos 1))}
+                                                   (Lfabsyn.TypeFam(id,k,Lfabsyn.NoFixity, Lfabsyn.None, 0, ref [], 0))}
   ;
 
 obj_list
@@ -112,22 +112,22 @@ obj_list
 
 obj
   : TERMC typing DOT {let (id,t) = $2 in
-                        Lfabsyn.Object(id, t, Lfabsyn.NoFixity, Lfabsyn.None, 0, getPos 1)}
+                        Lfabsyn.Object(id, t, Lfabsyn.NoFixity, Lfabsyn.None, 0)}
   ;
 
 ground_term
-  : id_term                     {Lfabsyn.IdTerm($1, getPos 1)}
+  : id_term                     {Lfabsyn.IdTerm($1)}
   | LPAREN term RPAREN          {$2}
   ;
 
 application_term
-  : id_term tm_list             {Lfabsyn.AppTerm($1, $2, getPos 1)}
+  : id_term tm_list             {Lfabsyn.AppTerm($1, $2)}
   | ground_term                 {$1}              
   ;
 
 prefix_term
   : LBRACK typing RBRACK term                 {let (id,t) = $2 in 
-                                               Lfabsyn.AbsTerm(id,t,$4, getPos 1)}
+                                               Lfabsyn.AbsTerm(id,t,$4)}
   | application_term                          {$1}
   ;
 
@@ -136,9 +136,9 @@ term
   ;
 
 id_term
-  : CONSTID                            {Lfabsyn.Const($1, getPos 1)}
-  | LANGLE VARID COLON type_tm RANGLE  {Lfabsyn.LogicVar($2, $4, getPos 2)}
-  | LPAREN VARID COLON type_tm RPAREN  {Lfabsyn.Var($2, $4, getPos 2)}
+  : CONSTID                            {Lfabsyn.Const($1)}
+  | LANGLE VARID COLON type_tm RANGLE  {Lfabsyn.LogicVar($2, $4)}
+  | LPAREN VARID COLON type_tm RPAREN  {Lfabsyn.Var($2, $4)}
   ;
 
 tm_list
@@ -147,7 +147,7 @@ tm_list
   ;
 
 ground_type
-  : id_term                     {Lfabsyn.IdType($1, getPos 1)}
+  : id_term                     {Lfabsyn.IdType($1)}
   | LPAREN type_tm RPAREN          {$2}
   ;
 
@@ -157,13 +157,13 @@ application_type
   ;
 
 arrow_type
-  : application_type ARROW arrow_type          {Lfabsyn.ImpType($1, $3, getPos 2)}
+  : application_type ARROW arrow_type          {Lfabsyn.ImpType($1, $3)}
   | application_type                           {$1}
   ;
 
 prefix_type
   : LBRACE typing RBRACE prefix_type        {let (id,t) = $2 in 
-                                             Lfabsyn.PiType(id, t, $4, getPos 1)}
+                                             Lfabsyn.PiType(id, t, $4)}
   | arrow_type                              {$1}
   ;
 

@@ -1,7 +1,7 @@
 (* This is taken from the Twelf implementation *)
 
-  val parseQualId' : (string list * Parsing.Parsing.lexResult) Parsing.Parsing.parser
-  val parseTerm' : ExtSyn.term Parsing.Parsing.parser
-  val parseDec' : (string option * ExtSyn.term option) Parsing.Parsing.parser
+  val parseQualId' : (string list * Tparsing.Parsing.lexResult) Tparsing.Parsing.parser
+  val parseTerm' : ExtSyn.term Tparsing.Parsing.parser
+  val parseDec' : (string option * ExtSyn.term option) Tparsing.Parsing.parser
 
 

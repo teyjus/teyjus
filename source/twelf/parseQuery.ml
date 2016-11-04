@@ -6,8 +6,8 @@
 
   let parseQuery1 args =
     match args with
-        (name, f, Parsing.Parsing.Lexer'.Stream'.Cons ((Parsing.Parsing.Lexer'.COLON, r), s')) ->
-          returnQuery (Some(name), ParseTerm.parseTerm' (Parsing.Parsing.Lexer'.Stream'.expose s'))
+        (name, f, Tparsing.Parsing.Lexer'.Stream'.Cons ((Tparsing.Parsing.Lexer'.COLON, r), s')) ->
+          returnQuery (Some(name), ParseTerm.parseTerm' (Tparsing.Parsing.Lexer'.Stream'.expose s'))
       | (name, f, _) -> returnQuery (None, ParseTerm.parseTerm' f)
 
   (* parseQuery' : lexResult front -> ExtQuery.query * lexResult front *)
@@ -20,7 +20,7 @@
   *)
   let parseQuery' f =
     match f with
-       (Parsing.Parsing.Lexer'.Stream'.Cons ((Parsing.Parsing.Lexer'.ID (Parsing.Parsing.Lexer'.Upper, name), r), s')) ->
-         parseQuery1 (name, f, Parsing.Parsing.Lexer'.Stream'.expose s')
+       (Tparsing.Parsing.Lexer'.Stream'.Cons ((Tparsing.Parsing.Lexer'.ID (Tparsing.Parsing.Lexer'.Upper, name), r), s')) ->
+         parseQuery1 (name, f, Tparsing.Parsing.Lexer'.Stream'.expose s')
      | f ->
          returnQuery (None, ParseTerm.parseTerm' f)

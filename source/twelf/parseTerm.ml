@@ -23,13 +23,13 @@
 
   let idToTerm args =
     match args with
-        (Parsing.Parsing.Lexer'.Lower, ids, name, r) -> ExtSyn.lcid (ids, name, r)
-      | (Parsing.Parsing.Lexer'.Upper, ids, name, r) -> ExtSyn.ucid (ids, name, r)
-      | (Parsing.Parsing.Lexer'.Quoted, ids, name, r) -> ExtSyn.quid (ids, name, r)
+        (Tparsing.Parsing.Lexer'.Lower, ids, name, r) -> ExtSyn.lcid (ids, name, r)
+      | (Tparsing.Parsing.Lexer'.Upper, ids, name, r) -> ExtSyn.ucid (ids, name, r)
+      | (Tparsing.Parsing.Lexer'.Quoted, ids, name, r) -> ExtSyn.quid (ids, name, r)
 
   let isQuoted arg =
     match arg with
-        (Parsing.Parsing.Lexer'.Quoted) -> true
+        (Tparsing.Parsing.Lexer'.Quoted) -> true
       | _ -> false
 
   type stack = (ExtSyn.term operator) list
@@ -78,9 +78,9 @@
       let reduceAll args =
         match args with
             (r, [Atom(e)]) -> e
-          | (r, Infix _::p') -> Parsing.Parsing.error (r, "Incomplete infix expression")
-  	  | (r, Prefix _::p') -> Parsing.Parsing.error (r, "Incomplete prefix expression")
-  	  | (r, []) -> Parsing.Parsing.error (r, "Empty expression")
+          | (r, Infix _::p') -> Tparsing.Parsing.error (r, "Incomplete infix expression")
+  	  | (r, Prefix _::p') -> Tparsing.Parsing.error (r, "Incomplete prefix expression")
+  	  | (r, []) -> Tparsing.Parsing.error (r, "Empty expression")
 	  | (r, p) -> reduceRec (reduce p)
 
       (* val shiftAtom : term * <pStable> -> <p> *)
@@ -106,12 +106,12 @@
 	(* Atom/Empty: shift *)
 	(* Infix/Atom: shift *)
 	  | (r, Infix _, Infix _::p') ->
-	    Parsing.Parsing.error (r, "Consective infix operators")
+	    Tparsing.Parsing.error (r, "Consective infix operators")
 	  | (r, Infix _, Prefix _::p') ->
-	    Parsing.Parsing.error (r, "Infix operator following prefix operator")
+	    Tparsing.Parsing.error (r, "Infix operator following prefix operator")
 	(* Infix/Postfix cannot arise *)
 	  | (r, Infix _, []) ->
-	    Parsing.Parsing.error (r, "Leading infix operator")
+	    Tparsing.Parsing.error (r, "Leading infix operator")
 	  | (r, ((Prefix _) as opr), ((Atom _::p') as p)) ->
 	    (* insert juxtaposition operator *)
 	    (* will be reduced later *)
@@ -120,12 +120,12 @@
 	(* Prefix/Postfix cannot arise *)
 	(* Postfix/Atom: shift, reduced immediately *)
 	  | (r, Postfix _, Infix _::p') ->
-	    Parsing.Parsing.error (r, "Postfix operator following infix operator")
+	    Tparsing.Parsing.error (r, "Postfix operator following infix operator")
 	  | (r, Postfix _, Prefix _::p') ->
-	    Parsing.Parsing.error (r, "Postfix operator following prefix operator")
+	    Tparsing.Parsing.error (r, "Postfix operator following prefix operator")
 	(* Postfix/Postfix cannot arise *)
 	  | (r, Postfix _, []) ->
-	    Parsing.Parsing.error (r, "Leading postfix operator")
+	    Tparsing.Parsing.error (r, "Leading postfix operator")
 	  | (r, opr, p) -> opr::p
 
       (* val resolve : Paths.region * opr * <pStable> -> <p> *)
@@ -140,12 +140,12 @@
 	         | (n,_,_) when n < 0 -> resolve (r, opr, reduce(p))
 	         | (0, Lfabsyn.Left, Lfabsyn.Left) -> resolve (r, opr, reduce(p))
 	         | (0, Lfabsyn.Right, Lfabsyn.Right) -> shift(r, opr, p)
-	         | _ -> Parsing.Parsing.error (r, "Ambiguous: infix following infix of identical precedence"))
+	         | _ -> Tparsing.Parsing.error (r, "Ambiguous: infix following infix of identical precedence"))
 	  | (r, Infix ((prec, assoc), _), (Atom(_)::Prefix(prec', _)::p')) ->
 	      (match prec-prec' with
 	           n when n > 0 -> shift(r, opr, p)
 	         | n when n < 0 -> resolve (r, opr, reduce(p))
-	         | 0 -> Parsing.Parsing.error (r, "Ambiguous: infix following prefix of identical precedence"))
+	         | 0 -> Tparsing.Parsing.error (r, "Ambiguous: infix following prefix of identical precedence"))
 	(* infix/atom/atom cannot arise *)
 	(* infix/atom/postfix cannot arise *)
 	(* infix/atom/<empty>: shift *)
@@ -159,13 +159,13 @@
 	      (match prec-prec' with
 	           n when n > 0 -> reduce (shift (r, opr, p))
 	  	 | n when n < 0 -> resolve (r, opr, reduce (p))
-		 | 0 -> Parsing.Parsing.error (r, "Ambiguous: postfix following prefix of identical precedence"))
+		 | 0 -> Tparsing.Parsing.error (r, "Ambiguous: postfix following prefix of identical precedence"))
 	(* always reduce postfix *)
 	  | (r, Postfix(prec, _), (Atom _::Infix((prec', _), _)::p')) ->
 	      (match prec - prec' with
 	           n when n > 0 -> reduce (shift (r, opr, p))
 	         | n when n < 0 -> resolve (r, opr, reduce (p))
-                 | 0 -> Parsing.Parsing.error (r, "Ambiguous: postfix following infix of identical precedence"))
+                 | 0 -> Tparsing.Parsing.error (r, "Ambiguous: postfix following infix of identical precedence"))
 	  | (r, Postfix _, [Atom _]) ->
 	    reduce (shift (r, opr, p))
 
@@ -176,23 +176,23 @@
     end  (* structure P *)
 
   (* parseQualifier' f = (ids, f')
-     pre: f begins with Parsing.Parsing.Lexer'.ID
+     pre: f begins with Tparsing.Parsing.Lexer'.ID
      Note: precondition for recursive call is enforced by the lexer. *)
-  let rec parseQualId' (Parsing.Parsing.Lexer'.Stream'.Cons ((Parsing.Parsing.Lexer'.ID (_, id) as t, r), s')) =
-      (match Parsing.Parsing.Lexer'.Stream'.expose s' with
-           Parsing.Parsing.Lexer'.Stream'.Cons ((Parsing.Parsing.Lexer'.PATHSEP, _), s'') ->
-             let ((ids, (t, r)), f') = parseQualId' (Parsing.Parsing.Lexer'.Stream'.expose s'') in
+  let rec parseQualId' (Tparsing.Parsing.Lexer'.Stream'.Cons ((Tparsing.Parsing.Lexer'.ID (_, id) as t, r), s')) =
+      (match Tparsing.Parsing.Lexer'.Stream'.expose s' with
+           Tparsing.Parsing.Lexer'.Stream'.Cons ((Tparsing.Parsing.Lexer'.PATHSEP, _), s'') ->
+             let ((ids, (t, r)), f') = parseQualId' (Tparsing.Parsing.Lexer'.Stream'.expose s'') in
              ((id::ids, (t, r)), f')
          | f' -> (([], (t, r)), f'))
 
 
-  (* val parseExp : (Parsing.Parsing.Lexer'.token * Parsing.Parsing.Lexer'.region) Parsing.Parsing.Lexer'.Stream'.stream * <p>
-                      -> ExtSyn.term * (Parsing.Parsing.Lexer'.token * Parsing.Parsing.Lexer'.region) Parsing.Parsing.Lexer'.Stream'.front *)
-  let rec parseExp (s, p) = parseExp' (Parsing.Parsing.Lexer'.Stream'.expose s, p)
+  (* val parseExp : (Tparsing.Parsing.Lexer'.token * Tparsing.Parsing.Lexer'.region) Tparsing.Parsing.Lexer'.Stream'.stream * <p>
+                      -> ExtSyn.term * (Tparsing.Parsing.Lexer'.token * Tparsing.Parsing.Lexer'.region) Tparsing.Parsing.Lexer'.Stream'.front *)
+  let rec parseExp (s, p) = parseExp' (Tparsing.Parsing.Lexer'.Stream'.expose s, p)
   and parseExp' (f,p) =
     match (f,p) with
-        (Parsing.Parsing.Lexer'.Stream'.Cons((Parsing.Parsing.Lexer'.ID _, r0), _), p) ->
-          let ((ids, (Parsing.Parsing.Lexer'.ID (idCase, name), r1)), f') = parseQualId' f in
+        (Tparsing.Parsing.Lexer'.Stream'.Cons((Tparsing.Parsing.Lexer'.ID _, r0), _), p) ->
+          let ((ids, (Tparsing.Parsing.Lexer'.ID (idCase, name), r1)), f') = parseQualId' f in
           let r = Paths.join (r0, r1) in
           let tm = idToTerm (idCase, ids, name, r) in
           (* Currently, we cannot override fixity status of identifiers *)
@@ -200,94 +200,94 @@
           if isQuoted (idCase)
           then parseExp' (f', P.shiftAtom (tm, p))
           else parseExp' (f', P.shiftAtom (tm, p))
-      | (Parsing.Parsing.Lexer'.Stream'.Cons((Parsing.Parsing.Lexer'.UNDERSCORE,r), s), p) ->
+      | (Tparsing.Parsing.Lexer'.Stream'.Cons((Tparsing.Parsing.Lexer'.UNDERSCORE,r), s), p) ->
           parseExp (s, P.shiftAtom (ExtSyn.omitted r, p))
-      | (Parsing.Parsing.Lexer'.Stream'.Cons((Parsing.Parsing.Lexer'.TYPE,r), s), p) ->
+      | (Tparsing.Parsing.Lexer'.Stream'.Cons((Tparsing.Parsing.Lexer'.TYPE,r), s), p) ->
 	  parseExp (s, P.shiftAtom (ExtSyn.typ r, p))
-      | (Parsing.Parsing.Lexer'.Stream'.Cons((Parsing.Parsing.Lexer'.COLON,r), s), p) ->
+      | (Tparsing.Parsing.Lexer'.Stream'.Cons((Tparsing.Parsing.Lexer'.COLON,r), s), p) ->
 	  parseExp (s, P.resolve (r, colonOp, p))
-      | (Parsing.Parsing.Lexer'.Stream'.Cons((Parsing.Parsing.Lexer'.BACKARROW,r), s), p) ->
+      | (Tparsing.Parsing.Lexer'.Stream'.Cons((Tparsing.Parsing.Lexer'.BACKARROW,r), s), p) ->
 	  parseExp (s, P.resolve (r, backArrowOp, p))
-      | (Parsing.Parsing.Lexer'.Stream'.Cons((Parsing.Parsing.Lexer'.ARROW,r), s), p) ->
+      | (Tparsing.Parsing.Lexer'.Stream'.Cons((Tparsing.Parsing.Lexer'.ARROW,r), s), p) ->
           parseExp (s, P.resolve (r, arrowOp, p))
-      | (Parsing.Parsing.Lexer'.Stream'.Cons((Parsing.Parsing.Lexer'.LPAREN,r), s), p) ->
+      | (Tparsing.Parsing.Lexer'.Stream'.Cons((Tparsing.Parsing.Lexer'.LPAREN,r), s), p) ->
 	  decideRParen (r, parseExp (s, []), p)
-      | (Parsing.Parsing.Lexer'.Stream'.Cons((Parsing.Parsing.Lexer'.RPAREN,r), s), p) ->
+      | (Tparsing.Parsing.Lexer'.Stream'.Cons((Tparsing.Parsing.Lexer'.RPAREN,r), s), p) ->
 	  (P.reduceAll (r, p), f)
-      | (Parsing.Parsing.Lexer'.Stream'.Cons((Parsing.Parsing.Lexer'.LBRACE,r), s), p) ->
+      | (Tparsing.Parsing.Lexer'.Stream'.Cons((Tparsing.Parsing.Lexer'.LBRACE,r), s), p) ->
 	  decideRBrace (r, parseDec (s), p)
-      | (Parsing.Parsing.Lexer'.Stream'.Cons((Parsing.Parsing.Lexer'.RBRACE,r), s), p) ->
+      | (Tparsing.Parsing.Lexer'.Stream'.Cons((Tparsing.Parsing.Lexer'.RBRACE,r), s), p) ->
           (P.reduceAll (r, p), f)
-      | (Parsing.Parsing.Lexer'.Stream'.Cons((Parsing.Parsing.Lexer'.LBRACKET,r), s), p) ->
+      | (Tparsing.Parsing.Lexer'.Stream'.Cons((Tparsing.Parsing.Lexer'.LBRACKET,r), s), p) ->
           decideRBracket (r, parseDec (s), p)
-      | (Parsing.Parsing.Lexer'.Stream'.Cons((Parsing.Parsing.Lexer'.RBRACKET,r), s), p) ->
+      | (Tparsing.Parsing.Lexer'.Stream'.Cons((Tparsing.Parsing.Lexer'.RBRACKET,r), s), p) ->
 	  (P.reduceAll (r, p), f)
-      | (Parsing.Parsing.Lexer'.Stream'.Cons((Parsing.Parsing.Lexer'.DOT,r), s), p) ->
+      | (Tparsing.Parsing.Lexer'.Stream'.Cons((Tparsing.Parsing.Lexer'.DOT,r), s), p) ->
 	  (P.reduceAll (r, p), f)
-      | (Parsing.Parsing.Lexer'.Stream'.Cons((Parsing.Parsing.Lexer'.EOF,r), s), p) ->
+      | (Tparsing.Parsing.Lexer'.Stream'.Cons((Tparsing.Parsing.Lexer'.EOF,r), s), p) ->
 	  (P.reduceAll (r, p), f)
-      | (Parsing.Parsing.Lexer'.Stream'.Cons((t,r), s), p) ->
+      | (Tparsing.Parsing.Lexer'.Stream'.Cons((t,r), s), p) ->
 	  (* possible error recovery: insert DOT *)
-	  Parsing.Parsing.error (r, "Unexpected token " ^ Parsing.Parsing.Lexer'.toString t
+	  Tparsing.Parsing.error (r, "Unexpected token " ^ Tparsing.Parsing.Lexer'.toString t
 			    ^ " found in expression")
 
-  and parseDec (s) = parseDec' (Parsing.Parsing.Lexer'.Stream'.expose s)
+  and parseDec (s) = parseDec' (Tparsing.Parsing.Lexer'.Stream'.expose s)
   and parseDec' args =
     match args with
-        (Parsing.Parsing.Lexer'.Stream'.Cons ((Parsing.Parsing.Lexer'.ID (Parsing.Parsing.Lexer'.Quoted,name), r), s')) ->
+        (Tparsing.Parsing.Lexer'.Stream'.Cons ((Tparsing.Parsing.Lexer'.ID (Tparsing.Parsing.Lexer'.Quoted,name), r), s')) ->
           (* cannot happen at present *)
-	  Parsing.Parsing.error (r, "Illegal bound quoted identifier " ^ name)
-      | (Parsing.Parsing.Lexer'.Stream'.Cons ((Parsing.Parsing.Lexer'.ID (idCase,name), r), s')) ->
+	  Tparsing.Parsing.error (r, "Illegal bound quoted identifier " ^ name)
+      | (Tparsing.Parsing.Lexer'.Stream'.Cons ((Tparsing.Parsing.Lexer'.ID (idCase,name), r), s')) ->
         (* MKS: we have single file, so nothing would ever be in the table to lookup *)
-        parseDec1 (Some(name), Parsing.Parsing.Lexer'.Stream'.expose s')
-      | (Parsing.Parsing.Lexer'.Stream'.Cons ((Parsing.Parsing.Lexer'.UNDERSCORE, r), s')) ->
-          parseDec1 (None, Parsing.Parsing.Lexer'.Stream'.expose s')
-      | (Parsing.Parsing.Lexer'.Stream'.Cons ((Parsing.Parsing.Lexer'.EOF, r), s')) ->
-	  Parsing.Parsing.error (r, "Unexpected end of stream in declaration")
-      | (Parsing.Parsing.Lexer'.Stream'.Cons ((t, r), s')) ->
-	  Parsing.Parsing.error (r, "Expected variable name, found token " ^ Parsing.Parsing.Lexer'.toString t)
+        parseDec1 (Some(name), Tparsing.Parsing.Lexer'.Stream'.expose s')
+      | (Tparsing.Parsing.Lexer'.Stream'.Cons ((Tparsing.Parsing.Lexer'.UNDERSCORE, r), s')) ->
+          parseDec1 (None, Tparsing.Parsing.Lexer'.Stream'.expose s')
+      | (Tparsing.Parsing.Lexer'.Stream'.Cons ((Tparsing.Parsing.Lexer'.EOF, r), s')) ->
+	  Tparsing.Parsing.error (r, "Unexpected end of stream in declaration")
+      | (Tparsing.Parsing.Lexer'.Stream'.Cons ((t, r), s')) ->
+	  Tparsing.Parsing.error (r, "Expected variable name, found token " ^ Tparsing.Parsing.Lexer'.toString t)
 
   and parseDec1 args =
     match args with
-        (x, Parsing.Parsing.Lexer'.Stream'.Cons((Parsing.Parsing.Lexer'.COLON, r), s')) ->
+        (x, Tparsing.Parsing.Lexer'.Stream'.Cons((Tparsing.Parsing.Lexer'.COLON, r), s')) ->
           let (tm, f'') = parseExp (s', []) in
           ((x, Some tm), f'') 
-      | (x, (Parsing.Parsing.Lexer'.Stream'.Cons((Parsing.Parsing.Lexer'.RBRACE, _), _) as f)) ->
+      | (x, (Tparsing.Parsing.Lexer'.Stream'.Cons((Tparsing.Parsing.Lexer'.RBRACE, _), _) as f)) ->
           ((x, None), f)
-      | (x, (Parsing.Parsing.Lexer'.Stream'.Cons ((Parsing.Parsing.Lexer'.RBRACKET, _), _) as f)) ->
+      | (x, (Tparsing.Parsing.Lexer'.Stream'.Cons ((Tparsing.Parsing.Lexer'.RBRACKET, _), _) as f)) ->
           ((x, None), f)
-      | (x, Parsing.Parsing.Lexer'.Stream'.Cons ((t,r), s')) ->
-	  Parsing.Parsing.error (r, "Expected optional type declaration, found token "
-			    ^ Parsing.Parsing.Lexer'.toString t)
+      | (x, Tparsing.Parsing.Lexer'.Stream'.Cons ((t,r), s')) ->
+	  Tparsing.Parsing.error (r, "Expected optional type declaration, found token "
+			    ^ Tparsing.Parsing.Lexer'.toString t)
 
   and decideRParen args =
     match args with
-        (r0, (tm, Parsing.Parsing.Lexer'.Stream'.Cons((Parsing.Parsing.Lexer'.RPAREN,r), s)), p) ->
+        (r0, (tm, Tparsing.Parsing.Lexer'.Stream'.Cons((Tparsing.Parsing.Lexer'.RPAREN,r), s)), p) ->
           parseExp (s, P.shiftAtom(tm,p))
-      | (r0, (tm, Parsing.Parsing.Lexer'.Stream'.Cons((_, r), s)), p) ->
-	  Parsing.Parsing.error (Paths.join(r0, r), "Unmatched open parenthesis")
+      | (r0, (tm, Tparsing.Parsing.Lexer'.Stream'.Cons((_, r), s)), p) ->
+	  Tparsing.Parsing.error (Paths.join(r0, r), "Unmatched open parenthesis")
 
   and decideRBrace args =
     match args with
-        (r0, ((x, yOpt), Parsing.Parsing.Lexer'.Stream'.Cons ((Parsing.Parsing.Lexer'.RBRACE,r), s)), p) ->
+        (r0, ((x, yOpt), Tparsing.Parsing.Lexer'.Stream'.Cons ((Tparsing.Parsing.Lexer'.RBRACE,r), s)), p) ->
           let dec = (match yOpt with
                          None -> ExtSyn.dec0 (x, Paths.join (r0, r))
                        | Some y -> ExtSyn.dec (x, y, Paths.join (r0, r))) in
 	  let (tm, f') = parseExp (s, []) in
 	  parseExp' (f', P.shiftAtom (ExtSyn.pi (dec, tm), p))
-      | (r0, (_, Parsing.Parsing.Lexer'.Stream'.Cons ((_, r), s)), p) ->
-	  Parsing.Parsing.error (Paths.join(r0, r), "Unmatched open brace")
+      | (r0, (_, Tparsing.Parsing.Lexer'.Stream'.Cons ((_, r), s)), p) ->
+	  Tparsing.Parsing.error (Paths.join(r0, r), "Unmatched open brace")
 
   and decideRBracket args =
     match args with
-        (r0, ((x, yOpt), Parsing.Parsing.Lexer'.Stream'.Cons ((Parsing.Parsing.Lexer'.RBRACKET,r), s)), p) ->
+        (r0, ((x, yOpt), Tparsing.Parsing.Lexer'.Stream'.Cons ((Tparsing.Parsing.Lexer'.RBRACKET,r), s)), p) ->
           let dec = (match yOpt with
                          None -> ExtSyn.dec0 (x, Paths.join (r0, r))
                        | Some y -> ExtSyn.dec (x, y, Paths.join (r0, r))) in
 	  let(tm, f') = parseExp (s, []) in
 	  parseExp' (f', P.shiftAtom (ExtSyn.lam (dec, tm), p))
-      | (r0, (dec, Parsing.Parsing.Lexer'.Stream'.Cons ((_, r), s)), p) ->
-	  Parsing.Parsing.error (Paths.join(r0, r), "Unmatched open bracket")
+      | (r0, (dec, Tparsing.Parsing.Lexer'.Stream'.Cons ((_, r), s)), p) ->
+	  Tparsing.Parsing.error (Paths.join(r0, r), "Unmatched open bracket")
 
 
 

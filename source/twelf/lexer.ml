@@ -5,7 +5,7 @@ sig
   (* Stream is not memoizing for efficiency *)
   (* module Stream : STREAM *)
   
-  module Stream' : Stream.STREAM
+  module Stream' : Tstream.STREAM
 
   (*! structure Paths : PATHS !*)
   type idCase =
@@ -78,12 +78,12 @@ sig
 
 end  (* signature LEXER *)
 
-module LexerFunc (S : Stream.STREAM) : LEXER =  
+module LexerFunc (S : Tstream.STREAM) : LEXER =  
 struct
   (* let module Stream = Stream' *)
   (*! structure Paths = Paths' !*)  
 
-  module Stream' : Stream.STREAM = S
+  module Stream' : Tstream.STREAM = S
 
 (* let module Paths = P *)
   type idCase =
@@ -543,5 +543,5 @@ end  (* functor Lexer *)
 
 
 module Lexer =
-  LexerFunc (Stream.Stream)
+  LexerFunc (Tstream.Stream)
 

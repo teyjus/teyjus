@@ -1,11 +1,17 @@
   type term =				(* term *)
-     Typ of Paths.region
+     Internal of IntSyn.exp * IntSyn.exp * Paths.region (* (U, V, r) *)
+        (* G |- U : V nf where V : L or V == kind *)
+        (* not used currently *)
+   | Constant of IntSyn.head * Paths.region
+   | Bvar of int * Paths.region
+   | Typ of Paths.region
    | Arrow of term * term
    | Backarrow of term * term
    | Pi of dec * term
    | Lam of dec * term
    | App of term * term
    | Hastype of term * term
+   | Mismatch of term * term * string * string
    | Omitted of Paths.region
    | Lcid of string list * string * Paths.region
    | Ucid of string list * string * Paths.region
@@ -13,6 +19,8 @@
    | Scon of string * Paths.region
    | Evar of string * Paths.region
    | Fvar of string * Paths.region
+   | Omitapx of Approx.exp * Approx.exp * Approx.uni * Paths.region
+   | Omitexact of IntSyn.exp * IntSyn.exp * Paths.region
   and dec =				(* variable declaration *)
      Dec of string option * term * Paths.region
    | Dec0 of string option * Paths.region

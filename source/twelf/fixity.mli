@@ -6,7 +6,7 @@
 
   val less : precedence * precedence -> bool
   val leq : precedence * precedence -> bool
-  val compare : precedence * precedence -> order
+  val compare : precedence * precedence -> int
 
   val inc : precedence -> precedence
   val dec : precedence -> precedence

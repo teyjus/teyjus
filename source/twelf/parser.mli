@@ -5,6 +5,6 @@
     | FQuery of ExtSyn.query (* A *)
     (* Further declarations to be added here *)
 
-  val parseStream: in_channel -> (fileParseResult * Paths.region) Parsing.Parsing.Lexer'.Stream'.stream
-  val parseTerminalQ : string * string -> ExtSyn.query Parsing.Parsing.Lexer'.Stream'.stream (* reads from std input *)
+  val parseStream: in_channel -> (fileParseResult * Paths.region) Tparsing.Parsing.Lexer'.Stream'.stream
+  val parseTerminalQ : string * string -> ExtSyn.query Tparsing.Parsing.Lexer'.Stream'.stream (* reads from std input *)
 

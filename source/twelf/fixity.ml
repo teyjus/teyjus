@@ -22,7 +22,7 @@
     let dec (Strength(p)) = Strength(p-1)
 
     (* Fixities ascribed to constants *)
-    datatype fixity =
+    type fixity =
         Nonfix
       | Infix of precedence * associativity
       | Prefix of precedence

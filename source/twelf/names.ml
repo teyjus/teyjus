@@ -23,13 +23,13 @@ let argNumber f =
      if V expects exactly n arguments,
      raises Error(msg) otherwise
   *)
-let checkAtomic args =
+let rec checkAtomic args =
   match args with
-      (name, IntSyn.Pi (D, V), 0) -> true
+      (name, IntSyn.Pi (d, v), 0) -> true
       (* allow extraneous arguments, Sat Oct 23 14:18:27 1999 -fp *)
       (* raise Error ("Constant " ^ name ^ " takes too many explicit arguments for given fixity") *)
-    | (name, IntSyn.Pi (D, V), n) ->
-	checkAtomic (name, V, n-1)
+    | (name, IntSyn.Pi (d, v), n) ->
+	checkAtomic (name, v, n-1)
     | (_, IntSyn.Uni _, 0) -> true
     | (_, IntSyn.Root _, 0) -> true
     | (name, _, _) -> false
@@ -40,14 +40,14 @@ let checkAtomic args =
   *)
 let checkArgNumber args =
   match args with
-      (IntSyn.ConDec (name, _, i, _, V, L), n) ->
-	checkAtomic (name, V, i+n)
-    | (IntSyn.SkoDec (name, _, i, V, L), n) ->
-	checkAtomic (name, V, i+n)
-    | (IntSyn.ConDef (name, _, i, _, V, L, _), n) ->
-	checkAtomic (name, V, i+n)
-    | (IntSyn.AbbrevDef (name, _, i, _, V, L), n) ->
-	checkAtomic (name, V, i+n)
+      (IntSyn.ConDec (name, _, i, _, v, l), n) ->
+	checkAtomic (name, v, i+n)
+(*    | (IntSyn.SkoDec (name, _, i, v, l), n) ->
+	checkAtomic (name, v, i+n)
+    | (IntSyn.ConDef (name, _, i, _, v, l, _), n) ->
+	checkAtomic (name, v, i+n)
+    | (IntSyn.AbbrevDef (name, _, i, _, v, l), n) ->
+	checkAtomic (name, v, i+n) *)
 
   (* checkFixity (name, cidOpt, n) = ()
      if n = 0 (no requirement on arguments)
@@ -59,7 +59,7 @@ let checkFixity args =
       (name, _, 0) -> ()
     | (name, cid, n) ->
         if checkArgNumber (IntSyn.sgnLookup (cid), n) then ()
-        else raise Error ("Constant " ^ name ^ " takes too few explicit arguments for given fixity")
+        else raise (Error ("Constant " ^ name ^ " takes too few explicit arguments for given fixity"))
 
   (****************************************)
   (* Constants Names and Name Preferences *)
@@ -90,18 +90,18 @@ let checkFixity args =
 type qid = Qid of string list * string
     
 let qidToString (Qid (ids, name)) =
-      List.foldr (fn (id, s) -> id ^ "." ^ s) name ids
+      List.fold_right (fun id s -> id ^ "." ^ s) ids name
 
 let validateQualName l =
   match l with
       [] -> None
     | (id::ids) ->
-        if List.exists (fn s -> s = "") l
+        if List.exists (fun s -> s = "") l
         then None
-        else Some (Qid (rev ids, id))
+        else Some (Qid (List.rev ids, id))
 
 let stringToQid name =
-      validateQualName (rev (String.fields (fn c -> c = #".") name))
+      validateQualName (List.rev (Str.split (Str.regexp ".") name))
 
 let unqualified arg =
   match arg with
@@ -125,7 +125,7 @@ let insertConst ((structTable, constTable), cid) =
 *)
   constTable := Symboltable.insert (!constTable) (Symb.symbol id) cid; ()  
 
-let insertStruct ((structTable, constTable), mid) =
+let insertStruct (((structTable, constTable) , mid) : namespace * IntSyn.mid) =
   let strdec = IntSyn.sgnStructLookup mid in
   let id = IntSyn.strDecName strdec in
 (*
@@ -135,20 +135,20 @@ let insertStruct ((structTable, constTable), mid) =
          raise Error ("Shadowing: A structure named " ^ id
                       ^ "\nhas already been declared in this signature")
 *)
-  structTable := Symboltable.insert (!structTable) (Symb.symbol id) strdec; ()
+  structTable := Symboltable.insert (!structTable) (Symb.symbol id) mid; ()
      
-let appConsts f (structTable, constTable) =
-  Symboltable.iter (!constTable) (fun s a -> constTable := Symboltable.insert (!constTable) s (f (Symb.name s,a)))
+let appConsts (f : string * IntSyn.cid -> unit) ((structTable, constTable) : namespace) =
+  Symboltable.iter (!constTable) (fun s a-> f (Symb.name s,a))
       (* StringTree.app f constTable *)
 
-let appStructs f (structTable, constTable) =
-  Symboltable.iter (!structTable) (fun s a -> structTable := Symboltable.insert (!structTable) s (f (Symb.name s,a)))
+let appStructs (f : string * IntSyn.mid -> unit) ((structTable, constTable) : namespace) =
+  Symboltable.iter (!structTable) (fun s a -> f (Symb.name s,a))
 (*      StringTree.app f structTable *)
 
-let fromTo f (from, to) = 
-  if from >= to 
+let rec fromTo f (from, too) = 
+  if from >= too 
   then ()
-  else (f from; fromTo f (from+1, to))
+  else (f from; fromTo f (from+1, too))
 
 let maxCid = Global.maxCid
 let shadowArray : IntSyn.cid option array ref =
@@ -162,12 +162,12 @@ let namePrefArray : (string list * string list) option array ref=
 let namePrefClear () = namePrefArray := Array.make (Array.length (!namePrefArray)) None
 
 let topNamespace : IntSyn.cid Symboltable.table ref = ref Symboltable.empty
-let topInsert = (*Symboltable.insertShadow topNamespace *) fun k v -> topNamespace := Symboltable.insert (!topNamespace) (Symb.symbol k) v; None
+let topInsert = (*Symboltable.insertShadow topNamespace *) fun (k,v) -> topNamespace := Symboltable.insert (!topNamespace) (Symb.symbol k) v; None
 let topLookup = fun k -> Symboltable.lookup (!topNamespace) (Symb.symbol k)
 let topDelete = fun k -> topNamespace := Symboltable.remove (!topNamespace) (Symb.symbol k); ()
 let topClear () = topNamespace := Symboltable.empty
 
-let dummyNamespace = (ref Symboltable.empty, ref Symboltable.empty) : namespace
+let dummyNamespace : namespace = (ref Symboltable.empty, ref Symboltable.empty)
 
 let maxMid = Global.maxMid
 let structShadowArray : IntSyn.mid option array ref =
@@ -178,7 +178,7 @@ let componentsArray : namespace array ref =
 let componentsClear () = componentsArray := Array.make (Array.length (!componentsArray)) dummyNamespace
 
 let topStructNamespace : IntSyn.mid Symboltable.table ref = ref Symboltable.empty
-let topStructInsert = fun k v -> topNamespace := Symboltable.insert (!topNamespace) (Symb.symbol k) v; None
+let topStructInsert = fun (k,v) -> topNamespace := Symboltable.insert (!topNamespace) (Symb.symbol k) v; None
 let topStructLookup = fun k -> Symboltable.lookup (!topNamespace) (Symb.symbol k)
 let topStructDelete = fun k -> topNamespace := Symboltable.remove (!topNamespace) (Symb.symbol k); ()
 let topStructClear () = topNamespace := Symboltable.empty
@@ -226,7 +226,7 @@ let topStructClear () = topNamespace := Symboltable.empty
 
   let resetFrom (mark, markStruct) =
     let (limit, limitStruct) = IntSyn.sgnSize () in
-    let ct f (i, j) = if j < i then ()
+    let rec ct f (i, j) = if j < i then ()
                       else (f j; ct f (i, j-1))
     in
     ct uninstallConst (mark, limit-1);
@@ -243,13 +243,14 @@ let topStructClear () = topNamespace := Symboltable.empty
   let structComps mid = fst (Array.get (!componentsArray) mid)
   let constComps mid = snd (Array.get (!componentsArray) mid)
 
-  let findStruct args =
-    (structTable, [id]) ->
-       Symboltable.lookup (!structTable) (Symb.symbol id)
-  | (structTable, id::ids) ->
-      (match Symboltable.lookup (!structTable) (Symb.symbol id) with
-           None -> None
-         | Some mid -> findStruct (structComps mid, ids))
+  let rec findStruct args =
+    match args with
+        (structTable, [id]) ->
+           Symboltable.lookup (!structTable) (Symb.symbol id)
+      | (structTable, id::ids) ->
+          (match Symboltable.lookup (!structTable) (Symb.symbol id) with
+               None -> None
+             | Some mid -> findStruct (structComps mid, ids))
 
   let findTopStruct l =
     match l with
@@ -260,18 +261,18 @@ let topStructClear () = topNamespace := Symboltable.empty
                None -> None
              | Some mid -> findStruct (structComps mid, ids))
 
-  let findUndefStruct args =
+  let rec findUndefStruct args =
     match args with
         (structTable, [id], ids') ->
           (match Symboltable.lookup (!structTable) (Symb.symbol id) with
-               None -> Some (Qid (rev ids', id))
+               None -> Some (Qid (List.rev ids', id))
              | Some _ -> None)
       | (structTable, id::ids, ids') ->
           (match Symboltable.lookup (!structTable) (Symb.symbol id) with
-               None -> Some (Qid (rev ids', id))
+               None -> Some (Qid (List.rev ids', id))
              | Some mid -> findUndefStruct (structComps mid, ids, id::ids'))
 
-  let findTopUndefStruct arg
+  let findTopUndefStruct arg =
     match arg with
         [id] ->
           (match Symboltable.lookup (!topStructNamespace) (Symb.symbol id) with
@@ -282,23 +283,23 @@ let topStructClear () = topNamespace := Symboltable.empty
                None -> Some (Qid ([], id))
              | Some mid -> findUndefStruct (structComps mid, ids, [id]))
 
-  let constLookupIn args =
+  let constLookupIn (args : namespace * qid) =
     match args with
         ((structTable, constTable), Qid ([], id)) ->
           Symboltable.lookup (!constTable) (Symb.symbol id)
       | ((structTable, constTable), Qid (ids, id)) ->
-          (match findStruct ((!structTable), ids) with
+          (match findStruct (structTable, ids) with
                None -> None
-             | Some mid -> Symboltable.lookup (constComps mid) (Symb.symbol id))
+             | Some mid -> Symboltable.lookup !(constComps mid) (Symb.symbol id))
 
   let structLookupIn args =
     match args with
         ((structTable, constTable), Qid ([], id)) ->
           Symboltable.lookup (!structTable) (Symb.symbol id)
       | ((structTable, constTable), Qid (ids, id)) ->
-          (match findStruct ((!structTable), ids) with
+          (match findStruct (structTable, ids) with
                None -> None
-             | Some mid -> Symboltable.lookup (structComps mid) (Symb.symbol id))
+             | Some mid -> Symboltable.lookup !(structComps mid) (Symb.symbol id))
 
   let constUndefIn args =
     match args with
@@ -310,7 +311,7 @@ let topStructClear () = topNamespace := Symboltable.empty
           (match findUndefStruct (structTable, ids, []) with
                (Some _) as opt -> opt
              | None ->
-                (match Symboltable.lookup (constComps (valOf (findStruct (structTable, ids)))) (Symb.symbol id) with
+                (match Symboltable.lookup !(constComps (Option.get (findStruct (structTable, ids)))) (Symb.symbol id) with
                      None -> Some (Qid (ids, id))
                    | Some _ -> None))
 
@@ -324,7 +325,7 @@ let topStructClear () = topNamespace := Symboltable.empty
           (match findUndefStruct (structTable, ids, []) with
                (Some _) as opt -> opt
              | None ->
-                  (match Symboltable.lookup (structComps (valOf (findStruct (structTable, ids)))) (Symb.symbol id) with
+                  (match Symboltable.lookup !(structComps (Option.get (findStruct (structTable, ids)))) (Symb.symbol id) with
                        None -> Some (Qid (ids, id))
                      | Some _ -> None))
 
@@ -338,7 +339,7 @@ let topStructClear () = topNamespace := Symboltable.empty
       | (Qid (ids, id)) ->
           (match findTopStruct ids with
                None -> None
-             | Some mid -> Symboltable.lookup (constComps mid) (Symb.symbol id))
+             | Some mid -> Symboltable.lookup !(constComps mid) (Symb.symbol id))
 
   let structLookup arg =
     match arg with
@@ -347,7 +348,7 @@ let topStructClear () = topNamespace := Symboltable.empty
       | (Qid (ids, id)) ->
           (match findTopStruct ids with
                None -> None
-             | Some mid -> Symboltable.lookup (structComps mid) (Symb.symbol id))
+             | Some mid -> Symboltable.lookup !(structComps mid) (Symb.symbol id))
 
   let constUndef arg =
     match arg with
@@ -359,25 +360,25 @@ let topStructClear () = topNamespace := Symboltable.empty
         (match findTopUndefStruct ids with
              (Some _) as opt -> opt
            | None -> 
-               (match Symboltable.lookup (constComps (valOf (findTopStruct ids))) (Symb.symbol id) with
+               (match Symboltable.lookup !(constComps (Option.get (findTopStruct ids))) (Symb.symbol id) with
                     None -> Some (Qid (ids, id))
                   | Some _ -> None))
 
   let structUndef arg =
     match arg with
         (Qid ([], id)) ->
-          (match Symboltable.lookup (!topStructNamespace) (Symb.symbol id)
+          (match Symboltable.lookup (!topStructNamespace) (Symb.symbol id) with
                None -> Some (Qid ([], id))
              | Some _ -> None)
       | (Qid (ids, id)) ->
           (match findTopUndefStruct ids with
             (Some _) as opt -> opt
             | None -> 
-               (match Symboltable.lookup (structComps (valOf (findTopStruct ids))) (Symb.symbol id) with
+               (match Symboltable.lookup !(structComps (Option.get (findTopStruct ids))) (Symb.symbol id) with
                     None -> Some (Qid (ids, id))
                   | Some _ -> None))
 
-  let structPath (mid, ids) =
+  let rec structPath (mid, ids) =
     let strdec = IntSyn.sgnStructLookup mid in
     let ids' = IntSyn.strDecName strdec::ids in
     match IntSyn.strDecParent strdec with
@@ -388,7 +389,7 @@ let topStructClear () = topNamespace := Symboltable.empty
     match args with
         (qid, false) -> qid
       | (Qid ([], id), true) -> Qid ([], "%" ^ id ^ "%")
-      | (Qid (id::ids, name), true) -> Qid ("%" ^ id ^ "%"::ids, name)
+      | (Qid (id::ids, name), true) -> Qid (("%" ^ id ^ "%")::ids, name)
 
   let conDecQid condec =
     let id = IntSyn.conDecName condec in
@@ -421,7 +422,7 @@ let topStructClear () = topNamespace := Symboltable.empty
   let installFixity (cid, fixity) =
     let name = qidToString (constQid cid) in
     checkFixity (name, cid, argNumber fixity);
-    Array.update (fixityArray, cid, fixity)
+    Array.set (!fixityArray) cid fixity
    
     (* getFixity (cid) = fixity
        fixity defaults to Fixity.Nonfix, if nothing has been declared
@@ -443,11 +444,11 @@ let topStructClear () = topNamespace := Symboltable.empty
 
     (* installNamePref' (cid, (ePref, uPref)) see installNamePref *)
   let installNamePref' (cid, (ePref, uPref)) =
-    let L = IntSyn.constUni (cid) in
-    let _ = match L with
+    let l = IntSyn.constUni (cid) in
+    let _ = match l with
 	        IntSyn.Type ->
-		       raise Error ("Object constant " ^ qidToString (constQid cid) ^ " cannot be given name preference\n"
-				    ^ "Name preferences can only be established for type families")
+		       raise (Error ("Object constant " ^ qidToString (constQid cid) ^ " cannot be given name preference\n"
+				     ^ "Name preferences can only be established for type families"))
 	      | IntSyn.Kind -> ()
     in
     Array.set (!namePrefArray) cid (Some (ePref, uPref))
@@ -458,9 +459,9 @@ let topStructClear () = topNamespace := Symboltable.empty
     *)
   let installNamePref args =
     match args with
-        (cid, (ePref, [])) =
-          installNamePref' (cid, (ePref, [String.lowercase_ascii (hd ePref)]))
-      | (cid, (ePref, uPref)) =
+        (cid, (ePref, [])) ->
+          installNamePref' (cid, (ePref, [String.lowercase (List.hd ePref)]))
+      | (cid, (ePref, uPref)) ->
           installNamePref' (cid, (ePref, uPref))
       
   let getNamePref cid = Array.get (!namePrefArray) cid
@@ -486,8 +487,8 @@ let topStructClear () = topNamespace := Symboltable.empty
     match args with
         (Exist, None) -> "X"
       | (Univ _, None) -> "x"
-      | (Exist, Some(ePref, uPref)) -> hd ePref
-      | (Univ _, Some(ePref, uPref)) -> hd uPref
+      | (Exist, Some(ePref, uPref)) -> List.hd ePref
+      | (Univ _, Some(ePref, uPref)) -> List.hd uPref
 
   let namePrefOf' args =
     match args with
@@ -499,14 +500,14 @@ let topStructClear () = topNamespace := Symboltable.empty
            undetermined types with FVars *)
       | (role, Some(IntSyn.FVar _)) -> namePrefOf'' (role, None)
 
-      | (role, Some(IntSyn.NSDef cid)) -> namePrefOf'' (role, Array.sget (!namePrefArray) cid)
+      | (role, Some(IntSyn.NSDef cid)) -> namePrefOf'' (role, Array.get (!namePrefArray) cid)
 
     (* namePrefOf (role, V) = name
        where name is the preferred base name for a variable with type V
 
        V should be a type, but the code is robust, returning the default "X" or "x"
     *)
-  let namePrefOf (role, V) -> namePrefOf' (role, IntSyn.targetHeadOpt V)
+  let namePrefOf (role, v) = namePrefOf' (role, (IntSyn.targetHeadOpt v))
 
   (******************)
   (* Variable Names *)
@@ -549,14 +550,14 @@ let topStructClear () = topNamespace := Symboltable.empty
      These are reset for each declaration or query, since
      EVars and FVars are local.
   *)
-  type varEntry = EVAR of IntSyn.Exp (* X *)
+  type varEntry = EVAR of IntSyn.exp (* X *)
       (* remove this datatype? -kw *)
 
     (* varTable mapping identifiers (strings) to EVars and FVars *)
     (* A hashtable is too inefficient, since it is cleared too often; *)
     (* so we use a red/black trees instead *)
   let varTable : varEntry Symboltable.table ref = ref Symboltable.empty
-  let varInsert = fun k v -> varTable := Symboltable.insert (!varTable) (Symb.symbol k) v; None
+  let varInsert = fun (k, v) -> varTable := Symboltable.insert (!varTable) (Symb.symbol k) v; ()
   let varLookup = fun k -> Symboltable.lookup (!varTable) (Symb.symbol k)
   let varClear () = varTable := Symboltable.empty
 
@@ -569,19 +570,19 @@ let topStructClear () = topNamespace := Symboltable.empty
     (* the mapping must be implemented as an association list *)
     (* since EVars are identified by reference *)
     (* an alternative becomes possible if time stamps are introduced *)
-  let evarList : (IntSyn.Exp * string) list ref = ref []
+  let evarList : (IntSyn.exp * string) list ref = ref []
 
   let evarReset () = (evarList := [])
-  let evarLookup (X) =
-    let evlk args =
+  let evarLookup (x) =
+    let rec evlk args =
       match args with
-          (r, []) = None
+          (r, []) -> None
 	| (r, (IntSyn.EVar(r',_,_,_), name)::l) ->
 	        if r = r' then Some(name) else evlk (r, l)
         | (r, ((IntSyn.AVar(r'), name)::l)) ->
 	        if r = r' then Some(name) else evlk (r, l)
     in
-    match X with
+    match x with
 	IntSyn.EVar(r,_,_,_) -> evlk (r, (!evarList))
       | IntSyn.AVar(r) -> evlk (r, (!evarList))
 
@@ -592,13 +593,13 @@ let topStructClear () = topNamespace := Symboltable.empty
     (* Since constraints are not printable at present, we only *)
     (* return a list of names of EVars that have constraints on them *)
     (* Note that EVars which don't have names, will not be considered! *)
-  let evarCnstr' args =
+  let rec evarCnstr' args =
     match args with
         ([], acc) -> acc
-      | (((IntSyn.EVar(ref(None), _, _, cnstrs), name) as Xn)::l, acc) ->
+      | (((IntSyn.EVar(r, _, _, cnstrs), name) as xn)::l, acc) when Option.isNone (!r) ->
           (match Constraints.simplify (!cnstrs) with
                [] -> evarCnstr' (l, acc)
-             | (_::_) -> evarCnstr' (l, Xn::acc))
+             | (_::_) -> evarCnstr' (l, xn::acc))
       | (_::l, acc) -> evarCnstr' (l, acc)
   let evarCnstr () = evarCnstr' (!evarList, [])
 
@@ -607,7 +608,7 @@ let topStructClear () = topNamespace := Symboltable.empty
        checked against the names of constants, FVars, EVars, and BVars.
     *)
   let indexTable : int Symboltable.table ref = ref Symboltable.empty
-  let indexInsert = fun k v -> indexTable := Symboltable.insert (!indexTable) (Symb.symbol k) v; None
+  let indexInsert = fun (k,v) -> indexTable := Symboltable.insert (!indexTable) (Symb.symbol k) v; None
   let indexLookup = fun k -> Symboltable.lookup (!indexTable) (Symb.symbol k)
   let indexClear () = indexTable := Symboltable.empty
 
@@ -627,20 +628,20 @@ let topStructClear () = topNamespace := Symboltable.empty
        Effect: clear variable tables
        This must be called for each declaration or query
     *)
-  let varReset G = (varClear (); evarReset (); indexClear ();
-                      varContext := G)
+  let varReset g = (varClear (); evarReset (); indexClear ();
+                      varContext := g)
 
     (* addEVar (X, name) = ()
        effect: adds (X, name) to varTable and evarList
        assumes name not already used *)
-  let addEVar (X, name) =
-      (evarInsert (X, name);
-       varInsert (name, EVAR(X)))
+  let addEVar (x, name) =
+      (evarInsert (x, name);
+       varInsert (name, EVAR(x)))
 
   let getEVarOpt (name) =
     (match varLookup name with
 	 None -> None
-       | Some(EVAR(X)) -> Some(X))
+       | Some(EVAR(x)) -> Some(x))
 
     (* varDefined (name) = true iff `name' refers to a free variable, *)
     (* which could be an EVar for constant declarations or FVar for queries *)
@@ -656,63 +657,64 @@ let topStructClear () = topNamespace := Symboltable.empty
        | Some _ -> true)
 
     (* ctxDefined (G, name) = true iff `name' is declared in context G *)
-  let ctxDefined (G, name) =
-    let cdfd arg =
+  let ctxDefined (g, name) =
+    let rec cdfd arg =
       match arg with
           (IntSyn.Null) -> false
-	| (IntSyn.Decl(G', IntSyn.Dec(Some(name'),_))) ->
-            name = name' || cdfd G'
-        | (IntSyn.Decl(G', IntSyn.BDec(Some(name'),_))) ->
-            name = name' || cdfd G'
-        | (IntSyn.Decl(G', IntSyn.NDec(Some(name')))) ->
-            name = name' || cdfd G'
-        | (IntSyn.Decl(G', _)) -> cdfd G'
+	| (IntSyn.Decl(g', IntSyn.Dec(Some(name'),_))) ->
+            name = name' || cdfd g'
+        | (IntSyn.Decl(g', IntSyn.BDec(Some(name'),_))) ->
+            name = name' || cdfd g'
+        | (IntSyn.Decl(g', IntSyn.NDec(Some(name')))) ->
+            name = name' || cdfd g'
+        | (IntSyn.Decl(g', _)) -> cdfd g'
     in
-    cdfd G
+    cdfd g
 
     (* tryNextName (G, base) = baseN
        where N is the next suffix such that baseN is unused in
        G, as a variable, or as a constant.
     *)
-  let tryNextName (G, base) =
-    let name = base ^ Int.toString (nextIndex (base)) in
-    if varDefined name || conDefined name || ctxDefined (G,name)
-    then tryNextName (G, base)
+  let rec tryNextName (g, base) =
+    let name = base ^ (string_of_int (nextIndex (base))) in
+    if varDefined name || conDefined name || ctxDefined (g,name)
+    then tryNextName (g, base)
     else name
 
-  let findNameLocal (G, base, i) =
+  let rec findNameLocal (g, base, i) =
     let name = base ^ (if i = 0 then "" else (string_of_int i)) in
-    if varDefined name || conDefined name || ctxDefined (G, name)
-    then findNameLocal (G, base, i+1)
+    if varDefined name || conDefined name || ctxDefined (g, name)
+    then findNameLocal (g, base, i+1)
     else name
 
   let findName args =
     match args with
-        (G, base, Local) -> findNameLocal (G, base, 0)
-      | (G, base, Global) -> tryNextName (G, base)
+        (g, base, Local) -> findNameLocal (g, base, 0)
+      | (g, base, Global) -> tryNextName (g, base)
         
-
-  let takeNonDigits = Substring.takel (not o Char.isDigit)
+(*  let takeNonDigits = Substring.takel (not o Char.isDigit)
 
     (* baseOf (name) = name',
        where name' is the prefix of name not containing a digit
     *)
   let baseOf (name) = Substring.string (takeNonDigits (Compat.Substring.full name))
-
+ *)
+  let baseOf name = Str.string_before name (Str.search_forward (Str.regexp "[0-9]") name 0)
+			  
     (* newEvarName (G, X) = name
        where name is the next unused name appropriate for X,
        based on the name preference declaration for A if X:A
     *)
-  let newEVarName (G, X) =
-    match (G, X) with
-        (G, IntSyn.EVar(r, _, V, Cnstr)) ->
+  let newEVarName (g, x) =
+    match (g, x) with
+        (g, IntSyn.EVar(r, _, v, cnstr)) ->
 	  (* use name preferences below *)
-          let name = tryNextName (G, namePrefOf (Exist, V)) in
-          (evarInsert (X, name); name)
-      | (G, IntSyn.AVar(r)) ->
+          let name = tryNextName (g, namePrefOf (Exist, v)) in
+          (evarInsert (x, name); name)
+      | (g, IntSyn.AVar(r)) ->
 	  (* use name preferences below *)
-	  let name = tryNextName (G, namePrefOf' (Exist, None)) in
-	  (evarInsert (X, name);
+	  let name = tryNextName (g, namePrefOf' (Exist, None)) in
+	  (evarInsert (x, name);
 	   name)
 
     (* evarName (G, X) = name
@@ -720,10 +722,10 @@ let topStructClear () = topNamespace := Symboltable.empty
        If no name has been assigned yet, assign a new one.
        Effect: if a name is assigned, update varTable
     *)
-  let evarName (G, X) =
-    (match evarLookup X with
-         None -> let name = newEVarName (G, X) in
-		 (varInsert (name, EVAR(X));
+  let evarName (g, x) =
+    (match evarLookup x with
+         None -> let name = newEVarName (g, x) in
+		 (varInsert (name, EVAR(x));
 			 name)
        | Some (name) -> name)
 
@@ -735,14 +737,14 @@ let topStructClear () = topNamespace := Symboltable.empty
        If no name has been assigned, the context might be built the wrong
        way---check decName below instread of IntSyn.Dec
     *)
-    let bvarName (G, k) =
-        case IntSyn.ctxLookup (G, k)
-	  of IntSyn.Dec(Some(name), _) -> name
-	   | IntSyn.ADec(Some(name), _) ->  name
-	   | IntSyn.NDec(Some(name)) ->  name (* Evars can depend on NDec :-( *)
-	   | IntSyn.ADec(None, _) -> "ADec_" 
-	   | IntSyn.Dec(None, _) -> "Dec_" 
-	   | _ -> raise Unprintable
+  let bvarName (g, k) =
+    match IntSyn.ctxLookup (g, k) with
+	IntSyn.Dec(Some(name), _) -> name
+      | IntSyn.ADec(Some(name), _) ->  name
+      | IntSyn.NDec(Some(name)) ->  name (* Evars can depend on NDec :-( *)
+      | IntSyn.ADec(None, _) -> "ADec_" 
+      | IntSyn.Dec(None, _) -> "Dec_" 
+      | _ -> raise Unprintable
 
     (* decName' role (G, D) = G,D'
        where D' is a possible renaming of the declaration D
@@ -750,59 +752,48 @@ let topStructClear () = topNamespace := Symboltable.empty
        If D does not assign a name, this picks, based on the name
        preference declaration.
     *)
-    let decName' role (G, IntSyn.Dec (None, V)) ->
-        let
-	  let name = findName (G, namePrefOf (role, V), extent (role))
-	in
-	  IntSyn.Dec (Some(name), V)
-	end
-      | decName' role (G, D as IntSyn.Dec (Some(name), V)) ->
-	if varDefined name || conDefined name
-	  || ctxDefined (G, name)
-	  then IntSyn.Dec (Some (tryNextName (G, baseOf name)), V)
-	else D
-      | decName' role (G, D as IntSyn.BDec (None, b as (cid, t))) ->
+  let decName' role (g, d) =
+    match (g, d) with
+        (g, IntSyn.Dec (None, v)) ->
+          let name = findName (g, namePrefOf (role, v), extent (role)) in
+          IntSyn.Dec (Some(name), v)
+      | (g, IntSyn.Dec (Some(name), v)) ->
+	  if varDefined name || conDefined name
+	     || ctxDefined (g, name)
+	  then IntSyn.Dec (Some (tryNextName (g, baseOf name)), v)
+	  else d
+      | (g, IntSyn.BDec (None, ((cid, t) as b))) ->
         (* use #l as base name preference for label l *)
-	let
-	  let name = findName (G, "#" ^ IntSyn.conDecName (IntSyn.sgnLookup cid), Local)
-	in
+	  let name = findName (g, "#" ^ IntSyn.conDecName (IntSyn.sgnLookup cid), Local) in
 	  IntSyn.BDec (Some(name), b)
-	end
-      | decName' role (G, D as IntSyn.BDec (Some(name), b as (cid, t))) ->
-	if varDefined name || conDefined name
-	  || ctxDefined (G, name)
-	  then IntSyn.BDec (Some (tryNextName (G, baseOf name)), b)
-	else D
-      | decName' role (G, IntSyn.ADec (None, d)) ->
-        let
-	  let name = findName (G, namePrefOf' (role, None), extent (role))
-	in
+      | (g, IntSyn.BDec (Some(name), ((cid, t) as b))) ->
+  	  if varDefined name || conDefined name
+	     || ctxDefined (g, name)
+	  then IntSyn.BDec (Some (tryNextName (g, baseOf name)), b)
+	  else d
+      | (g, IntSyn.ADec (None, d)) ->
+       	  let name = findName (g, namePrefOf' (role, None), extent (role)) in
 	  IntSyn.ADec (Some(name), d)
-	end
-      | decName' role (G, D as IntSyn.ADec (Some(name), d)) ->
+      | (g, IntSyn.ADec (Some(name), d')) ->
 (*	IntSyn.ADec(Some(name), d) *)
-	if varDefined name || conDefined name
-	  || ctxDefined (G, name)
-	  then IntSyn.ADec (Some (tryNextName (G, baseOf name)), d)
-	else D
-      | decName' role (G, D as IntSyn.NDec None) -> 
-	let 
-	  let name = findName (G, "@x", Local)
-	    let _ = print name
-	     
-	in 
+          if varDefined name || conDefined name
+	      || ctxDefined (g, name)
+	  then IntSyn.ADec (Some (tryNextName (g, baseOf name)), d')
+	  else d
+      | (g, IntSyn.NDec None) -> 
+	  let name = findName (g, "@x", Local) in
+	  let _ = print_string name in
 	  IntSyn.NDec (Some name)
-	end
-      | decName' role (G, D as IntSyn.NDec (Some name)) -> 
-	if varDefined name || conDefined name
-	  || ctxDefined (G, name)
-	  then IntSyn.NDec (Some (tryNextName (G, baseOf name)))
-	else D
+      | (g, IntSyn.NDec (Some name)) -> 
+          if varDefined name || conDefined name
+	     || ctxDefined (g, name)
+	  then IntSyn.NDec (Some (tryNextName (g, baseOf name)))
+	  else d
 
-    let decName = decName' Exist
-    let decEName = decName' Exist
-    let decUName = decName' (Univ (Global))
-    let decLUName = decName' (Univ (Local))
+  let decName = decName' Exist
+  let decEName = decName' Exist
+  let decUName = decName' (Univ (Global))
+  let decLUName = decName' (Univ (Local))
 
     (* ctxName G = G'
        
@@ -810,41 +801,38 @@ let topStructClear () = topNamespace := Symboltable.empty
 	|- G == G' ctx
 	where some Declaration in G' have been named/renamed
     *)
-    let ctxName (IntSyn.Null) -> IntSyn.Null
-      | ctxName (IntSyn.Decl (G, D)) -> 
-        let
-	  let G' = ctxName G
-	in
-	  IntSyn.Decl (G', decName (G', D))
-	end
+  let rec ctxName arg =
+    match arg with
+        (IntSyn.Null) -> IntSyn.Null
+      | (IntSyn.Decl (g, d)) -> 
+	  let g' = ctxName g in
+	  IntSyn.Decl (g', decName (g', d))
 
     (* ctxLUName G = G'
        like ctxName, but names assigned are local universal names.
     *)
-    let ctxLUName (IntSyn.Null) -> IntSyn.Null
-      | ctxLUName (IntSyn.Decl (G, D)) -> 
-        let
-	  let G' = ctxLUName G
-	in
-	  IntSyn.Decl (G', decLUName (G', D))
-	end
+  let rec ctxLUName arg =
+    match arg with
+        (IntSyn.Null) -> IntSyn.Null
+      | (IntSyn.Decl (g, d)) -> 
+          let g' = ctxLUName g in
+	  IntSyn.Decl (g', decLUName (g', d))
 
     (* pisEName' (G, i, V) = V'
        Assigns names to dependent Pi prefix of V with i implicit abstractions
        Used for implicit EVar in constant declarations after abstraction.
     *)
-    let pisEName' (G, 0, V) -> V
-      | pisEName' (G, i, IntSyn.Pi ((D, IntSyn.Maybe), V)) ->
+  let rec pisEName' args =
+    match args with
+        (g, 0, v) -> v
+      | (g, i, IntSyn.Pi ((d, IntSyn.Maybe), v)) ->
         (* i > 0 *)
-        let
-	  let D' = decEName (G, D)
-	in
-	  IntSyn.Pi ((D', IntSyn.Maybe),
-		     pisEName' (IntSyn.Decl (G, D'), i-1, V))
-	end
-      (* | pisEName' (G, i, V) = V *)
+	  let d' = decEName (g, d) in
+	  IntSyn.Pi ((d', IntSyn.Maybe),
+		     pisEName' (IntSyn.Decl (g, d'), i-1, v))
+      (* | pisEName' (g, i, V) = V *)
 
-    let pisEName (i, V) = pisEName' (IntSyn.Null, i, V)
+  let pisEName (i, v) = pisEName' (IntSyn.Null, i, v)
 
     (* defEName' (G, i, (U,V)) = (U',V')
        Invariant: G |- U : V  and G |- U' : V' since U == U' and V == V'.
@@ -852,43 +840,35 @@ let topStructClear () = topNamespace := Symboltable.empty
        with i implicit abstractions
        Used for implicit EVar in constant definitions after abstraction.
     *)
-    let defEName' (G, 0, UV) -> UV
-      | defEName' (G, i, (IntSyn.Lam (D, U), IntSyn.Pi ((_ (* = D *), P), V))) ->
+  let rec defEName' args =
+    match args with
+        (g, 0, uv) -> uv
+      | (g, i, (IntSyn.Lam (d, u), IntSyn.Pi ((_ (* = d *), p), v))) ->
         (* i > 0 *)
-        let
-	  let D' = decEName (G, D)
-	  let (U', V') = defEName' (IntSyn.Decl (G, D'), i-1, (U, V))
-	in
-	  (IntSyn.Lam (D', U'), IntSyn.Pi ((D', P), V'))
-	end
-      (* | defEName' (G, i, (U, V)) = (U, V) *)
+          let d' = decEName (g, d) in
+	  let (u', v') = defEName' (IntSyn.Decl (g, d'), i-1, (u, v)) in
+	  (IntSyn.Lam (d', u'), IntSyn.Pi ((d', p), v'))
+      (* | defEName' (g, i, (u, v)) = (u, v) *)
 
-    let defEName (imp, UV) = defEName' (IntSyn.Null, imp, UV)
+  let defEName (imp, uv) = defEName' (IntSyn.Null, imp, uv)
 
-    let nameConDec' (IntSyn.ConDec (name, parent, imp, status, V, L)) ->
-          IntSyn.ConDec (name, parent, imp, status, pisEName (imp, V), L)
-      | nameConDec' (IntSyn.ConDef (name, parent, imp, U, V, L, Anc)) ->
-	let 
-	  let (U', V') = defEName (imp, (U, V))
-	in
-	  IntSyn.ConDef (name, parent, imp, U', V', L, Anc)
-	end
-      | nameConDec' (IntSyn.AbbrevDef (name, parent, imp, U, V, L)) ->
-	let 
-	  let (U', V') = defEName (imp, (U, V))
-	in
-	  IntSyn.AbbrevDef (name, parent, imp, U', V', L)
-	end
-      | nameConDec' (skodec) -> skodec (* fix ??? *)
+  let nameConDec' arg =
+    match arg with
+        (IntSyn.ConDec (name, parent, imp, status, v, l)) ->
+          IntSyn.ConDec (name, parent, imp, status, pisEName (imp, v), l)
+(*      | (IntSyn.ConDef (name, parent, imp, u, v, l, Anc)) ->
+	  let (u', v') = defEName (imp, (u, v)) in
+	  IntSyn.ConDef (name, parent, imp, u', v', l, Anc)
+      | (IntSyn.AbbrevDef (name, parent, imp, u, v, l)) ->
+	  let (u', v') = defEName (imp, (u, v)) in
+	  IntSyn.AbbrevDef (name, parent, imp, u', v', l) *)
+      | (skodec) -> skodec (* fix ??? *)
 
     (* Assigns names to variables in a constant declaration *)
     (* The varReset (); is necessary so that explicitly named variables keep their name *)
-    let nameConDec (conDec) =
+  let nameConDec (conDec) =
         (varReset IntSyn.Null;			(* declaration is always closed *)
 	 nameConDec' conDec)
 
-    let skonstName (name) =
+  let skonstName (name) =
           tryNextName (IntSyn.Null, name)
-
-    let namedEVars = namedEVars
-    let evarCnstr = evarCnstr

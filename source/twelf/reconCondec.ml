@@ -20,12 +20,12 @@
     match c with 
         (condec(name, tm), Paths.Loc (fileName, r), abbFlag) ->
           let _ = Names.varReset IntSyn.Null in
-	  let _ = ReconTerm.resetErrors fileName in
+(*	  let _ = ReconTerm.resetErrors fileName in *)
           let ReconTerm.JClass ((V, oc), L) =
 (* Not implementing timers yet so call reconstruction directly *)
 (*              (Timers.time Timers.recon ReconTerm.recon) (ReconTerm.jclass tm) in *)
-            RecoNTerm.recon (ReconTerm.jclass tm) in
-	  let _ = ReconTerm.checkErrors (r) in
+            ReconTerm.recon (ReconTerm.jclass tm) in
+(*	  let _ = ReconTerm.checkErrors (r) in*)
 (* again, not implementing timers yet *)
 (*          let (i, V') = try (Timers.time Timers.abstract Abstract.abstractDecImp) V
 	                with Abstract.Error (msg)
@@ -44,4 +44,4 @@
 (*	  let _ = if !Global.doubleCheck
 		  then (Timers.time Timers.checking TypeCheck.check) (V', IntSyn.Uni L)
 		else () in *)
-	  (SOME(cd), SOME(ocd))
+	  (Some(cd), Some(ocd))

@@ -41,7 +41,7 @@
      name is shadowed (any constant or structure whose canonical name
      would map to something else, or to nothing at all, in the case of
      an anonymous structure, is shadowed). *)
-  val conDecQid : IntSyn.ConDec -> qid
+  val conDecQid : IntSyn.conDec -> qid
   val constQid : IntSyn.cid -> qid (* will mark if shadowed *)
   val structQid : IntSyn.mid -> qid (* will mark if shadowed *)
 
@@ -58,25 +58,25 @@
 
   (* EVar and BVar name choices *)
   val varReset : IntSyn.dctx -> unit (* context in which EVars are created *)
-  val addEVar : IntSyn.Exp * string -> unit (* assumes name not already used *)
-  val getEVarOpt : string -> IntSyn.Exp option (* NONE, if undefined or not EVar *)
-  val evarName : IntSyn.dctx * IntSyn.Exp -> string (* create, if undefined *)
+  val addEVar : IntSyn.exp * string -> unit (* assumes name not already used *)
+  val getEVarOpt : string -> IntSyn.exp option (* NONE, if undefined or not EVar *)
+  val evarName : IntSyn.dctx * IntSyn.exp -> string (* create, if undefined *)
   val bvarName : IntSyn.dctx * int -> string (* raises Unprintable if undefined *)
 
-  val decName  : IntSyn.dctx * IntSyn.Dec -> IntSyn.Dec (* status unknown, like decEName *)
-  val decEName : IntSyn.dctx * IntSyn.Dec -> IntSyn.Dec (* assign existential name *)
-  val decUName : IntSyn.dctx * IntSyn.Dec -> IntSyn.Dec (* assign universal name *)
-  val decLUName: IntSyn.dctx * IntSyn.Dec -> IntSyn.Dec (* assign local universal name *)
+  val decName  : IntSyn.dctx * IntSyn.dec -> IntSyn.dec (* status unknown, like decEName *)
+  val decEName : IntSyn.dctx * IntSyn.dec -> IntSyn.dec (* assign existential name *)
+  val decUName : IntSyn.dctx * IntSyn.dec -> IntSyn.dec (* assign universal name *)
+  val decLUName: IntSyn.dctx * IntSyn.dec -> IntSyn.dec (* assign local universal name *)
 
   val ctxName  : IntSyn.dctx -> IntSyn.dctx (* assign global existential names *)
   val ctxLUName: IntSyn.dctx -> IntSyn.dctx (* assign local universal names *)
 
-  val nameConDec : IntSyn.ConDec -> IntSyn.ConDec
+  val nameConDec : IntSyn.conDec -> IntSyn.conDec
 
   (* Skolem constants *)
   val skonstName : string -> string
 
   (* Named EVars, used for queries *)
-  val namedEVars : unit -> (IntSyn.Exp * string) list
+  val namedEVars : unit -> (IntSyn.exp * string) list
   (* Uninstantiated named EVars with constraints *)
-  val evarCnstr : unit -> (IntSyn.Exp * string) list
+  val evarCnstr : unit -> (IntSyn.exp * string) list

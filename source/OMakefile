@@ -184,9 +184,26 @@ LF_ML[] =
     $(LF)/intmap
     $(LF)/lfabsyn
     $(LF)/lfsig
-    $(LF)/lflexer
-    $(LF)/lfparser
-    $(LF)/lfparse
+    $(LF)/tstream
+    $(LF)/paths
+    $(LF)/extSyn
+    $(LF)/lexer
+    $(LF)/tparsing
+    $(LF)/parseTerm
+    $(LF)/parseCondec
+    $(LF)/parseQuery
+    $(LF)/parser
+    $(LF)/global
+    $(LF)/fgnopn
+    $(LF)/intSyn
+    $(LF)/fixity
+    $(LF)/whnf
+    $(LF)/conv
+    $(LF)/constraints
+#    $(LF)/names
+#    $(LF)/unify
+#    $(LF)/reconTerm
+#    $(LF)/reconCondec
     $(LF)/metadata
     $(FNT)/loader
     $(FNT)/lfquery
