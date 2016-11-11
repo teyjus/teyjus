@@ -197,7 +197,8 @@ and encode_type_negative opt metadata consttbl vars ty =
           let r = (encode_type_negative opt metadata consttbl vars' body) (makeApp m [vartm]) in
           let bodytm =
             if (opt && Strictness.appears_strict id body)
-            then r
+            then 
+              r
             else
               let l = (encode_type_positive opt metadata consttbl vars' typ) vartm in 
               makeApp (Absyn.ConstantTerm(Pervasive.implConstant, [], Errormsg.none)) [l;r]

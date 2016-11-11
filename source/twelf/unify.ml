@@ -536,14 +536,14 @@
           (* unifyUni (L1, L2) - removed Mon Aug 24 12:18:24 1998 -fp *)
           ()
 
-      | (g, (Root (h1, ss1), s1), (Root (h2, ss2), s2)) ->
+      | (g, (Root ((h1 : head), ss1), s1), (Root ((h2 : head), ss2), s2)) ->
 	  (* s1 = s2 = id by whnf *)
           (* order of calls critical to establish unifySpine invariant *)
           (match (h1, h2) with 
  	       (BVar(k1), BVar(k2)) -> 
 	         if (k1 = k2) then unifySpine (g, (ss1, s1), (ss2, s2))
 	         else raise (Unify "Bound variable clash")
-  	     | (Const(c1), Const(c2)) -> 	  
+  	     | (Const(c1), Const (c2)) ->  
 	         if (c1 = c2) then unifySpine (g, (ss1, s1), (ss2, s2))
 	         else raise (Unify "Constant clash")
 	     | (Proj (b1, i1), Proj (b2, i2)) ->
@@ -555,6 +555,8 @@
 	     | (FVar (n1,_,_), FVar (n2,_,_)) ->
 	         if (n1 = n2) then unifySpine (g, (ss1, s1), (ss2, s2))
 	         else raise (Unify "Free variable clash")
+	     | _ ->
+                 raise (Unify ("Head mismatch: "^(IntSyn.exp_to_string (Root (h1,ss1)))^" and "^(IntSyn.exp_to_string (Root (h2, ss2)))))  )
 (*	     | (Def (d1), Def (d2)) ->
 	         if (d1 = d2) then (* because of strict *) 
 	           unifySpine (g, (ss1, s1), (ss2, s2))
@@ -589,7 +591,6 @@
                  unifyExp (g, (w1, s1), us2)
              | (_, FgnConst (_, ConDef (_, _, _, w2, _, _, _))) ->
                  unifyExp (g, us1, (w2, s2))              *)
-	     | _ -> raise (Unify "Head mismatch"))
       | (g, (Pi ((d1, _), u1), s1), (Pi ((d2, _), u2), s2)) ->         
 	  (unifyDec (g, (d1, s1), (d2, s2)) ; 
            unifyExp (Decl (g, decSub (d1, s1)), (u1, dot1 s1), (u2, dot1 s2)))

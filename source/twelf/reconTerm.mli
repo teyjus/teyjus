@@ -1,4 +1,10 @@
   exception Error of string
+  val resetErrors : string -> unit      (* filename -fp *)
+  val checkErrors : Paths.region -> unit
+
+  type traceMode = Progressive | Omniscient
+  val trace : bool ref
+  val traceMode : traceMode ref
 
   (* Reconstruction jobs *)
   type job

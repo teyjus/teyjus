@@ -48,7 +48,6 @@
   val hastype : term * term -> term	(* tm : tm *)
   val omitted : Paths.region -> term	(* _ as object, region for "_" *)
 
-
   (* region for "{dec}" "[dec]" etc. *)
   val dec : string option * term * Paths.region -> dec (* id : tm | _ : tm *)
   val dec0 : string option * Paths.region -> dec (* id | _  (type omitted) *)
@@ -66,3 +65,4 @@
 
   val query : string option * term -> query (* ucid : tm | tm *)
 
+  val string_of_term : term -> string

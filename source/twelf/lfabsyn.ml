@@ -48,7 +48,11 @@ and id =
 | Var of (string * typ) 
 | LogicVar of (string * typ)
 
-
+let get_id_name id =
+  match id with
+      Const(n) -> n
+    | Var(n,_) -> n
+    | LogicVar(n,_) -> n
 
 let rec string_of_typefam (TypeFam(id,k,_,_,_,_,implicit)) =
   (string_of_id id) ^ " : " ^ (string_of_kind (skip_kind implicit k)) ^ "."
@@ -116,11 +120,16 @@ and string_of_id id =
 let string_of_query (Query(_,id,ty)) =
   (string_of_id id) ^ " : " ^ (string_of_typ ty)
 
+let string_of_query' (Query(fvars,id,ty)) =
+  let bndrs = List.fold_left (fun s (name,ty) -> s^(string_of_id name)^" : "^(string_of_typ ty)^".") "" fvars in
+  bndrs ^ (string_of_query(Query(fvars,id,ty)))
+
 let string_of_solution (subst, disprs) =
   let string_of_subst subst =
     let rec string_of_subst_aux sub =
       match sub with
-          ((id,tm) :: sub') ->
+          ((id,tm) :: sub') when (get_id_name id) = "" -> string_of_subst_aux sub'
+        | ((id,tm) :: sub') ->
             (string_of_id id) ^ " = " ^ (string_of_term tm) ^ "\n" ^ (string_of_subst_aux sub')
         | [] -> ""
     in
@@ -151,11 +160,14 @@ let get_obj_implicit (Object(_,_,_,_,_,p)) = p
 
 let get_typefam_name (TypeFam(name,_,_,_,_,_,_)) = string_of_id name
 let get_obj_name (Object(name,_,_,_,_,_)) = string_of_id name
-let get_id_name id =
-  match id with
-      Const(n) -> n
-    | Var(n,_) -> n
-    | LogicVar(n,_) -> n
+
 
 let get_typefam_kind (TypeFam(_,k,_,_,_,_,_)) = k
 let get_obj_typ (Object(_,t,_,_,_,_)) = t
+
+let rec get_typ_head t =
+  match t with
+      PiType(_,_,t') 
+    | ImpType (_,t') -> get_typ_head t'
+    | AppType (h,_) -> h
+    | IdType(h) -> h

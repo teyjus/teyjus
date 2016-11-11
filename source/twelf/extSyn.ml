@@ -49,7 +49,6 @@
   let hastype (a,b) = Hastype(a,b)	(* tm : tm *)
   let omitted a = Omitted(a)	(* _ as object, region for "_" *)
 
-
   (* region for "{dec}" "[dec]" etc. *)
   let dec (a,b,c) = Dec(a,b,c) (* id : tm | _ : tm *)
   let dec0 (a,b) = Dec0(a,b) (* id | _  (type omitted) *)
@@ -67,3 +66,27 @@
 
   let query (a,b) = Query(a,b) (* ucid : tm | tm *)
 
+  let rec string_of_term t =
+    match t with
+     Internal _ -> "internal" 
+   | Constant (IntSyn.Const(cid),_) -> "constant("^(IntSyn.conDecName (IntSyn.sgnLookup cid))^")"
+   | Bvar _ -> "bvar"
+   | Typ _ -> "type"
+   | Arrow (t1,t2) -> "arrow("^(string_of_term t1)^", "^(string_of_term t2)^")" 
+   | Backarrow _ -> "backarrow"
+   | Pi (Dec (Some(n),t,_), b) -> "pi("^n^" : "^(string_of_term t)^". "^(string_of_term b)^")"
+   | Pi (Dec (None,t,_), b) -> "pi("^(string_of_term t)^" -> "^(string_of_term b)^")"
+   | Pi _ -> "pi" 
+   | Lam _ -> "lam"
+   | App (t1, t2) -> "app("^(string_of_term t1)^", "^(string_of_term t2)^")"
+   | Hastype _ -> "hastype"
+   | Mismatch _ -> "mismatch"
+   | Omitted _ -> "omitted"
+   | Lcid _ -> "lcid"
+   | Ucid _ -> "ucid"
+   | Quid _ -> "quid"
+   | Scon _ -> "scon"
+   | Evar _ -> "evar"
+   | Fvar (n,_) -> "fvar("^n^")"
+   | Omitapx _ -> "omitapx"
+   | Omitexact _ -> "omitexact"

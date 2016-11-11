@@ -56,6 +56,7 @@ val string_of_typ : typ -> string
 val string_of_term : term -> string
 val string_of_id : id -> string
 val string_of_query : query -> string
+val string_of_query' : query -> string
 val string_of_solution : solution -> string
 
 val get_typefam_implicit : typefam -> int
@@ -67,3 +68,5 @@ val get_id_name : id -> string
 
 val get_typefam_kind : typefam -> kind
 val get_obj_typ : obj -> typ
+
+val get_typ_head : typ -> id

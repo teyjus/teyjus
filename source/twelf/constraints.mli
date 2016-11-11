@@ -1,5 +1,5 @@
 
-   exception Error of IntSyn.cnstr list
+   exception Error of IntSyn.cnstrRef list
 
-   val simplify : IntSyn.cnstr ref list -> IntSyn.cnstr ref list
+   val simplify : IntSyn.cnstrRef list -> IntSyn.cnstrRef list
    val warnConstraints : string list -> unit

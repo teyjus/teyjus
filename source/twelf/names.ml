@@ -162,7 +162,8 @@ let namePrefArray : (string list * string list) option array ref=
 let namePrefClear () = namePrefArray := Array.make (Array.length (!namePrefArray)) None
 
 let topNamespace : IntSyn.cid Symboltable.table ref = ref Symboltable.empty
-let topInsert = (*Symboltable.insertShadow topNamespace *) fun (k,v) -> topNamespace := Symboltable.insert (!topNamespace) (Symb.symbol k) v; None
+let topInsert = fun (k,v) -> topNamespace := Symboltable.insert (!topNamespace) (Symb.symbol k) v; 
+                             None
 let topLookup = fun k -> Symboltable.lookup (!topNamespace) (Symb.symbol k)
 let topDelete = fun k -> topNamespace := Symboltable.remove (!topNamespace) (Symb.symbol k); ()
 let topClear () = topNamespace := Symboltable.empty
@@ -334,12 +335,13 @@ let topStructClear () = topNamespace := Symboltable.empty
     *)
   let constLookup arg =
     match arg with
-        (Qid ([], id)) ->
+        (Qid ([], id)) ->  
           Symboltable.lookup (!topNamespace) (Symb.symbol id)
       | (Qid (ids, id)) ->
           (match findTopStruct ids with
                None -> None
              | Some mid -> Symboltable.lookup !(constComps mid) (Symb.symbol id))
+
 
   let structLookup arg =
     match arg with
@@ -578,9 +580,9 @@ let topStructClear () = topNamespace := Symboltable.empty
       match args with
           (r, []) -> None
 	| (r, (IntSyn.EVar(r',_,_,_), name)::l) ->
-	        if r = r' then Some(name) else evlk (r, l)
+	        if r == r' then Some(name) else evlk (r, l)
         | (r, ((IntSyn.AVar(r'), name)::l)) ->
-	        if r = r' then Some(name) else evlk (r, l)
+	        if r == r' then Some(name) else evlk (r, l)
     in
     match x with
 	IntSyn.EVar(r,_,_,_) -> evlk (r, (!evarList))
@@ -724,7 +726,7 @@ let topStructClear () = topNamespace := Symboltable.empty
     *)
   let evarName (g, x) =
     (match evarLookup x with
-         None -> let name = newEVarName (g, x) in
+         None -> let name = newEVarName (g, x) in 
 		 (varInsert (name, EVAR(x));
 			 name)
        | Some (name) -> name)

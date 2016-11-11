@@ -191,16 +191,7 @@
   let rec parseExp (s, p) = parseExp' (Tparsing.Parsing.Lexer'.Stream'.expose s, p)
   and parseExp' (f,p) =
     match (f,p) with
-        (Tparsing.Parsing.Lexer'.Stream'.Cons((Tparsing.Parsing.Lexer'.ID _, r0), _), p) ->
-          let ((ids, (Tparsing.Parsing.Lexer'.ID (idCase, name), r1)), f') = parseQualId' f in
-          let r = Paths.join (r0, r1) in
-          let tm = idToTerm (idCase, ids, name, r) in
-          (* Currently, we cannot override fixity status of identifiers *)
-          (* Thus isQuoted always returns false *)
-          if isQuoted (idCase)
-          then parseExp' (f', P.shiftAtom (tm, p))
-          else parseExp' (f', P.shiftAtom (tm, p))
-      | (Tparsing.Parsing.Lexer'.Stream'.Cons((Tparsing.Parsing.Lexer'.UNDERSCORE,r), s), p) ->
+        (Tparsing.Parsing.Lexer'.Stream'.Cons((Tparsing.Parsing.Lexer'.UNDERSCORE,r), s), p) ->
           parseExp (s, P.shiftAtom (ExtSyn.omitted r, p))
       | (Tparsing.Parsing.Lexer'.Stream'.Cons((Tparsing.Parsing.Lexer'.TYPE,r), s), p) ->
 	  parseExp (s, P.shiftAtom (ExtSyn.typ r, p))
@@ -226,6 +217,16 @@
 	  (P.reduceAll (r, p), f)
       | (Tparsing.Parsing.Lexer'.Stream'.Cons((Tparsing.Parsing.Lexer'.EOF,r), s), p) ->
 	  (P.reduceAll (r, p), f)
+      | (Tparsing.Parsing.Lexer'.Stream'.Cons((Tparsing.Parsing.Lexer'.ID _, r0), _), p) ->
+          let ((ids, (Tparsing.Parsing.Lexer'.ID (idCase, name), r1)), f') = parseQualId' f in
+          let r = Paths.join (r0, r1) in
+          let tm = idToTerm (idCase, ids, name, r) in
+          (* Currently, we cannot override fixity status of identifiers *)
+          (* Thus isQuoted always returns false *)
+          if isQuoted (idCase)
+          then parseExp' (f', P.shiftAtom (tm, p))
+          else parseExp' (f', P.shiftAtom (tm, p))
+
       | (Tparsing.Parsing.Lexer'.Stream'.Cons((t,r), s), p) ->
 	  (* possible error recovery: insert DOT *)
 	  Tparsing.Parsing.error (r, "Unexpected token " ^ Tparsing.Parsing.Lexer'.toString t

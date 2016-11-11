@@ -1,6 +1,6 @@
   (*! structure IntSyn = IntSyn' !*)
 
-  exception Error of IntSyn.cnstr list
+  exception Error of IntSyn.cnstrRef list
 
   (*
      Constraints cnstr are of the form (X<I>[s] = U).

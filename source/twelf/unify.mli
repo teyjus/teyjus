@@ -1,6 +1,6 @@
 (* type unifTrail *)
 
-	 (*
+(*	 
   (* suspending and resuming trailing *)
   val suspend : unit -> unifTrail
   val resume : unifTrail  -> unit
@@ -10,7 +10,8 @@
   val reset       : unit -> unit
   val mark   : unit -> unit
   val unwind : unit -> unit
-	  *)
+*)
+	  
   val instantiateEVar : IntSyn.exp option ref * IntSyn.exp * IntSyn.cnstrRef list -> unit
   val instantiateLVar : IntSyn.block option ref * IntSyn.block -> unit
 

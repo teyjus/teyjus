@@ -40,7 +40,8 @@ let rec appears_strict_ty id ty bndrs =
         (appears_strict_ty id r bndrs)
     | Lfabsyn.IdType(name) ->
         match (name, id) with
-            (Lfabsyn.LogicVar(v1,_), Lfabsyn.LogicVar(v2,_)) when (v1 = v2) ->
+             (Lfabsyn.Var(v1,_), Lfabsyn.Var(v2,_)) 
+           | (Lfabsyn.LogicVar(v1,_), Lfabsyn.LogicVar(v2,_)) when (v1 = v2) ->
               true
           | _ ->
               false
@@ -61,7 +62,8 @@ and appears_strict_tm id tm bndrs =
           (List.exists (fun x -> appears_strict_tm id x bndrs) tms)
     | Lfabsyn.IdTerm(name) ->
         match (name, id) with
-             (Lfabsyn.LogicVar(v1,_), Lfabsyn.LogicVar(v2,_)) when (v1 = v2) ->
+             (Lfabsyn.Var(v1,_), Lfabsyn.Var(v2,_)) 
+           | (Lfabsyn.LogicVar(v1,_), Lfabsyn.LogicVar(v2,_)) when (v1 = v2) ->
                true
            | _ ->
              false

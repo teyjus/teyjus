@@ -38,3 +38,5 @@
   val matchFun : exp * exp -> unit
 
   val makeGroundUni : uni -> bool
+ 
+  val exp_to_string : exp -> string

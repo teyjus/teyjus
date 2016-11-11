@@ -1,21 +1,21 @@
   exception Error of string
 
-  val piDepend  : (IntSyn.Dec * IntSyn.Depend) * IntSyn.Exp -> IntSyn.Exp
-  val closedDec : IntSyn.Dec IntSyn.Ctx * (IntSyn.Dec * IntSyn.Sub) -> bool
-  val closedSub : IntSyn.Dec IntSyn.Ctx * IntSyn.Sub -> bool
-  val closedExp : IntSyn.Dec IntSyn.Ctx * (IntSyn.Exp * IntSyn.Sub) -> bool
-  val closedCtx : IntSyn.Dec IntSyn.Ctx -> bool
+  val piDepend  : (IntSyn.dec * IntSyn.depend) * IntSyn.exp -> IntSyn.exp
+  val closedDec : IntSyn.dec IntSyn.ctx * (IntSyn.dec * IntSyn.sub) -> bool
+  val closedSub : IntSyn.dec IntSyn.ctx * IntSyn.sub -> bool
+  val closedExp : IntSyn.dec IntSyn.ctx * (IntSyn.exp * IntSyn.sub) -> bool
+  val closedCtx : IntSyn.dec IntSyn.ctx -> bool
 
-  val abstractDecImp : IntSyn.Exp  -> (int * IntSyn.Exp)
-  val abstractDef : (IntSyn.Exp * IntSyn.Exp)
-                     -> (int * (IntSyn.Exp * IntSyn.Exp))
-  val abstractCtxs : (IntSyn.Dec IntSyn.Ctx) list
-                     -> (IntSyn.Dec IntSyn.Ctx) * (IntSyn.Dec IntSyn.Ctx) list
-  val abstractSpine : IntSyn.Spine * IntSyn.Sub -> (IntSyn.dctx * IntSyn.Spine)
+  val abstractDecImp : IntSyn.exp  -> (int * IntSyn.exp)
+  val abstractDef : (IntSyn.exp * IntSyn.exp)
+                     -> (int * (IntSyn.exp * IntSyn.exp))
+  val abstractCtxs : (IntSyn.dec IntSyn.ctx) list
+                     -> (IntSyn.dec IntSyn.ctx) * (IntSyn.dec IntSyn.ctx) list
+  val abstractSpine : IntSyn.spine * IntSyn.sub -> (IntSyn.dctx * IntSyn.spine)
 
-  val collectEVars : IntSyn.dctx * IntSyn.eclo * IntSyn.Exp list -> IntSyn.Exp list
-  val collectEVarsSpine : IntSyn.dctx * (IntSyn.Spine * IntSyn.Sub) * IntSyn.Exp list -> IntSyn.Exp list
+  val collectEVars : IntSyn.dctx * IntSyn.eclo * IntSyn.exp list -> IntSyn.exp list
+  val collectEVarsSpine : IntSyn.dctx * (IntSyn.spine * IntSyn.sub) * IntSyn.exp list -> IntSyn.exp list
                          
 
-  val raiseTerm    : IntSyn.dctx * IntSyn.Exp -> IntSyn.Exp
-  val raiseType    : IntSyn.dctx * IntSyn.Exp -> IntSyn.Exp
+  val raiseTerm    : IntSyn.dctx * IntSyn.exp -> IntSyn.exp
+  val raiseType    : IntSyn.dctx * IntSyn.exp -> IntSyn.exp

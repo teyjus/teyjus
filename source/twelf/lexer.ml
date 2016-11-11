@@ -160,7 +160,8 @@ struct
   (* isQuote (c) = B iff c is the quote character *)
   let isQuote (c) = (Char.compare c '\'') = 0
 
-  let isSpace (c) = (Char.compare c ' ') = 0
+  let space = [' ';'\n';'\t';'\011';'\012';'\r']
+  let isSpace (c) = List.exists (fun c2 -> (Char.compare c c2) = 0) space
 
   let isLower (c) = let code = Char.code c in 97 <= code && code <= 122
 
@@ -233,7 +234,9 @@ struct
                     Note that the relevant parts must already have been read!
 	 Effects: None
       *)
-    let string (i,j) = String.sub (!s) (i - !left) (j-i) in
+    let string (i,j) = 
+(*      print_endline ("String.sub: string= "^(!s)^" start= "^(string_of_int (i - !left))^" len= "^(string_of_int (j-i))); *)
+      String.sub (!s) (i - !left) (j-i) in
     
     (* The remaining functions do not access the state or *)
     (* stream directly, using only functions char and string *)
@@ -270,7 +273,7 @@ struct
         | ('\026', i) -> (EOF, Paths.Reg (i-1,i-1))
         | ('"', i) -> lexString (Paths.Reg(i-1, i))
         | (c, i) ->
-  	  if isSpace (c) then lexInitial (char (i),i+1)
+  	  if isSpace (c) then (lexInitial (char (i),i+1))
 	  else if char_isUpper(c) then lexID (Upper, Paths.Reg (i-1,i))
  	  else if isDigit(c) then lexID (Lower, Paths.Reg (i-1,i))
 	  else if isLower(c) then lexID (Lower, Paths.Reg (i-1,i))
@@ -429,9 +432,9 @@ struct
 
   (* MKS: add this to avoid implementing Compat *)
   let inputLine97 instream = 
-    try (input_line instream)
+    try ((input_line instream)^"\n")
     with
-      End_of_file -> ""
+      End_of_file -> "%."
 
 (*  let lexStream (instream) = lex (fn i => Compat.inputLine97 (instream)) *)
   let lexStream instream = lex (fun i ->  inputLine97 instream)
@@ -439,10 +442,12 @@ struct
   let lexTerminal (prompt0, prompt1) =
         lex (fun n ->
                match n with
-                   0 -> (print_string (prompt0) ;
-		        inputLine97 (stdin))
-	         | i -> (print_string (prompt1) ;
-		        inputLine97 (stdin)))
+                   0 -> 
+                     let _ = print_string (prompt0) in
+		     inputLine97 (stdin)
+	         | i -> 
+                     let _ = print_string (prompt1) in
+		     inputLine97 (stdin))
 
   let toString' token =
     match token with

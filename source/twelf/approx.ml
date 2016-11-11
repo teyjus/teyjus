@@ -62,6 +62,47 @@
       | CVar of exp option ref
       | Undefined
 
+
+    let rec exp_to_string e =
+      match e with
+        Uni l ->
+          (match l with
+               Level(i) -> "uni("^(string_of_int i)^")"
+             | Next(_) -> "next"
+             | LVar x -> "uni(LVar)")
+      | Arrow(e1,e2) -> "arrow("^(exp_to_string e1)^", "^(exp_to_string e2)^")"
+      | Const(IntSyn.Const(i)) -> "const("^(IntSyn.conDecName (IntSyn.sgnLookup i))^")"
+      | Const _ -> "const"
+      | CVar(r) -> 
+          (match (!r) with 
+               Some(e) -> "cvar("^(exp_to_string e)^")"
+             | None -> "cvar(None)")
+      | Undefined -> "undefined" 
+
+
+
+
+  let rec exp_equal e1 e2 =
+    match e1, e2 with
+      Uni l1, Uni l2 -> uni_equal l1 l2
+    | Arrow(l1,r1), Arrow(l2,r2) -> exp_equal l1 l2 && exp_equal r1 r2
+    | Const(h1), Const(h2) -> h1 = h2
+    | CVar(r1), CVar(r2) -> 
+        (match !r1, !r2 with
+             Some(e1'), Some(e2') -> exp_equal e1' e2'
+           | _ -> false )
+    | Undefined, Undefined -> true
+    | _ -> false 
+  and uni_equal u1 u2 =
+    match u1, u2 with
+        Level i1, Level i2 -> i1 = i2
+      | Next u1', Next u2' -> uni_equal u1' u2'
+      | LVar op1, LVar op2 -> 
+          (match !op1, !op2 with
+               Some(u1'), Some(u2') -> uni_equal u1' u2'
+             | _ -> false)
+
+
   (* Because approximate type reconstruction uses the pattern G |- U
      ~:~ V ~:~ L and universe unification on L, if U is to be an
      arbitrary input expression, there must be an internal universe
@@ -275,8 +316,15 @@
     match args with
         (r, Next l) -> occurUniW (r, l)
       | (r, LVar r') ->
-          if r = r' then raise (Unify "Level circularity")
+          if r == r'
+          then raise (Unify "Level circularity")
           else ()
+(*
+          (match (!r, !r') with
+               Some(v), Some(v') when v = v' ->
+                 raise (Unify "Level circularity")
+             | _ -> ())
+*)
       | (r, _) -> ()
     let occurUni (r, l) = occurUniW (r, whnfUni l)
 
@@ -297,8 +345,14 @@
         | (Next l1, Next l2) ->
             matchUniW (l1, l2)
         | (LVar r1, ((LVar r2) as l2)) ->
-            if r1 = r2 then ()
+            if r1 == r2 
+            then ()
             else r1 := Some l2
+(*
+            (match (!r1,!r2) with
+                 (Some(e1),Some(e2)) when uni_equal e1 e2 -> ()
+                | _ -> r1 := Some l2)
+*)
         | (LVar r1, l2) ->
             (occurUniW (r1, l2);
              r1 := Some l2)
@@ -314,8 +368,15 @@
       match args with
 	  (r, Arrow (v1, v2)) -> (occur (r, v1); occur (r, v2))
         | (r, CVar r') ->
-            if r = r' then raise (Unify "Type/kind variable occurrence")
+            if r == r' 
+            then raise (Unify "Type/kind variable occurrence")
             else ()
+(*
+            (match (!r, !r') with
+                 Some(e1), Some(e2) when exp_equal e1 e2 ->
+                   raise (Unify "Type/kind variable occurrence (somes)")
+               | _ -> ())
+*)
         | (r, _) -> ()
     and occur (r, u) = occurW (r, whnf u)
 
@@ -345,9 +406,9 @@
               (* others cannot occur by invariant *)
 *) )
         | (Arrow (v1, v2), Arrow (v3, v4)) ->
-            (try matchFun (v1, v3)
-             with e -> (matchFun (v2, v4); raise e);
-             matchFun (v2, v4))
+             (try matchFun (v1, v3)
+              with e -> (matchFun (v2, v4); raise e));
+             matchFun (v2, v4)
 (*        | (Arrow _, Const(IntSyn.Def(d2))) ->
             matchFun (v1, constDefApx d2)
         | (Const(IntSyn.Def(d1)), Arrow _) ->
@@ -358,14 +419,20 @@
             matchFun (constDefApx d1, v2)
 *)
         | (CVar r1, ((CVar r2) as u2)) ->
-            if r1 = r2 then ()
+            if r1 == r2
+            then ()
             else r1 := Some u2
+(*
+            (match (!r1, !r2) with
+                 Some(e1), Some(e2) when exp_equal e1 e2 -> ()
+               | _ -> r1 := Some u2)
+*)
         | (CVar r1, u2) ->
             (occurW (r1, u2);
              r1 := Some u2)
         | (u1, CVar r2) ->
             (occurW (r2, u1);
-           r2 := Some u1)
+            r2 := Some u1)
         |  _ -> raise (Unify "Type/kind expression clash")
     and matchFun (u1, u2) = matchW (whnf u1, whnf u2)
 
@@ -379,4 +446,5 @@
       | (LVar r) when Option.isSome (!r) -> makeGroundUni (Option.get (!r))
       | (LVar r) when r = ref None -> (r := Some (Level 1);
                                                 true)
+
 

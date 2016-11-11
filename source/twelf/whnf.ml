@@ -221,7 +221,7 @@
 	  (match blockSub (b, s) with
                (Bidx (k)) as b' -> (Root (Proj (b', i), SClo (ss, s)), id)
              | (LVar _) as b' -> whnfRoot ((Proj (b', i), SClo (ss, s)), id)
-	     | Inst l -> whnfRedex (whnf (List.nth l (i-1), id), (ss, s)))
+	     | Inst l -> whnfRedex (whnf (List.nth l (i-i), id), (ss, s)))
       | ((Proj (LVar (r, sk, (l, t)), i), ss), s) when Option.isSome (!r) ->
 	   whnfRoot ((Proj (blockSub (Option.get (!r), comp (sk, s)), i), SClo (ss, s)), id)
       | ((Proj (((LVar (r, sk, (l, t)))), i), ss), s) -> (* r = ref None *)

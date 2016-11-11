@@ -276,3 +276,4 @@
   (* Used in Flit *)
   val rename : cid * string -> unit
 
+  val exp_to_string : exp -> string

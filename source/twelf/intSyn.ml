@@ -1,5 +1,5 @@
   type cid = int			(* Constant identifier        *)
-  type mid = int                        (* Structure identifier       *)
+  type mid = int                        (* Stsructure identifier       *)
   type csid = int                       (* CS module identifier       *)
 
 
@@ -346,8 +346,8 @@
     (* If Def(cid) is valid, then sgnArray(cid) = ConDef _ *)
 
   let rec sgnClean (i) = if i >= !nextCid then ()
-                     else (Array.set sgnArray i dummyEntry;
-                             sgnClean (i+1))
+                     else Array.set sgnArray i dummyEntry;
+                          sgnClean (i+1)
 
   let sgnReset () = ((* Fri Dec 20 12:04:24 2002 -fp *)
                        (* this circumvents a space leak *)
@@ -359,10 +359,10 @@
     let cid = !nextCid in
       if cid > maxCid
       then raise (Error ("Global signature size " ^ (string_of_int (maxCid+1)) ^ " exceeded"))
-      else (Array.set sgnArray cid conDec ;
-                nextCid := cid + 1;
-                cid)
-
+      else 
+        Array.set sgnArray cid conDec;
+        nextCid := cid + 1;
+        cid 
     (* 0 <= cid < !nextCid *)
   let sgnLookup (cid) = Array.get sgnArray cid
 
@@ -705,3 +705,69 @@
      as in targetFamOpt, except V must be a valid type
   *)
   let targetFam (a) = Option.get (targetFamOpt a)
+
+  let rec exp_to_string e =
+    match e with
+        Uni u -> (match u with Type -> "uni(type)" | Kind -> "uni(kind)")
+      | Pi((Dec(None,t),_),b) -> "pi("^(exp_to_string t)^" -> "^(exp_to_string b)^")"
+      | Pi((Dec(Some(n),t),_),b) -> "pi("^n^" : "^(exp_to_string t)^". "^(exp_to_string b)^")"
+      | Pi _ -> "pi"
+      | Root(h,s)  ->
+          let rec argStr s = 
+            (match s with
+                 Nil -> ""
+               | App(e, Nil) -> exp_to_string e
+               | App(e, s') -> (exp_to_string e) ^ ", "^ (argStr s')
+               | SClo(s', Shift(0)) -> argStr s')
+          in
+          "root( "^ 
+          (match h with
+               BVar _ -> "bvar"
+             | Const i -> "const("^(conDecName (sgnLookup i))^")"
+             | Proj _ -> "proj"
+             | Skonst _ -> "skonst"
+             | Def _ -> "def"
+             | NSDef _ -> "nsdef"
+             | FVar (n,e,s) when s = id -> "fvar("^n^", "^(exp_to_string e)^", id)"
+             | FVar (n,e,sub) -> "fvar("^n^", "^(exp_to_string e)^", "^(sub_to_string sub)^")"
+             | FgnConst _ -> "fgnconst"
+          )^(argStr s)^")"
+      | Redex _ -> "redex"
+      | Lam _ -> "lam"
+      | EVar(r,ctx,e',c) ->
+          "evar("^
+          (match !r with
+               Some(e'') -> "Some("^(exp_to_string e'')^")"
+             | None -> "None"
+          )^", ["^(ctx_to_string ctx)^"], "^(exp_to_string e')^", "^
+          (match !c with
+               [] -> "[]"
+             | _ -> "cnstrs"
+          )^")"
+      | EVar (r,_,e',c) when !r = None && !c = [] -> "evar(None, "^(exp_to_string e')^")"
+      | EVar (r,_,e',c) when Option.isSome !r && !c = [] -> "evar(Some("^(exp_to_string (Option.get !r))^"), "^(exp_to_string e')^")" 
+      | EVar _ -> "evar"
+      | EClo (e', sub) -> 
+          "eclo("^(exp_to_string e')^", "^(sub_to_string sub)^")" 
+      | AVar _ -> "avar"
+      | FgnExp _ -> "fgnexp" 
+      | NVar _ -> "nvar"
+
+  and sub_to_string s =
+    match s with
+        Shift(k) -> "shift("^(string_of_int k)^")"
+      | Dot(f, s') ->
+          "dot("^
+            (match f with 
+                 Idx(k) -> "idx("^(string_of_int k)^")"
+               | Exp(e) -> "exp("^(exp_to_string e)^")"
+            ) ^", "^(sub_to_string s')^")"
+
+  and ctx_to_string c =
+    match c with
+        Null -> "."
+      | Decl(c', Dec(name_op,e)) -> 
+          (match name_op with
+               Some(name) -> name^" : "
+             | None -> ""
+          )^(exp_to_string e)^", "^(ctx_to_string c')
