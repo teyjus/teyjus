@@ -8,7 +8,6 @@
    | Bvar of int * Paths.region
    | Typ of Paths.region
    | Arrow of term * term
-   | Backarrow of term * term
    | Pi of dec * term
    | Lam of dec * term
    | App of term * term
@@ -33,7 +32,7 @@
   val quid : string list * string * Paths.region -> term (* quoted id, currently not parsed *)
   val scon : string * Paths.region -> term (* string constant *)
 
-
+  val backarrow : (term * term) -> term
 
   (* unconditionally interpreted as such *)
   val evar : string * Paths.region -> term

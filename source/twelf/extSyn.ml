@@ -9,7 +9,6 @@
    | Bvar of int * Paths.region
    | Typ of Paths.region
    | Arrow of term * term
-   | Backarrow of term * term
    | Pi of dec * term
    | Lam of dec * term
    | App of term * term
@@ -34,7 +33,7 @@
   let quid (a,b,c) = Quid(a,b,c) (* quoted id, currently not parsed *)
   let scon (a,b) = Scon(a,b) (* string constant *)
 
-
+  let backarrow (tm1, tm2) = Arrow(tm2, tm1)
 
   (* unconditionally interpreted as such *)
   let evar (a,b) = Evar(a,b)
@@ -44,7 +43,6 @@
 
   let typ a = Typ(a)	(* type, region for "type" *)
   let arrow (a,b) = Arrow(a,b)	(* tm -> tm *)
-  let backarrow (a,b) = Backarrow(a,b)	(* tm <- tm *)
   let pi (a,b) = Pi(a,b)           (* {d} tm *)
   let lam (a,b) = Lam(a,b)          (* [d] tm *)
   let app (a,b) = App(a,b)	(* tm tm *)
@@ -75,7 +73,6 @@
    | Bvar _ -> "bvar"
    | Typ _ -> "type"
    | Arrow (t1,t2) -> "arrow("^(string_of_term t1)^", "^(string_of_term t2)^")" 
-   | Backarrow _ -> "backarrow"
    | Pi (Dec (Some(n),t,_), b) -> "pi("^n^" : "^(string_of_term t)^". "^(string_of_term b)^")"
    | Pi (Dec (None,t,_), b) -> "pi("^(string_of_term t)^" -> "^(string_of_term b)^")"
    | Pi _ -> "pi" 
