@@ -186,6 +186,7 @@ LF_ML[] =
     $(LF)/lfsig
     $(LF)/tstream
     $(LF)/paths
+    $(LF)/msg
     $(LF)/extSyn
     $(LF)/lexer
     $(LF)/tparsing
@@ -200,10 +201,13 @@ LF_ML[] =
     $(LF)/whnf
     $(LF)/conv
     $(LF)/constraints
-#    $(LF)/names
-#    $(LF)/unify
-#    $(LF)/reconTerm
-#    $(LF)/reconCondec
+    $(LF)/names
+    $(LF)/unify
+    $(LF)/abstract
+    $(LF)/approx
+    $(LF)/reconTerm
+    $(LF)/reconCondec
+    $(LF)/reconQuery
     $(LF)/metadata
     $(FNT)/loader
     $(FNT)/lfquery
