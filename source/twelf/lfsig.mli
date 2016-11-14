@@ -1,8 +1,8 @@
 (** Describes a representation for fully explicit LF signatures. *)
 
 (** An LF signature.
-    (file names, table of type-level declarations) *)
-type signature = Signature of (string list ref* Lfabsyn.typefam Symboltable.table)
+    (file names, table of type-level declarations, table of mapping from object to corresponding type family) *)
+type signature = Signature of (string list ref * Lfabsyn.typefam Symboltable.table * (Symb.symbol * int) Symboltable.table)
 
 val string_of_sig : signature -> string
 

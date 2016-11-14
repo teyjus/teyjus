@@ -124,13 +124,66 @@ let string_of_query' (Query(fvars,id,ty)) =
   let bndrs = List.fold_left (fun s (name,ty) -> s^(string_of_id name)^" : "^(string_of_typ ty)^".") "" fvars in
   bndrs ^ (string_of_query(Query(fvars,id,ty)))
 
-let string_of_solution (subst, disprs) =
+
+let rec skip k l =
+  match k, l with
+      0, _ -> l
+    | n, (x :: l') -> skip (n-1) l'
+    | _ ->
+        Errormsg.error Errormsg.none "Attempting to skip in empty argument list.";
+        l
+
+let rec string_of_term_implicit types objmap tm =
+  let rec aux tm =
+    match tm with
+      AbsTerm(id,ty,body) -> 
+        "([" ^ (string_of_id id) ^ " : " ^ (string_of_typ_implicit types objmap ty) ^"] " ^ (aux body) ^ ")"
+    | AppTerm(head, tms) -> 
+        let h_name = string_of_id head in
+        (match Symboltable.lookup objmap (Symb.symbol h_name) with
+             Some(tySymb, idx) ->
+               let TypeFam(_,_,_,_,_,objs,_) = Option.get (Symboltable.lookup types tySymb) in
+               let Object(_,_,_,_,_,k) = !(List.nth !objs idx) in
+               let tmlist = 
+                 List.fold_left (fun s t -> s ^ " " ^ (aux t)) "" (skip k tms)
+               in
+               "(" ^ h_name ^ " " ^ tmlist ^ ")"
+           | None -> 
+               Errormsg.error Errormsg.none ("No entry in object mapping for application head " ^ h_name);
+               string_of_term tm )
+    | IdTerm(id) -> string_of_id id
+  in
+  aux tm
+and string_of_typ_implicit types objmap ty =
+  let rec aux ty =
+    match ty with
+      PiType(id,t1,t2) -> 
+        "({ " ^ (string_of_id id) ^ " : " ^ (aux t1) ^ "} " ^ (aux t2) ^ ")"
+    | AppType(t,tms) ->
+        let h_name = string_of_id t in
+        (match Symboltable.lookup types (Symb.symbol h_name) with
+             Some(TypeFam(_,_,_,_,_,_,k)) ->
+               let tmlist =
+                 List.fold_left (fun s tm -> s ^ " " ^ (string_of_term_implicit types objmap tm)) "" (skip k tms)
+               in
+               "(" ^ (string_of_id t) ^ " " ^ tmlist ^ ")"
+           | None ->
+               Errormsg.error Errormsg.none ("No entry in type table for application head " ^ h_name);
+               string_of_typ ty )
+    | ImpType(t1,t2) ->
+        "(" ^ (aux t1) ^ " -> " ^ (aux t2) ^ ")"
+    | IdType(id) ->
+        string_of_id id
+  in
+  aux ty
+
+let string_of_solution types objmap (subst, disprs) =
   let string_of_subst subst =
     let rec string_of_subst_aux sub =
       match sub with
           ((id,tm) :: sub') when (get_id_name id) = "" -> string_of_subst_aux sub'
         | ((id,tm) :: sub') ->
-            (string_of_id id) ^ " = " ^ (string_of_term tm) ^ "\n" ^ (string_of_subst_aux sub')
+            (string_of_id id) ^ " = " ^ (string_of_term_implicit types objmap tm) ^ "\n" ^ (string_of_subst_aux sub')
         | [] -> ""
     in
     if subst = []
@@ -143,7 +196,8 @@ let string_of_solution (subst, disprs) =
     let rec string_of_disprs_aux prs =
       match prs with
           ((t1,t2) :: prs') ->
-            "<" ^ (string_of_term t1) ^ ", " ^ (string_of_term t2) ^ ">\n" ^ (string_of_disprs_aux prs')
+            "<" ^ (string_of_term_implicit types objmap t1) ^ ", " ^ 
+              (string_of_term_implicit types objmap t2) ^ ">\n" ^ (string_of_disprs_aux prs')
         | [] -> ""
     in
     if disprs = []

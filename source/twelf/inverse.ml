@@ -28,7 +28,7 @@ let generate_name metadata fvars =
 let reset_namegen_count () = bvar_namegen_count := 0
 
 
-let invert (Lfsig.Signature(_,types)) metadata fvars (subst, disprs) =
+let invert (Lfsig.Signature(_,types, objmap)) metadata fvars (subst, disprs) =
   (* collect all the object constants into a table for easy lookup
      ****Move this to somewhere else so it doesn't have to be done
          every time we invert; the signature does not change so can 

@@ -57,7 +57,7 @@ val string_of_term : term -> string
 val string_of_id : id -> string
 val string_of_query : query -> string
 val string_of_query' : query -> string
-val string_of_solution : solution -> string
+val string_of_solution : typefam Symboltable.table -> (Symb.symbol * int) Symboltable.table-> solution -> string
 
 val get_typefam_implicit : typefam -> int
 val get_obj_implicit : obj -> int

@@ -32,7 +32,7 @@ let submit_query query metadata kinds constants =
         "naive" -> Translator.NaiveTranslation.translate_query query metadata kinds constants
       | "optimized" -> Translator.OptimizedTranslation.translate_query query metadata kinds constants in
   let (term',_,_) = Parse.fixTerm (Parse.removeNestedAbstractions term) in
-  let _ = print_endline ("translated query: "^(Absyn.string_of_term term')) in 
+(*  let _ = print_endline ("translated query: "^(Absyn.string_of_term term')) in  *)
   Ccode_stubs.setTypeAndTermLocation (); 
   Readterm.readTermAndType term' (Types.Molecule(Absyn.ApplicationType(Pervasive.kbool,[]),[])) fvars [];
   fvartypes_init query;
@@ -45,8 +45,8 @@ let string_of_lpsol (subst, dsprs) =
   let disprStr = List.fold_left (fun str dspr -> str ^ (string_of_dispr dspr)) "" dsprs in
   "substitution:\n" ^ subStr ^ "disagreement pairs:\n" ^ disprStr
 *)
-let show_answers lpmodule lfsig metadata = 
+let show_answers lpmodule ((Lfsig.Signature(_,types,objmap)) as lfsig) metadata = 
   let lpsol = Buildterm.build_solution lpmodule (!freeVarTab) in 
 (*  let _ = print_endline (string_of_lpsol lpsol) in *)
   let lfsol = Inverse.invert lfsig metadata (!fvar_types) lpsol in
-  print_endline (Lfabsyn.string_of_solution lfsol)
+  print_endline (Lfabsyn.string_of_solution types objmap lfsol)

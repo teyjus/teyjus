@@ -469,7 +469,7 @@ let process_query fvars (proofterm, querytype) metadata constTab strictness =
 
 module NaiveTranslation : Translator =
 struct
-  let translate (Lfsig.Signature(name,types)) =
+  let translate (Lfsig.Signature(name,types, objmap)) =
     let metadata = initialize_metadata types in
     let kinds = Table.add (Symbol.symbol lfobjStr) lfobj (Table.add (Symbol.symbol lftypeStr) lftype Table.empty) in
     let constants = initialize_constants metadata types in
@@ -509,7 +509,7 @@ struct
     in
     swapped
       
-  let translate (Lfsig.Signature(name, types)) =
+  let translate (Lfsig.Signature(name, types, objmap)) =
     let metadata = initialize_metadata types in
     let kinds = Table.add (Symbol.symbol lfobjStr) lfobj (Table.add (Symbol.symbol lftypeStr) lftype Table.empty) in
     let constants = initialize_constants metadata types in

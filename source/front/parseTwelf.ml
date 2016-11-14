@@ -164,12 +164,12 @@ and build_type_from_dctx bvars ty ctx =
 
 let conDec_to_typeFam (IntSyn.ConDec(name, id, implicit, _, kind, _)) =
   let k = exp_to_kind [] kind in 
-  Lfabsyn.TypeFam(Lfabsyn.Const(name), k, Lfabsyn.NoFixity, Lfabsyn.None, 0, ref [], 0)
+  Lfabsyn.TypeFam(Lfabsyn.Const(name), k, Lfabsyn.NoFixity, Lfabsyn.None, 0, ref [], implicit)
 
 let conDec_to_obj (IntSyn.ConDec(name, id, implicit, _, ty, _)) =
   let typ = exp_to_type [] ty in
   let Lfabsyn.Const(tyhead) = Lfabsyn.get_typ_head typ in
-  (Lfabsyn.Object(Lfabsyn.Const(name), typ, Lfabsyn.NoFixity, Lfabsyn.None, 0, 0), tyhead)
+  (Lfabsyn.Object(Lfabsyn.Const(name), typ, Lfabsyn.NoFixity, Lfabsyn.None, 0, implicit), tyhead)
 
 let query_to_query (queryty, name_op, evars) =
   let pt = match name_op with Some(n) -> n | None -> "" in
@@ -193,10 +193,10 @@ let parse_sig filename =
     let inchann = open_in filename in
     let parseStream = Parser.parseStream inchann in
     let _ = context := Some(Names.newNamespace ()) in
-    let readDec stream (Lfsig.Signature(name, decls)) =
-      let rec aux stream decls =
+    let readDec stream (Lfsig.Signature(name, decls, objmap)) =
+      let rec aux stream decls objmap =
         match Tparsing.Parsing.Lexer'.Stream'.expose stream with
-  	    Tparsing.Parsing.Lexer'.Stream'.Empty -> decls
+  	    Tparsing.Parsing.Lexer'.Stream'.Empty -> (decls, objmap)
           | Tparsing.Parsing.Lexer'.Stream'.Cons((Parser.ConDec(condec), r), stream') ->
 	     let (conDec_op, occTree_op) = ReconCondec.condecToConDec (condec, Paths.Loc("test", r), false) in
              (match conDec_op with
@@ -214,22 +214,27 @@ let parse_sig filename =
                          IntSyn.Kind ->
                            let typefam = conDec_to_typeFam conDec in
                            let decls' = Symboltable.insert decls (Symb.symbol (Lfabsyn.get_typefam_name typefam)) typefam in
-                           aux stream' decls'
+                           aux stream' decls' objmap
                        | IntSyn.Type ->
                            let (obj, target) = conDec_to_obj conDec in
                            match Symboltable.lookup decls (Symb.symbol target) with
                                None -> Errormsg.error Errormsg.none ("Type constructor "^target^" not found in signature.");
                                      (* try to continue if error *)
-                                     aux stream' decls
+                                     aux stream' decls objmap
                              | Some(Lfabsyn.TypeFam(a,b,c,d,e,objs,f)) -> 
+                                 let objmap' = Symboltable.insert objmap 
+                                                                 (Symb.symbol (Lfabsyn.get_obj_name obj)) 
+                                                                 (Symb.symbol (Lfabsyn.string_of_id a), List.length !objs)
+                                 in
                                  let _ = objs := (List.append !objs [ref obj]) in
-                                 aux stream' decls)
+                                 aux stream' decls objmap')
                 | None ->  
-                    aux stream' decls )
+                    aux stream' decls objmap)
       in
-      Lfsig.Signature(name, aux stream decls)
+      let (decls', objmap') = aux stream decls objmap in
+      Lfsig.Signature(name, decls', objmap')
     in
-    let lfsig = readDec parseStream (Lfsig.Signature(ref ["top"], Symboltable.empty)) in
+    let lfsig = readDec parseStream (Lfsig.Signature(ref ["top"], Symboltable.empty, Symboltable.empty)) in
     close_in inchann; Some(lfsig)
   with
     Failure(s) -> (print_endline ("Error: " ^ s ^ "."); None)
