@@ -42,7 +42,16 @@ let invert (Lfsig.Signature(_,types)) metadata fvars (subst, disprs) =
   (* apply_subst : Lfabsyn.typ -> (Lfabsyn.id * Lfabsyn.term) list -> Lfabsyn.typ
      Apply the given substitution to the LF type. *)
   let rec apply_subst lftype substitution =
-    let rec sub_tm id tm t =
+    let rec reduce head args =
+      match head, args with
+          Lfabsyn.IdTerm(id), _ ->
+            Lfabsyn.AppTerm(id, args)
+        | Lfabsyn.AppTerm(id, args'), _ ->
+            Lfabsyn.AppTerm(id, List.append args' args)
+        | Lfabsyn.AbsTerm(id, typ, tm), (a :: args') ->
+            let tm' = sub_tm id a tm in
+            reduce tm' args'
+    and sub_tm id tm t =
       match t with
           Lfabsyn.AbsTerm(n,ty,_) 
             when (Lfabsyn.get_id_name id) = (Lfabsyn.get_id_name n) ->
@@ -67,11 +76,11 @@ let invert (Lfsig.Signature(_,types)) metadata fvars (subst, disprs) =
                  | Lfabsyn.AbsTerm(_,_,_) when (List.length args) = 0 ->
                      tm
                  | Lfabsyn.AbsTerm(_,_,_) ->
-                     Errormsg.error Errormsg.none 
-                                    ("Error: apply_subst: creating beta-redex when substituting "^
+                     Errormsg.warning Errormsg.none 
+                                    ("Warning: apply_subst: creating beta-redex when substituting "^
                                      (Lfabsyn.string_of_term tm)^ " for "^(Lfabsyn.string_of_id id)^
                                      " in " ^ (Lfabsyn.string_of_term t));
-                     t)
+                     reduce tm args )
             else
               Lfabsyn.AppTerm(head, args')
         | Lfabsyn.IdTerm(n) ->
@@ -84,32 +93,14 @@ let invert (Lfsig.Signature(_,types)) metadata fvars (subst, disprs) =
       match ty with
           Lfabsyn.PiType(n,t,_) 
             when (Lfabsyn.get_id_name id) = (Lfabsyn.get_id_name n) -> 
-            let newname = generate_name metadata fvars in
-            let Lfabsyn.PiType(n',t',b') = 
-              subst n (Lfabsyn.IdTerm(Lfabsyn.Var(newname,t))) ty 
-            in
-            Lfabsyn.PiType(n', subst id tm t', subst id tm b')
+            ty
         | Lfabsyn.PiType(n,t,b) ->
             Lfabsyn.PiType(n, subst id tm t, subst id tm b)
         | Lfabsyn.ImpType(l,r) ->
             Lfabsyn.ImpType(subst id tm l, subst id tm r)
         | Lfabsyn.AppType(h,args) ->
             let args' = List.map (sub_tm id tm) args in
-            if (Lfabsyn.get_id_name id) = (Lfabsyn.get_id_name h)
-            then
-              (match tm with
-                   Lfabsyn.IdTerm(ident) ->
-                     Lfabsyn.AppType(ident,args')
-                 | Lfabsyn.AppTerm(ident,newargs) ->
-                     Lfabsyn.AppType(ident, List.append newargs args')
-                 | Lfabsyn.AbsTerm(_,_,_) ->
-                     Errormsg.error Errormsg.none 
-                                    ("Error: apply_subst: creating beta-redex when substituting "^
-                                     (Lfabsyn.string_of_term tm)^ " for "^(Lfabsyn.string_of_id id)^
-                                     " in " ^ (Lfabsyn.string_of_typ ty));
-                     ty)
-            else
-              Lfabsyn.AppType(h,args')
+            Lfabsyn.AppType(h,args')
         | Lfabsyn.IdType(_) -> ty
     in
     match substitution with
