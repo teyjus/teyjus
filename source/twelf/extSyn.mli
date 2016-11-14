@@ -33,6 +33,7 @@
   val scon : string * Paths.region -> term (* string constant *)
 
   val backarrow : (term * term) -> term
+  val dec0 : string option * Paths.region -> dec
 
   (* unconditionally interpreted as such *)
   val evar : string * Paths.region -> term
@@ -51,7 +52,6 @@
 
   (* region for "{dec}" "[dec]" etc. *)
   val dec : string option * term * Paths.region -> dec (* id : tm | _ : tm *)
-  val dec0 : string option * Paths.region -> dec (* id | _  (type omitted) *)
 
 
 
@@ -66,4 +66,6 @@
 
   val query : string option * term -> query (* ucid : tm | tm *)
 
+(* MKS: not a well constructed string generator,
+   but was used for debugging. *)
   val string_of_term : term -> string

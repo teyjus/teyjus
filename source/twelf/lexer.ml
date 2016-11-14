@@ -167,7 +167,7 @@ struct
 
   let char_isUpper (c) = let code = Char.code c in 65 <= code && code <= 90
 
-  let isDigit (c) = let code = Char.code c in 49 <= code && code <= 57
+  let isDigit (c) = let code = Char.code c in 48 <= code && code <= 57
 
   (* isIdChar (c) = B iff c is legal identifier constituent *)
   let isIdChar (c) = isLower(c) || char_isUpper (c)

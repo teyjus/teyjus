@@ -257,7 +257,7 @@
 	  Root (invertHead (g, h, ss, rOccur),
 		invertSpine (g, (ss', s), ss, rOccur))
       | (g, (((EVar (r, gx, v, cnstrs)) as x), s), ss, rOccur) -> 
-	  if (rOccur = r) then raise NotInvertible
+	  if (rOccur == r) then raise NotInvertible
 	  else if Whnf.isPatSub (s) then
             let w = weakenSub (g, s, ss) in
             if Whnf.isId w
@@ -372,7 +372,7 @@
 	  Root (pruneHead (g, h, ss, rOccur),
 		pruneSpine (g, (ss', s), ss, rOccur))
       | (g, (((EVar (r, gx, v, cnstrs)) as x), s), ss, rOccur) -> 
-	  if (rOccur = r) then raise (Unify "Variable occurrence")
+	  if (rOccur == r) then raise (Unify "Variable occurrence")
 	  else if Whnf.isPatSub (s) then
             let w = weakenSub (g, s, ss) in
               if Whnf.isId w
@@ -623,7 +623,7 @@
       | (g, (((EVar(r1, g1, v1, cnstrs1)) as u1), s1),
 		   (((EVar(r2, g2, v2, cnstrs2)) as u2), s2)) ->
 	  (* postpone, if s1 or s2 are not patsub *)
-	  if r1 = r2 then 
+	  if r1 == r2 then 
 	    if Whnf.isPatSub(s1) then 
 	      if Whnf.isPatSub(s2) then
                 let s' = intersection (s1,s2) in	(* compute ss' directly? *)
@@ -780,7 +780,7 @@
           if l1 <> l2 then
   	    raise (Unify "Label clash")
           else
-	    if r1 = r2
+	    if r1 == r2
 	    then ()
 	    else
 	    ( unifySub (g, comp(t1,s1), comp(t2,s2)) ; (* Sat Dec  7 22:04:31 2002 -fp *)

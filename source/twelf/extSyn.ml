@@ -51,7 +51,7 @@
 
   (* region for "{dec}" "[dec]" etc. *)
   let dec (a,b,c) = Dec(a,b,c) (* id : tm | _ : tm *)
-  let dec0 (a,b) = Dec0(a,b) (* id | _  (type omitted) *)
+  let dec0 (nameOpt, r) = Dec(nameOpt, omitted (r), r) (* id | _  (type omitted) *)
 
 
 

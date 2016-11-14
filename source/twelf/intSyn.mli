@@ -278,4 +278,6 @@
   (* Used in Flit *)
   val rename : cid * string -> unit
 
+(* MKS: not a well constructed string generator,
+   but was used for debugging. *)
   val exp_to_string : exp -> string

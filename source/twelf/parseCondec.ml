@@ -24,6 +24,8 @@
     match args with
         (Tparsing.Parsing.Lexer'.Stream'.Cons ((Tparsing.Parsing.Lexer'.ID (idCase,name), r), s')) ->
           parseConDec1 (Some(name), Tparsing.Parsing.Lexer'.Stream'.expose s')
+      | (Tparsing.Parsing.Lexer'.Stream'.Cons((Tparsing.Parsing.Lexer'.UNDERSCORE, r), s')) ->
+          parseConDec1 (None, Tparsing.Parsing.Lexer'.Stream'.expose s')
       | (Tparsing.Parsing.Lexer'.Stream'.Cons ((t, r), s')) ->
           Tparsing.Parsing.error (r, "Constant or block declaration expected, found token " ^ Tparsing.Parsing.Lexer'.toString t)
 

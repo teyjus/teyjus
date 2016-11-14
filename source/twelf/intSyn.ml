@@ -720,7 +720,8 @@
                  Nil -> ""
                | App(e, Nil) -> exp_to_string e
                | App(e, s') -> (exp_to_string e) ^ ", "^ (argStr s')
-               | SClo(s', Shift(0)) -> argStr s')
+               | SClo(s', Shift(0)) -> argStr s'
+               | _ -> "spine")
           in
           "root( "^ 
           (match h with

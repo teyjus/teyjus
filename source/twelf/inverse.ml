@@ -76,10 +76,10 @@ let invert (Lfsig.Signature(_,types)) metadata fvars (subst, disprs) =
                  | Lfabsyn.AbsTerm(_,_,_) when (List.length args) = 0 ->
                      tm
                  | Lfabsyn.AbsTerm(_,_,_) ->
-                     Errormsg.warning Errormsg.none 
-                                    ("Warning: apply_subst: creating beta-redex when substituting "^
+(*                     Errormsg.warning Errormsg.none 
+                                    ("apply_subst: creating beta-redex when substituting "^
                                      (Lfabsyn.string_of_term tm)^ " for "^(Lfabsyn.string_of_id id)^
-                                     " in " ^ (Lfabsyn.string_of_term t));
+                                     " in " ^ (Lfabsyn.string_of_term t)); *)
                      reduce tm args )
             else
               Lfabsyn.AppTerm(head, args')
