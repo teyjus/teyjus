@@ -1,3 +1,4 @@
+(* This is taken from the Twelf implementation *)
 
    exception Error of IntSyn.cnstrRef list
 

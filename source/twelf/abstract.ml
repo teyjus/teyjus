@@ -1,3 +1,5 @@
+(* This is taken from the Twelf implementation *)
+
   exception Error of string
 
     (* Intermediate Data Structure *)

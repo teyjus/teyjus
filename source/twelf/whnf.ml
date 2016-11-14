@@ -1,3 +1,4 @@
+(* This is taken from the Twelf implementation *)
 
   (*
      Weak Head-Normal Form (whnf)

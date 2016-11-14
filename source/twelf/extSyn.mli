@@ -1,3 +1,5 @@
+(* This is taken from the Twelf implementation *)
+
   type term =				(* term *)
      Internal of IntSyn.exp * IntSyn.exp * Paths.region (* (U, V, r) *)
         (* G |- U : V nf where V : L or V == kind *)

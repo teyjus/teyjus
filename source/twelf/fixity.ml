@@ -1,3 +1,5 @@
+(* This is taken from the Twelf implementation *)
+
    (* Associativity ascribed to infix operators
        assoc ::= left    e.g. `<-'
                | right   e.g. `->'

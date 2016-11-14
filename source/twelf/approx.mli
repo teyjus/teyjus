@@ -1,3 +1,4 @@
+(* This is taken from the Twelf implementation *)
  
   type uni =
       Level of int (* 1 = type, 2 = kind, 3 = hyperkind, etc. *)

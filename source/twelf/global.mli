@@ -1,3 +1,5 @@
+(* This is taken from the Twelf implementation *)
+
   val chatter : int ref
   val style : int ref
   val maxCid : int

@@ -1,3 +1,5 @@
+(* This is taken from the Twelf implementation *)
+
   exception Error of string
 
   val condecToConDec : ExtSyn.condec * Paths.location * bool -> IntSyn.conDec option * Paths.occConDec option

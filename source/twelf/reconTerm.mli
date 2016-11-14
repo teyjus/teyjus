@@ -1,3 +1,5 @@
+(* This is taken from the Twelf implementation *)
+
   exception Error of string
   val resetErrors : string -> unit      (* filename -fp *)
   val checkErrors : Paths.region -> unit

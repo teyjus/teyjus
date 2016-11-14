@@ -1,3 +1,5 @@
+(* This is taken from the Twelf implementation *)
+
   (*! structure IntSyn = IntSyn' !*)
 
   exception Error of string

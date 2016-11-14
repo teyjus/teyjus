@@ -1,3 +1,4 @@
+(* This is taken from the Twelf implementation *)
 
     let headConDec arg =
       match arg with

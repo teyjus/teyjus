@@ -1,3 +1,5 @@
+(* This is taken from the Twelf implementation *)
+
   exception Unify of string
   exception NotInvertible
     open IntSyn

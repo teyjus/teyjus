@@ -1,3 +1,5 @@
+(* This is taken from the Twelf implementation *)
+
   exception Error of string
 
   val piDepend  : (IntSyn.dec * IntSyn.depend) * IntSyn.exp -> IntSyn.exp

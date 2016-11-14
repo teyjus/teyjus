@@ -1,3 +1,5 @@
+(* This is taken from the Twelf implementation *)
+
    open IntSyn
 
     (* eqUni (L1, L2) = B iff L1 = L2 *)

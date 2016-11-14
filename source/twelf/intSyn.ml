@@ -1,3 +1,5 @@
+(* This is taken from the Twelf implementation *)
+
   type cid = int			(* Constant identifier        *)
   type mid = int                        (* Stsructure identifier       *)
   type csid = int                       (* CS module identifier       *)

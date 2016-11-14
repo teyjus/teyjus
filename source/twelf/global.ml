@@ -1,3 +1,5 @@
+(* This is taken from the Twelf implementation *)
+
   let chatter = ref 3
   let style = ref 0
   let maxCid = 19999

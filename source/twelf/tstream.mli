@@ -1,3 +1,5 @@
+(* This is taken from the Twelf implementation *)
+
 module type BASIC_STREAM =
 sig
   type 'a stream

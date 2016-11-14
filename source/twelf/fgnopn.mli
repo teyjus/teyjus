@@ -1,3 +1,5 @@
+(* This is taken from the Twelf implementation *)
+
 module type FGN_OPN = sig
   type csid = int
   type rep = exn

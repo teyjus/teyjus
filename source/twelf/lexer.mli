@@ -1,3 +1,5 @@
+(* This is taken from the Twelf implementation *)
+
 module type LEXER = 
 sig
   (* Stream is not memoizing for efficiency *)

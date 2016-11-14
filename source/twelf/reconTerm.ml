@@ -1,3 +1,5 @@
+(* This is taken from the Twelf implementation *)
+
   let delayedList : (unit -> unit) list ref = ref []
 
   let clearDelayed () = (delayedList := [])

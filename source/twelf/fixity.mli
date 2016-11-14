@@ -1,3 +1,5 @@
+(* This is taken from the Twelf implementation *)
+
   type associativity = Left | Right | None
   type precedence = Strength of int
 

@@ -1,3 +1,5 @@
+(* This is taken from the Twelf implementation *)
+
   (* Patterns *)
   val isPatSub : IntSyn.sub -> bool
   val makePatSub : IntSyn.sub -> IntSyn.sub option
