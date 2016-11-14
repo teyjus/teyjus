@@ -14,14 +14,14 @@ sig
                           Absyn.aconstant Table.SymbolTable.t -> (Absyn.aterm * Absyn.atypesymbol list)
 end
 
-let currentTranslation = ref "naive"
+let currentTranslation = ref "optimized"
 let set_translation s =
   match s with
       "naive" 
     | "optimized" ->
-        currentTranslation := s; true
-    | _ -> Errormsg.warning Errormsg.none ("Invalid translation: " ^ s);
-           false
+        currentTranslation := s
+    | _ -> Errormsg.warning Errormsg.none ("Invalid translation: " ^ s)
+           
 let get_translation () = !currentTranslation
 
 (* Generate unique names for variables generated during 

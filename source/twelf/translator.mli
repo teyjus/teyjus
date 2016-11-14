@@ -17,7 +17,7 @@ end
 
 val get_translation : unit -> string
 
-val set_translation : string -> bool
+val set_translation : string -> unit
 
 (** An implementation of the basic, naive translation from LF to 
     LP signatures. *)

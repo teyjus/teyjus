@@ -239,7 +239,7 @@
           (* cannot happen at present *)
 	  Tparsing.Parsing.error (r, "Illegal bound quoted identifier " ^ name)
       | (Tparsing.Parsing.Lexer'.Stream'.Cons ((Tparsing.Parsing.Lexer'.ID (idCase,name), r), s')) ->
-        (* MKS: we have single file, so nothing would ever be in the table to lookup *)
+        (* MKS: no fixity declarations so always nofix case *)
         parseDec1 (Some(name), Tparsing.Parsing.Lexer'.Stream'.expose s')
       | (Tparsing.Parsing.Lexer'.Stream'.Cons ((Tparsing.Parsing.Lexer'.UNDERSCORE, r), s')) ->
           parseDec1 (None, Tparsing.Parsing.Lexer'.Stream'.expose s')

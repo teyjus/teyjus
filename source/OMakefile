@@ -211,6 +211,7 @@ LF_ML[] =
     $(LF)/metadata
     $(FNT)/loader
     $(FNT)/lfquery
+    $(FNT)/parseTwelf
     $(LF)/strictness
     $(LF)/optimization
     $(LF)/translator

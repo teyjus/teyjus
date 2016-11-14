@@ -11,5 +11,6 @@ let string_of_sig (Signature(files, types)) =
     (List.fold_left (fun str objref -> str ^ (Lfabsyn.string_of_obj !objref) ^ "\n" ) "" (!objs)) ^ str
   in Symboltable.fold types per_type ""
 
+
 let get_filenames (Signature(files, types)) = (!files)
 let get_typetable (Signature(files, types)) = types

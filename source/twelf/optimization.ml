@@ -28,7 +28,7 @@ let makeApp h args =
 
 module Specialize : Optimization =
 struct
-  let run = ref false
+  let run = ref true
 
   let get () = !run
 
@@ -142,7 +142,7 @@ end
 
 module Swap : Optimization =
 struct
-  let run = ref false
+  let run = ref true
 
   let get () = !run
 
