@@ -241,7 +241,7 @@ let parse_sig filename =
 
 (* parse the implicit LF (Twelf-style) query *)
 let parse_query () =
-  let parseStream = Parser.parseTerminalQ((*"["^"top"^"] ?- "*)"", "") in
+  let parseStream = Parser.parseTerminalQ("["^"top"^"] ?- ", "    ") in
   match Tparsing.Parsing.Lexer'.Stream'.expose parseStream with
       Tparsing.Parsing.Lexer'.Stream'.Cons(query, parseStream') ->
         let (ty, name_op, evars) = ReconQuery.queryToQuery(query, Paths.Loc ("stdIn", Paths.Reg(0,0))) in

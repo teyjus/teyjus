@@ -443,10 +443,10 @@ struct
         lex (fun n ->
                match n with
                    0 -> 
-                     let _ = print_string (prompt0) in
+                     let _ = print_string (prompt0); flush stdout in
 		     inputLine97 (stdin)
 	         | i -> 
-                     let _ = print_string (prompt1) in
+                     let _ = print_string (prompt1); flush stdout in
 		     inputLine97 (stdin))
 
   let toString' token =
