@@ -148,8 +148,7 @@ let rec string_of_term_implicit types objmap tm =
                  List.fold_left (fun s t -> s ^ " " ^ (aux t)) "" (skip k tms)
                in
                "(" ^ h_name ^ " " ^ tmlist ^ ")"
-           | None -> 
-               Errormsg.error Errormsg.none ("No entry in object mapping for application head " ^ h_name);
+           | None -> (* head is not constant *)
                string_of_term tm )
     | IdTerm(id) -> string_of_id id
   in
