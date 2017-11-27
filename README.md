@@ -29,7 +29,7 @@ unification.
 
 ## External Links ##
 
-* [Lambda Prolog Homepage](https://sites.google.com/site/proghol/)
+* [Lambda Prolog Homepage](http://www.lix.polytechnique.fr/~dale/lProlog/)
 * [Programming with Higher-Order Logic](https://sites.google.com/site/proghol/)
 
 ## Acknowledgments ##
