@@ -472,7 +472,7 @@
 			Name="Front"
 			>
 			<File
-				RelativePath="..\front\ccode_stubs.c"
+				RelativePath="..\front\ccode_stubs_c.c"
 				>
 				<FileConfiguration
 					Name="Debug|Win32"

@@ -407,7 +407,7 @@
 			Name="Front"
 			>
 			<File
-				RelativePath="..\front\ccode_stubs.mli"
+				RelativePath="..\front\ccode_stubs.ml"
 				>
 			</File>
 			<File

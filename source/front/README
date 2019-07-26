@@ -60,10 +60,10 @@ query_c.h{c}
   Defines C functions invoked from query.ml for solving queries or display
   answer substitutions.
 
-ccode_stubs.mli
-===============
+ccode_stubs.ml
+==============
   Interface declaration for the invocation of C functions from OCaml code.
 
-ccode_stubs.c
-==============
+ccode_stubs_c.c
+===============
   Interface functions for the invocation of C functions from OCaml code.
