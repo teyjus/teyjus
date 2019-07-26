@@ -248,28 +248,28 @@ let readWord () = readNBytes (getInChannel ()) (getWordSize ())
 let readString () =
   let input = getInChannel () in
   let length = readNBytes input 4 in
-  let myString = String.make length ' ' in
+  let myString = Bytes.make length ' ' in
   let rec readStringAux index =
 	if (index = length) then ()
 	else 
-	  (String.set myString index (input_char input);
+	  (Bytes.set myString index (input_char input);
 	   readStringAux (index + 1))
   in
   readStringAux 0;
-  myString 
+  Bytes.to_string myString 
 
 let readLongString () = 
   let input = getInChannel() in
   let length = readNBytes input 4 in
-  let myString = String.make length ' ' in
+  let myString = Bytes.make length ' ' in
   let rec readStringAux index =
 	if (index = length) then ()
 	else 
-	  (String.set myString index (input_char input);
+	  (Bytes.set myString index (input_char input);
 	   readStringAux (index + 1))
   in
   readStringAux 0;
-  myString 
+  Bytes.to_string myString 
 
 (* skip n bytes   *)
 let skipNBytes numberBytes =
