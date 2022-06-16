@@ -1,0 +1,3 @@
+(executable
+ (name disassembly)
+ (libraries system compiler))

@@ -1,0 +1,38 @@
+(library
+ (name simulator))
+
+(rule
+ (targets
+  abstmachine.o
+  dataformats.o
+  hnorm.o
+  hnormlocal.o
+  hopu.o
+  io-datastructures.o
+  mcstring.o
+  printterm.o
+  siminit.o
+  siminstr.o
+  siminstrlocal.o
+  simulator.o
+  trail.o
+  types.o
+ )
+ (deps (glob_files_rec ../*.h)
+  (:cfiles abstmachine.c
+  dataformats.c
+  hnorm.c
+  hnormlocal.c
+  hopu.c
+  io-datastructures.c
+  mcstring.c
+  printterm.c
+  siminit.c
+  siminstr.c
+  siminstrlocal.c
+  simulator.c
+  trail.c
+  types.c)
+ )
+ (action
+  (run %{ocaml-config:c_compiler} -c %{cfiles})))

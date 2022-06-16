@@ -1,0 +1,12 @@
+(library
+ (name system)
+ (libraries simulator))
+
+(rule
+ (targets error.o memory.o message.o stream.o)
+ (deps
+  (glob_files *.h)
+  ../simulator/mctypes.h
+  (:cfiles error.c memory.c message.c stream.c))
+ (action
+  (run %{ocaml-config:c_compiler} -c %{cfiles})))

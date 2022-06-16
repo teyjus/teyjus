@@ -334,6 +334,7 @@ void cspitCInstructionsH(char * root)
     strcat(filename, "tables/instructions.h");
 
     outFile = UTIL_fopenW(filename);
+    if (!outFile) return;
     fprintf(outFile, "%s\n%s\n%s\n", COMMENTS_BEG_H, COMPDEF_BEG_H, INCLUDE_H);
     fprintf(outFile, "%s\n", opsH);
     fprintf(outFile, "%s\n", instrCatH);
@@ -546,6 +547,7 @@ void cspitCInstructionsC(char * root)
     strcat(filename, "tables/instructions.c");
 
     outFile = UTIL_fopenW(filename);
+    if (!outFile) return;
     fprintf(outFile, "%s\n%s\n", COMMENTS_BEG_C, INCLUDE_C);
     fprintf(outFile, "%s\n", opTypeC);
     fprintf(outFile, "%s\n", instrC);
@@ -637,6 +639,7 @@ void cspitSimDispatch(char * root)
     strcpy(filename, root);
     strcat(filename, "simulator/simdispatch.c");
     outFile = UTIL_fopenW(filename);
+    if (!outFile) return;
     fprintf(outFile, "%s\n", dispatch);
 
     free(dispatch);

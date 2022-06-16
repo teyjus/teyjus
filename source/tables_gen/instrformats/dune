@@ -1,0 +1,46 @@
+(library
+ (name instr))
+
+(rule
+ (targets util.c)
+ (deps ../util/util.c)
+ (action
+  (copy %{deps} ./util.c)))
+
+(rule
+ (targets util.h)
+ (deps ../util/util.h)
+ (action
+  (copy %{deps} ./util.h)))
+
+(rule
+ (targets lex.yy.c)
+ (deps instrformats.l)
+ (action
+  (run %{bin:flex} %{deps})))
+
+(rule
+ (targets y.tab.c y.tab.h)
+ (deps instrformats.y)
+ (action
+  (run %{bin:yacc} -d %{deps})))
+
+(rule
+ (targets instrgen-c.o instrgen-ocaml.o util.o)
+ (deps
+  (:util util.h)
+  (:cfiles
+   (glob_files *.c))
+  (glob_files *.h))
+ (action
+  (run %{ocaml-config:c_compiler} -c %{cfiles} %{util})))
+
+(rule
+ (targets instr_gen)
+ (deps
+  (:files lex.yy.c y.tab.c instrgen-c.o instrgen-ocaml.o util.o)
+  (:input
+   (glob_files instrformats*.in)))
+ ;
+ (action
+  (run %{ocaml-config:c_compiler} -o %{targets} %{deps} -lm)))

@@ -316,6 +316,7 @@ void spitOCPervasiveML(char * root)
     strcpy(filename, root);
     strcat(filename, "compiler/pervasive.ml");
     outFile = UTIL_fopenW(filename);
+    if (!outFile) return;
 
     ocamlGenFixedML();
     fprintf(outFile, "%s\n\n", kindML);          free(kindML);
@@ -338,6 +339,7 @@ void spitOCPervasiveMLI(char * root)
     strcpy(filename, root);
     strcat(filename, "compiler/pervasive.mli");
     outFile = UTIL_fopenW(filename);
+    if (!outFile) return;
     
     ocamlGenFixedMLI();
     fprintf(outFile, "%s\n\n", kindMLI);         free(kindMLI);

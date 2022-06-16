@@ -811,6 +811,7 @@ void ocSpitInstructionMLI(char * root)
     strcat(filename, "compiler/instr.mli");
 
     outFile = UTIL_fopenW(filename);
+    if(!outFile) return;
     fprintf(outFile, typeDefs);          
     fprintf(outFile, opMLI);             free(opMLI);
     fprintf(outFile, instrCatMLI);       free(instrCatMLI);
@@ -830,6 +831,7 @@ void ocSpitInstructionML(char * root)
     strcat(filename, "compiler/instr.ml");
 
     outFile = UTIL_fopenW(filename);
+    if (!outFile) return;
     fprintf(outFile, typeDefs);          free(typeDefs);
     fprintf(outFile, opML);              free(opML);
     fprintf(outFile, instrCatML);        free(instrCatML);

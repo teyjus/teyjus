@@ -1,0 +1,26 @@
+(library
+ (name compiler)
+ (wrapped false)
+ (libraries simulator pervasives))
+
+(rule
+ (targets pervasive.ml pervasive.mli)
+ (deps ../tables_gen/pervasives/perv_gen)
+ (mode fallback)
+ (action
+  (chdir
+   ../tables_gen/pervasives/
+   (run ./perv_gen pervasives.in))))
+
+(rule
+ (targets instr.ml instr.mli)
+ (deps ../tables_gen/instrformats/instr_gen)
+ (mode fallback)
+ (action
+  (chdir
+   ../tables_gen/instrformats/
+   (run ./instr_gen))))
+
+(ocamllex lplex)
+
+(ocamlyacc lpyacc)

@@ -1,0 +1,52 @@
+(library
+ (name front)
+ (modules parseargs query ccode_stubs readterm simerrors module front)
+ (libraries compiler loader)
+ (wrapped false))
+
+(executable
+ (name compilerfront)
+ (modules compilerfront)
+ (libraries compiler front system))
+
+(rule
+ (targets
+  front_c.o
+  linker_c.o
+  ocaml_wrap.o
+  query_c.o
+  readterm_c.o
+)
+ (deps (glob_files_rec ../*.h)
+   (:cfiles
+  front_c.c
+  linker_c.c
+  ocaml_wrap.c
+  query_c.c
+  readterm_c.c
+   ))
+ (action (run %{ocaml-config:c_compiler} -c %{cfiles})))
+
+(executable
+ (name simulatorfront)
+ (modules simulatorfront)
+ (foreign_stubs (language c) (names ccode_stubs_c))
+ (link_deps
+ccode_stubs_c.o
+front_c.o
+query_c.o
+(glob_files ../tables/*.o)
+(glob_files ../system/*.o)
+(glob_files ../simulator/*.o)
+(glob_files ../simulator/builtins/*.o)
+ )
+ (libraries
+  simulator
+  front
+  system
+  tables
+  compiler
+  builtins
+  linker
+  include
+  loader))

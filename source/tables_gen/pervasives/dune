@@ -1,0 +1,66 @@
+(library
+ (name pervasives)
+ (libraries util)
+ (wrapped false))
+
+(rule
+ (targets lex.yy.c)
+ (deps pervasives.l)
+ (action
+  (run %{bin:flex} --nounput %{deps})))
+
+(rule
+ (targets y.tab.c y.tab.h)
+ (deps pervasives.y)
+ (action
+  (run %{bin:yacc} -d %{deps})))
+
+(rule
+ (targets util.c)
+ (deps ../util/util.c)
+ (action
+  (copy %{deps} ./util.c)))
+
+(rule
+ (targets util.h)
+ (deps ../util/util.h)
+ (action
+  (copy %{deps} ./util.h)))
+
+(rule
+ (targets
+  types.o
+  pervgen-c.o
+  op.o
+  pervgen-ocaml.o
+  ocamlcode.o
+  ccode.o
+  util.o)
+ (deps
+  (glob_files *.h)
+  (:cfiles
+   types.c
+   pervgen-c.c
+   op.c
+   pervgen-ocaml.c
+   ocamlcode.c
+   ccode.c
+   util.c))
+ (action
+  (run %{ocaml-config:c_compiler} -c %{cfiles})))
+
+(rule
+ (targets perv_gen)
+ (deps
+  (:gen lex.yy.c y.tab.c)
+  (:ofiles
+   types.o
+   pervgen-c.o
+   op.o
+   util.o
+   pervgen-ocaml.o
+   ocamlcode.o
+   ccode.o)
+  (:input pervasives.in))
+ (action
+  (run %{ocaml-config:c_compiler} -o %{targets} %{gen} %{ofiles})))
