@@ -4,18 +4,3 @@
  (foreign_stubs
   (language c)
   (names readterm builtins compexp evalexp io meta)))
-
-;; (rule
-;;  (targets builtins.o compexp.o evalexp.o io.o meta.o ;; readterm.o
-;;  )
-;;  (deps
-;;   (glob_files *.h)
-;;   (:external
-;;    (glob_files ../*.h)
-;;    ../../front/readterm_c.h
-;;    ../../tables/instructions.h
-;;    (glob_files_rec ../../*.h))
-;;   (:cfiles builtins.c compexp.c evalexp.c io.c meta.c ;; readterm.c
-;;   ))
-;;  (action
-;;   (run %{ocaml-config:c_compiler} -c %{cfiles})))
