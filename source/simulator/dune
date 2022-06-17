@@ -18,7 +18,7 @@
    simulator
    trail
    types))
- (libraries instr))
+ (libraries instr tables))
 
 (rule
  (targets simdispatch.c)

@@ -1,6 +1,6 @@
 (library
  (name tables)
- (libraries pervasives compiler)
+ (libraries pervasives)
  (foreign_stubs
   (language c)
   (names pervinit pervasives instructions)))
