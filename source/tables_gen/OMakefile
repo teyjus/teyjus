@@ -1,3 +1,0 @@
-.SUBDIRS: instrformats pervasives util
-   if $(file-exists OMakefile)
-      include OMakefile
