@@ -39,8 +39,6 @@
  (targets instr_gen)
  (deps
   (:files lex.yy.c y.tab.c instrgen-c.o instrgen-ocaml.o util.o)
-  (:input
-   (glob_files instrformats*.in)))
- ;
+  (:input instrformats_32.in instrformats_64.in))
  (action
-  (run %{ocaml-config:c_compiler} -o %{targets} %{deps} -lm)))
+  (run %{ocaml-config:c_compiler} -o %{targets} %{files} -lm)))

@@ -1,38 +1,19 @@
 (library
  (name loader)
  (wrapped false)
- (libraries compiler))
-
-(rule
- (targets
-  bvrtab.o
-  code.o
-  const.o
-  file.o
-  hashtab.o
-  implgoal.o
-  importtab.o
-  kind.o
-  loader.o
-  main.o
-  searchtab.o
-  strings.o
-  tyskel.o)
- (deps
-  (glob_files_rec ../*.h)
-  (:cfiles
-   bvrtab.c
-   code.c
-   const.c
-   file.c
-   hashtab.c
-   implgoal.c
-   importtab.c
-   kind.c
-   loader.c
-   main.c
-   searchtab.c
-   strings.c
-   tyskel.c))
- (action
-  (run %{ocaml-config:c_compiler} -c %{cfiles})))
+ (libraries compiler)
+ (foreign_stubs
+  (language c)
+  (names
+   bvrtab
+   code
+   const
+   file
+   hashtab
+   implgoal
+   importtab
+   kind
+   loader
+   searchtab
+   strings
+   tyskel)))

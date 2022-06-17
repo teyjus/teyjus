@@ -2,15 +2,9 @@
  (name include))
 
 (rule
- (targets
-  byteswap.o
-  obstack.o
-  search.o
-)
- (deps (glob_files_rec ../*.h)
-  (:cfiles byteswap.c
-  obstack.c
-  search.c)
- )
+ (targets byteswap.o obstack.o search.o)
+ (deps
+  (glob_files_rec ../*.h)
+  (:cfiles byteswap.c obstack.c search.c))
  (action
   (run %{ocaml-config:c_compiler} -c %{cfiles})))

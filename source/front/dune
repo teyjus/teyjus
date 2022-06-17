@@ -1,7 +1,14 @@
 (library
  (name front)
  (modules parseargs query ccode_stubs readterm simerrors module front)
- (libraries compiler loader)
+ (foreign_stubs
+  (language c)
+  (names
+   ccode_stubs_c
+   front_c
+   query_c
+   ))
+ (libraries compiler loader simulator builtins system linker include)
  (wrapped false))
 
 (executable
@@ -10,43 +17,44 @@
  (libraries compiler front system))
 
 (rule
- (targets
-  front_c.o
-  linker_c.o
-  ocaml_wrap.o
-  query_c.o
-  readterm_c.o
-)
- (deps (glob_files_rec ../*.h)
-   (:cfiles
-  front_c.c
-  linker_c.c
-  ocaml_wrap.c
-  query_c.c
-  readterm_c.c
-   ))
- (action (run %{ocaml-config:c_compiler} -c %{cfiles})))
+ (copy ocaml_wrap.h ocaml_wrap_cpy.h))
+
+(rule
+ (copy ocaml_wrap.c ocaml_wrap_cpy.c))
+
+(rule
+ (copy readterm_c.h readterm_c_cpy.h))
+
+(rule
+ (copy readterm_c.c readterm_c_cpy.c))
+
+(executable
+ (name linkerfront)
+ (modules linkerfront)
+ (foreign_stubs
+  (language c)
+  (names readterm_c ocaml_wrap))
+ (libraries front))
 
 (executable
  (name simulatorfront)
  (modules simulatorfront)
- (foreign_stubs (language c) (names ccode_stubs_c))
- (link_deps
-ccode_stubs_c.o
-front_c.o
-query_c.o
-(glob_files ../tables/*.o)
-(glob_files ../system/*.o)
-(glob_files ../simulator/*.o)
-(glob_files ../simulator/builtins/*.o)
- )
- (libraries
-  simulator
-  front
-  system
-  tables
-  compiler
-  builtins
-  linker
-  include
-  loader))
+ (foreign_stubs
+  (language c)
+  (names readterm_c_cpy ocaml_wrap_cpy)
+  )
+ (libraries front))
+
+(executable
+ (name disassemblerfront)
+ (modules disassemblerfront)
+ (libraries front disassembly))
+
+(install
+ (section bin)
+ (package teyjus)
+ (files
+  (simulatorfront.exe as tjsim)
+  (linkerfront.exe as tjlink)
+  (compilerfront.exe as tjcc)
+  (disassemblerfront.exe as tjdis)))
