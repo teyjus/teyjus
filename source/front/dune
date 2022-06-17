@@ -3,11 +3,7 @@
  (modules parseargs query ccode_stubs readterm simerrors module front)
  (foreign_stubs
   (language c)
-  (names
-   ccode_stubs_c
-   front_c
-   query_c
-   ))
+  (names ccode_stubs_c front_c query_c))
  (libraries compiler loader simulator builtins system linker include)
  (wrapped false))
 
@@ -41,14 +37,23 @@
  (modules simulatorfront)
  (foreign_stubs
   (language c)
-  (names readterm_c_cpy ocaml_wrap_cpy)
-  )
+  (names readterm_c_cpy ocaml_wrap_cpy))
  (libraries front))
 
 (executable
  (name disassemblerfront)
  (modules disassemblerfront)
  (libraries front disassembly))
+
+(executable
+ (name dependfront)
+ (modules dependfront)
+ (libraries front))
+
+(executable
+ (name parsefront)
+ (modules parsefront)
+ (libraries front))
 
 (install
  (section bin)
@@ -57,4 +62,6 @@
   (simulatorfront.exe as tjsim)
   (linkerfront.exe as tjlink)
   (compilerfront.exe as tjcc)
-  (disassemblerfront.exe as tjdis)))
+  (disassemblerfront.exe as tjdis)
+  (dependfront.exe as tjdepend)
+  (parsefront.exe as tjparse)))

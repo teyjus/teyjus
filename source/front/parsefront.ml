@@ -93,7 +93,7 @@ let writeModule m clauses newclauses oc =
       | AnonymousImplicitVar(_) -> true
       | BoundVar(sym,_,_,_) ->
           let name = Symbol.name sym in
-          name.[0] = '_' || name = (String.capitalize name)
+          name.[0] = '_' || name = (StringLabels.capitalize_ascii name)
     in
       
     let rec getActualClause t =
