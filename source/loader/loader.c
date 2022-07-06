@@ -50,6 +50,7 @@ char* LD_LOADER_makePath(char* modname)
 
 #define LINKCODE_EXT ".lp"
 #define BYTECODE_EXT ".lpo"
+#define QUERY_EXT ".tmp"
 
 void LD_LOADER_LoadLinkcodeVer();
 

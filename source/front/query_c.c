@@ -56,8 +56,13 @@ void QUERY_setTypeAndTermLocation()
 
 
 /* solve query */
+/* TODO: Maybe take AM_preg as argument? */
 int QUERY_solveQuery()
 {
+  /* Query compilation TODO:
+   * - set the program register (AM_preg) to point to the compiled query clause
+   * - What is AM_solveCode??
+   */
     EM_TRY {
         if (QUERY_reQuery) {// cause backtracking by setting simulator to fail
             AM_preg = AM_failCode;

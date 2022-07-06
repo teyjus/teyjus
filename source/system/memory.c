@@ -155,7 +155,7 @@ int MEM_impIthLT(MemPtr lt, int ind)   { return *((int *)(lt + ind));          }
 int MEM_impIthLCT(MemPtr lct, int ind) { return *((int *)(lct + ind));         }
 
 /*****************************************************************************/
-/*    ACCESSING THE BOUND VARIABLE INDEXING TABLE (BRACHING TABLE)           */
+/*    ACCESSING THE BOUND VARIABLE INDEXING TABLE (BRANCHING TABLE)          */
 /*****************************************************************************/
 int       MEM_branchTabIndexVal(MemPtr tab, int index) //the nth index value
 {

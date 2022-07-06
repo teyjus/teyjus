@@ -116,7 +116,13 @@ let solveQueries () =
   
   (* solve one query *)
   let solveQuery query =
-    if Query.buildQueryTerm query (Module.getCurrentModule ()) then 
+    ignore @@ Query.compileQuery query (Module.getCurrentModule ());
+    flush stdout;
+    print_endline "======================================================================";
+    
+    (* TODO: solveQueryBatch/Interact will now need to call the query predicate *)
+    if Query.buildQueryTerm query (Module.getCurrentModule ()) then
+    (* if false then *)
       if !batch then
         solveQueryBatch ()
       else

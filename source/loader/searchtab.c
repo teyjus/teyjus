@@ -114,7 +114,6 @@ WordPtr LD_SEARCHTAB_LoadSeqSTab(MEM_GmtEnt* ent, int* size)
   int numEntries=*size=LD_FILE_GET2();
   int i;
 
-  //SeqSTabEnt* tab=(SeqSTabEnt*)LD_LOADER_ExtendModSpace(ent,sizeof(SeqSTabEnt)*numEntries); -- XQ
   SeqSTabEnt* tab=(SeqSTabEnt*)LD_LOADER_ExtendModSpaceInByte(ent,sizeof(SeqSTabEnt)*numEntries);
   for(i=0;i<numEntries;i++)
   {

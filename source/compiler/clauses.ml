@@ -132,7 +132,7 @@ let makeHiddenConstant tsym =
 * corresponding to a disjunctive goal. Skeletonization here is okay
 * since the type skeleton will not be needed again for such predicates.
 ********************************************************************)
-let rec newHead fvs =
+let rec newHead fvs : Absyn.aconstant * Absyn.aterm =
   let rec argumentsAndTypes fvs =
     match fvs with
       [] -> ([], [])
@@ -167,10 +167,10 @@ let rec newHead fvs =
 
 (********************************************************************
 *newPredicate:
-* Creates a list of new clauses from the given list of goals.  The
+* Creates a list of new clauses from the given list of goals. The
 * goals represent a disjunction.
 ********************************************************************)
-and newPredicate goals fvs newclauses =
+and newPredicate goals fvs newclauses : Absyn.aterm * newclause list =
   let (pred, head) = newHead fvs in
   let clauses = reverseDistributeImplication head goals [] in
   let newclause = NewClause(pred, clauses) in
@@ -181,7 +181,7 @@ and newPredicate goals fvs newclauses =
 * Creates a list of new clauses from two lists of 'and' goals, where
 * each list represents a disjunction.
 ********************************************************************)
-and newPredicateFromAnd goals1 goals2 fvs newclauses =
+and newPredicateFromAnd goals1 goals2 fvs newclauses : Absyn.aterm * newclause list =
   let (pred, head) = newHead fvs in
   let clauses = reverseDistributeImplication head goals2 [] in
   let clauses' = reverseDistributeImplication head goals1 clauses in
@@ -194,7 +194,7 @@ and newPredicateFromAnd goals1 goals2 fvs newclauses =
 * application, with and ("," or "&") at the head, and the
 * original head and the andgoal as arguments.
 ********************************************************************)
-and getGoal head andgoal =
+and getGoal head andgoal : Absyn.aterm =
   if Option.isSome andgoal then
     let andgoal' = Option.get andgoal in
     let head' = Absyn.ApplicationTerm(
@@ -253,7 +253,7 @@ and closeUniversalDefinitions tsym uvdefs =
 * Transforms applications to Boehm form, and checks the legality of
 * constants in the term.
 ********************************************************************)
-and collectFreeVars term fvs bvs =
+and collectFreeVars term fvs bvs : Absyn.aterm * (Absyn.atypesymbol list) =
   match term with
     Absyn.IntTerm(_) -> (term, fvs)
   | Absyn.RealTerm(_) -> (term, fvs)
@@ -268,28 +268,40 @@ and collectFreeVars term fvs bvs =
         (term, tsym::fvs)
       else
         (term, fvs)
-  | Absyn.ConstantTerm(c,_,pos) ->
-      if illegalConstant c pos then
-        (Absyn.errorTerm, [])
-      else
-        (term, fvs)
+  (* | Absyn.ConstantTerm(c,_,pos) ->
+   *     if illegalConstant c pos then
+   *       (Absyn.errorTerm, [])
+   *     else
+   *       (term, fvs) *)
+  (* TODO: only do this on a query term *)
+  | Absyn.ConstantTerm(c,_,pos) -> (term, fvs)
   | Absyn.AbstractionTerm(Absyn.NestedAbstraction(tsym, body),pos) ->
-      let (body', fvs') = collectFreeVars body fvs bvs in
-      let term' = Absyn.AbstractionTerm(Absyn.NestedAbstraction(tsym, body'), pos) in
-      (term', fvs')
+     let (body', fvs') = collectFreeVars body fvs bvs in
+     let term' = Absyn.AbstractionTerm(Absyn.NestedAbstraction(tsym, body'), pos) in
+     (term', fvs')
   | Absyn.ApplicationTerm(_) ->
-      let pos = Absyn.getTermPos term in
-      let (head, args) = Absyn.getTermApplicationHeadAndArguments term in
-      let (head', fvs') = collectFreeVars head fvs bvs in
-      let (args', fvs'') = collectArgsFreeVars args fvs' bvs in
-      let term' = Absyn.ApplicationTerm(
-        Absyn.FirstOrderApplication(
-          head',
-          args',
-          List.length args'),
-        pos) in
-      (term', fvs'')
-  | Absyn.ErrorTerm -> (term, fvs)
+     let pos = Absyn.getTermPos term in
+     let (head, args) = Absyn.getTermApplicationHeadAndArguments term in
+     let (head', fvs') = collectFreeVars head fvs bvs in
+     let (args', fvs'') = collectArgsFreeVars args fvs' bvs in
+     let term' = Absyn.ApplicationTerm(
+                     Absyn.FirstOrderApplication(
+                         head',
+                         args',
+                         List.length args'),
+                     pos) in
+     (term', fvs'')
+  | Absyn.ErrorTerm -> (term, fvs)   
+  (* Only executed when deorifying a query (which is a toplevel term).
+   * This is necessary because nested abstractions
+   * are removed when processing a query, and
+   * bound variables are DeBruijndenized. *)
+  (* | Absyn.AbstractionTerm(Absyn.UNestedAbstraction(tsyms,nabs,body),pos) ->
+   *    let (body',fvs') = collectFreeVars body fvs bvs in
+   *    let term' = Absyn.AbstractionTerm(Absyn.UNestedAbstraction(tsyms,nabs,body'),pos) in
+   *    (term',fvs')
+   * | Absyn.BoundVarTerm(Absyn.DBIndex k, pos) ->
+   *    (term,fvs) *)
   | _ -> Errormsg.impossible Errormsg.none "Clauses.collectFreeVars: Invalid term type."
 
 (**********************************************************************
@@ -330,7 +342,7 @@ and distributeAndGoal goals othergoals andgoal =
 
 (**********************************************************************
 *distributeQuantifierTerms:
-* Distributing a quantifier given by qterm over a variable given by tysy
+* Distributing a quantifier given by qterm over a variable given by tsym
 * over a list of goals and then forming a conjunction with andgoal.
 **********************************************************************)
 and distributeQuantifierTerms qterm tsym goals andgoal =
@@ -908,10 +920,18 @@ and deOrifyClauses clauses currentclauses uvs newclauses hcs =
 * abstraction structure at the top; resulting body and bound variable
 * are returned.
 **********************************************************************)
-and etaFluffQuantifier term arg = 
+and etaFluffQuantifier term arg : Absyn.aterm * Absyn.atypesymbol = 
   match arg with
-    Absyn.AbstractionTerm(_) ->
-      (Absyn.getTermAbstractionBody arg, Absyn.getTermAbstractionVar arg)
+    Absyn.AbstractionTerm(Absyn.NestedAbstraction(_,_),_) ->
+     (Absyn.getTermAbstractionBody arg, Absyn.getTermAbstractionVar arg)
+  (* We add this case for processing queries, which are toplevel terms,
+   * and therefore may have UNestedAsbractions. However, we should not have
+   * more than one abstraction in a quantifier term. *)
+  | Absyn.AbstractionTerm(Absyn.UNestedAbstraction(_,nabs,_),_) ->
+     if nabs = 1 then
+       (Absyn.getTermAbstractionBody arg, List.hd @@ Absyn.getTermAbstractionVars arg)
+     else
+       Errormsg.impossible Errormsg.none "Clauses.etaFluffQuantifier: Expected predicate in quantifier."
   | _ ->
       let tenv = Absyn.getTermMoleculeEnv term in
       let sym = Symbol.generate () in
@@ -1133,7 +1153,7 @@ let linearizeClause clause =
       pos)
   in
   
-  let getHeadAndBody clause =
+  let getHeadAndBody clause : Absyn.aterm * (Absyn.aterm option) =
     match clause with
         Absyn.ApplicationTerm(
           Absyn.FirstOrderApplication(
@@ -1238,3 +1258,65 @@ let linearizeClause clause =
         Some body' ->
           imp head' body' pos
       | None -> head'
+
+
+
+
+let getHeadAndBody clause : Absyn.aterm * (Absyn.aterm option) =
+  match clause with
+    Absyn.ApplicationTerm(
+        Absyn.FirstOrderApplication(
+            Absyn.ConstantTerm(impc, _, _),
+            [body; head],
+            _),
+        _) when impc == Pervasive.implConstant ->
+     (head, Some body)
+  | Absyn.ApplicationTerm(Absyn.FirstOrderApplication(
+                              Absyn.ConstantTerm(impc, _, _),
+                              [head; body], _), _) when impc == Pervasive.colondashConstant ->
+     (head, Some body)
+  | Absyn.ApplicationTerm(_) -> (clause, None)
+  | Absyn.ConstantTerm(_) -> (clause, None)
+  | _ -> Errormsg.impossible (Absyn.getTermPos clause) ("Clauses.linearizeClause: invalid clause " ^ (Absyn.string_of_term_ast clause))
+       
+
+(* Construct a new clause for a query
+ * p X0 ... Xn :- {query X0 ... Xn}. *)
+let makeQueryClause query : Absyn.aconstant * Absyn.aterm =
+  let query, fvs = collectFreeVars query [] [] in
+  let (pred, head) = newHead fvs in
+  let appinfo = Absyn.FirstOrderApplication(
+                    Absyn.makeConstantTerm (Pervasive.implConstant) [] 
+                      Errormsg.none, [query;head], 2) in
+  (pred, Absyn.ApplicationTerm(appinfo, Errormsg.none))
+
+
+let translateQuery pred query amod : Absyn.amodule * (Absyn.aterm list) * (Absyn.aterm list) * (closeddefinition list) =
+  let setHiddenConstants amod hcs =
+    let hiddenconstants = (List.map getHiddenConstantConstant hcs) in
+    let skels = (List.map (Absyn.getConstantSkeletonValue) hiddenconstants) in
+    let _ = (Absyn.getModuleHiddenConstantsRef amod) := hiddenconstants in
+    let _ = (Absyn.getModuleHiddenConstantSkeletonsRef amod) := skels in
+    amod
+  in
+  let translateClause query amod =
+      let uvdefs = ref []  in
+      let clauses = normalizeClause query [] [] uvdefs false in
+      let DeOrifyClauseResult(clauses', _, _, newclauses, hcs) = 
+        (deOrifyClauses clauses [] [] [] []) in
+      (clauses', newclauses, hcs)   
+  in
+  initClosedDefs ();
+  (* The main clause is at the head of clauses *)
+  let (clauses, newclauses, hcs) = translateClause query amod in
+  let main_clause = List.hd clauses in
+  let clauses = List.tl clauses in
+  (* Enter the hidden constants into the module *)
+  let amod' = setHiddenConstants amod hcs in
+  (* main_clause needs to be processed as a new clause
+   * because it is anonymous (and therefore closed) *)
+  let newclauses' = main_clause :: (List.concat (List.map getNewClauseClause newclauses)) in
+  (amod',
+   List.map Parse.removeNestedAbstractions clauses,
+   List.map Parse.removeNestedAbstractions newclauses',
+   getClosedDefs ())

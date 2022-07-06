@@ -24,4 +24,7 @@
 (* of a module into in the required bytecode form into a specified byteode *)
 (* file.                                                                   *)
 (***************************************************************************)
+
+val writeImpGoalInfo : Codegen.cgimpgoallist -> unit
+val writeInstructions : Instr.instruction  list -> unit
 val writeByteCode : Codegen.cgmodule -> unit

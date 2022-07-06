@@ -260,7 +260,12 @@ let rec translateClause term amodule =
       ()
   in
 
+  let _ = Errormsg.log Errormsg.none 
+            "Parse.translateClause: normalizing term..." in
   let term''' = (normalizeTerm term'') in
+  let _ = Errormsg.log Errormsg.none 
+            ("Parse.translateClause: normalized term:" ^
+               (Absyn.string_of_term_ast term''')) in
   let result =
     if !Errormsg.anyErrors then
       None
@@ -270,6 +275,7 @@ let rec translateClause term amodule =
   (Errormsg.anyErrors := previous || (!Errormsg.anyErrors);
   result)
 
+  
 (**********************************************************************
 *translateTermTopLevel:
 * Given an abstract syntax representation of a module and a preabsyn
@@ -406,6 +412,7 @@ and parseTerm parsingtoplevel inlist term fvs bvs bdgs amodule =
 *   terms: the list of terms in preabstract syntax to parse.
 *   fvs: the set of free variables in the term so far.
 *   bvs: the set of variables with binders in the enclosing context.
+*   bdgs : a table containing the bindings for the annotated types.
 *   amodule: the abstract syntax module against whose definitions this
 *     term list is being parsed.
 *   stack: the current parse stack.
@@ -1338,9 +1345,13 @@ and removeNestedAbstractions term =
           Absyn.AbstractionTerm(abst', p) -> 
             removeAbstraction abst' (tsym :: tsyms)
         | _ -> (List.rev (tsym :: tsyms), remove body))
-    | Absyn.UNestedAbstraction(_) ->
-        (Errormsg.impossible Errormsg.none
-          "Parse.removeNestedAbstractions: unexpected unnested abstraction")
+    (* This instance may occur while processing queries
+     * because queries are toplevel terms *)
+    | Absyn.UNestedAbstraction(tsyms,nabs,body) ->
+       (tsyms,body)
+  (* | Absyn.UNestedAbstraction(_) ->
+   *     (Errormsg.impossible Errormsg.none
+   *       "Parse.removeNestedAbstractions: unexpected unnested abstraction") *)
   in
   remove term									   
 

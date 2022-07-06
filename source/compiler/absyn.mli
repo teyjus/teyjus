@@ -271,6 +271,7 @@ and ahcvarassoc = HCVarAssocs of ((avar * aconstant) list)
 * term variable map, type variable map, logic variables, offset,  
 * [body, gesplist, cut var, hasenv,] 
 * imported modules)
+*Note: term/type variable maps are always empty for top-level clauses
 **********************************************************************)
 and aclause = 
     Fact of (aconstant * aterm list * atype list * int * int * 

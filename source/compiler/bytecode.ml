@@ -385,7 +385,7 @@ let readint2 () = readTwoBytes ()
 let readint4 () = readNBytes (getInChannel ()) 4
 let readint8 () = readNBytes (getInChannel ()) 8
 
-(* read lable *)
+(* read label *)
 let getLabelFn : (int -> unit) option ref = ref None
 let setGetLabelFn func = getLabelFn := Some func
 

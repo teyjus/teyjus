@@ -86,7 +86,7 @@ int FRONT_systemInit(int inSize)
         if (inSize == 0) memSize = FRONT_DEFAULT_SYS_SIZE;
         else{
             /* make sure the heap is in range */
-            if (inSize > 265 * 1024) 
+            if (inSize > 256 * 128 * 1024)
                 EM_error(FRONT_ERROR_HEAP_TOO_BIG, inSize);
             else if (inSize <= 10)
                 EM_error(FRONT_ERROR_HEAP_TOO_SMALL, inSize);

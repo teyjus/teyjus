@@ -27,7 +27,7 @@
 (* 2). Imported and accumulated module lists are mapped into lists and all *)
 (*     information needed for dumping out the renaming functions is stored *)
 (*     in these lists.                                                     *)
-(* 3). Predicate defintions are processed and transformed into instructions*)
+(* 3). Predicate definitions are processed and transformed into instructions*)
 (*     together with the size of code space. (The functions in this module *)
 (*     are in charge of generating switching and indexing code and in this *)
 (*     process, hash tables are formed and stored, ready for dumping.      *)
@@ -158,7 +158,16 @@ type cgmodule =
 	    cgconsts * cgpreds * cgpreds * cgpreds * cgpreds * 
 		cgtypeskeletons * cgstrings * cgrenaming list * cgrenaming list * 
 		cginstructions * cghashtabs * cgimpgoallist 
-		
+
+val getCGModuleName : cgmodule -> string
+val getCGModuleInstructions : cgmodule -> cginstructions
+val getCGModuleImpGoalList : cgmodule -> cgimpgoallist
+val getCGModuleLocalConstants : cgmodule -> cgconsts
+val getCGModuleGlobalConstants : cgmodule -> cgconsts
+val getCGModuleHiddenConstants : cgmodule -> cgconsts
+val getCGModuleStrings : cgmodule -> cgstrings
+
+val empty_cgconsts : cgconsts -> bool
 
 (*****************************************************************************)
 (*                CODE GENERATION FOR A MODULE                               *)

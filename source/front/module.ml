@@ -127,7 +127,9 @@ let getCurrentModule ()     = !currentModule
 (* top module: nothing needs to be loaded *)
 let loadTopModule ()   = ()
 
-(* specified module *) 
+(* specified module *)
+(* Doesn't this defeat the purpose of the GMT?
+ * If a module is already loaded, we shouldn't have to load it again *)
 let loadModule modName = 
   (* asking for a slot from the global module table *)
   let index = getModuleTableIndex modName in
