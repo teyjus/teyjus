@@ -21,10 +21,10 @@
 #include "../simulator/builtins/readterm.h"
 #include "front_c.h"
 #include "query_c.h"
-#include "caml/mlvalues.h"
-#include "caml/memory.h"
-#include "caml/alloc.h"
-#include "caml/custom.h"
+#include <caml/mlvalues.h>
+#include <caml/memory.h>
+#include <caml/alloc.h>
+#include <caml/custom.h>
 
 /***************************************************************************/
 /*                          front                                          */

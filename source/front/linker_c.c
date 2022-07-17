@@ -20,10 +20,10 @@
 
 #include "../linker/module.h"
 #include "../linker/linker_message.h"
-#include "caml/mlvalues.h"
-#include "caml/memory.h"
-#include "caml/alloc.h"
-#include "caml/custom.h"
+#include <caml/mlvalues.h>
+#include <caml/memory.h>
+#include <caml/alloc.h>
+#include <caml/custom.h>
 
 value FRONT_link(value mod_str, value verb)
 {
