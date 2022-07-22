@@ -170,31 +170,12 @@ let get_main_pred_loc () : int =
 let getCGModuleName = function
     Module(cgname,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_) -> cgname
                                                     
+let getNumCGConsts = function
+    ConstantList(_,num) -> num
 
-let getCGModuleGlobalConstants = function
-    Module(_,_,_,cggconsts,_,_,_,_,_,_,_,_,_,_,_,_,_) -> cggconsts
-
-let getCGModuleLocalConstants = function
-    Module(_,_,_,_,cglconsts,_,_,_,_,_,_,_,_,_,_,_,_) -> cglconsts
-
-let getCGModuleHiddenConstants = function
-    Module(_,_,_,_,_,cghconsts,_,_,_,_,_,_,_,_,_,_,_) -> cghconsts
-
-let getCGModuleStrings = function
-    Module(_,_,_,_,_,_,_,_,_,_,_,cgstrs,_,_,_,_,_) -> cgstrs
-
-let getCGModuleInstructions = function
-    Module(_,_,_,_,_,_,_,_,_,_,_,_,_,_,cginstrs,_,_) -> cginstrs
-
-let getCGModuleHashTables = function
-    Module(_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,cghashtabs,_) -> cghashtabs
-    
-let getCGModuleImpGoalList = function
-    Module(_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,cgimpgoals) -> cgimpgoals
-
-let empty_cgconsts = function
-    ConstantList(_,num) -> num = 0
-
+let getNumCGTypeSkeletons = function
+    TypeSkeletonList(_,num) -> num
+                         
 (*****************************************************************************)
 (*  HASH TABLE LIST:                                                         *)
 (*****************************************************************************)

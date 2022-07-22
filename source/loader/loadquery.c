@@ -132,9 +132,8 @@ void LD_LOADQ_LoadCompiledQuery(MEM_GmtEnt* parent_ent,
   printf("loading code\n");
   LD_CODE_LoadCode(&ent,1);
 
-  // TODO: We need to overwrite code and module space for the next query!
-  // Module space should be reset automatically, but not code space!
-  // Q: Do we need to set AM_hbreg/AM_breg?
+  // TODO: We need to overwrite code space for the next query!
+  // Module space is reset automatically, but not code space!
   AM_hreg = ent.modSpaceEnd;
 
 

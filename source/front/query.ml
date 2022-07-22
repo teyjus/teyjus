@@ -86,16 +86,22 @@ let compileQuery query amod =
   let preTerm = Option.get @@ Compile.compileString query in
   
   (* Translate pre-abstract syntax to abstract syntax *)
-  let (term, tymol, fvars, tyfvars) =
-    Option.get @@ Parse.translateTermTopLevel preTerm amod in
-  let _ = abortOnError () in
+  (* let (term, tymol, fvars, tyfvars) =
+   *   Option.get @@ Parse.translateTermTopLevel preTerm amod in
+   * let _ = abortOnError () in *)
+  let term = Option.get @@ Parse.translateClause preTerm amod in
 
+  
   (** Now compile query *)
 
+  prerr_endline(Format.sprintf "Term: %s" (Absyn.string_of_term_ast term));
+  prerr_endline "Making Query Clause...";
   (* Create a main clause for the query *)
-  let (pred,term)  = Clauses.makeQueryClause term in
+  let (pred,term, fvars)  = Clauses.makeQueryClause term (* fvars *) in
+  (prerr_endline (string_of_int (List.length fvars)));
   
   (* Normalize and deOrify the query *)
+  prerr_endline "Translating query...";
   let (amod, clauses, newclauses, closeddefs) = Clauses.translateQuery pred term amod in
   let _ = abortOnError () in
 
@@ -103,25 +109,30 @@ let compileQuery query amod =
    * It seems they are only needed because the new main predicate
    * has SkeletonNeededness and ConstantNeededness uninitialized...
    *)
-  
+
+  prerr_endline "Reducing Skeletons...";
   (* This is necessary otherwise we get a SkeletonNeedednesss 
    * undefined error in Codegen *)
   let amod = Typereduction.reduceSkeletons amod in
   let _ = abortOnError () in
-  
+
+  prerr_endline "Reducing Predicates...";
   (* For some reason reducing predicates makes things work because
    * it calls makeConstantNeededness on all entries in the constant table *) 
   let amod = Typereduction.reducePredicates amod in
   let _ = abortOnError () in
-  
+
+  prerr_endline "Processing Clauses...";
   (* Translate Absyn.aterm clauses to Absyn.aclause *)
   let amod = Processclauses.processClauses amod clauses newclauses closeddefs in
   let _ = abortOnError () in
 
+  prerr_endline "Analyzing Variables...";
   (* Analyze variables (register allocation magic) *)
   let () = Annvariables.processClauses amod in
   let _ = abortOnError () in
 
+  prerr_endline "Generating Code...";
   Codegen.set_main_pred (Absyn.getConstantName pred);
   let cg = Codegen.generateModuleCode amod in
   let startLoc = Codegen.get_main_pred_loc () in  
@@ -148,9 +159,9 @@ let compileQuery query amod =
 
   (* Number of term/type nodes is the number of free variables *)
   let _ = (Ccode_stubs.initLocalTabs
-             (List.length fvars) (List.length tyfvars)
-             (List.length fvars) (List.length tyfvars)) in
-  let _ = Readterm.initVariables fvars tyfvars in
+             (List.length fvars) 0
+             (List.length fvars) 0) in
+  let _ = Readterm.initVariables fvars [] in
 
   (name,startLoc)
   

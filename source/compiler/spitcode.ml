@@ -378,12 +378,15 @@ let writeQueryByteCode cgModule =
     prerr_endline ("Writing Code size: "^(string_of_int codeSize));
     writeCodeSize codeSize;
     (* [type skeletons] *)
-    (* TODO *)
-    (* writeTypeSkels tySkels;
-     * (\* [global constants] *\)
-     * (\* [local constants] *\)
-     *   (\* [hidden constants] *\)
-     * writeConstInfo gconsts lconsts hconsts; *)
+    let numtyskels = Codegen.getNumCGTypeSkeletons tySkels in
+    prerr_endline(Printf.sprintf "Num Type Skels: %d" numtyskels);
+    (* writeTypeSkels tySkels; *)
+    (* [global constants] *)
+    (* [local constants] *)
+    (* [hidden constants] *)
+    assert(Codegen.getNumCGConsts gconsts = 0
+           && Codegen.getNumCGConsts lconsts = 0);
+    (* writeConstInfo gconsts lconsts hconsts; *)
     (* [strings] *)
     writeStrings strs;
     (* [implication goal tables] *)

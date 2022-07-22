@@ -327,7 +327,7 @@ and transTermBoundVar var bvs =
         Absyn.BoundVarTerm(Absyn.DBIndex(dbInd), Errormsg.none)
       else 
         Absyn.FreeVarTerm(Absyn.FreeVar(transTermVar tysy, ref None), 
-              Errormsg.none)
+                          Errormsg.none)
   | _ -> Errormsg.impossible Errormsg.none "transTermBoundVar: invalid var rep"
     
 
@@ -559,7 +559,9 @@ and processAtomicGoal gltm head args arity =
                        arity + (Absyn.getConstantTypeEnvSize false pred),
                        arity,
                        List.map (transTerm []) args, List.map transType tyenv)
-  | _ -> Errormsg.impossible Errormsg.none "processAtomicGoal: invalid pred"
+  | _ -> prerr_endline(Format.sprintf "Head: %s"
+                         (Absyn.string_of_term_ast head));
+         Errormsg.impossible Errormsg.none "processAtomicGoal: invalid pred"
   
 
 (***************************************************************************)

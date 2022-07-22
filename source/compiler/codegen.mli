@@ -160,17 +160,16 @@ type cgmodule =
 		cginstructions * cghashtabs * cgimpgoallist 
 
 val getCGModuleName : cgmodule -> string
-val getCGModuleInstructions : cgmodule -> cginstructions
-val getCGModuleLocalConstants : cgmodule -> cgconsts
-val getCGModuleGlobalConstants : cgmodule -> cgconsts
-val getCGModuleHiddenConstants : cgmodule -> cgconsts
-val getCGModuleStrings : cgmodule -> cgstrings
-val getCGModuleImpGoalList : cgmodule -> cgimpgoallist
-val getCGModuleHashTables : cgmodule -> cghashtabs
+(* val getCGModuleInstructions : cgmodule -> cginstructions
+ * val getCGModuleLocalConstants : cgmodule -> cgconsts
+ * val getCGModuleGlobalConstants : cgmodule -> cgconsts
+ * val getCGModuleHiddenConstants : cgmodule -> cgconsts
+ * val getCGModuleStrings : cgmodule -> cgstrings
+ * val getCGModuleImpGoalList : cgmodule -> cgimpgoallist
+ * val getCGModuleHashTables : cgmodule -> cghashtabs *)
 
-val empty_cgconsts : cgconsts -> bool
-
-
+val getNumCGConsts : cgconsts -> int
+val getNumCGTypeSkeletons : cgtypeskeletons -> int
   
 val set_main_pred : string -> unit
 val get_main_pred_loc : unit -> int

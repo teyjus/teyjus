@@ -268,15 +268,17 @@ and collectFreeVars term fvs bvs : Absyn.aterm * (Absyn.atypesymbol list) =
         (term, tsym::fvs)
       else
         (term, fvs)
+  (* Query terms may have implications! *)
   (* | Absyn.ConstantTerm(c,_,pos) ->
    *     if illegalConstant c pos then
    *       (Absyn.errorTerm, [])
    *     else
    *       (term, fvs) *)
-  (* TODO: only do this on a query term *)
   | Absyn.ConstantTerm(c,_,pos) -> (term, fvs)
   | Absyn.AbstractionTerm(Absyn.NestedAbstraction(tsym, body),pos) ->
-     let (body', fvs') = collectFreeVars body fvs bvs in
+     (* !!! This seems like a typo, tsym should be added to bound variables???
+      * --> This is what Parse.fixTerm does...  *)
+     let (body', fvs') = collectFreeVars body fvs (tsym::bvs) in
      let term' = Absyn.AbstractionTerm(Absyn.NestedAbstraction(tsym, body'), pos) in
      (term', fvs')
   | Absyn.ApplicationTerm(_) ->
@@ -462,8 +464,7 @@ and distributeImplication goal cls result =
 * wholegoal is true and a disjunction free form otherwise.
 **********************************************************************)
 and deOrifyGoal goal uvs uvdefs andgoal wholegoal newclauses hcs =
-  let (t, args) = Absyn.getTermApplicationHeadAndArguments goal in
-  
+  let (t, args) = Absyn.getTermApplicationHeadAndArguments goal in  
   match t with
     Absyn.ConstantTerm(c,_,pos) ->
       if c = Pervasive.allConstant then
@@ -517,10 +518,8 @@ and deOrifyUniversalGoal t arg1 uvs uvdefs andgoal wholegoal newclauses hcs =
   let uvs' = tsym :: uvs in
   let DeOrifyGoalResult(goals', fvs', uvdefs', hascut', newclauses', hcs') = 
     deOrifyGoal body uvs' uvdefs None wholegoal newclauses hcs in
-
   let hcs'' = hc :: hcs' in
   let uvdefs'' = closeUniversalDefinitions tsym uvdefs' in 
-
   if List.memq tsym fvs' then
     let fvs'' = (List.filter ((<>) tsym) fvs') in
     let goals'' = distributeQuantifierTerms t tsym goals' andgoal in 
@@ -563,7 +562,6 @@ and deOrifyImplicationGoal
       [] -> true
     | _::_ -> false
   in
-  
   (********************************************************************
   *normalizeGoal:
   *	Given the antecedent and the consequent of an implication goal,
@@ -661,19 +659,14 @@ and deOrifyImplicationGoal
   
   let (clause, goal) = normalizeGoal clause goal in
   let defuvs = ref [] in
-
   let clauses = (normalizeClause clause [] uvs defuvs true) in
   let defuvs = !defuvs in
-
   let DeOrifyClauseResult(clauses', fvs', uvdefs', newclauses', hcs') = 
     deOrifyClauses clauses [] uvs newclauses hcs in
-
   let defuvs = addUVDefs defuvs uvdefs' in 
-  
   let DeOrifyGoalResult(goals', fvs, uvdefs', hascut, newclauses'', hcs'') = 
     deOrifyGoal goal uvs [] None false newclauses' hcs' in
   let defuvs = addUVDefs defuvs uvdefs' in
-  
   if (not (empty clauses')) && (not (empty goals')) then
     let cl = andifyList clauses' in
     let goal = List.hd goals' in
@@ -706,7 +699,7 @@ and deOrifyAtomicGoal head args andgoal uvs uvdefs newclauses hcs =
         DeOrifyGoalResult([getGoal head andgoal], fvs, uvdefs, 
                           hascut, newclauses, hcs)
     | _ ->
-        let (args', fvs') = collectArgsFreeVars args fvs [] in
+       let (args', fvs') = collectArgsFreeVars args fvs [] in
         let head' = Absyn.ApplicationTerm(
           Absyn.FirstOrderApplication(
             head,
@@ -850,7 +843,6 @@ and deOrifyClause term currentclauses fvs uvs uvdefs newclauses hcs =
     in
     check' args fvs
   in
-  
   match term with
     (*  An application  *)
     Absyn.ApplicationTerm(_, pos) ->
@@ -1282,13 +1274,13 @@ let getHeadAndBody clause : Absyn.aterm * (Absyn.aterm option) =
 
 (* Construct a new clause for a query
  * p X0 ... Xn :- {query X0 ... Xn}. *)
-let makeQueryClause query : Absyn.aconstant * Absyn.aterm =
+let makeQueryClause query (* fvs *) : Absyn.aconstant * Absyn.aterm * (Absyn.atypesymbol list) =
   let query, fvs = collectFreeVars query [] [] in
   let (pred, head) = newHead fvs in
   let appinfo = Absyn.FirstOrderApplication(
                     Absyn.makeConstantTerm (Pervasive.implConstant) [] 
                       Errormsg.none, [query;head], 2) in
-  (pred, Absyn.ApplicationTerm(appinfo, Errormsg.none))
+  (pred, Absyn.ApplicationTerm(appinfo, Errormsg.none), fvs)
 
 
 let translateQuery pred query amod : Absyn.amodule * (Absyn.aterm list) * (Absyn.aterm list) * (closeddefinition list) =
@@ -1300,11 +1292,11 @@ let translateQuery pred query amod : Absyn.amodule * (Absyn.aterm list) * (Absyn
     amod
   in
   let translateClause query amod =
-      let uvdefs = ref []  in
-      let clauses = normalizeClause query [] [] uvdefs false in
-      let DeOrifyClauseResult(clauses', _, _, newclauses, hcs) = 
-        (deOrifyClauses clauses [] [] [] []) in
-      (clauses', newclauses, hcs)   
+    let uvdefs = ref []  in
+    let clauses = normalizeClause query [] [] uvdefs false in
+    let DeOrifyClauseResult(clauses', _, _, newclauses, hcs) = 
+      (deOrifyClauses clauses [] [] [] []) in
+    (clauses', newclauses, hcs)   
   in
   initClosedDefs ();
   (* The main clause is at the head of clauses *)
