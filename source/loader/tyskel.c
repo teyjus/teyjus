@@ -55,7 +55,7 @@ int LD_TYSKEL_LoadTst(MEM_GmtEnt* ent)
      -- XQ
   */
   tst =(MemPtr*)LD_LOADER_ExtendModSpace(ent,
-                                        (tstSize+PERV_TY_SKEL_NUM) *
+                                        (tstSize+PERV_TY_SKEL_NUM/* +100 */) *
                                         MEM_TST_ENTRY_SIZE);
   
   ent->tstBase=(MEM_TstPtr)tst;

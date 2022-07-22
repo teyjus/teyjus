@@ -109,6 +109,8 @@ let buildType tyfvIndex tyExps =
 (*********************************************************************)
 (*                         term creation                             *)
 (*********************************************************************)
+
+
 let buildTerm fvIndex tyfvIndex terms =
   let rec buildTermAux terms types =
 	match terms with
@@ -272,3 +274,15 @@ let readTermAndType tm tymol fvars tyfvars =
   buildTerm fvIndexes tyfvIndexes [tm];
   Ccode_stubs.setQueryFreeVariables ();
   Ccode_stubs.cleanLocalTabs () 
+
+
+let initVariables fvars tyfvars =
+  let fvIndexes = layOutVariables fvars buildFreeVariable in
+  let tyfvIndexes = layOutVariables tyfvars buildFreeTypeVariable in
+  prerr_endline @@
+    (Format.sprintf "Num fvs:  %d\nNum ftvs: %d"
+       (List.length fvIndexes)
+       (List.length tyfvIndexes));
+  (* This sets the number of variables in IO_freeVarTab *)
+  Ccode_stubs.setQueryFreeVariables ();
+  Ccode_stubs.cleanLocalTabs ()

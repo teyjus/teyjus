@@ -43,3 +43,6 @@ val get : 'a option -> 'a
 * option is a Some; otherwise, prints "None".
 **********************************************************************)
 val string_of_option : 'a option -> ('a -> string) -> string
+
+
+val (let*) : 'a option -> ('a -> 'b option) -> 'b option

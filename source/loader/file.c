@@ -37,10 +37,9 @@ void LD_FILE_GetString(char* buffer,int length)
 }
 
 void LD_FILE_Open(char* modname, char* extension)
-{
+{  
   char* buf=(char *)EM_malloc(sizeof(char)*(strlen(modname)+strlen(extension)+1));
   sprintf(buf,"%s%s",modname,extension);
-  
   
   fd=open(buf,O_RDONLY|O_BINARY,0000);
   if(fd==-1)

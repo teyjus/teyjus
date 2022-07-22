@@ -19,7 +19,7 @@
 * along with Teyjus.  If not, see <http://www.gnu.org/licenses/>.
 ****************************************************************************)
 val buildQueryTerm : string -> Absyn.amodule -> bool
-val compileQuery : string -> Absyn.amodule -> bool
+val compileQuery : string -> Absyn.amodule -> string * int
 
 val solveQuery     : unit -> bool
 val showAnswers    : unit -> unit

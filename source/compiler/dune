@@ -1,7 +1,38 @@
 (library
  (name compiler)
  (wrapped false)
- (libraries simulator pervasives))
+ (libraries simulator pervasives)
+ (modules
+   clauses
+   absyn
+   symbol
+   table
+   option
+   preabsyn
+   pervasive
+   types
+   pervasiveutils
+   parse
+   translate
+   compile
+   instr
+   bytecode
+   lpyacc
+   lplex
+   typereduction
+   processclauses
+   annvariables
+   codegen
+   registers
+   clausegen
+   explicit
+   spitcode
+   errormsg)
+
+ ;; for tracing, set environment variable
+ ;; OCAML_LANDMARKS=auto,debug,format=json,output=profile.json
+ (preprocess (pps landmarks-ppx --auto))
+)
 
 (rule
  (targets pervasive.ml pervasive.mli)

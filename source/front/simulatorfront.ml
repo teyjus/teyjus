@@ -116,19 +116,26 @@ let solveQueries () =
   
   (* solve one query *)
   let solveQuery query =
-    ignore @@ Query.compileQuery query (Module.getCurrentModule ());
-    flush stdout;
-    print_endline "======================================================================";
+    let modname,startLoc = Query.compileQuery query (Module.getCurrentModule ()) in
+    ignore @@ Ccode_stubs.loadQuery modname;
+    Ccode_stubs.setQueryEntryPoint startLoc;
+    if !batch then
+      solveQueryBatch ()
+    else
+      solveQueryInteract ();
+
+    (* flush stdout; *)
+
     
     (* TODO: solveQueryBatch/Interact will now need to call the query predicate *)
-    if Query.buildQueryTerm query (Module.getCurrentModule ()) then
-    (* if false then *)
-      if !batch then
-        solveQueryBatch ()
-      else
-        solveQueryInteract ()
-    else
-      prerr_endline "";
+    (* if Query.buildQueryTerm query (Module.getCurrentModule ()) then
+     * (\* if false then *\)
+     *   if !batch then
+     *     solveQueryBatch ()
+     *   else
+     *     solveQueryInteract ()
+     * else
+     *   prerr_endline ""; *)
     Module.cleanModule (); 
     Front.simulatorReInit false ;
     Module.initModuleContext ()

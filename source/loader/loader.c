@@ -42,7 +42,10 @@ void  LD_LOADER_setPath(char* path)
 
 char* LD_LOADER_makePath(char* modname)
 {
-  char* buf=(char *)EM_malloc(strlen(LD_LOADER_path)+strlen(modname)+1);
+  char* buf=(char*) malloc((strlen(LD_LOADER_path)+strlen(modname)+1)*sizeof(char));
+  /* char* buf=(char *)EM_malloc(strlen(LD_LOADER_path)+strlen(modname)+1); */
+  /* strcpy(buf,LD_LOADER_path); */
+  /* strcat(buf,modname); */
   sprintf(buf,"%s%s",LD_LOADER_path,modname);
   return buf;
 }
@@ -50,7 +53,7 @@ char* LD_LOADER_makePath(char* modname)
 
 #define LINKCODE_EXT ".lp"
 #define BYTECODE_EXT ".lpo"
-#define QUERY_EXT ".tmp"
+
 
 void LD_LOADER_LoadLinkcodeVer();
 
@@ -70,6 +73,7 @@ int LD_verbosity = 0;
 //Returns -1 on failure.
 int LD_LOADER_Load(char* modname, int index)
 {
+  LD_verbosity = 3;
   MEM_GmtEnt* gmtEnt;
 
   EM_TRY{
@@ -87,11 +91,11 @@ int LD_LOADER_Load(char* modname, int index)
     LD_TYSKEL_LoadTst(gmtEnt);
     LD_CONST_LoadCst(gmtEnt);
     LD_STRING_LoadStrings(gmtEnt);
-    LD_IMPLGOAL_LoadImplGoals(gmtEnt);
-    LD_HASHTAB_LoadHashTabs(gmtEnt);
+    LD_IMPLGOAL_LoadImplGoals(gmtEnt,0);
+    LD_HASHTAB_LoadHashTabs(gmtEnt,0);
     LD_BVRTAB_LoadBvrTabs(gmtEnt);
     LD_IMPORTTAB_LoadImportTabs(gmtEnt);
-    LD_CODE_LoadCode(gmtEnt);
+    LD_CODE_LoadCode(gmtEnt, 0);
     LD_LOADER_AddGMTEnt(gmtEnt);
   }EM_CATCH{
     ///\todo Clean up after failed load.

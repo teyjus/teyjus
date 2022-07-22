@@ -4,6 +4,8 @@
  (libraries compiler)
  (foreign_stubs
   (language c)
+   ; (flags -std=c99)
+  ; (flags -Wimplicit-function-declaration)
   (names
    bvrtab
    code
@@ -16,4 +18,5 @@
    loader
    searchtab
    strings
-   tyskel)))
+   tyskel
+   loadquery)))

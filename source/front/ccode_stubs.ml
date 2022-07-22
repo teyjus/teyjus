@@ -37,6 +37,8 @@ external solveQuery             : unit -> int  = "c_solveQuery"
 external showAnswers            : unit -> int  = "c_showAnswers"
 external setQueryFreeVariables  : unit -> unit = "c_setQueryFreeVariables"
 external queryHasVars           : unit -> bool = "c_queryHasVars"
+external loadQuery              : string -> unit = "c_loadQuery"
+external setQueryEntryPoint     : int -> unit = "c_setQueryEntryPoint"
 
 (* read term *)
 external initLocalTabs  : int -> int -> int -> int -> int = "c_initLocalTabs"

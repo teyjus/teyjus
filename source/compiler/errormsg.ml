@@ -30,7 +30,7 @@ let anyErrors = ref false
 
 let errorsEnabled = ref true
 let warningsEnabled = ref true
-let loggingEnabled = ref false
+let loggingEnabled = ref true
 
 let warningsAsErrors = ref false
 

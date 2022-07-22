@@ -115,12 +115,12 @@ int FRONT_simulatorInit()
         SINIT_preInit();
         //finalize simulator memory components
         AM_heapBeg  = (MemPtr)MEM_memTop;
-        AM_heapEnd  = AM_stackBeg = 
+        AM_heapEnd  = AM_stackBeg = /* Should this be (MEM_memEnd - MEM_memBot)? */
             ((MemPtr)MEM_memBeg) + (FRONT_heapSize -(MEM_memBot - MEM_memEnd));
         AM_stackEnd = AM_trailBeg = AM_stackBeg + FRONT_stackSize;
         AM_trailEnd = AM_pdlBeg   = AM_trailBeg + FRONT_trailSize;
         AM_pdlEnd   = AM_pdlBeg + (FRONT_pdlSize - 1);
-        
+
         //initialize simulator heap and registers
         SINIT_simInit();
         //initialize built-in error messages
@@ -164,7 +164,7 @@ int FRONT_link(char* modName)
 
 int FRONT_load(char* modName, int index)
 {
-    LD_verbosity = 0;
+    LD_verbosity = 3;
     EM_TRY{
         LD_LOADER_Load(modName, index);
     }EM_CATCH{

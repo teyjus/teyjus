@@ -100,3 +100,15 @@ TwoBytes LD_KIND_GetKindInd()
       EM_THROW(LD_LoadError);
   }
 }
+TwoBytes LD_KIND_GetKindIndQuery(int query)
+{
+  TwoBytes ind;
+  if(query){
+	LD_FILE_GET1();
+	ind=LD_FILE_GET2();
+  }else{
+	ind=LD_KIND_GetKindInd();
+  }
+  return ind;
+}
+  

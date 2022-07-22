@@ -49,6 +49,10 @@ let getConstantMark constCat =
   | _ -> Bytecode.hidden (* assumed to be hidden constant *)		
   
 let writeConstIndex const =
+  let cty = (getConstantMark (Absyn.getConstantType const)) in
+  let ci = (Absyn.getConstantIndex const) in
+  prerr_endline(Printf.sprintf "Writing const %d~%d" cty ci);
+
   Bytecode.writeint1 (getConstantMark (Absyn.getConstantType const));
   Bytecode.writeint2 (Absyn.getConstantIndex const)
 
@@ -61,6 +65,9 @@ let writeHeader modName codeSize =
   (* [module name] *)
   Bytecode.writeString modName;
   (* <code size in bytes> *)
+  Bytecode.writeWord codeSize
+
+let writeCodeSize codeSize =
   Bytecode.writeWord codeSize
 
 (****************************************************************************)
@@ -184,6 +191,8 @@ let writeStrings strs =
 let writeImpGoalInfo implGoals =
   let writeDef def =
 	let Codegen.ImpPredInfo(pred, offset) = def in
+    prerr_endline(Printf.sprintf "Def: %s<%d>"
+                    (Absyn.getConstantName pred) offset);
 	writeConstIndex pred;
 	Bytecode.writeWord offset
   in
@@ -192,7 +201,10 @@ let writeImpGoalInfo implGoals =
 	let Codegen.ImpGoalCode(Codegen.PredList(extPreds, numExtPreds), 
 							impPredList, numDefs) =  impGoal
 	in
-	(* [next clause table]*)
+    prerr_endline(Printf.sprintf "NumExtPred: %d\nNumDefs: %d"
+                    numExtPreds numDefs);
+    
+	(* [next clause table] *)
 	Bytecode.writeint2 numExtPreds;
 	map writeConstIndex extPreds; 
 	(* <find code function> *)
@@ -203,7 +215,7 @@ let writeImpGoalInfo implGoals =
   in 
 
   let Codegen.ImpGoalList(impGoalList, numImpGoals) = implGoals in
-  (* <number of implication goals>*)
+  (* <number of implication goals> *)
   Bytecode.writeint2 numImpGoals;
   (* [implication goal info] *)
   map writeImpGoal impGoalList
@@ -356,10 +368,29 @@ let writeByteCode cgModule =
       writeInstructions code
 	   
 	   
-	   
-	   
-
-
-
-
-
+let writeQueryByteCode cgModule =
+  match cgModule with
+    Codegen.Module(modName, gkinds, lkinds, gconsts, lconsts, hconsts, defs, 
+				   nonExpDefs, expDefs, localDefs, tySkels, strs, impRenaming,
+				   accRenaming, instrs, hashTabs, implGoals) ->
+    let Codegen.Instructions(code,codeSize) = instrs in
+    (* [code size] *)
+    prerr_endline ("Writing Code size: "^(string_of_int codeSize));
+    writeCodeSize codeSize;
+    (* [type skeletons] *)
+    (* TODO *)
+    (* writeTypeSkels tySkels;
+     * (\* [global constants] *\)
+     * (\* [local constants] *\)
+     *   (\* [hidden constants] *\)
+     * writeConstInfo gconsts lconsts hconsts; *)
+    (* [strings] *)
+    writeStrings strs;
+    (* [implication goal tables] *)
+    writeImpGoalInfo implGoals;
+    (* [hash tables] *)
+    writeHashTabInfo hashTabs;
+    (* [bound variable tables] *)
+    Bytecode.writeint2 0;
+    (* [instructions] *)
+    writeInstructions code

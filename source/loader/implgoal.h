@@ -22,7 +22,7 @@
 
 #include "../system/memory.h"
 
-void LD_IMPLGOAL_LoadImplGoals(MEM_GmtEnt* ent);
+void LD_IMPLGOAL_LoadImplGoals(MEM_GmtEnt* ent, int query);
 
 WordPtr LD_IMPLGOAL_GetImplGoalAddr();
 

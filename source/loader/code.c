@@ -43,7 +43,7 @@ INSTR_Float LD_getFloat()
   return ldexp(significant, exponent);
 }
 
-int LD_CODE_LoadCode(MEM_GmtEnt* ent)
+int LD_CODE_LoadCode(MEM_GmtEnt* ent, int query)
 {
   int i,j;
   int size = (BytePtr)(ent->codeSpaceEnd) - (BytePtr)(ent->codeSpaceBeg) + 1;
@@ -85,21 +85,26 @@ int LD_CODE_LoadCode(MEM_GmtEnt* ent)
               LD_debug("#%d ",*(Byte*)(code+j));
               j+=sizeof(Byte);
               break;
-              
+
           case INSTR_C:///\todo Check on constant index size in code
-              *(TwoBytes*)(code+j)=LD_CONST_GetConstInd();
-              j+=sizeof(TwoBytes);
-              break;
+			*(TwoBytes*)(code+j)=LD_CONST_GetConstIndQuery(query);
+			j+=sizeof(TwoBytes);
+			break;
               
           case INSTR_K:
-              *(TwoBytes*)(code+j)=LD_KIND_GetKindInd();
-              j+=sizeof(TwoBytes);
-              break;
+			*(TwoBytes*)(code+j)=LD_KIND_GetKindIndQuery(query);
+			j+=sizeof(TwoBytes);
+			break;
               
           case INSTR_MT:///\todo Make sure table indexes are supposed to resolve to real addresses.
-              *(WordPtr*)(code+j)=LD_IMPORTTAB_GetImportTabAddr();
-              j+=sizeof(WordPtr);
-              break;
+			// Queries should not have import table instructions
+			if(query){
+			  LD_error("Unexpected instruction `INSTR_MT` in query.");
+			  EM_THROW(LD_LoadError);
+			}
+			*(WordPtr*)(code+j)=LD_IMPORTTAB_GetImportTabAddr();
+			j+=sizeof(WordPtr);
+			break;
               
           case INSTR_IT:
               *(WordPtr*)(code+j)=LD_IMPLGOAL_GetImplGoalAddr();
@@ -169,10 +174,13 @@ CSpacePtr LD_CODE_GetCodeInd()
 void LD_CODE_LoadCodeSize(MEM_GmtEnt* ent)
 {
     //LD_CODE_codeSpaceBeg = ent->codeSpaceBeg = ent->codeSpaceEnd-(int)codesize;
-    long codesize = (long)LD_FILE_GETWORD(); 
+    long codesize = (long)LD_FILE_GETWORD();
+	printf("Code size: %ld\n",codesize);
     LD_CODE_codeSpaceBeg  = ((CSpacePtr)(ent -> codeSpaceEnd)) - codesize + 1;
     ent->codeSpaceBeg = (WordPtr)LD_CODE_codeSpaceBeg;
 
+	printf("Code: %x\n", ent->codeSpaceBeg);
+	
     if(ent->modSpaceEnd>ent->codeSpaceBeg){
         LD_error("Out of module space.\n");
         EM_THROW(LD_LoadError);

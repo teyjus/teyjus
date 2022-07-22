@@ -44,6 +44,8 @@
 #include "printterm.h"
 #include "../system/stream.h"
 
+#include "io-datastructures.h"
+
 static AM_DataTypePtr regX, regA;
 static AM_DataTypePtr envY, clenvY;
 static DF_TermPtr     tmPtr, func;
@@ -181,6 +183,7 @@ void SINSTR_put_nil()                     //put_nil Ai -- R_X
 void SINSTR_put_integer()                 //put_integer Ai,i -- R_I_X
 {
     INSACC_RIX(regA, intValue);
+	printf("Put integer %x, %d\n", regA, intValue);
     DF_mkInt((MemPtr)regA, intValue);
 }
 
@@ -464,6 +467,8 @@ void SINSTR_get_integer()               //get_integer Xi,i -- R_I_X
 {
     INSACC_RIX(regX, intValue);
     tmPtr = DF_termDeref((DF_TermPtr)regX);
+	printf("get_integer: %x, %d\n", tmPtr, intValue);
+
     SINSTRL_unifyInt(tmPtr, intValue);
 }
 
@@ -1511,6 +1516,7 @@ void SINSTR_call()                      //call n,L -- I1_L_X
 void SINSTR_call_name()                 //call_name n,c -- I1_C_WP_X
 {
     INSACC_I1CWPX_C(constInd);
+	printf("call_name %d -> %s\n",constInd,AM_cstName(constInd));
     AM_findCode(constInd, &cl, &ip);
     if (cl) {
         AM_cpreg = (AM_preg + INSTR_I1CWPX_LEN); // next instr

@@ -26,6 +26,9 @@
 /* the type of query and the query; increase the heap top correspondingly  */
 void QUERY_setTypeAndTermLocation();
 
+/* load query */
+void QUERY_loadQuery(char* modName);
+
 /* solve query */
 int QUERY_solveQuery();
 
@@ -34,3 +37,4 @@ int QUERY_showAnswers();
 void QUERY_setQueryFreeVariables();
 Boolean QUERY_queryHasVars();
 
+void QUERY_setQueryEntryPoint(int loc);

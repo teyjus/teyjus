@@ -110,6 +110,7 @@ let rec loadGlobalConsts constSymTab index numConsts tySkelTab =
 	let const = Bytecode.readGlobalConstant loadConstTypeSkel index in
 	Table.add (Absyn.getConstantSymbol const) const constSymTab
   in
+  prerr_endline (Format.sprintf "Loading GConsts: %d" numConsts);
   if (numConsts = 0) then constSymTab 
   else 
 	loadGlobalConsts (loadConst constSymTab index) (index + 1) (numConsts - 1)

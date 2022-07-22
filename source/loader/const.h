@@ -25,5 +25,6 @@ extern int LD_CONST_LoadCst(MEM_GmtEnt* ent);
 
 //!Read an index in multi-table form and return it in single table form.  Relies on global const counter.
 extern TwoBytes LD_CONST_GetConstInd();
+extern TwoBytes LD_CONST_GetConstIndQuery(int query);
 
 #endif //_KIND_H_

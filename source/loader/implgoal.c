@@ -26,12 +26,14 @@
 #include "searchtab.h"
 #include "ld_message.h"
 
+#include "../simulator/abstmachine.h"
+
 TwoBytes LD_IMPLGOAL_numImplGoals;
 WordPtr* LD_IMPLGOAL_ImplGoals;
 
-WordPtr LD_IMPLGOAL_LoadImplGoal(MEM_GmtEnt* ent);
+WordPtr LD_IMPLGOAL_LoadImplGoal(MEM_GmtEnt* ent, int query);
 
-void LD_IMPLGOAL_LoadImplGoals(MEM_GmtEnt* ent)
+void LD_IMPLGOAL_LoadImplGoals(MEM_GmtEnt* ent, int query)
 {
   int i;
   TwoBytes count=LD_IMPLGOAL_numImplGoals=LD_FILE_GET2();
@@ -40,13 +42,13 @@ void LD_IMPLGOAL_LoadImplGoals(MEM_GmtEnt* ent)
   
   for(i=0;i<count;i++)
   {
-    LD_IMPLGOAL_ImplGoals[i]=LD_IMPLGOAL_LoadImplGoal(ent);
+    LD_IMPLGOAL_ImplGoals[i]=LD_IMPLGOAL_LoadImplGoal(ent, query);
   }
   
   return;
 }
 
-WordPtr LD_IMPLGOAL_LoadImplGoal(MEM_GmtEnt* ent)
+WordPtr LD_IMPLGOAL_LoadImplGoal(MEM_GmtEnt* ent, int query)
 {
   int i;
   Byte fcf;
@@ -62,8 +64,15 @@ WordPtr LD_IMPLGOAL_LoadImplGoal(MEM_GmtEnt* ent)
   MEM_implPutLTS(tab,nctSize);
   for(i=0;i<nctSize;i++)
   {
-    cst=(int)LD_CONST_GetConstInd();
-    MEM_implPutLT(tab,i,cst);
+	// If we are loading a query, constant indices should be absolute
+	if(query){
+	  LD_FILE_GET1();
+	  cst=(int)LD_FILE_GET2();
+	  MEM_implPutLT(tab,i,cst);
+	}else{
+	  cst=(int)LD_CONST_GetConstInd();
+	  MEM_implPutLT(tab,i,cst);
+	}
   }
   
   //Load FindCodeFunc
@@ -74,14 +83,14 @@ WordPtr LD_IMPLGOAL_LoadImplGoal(MEM_GmtEnt* ent)
   if(fcf==FCF_SEQNSEARCH)
   {
     MEM_implPutFC(tab,(MEM_FindCodeFnPtr)&LD_SEARCHTAB_SeqnSrch);
-    LD_SEARCHTAB_LoadSeqSTab(ent,&tabSize);
+    LD_SEARCHTAB_LoadSeqSTab(ent,&tabSize,1);
     MEM_implPutPSTS(tab,tabSize);
     ///\todo do something with returned address.
   }
   else if(fcf==FCF_HASHSEARCH)
   {
     MEM_implPutFC(tab,(MEM_FindCodeFnPtr)&LD_SEARCHTAB_HashSrch);
-    LD_SEARCHTAB_LoadHashTab(ent,&tabSize);
+    LD_SEARCHTAB_LoadHashTab(ent,&tabSize,1);
     MEM_implPutPSTS(tab,tabSize);
     ///\todo do something with returned address.
   }

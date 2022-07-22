@@ -130,6 +130,19 @@ Boolean c_queryHasVars(value v)
     else CAMLreturn(Val_int(0));
 }
 
+void c_loadQuery(value modName)
+{
+  CAMLparam1 (modName);
+  QUERY_loadQuery(String_val(modName));
+  CAMLreturn0;
+}
+
+void c_setQueryEntryPoint(value loc)
+{
+  CAMLparam1 (loc);
+  QUERY_setQueryEntryPoint(Int_val(loc));
+  CAMLreturn0;
+}
 
 /***************************************************************************/
 /*                               read term                                 */

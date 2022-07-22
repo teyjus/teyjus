@@ -30,6 +30,9 @@
 #include "../simulator/builtins/readterm.h"
 #include "../simulator/printterm.h"
 
+#include "../tables/instructions.h"
+#include "../simulator/io-datastructures.h"
+
 #include <stdio.h>
 
 /***************************************************************************/
@@ -53,46 +56,91 @@ void QUERY_setTypeAndTermLocation()
 
     QUERY_reQuery = FALSE;
 }
+void QUERY_setQueryEntryPoint(int startLoc)
+{
+  // A query is always compiled as
+  // 0x0:fail
+  // 0x8:try_me_else #0, 0x0
+  // 0x18:...
+  // But we don't need a try_me_else since there is only one clause for main
 
+  // This is the instruction right after try_me_else
+  /* AM_preg += 0x18; */
 
-/* solve query */
-/* TODO: Maybe take AM_preg as argument? */
+  // A more robust solution would be startLoc + (INSTR_I1LX_LEN)
+  AM_preg += (startLoc + INSTR_I1LX_LEN);
+
+}
 int QUERY_solveQuery()
 {
-  /* Query compilation TODO:
-   * - set the program register (AM_preg) to point to the compiled query clause
-   * - What is AM_solveCode??
-   */
-    EM_TRY {
-        if (QUERY_reQuery) {// cause backtracking by setting simulator to fail
-            AM_preg = AM_failCode;
-        } else { // set up to solve the query `solve(Query)' 
-            AM_preg  = AM_solveCode;
-            AM_cpreg = AM_proceedCode;
-            DF_copyAtomic(RT_getTermStart(), (MemPtr)(AM_reg(1)));
-            //PR_printTerm((DF_TermPtr)(AM_reg(1)));
-            
-            QUERY_reQuery = TRUE;
-        }
-        //invoke simulator 
-        SIM_simulate();
+  DF_TermPtr ptr;
+  printf("Solving query...\n");
+  EM_TRY {
+	if (QUERY_reQuery) {// cause backtracking by setting simulator to fail
+	  AM_preg = AM_failCode;
+	} else { // set up to solve the query `solve(Query)' 
+	  // AM_preg should be set by loader/loadquery.c
+	  /* AM_preg  = startLoc; */
+	  printf("EntryPoint: %x\n", AM_preg);
+	  AM_cpreg = AM_proceedCode;
+
+	  printf("NumFreeVars: %d\n", IO_freeVarTabTop);
+	  // Initialize register arguments to IO_freeVarTab
+	  for(int i = 0; i < IO_freeVarTabTop; i++){
+		// I believe the first register is reserved...
+		DF_mkRef(AM_reg(i+1),IO_freeVarTab[i].rigdes);
+		QUERY_reQuery = TRUE;
+	  }
+	}
+	//invoke simulator 
+	SIM_simulate();
+	
+	
+
         
-    } EM_CATCH {
-        if (EM_CurrentExnType == EM_QUERY) {
-            PRINT_resetPrintState();
-        }
-        return EM_CurrentExnType;
-    }
-    return EM_NO_ERR;
+  } EM_CATCH {
+	if (EM_CurrentExnType == EM_QUERY) {
+	  PRINT_resetPrintState();
+	}
+	return EM_CurrentExnType;
+  }
+  return EM_NO_ERR;
 }
+
+/* solve query */
+/* int QUERY_solveQuery() */
+/* { */
+/*     EM_TRY { */
+/*         if (QUERY_reQuery) {// cause backtracking by setting simulator to fail */
+/*             AM_preg = AM_failCode; */
+/*         } else { // set up to solve the query `solve(Query)'  */
+/*             AM_preg  = AM_solveCode; */
+/*             AM_cpreg = AM_proceedCode; */
+/*             DF_copyAtomic(RT_getTermStart(), (MemPtr)(AM_reg(1))); */
+/*             //PR_printTerm((DF_TermPtr)(AM_reg(1))); */
+            
+/*             QUERY_reQuery = TRUE; */
+/*         } */
+/*         //invoke simulator  */
+/*         SIM_simulate(); */
+        
+/*     } EM_CATCH { */
+/*         if (EM_CurrentExnType == EM_QUERY) { */
+/*             PRINT_resetPrintState(); */
+/*         } */
+/*         return EM_CurrentExnType; */
+/*     } */
+/*     return EM_NO_ERR; */
+/* } */
 
 /* show answers */
 int QUERY_showAnswers()
-{ 
+{
+  DF_TermPtr ptr;
     EM_TRY {
         STREAM_printf(STREAM_stdout, "\n");
         STREAM_printf(STREAM_stdout,"The answer substitution:\n");
-        
+
         PRINT_showAnswerSubs();
         
         if (AM_nempLiveList()){
@@ -117,4 +165,10 @@ void QUERY_setQueryFreeVariables()
 Boolean QUERY_queryHasVars()
 {
     return PRINT_queryHasVars();
+}
+
+
+void QUERY_loadQuery(char* modName)
+{
+  LD_LOADQ_LoadCompiledQuery(NULL,0,0,modName);
 }

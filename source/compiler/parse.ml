@@ -1564,7 +1564,9 @@ and fixTerm term =
       | Absyn.ConstantTerm(c,tenv,p) -> 
           (* collect type variables in (needed components of) type environment 
              and check constant is legal here *)
-          let _ = checkIllegalConstant c p in
+
+         (* TODO: NG: we still need check this for terms (but goals are okay) *)
+         (* let _ = checkIllegalConstant c p in *)
           let neededtenv = 
             trunclist tenv (Absyn.getConstantTypeEnvSize false c) in
             (Absyn.ConstantTerm(c,neededtenv,p),fvars,

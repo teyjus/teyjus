@@ -22,7 +22,7 @@
 
 #include "../system/memory.h"
 
-extern void LD_HASHTAB_LoadHashTabs(MEM_GmtEnt* ent);
+extern void LD_HASHTAB_LoadHashTabs(MEM_GmtEnt* ent, int query);
 
 extern WordPtr LD_HASHTAB_GetHashTabAddr();
 

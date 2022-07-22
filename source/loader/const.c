@@ -47,10 +47,11 @@ int LD_CONST_LoadCst(MEM_GmtEnt* ent)
   TwoBytes cstsize=LD_FILE_GET2();
   LD_detail("Loading %d consts\n",cstsize);
   
+  
   /* MEM_CstEnt* cst=(MEM_CstEnt*)LD_LOADER_ExtendModSpace(ent,(cstsize+PERV_CONST_NUM)*sizeof(MEM_CstEnt)); -- XQ*/
   cst=(MEM_CstEnt*)LD_LOADER_ExtendModSpace(ent,
-                                                        (cstsize+PERV_CONST_NUM) * 
-                                                        MEM_CST_ENTRY_SIZE);
+											(cstsize+PERV_CONST_NUM /* + 100 */) * 
+											MEM_CST_ENTRY_SIZE);
   ent->cstBase=(MEM_CstPtr)cst;
   //Copy Pervasive constants.
   PERVINIT_copyConstDataTab(cst);
@@ -108,8 +109,12 @@ int LD_CONST_LoadCst(MEM_GmtEnt* ent)
     cst[i].name=NULL;
     cst[i].tskTabIndex=LD_FILE_GET2();
   }
+
+  printf("GConsts: %d\nLConsts: %d\nHConsts: %d\n",
+		 (int)num_glob, (int)num_loc, (int)num_hid);
   return 0;
 }
+
 
 TwoBytes LD_CONST_GetConstInd()
 {
@@ -131,4 +136,17 @@ TwoBytes LD_CONST_GetConstInd()
       EM_THROW(LD_LoadError);
       break;
   }
+}
+
+
+TwoBytes LD_CONST_GetConstIndQuery(int query)
+{
+  TwoBytes ind;
+  if(query){
+	LD_FILE_GET1();
+	ind=LD_FILE_GET2();
+  }else{
+	ind=LD_CONST_GetConstInd();
+  }
+  return ind;
 }

@@ -32,6 +32,8 @@ typedef enum LD_Error{
   LD_FILE_ReadError
 } LD_Error;
 
+extern char* LD_LOADER_makePath(char* modname);
+
 extern int LD_LOADER_Load(char* modname, int index);
 /* Asking space of given number of WORDS from the system memory */
 extern WordPtr LD_LOADER_ExtendModSpace(MEM_GmtEnt* ent, int size);

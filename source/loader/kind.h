@@ -28,5 +28,6 @@ extern int LD_KIND_LoadKst(MEM_GmtEnt* ent);
 
 //!Read an index in multi-table form and return it in single table form.  Relies on global kind counter.
 extern TwoBytes LD_KIND_GetKindInd();
+extern TwoBytes LD_KIND_GetKindIndQuery(int query);
 
 #endif //_KIND_H_

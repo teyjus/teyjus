@@ -114,7 +114,7 @@ WordPtr LD_IMPORTTAB_LoadImportTab(MEM_GmtEnt* ent)
   {
     LD_debug(" Loading sequential search table\n");
     MEM_impPutFC(tab,(MEM_FindCodeFnPtr)&LD_SEARCHTAB_SeqnSrch);
-    LD_SEARCHTAB_LoadSeqSTab(ent,&psts);
+    LD_SEARCHTAB_LoadSeqSTab(ent,&psts,0);
     MEM_impPutPSTS(tab,psts);
     ///\todo do something with returned address.
   }
@@ -123,7 +123,7 @@ WordPtr LD_IMPORTTAB_LoadImportTab(MEM_GmtEnt* ent)
       
     LD_debug(" Loading hash table\n");
     MEM_impPutFC(tab,(MEM_FindCodeFnPtr)&LD_SEARCHTAB_HashSrch);
-    LD_SEARCHTAB_LoadHashTab(ent,&psts);
+    LD_SEARCHTAB_LoadHashTab(ent,&psts,0);
     MEM_impPutPSTS(tab,psts);
     ///\todo do something with returned address.
   } else {

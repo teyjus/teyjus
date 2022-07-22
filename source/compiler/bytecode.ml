@@ -32,9 +32,13 @@ let byteCodeSuffix = ".lpo"
 let linkedByteCodeVersionNumber = 3
 let linkedByteCodeSuffix = ".lp"
 
+let queryByteCodeVersionNumber = 3
+let queryByteCodeSuffix = ".lpq"
+                         
 let makeByteCodeFileName modName   = modName ^ byteCodeSuffix
 let makeLinkedByteCodeName modName = modName ^ linkedByteCodeSuffix
-
+let makeQueryByteCodeName modName = modName ^ queryByteCodeSuffix
+                                   
 (* type skeleton representation *)
 let typeMarkArrow       = 0
 let typeMarkKind        = 1

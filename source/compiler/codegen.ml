@@ -159,14 +159,17 @@ type cgmodule =
 		cginstructions * cghashtabs * cgimpgoallist 
 		
 
+let main_pred = ref None
+
+let set_main_pred name : unit =
+  main_pred := Some (name, 0)
+
+let get_main_pred_loc () : int =
+  snd (Option.get !main_pred)
+              
 let getCGModuleName = function
     Module(cgname,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_) -> cgname
                                                     
-let getCGModuleInstructions = function
-    Module(_,_,_,_,_,_,_,_,_,_,_,_,_,_,cginstrs,_,_) -> cginstrs
-
-let getCGModuleImpGoalList = function
-    Module(_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,cgimpgoals) -> cgimpgoals
 
 let getCGModuleGlobalConstants = function
     Module(_,_,_,cggconsts,_,_,_,_,_,_,_,_,_,_,_,_,_) -> cggconsts
@@ -179,6 +182,15 @@ let getCGModuleHiddenConstants = function
 
 let getCGModuleStrings = function
     Module(_,_,_,_,_,_,_,_,_,_,_,cgstrs,_,_,_,_,_) -> cgstrs
+
+let getCGModuleInstructions = function
+    Module(_,_,_,_,_,_,_,_,_,_,_,_,_,_,cginstrs,_,_) -> cginstrs
+
+let getCGModuleHashTables = function
+    Module(_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,cghashtabs,_) -> cghashtabs
+    
+let getCGModuleImpGoalList = function
+    Module(_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,cgimpgoals) -> cgimpgoals
 
 let empty_cgconsts = function
     ConstantList(_,num) -> num = 0
@@ -249,19 +261,22 @@ let assignConstIndex gconsts lconsts hconsts =
 	match consts with
 	  [] -> (index, defs, numDefs)  (*note defs are in reversed order *)
 	| (const :: rest) ->
-		Absyn.setConstantIndex const index; (*set index*)
-		let (newDefs, newNumDefs) =
-		  match (!(Absyn.getConstantCodeInfo const)) with
-			  None -> (defs, numDefs)         (* not have def in this module *)
-		  | Some(Absyn.Clauses(clauseBlock)) ->
-			    Absyn.setClauseBlockClose clauseBlock true;
-			    (const :: defs, numDefs + 1)
-		  | _ ->
-		      Errormsg.impossible Errormsg.none 
-			      ("Codegen.assignConstIndex: invalid constant codeInfo on constant '" ^
-			      (Absyn.getConstantName const) ^ "'")
-		in
-		assignLocalConstIndex rest (index + 1) newDefs newNumDefs
+       let ii = Absyn.getConstantIndex const in
+       prerr_endline (Format.sprintf "Setting Local const index: %d -> %d"
+                        ii index);
+	   Absyn.setConstantIndex const index; (*set index*)
+	   let (newDefs, newNumDefs) =
+		 match (!(Absyn.getConstantCodeInfo const)) with
+		   None -> (defs, numDefs)         (* not have def in this module *)
+		 | Some(Absyn.Clauses(clauseBlock)) ->
+			Absyn.setClauseBlockClose clauseBlock true;
+			(const :: defs, numDefs + 1)
+		 | _ ->
+		    Errormsg.impossible Errormsg.none 
+			  ("Codegen.assignConstIndex: invalid constant codeInfo on constant '" ^
+			     (Absyn.getConstantName const) ^ "'")
+	   in
+	   assignLocalConstIndex rest (index + 1) newDefs newNumDefs
   in
   
   (* assign indexes for hidden constants *)
@@ -269,6 +284,9 @@ let assignConstIndex gconsts lconsts hconsts =
 	match consts with
 	  [] -> index
 	| (const :: rest) ->
+       let ii = Absyn.getConstantIndex const in
+       prerr_endline ("Setting Hidden const index: "^(string_of_int ii));
+       
 		Absyn.setConstantIndex const index;
 		assignHiddenConstIndex rest (index + 1)
   in
@@ -284,6 +302,10 @@ let assignConstIndex gconsts lconsts hconsts =
       [] -> (index, defs, numDefs, nonExpDefs, numNonExpDefs, expDefs, 
 	     numExpDefs) (* reverse?! *)
     | (const :: rest) ->
+       let ii = Absyn.getConstantIndex const in
+       prerr_endline (Format.sprintf "Setting Global const index: %d -> %d"
+                        ii index);
+
 	Absyn.setConstantIndex const index;
 	let codeInfo = Absyn.getConstantCodeInfo const in
 	let (newDefs, newNumDefs, newNonExpDefs, newNumNonExpDefs, newExpDefs, 
@@ -314,7 +336,7 @@ let assignConstIndex gconsts lconsts hconsts =
 	assignGlobalConstIndex rest (index+1) newDefs newNumDefs newNonExpDefs
 	  newNumNonExpDefs newExpDefs newNumExpDefs
   in
-
+  prerr_endline "Assigning constant indices...";
   (* function body of assignConstIndex *)
   let (numLConsts, defs, numDefs) = 
 	assignLocalConstIndex lconsts 0 [] 0 
@@ -374,7 +396,7 @@ let assignSkelIndex skels hskels =
   TypeSkeletonList(newSkels, numTySkels)
 
 (****************************************************************************)
-(*                      ASSIGN TYPE SKELETON INDEXES                        *)
+(*                      ASSIGN STRING INDEXES                               *)
 (* assign indexes to strings in this module                                 *)
 (****************************************************************************)
 let assignStringIndex strs =
@@ -982,7 +1004,11 @@ let processDef clauseBlock insts startLoc =
   let (dummyTryMeElse, dummyTryMeElseSize)
       = genDummyTryMeElse clauses partitions
   in
-  let pred = Absyn.getClausePred (List.hd clauses) in
+  let pred = Absyn.getConstantName(Absyn.getClausePred (List.hd clauses)) in
+  prerr_endline (Format.sprintf "Processing pred: %x:%s" startLoc pred);
+  if ((Option.isSome !main_pred)
+      && (pred = fst (Option.get !main_pred))) then
+    main_pred := Some (pred, startLoc);
   if (Absyn.getClauseBlockClose clauseBlock) then (* closed definition *)
     (Absyn.setClauseBlockOffset clauseBlock (startLoc + dummyTryMeElseSize);
      genSwitchCode partitions (insts @ dummyTryMeElse) (startLoc + dummyTryMeElseSize))
@@ -1047,10 +1073,13 @@ let processTopLevelDefs defs =
 (* generate code for definitions in an implication              *)
 (****************************************************************)
 let genImpDefs defs insts startLoc =
+  prerr_endline(Printf.sprintf "startLoc: %d" startLoc);
 
   let rec genImpDefsAux defs insts startLoc extNum extPreds predNum predInfo =
 	(* generate code for one definition *)
 	let genImpDef pred clauseBlock insts startLoc extNum extPreds =
+      prerr_endline(Printf.sprintf "genImpDef for pred %s"
+                      (Absyn.getConstantName pred));
       let (newExtPreds, newExtNum) =
 		if (Absyn.getClauseBlockClose clauseBlock) then (extPreds, extNum)
 		else

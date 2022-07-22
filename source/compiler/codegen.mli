@@ -161,13 +161,20 @@ type cgmodule =
 
 val getCGModuleName : cgmodule -> string
 val getCGModuleInstructions : cgmodule -> cginstructions
-val getCGModuleImpGoalList : cgmodule -> cgimpgoallist
 val getCGModuleLocalConstants : cgmodule -> cgconsts
 val getCGModuleGlobalConstants : cgmodule -> cgconsts
 val getCGModuleHiddenConstants : cgmodule -> cgconsts
 val getCGModuleStrings : cgmodule -> cgstrings
+val getCGModuleImpGoalList : cgmodule -> cgimpgoallist
+val getCGModuleHashTables : cgmodule -> cghashtabs
 
 val empty_cgconsts : cgconsts -> bool
+
+
+  
+val set_main_pred : string -> unit
+val get_main_pred_loc : unit -> int
+
 
 (*****************************************************************************)
 (*                CODE GENERATION FOR A MODULE                               *)
