@@ -1,11 +1,19 @@
+(* -*- tuareg -*- *)
+
+let is_mac_os () =
+  (List.assoc "system" Jbuild_plugin.V1.ocamlc_config) = "macosx"
+
+let mac_os_instr = {|
 (library
  (name include)
-)
+ (foreign_stubs
+  (language c)
+  (names byteswap obstack search)))
+|}
 
-(rule
- (targets byteswap.o obstack.o search.o)
- (deps
-  (glob_files_rec ../*.h)
-  (:cfiles byteswap.c obstack.c search.c))
- (action
-  (run %{ocaml-config:c_compiler} -c %{cfiles})))
+let non_mac_instr = {|
+(library
+ (name include))
+|}
+
+let () = Jbuild_plugin.V1.send (if is_mac_os () then mac_os_instr else non_mac_instr)
