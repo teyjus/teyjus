@@ -2,4 +2,5 @@
  (name include)
  (foreign_stubs
   (language c)
-  (names byteswap obstack search)))
+  (names byteswap obstack search))
+ (enabled_if (= %{system} macosx)))
