@@ -231,6 +231,8 @@ and transTermConst c tyenv =
       | _ -> Errormsg.impossible Errormsg.none 
                "Parse.trunclist: invalid arguments."
   in
+  prerr_endline(Format.sprintf "Constant Skeleton Neededness for const: %s"
+                  (Absyn.getConstantName c));
   let skeletonNeededness = 
   Option.get (Absyn.getConstantSkeletonNeededness c) 
   in

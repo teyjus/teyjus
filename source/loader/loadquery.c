@@ -99,9 +99,7 @@ void LD_LOADQ_LoadCompiledQuery(MEM_GmtEnt* parent_ent,
 
 
   // for now we assume no hidden constants + type skeletons!
-  
-  // There is size for up to 100 new typeskels or consts
-  
+    
   // Load the hidden constant table and local kind table
   // in the contiguous CST module space of the loaded module
   /* ent.modSpaceEnd = parent_ent->kstBase + (num_typeskels * MEM_TST_ENTRY_SIZE); */

@@ -119,7 +119,8 @@ let compileQuery query amod =
   prerr_endline "Reducing Predicates...";
   (* For some reason reducing predicates makes things work because
    * it calls makeConstantNeededness on all entries in the constant table *) 
-  let amod = Typereduction.reducePredicates amod in
+  (* let amod = Typereduction.reducePredicates amod in *)
+  let amod = Typereduction.initConstantNeededness amod in
   let _ = abortOnError () in
 
   prerr_endline "Processing Clauses...";

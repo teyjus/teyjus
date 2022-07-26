@@ -320,6 +320,8 @@ let reducePredicates amod =
     if Option.isNone (!neededness) then
       let neededness' = 
         Array.make (Absyn.getConstantTypeEnvSize false constant) false in
+      prerr_endline(Format.sprintf "Make const Neededness for `%s`"
+                      (Absyn.getConstantName constant));
       neededness := Some(neededness')
     else
       ()
@@ -732,4 +734,33 @@ let reducePredicates amod =
   (*  Run the fixed-point algorithm to compute neededness.  *)
   let _ = computeNeededness clauses in
 
+  amod
+
+
+let initConstantNeededness amod =
+  let makeConstantNeededness sym constant =
+    let neededness = Absyn.getConstantNeedednessRef constant in
+    if Option.isNone (!neededness) then
+      let neededness' = 
+        Array.make (Absyn.getConstantTypeEnvSize false constant) true in
+      prerr_endline(Format.sprintf "Make const Neededness for `%s`"
+                      (Absyn.getConstantName constant));
+      neededness := Some(neededness')
+    else
+      ()
+  in
+  let makeConstantSkeletonNeededness sym constant =
+    let neededness = Absyn.getConstantSkeletonNeedednessRef constant in
+    if Option.isNone (!neededness) then
+      let neededness' =
+        Array.make (Absyn.getConstantTypeEnvSize false constant) true in
+      prerr_endline(Format.sprintf "Make skeleton Neededness for `%s`"
+                      (Absyn.getConstantName constant));
+
+      neededness := Some(neededness')
+    else ()
+  in
+  let ctable = Absyn.getModuleConstantTable amod in
+  let _ = Table.iter makeConstantNeededness ctable in
+  let _ = Table.iter makeConstantSkeletonNeededness ctable in
   amod

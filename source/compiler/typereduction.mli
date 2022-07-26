@@ -33,3 +33,8 @@ val reduceSkeletons : Absyn.amodule -> Absyn.amodule
 * This function has never been used (always commented in compilerfront.ml 
 **********************************************************************)
 val reducePredicates : Absyn.amodule -> Absyn.amodule
+
+
+
+val initConstantNeededness : Absyn.amodule -> Absyn.amodule
+                                            
