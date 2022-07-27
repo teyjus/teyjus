@@ -124,22 +124,9 @@ let solveQueries () =
     else
       solveQueryInteract ();
 
-    (* flush stdout; *)
-
-    
-    (* TODO: solveQueryBatch/Interact will now need to call the query predicate *)
-    (* if Query.buildQueryTerm query (Module.getCurrentModule ()) then
-     * (\* if false then *\)
-     *   if !batch then
-     *     solveQueryBatch ()
-     *   else
-     *     solveQueryInteract ()
-     * else
-     *   prerr_endline ""; *)
     Module.cleanModule (); 
     Front.simulatorReInit false ;
-    Module.initModuleContext ()
-      
+    Module.initModuleContext ()  
   in
 
   let interactSolveQuery queries modName =

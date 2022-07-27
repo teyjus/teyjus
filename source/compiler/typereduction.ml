@@ -320,8 +320,6 @@ let reducePredicates amod =
     if Option.isNone (!neededness) then
       let neededness' = 
         Array.make (Absyn.getConstantTypeEnvSize false constant) false in
-      prerr_endline(Format.sprintf "Make const Neededness for `%s`"
-                      (Absyn.getConstantName constant));
       neededness := Some(neededness')
     else
       ()
@@ -738,13 +736,15 @@ let reducePredicates amod =
 
 
 let initConstantNeededness amod =
+  prerr_endline "Making neededness";
   let makeConstantNeededness sym constant =
     let neededness = Absyn.getConstantNeedednessRef constant in
     if Option.isNone (!neededness) then
+      let size = (Absyn.getConstantTypeEnvSize false constant) in
       let neededness' = 
-        Array.make (Absyn.getConstantTypeEnvSize false constant) true in
-      prerr_endline(Format.sprintf "Make const Neededness for `%s`"
-                      (Absyn.getConstantName constant));
+        Array.make size true in
+      prerr_endline(Format.sprintf "Make const Neededness for `%s`[%d]"
+                      (Absyn.getConstantName constant) size);
       neededness := Some(neededness')
     else
       ()
@@ -752,10 +752,11 @@ let initConstantNeededness amod =
   let makeConstantSkeletonNeededness sym constant =
     let neededness = Absyn.getConstantSkeletonNeedednessRef constant in
     if Option.isNone (!neededness) then
+      let size = (Absyn.getConstantTypeEnvSize false constant) in
       let neededness' =
-        Array.make (Absyn.getConstantTypeEnvSize false constant) true in
-      prerr_endline(Format.sprintf "Make skeleton Neededness for `%s`"
-                      (Absyn.getConstantName constant));
+        Array.make size true in
+      prerr_endline(Format.sprintf "Make skeleton Neededness for `%s`[%d]"
+                      (Absyn.getConstantName constant) size);
 
       neededness := Some(neededness')
     else ()

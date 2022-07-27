@@ -42,8 +42,8 @@ void SIM_simulate()
     EM_TRY {       
         while(1) {
 		  /* fprintf(stderr, "breg:  %x\nfstCP: %x\n", AM_breg, AM_fstCP); */
-		  fprintf(stderr, "AM_preg %x opcode: %d\n", AM_preg, 
-            *((INSTR_OpCode *)AM_preg));
+		  fprintf(stderr, "AM_preg %x opcode: %d:%s\n", AM_preg, 
+				  *((INSTR_OpCode *)AM_preg), INSTR_instrName(*((INSTR_OpCode *)AM_preg)));
             SDP_dispatchTable[*((INSTR_OpCode *)AM_preg)]();
         }
         /* it's expected that this statement not be reached: the only

@@ -1276,7 +1276,7 @@ let getHeadAndBody clause : Absyn.aterm * (Absyn.aterm option) =
  * p X0 ... Xn :- {query X0 ... Xn}. *)
 let makeQueryClause query (* fvs *) : Absyn.aconstant * Absyn.aterm * (Absyn.atypesymbol list) =
   let query, fvs = collectFreeVars query [] [] in
-  let (pred, head) = newHead fvs in
+  let (pred, head) = newHead (List.rev fvs) in
   let appinfo = Absyn.FirstOrderApplication(
                     Absyn.makeConstantTerm (Pervasive.implConstant) [] 
                       Errormsg.none, [query;head], 2) in

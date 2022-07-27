@@ -49,6 +49,8 @@ static Boolean QUERY_reQuery; /* TRUE if this query has already
 /* Also, set QUERY_reQuery to be false                                     */
 void QUERY_setTypeAndTermLocation()
 {
+  // for compiled queries, we only do this because readterm expects
+  // term/typeStartLoc to be initialized when calling RT_initLocalTabs
     RT_setTypeStart(AM_hreg);
     AM_hreg += DF_TY_ATOMIC_SIZE;
     RT_setTermStart(AM_hreg);
@@ -73,14 +75,11 @@ void QUERY_setQueryEntryPoint(int startLoc)
 }
 int QUERY_solveQuery()
 {
-  DF_TermPtr ptr;
   printf("Solving query...\n");
   EM_TRY {
 	if (QUERY_reQuery) {// cause backtracking by setting simulator to fail
 	  AM_preg = AM_failCode;
-	} else { // set up to solve the query `solve(Query)' 
-	  // AM_preg should be set by loader/loadquery.c
-	  /* AM_preg  = startLoc; */
+	} else {
 	  printf("EntryPoint: %x\n", AM_preg);
 	  AM_cpreg = AM_proceedCode;
 
@@ -91,12 +90,18 @@ int QUERY_solveQuery()
 		DF_mkRef(AM_reg(i+1),IO_freeVarTab[i].rigdes);
 		QUERY_reQuery = TRUE;
 	  }
+	  /* printf("NumTypeVars: %d\n", IO); */
+	  // Initialize type register arguments
+	  for(int i = IO_freeVarTabTop; i < IO_freeVarTabTop + IO_freeVarTabTop; i++){
+	    DF_mkFreeVarType(AM_hreg);
+		DF_mkRefType(AM_reg(i+1), AM_hreg);
+		printf("Making typevar[%d]: %x\n", (i+1),AM_hreg);
+		AM_hreg += DF_TY_ATOMIC_SIZE;
+	  }
 	}
 	//invoke simulator 
 	SIM_simulate();
 	
-	
-
         
   } EM_CATCH {
 	if (EM_CurrentExnType == EM_QUERY) {
