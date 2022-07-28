@@ -175,7 +175,10 @@ let getNumCGConsts = function
 
 let getNumCGTypeSkeletons = function
     TypeSkeletonList(_,num) -> num
-                         
+
+let getNumCGPreds = function
+    PredList(_,num) -> num
+
 (*****************************************************************************)
 (*  HASH TABLE LIST:                                                         *)
 (*****************************************************************************)

@@ -49,9 +49,9 @@ let getConstantMark constCat =
   | _ -> Bytecode.hidden (* assumed to be hidden constant *)		
   
 let writeConstIndex const =
-  let cty = (getConstantMark (Absyn.getConstantType const)) in
-  let ci = (Absyn.getConstantIndex const) in
-  prerr_endline(Printf.sprintf "Writing const %d~%d" cty ci);
+  (* let cty = (getConstantMark (Absyn.getConstantType const)) in
+   * let ci = (Absyn.getConstantIndex const) in
+   * prerr_endline(Printf.sprintf "Writing const %d~%d" cty ci); *)
 
   Bytecode.writeint1 (getConstantMark (Absyn.getConstantType const));
   Bytecode.writeint2 (Absyn.getConstantIndex const)
@@ -191,8 +191,6 @@ let writeStrings strs =
 let writeImpGoalInfo implGoals =
   let writeDef def =
 	let Codegen.ImpPredInfo(pred, offset) = def in
-    prerr_endline(Printf.sprintf "Def: %s<%d>"
-                    (Absyn.getConstantName pred) offset);
 	writeConstIndex pred;
 	Bytecode.writeWord offset
   in
@@ -201,9 +199,6 @@ let writeImpGoalInfo implGoals =
 	let Codegen.ImpGoalCode(Codegen.PredList(extPreds, numExtPreds), 
 							impPredList, numDefs) =  impGoal
 	in
-    prerr_endline(Printf.sprintf "NumExtPred: %d\nNumDefs: %d"
-                    numExtPreds numDefs);
-    
 	(* [next clause table] *)
 	Bytecode.writeint2 numExtPreds;
 	map writeConstIndex extPreds; 
@@ -242,6 +237,7 @@ let writeHashTabInfo hashTabs =
 	
   let Codegen.ConstHashTabs(hashTabList, numHashTabs) = hashTabs in
   (* <number of hash tables> *)
+  prerr_endline(Format.sprintf "Writing HashTabs: %d" numHashTabs);
   Bytecode.writeint2 numHashTabs;
   (* [hash tables] *)
   map writeHashTab hashTabList	
@@ -270,10 +266,13 @@ let writeModDefsInfo nonExpDefs expDefs localDefs defs =
   in
 
   (* [next clause table] *)
+  prerr_endline(Format.sprintf "writing NonExpDefs: %d" (Codegen.getNumCGPreds nonExpDefs));
   writePredTabs nonExpDefs;
   (* [exportdef predicate table] *)
+  prerr_endline(Format.sprintf "writing ExpDefs: %d" (Codegen.getNumCGPreds expDefs));
   writePredTabs expDefs;
   (* [local predicate table] *)
+  prerr_endline(Format.sprintf "writing localDefs: %d" (Codegen.getNumCGPreds localDefs));
   writePredTabs localDefs;
   (* <find code function> *)
   Bytecode.writeint1 Bytecode.findCodeFuncMarkHash;

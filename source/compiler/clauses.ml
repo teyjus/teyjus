@@ -954,7 +954,7 @@ and normalizeClause clauseterm clauses uvs uvdefs embedded =
   
   (********************************************************************
   *rigidAtom:
-  * An "plain" atom head, with or without arguments.
+  * A "plain" atom head, with or without arguments.
   ********************************************************************)
   let rigidAtom term clauses args =
     match args with

@@ -102,6 +102,7 @@ void LD_LOADQ_LoadCompiledQuery(MEM_GmtEnt* parent_ent,
     
   // Load the hidden constant table and local kind table
   // in the contiguous CST module space of the loaded module
+  // should this be cstBase??
   /* ent.modSpaceEnd = parent_ent->kstBase + (num_typeskels * MEM_TST_ENTRY_SIZE); */
   /* LD_TYSKEL_LoadTst(&ent); */
   
@@ -130,8 +131,7 @@ void LD_LOADQ_LoadCompiledQuery(MEM_GmtEnt* parent_ent,
   printf("loading code\n");
   LD_CODE_LoadCode(&ent,1);
 
-  // TODO: We need to overwrite code space for the next query!
-  // Module space is reset automatically, but not code space!
+  // Module space is reset automatically
   AM_hreg = ent.modSpaceEnd;
 
 
