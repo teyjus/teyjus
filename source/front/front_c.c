@@ -52,7 +52,7 @@ static MSG_Msg FRONT_ErrorMessages[FRONT_NUM_ERROR_MESSAGES] =
       EM_NEWLINE, EM_ABORT, 1 },
     { FRONT_ERROR_HEAP_TOO_SMALL,
       EM_ERROR_COLON,
-      "Specified heap size (%uK) is smaller than minimum of 10K.",
+      "Specified heap size (%uK) is smaller than minimum of 10Kb.",
       EM_NEWLINE, EM_ABORT, 1 },
 };
 
@@ -79,6 +79,8 @@ static void FRONT_setMemorySizes(int memSize)
     FRONT_pdlSize   = memSize / 16 * 1;
 }
 
+
+// Can we specify k in MB?
 int FRONT_systemInit(int inSize) 
 {
     int memSize;

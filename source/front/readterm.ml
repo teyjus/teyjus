@@ -277,12 +277,8 @@ let readTermAndType tm tymol fvars tyfvars =
 
 
 let initVariables fvars tyfvars =
-  let fvIndexes = layOutVariables fvars buildFreeVariable in
-  let tyfvIndexes = layOutVariables tyfvars buildFreeTypeVariable in
-  prerr_endline @@
-    (Format.sprintf "Num fvs:  %d\nNum ftvs: %d"
-       (List.length fvIndexes)
-       (List.length tyfvIndexes));
+  let _ = layOutVariables fvars buildFreeVariable in
+  let _ = layOutVariables tyfvars buildFreeTypeVariable in
   (* This sets the number of variables in IO_freeVarTab *)
   Ccode_stubs.setQueryFreeVariables ();
   Ccode_stubs.cleanLocalTabs ()

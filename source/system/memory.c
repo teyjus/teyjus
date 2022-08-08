@@ -222,7 +222,9 @@ void MEM_topModuleInit()
     MEM_topModule.addtable = NULL;
     MEM_topModule.kstBase  = kst;
     MEM_topModule.tstBase  = tst;
+	MEM_topModule.tstSize  = PERV_TY_SKEL_NUM;
     MEM_topModule.cstBase  = cst;
+	MEM_topModule.cstSize  = PERV_CONST_NUM;
     MEM_topModule.modSpaceBeg = memTop;
     MEM_topModule.modSpaceEnd = MEM_memTop;
     MEM_topModule.codeSpaceBeg = NULL;

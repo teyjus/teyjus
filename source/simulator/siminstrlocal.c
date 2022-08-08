@@ -417,7 +417,7 @@ void SINSTRL_unifyConst(DF_TermPtr tmPtr, int constInd)
 void SINSTRL_unifyInt(DF_TermPtr tmPtr, int intValue)
 {
     switch (DF_termTag(tmPtr)) {
-    case DF_TM_TAG_VAR: { printf("Binding %x -> %d\n", tmPtr, intValue);
+    case DF_TM_TAG_VAR: { 
 		SINSTRL_bindInt(tmPtr, intValue); return; }
     case DF_TM_TAG_INT: 
     { 

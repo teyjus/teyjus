@@ -60,18 +60,15 @@ void QUERY_setTypeAndTermLocation()
 }
 void QUERY_setQueryEntryPoint(int startLoc)
 {
-  // A query is always compiled as
-  // 0x0:fail
-  // 0x8:try_me_else #0, 0x0
-  // 0x18:...
-  // But we don't need a try_me_else since there is only one clause for main
-
-  // This is the instruction right after try_me_else
-  /* AM_preg += 0x18; */
-
-  // A more robust solution would be startLoc + (INSTR_I1LX_LEN)
+  // In practice, a query is always compiled as
+  // 0x0:fail                                   <-- AM_preg
+  // 0x8:try_me_else #0, 0x0                    <-- startLoc (relative to code start)
+  // 0x18:...                                   <-- actual start location
+  // But we need to skip over the try_me_else since there is only one clause for main.
+  // We assume that AM_preg has been set to the start location of the
+  // code for the compiled query, in loader/loadquery.c
+  // (INSTR_I1LX_LEN is the length of the try_me_else instruction)
   AM_preg += (startLoc + INSTR_I1LX_LEN);
-
 }
 int QUERY_solveQuery()
 {
@@ -86,11 +83,10 @@ int QUERY_solveQuery()
 	  printf("NumFreeVars: %d\n", IO_freeVarTabTop);
 	  // Initialize register arguments to IO_freeVarTab
 	  for(int i = 0; i < IO_freeVarTabTop; i++){
-		// I believe the first register is reserved...
+		// Argument registers start at index 1
 		DF_mkRef(AM_reg(i+1),IO_freeVarTab[i].rigdes);
 		QUERY_reQuery = TRUE;
 	  }
-	  /* printf("NumTypeVars: %d\n", IO); */
 	  // Initialize type register arguments
 	  for(int i = IO_freeVarTabTop; i < IO_freeVarTabTop + IO_freeVarTabTop; i++){
 	    DF_mkFreeVarType(AM_hreg);
@@ -113,6 +109,7 @@ int QUERY_solveQuery()
 }
 
 /* solve query */
+// NG: Deprecated, since queries are now compiled
 /* int QUERY_solveQuery() */
 /* { */
 /*     EM_TRY { */
@@ -175,5 +172,5 @@ Boolean QUERY_queryHasVars()
 
 void QUERY_loadQuery(char* modName)
 {
-  LD_LOADQ_LoadCompiledQuery(NULL,0,0,modName);
+  LD_LOADQ_LoadCompiledQuery(modName);
 }

@@ -48,10 +48,8 @@ WordPtr LD_SEARCHTAB_LoadHashTab(MEM_GmtEnt* ent, int* size,int query)
   struct HashTabEnt *tab;
   int numEntries=*size=LD_FILE_GET2();
   LD_debug("Hash table has %d entries\n",numEntries);
-  /*
-  struct HashTabEnt *tab=(struct HashTabEnt*)LD_LOADER_ExtendModSpace(ent,sizeof(struct HashTabEnt)*numEntries); --XQ
-  */
-  tab=(struct HashTabEnt*)LD_LOADER_ExtendModSpaceInByte(ent,sizeof(struct HashTabEnt)*numEntries);
+  tab=(struct HashTabEnt*)
+	LD_LOADER_ExtendModSpaceInByte(ent,sizeof(struct HashTabEnt)*numEntries);
   for(i=0;i<numEntries;i++)
   {
     tab[i].constInd=-1;
@@ -70,11 +68,8 @@ WordPtr LD_SEARCHTAB_LoadHashTab(MEM_GmtEnt* ent, int* size,int query)
     } else {
       while(tabEnt->next!=NULL)
         tabEnt=tabEnt->next;
-      /*
-      tabEnt=tabEnt->next=(struct HashTabEnt*)LD_LOADER_ExtendModSpace(ent,sizeof(struct HashTabEnt));
-      -- XQ */
       tabEnt=tabEnt->next=
-          (struct HashTabEnt*)LD_LOADER_ExtendModSpaceInByte(ent,sizeof(struct HashTabEnt));
+		(struct HashTabEnt*)LD_LOADER_ExtendModSpaceInByte(ent,sizeof(struct HashTabEnt));
       tabEnt->constInd=cst;
       tabEnt->codeAddr=LD_CODE_GetCodeInd();
       tabEnt->next=NULL;

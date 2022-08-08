@@ -553,7 +553,6 @@ void DF_mkTConst(MemPtr loc, int uc, int ind, DF_TypePtr typeEnv)
 }
 void DF_mkInt(MemPtr loc, long value)                        //int
 {
-  printf("Making int(%ld) at %x\n", value, loc);
     ((DF_IntTerm*)loc) -> tag.categoryTag = DF_TM_TAG_INT;
     ((DF_IntTerm*)loc) -> value = value;
 }

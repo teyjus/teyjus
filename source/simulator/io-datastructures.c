@@ -45,7 +45,6 @@ Boolean IO_freeVarTabFull(int incSize)
 /* make an entry in the free term variable table */
 void IO_enterFreeVarTab(DF_StrDataPtr name, DF_TermPtr varLoc)
 {
-  printf("EnterFreeVarTab\n");
     int i = IO_freeVarTabTop++;
     
     IO_freeVarTab[i].varName  = name;

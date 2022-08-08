@@ -269,7 +269,7 @@ let assignConstIndex gconsts lconsts hconsts =
 	  [] -> index
 	| (const :: rest) ->
        let ii = Absyn.getConstantIndex const in
-       prerr_endline ("Setting Hidden const index: "^(string_of_int ii));
+       prerr_endline (Format.sprintf "Setting Hidden const index: %d -> %d" ii index);
        
 		Absyn.setConstantIndex const index;
 		assignHiddenConstIndex rest (index + 1)

@@ -49,10 +49,9 @@ let getConstantMark constCat =
   | _ -> Bytecode.hidden (* assumed to be hidden constant *)		
   
 let writeConstIndex const =
-  (* let cty = (getConstantMark (Absyn.getConstantType const)) in
-   * let ci = (Absyn.getConstantIndex const) in
-   * prerr_endline(Printf.sprintf "Writing const %d~%d" cty ci); *)
-
+  let cname = (Absyn.getConstantName const) in
+  let ci = (Absyn.getConstantIndex const) in
+  prerr_endline(Printf.sprintf "Writing const %s -> %d" cname ci);
   Bytecode.writeint1 (getConstantMark (Absyn.getConstantType const));
   Bytecode.writeint2 (Absyn.getConstantIndex const)
 
@@ -379,13 +378,17 @@ let writeQueryByteCode cgModule =
     (* [type skeletons] *)
     let numtyskels = Codegen.getNumCGTypeSkeletons tySkels in
     prerr_endline(Printf.sprintf "Num Type Skels: %d" numtyskels);
-    (* writeTypeSkels tySkels; *)
+    writeTypeSkels tySkels;
     (* [global constants] *)
     (* [local constants] *)
     (* [hidden constants] *)
     assert(Codegen.getNumCGConsts gconsts = 0
            && Codegen.getNumCGConsts lconsts = 0);
-    (* writeConstInfo gconsts lconsts hconsts; *)
+    prerr_endline(Printf.sprintf "Num hidden consts: %d" (Codegen.getNumCGConsts hconsts));
+    (* We need to write total number of new constants
+     * since loader is expecting linkcode *)
+    Bytecode.writeint2 (Codegen.getNumCGConsts hconsts);
+    writeConstInfo gconsts lconsts hconsts;
     (* [strings] *)
     writeStrings strs;
     (* [implication goal tables] *)

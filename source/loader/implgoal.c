@@ -65,14 +65,8 @@ WordPtr LD_IMPLGOAL_LoadImplGoal(MEM_GmtEnt* ent, int query)
   for(i=0;i<nctSize;i++)
   {
 	// If we are loading a query, constant indices should be absolute
-	if(query){
-	  LD_FILE_GET1();
-	  cst=(int)LD_FILE_GET2();
-	  MEM_implPutLT(tab,i,cst);
-	}else{
-	  cst=(int)LD_CONST_GetConstInd();
-	  MEM_implPutLT(tab,i,cst);
-	}
+	cst=(int)LD_CONST_GetConstIndQuery(query);
+	MEM_implPutLT(tab,i,cst);
   }
   
   //Load FindCodeFunc
@@ -103,4 +97,10 @@ WordPtr LD_IMPLGOAL_GetImplGoalAddr()
   if(0>i || i>LD_IMPLGOAL_numImplGoals)
     EM_THROW(LD_LoadError);
   return LD_IMPLGOAL_ImplGoals[i];
+}
+
+void LD_IMPLGOAL_FreeTempAddresses()
+{
+  LD_detail("Freeing implication goal index table\n");
+  free(LD_IMPLGOAL_ImplGoals);
 }

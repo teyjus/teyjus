@@ -467,8 +467,6 @@ void SINSTR_get_integer()               //get_integer Xi,i -- R_I_X
 {
     INSACC_RIX(regX, intValue);
     tmPtr = DF_termDeref((DF_TermPtr)regX);
-	printf("get_integer: %x, %d\n", tmPtr, intValue);
-
     SINSTRL_unifyInt(tmPtr, intValue);
 }
 
@@ -1516,7 +1514,6 @@ void SINSTR_call()                      //call n,L -- I1_L_X
 void SINSTR_call_name()                 //call_name n,c -- I1_C_WP_X
 {
     INSACC_I1CWPX_C(constInd);
-	printf("call_name %d -> %s\n",constInd,AM_cstName(constInd));
     AM_findCode(constInd, &cl, &ip);
     if (cl) {
         AM_cpreg = (AM_preg + INSTR_I1CWPX_LEN); // next instr
