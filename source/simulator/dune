@@ -2,6 +2,7 @@
  (name simulator)
  (foreign_stubs
   (language c)
+  ; (flags -O3 -fPIC)
   (names
    abstmachine
    dataformats

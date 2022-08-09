@@ -43,11 +43,7 @@ int LD_KIND_LoadKst(MEM_GmtEnt* ent)
   //Allocate space for the kind table.
   TwoBytes kstsize=LD_FILE_GET2();
   LD_detail("Loading %d kinds\n",kstsize);
-  /*  Use MEM_KST_ENTRY_SIZE instead which is the number of *WORDS* for each KST entry
-      -- XQ
-  */
-  kst= (MEM_KstPtr)LD_LOADER_ExtendModSpace(ent,(kstsize+PERV_KIND_NUM)*MEM_KST_ENTRY_SIZE);
- 
+  kst=(MEM_KstEnt*)EM_malloc((kstsize+PERV_KIND_NUM)*sizeof(MEM_KstEnt));
   ent->kstBase = kst;
   
   //Copy the pervasive kinds
@@ -104,6 +100,8 @@ TwoBytes LD_KIND_GetKindIndQuery(int query)
 {
   TwoBytes ind;
   if(query){
+	// In the case of a query, a kind must be global,
+	// and the index is already absolute
 	LD_FILE_GET1();
 	ind=LD_FILE_GET2();
   }else{
@@ -112,3 +110,8 @@ TwoBytes LD_KIND_GetKindIndQuery(int query)
   return ind;
 }
   
+void LD_KIND_FreeKst(MEM_GmtEnt* ent)
+{
+  LD_detail("Freeing kind symbol table\n");
+  free(ent->kstBase);
+}

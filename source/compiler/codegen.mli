@@ -170,6 +170,7 @@ val getCGModuleName : cgmodule -> string
 
 val getNumCGConsts : cgconsts -> int
 val getNumCGTypeSkeletons : cgtypeskeletons -> int
+val getNumCGPreds : cgpreds -> int
   
 val set_main_pred : string -> unit
 val get_main_pred_loc : unit -> int

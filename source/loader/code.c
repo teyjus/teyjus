@@ -31,7 +31,7 @@
 #include "importtab.h"
 #include "ld_message.h"
 
-CSpacePtr LD_CODE_codeSpaceBeg;
+CSpacePtr codeSpaceBeg;
 
 INSTR_Float LD_getFloat()
 {
@@ -128,7 +128,7 @@ int LD_CODE_LoadCode(MEM_GmtEnt* ent, int query)
               
           case INSTR_L:
               *(CSpacePtr*)(code+j)=LD_CODE_GetCodeInd();
-              LD_debug("L%x ",*(CSpacePtr*)(code+j)-LD_CODE_codeSpaceBeg);
+              LD_debug("L%x ",*(CSpacePtr*)(code+j)-codeSpaceBeg);
               j+=sizeof(WordPtr);
               break;
               
@@ -165,7 +165,7 @@ int LD_CODE_LoadCode(MEM_GmtEnt* ent, int query)
 
 CSpacePtr LD_CODE_GetCodeInd()
 {
-  return LD_CODE_codeSpaceBeg+(long)LD_FILE_GETWORD();
+  return codeSpaceBeg+(long)LD_FILE_GETWORD();
 }
 
 /* allocate given size of BYTES at the bottom of system memory as the code */
@@ -173,16 +173,12 @@ CSpacePtr LD_CODE_GetCodeInd()
 /* table entry. -- XQ                                                      */
 void LD_CODE_LoadCodeSize(MEM_GmtEnt* ent)
 {
-    //LD_CODE_codeSpaceBeg = ent->codeSpaceBeg = ent->codeSpaceEnd-(int)codesize;
     long codesize = (long)LD_FILE_GETWORD();
-	printf("Code size: %ld\n",codesize);
-    LD_CODE_codeSpaceBeg  = ((CSpacePtr)(ent -> codeSpaceEnd)) - codesize + 1;
-    ent->codeSpaceBeg = (WordPtr)LD_CODE_codeSpaceBeg;
+	codeSpaceBeg  = ((CSpacePtr)(ent -> codeSpaceEnd)) - codesize + 1;
+	ent->codeSpaceBeg = (WordPtr)codeSpaceBeg;
 
-	printf("Code: %x\n", ent->codeSpaceBeg);
-	
-    if(ent->modSpaceEnd>ent->codeSpaceBeg){
-        LD_error("Out of module space.\n");
-        EM_THROW(LD_LoadError);
-    }
+	if(ent->modSpaceEnd>ent->codeSpaceBeg){
+	  LD_error("Out of module space.\n");
+	  EM_THROW(LD_LoadError);
+	}
 }

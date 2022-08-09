@@ -42,10 +42,7 @@ void  LD_LOADER_setPath(char* path)
 
 char* LD_LOADER_makePath(char* modname)
 {
-  char* buf=(char*) malloc((strlen(LD_LOADER_path)+strlen(modname)+1)*sizeof(char));
-  /* char* buf=(char *)EM_malloc(strlen(LD_LOADER_path)+strlen(modname)+1); */
-  /* strcpy(buf,LD_LOADER_path); */
-  /* strcat(buf,modname); */
+  char* buf=(char *)EM_malloc(strlen(LD_LOADER_path)+strlen(modname)+1);
   sprintf(buf,"%s%s",LD_LOADER_path,modname);
   return buf;
 }
@@ -88,8 +85,8 @@ int LD_LOADER_Load(char* modname, int index)
     LD_LOADER_SetName(gmtEnt,modname);
     LD_CODE_LoadCodeSize(gmtEnt);
     LD_KIND_LoadKst(gmtEnt);
-    LD_TYSKEL_LoadTst(gmtEnt);
-    LD_CONST_LoadCst(gmtEnt);
+    LD_TYSKEL_LoadTst(gmtEnt,0);
+    LD_CONST_LoadCst(gmtEnt,0);
     LD_STRING_LoadStrings(gmtEnt);
     LD_IMPLGOAL_LoadImplGoals(gmtEnt,0);
     LD_HASHTAB_LoadHashTabs(gmtEnt,0);
@@ -97,11 +94,14 @@ int LD_LOADER_Load(char* modname, int index)
     LD_IMPORTTAB_LoadImportTabs(gmtEnt);
     LD_CODE_LoadCode(gmtEnt, 0);
     LD_LOADER_AddGMTEnt(gmtEnt);
+	// free up temporary array
+	LD_IMPLGOAL_FreeTempAddresses();
   }EM_CATCH{
     ///\todo Clean up after failed load.
     LD_LOADER_DropGMTEnt(gmtEnt);
     EM_THROW(LD_LoadError);
   }
+
     
   return 0;
 }
@@ -146,6 +146,9 @@ MEM_GmtEnt* LD_LOADER_GetNewGMTEnt(int index)
 void LD_LOADER_DropGMTEnt(MEM_GmtEnt* ent)
 {
   ent->modname=NULL;
+  LD_KIND_FreeKst(ent);
+  LD_TYSKEL_FreeTst(ent);
+  LD_CONST_FreeCst(ent);
 }
 
 /* finalize system memory after loading modules -- XQ */
@@ -173,8 +176,8 @@ BytePtr LD_LOADER_ExtendModSpaceInByte(MEM_GmtEnt* ent, int size)
     BytePtr tmp = (BytePtr) (ent -> modSpaceEnd);
     ent -> modSpaceEnd = (WordPtr)(((BytePtr)ent->modSpaceEnd) + size);
     if (ent -> modSpaceEnd >  ent->codeSpaceBeg){
-        LD_error("Out of module space.\n");
-        EM_THROW(LD_LoadError);
+	  LD_error("Out of module space.\n");
+	  EM_THROW(LD_LoadError);
     }
     return tmp;
 }
