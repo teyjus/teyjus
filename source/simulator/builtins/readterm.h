@@ -37,6 +37,10 @@ DF_TypePtr RT_getTypeStart();
 /* initialize local free variable address table, free type variable address
    table, term address table and type address table */
 int RT_initLocalTabs(int numFvs,int numTyFvs,int numTermArgs,int numTypeArgs);
+/* For compiled queries, the only input are variables, so
+   no need to initialize term and type queues */
+int RT_initLocalTabsQuery(int numFvs);
+
 /* reclaim local tables */
 void RT_cleanLocalTabs();
 

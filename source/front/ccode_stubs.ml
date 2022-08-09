@@ -42,6 +42,7 @@ external setQueryEntryPoint     : int -> unit = "c_setQueryEntryPoint"
 
 (* read term *)
 external initLocalTabs  : int -> int -> int -> int -> int = "c_initLocalTabs"
+external initLocalTabsQuery : int -> int = "c_initLocalTabsQuery"
 external cleanLocalTabs : unit -> unit = "c_cleanLocalTabs" 
 
 external buildFreeVariable     : string -> int -> int = "c_buildFreeVariable"

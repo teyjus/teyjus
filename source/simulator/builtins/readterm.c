@@ -149,7 +149,24 @@ int RT_initLocalTabs(int numFvs,int numTyFvs,int numTermArgs,int numTypeArgs)
     }
     return EM_NO_ERR;
 }
+
+// For compiled queries, the only input are variables, so
+// no need to initialize term and type queues
+int RT_initLocalTabsQuery(int numFvs)
+{
+    int     size   = numFvs;
+    WordPtr tables;
     
+    EM_TRY{
+        tables = (WordPtr)EM_malloc(sizeof(DF_TermPtr) * size);
+
+        if (IO_freeVarTabFull(numFvs)) EM_error(RT_ERROR_FULL_VAR);
+        RT_freeVarTab  = (DF_TermPtr*)tables;        
+    } EM_CATCH {
+        return EM_CurrentExnType;
+    }
+    return EM_NO_ERR;
+}
 
 /* reclaim local tables */
 void RT_cleanLocalTabs()

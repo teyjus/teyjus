@@ -125,9 +125,8 @@ let compileQuery query amod =
   (* Number of term nodes is the number of free variables.
    * We set the type variables to 0 because we initialize them separately
    * in QUERY_solveQuery *)
-  let _ = (Ccode_stubs.initLocalTabs
-             (List.length fvars) 0
-             (List.length fvars) 0) in
+  let _ = (Ccode_stubs.initLocalTabsQuery (List.length fvars))
+  (* (List.length fvars)  0)*) in
   let _ = Readterm.initVariables fvars [] in
 
   (name,startLoc)
