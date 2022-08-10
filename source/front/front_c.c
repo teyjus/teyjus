@@ -204,6 +204,7 @@ static void FRONT_resetRegs()
 } 
 
 /* record symbol table bases */
+/* Note that a query may realloc the symbol table bases -- NG */
 static void FRONT_initSymbolTableBases()
 {
     AM_kstBase = MEM_currentModule -> kstBase;

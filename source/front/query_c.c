@@ -93,6 +93,7 @@ int QUERY_solveQuery()
 	  }
 	  // Initialize type register arguments
 	  // Note: All type variables are needed
+	  // TODO: It would be safer to use AM_cstTyEnvSize of the predicate -- NG
 	  for(int i = IO_freeVarTabTop; i < IO_freeVarTabTop + IO_freeVarTabTop; i++){
 	    DF_mkFreeVarType(AM_hreg);
 		DF_mkRefType(AM_reg(i+1), AM_hreg);

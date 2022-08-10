@@ -134,7 +134,12 @@ void LD_LOADQ_LoadCompiledQuery(char* modName)
   MEM_currentModule -> tstBase = ent.tstBase;
   MEM_currentModule -> cstBase = ent.cstBase;
 
-  
+  // Note: One could also call
+  //   front_c.c:FRONT_initSymbolTableBases
+  // but this seems cleaner.
+  AM_tstBase = ent.tstBase;
+  AM_cstBase = ent.cstBase;
+    
   // Set heap register to end of module space
   // When a new query is loaded it will be reset to the top of the heap
   AM_hreg = (MemPtr)ent.modSpaceEnd;
