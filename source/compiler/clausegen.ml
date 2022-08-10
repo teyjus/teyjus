@@ -1727,9 +1727,6 @@ let setUpGoalArgs goal chunk last hasenv =
   let neededness  = 
 	Absyn.getConstantNeedednessValue (Absyn.getAtomicGoalPredicate goal)
   in
-  prerr_endline(Format.sprintf "Generating args for constant %s:"
-                  (Absyn.getConstantName (Absyn.getAtomicGoalPredicate goal)));
-
   let numGoalArgs = Registers.getNumGoalArgs () in
   let (regTypePairs, typeConflictCode, typeConflictSize) =
     genRegTypePairs (numTermArgs + 1) numGoalArgs 

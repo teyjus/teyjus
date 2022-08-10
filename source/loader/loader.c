@@ -70,7 +70,6 @@ int LD_verbosity = 0;
 //Returns -1 on failure.
 int LD_LOADER_Load(char* modname, int index)
 {
-  LD_verbosity = 3;
   MEM_GmtEnt* gmtEnt;
 
   EM_TRY{
@@ -95,14 +94,17 @@ int LD_LOADER_Load(char* modname, int index)
     LD_CODE_LoadCode(gmtEnt, 0);
     LD_LOADER_AddGMTEnt(gmtEnt);
 	// free up temporary array
-	LD_IMPLGOAL_FreeTempAddresses();
+	LD_IMPLGOAL_Cleanup();
+	LD_STRING_Cleanup();
+	LD_BVRTAB_Cleanup();
+	LD_HASHTAB_Cleanup();
+	LD_IMPORTTAB_Cleanup();
   }EM_CATCH{
     ///\todo Clean up after failed load.
     LD_LOADER_DropGMTEnt(gmtEnt);
     EM_THROW(LD_LoadError);
   }
-
-    
+ 
   return 0;
 }
 

@@ -209,11 +209,10 @@ void MEM_removeModTableEntry(char* name)
 MEM_GmtEnt MEM_topModule;               //top module
 void MEM_topModuleInit()
 {   
-    WordPtr    memTop = MEM_memTop;
-    MEM_KstPtr kst=(MEM_KstPtr)MEM_memExtend(MEM_KST_ENTRY_SIZE*PERV_KIND_NUM);
-    MEM_TstPtr tst=(MEM_TstPtr)MEM_memExtend(MEM_TST_ENTRY_SIZE*PERV_TY_SKEL_NUM);
-    MEM_CstPtr cst=(MEM_CstPtr)MEM_memExtend(MEM_CST_ENTRY_SIZE*PERV_CONST_NUM);    
-
+	MEM_KstPtr kst = (MEM_KstEnt*)EM_malloc(PERV_KIND_NUM * sizeof(MEM_KstEnt));
+	MEM_TstPtr tst = (MEM_TstEnt*)EM_malloc(PERV_TY_SKEL_NUM * sizeof(MEM_TstEnt));
+	MEM_CstPtr cst = (MEM_CstEnt*)EM_malloc(PERV_CONST_NUM * sizeof(MEM_CstEnt));
+	
     PERVINIT_copyKindDataTab(kst);
     PERVINIT_copyTySkelTab(tst);
     PERVINIT_copyConstDataTab(cst);
@@ -225,7 +224,7 @@ void MEM_topModuleInit()
 	MEM_topModule.tstSize  = PERV_TY_SKEL_NUM;
     MEM_topModule.cstBase  = cst;
 	MEM_topModule.cstSize  = PERV_CONST_NUM;
-    MEM_topModule.modSpaceBeg = memTop;
+    MEM_topModule.modSpaceBeg = MEM_memTop;
     MEM_topModule.modSpaceEnd = MEM_memTop;
     MEM_topModule.codeSpaceBeg = NULL;
     MEM_topModule.codeSpaceEnd = NULL;    

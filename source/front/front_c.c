@@ -166,7 +166,6 @@ int FRONT_link(char* modName)
 
 int FRONT_load(char* modName, int index)
 {
-    LD_verbosity = 3;
     EM_TRY{
         LD_LOADER_Load(modName, index);
     }EM_CATCH{

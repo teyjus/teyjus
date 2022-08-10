@@ -62,7 +62,14 @@ void LD_LOADQ_LoadCompiledQuery(char* modName)
 
   // set code space at the end of the heap
   ent.codeSpaceEnd = (WordPtr)AM_heapEnd;
-  ent.modSpaceEnd = (WordPtr)AM_hreg;
+  ent.modSpaceEnd = ent.modSpaceBeg = (WordPtr)AM_hreg;
+
+  // These parameters are required to load the
+  // type skeleton and constant tables
+  ent.tstSize = MEM_currentModule -> tstSize;
+  ent.cstSize = MEM_currentModule -> cstSize;
+  ent.tstBase = MEM_currentModule -> tstBase;
+  ent.cstBase = MEM_currentModule -> cstBase;
 
   EM_TRY{
 	LD_FILE_Open(LD_LOADER_makePath(modName),QUERY_EXT);
@@ -74,15 +81,15 @@ void LD_LOADQ_LoadCompiledQuery(char* modName)
 	LD_error("Failed to open query stream\n");
 	EM_THROW(LD_LoadError);
   }
-
+  
   EM_TRY{
 	// Load new type skeletons contiguously to already loaded TST
 	LD_detail("loading new type skeletons\n");
-	LD_TYSKEL_LoadTst(MEM_currentModule, 1);
+	LD_TYSKEL_LoadTst(&ent, 1);
 
 	// Load new hidden constants contiguously to already loaded CST
 	LD_detail("loading new constant symbols\n");
-	LD_CONST_LoadCst(MEM_currentModule, 1);
+	LD_CONST_LoadCst(&ent, 1);
 
 
 	ent.modSpaceBeg = ent.modSpaceEnd = AM_hreg;
@@ -106,13 +113,28 @@ void LD_LOADQ_LoadCompiledQuery(char* modName)
 	/* Read bytecode in query mode */
 	LD_detail("loading code\n");
 	LD_CODE_LoadCode(&ent, 1);
+
+	LD_STRING_Cleanup();
+	LD_IMPLGOAL_Cleanup();
+	LD_HASHTAB_Cleanup();
+	LD_BVRTAB_Cleanup();
 	
-	LD_IMPLGOAL_FreeTempAddresses();
   }EM_CATCH{
 	LD_error("Failed to load compiled query\n");
 	EM_THROW(LD_LoadError);
   }
 
+
+  // In the event that the type skeleton or constant
+  // tables have been reallocated, we must update
+  // the values for the current module.
+  // Note that tstSize and cstSize should
+  // reflect the original size of the tables,
+  // and therefore should not be changed.
+  MEM_currentModule -> tstBase = ent.tstBase;
+  MEM_currentModule -> cstBase = ent.cstBase;
+
+  
   // Set heap register to end of module space
   // When a new query is loaded it will be reset to the top of the heap
   AM_hreg = (MemPtr)ent.modSpaceEnd;

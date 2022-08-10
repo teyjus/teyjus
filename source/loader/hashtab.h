@@ -26,4 +26,6 @@ extern void LD_HASHTAB_LoadHashTabs(MEM_GmtEnt* ent, int query);
 
 extern WordPtr LD_HASHTAB_GetHashTabAddr();
 
+extern void LD_HASHTAB_Cleanup();
+
 #endif //_HASHTAB_H_

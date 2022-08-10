@@ -231,8 +231,6 @@ and transTermConst c tyenv =
       | _ -> Errormsg.impossible Errormsg.none 
                "Parse.trunclist: invalid arguments."
   in
-  prerr_endline(Format.sprintf "Constant Skeleton Neededness for const: %s"
-                  (Absyn.getConstantName c));
   let skeletonNeededness = 
   Option.get (Absyn.getConstantSkeletonNeededness c) 
   in
@@ -561,9 +559,7 @@ and processAtomicGoal gltm head args arity =
                        arity + (Absyn.getConstantTypeEnvSize false pred),
                        arity,
                        List.map (transTerm []) args, List.map transType tyenv)
-  | _ -> prerr_endline(Format.sprintf "Head: %s"
-                         (Absyn.string_of_term_ast head));
-         Errormsg.impossible Errormsg.none "processAtomicGoal: invalid pred"
+  | _ -> Errormsg.impossible Errormsg.none "processAtomicGoal: invalid pred"
   
 
 (***************************************************************************)

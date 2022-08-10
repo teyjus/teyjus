@@ -60,6 +60,16 @@ let usageMsg =
     "options are:"
 
 (***********************************************************************
+*compileAndLoadQuery:
+* Compile and load a query.
+***********************************************************************)
+let compileAndLoadQuery query =
+  let modname,startLoc = Query.compileQuery query (Module.getCurrentModule ()) in
+  let _ = Ccode_stubs.loadQuery modname in
+  Ccode_stubs.setQueryEntryPoint startLoc
+
+  
+(***********************************************************************
 *solveQueries:
 * Main interaction loop.
 ***********************************************************************)
@@ -116,9 +126,7 @@ let solveQueries () =
   
   (* solve one query *)
   let solveQuery query =
-    let modname,startLoc = Query.compileQuery query (Module.getCurrentModule ()) in
-    ignore @@ Ccode_stubs.loadQuery modname;
-    Ccode_stubs.setQueryEntryPoint startLoc;
+    let _ = compileAndLoadQuery query in
     if !batch then
       solveQueryBatch ()
     else
@@ -166,9 +174,10 @@ let solveQueries () =
 * Reads terms with respect to the current module; registered with
 * the simulator.
 **********************************************************************)
-let readTerm term =
-  Query.readTerm term (Module.getCurrentModule ())
-let _ = Callback.register "ocaml_read_term" readTerm
+(* NG: No longer in use, since queries are now compiled *)
+(* let readTerm term =
+ *   Query.readTerm term (Module.getCurrentModule ())
+ * let _ = Callback.register "ocaml_read_term" readTerm *)
   
 (**********************************************************************
 *main:

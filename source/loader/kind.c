@@ -52,7 +52,6 @@ int LD_KIND_LoadKst(MEM_GmtEnt* ent)
           
   //Get the number of global kinds
   num_glob=LD_KIND_numGKinds=LD_FILE_GET2();
-  //printf("GKind table size=%d\n",num_glob);
   if(num_glob>kstsize)
     return -1;
   
@@ -65,7 +64,6 @@ int LD_KIND_LoadKst(MEM_GmtEnt* ent)
   
   //Load the local kinds
   num_loc=LD_FILE_GET2();
-  //printf("LKind table size=%d\n",num_loc);
   if(num_glob+num_loc!=kstsize)
     return -1;
   kst+=num_glob;
@@ -82,7 +80,6 @@ TwoBytes LD_KIND_GetKindInd()
 {
   Byte gl=LD_FILE_GET1();
   TwoBytes ind=LD_FILE_GET2();
-  //printf("Read KIndex %d:%d\n",gl,ind);
   switch(gl)
   {
     case LOCAL:

@@ -94,6 +94,7 @@ int c_setPath(value v)
 /***************************************************************************/
 /*                               query                                     */
 /***************************************************************************/
+// NG: No longer in use, since queries are now compiled
 void c_setTypeAndTermLocation(value v)
 {
     CAMLparam1 (v);
@@ -147,13 +148,13 @@ void c_setQueryEntryPoint(value loc)
 /***************************************************************************/
 /*                               read term                                 */
 /***************************************************************************/
-
-int c_initLocalTabs(value numFvs, value numTyFvs, value numTermArgs, 
+// NG: No longer in use, since queries are now compiled
+int c_initLocalTabs(value numFvs, value numTyFvs, value numTermArgs,
                      value numTypeArgs)
 {
     CAMLparam4 (numFvs, numTyFvs, numTermArgs, numTypeArgs);
     CAMLreturn(Val_int(RT_initLocalTabs(Int_val(numFvs), Int_val(numTyFvs),
-                                        Int_val(numTermArgs), 
+                                        Int_val(numTermArgs),
                                         Int_val(numTypeArgs))));
 }
 

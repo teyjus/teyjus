@@ -49,9 +49,6 @@ let getConstantMark constCat =
   | _ -> Bytecode.hidden (* assumed to be hidden constant *)		
   
 let writeConstIndex const =
-  let cname = (Absyn.getConstantName const) in
-  let ci = (Absyn.getConstantIndex const) in
-  prerr_endline(Printf.sprintf "Writing const %s -> %d" cname ci);
   Bytecode.writeint1 (getConstantMark (Absyn.getConstantType const));
   Bytecode.writeint2 (Absyn.getConstantIndex const)
 
@@ -236,7 +233,6 @@ let writeHashTabInfo hashTabs =
 	
   let Codegen.ConstHashTabs(hashTabList, numHashTabs) = hashTabs in
   (* <number of hash tables> *)
-  prerr_endline(Format.sprintf "Writing HashTabs: %d" numHashTabs);
   Bytecode.writeint2 numHashTabs;
   (* [hash tables] *)
   map writeHashTab hashTabList	
@@ -373,20 +369,17 @@ let writeQueryByteCode cgModule =
 				   accRenaming, instrs, hashTabs, implGoals) ->
     let Codegen.Instructions(code,codeSize) = instrs in
     (* [code size] *)
-    prerr_endline ("Writing Code size: "^(string_of_int codeSize));
     writeCodeSize codeSize;
     (* [type skeletons] *)
     let numtyskels = Codegen.getNumCGTypeSkeletons tySkels in
-    prerr_endline(Printf.sprintf "Num Type Skels: %d" numtyskels);
     writeTypeSkels tySkels;
     (* [global constants] *)
     (* [local constants] *)
     (* [hidden constants] *)
-    assert(Codegen.getNumCGConsts gconsts = 0
-           && Codegen.getNumCGConsts lconsts = 0);
-    prerr_endline(Printf.sprintf "Num hidden consts: %d" (Codegen.getNumCGConsts hconsts));
+    assert(Codegen.getNumCGConsts gconsts = 0 && Codegen.getNumCGConsts lconsts = 0);
     (* We need to write total number of new constants
-     * since loader is expecting linkcode *)
+     * since loader is expecting linkcode. Note that in a query,
+     * the only new constants should be hidden. *)
     Bytecode.writeint2 (Codegen.getNumCGConsts hconsts);
     writeConstInfo gconsts lconsts hconsts;
     (* [strings] *)

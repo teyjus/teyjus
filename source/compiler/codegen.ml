@@ -245,9 +245,6 @@ let assignConstIndex gconsts lconsts hconsts =
 	match consts with
 	  [] -> (index, defs, numDefs)  (*note defs are in reversed order *)
 	| (const :: rest) ->
-       let ii = Absyn.getConstantIndex const in
-       prerr_endline (Format.sprintf "Setting Local const index: %d -> %d"
-                        ii index);
 	   Absyn.setConstantIndex const index; (*set index*)
 	   let (newDefs, newNumDefs) =
 		 match (!(Absyn.getConstantCodeInfo const)) with
@@ -268,9 +265,6 @@ let assignConstIndex gconsts lconsts hconsts =
 	match consts with
 	  [] -> index
 	| (const :: rest) ->
-       let ii = Absyn.getConstantIndex const in
-       prerr_endline (Format.sprintf "Setting Hidden const index: %d -> %d" ii index);
-       
 		Absyn.setConstantIndex const index;
 		assignHiddenConstIndex rest (index + 1)
   in
@@ -286,10 +280,6 @@ let assignConstIndex gconsts lconsts hconsts =
       [] -> (index, defs, numDefs, nonExpDefs, numNonExpDefs, expDefs, 
 	     numExpDefs) (* reverse?! *)
     | (const :: rest) ->
-       let ii = Absyn.getConstantIndex const in
-       prerr_endline (Format.sprintf "Setting Global const index: %d -> %d"
-                        ii index);
-
 	Absyn.setConstantIndex const index;
 	let codeInfo = Absyn.getConstantCodeInfo const in
 	let (newDefs, newNumDefs, newNonExpDefs, newNumNonExpDefs, newExpDefs, 
@@ -320,7 +310,6 @@ let assignConstIndex gconsts lconsts hconsts =
 	assignGlobalConstIndex rest (index+1) newDefs newNumDefs newNonExpDefs
 	  newNumNonExpDefs newExpDefs newNumExpDefs
   in
-  prerr_endline "Assigning constant indices...";
   (* function body of assignConstIndex *)
   let (numLConsts, defs, numDefs) = 
 	assignLocalConstIndex lconsts 0 [] 0 
@@ -989,7 +978,6 @@ let processDef clauseBlock insts startLoc =
       = genDummyTryMeElse clauses partitions
   in
   let pred = Absyn.getConstantName(Absyn.getClausePred (List.hd clauses)) in
-  prerr_endline (Format.sprintf "Processing pred: %x:%s" startLoc pred);
   if ((Option.isSome !main_pred)
       && (pred = fst (Option.get !main_pred))) then
     main_pred := Some (pred, startLoc);
@@ -1057,13 +1045,10 @@ let processTopLevelDefs defs =
 (* generate code for definitions in an implication              *)
 (****************************************************************)
 let genImpDefs defs insts startLoc =
-  prerr_endline(Printf.sprintf "startLoc: %d" startLoc);
 
   let rec genImpDefsAux defs insts startLoc extNum extPreds predNum predInfo =
 	(* generate code for one definition *)
 	let genImpDef pred clauseBlock insts startLoc extNum extPreds =
-      prerr_endline(Printf.sprintf "genImpDef for pred %s"
-                      (Absyn.getConstantName pred));
       let (newExtPreds, newExtNum) =
 		if (Absyn.getClauseBlockClose clauseBlock) then (extPreds, extNum)
 		else

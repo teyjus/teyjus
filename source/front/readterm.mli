@@ -18,7 +18,8 @@
 * You should have received a copy of the GNU General Public License
 * along with Teyjus.  If not, see <http://www.gnu.org/licenses/>.
 ****************************************************************************)
+(* NG: No longer in use, since queries are now compiled *)
 val readTermAndType : Absyn.aterm -> Types.typemolecule -> 
   Absyn.atypesymbol list -> Absyn.atype list -> unit
 
-val initVariables : (Absyn.atypesymbol list) -> (Absyn.atype list) -> unit
+val initVariables : (Absyn.atypesymbol list) -> unit

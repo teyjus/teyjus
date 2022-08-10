@@ -26,4 +26,6 @@ extern void LD_BVRTAB_LoadBvrTabs(MEM_GmtEnt* ent);
 
 extern WordPtr LD_BVRTAB_GetBvrTabAddr();
 
+extern void LD_BVRTAB_Cleanup();
+
 #endif //_BVRTAB_H_

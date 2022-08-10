@@ -47,6 +47,7 @@ static Boolean QUERY_reQuery; /* TRUE if this query has already
 /* register the current heap top and the next cell as the positions of     */
 /* the type of query and the query; increase the heap top correspondingly; */
 /* Also, set QUERY_reQuery to be false                                     */
+// NG: No longer in use, since queries are now compiled
 void QUERY_setTypeAndTermLocation()
 {
   // for compiled queries, we only do this because readterm expects
@@ -58,6 +59,9 @@ void QUERY_setTypeAndTermLocation()
 
     QUERY_reQuery = FALSE;
 }
+
+// Set main entry point for compiled query
+// We assume AM_preg is pointing to the start of the query code
 void QUERY_setQueryEntryPoint(int startLoc)
 {
   // In practice, a query is always compiled as
@@ -69,29 +73,29 @@ void QUERY_setQueryEntryPoint(int startLoc)
   // code for the compiled query, in loader/loadquery.c
   // (INSTR_I1LX_LEN is the length of the try_me_else instruction)
   AM_preg += (startLoc + INSTR_I1LX_LEN);
+  QUERY_reQuery = FALSE;
 }
+
 int QUERY_solveQuery()
 {
-  printf("Solving query...\n");
   EM_TRY {
 	if (QUERY_reQuery) {// cause backtracking by setting simulator to fail
 	  AM_preg = AM_failCode;
 	} else {
-	  printf("EntryPoint: %x\n", AM_preg);
 	  AM_cpreg = AM_proceedCode;
 
-	  printf("NumFreeVars: %d\n", IO_freeVarTabTop);
-	  // Initialize register arguments to IO_freeVarTab
+	  // Initialize register arguments to those
+	  // already layed out on the heap and stored in IO_freeVarTab
 	  for(int i = 0; i < IO_freeVarTabTop; i++){
 		// Argument registers start at index 1
 		DF_mkRef(AM_reg(i+1),IO_freeVarTab[i].rigdes);
 		QUERY_reQuery = TRUE;
 	  }
 	  // Initialize type register arguments
+	  // Note: All type variables are needed
 	  for(int i = IO_freeVarTabTop; i < IO_freeVarTabTop + IO_freeVarTabTop; i++){
 	    DF_mkFreeVarType(AM_hreg);
 		DF_mkRefType(AM_reg(i+1), AM_hreg);
-		printf("Making typevar[%d]: %x\n", (i+1),AM_hreg);
 		AM_hreg += DF_TY_ATOMIC_SIZE;
 	  }
 	}
@@ -109,7 +113,7 @@ int QUERY_solveQuery()
 }
 
 /* solve query */
-// NG: Deprecated, since queries are now compiled
+// NG: No longer in use, since queries are now compiled
 /* int QUERY_solveQuery() */
 /* { */
 /*     EM_TRY { */

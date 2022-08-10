@@ -141,3 +141,11 @@ WordPtr LD_IMPORTTAB_GetImportTabAddr()
     EM_THROW(LD_LoadError);
   return LD_IMPORTTAB_ImportTabs[i];
 }
+
+void LD_IMPORTTAB_Cleanup()
+{
+  if(LD_IMPORTTAB_ImportTabs){
+	free(LD_IMPORTTAB_ImportTabs);
+    LD_IMPORTTAB_ImportTabs=NULL;
+  }
+}

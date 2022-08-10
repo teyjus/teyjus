@@ -26,6 +26,6 @@ void LD_IMPLGOAL_LoadImplGoals(MEM_GmtEnt* ent, int query);
 
 WordPtr LD_IMPLGOAL_GetImplGoalAddr();
 
-void LD_IMPLGOAL_FreeTempAddresses();
+void LD_IMPLGOAL_Cleanup();
 
 #endif //_IMPLGOAL_H_

@@ -48,3 +48,12 @@ WordPtr LD_HASHTAB_GetHashTabAddr()
     EM_THROW(LD_LoadError);
   return LD_HASHTAB_HashTabs[i];
 }
+
+
+void LD_HASHTAB_Cleanup()
+{
+  if(LD_HASHTAB_HashTabs){
+	free(LD_HASHTAB_HashTabs);
+    LD_HASHTAB_HashTabs=NULL;
+  }
+}

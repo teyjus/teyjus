@@ -241,6 +241,7 @@ let termAndTypeSize tm ty =
 (********************************************************************)
 (*                       interface function                         *)
 (********************************************************************)
+(* NG: No longer in use, since queries are now compiled *)
 let readTermAndType tm tymol fvars tyfvars =
     let getTypeMoleculeType tymol =
     let rec getTypeMoleculeTypeAux tyenv tyskel =
@@ -273,12 +274,11 @@ let readTermAndType tm tymol fvars tyfvars =
   buildType tyfvIndexes [ty];
   buildTerm fvIndexes tyfvIndexes [tm];
   Ccode_stubs.setQueryFreeVariables ();
-  Ccode_stubs.cleanLocalTabs () 
+  Ccode_stubs.cleanLocalTabs ()
 
 
-let initVariables fvars tyfvars =
+let initVariables fvars =
   let _ = layOutVariables fvars buildFreeVariable in
-  let _ = layOutVariables tyfvars buildFreeTypeVariable in
   (* This sets the number of variables in IO_freeVarTab *)
   Ccode_stubs.setQueryFreeVariables ();
   Ccode_stubs.cleanLocalTabs ()

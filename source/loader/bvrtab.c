@@ -66,3 +66,11 @@ WordPtr LD_BVRTAB_GetBvrTabAddr()
     EM_THROW(LD_LoadError);
   return LD_BVRTAB_BvrTabs[i];
 }
+
+void LD_BVRTAB_Cleanup()
+{
+  if(LD_BVRTAB_BvrTabs){
+	free(LD_BVRTAB_BvrTabs);
+	LD_BVRTAB_BvrTabs=NULL;
+  }
+}

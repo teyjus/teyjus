@@ -99,8 +99,10 @@ WordPtr LD_IMPLGOAL_GetImplGoalAddr()
   return LD_IMPLGOAL_ImplGoals[i];
 }
 
-void LD_IMPLGOAL_FreeTempAddresses()
+void LD_IMPLGOAL_Cleanup()
 {
-  LD_detail("Freeing implication goal index table\n");
-  free(LD_IMPLGOAL_ImplGoals);
+  if(LD_IMPLGOAL_ImplGoals){
+	free(LD_IMPLGOAL_ImplGoals);
+    LD_IMPLGOAL_ImplGoals=NULL;
+  }
 }

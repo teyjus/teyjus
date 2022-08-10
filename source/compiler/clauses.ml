@@ -277,7 +277,7 @@ and collectFreeVars term fvs bvs : Absyn.aterm * (Absyn.atypesymbol list) =
   | Absyn.ConstantTerm(c,_,pos) -> (term, fvs)
   | Absyn.AbstractionTerm(Absyn.NestedAbstraction(tsym, body),pos) ->
      (* !!! This seems like a typo, tsym should be added to bound variables???
-      * --> This is what Parse.fixTerm does...  *)
+      * --> This is what Parse.fixTerm does... -- NG *)
      let (body', fvs') = collectFreeVars body fvs (tsym::bvs) in
      let term' = Absyn.AbstractionTerm(Absyn.NestedAbstraction(tsym, body'), pos) in
      (term', fvs')
@@ -294,16 +294,6 @@ and collectFreeVars term fvs bvs : Absyn.aterm * (Absyn.atypesymbol list) =
                      pos) in
      (term', fvs'')
   | Absyn.ErrorTerm -> (term, fvs)   
-  (* Only executed when deorifying a query (which is a toplevel term).
-   * This is necessary because nested abstractions
-   * are removed when processing a query, and
-   * bound variables are DeBruijndenized. *)
-  (* | Absyn.AbstractionTerm(Absyn.UNestedAbstraction(tsyms,nabs,body),pos) ->
-   *    let (body',fvs') = collectFreeVars body fvs bvs in
-   *    let term' = Absyn.AbstractionTerm(Absyn.UNestedAbstraction(tsyms,nabs,body'),pos) in
-   *    (term',fvs')
-   * | Absyn.BoundVarTerm(Absyn.DBIndex k, pos) ->
-   *    (term,fvs) *)
   | _ -> Errormsg.impossible Errormsg.none "Clauses.collectFreeVars: Invalid term type."
 
 (**********************************************************************

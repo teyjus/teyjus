@@ -26,6 +26,8 @@ let abortOnError () =
 (***************************************************************************)
 (*   parse a query and create relevant structures onto simulator heap      *)
 (***************************************************************************)
+
+(* NG: No longer in use, since queries are now compiled *)
 let buildQueryTerm query amod =
   (* parse the query to pre abstract syntax *)
   let preTerm = Compile.compileString query in
@@ -73,34 +75,28 @@ let compileQuery query amod =
   let term = Option.get @@ Parse.translateClause preTerm amod in
   
   (** Now compile query *)
-
-  prerr_endline "Making Query Clause...";
   (* Create a main clause for the query *)
   let (pred,term, fvars)  = Clauses.makeQueryClause term (* fvars *) in
   (prerr_endline (string_of_int (List.length fvars)));
   
   (* Normalize and deOrify the query *)
-  prerr_endline "Translating query...";
   let (amod, clauses, newclauses, closeddefs) = Clauses.translateQuery pred term amod in
   let _ = abortOnError () in
 
-
   (* We cannot call Typereduction.reduceSkeletons or Typereduction.reducePredicates here
-   * because that would generate different neededness values. However, 
-   * in an exported definition we must assume that every type variable is needed. *)
+   * because that would generate different neededness values.  
+   * Neededness values are local to a module, so in an exported definition 
+   * we must assume that every type variable is needed. *)
   let amod = Typereduction.initConstantNeededness amod in
 
-  prerr_endline "Processing Clauses...";
   (* Translate Absyn.aterm clauses to Absyn.aclause *)
   let amod = Processclauses.processClauses amod clauses newclauses closeddefs in
   let _ = abortOnError () in
 
-  prerr_endline "Analyzing Variables...";
   (* Analyze variables (register allocation magic) *)
   let () = Annvariables.processClauses amod in
   let _ = abortOnError () in
 
-  prerr_endline "Generating Code...";
   Codegen.set_main_pred (Absyn.getConstantName pred);
   let cg = Codegen.generateModuleCode amod in
   let startLoc = Codegen.get_main_pred_loc () in  
@@ -118,17 +114,15 @@ let compileQuery query amod =
   let _ = Bytecode.closeOutChannel () in
   let _ = abortOnError () in
 
-  (** Init free variables onto the heap *)
-  (* Needed for initLocalTabs *)
-  let _ = (Ccode_stubs.setTypeAndTermLocation ()) in
-
-  (* Number of term nodes is the number of free variables.
-   * We set the type variables to 0 because we initialize them separately
-   * in QUERY_solveQuery *)
-  let _ = (Ccode_stubs.initLocalTabsQuery (List.length fvars))
-  (* (List.length fvars)  0)*) in
-  let _ = Readterm.initVariables fvars [] in
-
+  (** Init free term variables onto the heap, and IO tables *)
+  (* Note: since neededness values are maximal, we must pass
+   * all type variables as arguments. For example,
+   * main A1 ... An T1 ... Tn :- {query A1 ... An}.
+   * The type variables are initialized later, in 
+   *   front/query_c.c:QUERY_solveQuery
+   *)
+  let _ = (Ccode_stubs.initLocalTabsQuery (List.length fvars)) in
+  let _ = Readterm.initVariables fvars in
   (name,startLoc)
   
       
@@ -160,6 +154,8 @@ let queryHasVars () =
 (*                      read term                                          *)
 (*  parse a term and create relevant structures onto simulator heap        *)
 (***************************************************************************)
+
+(* NG: No longer in use, since queries are now compiled *)
 
 let readTerm term amod =
  

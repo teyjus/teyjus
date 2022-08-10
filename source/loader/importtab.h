@@ -26,4 +26,6 @@ void LD_IMPORTTAB_LoadImportTabs(MEM_GmtEnt* ent);
 
 WordPtr LD_IMPORTTAB_GetImportTabAddr();
 
+void LD_IMPORTTAB_Cleanup();
+
 #endif //_IMPORTTAB_H_

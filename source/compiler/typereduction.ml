@@ -734,17 +734,20 @@ let reducePredicates amod =
 
   amod
 
-
+(* This initializes constant and constant skeleton neededness 
+ * for queries. The expected behavior is that a query should
+ * only have external access to a module, as if it was importing
+ * the module. Since neededness values are only local to a module, 
+ * any call to a predicat or constant from outside the module 
+ * (and thus from a query) must assume maximal neededness.
+ *)
 let initConstantNeededness amod =
-  prerr_endline "Making neededness";
   let makeConstantNeededness sym constant =
     let neededness = Absyn.getConstantNeedednessRef constant in
     if Option.isNone (!neededness) then
       let size = (Absyn.getConstantTypeEnvSize false constant) in
       let neededness' = 
         Array.make size true in
-      prerr_endline(Format.sprintf "Make const Neededness for `%s`[%d]"
-                      (Absyn.getConstantName constant) size);
       neededness := Some(neededness')
     else
       ()
@@ -755,9 +758,6 @@ let initConstantNeededness amod =
       let size = (Absyn.getConstantTypeEnvSize false constant) in
       let neededness' =
         Array.make size true in
-      prerr_endline(Format.sprintf "Make skeleton Neededness for `%s`[%d]"
-                      (Absyn.getConstantName constant) size);
-
       neededness := Some(neededness')
     else ()
   in

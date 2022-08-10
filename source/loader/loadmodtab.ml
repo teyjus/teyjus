@@ -186,7 +186,7 @@ let loadConstSymTab tySkeletonTab =
 (****************************************************************************)
 let skipStringTab () =
   let numStrings = Bytecode.readTwoBytes () in
-  prerr_endline(Printf.sprintf "Skipping strings: %d" numStrings);
+  (* prerr_endline(Printf.sprintf "Skipping strings: %d" numStrings); *)
   List.iter (fun _ -> ignore @@ Bytecode.readString())
     (List.init numStrings (fun i -> ()))
 
@@ -199,7 +199,7 @@ let skipImpGoalTabs () =
     Bytecode.skipNBytes ((3 + (Bytecode.getWordSize())) * numDefs)
   in
   let numImpGoalTabs = Bytecode.readTwoBytes() in
-  prerr_endline(Printf.sprintf "Skipping implication goal tables: %d" numImpGoalTabs);
+  (* prerr_endline(Printf.sprintf "Skipping implication goal tables: %d" numImpGoalTabs); *)
   List.iter skipImpGoalTab (List.init numImpGoalTabs (fun i -> ()))
 
 let skipHashTabs () =
@@ -208,7 +208,7 @@ let skipHashTabs () =
     Bytecode.skipNBytes ((3 + (Bytecode.getWordSize())) * numEntries)
   in
   let numHashTabs = Bytecode.readTwoBytes() in
-  prerr_endline(Printf.sprintf "Skipping Hash tables: %d" numHashTabs);
+  (* prerr_endline(Printf.sprintf "Skipping Hash tables: %d" numHashTabs); *)
   List.iter skipHashTab (List.init numHashTabs (fun i -> ()))
 
 let skipBVTabs () =
