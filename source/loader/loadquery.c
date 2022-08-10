@@ -53,13 +53,24 @@
  indices for kinds and constants (except for hidden constants) are independent 
  of the type of the constant (ie. global/local/hidden/pervasive)
  thus we must pass to the loading components whether or not we are loading a query.
+ See loader/const.c:LD_CONST_GetConstIndQuery and
+ loader/kind.c:LD_KIND_GetKindIndQuery.
 */
+
+MemPtr LD_LOADQ_heapEnd = NULL;
 
 void LD_LOADQ_LoadCompiledQuery(char* modName)
 {	
   // set up a virtual GMT module
   MEM_GmtEnt ent;
 
+  // reset the end of the heap to overwrite
+  // code from the previous query.
+  if(LD_LOADQ_heapEnd){
+	AM_heapEnd = LD_LOADQ_heapEnd;
+  }
+  printf("Heap End: %x\n", AM_heapEnd);
+  
   // set code space at the end of the heap
   ent.codeSpaceEnd = (WordPtr)AM_heapEnd;
   ent.modSpaceEnd = ent.modSpaceBeg = (WordPtr)AM_hreg;
@@ -152,5 +163,14 @@ void LD_LOADQ_LoadCompiledQuery(char* modName)
   // In front/query_c.c, we skip over the first two instructions
   AM_preg = (MemPtr)ent.codeSpaceBeg;
 
+  // We temporarily shrink the heap so that
+  // code for the query does not get overwritten.
+  // For this reason, we must recall the true location of
+  // the end of the heap so that it may be reset for the next query.
+  // Note: This is kind of a hack, but much simpler than putting the
+  // code space before the module space, because the loader generally
+  // assumes that the module space precedes the code space.
+  LD_LOADQ_heapEnd = AM_heapEnd;
   AM_heapEnd = ent.codeSpaceBeg;
+  
 }
