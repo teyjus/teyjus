@@ -21,7 +21,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <errno.h>
 #include "util.h"
 
 
@@ -121,10 +120,16 @@ FILE* UTIL_fopenR(char* filename)
 /* open file in write mode */
 FILE* UTIL_fopenW(char* filename)
 {
-    FILE* filePtr = fopen(filename, "w");
-    if (filePtr || errno == 13) return filePtr;
+    FILE* filePtr = fopen(filename, "r");
+    if (filePtr) {
+        // File already exists
+        fclose(filePtr);
+        return NULL;
+    }
+    filePtr = fopen(filename, "w");
+    if (filePtr) return filePtr;
     
-    printf("Error : cannot open output file %s error: %d\n", filename, errno);
+    printf("Error : cannot open output file %s\n", filename);
     exit(1);
 }
 
