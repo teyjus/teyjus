@@ -11,8 +11,6 @@
 #include "code.h"
 #include "../simulator/abstmachine.h"
 
-#define QUERY_EXT ".lpq"
-
 /* Load the bytecode for a compiled query into the heap.
    The only information we care about are:
    - Code size
@@ -59,8 +57,10 @@
 
 MemPtr LD_LOADQ_heapEnd = NULL;
 
-void LD_LOADQ_LoadCompiledQuery(char* modName)
-{	
+// Assumes a pipe containing query code is already open
+void LD_LOADQ_LoadCompiledQuery()
+{
+  // LD_verbosity = 3;
   // set up a virtual GMT module
   MEM_GmtEnt ent;
 
@@ -83,8 +83,8 @@ void LD_LOADQ_LoadCompiledQuery(char* modName)
   ent.cstBase = MEM_currentModule -> cstBase;
 
   EM_TRY{
-	LD_FILE_Open(LD_LOADER_makePath(modName),QUERY_EXT);
-
+	// Note: that a pipe is already open
+	
 	// This will set: ent.codeSpaceBeg = ent.codeSpaceEnd - codeSize
 	LD_detail("loading code size\n");
 	LD_CODE_LoadCodeSize(&ent);
@@ -129,9 +129,12 @@ void LD_LOADQ_LoadCompiledQuery(char* modName)
 	LD_IMPLGOAL_Cleanup();
 	LD_HASHTAB_Cleanup();
 	LD_BVRTAB_Cleanup();
+
+	LD_FILE_ClosePipe();
 	
   }EM_CATCH{
 	LD_error("Failed to load compiled query\n");
+	LD_FILE_ClosePipe();
 	EM_THROW(LD_LoadError);
   }
 

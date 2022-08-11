@@ -21,10 +21,13 @@
 #include "../simulator/builtins/readterm.h"
 #include "front_c.h"
 #include "query_c.h"
+#include "../loader/file.h"
+
 #include "caml/mlvalues.h"
 #include "caml/memory.h"
 #include "caml/alloc.h"
 #include "caml/custom.h"
+
 
 /***************************************************************************/
 /*                          front                                          */
@@ -144,6 +147,30 @@ void c_setQueryEntryPoint(value loc)
   QUERY_setQueryEntryPoint(Int_val(loc));
   CAMLreturn0;
 }
+
+/***************************************************************************/
+/*                               pipes                                     */
+/***************************************************************************/
+void c_openPipe()
+{
+  CAMLparam0();
+  LD_FILE_OpenPipe();
+  CAMLreturn0;
+}
+
+int c_getPipeIn()
+{
+  CAMLparam0();
+  int fd = LD_FILE_GetPipeIn();
+  CAMLreturn(Val_int(fd));
+}
+
+/* void c_setInChannel(value chan) */
+/* { */
+/*   CAMLparam1(chan); */
+/*   LD_FILE_SetInChannel(Int_val(chan)); */
+/*   CAMLreturn0; */
+/* } */
 
 /***************************************************************************/
 /*                               read term                                 */

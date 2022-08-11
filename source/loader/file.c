@@ -144,7 +144,7 @@ Byte LD_FILE_GET1()
   return tmp;
 }
 
-//#ifdef DEBUG
+  
 int pfd;
 
 void LD_FILE_OpenPipe()
@@ -156,6 +156,11 @@ void LD_FILE_OpenPipe()
   pfd=m_pipe[1];
 }
 
+int LD_FILE_GetPipeIn(){
+  return pfd;
+}
+
+//#ifdef DEBUG
 void LD_FILE_PipePUT1(Byte b)
 {
   write(pfd,&b,sizeof(b));

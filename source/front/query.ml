@@ -101,18 +101,18 @@ let compileQuery query amod =
   let cg = Codegen.generateModuleCode amod in
   let startLoc = Codegen.get_main_pred_loc () in  
   abortOnError();
-  
-  (** Write bytecode file *)
-  (* TODO: See Unix.mkfifo *)
-  (* write output to temporary file for processing by C code *)
+
+  (** Write output to pipe for processing by C code *)
   let _ = Bytecode.setWordSize () in
   let name = Codegen.getCGModuleName cg in
-  let _ = Bytecode.openOutChannel (name ^ ".lpq") in
+  
+  let _ = Ccode_stubs.openPipe() in
+  let out_chan = Unix.out_channel_of_descr(Ccode_stubs.getPipeIn()) in
+  let _ = Bytecode.setOutChannel out_chan in
   
   let _ = Spitcode.writeQueryByteCode cg in
-  
-  let _ = Bytecode.closeOutChannel () in
   let _ = abortOnError () in
+  let _ = flush(out_chan) in
 
   (** Init free term variables onto the heap, and IO tables *)
   (* Note: since neededness values are maximal, we must pass

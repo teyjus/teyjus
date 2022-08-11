@@ -88,7 +88,7 @@ int QUERY_solveQuery()
 	  // already layed out on the heap and stored in IO_freeVarTab
 	  for(int i = 0; i < IO_freeVarTabTop; i++){
 		// Argument registers start at index 1
-		DF_mkRef(AM_reg(i+1),IO_freeVarTab[i].rigdes);
+		DF_mkRef((MemPtr)AM_reg(i+1),IO_freeVarTab[i].rigdes);
 		QUERY_reQuery = TRUE;
 	  }
 	  // Initialize type register arguments
@@ -96,7 +96,7 @@ int QUERY_solveQuery()
 	  // TODO: It would be safer to use AM_cstTyEnvSize of the predicate -- NG
 	  for(int i = IO_freeVarTabTop; i < IO_freeVarTabTop + IO_freeVarTabTop; i++){
 	    DF_mkFreeVarType(AM_hreg);
-		DF_mkRefType(AM_reg(i+1), AM_hreg);
+		DF_mkRefType((MemPtr)AM_reg(i+1), (DF_TypePtr)AM_hreg);
 		AM_hreg += DF_TY_ATOMIC_SIZE;
 	  }
 	}
@@ -175,7 +175,7 @@ Boolean QUERY_queryHasVars()
 }
 
 
-void QUERY_loadQuery(char* modName)
+void QUERY_loadQuery()
 {
-  LD_LOADQ_LoadCompiledQuery(modName);
+  LD_LOADQ_LoadCompiledQuery();
 }

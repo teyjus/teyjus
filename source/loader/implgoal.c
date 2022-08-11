@@ -77,14 +77,14 @@ WordPtr LD_IMPLGOAL_LoadImplGoal(MEM_GmtEnt* ent, int query)
   if(fcf==FCF_SEQNSEARCH)
   {
     MEM_implPutFC(tab,(MEM_FindCodeFnPtr)&LD_SEARCHTAB_SeqnSrch);
-    LD_SEARCHTAB_LoadSeqSTab(ent,&tabSize,1);
+    LD_SEARCHTAB_LoadSeqSTab(ent,&tabSize,query);
     MEM_implPutPSTS(tab,tabSize);
     ///\todo do something with returned address.
   }
   else if(fcf==FCF_HASHSEARCH)
   {
     MEM_implPutFC(tab,(MEM_FindCodeFnPtr)&LD_SEARCHTAB_HashSrch);
-    LD_SEARCHTAB_LoadHashTab(ent,&tabSize,1);
+    LD_SEARCHTAB_LoadHashTab(ent,&tabSize,query);
     MEM_implPutPSTS(tab,tabSize);
     ///\todo do something with returned address.
   }

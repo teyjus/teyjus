@@ -58,6 +58,7 @@ void LD_IMPORTTAB_LoadImportTabs(MEM_GmtEnt* ent)
   return;
 }
 
+// Never called from a query
 WordPtr LD_IMPORTTAB_LoadImportTab(MEM_GmtEnt* ent)
 {
   WordPtr tab;

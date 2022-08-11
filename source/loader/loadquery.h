@@ -10,4 +10,4 @@
 #include "../simulator/abstmachine.h"
 
 
-void LD_LOADQ_LoadCompiledQuery(char* modname)
+void LD_LOADQ_LoadCompiledQuery()

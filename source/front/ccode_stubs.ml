@@ -40,6 +40,11 @@ external queryHasVars           : unit -> bool = "c_queryHasVars"
 external loadQuery              : string -> unit = "c_loadQuery"
 external setQueryEntryPoint     : int -> unit = "c_setQueryEntryPoint"
 
+(* pipes *)
+external openPipe  : unit -> unit = "c_openPipe"
+external getPipeIn : unit -> Unix.file_descr = "c_getPipeIn"
+                                         
+                                              
 (* read term *)
 external initLocalTabs  : int -> int -> int -> int -> int = "c_initLocalTabs"
 external initLocalTabsQuery : int -> int = "c_initLocalTabsQuery"

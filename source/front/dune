@@ -1,10 +1,26 @@
 (library
  (name front)
- (modules parseargs query ccode_stubs readterm simerrors module front)
+ (modules
+   parseargs
+   query
+   ccode_stubs
+   readterm
+   simerrors
+   module
+   front)
  (foreign_stubs
   (language c)
   (names ccode_stubs_c front_c query_c))
- (libraries compiler loader simulator builtins system linker include)
+ (libraries
+   compiler
+   loader
+   simulator
+   builtins
+   system
+   linker
+   include
+   unix ;; For pipes
+ )
  (wrapped false))
 
 (executable

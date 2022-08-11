@@ -27,7 +27,7 @@
 void QUERY_setTypeAndTermLocation();
 
 /* load query */
-void QUERY_loadQuery(char* modName);
+void QUERY_loadQuery();
 
 /* solve query */
 int QUERY_solveQuery();

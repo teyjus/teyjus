@@ -31,10 +31,6 @@ val makeByteCodeFileName  : string -> string
 
 val linkedByteCodeVersionNumber : int
 val makeLinkedByteCodeName : string -> string
-
-val queryByteCodeVersionNumber : int
-val makeQueryByteCodeName : string -> string
-
   
 (* type skeleton representation *)
 val typeMarkArrow         : int
@@ -76,6 +72,7 @@ val getWordSize : unit -> int
 (* management of output channel                                   *)
 (******************************************************************)
 val openOutChannel  : string -> unit
+val setOutChannel : out_channel -> unit
 val closeOutChannel : unit   -> unit 
 
 (******************************************************************)
