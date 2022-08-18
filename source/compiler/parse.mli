@@ -41,6 +41,7 @@ type symbol = Symbol.symbol
 *   a list of new free type variables in the type
 *
 **********************************************************************)
+(* NG: No longer in use, since queries are now compiled *)
 val translateTermTopLevel : Preabsyn.pterm -> Absyn.amodule ->
   (Absyn.aterm * Types.typemolecule * Absyn.atypesymbol list * Absyn.atype list) option
   

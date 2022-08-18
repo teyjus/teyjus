@@ -1347,11 +1347,11 @@ and removeNestedAbstractions term =
         | _ -> (List.rev (tsym :: tsyms), remove body))
     (* This instance may occur while processing queries
      * because queries are toplevel terms *)
-    | Absyn.UNestedAbstraction(tsyms,nabs,body) ->
-       (tsyms,body)
-  (* | Absyn.UNestedAbstraction(_) ->
-   *     (Errormsg.impossible Errormsg.none
-   *       "Parse.removeNestedAbstractions: unexpected unnested abstraction") *)
+    (* | Absyn.UNestedAbstraction(tsyms,nabs,body) ->
+     *    (tsyms,body) *)
+  | Absyn.UNestedAbstraction(_) ->
+      (Errormsg.impossible Errormsg.none
+        "Parse.removeNestedAbstractions: unexpected unnested abstraction")
   in
   remove term									   
 
@@ -1564,9 +1564,7 @@ and fixTerm term =
       | Absyn.ConstantTerm(c,tenv,p) -> 
           (* collect type variables in (needed components of) type environment 
              and check constant is legal here *)
-
-         (* TODO: NG: we still need check this for terms (but goals are okay) *)
-         (* let _ = checkIllegalConstant c p in *)
+         let _ = checkIllegalConstant c p in
           let neededtenv = 
             trunclist tenv (Absyn.getConstantTypeEnvSize false c) in
             (Absyn.ConstantTerm(c,neededtenv,p),fvars,

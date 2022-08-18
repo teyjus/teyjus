@@ -253,7 +253,7 @@ and closeUniversalDefinitions tsym uvdefs =
 * Transforms applications to Boehm form, and checks the legality of
 * constants in the term.
 ********************************************************************)
-and collectFreeVars term fvs bvs : Absyn.aterm * (Absyn.atypesymbol list) =
+and collectFreeVars term ?(toplevel=false) fvs bvs : Absyn.aterm * (Absyn.atypesymbol list) =
   match term with
     Absyn.IntTerm(_) -> (term, fvs)
   | Absyn.RealTerm(_) -> (term, fvs)
@@ -268,24 +268,23 @@ and collectFreeVars term fvs bvs : Absyn.aterm * (Absyn.atypesymbol list) =
         (term, tsym::fvs)
       else
         (term, fvs)
-  (* Query terms may have implications! *)
-  (* | Absyn.ConstantTerm(c,_,pos) ->
-   *     if illegalConstant c pos then
-   *       (Absyn.errorTerm, [])
-   *     else
-   *       (term, fvs) *)
-  | Absyn.ConstantTerm(c,_,pos) -> (term, fvs)
+  | Absyn.ConstantTerm(c,_,pos) ->
+     (* Query (toplevel) terms may have implications *)
+     if (not(toplevel) && (illegalConstant c pos)) then
+        (Absyn.errorTerm, [])
+      else
+        (term, fvs)
   | Absyn.AbstractionTerm(Absyn.NestedAbstraction(tsym, body),pos) ->
-     (* !!! This seems like a typo, tsym should be added to bound variables???
-      * --> This is what Parse.fixTerm does... -- NG *)
-     let (body', fvs') = collectFreeVars body fvs (tsym::bvs) in
+     (* Fixed a typo: tsym should be added to bound variables
+      * (This is what Parse.fixTerm does) -- NG *)
+     let (body', fvs') = collectFreeVars body ~toplevel fvs (tsym::bvs) in
      let term' = Absyn.AbstractionTerm(Absyn.NestedAbstraction(tsym, body'), pos) in
      (term', fvs')
   | Absyn.ApplicationTerm(_) ->
      let pos = Absyn.getTermPos term in
      let (head, args) = Absyn.getTermApplicationHeadAndArguments term in
-     let (head', fvs') = collectFreeVars head fvs bvs in
-     let (args', fvs'') = collectArgsFreeVars args fvs' bvs in
+     let (head', fvs') = collectFreeVars head ~toplevel fvs bvs in
+     let (args', fvs'') = collectArgsFreeVars args ~toplevel fvs' bvs in
      let term' = Absyn.ApplicationTerm(
                      Absyn.FirstOrderApplication(
                          head',
@@ -301,12 +300,12 @@ and collectFreeVars term fvs bvs : Absyn.aterm * (Absyn.atypesymbol list) =
 * Collect the free variables of a list of terms, and return a list
 * of rectified items, and the fvs.
 **********************************************************************)
-and collectArgsFreeVars args fvs bvs =
+and collectArgsFreeVars args ?(toplevel=false) fvs bvs =
   match args with
     [] -> ([], fvs)
   | a::aa ->
-      let (args', fvs') = collectArgsFreeVars aa fvs bvs in
-      let (arg', fvs'') = collectFreeVars a fvs' bvs in
+      let (args', fvs') = collectArgsFreeVars aa ~toplevel fvs bvs in
+      let (arg', fvs'') = collectFreeVars a ~toplevel fvs' bvs in
       (arg'::args', fvs'')
 
 (**********************************************************************
@@ -1265,7 +1264,7 @@ let getHeadAndBody clause : Absyn.aterm * (Absyn.aterm option) =
 (* Construct a new clause for a query
  * p X0 ... Xn :- {query X0 ... Xn}. *)
 let makeQueryClause query (* fvs *) : Absyn.aconstant * Absyn.aterm * (Absyn.atypesymbol list) =
-  let query, fvs = collectFreeVars query [] [] in
+  let query, fvs = collectFreeVars query ~toplevel:true [] [] in
   let (pred, head) = newHead (List.rev fvs) in
   let appinfo = Absyn.FirstOrderApplication(
                     Absyn.makeConstantTerm (Pervasive.implConstant) [] 
