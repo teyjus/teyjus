@@ -77,7 +77,6 @@ let compileQuery query amod =
   (** Now compile query *)
   (* Create a main clause for the query *)
   let (pred,term, fvars)  = Clauses.makeQueryClause term (* fvars *) in
-  (prerr_endline (string_of_int (List.length fvars)));
   
   (* Normalize and deOrify the query *)
   let (amod, clauses, newclauses, closeddefs) = Clauses.translateQuery pred term amod in

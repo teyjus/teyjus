@@ -183,7 +183,6 @@ void SINSTR_put_nil()                     //put_nil Ai -- R_X
 void SINSTR_put_integer()                 //put_integer Ai,i -- R_I_X
 {
     INSACC_RIX(regA, intValue);
-	printf("Put integer %x, %d\n", regA, intValue);
     DF_mkInt((MemPtr)regA, intValue);
 }
 

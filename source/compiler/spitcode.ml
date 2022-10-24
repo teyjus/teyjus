@@ -261,13 +261,10 @@ let writeModDefsInfo nonExpDefs expDefs localDefs defs =
   in
 
   (* [next clause table] *)
-  prerr_endline(Format.sprintf "writing NonExpDefs: %d" (Codegen.getNumCGPreds nonExpDefs));
   writePredTabs nonExpDefs;
   (* [exportdef predicate table] *)
-  prerr_endline(Format.sprintf "writing ExpDefs: %d" (Codegen.getNumCGPreds expDefs));
   writePredTabs expDefs;
   (* [local predicate table] *)
-  prerr_endline(Format.sprintf "writing localDefs: %d" (Codegen.getNumCGPreds localDefs));
   writePredTabs localDefs;
   (* <find code function> *)
   Bytecode.writeint1 Bytecode.findCodeFuncMarkHash;

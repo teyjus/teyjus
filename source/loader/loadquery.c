@@ -69,7 +69,7 @@ void LD_LOADQ_LoadCompiledQuery()
   if(LD_LOADQ_heapEnd){
 	AM_heapEnd = LD_LOADQ_heapEnd;
   }
-  printf("Heap End: %x\n", AM_heapEnd);
+  /* printf("Heap End: %x\n", AM_heapEnd); */
   
   // set code space at the end of the heap
   ent.codeSpaceEnd = (WordPtr)AM_heapEnd;
