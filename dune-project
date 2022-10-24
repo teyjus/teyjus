@@ -1,13 +1,13 @@
 (lang dune 3.1)
 (name "teyjus")
-; (version 2.2)
+(version "2.2.0")
 
 (generate_opam_files true)
 (source (github teyjus/teyjus))
 (homepage "http://teyjus.cs.umn.edu/")
 (documentation "https://github.com/teyjus/teyjus/wiki/TeyjusManual")
-(authors "Andrew Gacek, Steven Holte, Gopalan Nadathur, Xiaochu Qi, Zach Snow")
-(maintainers "TBD")
+(authors "Andrew Gacek, Nathan Guermond, Steven Holte, Gopalan Nadathur, Xiaochu Qi, Zach Snow")
+(maintainers "nguermond@proton.me")
 (license "GPL-3.0-or-later")
 
 (package
