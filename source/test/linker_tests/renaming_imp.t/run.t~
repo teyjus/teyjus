@@ -1,0 +1,6 @@
+  $ tjcc acc
+  $ tjdis acc.lpo
+  $ tjcc top
+  $ tjdis top.lpo
+  $ tjlink top
+  $ tjdis top.lp
