@@ -57,8 +57,8 @@ Microsoft Visual Studio 2008:
   to get either the actual dependency, or information on procuring it.
 
   OCaml                           http://caml.inria.fr/
+  Dune                            https://dune.build/
   Microsoft Visual Studio 2008    http://msdn.microsoft.com/vstudio/
-  ocamake                         /util/ocamake.ml  (included)
   flex                            http://gnuwin32.sourceforge.net/
   bison                           http://gnuwin32.sourceforge.net/
 
@@ -92,13 +92,6 @@ Microsoft Visual Studio 2008:
 
     Make sure that flex and bison are in your path.
 
-    Build ocamake and make sure it is in your path.  To build ocamake,
-    run this command in the /util directory of the distribution:
-      ocamlc unix.cma str.cma ocamake.ml -o ocamake.exe
-    Then, copy that file into your ocaml/bin directory, or alternatively
-    modify your path.  Be sure to use the provided version of ocamake.ml, as
-    it has been patched to work with Visual Studio 2008 project files.
-
   Building the System:
     To build the system in a Windows environment, use the provided
     Microsoft Visual Studio 2008 solution file, (/source/VisualStudio/Teyjus.sln).
@@ -123,11 +116,6 @@ Microsoft Visual Studio 2008:
 
     Note that there is no support for building Teyjus using omake on Windows as
     of yet.
-
-  Testing:
-    The testing harness only partially works on Windows.  Several tests fail due
-    to ActivePerl's method of calling other programs through cmd.exe.
-
 
                              SYSTEM USAGE
                              ============
