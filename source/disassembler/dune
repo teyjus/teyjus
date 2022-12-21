@@ -1,3 +1,12 @@
 (library
  (name disassembly)
  (libraries system compiler))
+
+
+(env
+ (dev
+  (flags (:standard -w
+           -27
+           ;; 27: unused variable
+   )
+)))
