@@ -1,0 +1,9 @@
+(cram
+ (applies_to :whole_subtree)
+ (deps
+  %{bin:tjcc}
+  %{bin:tjlink}
+  %{bin:tjdis}
+  %{bin:tjsim} 
+ )
+)
