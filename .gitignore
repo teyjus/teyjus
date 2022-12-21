@@ -45,3 +45,5 @@ tjsim
 examples/
 
 _build/
+
+*~

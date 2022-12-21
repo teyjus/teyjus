@@ -55,3 +55,17 @@
 (ocamllex lplex)
 
 (ocamlyacc lpyacc)
+
+
+(env
+ (dev
+  (flags (:standard -w
+           -27-32-38-39-34-50
+           ;; 27: unused variable
+           ;; 32: unused variable declaration
+           ;; 38: unused exception
+           ;; 39: unused rec flag
+           ;; 34: unused type declaration
+           ;; 50: unexpected docstring
+   )
+)))

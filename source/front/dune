@@ -81,3 +81,15 @@
   (disassemblerfront.exe as tjdis)
   (dependfront.exe as tjdepend)
   (parsefront.exe as tjparse)))
+
+
+(env
+ (dev
+  (flags (:standard -w
+           -27-50-38-32
+           ;; 27: unused variable
+           ;; 32: unused variable declaration
+           ;; 38: unused exception
+           ;; 50: unexpected docstring
+   )
+)))
