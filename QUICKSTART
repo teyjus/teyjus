@@ -207,3 +207,27 @@ Microsoft Visual Studio 2008:
     --version  Return the system version
     -help      Display this list of options
     --help     Display this list of options
+
+
+  6. parser (teyjus/source/tjparse)
+  -----------------------------------------------
+
+  Usage: tjparse [options] <file>
+  options are:
+    -o         Specifies the name of the output module
+    --output   Specifies the name of the output module
+    -v         Return the system version
+    --version  Return the system version
+    -help      Display this list of options
+    --help     Display this list of options
+
+
+                         TESTING
+                         =======
+
+                   ---*nix and Cygwin---
+
+  Run all tests with
+   make test
+  or
+   dune runtest
