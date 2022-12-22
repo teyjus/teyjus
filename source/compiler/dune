@@ -31,7 +31,7 @@
 
  ;; for tracing, set environment variable
  ;; OCAML_LANDMARKS=auto,debug,format=json,output=profile.json
- (preprocess (pps landmarks-ppx --auto))
+ ;; (preprocess (pps landmarks-ppx --auto))
 )
 
 (rule
@@ -60,7 +60,8 @@
 (env
  (dev
   (flags (:standard -w
-           -27-32-38-39-34-50
+           -26-27-32-38-39-34-50
+           ;; 26: unused variable
            ;; 27: unused variable
            ;; 32: unused variable declaration
            ;; 38: unused exception

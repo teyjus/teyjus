@@ -1,6 +1,7 @@
 (****************************************************************************
 *Copyright 2008
-*  Andrew Gacek, Steven Holte, Gopalan Nadathur, Xiaochu Qi, Zach Snow
+*  Andrew Gacek, Nathan Guermond, Steven Holte, 
+*  Gopalan Nadathur, Xiaochu Qi, Zach Snow
 ****************************************************************************)
 (****************************************************************************
 * This file is part of Teyjus.
@@ -24,7 +25,7 @@ let dualArgs dualSpecList =
   in
     List.flatten (List.map seperate dualSpecList)
 
-let version = "2.1.1"
+let version = "2.2.0"
 
 let printVersion () =
   print_endline ("Teyjus version " ^ version) ;

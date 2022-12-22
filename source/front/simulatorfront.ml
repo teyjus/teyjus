@@ -1,6 +1,7 @@
 (****************************************************************************
 *Copyright 2008
-*  Andrew Gacek, Steven Holte, Gopalan Nadathur, Xiaochu Qi, Zach Snow
+*  Andrew Gacek, Nathan Guermond, Steven Holte, 
+*  Gopalan Nadathur, Xiaochu Qi, Zach Snow
 ****************************************************************************)
 (****************************************************************************
 * This file is part of Teyjus.
@@ -151,8 +152,8 @@ let solveQueries () =
 
   let print_banner () =
        print_endline "Welcome to Teyjus";
-       print_endline "Copyright (C) 2008 A. Gacek, S. Holte, \
-                      G. Nadathur, X. Qi, Z. Snow";
+       print_endline "Copyright (C) 2008 A. Gacek, N. Guermond, \
+                      S. Holte, G. Nadathur, X. Qi, Z. Snow";
        print_endline "Teyjus comes with ABSOLUTELY NO WARRANTY";
        print_endline "This is free software, and you are \
                       welcome to redistribute it";

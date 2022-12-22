@@ -1,6 +1,6 @@
 (lang dune 3.1)
 (name "teyjus")
-(version "2.1.1")
+(version "2.2.0")
 (cram enable)
 
 (generate_opam_files true)
