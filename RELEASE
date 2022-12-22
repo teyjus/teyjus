@@ -2,5 +2,5 @@ These are instructions for creating a release of the Teyjus system.
 These are to be executed from the root of the Teyjus directory.
 
  1. Edit 'source/front/parseargs.ml' and 'dune-project' to set the version number
- 2. Execute 'dune runtest --release' and confirm that all tests are passing
+ 2. Execute 'make test' and confirm that all tests are passing
  3. Set a tag to the version number 'git tag vX.X.X' to create a tarball
