@@ -10,6 +10,10 @@ install:
 	@dune build @install --release
 	@dune install --release
 
+.PHONY: test
+test:
+	@dune runtest --release
+
 .PHONY: clean
 clean:
 	@dune clean
