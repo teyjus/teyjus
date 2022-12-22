@@ -1,0 +1,9 @@
+# v2.1.1
+
+Changes:
+* removed the Caml runtime 'front/caml' (no longer needed with OCaml >= 4.05.0)
+* replace Omake build dependency with Dune
+* replace Omake tests with Cram tests
+
+Known bugs:
+* test/system_tests/exportdef fails
