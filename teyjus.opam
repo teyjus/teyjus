@@ -36,7 +36,7 @@ doc: "https://github.com/teyjus/teyjus/wiki/TeyjusManual"
 bug-reports: "https://github.com/teyjus/teyjus/issues"
 depends: [
   "dune" {>= "3.1"}
-  "ocaml" {>= "4.05.0"}
+  "ocaml" {>= "4.05.0" & < "5.0.0"}
   "odoc" {with-doc}
 ]
 build: [
