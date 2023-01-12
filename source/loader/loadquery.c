@@ -83,7 +83,7 @@ void LD_LOADQ_LoadCompiledQuery()
   ent.cstBase = MEM_currentModule -> cstBase;
 
   EM_TRY{
-	// Note: that a pipe is already open
+	// Note: Assumes that a pipe is already open
 	
 	// This will set: ent.codeSpaceBeg = ent.codeSpaceEnd - codeSize
 	LD_detail("loading code size\n");
