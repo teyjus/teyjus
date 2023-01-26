@@ -278,8 +278,12 @@ let readTermAndType tm tymol fvars tyfvars =
   Ccode_stubs.cleanLocalTabs ()
 
 
-let initVariables fvars =
+let initVariables fvars tyfvars =
+  let _ =
+    Simerrors.handleSimExceptions
+      (Ccode_stubs.initLocalTabsQuery (List.length fvars) (List.length tyfvars)) in
   let _ = layOutVariables fvars buildFreeVariable in
+  (* let _ = layOutVariables tyfvars buildFreeTypeVariable in *)
   (* This sets the number of variables in IO_freeVarTab *)
   Ccode_stubs.setQueryFreeVariables ();
   Ccode_stubs.cleanLocalTabs ()

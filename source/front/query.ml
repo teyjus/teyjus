@@ -71,13 +71,21 @@ let buildQueryTerm query amod =
 let compileQuery query amod =
   (* Parse query to pre-abstract syntax *)
   let preTerm = Option.get @@ Compile.compileString query in
-  
+
+  (* prerr_endline "asdf"; *)
   (* Translate pre-abstract syntax to abstract syntax *)
   let term = Option.get @@ Parse.translateClause preTerm amod in
   
   (** Now compile query *)
   (* Create a main clause for the query *)
-  let (pred,term, fvars)  = Clauses.makeQueryClause term (* fvars *) in
+  let (pred,term, fvars)  = Clauses.makeQueryClause term in
+
+  (* The issue now is that these fvars have associated types, which we need to recover and store in the heap! *)
+  (* let (_,tymol,fvars',tyfvars) = Option.get @@ Parse.translateTermTopLevel preTerm amod in *)
+  
+  (assert (fvars = fvars'));
+
+  let tyfvars = [] in
   
   (* Normalize and deOrify the query *)
   let (amod, clauses, newclauses, closeddefs) = Clauses.translateQuery pred term amod in
@@ -121,8 +129,8 @@ let compileQuery query amod =
    * The type variables are initialized later, in 
    *   front/query_c.c:QUERY_solveQuery
    *)
-  let _ = (Ccode_stubs.initLocalTabsQuery (List.length fvars)) in
-  let _ = Readterm.initVariables fvars in
+
+  let _ = Readterm.initVariables fvars tyfvars in
   (name,startLoc)
   
       

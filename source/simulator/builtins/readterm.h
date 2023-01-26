@@ -40,7 +40,7 @@ DF_TypePtr RT_getTypeStart();
 int RT_initLocalTabs(int numFvs,int numTyFvs,int numTermArgs,int numTypeArgs);
 /* For compiled queries, the only input are variables, so
    no need to initialize term and type queues */
-int RT_initLocalTabsQuery(int numFvs);
+int RT_initLocalTabsQuery(int numFvs,int numTyFvs);
 
 /* reclaim local tables */
 void RT_cleanLocalTabs();

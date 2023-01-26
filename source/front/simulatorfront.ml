@@ -93,11 +93,11 @@ let solveQueries () =
       if Query.solveQuery () then 
         if !minSolutions > 1 then 
           Parseargs.error "fewer answers than expected"
-        else ()
+        else (if not !quiet then print_endline "\nyes\n" else ())
       else 
         if !minSolutions > 0 then
           Parseargs.error "fewer answers than expected"
-        else ()
+        else (if not !quiet then print_endline "\nno (more) solutions\n" else ())
   in
 
   let rec solveQueryInteract () =

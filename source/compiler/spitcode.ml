@@ -369,7 +369,6 @@ let writeQueryByteCode cgModule =
     (* [code size] *)
     writeCodeSize codeSize;
     (* [type skeletons] *)
-    let numtyskels = Codegen.getNumCGTypeSkeletons tySkels in
     writeTypeSkels tySkels;
     (* [global constants] *)
     (* [local constants] *)

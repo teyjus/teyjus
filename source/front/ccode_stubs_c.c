@@ -186,10 +186,10 @@ int c_initLocalTabs(value numFvs, value numTyFvs, value numTermArgs,
                                         Int_val(numTypeArgs))));
 }
 
-int c_initLocalTabsQuery(value numFvs)
+int c_initLocalTabsQuery(value numFvs, value numTyFvs)
 {
-    CAMLparam1 (numFvs);
-    CAMLreturn(Val_int(RT_initLocalTabsQuery(Int_val(numFvs))));
+    CAMLparam2 (numFvs, numTyFvs);
+    CAMLreturn(Val_int(RT_initLocalTabsQuery(Int_val(numFvs), Int_val(numTyFvs))));
 }
 
 
