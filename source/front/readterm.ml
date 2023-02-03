@@ -274,16 +274,25 @@ let readTermAndType tm tymol fvars tyfvars =
   let tyfvIndexes = layOutVariables tyfvars buildFreeTypeVariable in
   buildType tyfvIndexes [ty];
   buildTerm fvIndexes tyfvIndexes [tm];
-  Ccode_stubs.setQueryFreeVariables ();
+  Ccode_stubs.setQueryFreeVariables 0; (* argument not needed *)
   Ccode_stubs.cleanLocalTabs ()
 
-
-let initVariables fvars tyfvars =
+(* ntyfvars is the total number of distinct free type variables in 
+ * the types of the free variables. 
+ * ie. for input variables
+ *    X : A -> B
+ *    Y : int -> (B -> C) -> D
+ *    Z : D -> E
+ * the number of free type variables is 5.
+ * This is the number of type variable registers that need to be initialized.
+ *)
+let initVariables fvars ntyfvars =
   let _ =
     Simerrors.handleSimExceptions
-      (Ccode_stubs.initLocalTabsQuery (List.length fvars) (List.length tyfvars)) in
+      (Ccode_stubs.initLocalTabsQuery (List.length fvars) ntyfvars) in
   let _ = layOutVariables fvars buildFreeVariable in
+  (* let _ = layOutVar *)
   (* let _ = layOutVariables tyfvars buildFreeTypeVariable in *)
   (* This sets the number of variables in IO_freeVarTab *)
-  Ccode_stubs.setQueryFreeVariables ();
+  Ccode_stubs.setQueryFreeVariables ntyfvars;
   Ccode_stubs.cleanLocalTabs ()

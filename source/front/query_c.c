@@ -42,6 +42,8 @@
 static Boolean QUERY_reQuery; /* TRUE if this query has already
                                  begun executing and FALSE otherwise. */
 
+static int QUERY_numTyFVars;
+
 /***************************************************************************/
 /*  public functions                                                       */
 /***************************************************************************/
@@ -93,9 +95,9 @@ int QUERY_solveQuery()
 		QUERY_reQuery = TRUE;
 	  }
 	  // Initialize type register arguments
-	  // Note: All type variables are needed
-	  // TODO: It would be safer to use AM_cstTyEnvSize of the predicate -- NG
-	  for(int i = IO_freeVarTabTop; i < IO_freeVarTabTop + IO_freeVarTabTop; i++){
+	  // The number of type registers is total number of
+	  // distinct free type variables in the types of all free variables.
+	  for(int i = IO_freeVarTabTop; i < IO_freeVarTabTop + QUERY_numTyFVars; i++){
 	    DF_mkFreeVarType(AM_hreg);
 		DF_mkRefType((MemPtr)AM_reg(i+1), (DF_TypePtr)AM_hreg);
 		AM_hreg += DF_TY_ATOMIC_SIZE;
@@ -165,8 +167,9 @@ int QUERY_showAnswers()
     return EM_NO_ERR;
 }
 
-void QUERY_setQueryFreeVariables()
+void QUERY_setQueryFreeVariables(int nTyFVars)
 {
+    QUERY_numTyFVars = nTyFVars;
     PRINT_setQueryFreeVariables();
 }
 

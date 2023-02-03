@@ -1687,7 +1687,8 @@ let setUpGoalArgs goal chunk last hasenv =
 
   (* pair up the type arguments with registers, resolving conflicts if   *)
   (* needed                                                              *)
-  let genRegTypePairs regNumStart regNumEnd tyargs neededness =
+  let genRegTypePairs regNumStart regNumEnd tyargs neededness
+      : ((int * Absyn.atype) list) * (Instr.instruction list) * int =
     let rec genRegTypePairsAux regNum tyargs index insts size regTyPairs =
       if (regNum > regNumEnd) then 
 	(List.rev regTyPairs, List.flatten (List.rev insts), size)
@@ -2231,4 +2232,3 @@ let genClauseCode cl insts startLoc =
     let (instsCut,  instsCutNext)  = genClauseCut  instsHead instsHeadNext in
     let (instsBody, instsBodyNext) = genClauseBody instsCut instsCutNext   in
     (instsBody, instsBodyNext)
-

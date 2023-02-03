@@ -322,6 +322,17 @@ let writeRenamingInfo renamingList =
 let writeInstructions code =
   map Instr.writeInstruction code
 
+(* For debugging purposes *)
+let displayInstructions code : string =
+  String.concat "\n"
+    (List.map (fun u ->
+         let (s,i) = try Instr.displayInstruction u
+                     with Errormsg.InternalError ->
+                       ("=== Could not resolve label! ===", 0)
+         in
+         Format.sprintf "%d: %s" i s)
+       code)
+
 (************************************************************************)
 (*                        INTERFACE FUNCTION                            *)
 (************************************************************************)
@@ -388,4 +399,7 @@ let writeQueryByteCode cgModule =
     (* [bound variable tables] *)
     Bytecode.writeint2 0;
     (* [instructions] *)
+
+    (* prerr_endline (displayInstructions code); *)
+    
     writeInstructions code

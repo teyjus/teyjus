@@ -123,9 +123,9 @@ int c_showAnswers(value v)
 
 void c_setQueryFreeVariables(value v)
 {
-    CAMLparam1 (v);
-    QUERY_setQueryFreeVariables();
-    CAMLreturn0;
+  CAMLparam1 (v);
+  QUERY_setQueryFreeVariables(Int_val(v));
+  CAMLreturn0;
 }
 
 Boolean c_queryHasVars(value v)

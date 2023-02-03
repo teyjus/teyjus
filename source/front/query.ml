@@ -29,40 +29,40 @@ let abortOnError () =
 (***************************************************************************)
 
 (* NG: No longer in use, since queries are now compiled *)
-let buildQueryTerm query amod =
-  (* parse the query to pre abstract syntax *)
-  let preTerm = Compile.compileString query in
-  if Option.isNone preTerm then
-    false
-  else
-  let preTerm = Option.get preTerm in
-	(* parse to abstract syntax *)
-	let result = Parse.translateTermTopLevel preTerm amod in
-	if Option.isNone result then
-	  false
-	else
-	  let (term, tymol, fvars, tyfvars) = Option.get result in
-	  (* check whether the query has boolean type *)
-	  let ty = Types.getMoleculeType tymol in
-        match ty with
-          | Absyn.ApplicationType(k, _) when (Pervasive.iskbool k) ->
-              (* create the term and type onto simulator heap top *)
-              (Ccode_stubs.setTypeAndTermLocation ();
-               Readterm.readTermAndType term tymol fvars tyfvars;
-               true)
-          | Absyn.SkeletonVarType(_) ->
-              prerr_endline ("Error: Ill-formed goal: "  ^
-                               "uninstantiated variable as head.");
-              false
-          | _ -> 
-              prerr_endline 
-                 ("Error: expecting query term of type: o" ^
-                  (Errormsg.info ("encountered term: " ^ 
-                                  (Absyn.string_of_term term))) ^
-                  (Errormsg.info ("of type: " ^ 
-                                  (Types.string_of_typemolecule tymol)
-                  )));
-               false
+(* let buildQueryTerm query amod = *)
+(*   (\* parse the query to pre abstract syntax *\) *)
+(*   let preTerm = Compile.compileString query in *)
+(*   if Option.isNone preTerm then *)
+(*     false *)
+(*   else *)
+(*   let preTerm = Option.get preTerm in *)
+(* 	(\* parse to abstract syntax *\) *)
+(* 	let result = Parse.translateTermTopLevel preTerm amod in *)
+(* 	if Option.isNone result then *)
+(* 	  false *)
+(* 	else *)
+(* 	  let (term, tymol, fvars, tyfvars) = Option.get result in *)
+(* 	  (\* check whether the query has boolean type *\) *)
+(* 	  let ty = Types.getMoleculeType tymol in *)
+(*         match ty with *)
+(*           | Absyn.ApplicationType(k, _) when (Pervasive.iskbool k) -> *)
+(*               (\* create the term and type onto simulator heap top *\) *)
+(*               (Ccode_stubs.setTypeAndTermLocation (); *)
+(*                Readterm.readTermAndType term tymol fvars tyfvars; *)
+(*                true) *)
+(*           | Absyn.SkeletonVarType(_) -> *)
+(*               prerr_endline ("Error: Ill-formed goal: "  ^ *)
+(*                                "uninstantiated variable as head."); *)
+(*               false *)
+(*           | _ ->  *)
+(*               prerr_endline  *)
+(*                  ("Error: expecting query term of type: o" ^ *)
+(*                   (Errormsg.info ("encountered term: " ^  *)
+(*                                   (Absyn.string_of_term term))) ^ *)
+(*                   (Errormsg.info ("of type: " ^  *)
+(*                                   (Types.string_of_typemolecule tymol) *)
+(*                   ))); *)
+(*                false *)
 
 (***************************************************************************)
 (*    compile query term                                                   *)
@@ -72,23 +72,26 @@ let compileQuery query amod =
   (* Parse query to pre-abstract syntax *)
   let preTerm = Option.get @@ Compile.compileString query in
 
-  (* prerr_endline "asdf"; *)
   (* Translate pre-abstract syntax to abstract syntax *)
+  (* let term = Option.get @@ Parse.translateClause preTerm amod in *)
   let term = Option.get @@ Parse.translateClause preTerm amod in
+
   
-  (** Now compile query *)
+  (** now compile query *)  
   (* Create a main clause for the query *)
-  let (pred,term, fvars)  = Clauses.makeQueryClause term in
+  let (main_pred,query_term, fvars, tyfvars)  = Clauses.makeQueryClause term in
 
-  (* The issue now is that these fvars have associated types, which we need to recover and store in the heap! *)
-  (* let (_,tymol,fvars',tyfvars) = Option.get @@ Parse.translateTermTopLevel preTerm amod in *)
-  
-  (assert (fvars = fvars'));
+  (* Count the number of distinct type variables in tyfvars. 
+   * This will be the number of type variable registers we need
+   * to initialize. *)
+  let ntyfvars = List.length(List.fold_right (fun a tyfvars ->
+                                 Types.freeTypeVars a tyfvars) tyfvars [])
+  in
 
-  let tyfvars = [] in
-  
   (* Normalize and deOrify the query *)
-  let (amod, clauses, newclauses, closeddefs) = Clauses.translateQuery pred term amod in
+  let (amod, clauses, newclauses, closeddefs) = Clauses.translateQuery query_term amod
+  in
+
   let _ = abortOnError () in
 
   (* We cannot call Typereduction.reduceSkeletons or Typereduction.reducePredicates here
@@ -105,32 +108,36 @@ let compileQuery query amod =
   let () = Annvariables.processClauses amod in
   let _ = abortOnError () in
 
-  Codegen.set_main_pred (Absyn.getConstantName pred);
+
+  Codegen.set_main_pred (Absyn.getConstantName main_pred);
   let cg = Codegen.generateModuleCode amod in
-  let startLoc = Codegen.get_main_pred_loc () in  
+  let startLoc = Codegen.get_main_pred_loc () in
   abortOnError();
 
   (** Write output to pipe for processing by C code *)
+
   let _ = Bytecode.setWordSize () in
   let name = Codegen.getCGModuleName cg in
   
   let _ = Ccode_stubs.openPipe() in
   let out_chan = Unix.out_channel_of_descr(Ccode_stubs.getPipeIn()) in
   let _ = Bytecode.setOutChannel out_chan in
-  
+
   let _ = Spitcode.writeQueryByteCode cg in
   let _ = abortOnError () in
+  (* Loader assumes Pipe is still open *)
   let _ = flush(out_chan) in
 
   (** Init free term variables onto the heap, and IO tables *)
   (* Note: since neededness values are maximal, we must pass
-   * all type variables as arguments. For example,
-   * main A1 ... An T1 ... Tn :- {query A1 ... An}.
+   * all type variables as arguments. The number of type variables
+   * is the total number of free type variables.
+   * For example,
+   *   main A1 ... An T1 ... Tm :- {query A1 ... An}.
    * The type variables are initialized later, in 
    *   front/query_c.c:QUERY_solveQuery
    *)
-
-  let _ = Readterm.initVariables fvars tyfvars in
+  let _ = Readterm.initVariables fvars ntyfvars in
   (name,startLoc)
   
       
@@ -165,20 +172,20 @@ let queryHasVars () =
 
 (* NG: No longer in use, since queries are now compiled *)
 
-let readTerm term amod =
+(* let readTerm term amod = *)
  
-  (* parse the term to pre abstract syntax *)
-  let preTerm = Compile.compileString term in
-  if Option.isNone preTerm then
-    0
-  else
-    let preTerm = Option.get preTerm in
-    (* parse to abstract syntax *)
-    let result = Parse.translateTermTopLevel preTerm amod in
-    if Option.isNone result then
-      0
-    else
-      let (term, tymol, fvars, tyfvars) = Option.get result in
-      Readterm.readTermAndType term tymol fvars tyfvars;
-      1
+(*   (\* parse the term to pre abstract syntax *\) *)
+(*   let preTerm = Compile.compileString term in *)
+(*   if Option.isNone preTerm then *)
+(*     0 *)
+(*   else *)
+(*     let preTerm = Option.get preTerm in *)
+(*     (\* parse to abstract syntax *\) *)
+(*     let result = Parse.translateTermTopLevel preTerm amod in *)
+(*     if Option.isNone result then *)
+(*       0 *)
+(*     else *)
+(*       let (term, tymol, fvars, tyfvars) = Option.get result in *)
+(*       Readterm.readTermAndType term tymol fvars tyfvars; *)
+(*       1 *)
 	

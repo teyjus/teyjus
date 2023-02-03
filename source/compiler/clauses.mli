@@ -53,14 +53,15 @@ val linearizeClause : Absyn.aterm -> Absyn.aterm
  * construct a clause of the form
  *   p X1 ... Xn :- {query X1 ... Xn}
  *********************************************************************)
-val makeQueryClause : Absyn.aterm -> Absyn.aconstant * Absyn.aterm * (Absyn.atypesymbol list)
+val makeQueryClause : Absyn.aterm -> Absyn.aconstant * Absyn.aterm
+                                     * (Absyn.atypesymbol list) * (Absyn.atype list)
   
 (*********************************************************************
  *translateQuery:
  * Given a query clause and module,
  * normalize the query clause as above
  *********************************************************************) 
-val translateQuery : Absyn.aconstant -> Absyn.aterm -> Absyn.amodule ->
+val translateQuery : Absyn.aterm -> Absyn.amodule ->
                      Absyn.amodule * (Absyn.aterm list)
                      * (Absyn.aterm list) * (closeddefinition list) 
 

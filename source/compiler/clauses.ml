@@ -1263,17 +1263,18 @@ let getHeadAndBody clause : Absyn.aterm * (Absyn.aterm option) =
        
 
 (* Construct a new clause for a query
- * p X0 ... Xn :- {query X0 ... Xn}. *)
-let makeQueryClause query (* fvs *) : Absyn.aconstant * Absyn.aterm * (Absyn.atypesymbol list) =
-  let query, fvs = collectFreeVars query ~toplevel:true [] [] in
-  let (pred, head) = newHead (List.rev fvs) in
+ * main X0 ... Xn :- {query X0 ... Xn}. *)
+let makeQueryClause query : Absyn.aconstant * Absyn.aterm * (Absyn.atypesymbol list) * (Absyn.atype list) =
+  let query, fvars = collectFreeVars query ~toplevel:true [] [] in
+  let tyfvars : Absyn.atype list = List.map Absyn.getTypeSymbolType fvars in
+  let (pred, head) = newHead (List.rev fvars) in
   let appinfo = Absyn.FirstOrderApplication(
                     Absyn.makeConstantTerm (Pervasive.implConstant) [] 
                       Errormsg.none, [query;head], 2) in
-  (pred, Absyn.ApplicationTerm(appinfo, Errormsg.none), fvs)
+  (pred, Absyn.ApplicationTerm(appinfo, Errormsg.none), fvars, tyfvars)
 
 
-let translateQuery pred query amod : Absyn.amodule * (Absyn.aterm list) * (Absyn.aterm list) * (closeddefinition list) =
+let translateQuery query amod : Absyn.amodule * (Absyn.aterm list) * (Absyn.aterm list) * (closeddefinition list) =
   let setHiddenConstants amod hcs =
     let hiddenconstants = (List.map getHiddenConstantConstant hcs) in
     let skels = (List.map (Absyn.getConstantSkeletonValue) hiddenconstants) in
