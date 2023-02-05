@@ -243,39 +243,39 @@ let termAndTypeSize tm ty =
 (*                       interface function                         *)
 (********************************************************************)
 (* NG: No longer in use, since queries are now compiled *)
-let readTermAndType tm tymol fvars tyfvars =
-    let getTypeMoleculeType tymol =
-    let rec getTypeMoleculeTypeAux tyenv tyskel =
-      match (Absyn.dereferenceType tyskel) with
-        Absyn.SkeletonVarType(ind) -> List.nth tyenv (!ind)
-      | Absyn.ArrowType(l, r) ->
-          Absyn.ArrowType(getTypeMoleculeTypeAux tyenv l, 
-            getTypeMoleculeTypeAux tyenv r)
-      | Absyn.ApplicationType(k, args) ->
-          Absyn.ApplicationType(k,
-            List.map (getTypeMoleculeTypeAux tyenv) args)
-      | _ ->
-          Errormsg.impossible Errormsg.none 
-            "Readterm.getTypeMoleculeType: invalid type skeleton"
-    in
-    
-    let tyskel = Types.getMoleculeType tymol in
-    let tyenv  = Types.getMoleculeEnvironment tymol in
-    getTypeMoleculeTypeAux tyenv tyskel
-  in
-  let ty = getTypeMoleculeType tymol in
-  let (numTmNodes, numTyNodes) = termAndTypeSize tm ty in
-  let _ = 
-    Simerrors.handleSimExceptions 
-      (Ccode_stubs.initLocalTabs (List.length fvars) (List.length tyfvars)  
-	 numTmNodes numTyNodes)
-  in
-  let fvIndexes = layOutVariables fvars buildFreeVariable in
-  let tyfvIndexes = layOutVariables tyfvars buildFreeTypeVariable in
-  buildType tyfvIndexes [ty];
-  buildTerm fvIndexes tyfvIndexes [tm];
-  Ccode_stubs.setQueryFreeVariables 0; (* argument not needed *)
-  Ccode_stubs.cleanLocalTabs ()
+(* let readTermAndType tm tymol fvars tyfvars =
+ *     let getTypeMoleculeType tymol =
+ *     let rec getTypeMoleculeTypeAux tyenv tyskel =
+ *       match (Absyn.dereferenceType tyskel) with
+ *         Absyn.SkeletonVarType(ind) -> List.nth tyenv (!ind)
+ *       | Absyn.ArrowType(l, r) ->
+ *           Absyn.ArrowType(getTypeMoleculeTypeAux tyenv l, 
+ *             getTypeMoleculeTypeAux tyenv r)
+ *       | Absyn.ApplicationType(k, args) ->
+ *           Absyn.ApplicationType(k,
+ *             List.map (getTypeMoleculeTypeAux tyenv) args)
+ *       | _ ->
+ *           Errormsg.impossible Errormsg.none 
+ *             "Readterm.getTypeMoleculeType: invalid type skeleton"
+ *     in
+ *     
+ *     let tyskel = Types.getMoleculeType tymol in
+ *     let tyenv  = Types.getMoleculeEnvironment tymol in
+ *     getTypeMoleculeTypeAux tyenv tyskel
+ *   in
+ *   let ty = getTypeMoleculeType tymol in
+ *   let (numTmNodes, numTyNodes) = termAndTypeSize tm ty in
+ *   let _ = 
+ *     Simerrors.handleSimExceptions 
+ *       (Ccode_stubs.initLocalTabs (List.length fvars) (List.length tyfvars)  
+ * 	 numTmNodes numTyNodes)
+ *   in
+ *   let fvIndexes = layOutVariables fvars buildFreeVariable in
+ *   let tyfvIndexes = layOutVariables tyfvars buildFreeTypeVariable in
+ *   buildType tyfvIndexes [ty];
+ *   buildTerm fvIndexes tyfvIndexes [tm];
+ *   Ccode_stubs.setQueryFreeVariables 0; (\* argument not needed *\)
+ *   Ccode_stubs.cleanLocalTabs () *)
 
 (* ntyfvars is the total number of distinct free type variables in 
  * the types of the free variables. 
@@ -289,10 +289,11 @@ let readTermAndType tm tymol fvars tyfvars =
 let initVariables fvars ntyfvars =
   let _ =
     Simerrors.handleSimExceptions
-      (Ccode_stubs.initLocalTabsQuery (List.length fvars) ntyfvars) in
+      (Ccode_stubs.initLocalTabsQuery (List.length fvars)) in
   let _ = layOutVariables fvars buildFreeVariable in
-  (* let _ = layOutVar *)
+  (* TODO: It might be nicer to use this instead of building them in query_c:solveQuery *)
   (* let _ = layOutVariables tyfvars buildFreeTypeVariable in *)
-  (* This sets the number of variables in IO_freeVarTab *)
+  (* This sets the number of variables in IO_freeVarTab,
+   * as well as the number of free type variables that need to be initialized. *)
   Ccode_stubs.setQueryFreeVariables ntyfvars;
   Ccode_stubs.cleanLocalTabs ()

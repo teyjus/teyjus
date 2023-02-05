@@ -51,17 +51,17 @@ static int QUERY_numTyFVars;
 /* the type of query and the query; increase the heap top correspondingly; */
 /* Also, set QUERY_reQuery to be false                                     */
 // NG: No longer in use, since queries are now compiled
-void QUERY_setTypeAndTermLocation()
-{
-  // for compiled queries, we only do this because readterm expects
-  // term/typeStartLoc to be initialized when calling RT_initLocalTabs
-    RT_setTypeStart(AM_hreg);
-    AM_hreg += DF_TY_ATOMIC_SIZE;
-    RT_setTermStart(AM_hreg);
-    AM_hreg += DF_TM_ATOMIC_SIZE;
+/* void QUERY_setTypeAndTermLocation() */
+/* { */
+/*   // for compiled queries, we only do this because readterm expects */
+/*   // term/typeStartLoc to be initialized when calling RT_initLocalTabs */
+/*     RT_setTypeStart(AM_hreg); */
+/*     AM_hreg += DF_TY_ATOMIC_SIZE; */
+/*     RT_setTermStart(AM_hreg); */
+/*     AM_hreg += DF_TM_ATOMIC_SIZE; */
 
-    QUERY_reQuery = FALSE;
-}
+/*     QUERY_reQuery = FALSE; */
+/* } */
 
 // Set main entry point for compiled query
 // We assume AM_preg is pointing to the start of the query code

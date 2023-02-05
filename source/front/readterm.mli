@@ -20,7 +20,7 @@
 * along with Teyjus.  If not, see <http://www.gnu.org/licenses/>.
 ****************************************************************************)
 (* NG: No longer in use, since queries are now compiled *)
-val readTermAndType : Absyn.aterm -> Types.typemolecule -> 
-  Absyn.atypesymbol list -> Absyn.atype list -> unit
+(* val readTermAndType : Absyn.aterm -> Types.typemolecule -> 
+ *   Absyn.atypesymbol list -> Absyn.atype list -> unit *)
 
 val initVariables : (Absyn.atypesymbol list) -> int -> unit

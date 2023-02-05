@@ -99,12 +99,12 @@ int c_setPath(value v)
 /*                               query                                     */
 /***************************************************************************/
 // NG: No longer in use, since queries are now compiled
-void c_setTypeAndTermLocation(value v)
-{
-    CAMLparam1 (v);
-    QUERY_setTypeAndTermLocation();
-    CAMLreturn0;
-}
+/* void c_setTypeAndTermLocation(value v) */
+/* { */
+/*     CAMLparam1 (v); */
+/*     QUERY_setTypeAndTermLocation(); */
+/*     CAMLreturn0; */
+/* } */
 
 int c_solveQuery(value v)
 {
@@ -177,19 +177,20 @@ int c_getPipeIn()
 /*                               read term                                 */
 /***************************************************************************/
 // NG: No longer in use, since queries are now compiled
-int c_initLocalTabs(value numFvs, value numTyFvs, value numTermArgs,
-                     value numTypeArgs)
-{
-    CAMLparam4 (numFvs, numTyFvs, numTermArgs, numTypeArgs);
-    CAMLreturn(Val_int(RT_initLocalTabs(Int_val(numFvs), Int_val(numTyFvs),
-                                        Int_val(numTermArgs),
-                                        Int_val(numTypeArgs))));
-}
+//     -> use initLocalTabsQuery instead
+/* int c_initLocalTabs(value numFvs, value numTyFvs, value numTermArgs, */
+/*                      value numTypeArgs) */
+/* { */
+/*     CAMLparam4 (numFvs, numTyFvs, numTermArgs, numTypeArgs); */
+/*     CAMLreturn(Val_int(RT_initLocalTabs(Int_val(numFvs), Int_val(numTyFvs), */
+/*                                         Int_val(numTermArgs), */
+/*                                         Int_val(numTypeArgs)))); */
+/* } */
 
-int c_initLocalTabsQuery(value numFvs, value numTyFvs)
+int c_initLocalTabsQuery(value numFvs)
 {
-    CAMLparam2 (numFvs, numTyFvs);
-    CAMLreturn(Val_int(RT_initLocalTabsQuery(Int_val(numFvs), Int_val(numTyFvs))));
+    CAMLparam1 (numFvs);
+    CAMLreturn(Val_int(RT_initLocalTabsQuery(Int_val(numFvs))));
 }
 
 

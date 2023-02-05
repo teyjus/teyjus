@@ -19,5 +19,7 @@
 // along with Teyjus.  If not, see <http://www.gnu.org/licenses/>.          //
 //////////////////////////////////////////////////////////////////////////////
 
-void ocaml_simulator_main();
+// NG: No longer in use, since queries are now compiled
+/* void ocaml_simulator_main(); */
+
 int ocaml_read_term(char *str);

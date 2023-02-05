@@ -24,19 +24,18 @@
 #include "caml/alloc.h"
 
 // NG: No longer in use, since queries are now compiled
-void ocaml_simulator_main()
-{
-  static value *ocaml_main_closure = NULL;
-  if (ocaml_main_closure == NULL) 
-    ocaml_main_closure = caml_named_value("ocaml_simulator_main");
-  caml_callback(*ocaml_main_closure, Val_unit);
-}
+/* void ocaml_simulator_main() */
+/* { */
+/*   static value *ocaml_main_closure = NULL; */
+/*   if (ocaml_main_closure == NULL)  */
+/*     ocaml_main_closure = caml_named_value("ocaml_simulator_main"); */
+/*   caml_callback(*ocaml_main_closure, Val_unit); */
+/* } */
 
-// NG: No longer in use, since queries are now compiled
 int ocaml_read_term(char *str)
 {
   static value *ocaml_read_term_closure = NULL;
-  if (ocaml_read_term_closure == NULL) 
+  if (ocaml_read_term_closure == NULL)
     ocaml_read_term_closure = caml_named_value("ocaml_read_term");
   return Int_val(caml_callback(*ocaml_read_term_closure, caml_copy_string(str)));
 }

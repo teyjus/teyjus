@@ -25,7 +25,8 @@
 /***************************************************************************/
 /* register the current heap top and the next cell as the positions of     */
 /* the type of query and the query; increase the heap top correspondingly  */
-void QUERY_setTypeAndTermLocation();
+// NG: No longer in use, since queries are now compiled
+/* void QUERY_setTypeAndTermLocation(); */
 
 /* load query */
 void QUERY_loadQuery();
