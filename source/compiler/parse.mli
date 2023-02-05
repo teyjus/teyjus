@@ -63,7 +63,7 @@ val translateTermTopLevel : Preabsyn.pterm -> Absyn.amodule ->
 *   the translated absyn term
 *
 **********************************************************************)
-val translateClause : Preabsyn.pterm -> Absyn.amodule -> Absyn.aterm option
+val translateClause : ?parsingtoplevel:bool -> Preabsyn.pterm -> Absyn.amodule -> Absyn.aterm option
 
 (**********************************************************************
 *removeNestedAbstractions:

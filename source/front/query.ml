@@ -73,10 +73,9 @@ let compileQuery query amod =
   let preTerm = Option.get @@ Compile.compileString query in
 
   (* Translate pre-abstract syntax to abstract syntax *)
-  (* let term = Option.get @@ Parse.translateClause preTerm amod in *)
-  let term = Option.get @@ Parse.translateClause preTerm amod in
+  let term = Option.get @@ Parse.translateClause ~parsingtoplevel:true
+                             preTerm amod in
 
-  
   (** now compile query *)  
   (* Create a main clause for the query *)
   let (main_pred,query_term, fvars, tyfvars)  = Clauses.makeQueryClause term in
@@ -84,6 +83,7 @@ let compileQuery query amod =
   (* Count the number of distinct type variables in tyfvars. 
    * This will be the number of type variable registers we need
    * to initialize. *)
+  (* TODO: Move this somewhere else *)
   let ntyfvars = List.length(List.fold_right (fun a tyfvars ->
                                  Types.freeTypeVars a tyfvars) tyfvars [])
   in
@@ -91,14 +91,13 @@ let compileQuery query amod =
   (* Normalize and deOrify the query *)
   let (amod, clauses, newclauses, closeddefs) = Clauses.translateQuery query_term amod
   in
-
   let _ = abortOnError () in
 
   (* We cannot call Typereduction.reduceSkeletons or Typereduction.reducePredicates here
    * because that would generate different neededness values.  
    * Neededness values are local to a module, so in an exported definition 
    * we must assume that every type variable is needed. *)
-  let amod = Typereduction.initConstantNeededness amod in
+  let amod = Typereduction.initConstantAndSkeletonNeedednessTopLevel amod in
 
   (* Translate Absyn.aterm clauses to Absyn.aclause *)
   let amod = Processclauses.processClauses amod clauses newclauses closeddefs in
@@ -107,7 +106,6 @@ let compileQuery query amod =
   (* Analyze variables (register allocation magic) *)
   let () = Annvariables.processClauses amod in
   let _ = abortOnError () in
-
 
   Codegen.set_main_pred (Absyn.getConstantName main_pred);
   let cg = Codegen.generateModuleCode amod in

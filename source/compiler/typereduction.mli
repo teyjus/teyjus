@@ -37,5 +37,5 @@ val reducePredicates : Absyn.amodule -> Absyn.amodule
 
 
 
-val initConstantNeededness : Absyn.amodule -> Absyn.amodule
+val initConstantAndSkeletonNeedednessTopLevel : Absyn.amodule -> Absyn.amodule
                                             

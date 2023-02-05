@@ -742,11 +742,13 @@ let reducePredicates amod =
  * any call to a predicat or constant from outside the module 
  * (and thus from a query) must assume maximal neededness.
  *)
-let initConstantNeededness amod =
+let initConstantAndSkeletonNeedednessTopLevel amod =
+  (* Note: true must be passed to getConstantTypeEnvSize
+   * because we are in the toplevel *)
   let makeConstantNeededness sym constant =
     let neededness = Absyn.getConstantNeedednessRef constant in
     if Option.isNone (!neededness) then
-      let size = (Absyn.getConstantTypeEnvSize false constant) in
+      let size = (Absyn.getConstantTypeEnvSize true constant) in
       let neededness' = 
         Array.make size true in
       neededness := Some(neededness')
@@ -754,9 +756,11 @@ let initConstantNeededness amod =
       ()
   in
   let makeConstantSkeletonNeededness sym constant =
+    (* prerr_endline (Format.sprintf "making skeleton neededness for const %s[%d]"
+     *                (Symbol.name sym) (Absyn.getConstantTypeEnvSize true constant)); *)
     let neededness = Absyn.getConstantSkeletonNeedednessRef constant in
     if Option.isNone (!neededness) then
-      let size = (Absyn.getConstantTypeEnvSize false constant) in
+      let size = (Absyn.getConstantTypeEnvSize true constant) in
       let neededness' =
         Array.make size true in
       neededness := Some(neededness')
