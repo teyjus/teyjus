@@ -22,8 +22,8 @@
   $ tjsim maps -b -s "mapfun [X] F [g a a]."
   
   The answer substitution:
-  F = F
   X = X
+  F = F
   
   The remaining disagreement pairs list:
   <F X, g a a>

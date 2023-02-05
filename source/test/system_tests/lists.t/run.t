@@ -7,28 +7,28 @@
   $ tjsim lists -b -s "append L1 L2 (1::2::3::4::5::nil)."
   
   The answer substitution:
-  L2 = 1 :: 2 :: 3 :: 4 :: 5 :: nil
   L1 = nil
+  L2 = 1 :: 2 :: 3 :: 4 :: 5 :: nil
   
   The answer substitution:
-  L2 = 2 :: 3 :: 4 :: 5 :: nil
   L1 = 1 :: nil
+  L2 = 2 :: 3 :: 4 :: 5 :: nil
   
   The answer substitution:
-  L2 = 3 :: 4 :: 5 :: nil
   L1 = 1 :: 2 :: nil
+  L2 = 3 :: 4 :: 5 :: nil
   
   The answer substitution:
-  L2 = 4 :: 5 :: nil
   L1 = 1 :: 2 :: 3 :: nil
+  L2 = 4 :: 5 :: nil
   
   The answer substitution:
-  L2 = 5 :: nil
   L1 = 1 :: 2 :: 3 :: 4 :: nil
+  L2 = 5 :: nil
   
   The answer substitution:
-  L2 = nil
   L1 = 1 :: 2 :: 3 :: 4 :: 5 :: nil
+  L2 = nil
   $ tjsim lists -b -s "pi (X \ (append (X::nil) (2::X::nil) (F X)))."
   
   The answer substitution:
@@ -56,7 +56,13 @@
   The remaining disagreement pairs list:
   <F _T1, 2 :: 3 :: 3 :: nil>
   $ tjsim lists -b -s "memb 1 (2::2::nil)."
+  
+  no (more) solutions
+  
   $ tjsim lists -b -s "memb 1 (2::1::nil)."
+  
+  yes
+  
   $ tjsim lists -b -s "memb X (2::1::nil)."
   
   The answer substitution:

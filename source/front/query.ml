@@ -29,40 +29,40 @@ let abortOnError () =
 (***************************************************************************)
 
 (* NG: No longer in use, since queries are now compiled *)
-(* let buildQueryTerm query amod = *)
-(*   (\* parse the query to pre abstract syntax *\) *)
-(*   let preTerm = Compile.compileString query in *)
-(*   if Option.isNone preTerm then *)
-(*     false *)
-(*   else *)
-(*   let preTerm = Option.get preTerm in *)
-(* 	(\* parse to abstract syntax *\) *)
-(* 	let result = Parse.translateTermTopLevel preTerm amod in *)
-(* 	if Option.isNone result then *)
-(* 	  false *)
-(* 	else *)
-(* 	  let (term, tymol, fvars, tyfvars) = Option.get result in *)
-(* 	  (\* check whether the query has boolean type *\) *)
-(* 	  let ty = Types.getMoleculeType tymol in *)
-(*         match ty with *)
-(*           | Absyn.ApplicationType(k, _) when (Pervasive.iskbool k) -> *)
-(*               (\* create the term and type onto simulator heap top *\) *)
-(*               (Ccode_stubs.setTypeAndTermLocation (); *)
-(*                Readterm.readTermAndType term tymol fvars tyfvars; *)
-(*                true) *)
-(*           | Absyn.SkeletonVarType(_) -> *)
-(*               prerr_endline ("Error: Ill-formed goal: "  ^ *)
-(*                                "uninstantiated variable as head."); *)
-(*               false *)
-(*           | _ ->  *)
-(*               prerr_endline  *)
-(*                  ("Error: expecting query term of type: o" ^ *)
-(*                   (Errormsg.info ("encountered term: " ^  *)
-(*                                   (Absyn.string_of_term term))) ^ *)
-(*                   (Errormsg.info ("of type: " ^  *)
-(*                                   (Types.string_of_typemolecule tymol) *)
-(*                   ))); *)
-(*                false *)
+let buildQueryTerm query amod =
+  (* parse the query to pre abstract syntax *)
+  let preTerm = Compile.compileString query in
+  if Option.isNone preTerm then
+    false
+  else
+  let preTerm = Option.get preTerm in
+	(* parse to abstract syntax *)
+	let result = Parse.translateTermTopLevel preTerm amod in
+	if Option.isNone result then
+	  false
+	else
+	  let (term, tymol, fvars, tyfvars) = Option.get result in
+	  (* check whether the query has boolean type *)
+	  let ty = Types.getMoleculeType tymol in
+        match ty with
+          | Absyn.ApplicationType(k, _) when (Pervasive.iskbool k) ->
+              (* create the term and type onto simulator heap top *)
+              (Ccode_stubs.setTypeAndTermLocation ();
+               Readterm.readTermAndType term tymol fvars tyfvars;
+               true)
+          | Absyn.SkeletonVarType(_) ->
+              prerr_endline ("Error: Ill-formed goal: "  ^
+                               "uninstantiated variable as head.");
+              false
+          | _ ->
+              prerr_endline
+                 ("Error: expecting query term of type: o" ^
+                  (Errormsg.info ("encountered term: " ^
+                                  (Absyn.string_of_term term))) ^
+                  (Errormsg.info ("of type: " ^
+                                  (Types.string_of_typemolecule tymol)
+                  )));
+               false
 
 (***************************************************************************)
 (*    compile query term                                                   *)
@@ -169,21 +169,20 @@ let queryHasVars () =
 (***************************************************************************)
 
 (* NG: No longer in use, since queries are now compiled *)
-
-(* let readTerm term amod = *)
+let readTerm term amod =
  
-(*   (\* parse the term to pre abstract syntax *\) *)
-(*   let preTerm = Compile.compileString term in *)
-(*   if Option.isNone preTerm then *)
-(*     0 *)
-(*   else *)
-(*     let preTerm = Option.get preTerm in *)
-(*     (\* parse to abstract syntax *\) *)
-(*     let result = Parse.translateTermTopLevel preTerm amod in *)
-(*     if Option.isNone result then *)
-(*       0 *)
-(*     else *)
-(*       let (term, tymol, fvars, tyfvars) = Option.get result in *)
-(*       Readterm.readTermAndType term tymol fvars tyfvars; *)
-(*       1 *)
+  (* parse the term to pre abstract syntax *)
+  let preTerm = Compile.compileString term in
+  if Option.isNone preTerm then
+    0
+  else
+    let preTerm = Option.get preTerm in
+    (* parse to abstract syntax *)
+    let result = Parse.translateTermTopLevel preTerm amod in
+    if Option.isNone result then
+      0
+    else
+      let (term, tymol, fvars, tyfvars) = Option.get result in
+      Readterm.readTermAndType term tymol fvars tyfvars;
+      1
 	
