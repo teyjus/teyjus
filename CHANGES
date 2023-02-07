@@ -9,3 +9,4 @@ Changes:
 Known bugs:
 * test/system_tests/exportdef fails
 * test/system_tests/implications fails
+* test/system_tests/uncurry fails
