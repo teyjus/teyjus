@@ -19,12 +19,13 @@
 * You should have received a copy of the GNU General Public License
 * along with Teyjus.  If not, see <http://www.gnu.org/licenses/>.
 ****************************************************************************)
-let dualArgs dualSpecList =
-  let seperate (key1, key2, spec, doc) =
-    [(key1, spec, doc) ; (key2, spec, doc)]
-  in
-    List.flatten (List.map seperate dualSpecList)
 
+let multLine specList =
+  specList
+  |> List.map (fun (key1, key2, spec, doc1, doc2) ->
+      [(key1, spec, doc1); (key2, spec, doc2)])
+  |> List.flatten
+  
 let version = "2.2.0"
 
 let printVersion () =
@@ -32,8 +33,8 @@ let printVersion () =
   exit 0
 
 let versionspec =
-  ("-v", "--version", Arg.Unit printVersion, " Return the system version")
-
+  ("-v", "--version", Arg.Unit printVersion, " Return the system version", " \n")
+  
 let getModName name =
   try
     Filename.chop_extension name

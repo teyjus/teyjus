@@ -27,9 +27,9 @@ let verbosity = ref 0
   
 let moreVerbose () = incr verbosity
 
-let specList = dualArgs
+let specList = multLine
   [("-V", "--verbose", Arg.Unit moreVerbose,
-    " Produce verbose output - use multiple times to increase verbosity");
+    " Produce verbose output - use multiple times to increase verbosity", " \n");
    versionspec]
 
 let usageMsg =

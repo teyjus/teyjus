@@ -36,26 +36,29 @@ let addQuery str =
 let setPath p =
   path := p
 
-let specList = dualArgs
+
+let specList = multLine
   [("-p", "--path", Arg.String setPath, 
-        " Add PATH to the search path.") ;
+        " Add PATH to the search path.", " \n") ;
    ("-s", "--solve", Arg.String addQuery, 
-        " Solve the given query on startup. Several queries may be specified") ;
+        " Solve the given query on startup. Several queries may be specified", " \n") ;
    ("-e", "--expect", Arg.Set_int minSolutions,
-        " Expect at least this many solutions from each query;\n" ^
-      "\t\terror if fewer. Valid only in batch mode") ;
+        " Expect at least this many solutions from each query;",
+        "   error if fewer. Valid only in batch mode\n") ;
    ("-m", "--maximum", Arg.Set_int maxSolutions,
-        " Halt after this many solutions to the query have been found.\n" ^
-      "\t\tValid only in batch mode") ;
+        " Halt after this many solutions to the query have been found.",
+        "   Valid only in batch mode\n") ;
    ("-q", "--quiet", Arg.Set quiet, 
-        " Suppress all non-error output from the system,\n" ^
-      "\t\texcept variable bindings on query success") ;
+        " Suppress all non-error output from the system,",
+        "   except variable bindings on query success\n") ;
    ("-b", "--batch", Arg.Set batch,
-        " Suppress system interaction; send all output without stopping") ;
+        "   Suppress system interaction; send all output without stopping", " \n") ;
    ("-k", "--heap", Arg.Set_int heapSize,
-        " Allocate a heap of the given size (K)") ;
+        " Allocate a heap of the given size (in KW, W=8B on 64 bit machine)",
+        " default: 512MB; min: 64KB; max: 32GB\n") ;
    versionspec]
 
+             
 let usageMsg =
   "Usage: tjsim [options] <module-name>\n" ^
     "options are:"

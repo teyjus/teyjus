@@ -174,7 +174,7 @@ let usageMsg =
   "Usage: tjdepend [options] <module-files>\n" ^
   "options are:"
 
-let specList = dualArgs [versionspec]
+let specList = multLine [versionspec]
 
 let inputNames = ref []
 

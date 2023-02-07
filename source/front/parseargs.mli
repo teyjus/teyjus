@@ -19,10 +19,12 @@
 * You should have received a copy of the GNU General Public License
 * along with Teyjus.  If not, see <http://www.gnu.org/licenses/>.
 ****************************************************************************)
-val dualArgs : (Arg.key * Arg.key * Arg.spec * Arg.doc) list ->
-  (Arg.key * Arg.spec * Arg.doc) list
 
-val versionspec : Arg.key * Arg.key * Arg.spec * Arg.doc
+val multLine : (Arg.key * Arg.key * Arg.spec * Arg.doc * Arg.doc) list ->
+               (Arg.key * Arg.spec * Arg.doc) list
+  
+  
+val versionspec : Arg.key * Arg.key * Arg.spec * Arg.doc * Arg.doc
 
 val getModName : string -> string
   

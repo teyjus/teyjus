@@ -63,7 +63,8 @@ static MSG_Msg FRONT_ErrorMessages[FRONT_NUM_ERROR_MESSAGES] =
 /***************************************************************************/
 // default heap size (in words)
 // this defaults to 256MB on 32bit machines, 512MB on 64bit machines.
-#define FRONT_DEFAULT_SYS_SIZE      64 * 1024 * 1024
+// max is 256Gb (32 GB)
+#define FRONT_DEFAULT_SYS_SIZE      64 * 1024 * 1024 // = 512 * 1024 * 1024 / 8
 
 // variables recording the sizes of the different system components 
 static int FRONT_heapSize;
@@ -81,19 +82,20 @@ static void FRONT_setMemorySizes(int memSize)
 }
 
 
-// Can we specify k in MB?
+
 int FRONT_systemInit(int inSize) 
 {
     int memSize;
     EM_TRY {
         if (inSize == 0) memSize = FRONT_DEFAULT_SYS_SIZE;
         else{
-            /* make sure the heap is in range */
-            if (inSize > 256 * 128 * 1024)
-                EM_error(FRONT_ERROR_HEAP_TOO_BIG, inSize);
-            else if (inSize <= 10)
-                EM_error(FRONT_ERROR_HEAP_TOO_SMALL, inSize);
-            memSize = inSize * 1024;
+		  /* make sure the heap is in range */
+		  if (inSize > 4 * 1024 * 1024) // = (256 / 8) * 1024 * 1024 / 8
+            EM_error(FRONT_ERROR_HEAP_TOO_BIG, inSize);
+		  else if (inSize < 8)
+			EM_error(FRONT_ERROR_HEAP_TOO_SMALL, inSize);
+
+		  memSize = inSize * 1024;
         }
         FRONT_setMemorySizes(memSize);
         /* initialize system memory */
@@ -103,7 +105,8 @@ int FRONT_systemInit(int inSize)
         /* initialize top module */
         MEM_topModuleInit();
     } EM_CATCH {
-        return EM_CurrentExnType;
+      // TODO: Process is killed before error is caught
+      return EM_CurrentExnType;
     }
     return EM_NO_ERR;
 }
