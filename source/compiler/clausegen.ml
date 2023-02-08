@@ -31,10 +31,14 @@
 (***************************************************************************) 
 let impPointList : (Absyn.adefinitions list) ref = ref []
 let numImpPoints : int ref = ref 0
+let totImpPoints : int ref = ref 0
 
-let initImpPointList () = (impPointList := []; numImpPoints := 0)
+let initImpPointList () = (impPointList := [];
+                           totImpPoints := !totImpPoints + !numImpPoints;
+                           numImpPoints := 0)
 let getImpPointList  () = (!impPointList)
 let getNumImpPoints  () = (!numImpPoints)
+let getTotImpPoints  () = (!totImpPoints)
 
 let addImpPointList impPoint = 
   (impPointList := impPoint :: (!impPointList); 
@@ -2102,7 +2106,7 @@ and genImpGoal goal cl goalNum last chunk chunks insts startLoc =
   let (bodyCode, bodyCodeNext, newChunk', newChunks', newGoalNum) =
     genGoal (Absyn.getImpGoalBody goal) cl goalNum false newChunk newChunks
 	  (insts @ (List.rev 
-				  (Instr.Ins_push_impl_point(envSize, (getNumImpPoints ()) -1) ::
+				  (Instr.Ins_push_impl_point(envSize, (getNumImpPoints () + getTotImpPoints ()) -1) ::
 				   (tyvarInitCode @ varInitCode))))
 	  (startLoc + varInitCodeSize + tyvarInitCodeSize + 
 		 Instr.getSize_push_impl_point)

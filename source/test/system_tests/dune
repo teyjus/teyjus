@@ -1,11 +1,5 @@
 (cram
- (enabled_if false)
- ;; Exclude the following failing tests:
- (applies_to
-   exportdef
-   implications
-   uncurry
- )
+ (applies_to :whole_subtree)
  (deps
   %{bin:tjcc}
   %{bin:tjlink}
@@ -13,3 +7,11 @@
   %{bin:tjsim} 
  )
 )
+
+   
+(cram
+  (enabled_if (<> %{profile} release))
+ ;; Exclude the following failing tests:
+ (applies_to
+   exportdef
+   uncurry))

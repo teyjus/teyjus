@@ -7,8 +7,6 @@ main X :- pi p \ pi q \
 	 => p X.
 
 
-%% This segfaults, but the problem goes away
-%% if main and main3 are commented??
 main2 :- sigma X \ pi p \ pi q \ q X => (p X :- (p 3 => (q X))) => p X.
 
 
