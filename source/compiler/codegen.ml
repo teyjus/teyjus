@@ -605,7 +605,6 @@ let breakClauses cls =
 
 (************************************************************************)
 (* generating an indexed sequence of code for a list of variable clauses*)
-(* --------wtf is a variable clause???                                  *)
 (************************************************************************)
 let genVarClausesCode cls isbeginning isend insts startLoc =
   let numArgs = Absyn.getClauseNumberOfArgs (List.hd cls) in
@@ -978,6 +977,7 @@ let processDef clauseBlock insts startLoc =
   let (dummyTryMeElse, dummyTryMeElseSize)
       = genDummyTryMeElse clauses partitions
   in
+  (* Get location of main_pred in code *)
   let pred = Absyn.getConstantName(Absyn.getClausePred (List.hd clauses)) in
   if ((Option.isSome !main_pred)
       && (pred = fst (Option.get !main_pred))) then

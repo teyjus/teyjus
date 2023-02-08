@@ -63,6 +63,4 @@ val makeQueryClause : Absyn.aterm -> Absyn.aconstant * Absyn.aterm
  *********************************************************************) 
 val translateQuery : Absyn.aterm -> Absyn.amodule ->
                      Absyn.amodule * (Absyn.aterm list)
-                     * (Absyn.aterm list) * (closeddefinition list) 
-
-val getHeadAndBody : Absyn.aterm -> Absyn.aterm * (Absyn.aterm option)
+                     * (Absyn.aterm list) * (closeddefinition list)

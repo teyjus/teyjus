@@ -35,8 +35,6 @@
 
 #include <stdio.h> //temp
 
-/* Main entry point for simulator is on
- * 'solve' with input set to register 1 */
 void SIM_simulate()
 {
   restart_loop:

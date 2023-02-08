@@ -257,12 +257,7 @@ let rec translateClause ?(parsingtoplevel=false) term amodule =
     else
       ()
   in
-  let _ = Errormsg.log Errormsg.none 
-            "Parse.translateClause: normalizing term..." in
   let term''' = (normalizeTerm term'') in
-  let _ = Errormsg.log Errormsg.none 
-            ("Parse.translateClause: normalized term:" ^
-               (Absyn.string_of_term_ast term''')) in
   let result =
     if !Errormsg.anyErrors then
       None

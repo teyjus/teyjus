@@ -43,8 +43,8 @@ type symbol = Symbol.symbol
 *
 **********************************************************************)
 (* NG: No longer in use, since queries are now compiled *)
-val translateTermTopLevel : Preabsyn.pterm -> Absyn.amodule ->
-  (Absyn.aterm * Types.typemolecule * Absyn.atypesymbol list * Absyn.atype list) option
+(* val translateTermTopLevel : Preabsyn.pterm -> Absyn.amodule -> *)
+(*   (Absyn.aterm * Types.typemolecule * Absyn.atypesymbol list * Absyn.atype list) option *)
   
 (**********************************************************************
 *translateClause:

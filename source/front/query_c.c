@@ -146,7 +146,6 @@ int QUERY_solveQuery()
 /* show answers */
 int QUERY_showAnswers()
 {
-  DF_TermPtr ptr;
     EM_TRY {
         STREAM_printf(STREAM_stdout, "\n");
         STREAM_printf(STREAM_stdout,"The answer substitution:\n");

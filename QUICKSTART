@@ -3,20 +3,25 @@
 
 You must have the following software installed
 
-  OCaml               http://caml.inria.fr/
-  Dune                https://dune.build/
+  OCaml               https://ocaml.org/        Version >= 4.05  < 5.0
+  Dune                https://dune.build/       Version >= 3.1
+  Opam                https://opam.ocaml.org/   (Optional)
+  gcc
+  flex
+  yacc
 
-These standard tools are also required: a C compiler, lex, and yacc.
-
-To build teyjus, execute 'make install' from the teyjus directory.
+If Opam is installed, execute 'make install' from the teyjus directory.
 This will put tjcc, tjlink, tjsim, tjdepend, and tjdis in your opam
-folder under the 'bin' directory.
+environment.
+
+If Opam is not installed, execute 'make all' from the teyjus directory.
+This will put executables in _build/default/source/front.
 
 Documentation for Teyjus can be found at http://teyjus.cs.umn.edu/
 
 The rest of this file gives detailed instructions for compiling teyjus
 on various platforms. The instructions for *nix apply to both Linux
-and Mac OS X.
+and Mac OS X. Recommended build for Windows is through Cygwin or WSL2.
 
 
                              DEPENDENCIES
@@ -24,12 +29,13 @@ and Mac OS X.
 
                               ---*nix---
 
-The following dependencies must be in the path:
-
-  OCaml
-  Dune
+  OCaml               https://ocaml.org/        Version >= 4.05  < 5.0
+  Dune                https://dune.build/       Version >= 3.1
+  Opam                https://opam.ocaml.org/   (Optional)
+  gcc
   flex
-  bison
+  yacc
+
 
                             ---Windows---
 
@@ -63,29 +69,49 @@ Microsoft Visual Studio 2008:
   bison                           http://gnuwin32.sourceforge.net/
 
 
-                             BUILD SYSTEM
-                             ============
+                          BUILD AND INSTALL
+                          =================
 
                         ---*nix and Cygwin---
 
-  To build the system in a *nix or Cygwin environment, use omake:
+I. Recommended installation is with Opam.
 
-  component                 command                    path
-  -----------------------------------------------------------------
-  compiler                  omake tjcc                 teyjus/source
+1) Initialize Opam (if not already done)
+  opam init
 
-  simulator                 omake tjsim                teyjus/source
+2) Install Ocaml (if not already installed)
+  opam switch create default 4.14.1
 
-  disassembler              omake tjdis                teyjus/source
+3) Setup opam environment
+  eval $(opam env)
 
-  linker                    omake tjlink               teyjus/source
+3) Install Dune (if not already installed)
+  opam update
+  opam install dune.3.1.2
 
-  dependency analyzer       omake tjdepend             teyjus/source
+4) Install Teyjus
+  make install
 
-  all                       omake all                  teyjus/source
+5) Test
+  make test
+
+II. Without opam, make sure OCaml and Dune are installed, then run
+
+  make all
+
+this creates the executables
+  _build/default/source/front/simulatorfront.exe
+                          .../linkerfront.exe
+                          .../dependfront.exe
+                          .../parsefront.exe
+                          .../disassemblerfront.exe
+                          .../simulatorfront.exe
 
 
              ---Windows: Microsoft Visual Studio 2008---
+
+  **Note:** These instructions have not been tested. Recommended
+            install on Windows is through Cygwin or WSL2
 
   Installing dependencies:
     Make sure that O'Caml is installed and in your path.
@@ -227,7 +253,7 @@ Microsoft Visual Studio 2008:
 
                    ---*nix and Cygwin---
 
-  Run all tests with
+  Run tests with
    make test
-  or
+  Run all tests (including tests known to fail) with
    dune runtest

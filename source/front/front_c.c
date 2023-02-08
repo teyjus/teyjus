@@ -53,7 +53,7 @@ static MSG_Msg FRONT_ErrorMessages[FRONT_NUM_ERROR_MESSAGES] =
       EM_NEWLINE, EM_ABORT, 1 },
     { FRONT_ERROR_HEAP_TOO_SMALL,
       EM_ERROR_COLON,
-      "Specified heap size (%uK) is smaller than minimum of 10Kb.",
+      "Specified heap size (%uK) is smaller than minimum of 64KB.",
       EM_NEWLINE, EM_ABORT, 1 },
 };
 
@@ -63,7 +63,9 @@ static MSG_Msg FRONT_ErrorMessages[FRONT_NUM_ERROR_MESSAGES] =
 /***************************************************************************/
 // default heap size (in words)
 // this defaults to 256MB on 32bit machines, 512MB on 64bit machines.
-// max is 256Gb (32 GB)
+// Assume 64bit machine, then:
+//  max is 256Gb (32 GB)
+//  min is 64KB
 #define FRONT_DEFAULT_SYS_SIZE      64 * 1024 * 1024 // = 512 * 1024 * 1024 / 8
 
 // variables recording the sizes of the different system components 
@@ -82,7 +84,7 @@ static void FRONT_setMemorySizes(int memSize)
 }
 
 
-
+// Input specified in Kw (kiloword)
 int FRONT_systemInit(int inSize) 
 {
     int memSize;

@@ -42,8 +42,8 @@ tjlink
 tjparse
 tjsim
 
-examples/
-
 _build/
+
+examples/
 
 *~

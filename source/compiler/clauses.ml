@@ -1241,27 +1241,6 @@ let linearizeClause clause =
           imp head' body' pos
       | None -> head'
 
-
-
-
-let getHeadAndBody clause : Absyn.aterm * (Absyn.aterm option) =
-  match clause with
-    Absyn.ApplicationTerm(
-        Absyn.FirstOrderApplication(
-            Absyn.ConstantTerm(impc, _, _),
-            [body; head],
-            _),
-        _) when impc == Pervasive.implConstant ->
-     (head, Some body)
-  | Absyn.ApplicationTerm(Absyn.FirstOrderApplication(
-                              Absyn.ConstantTerm(impc, _, _),
-                              [head; body], _), _) when impc == Pervasive.colondashConstant ->
-     (head, Some body)
-  | Absyn.ApplicationTerm(_) -> (clause, None)
-  | Absyn.ConstantTerm(_) -> (clause, None)
-  | _ -> Errormsg.impossible (Absyn.getTermPos clause) ("Clauses.linearizeClause: invalid clause " ^ (Absyn.string_of_term_ast clause))
-       
-
 (* Construct a new clause for a query
  * main X0 ... Xn :- {query X0 ... Xn}. *)
 let makeQueryClause query : Absyn.aconstant * Absyn.aterm * (Absyn.atypesymbol list) * (Absyn.atype list) =
