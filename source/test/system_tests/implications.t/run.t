@@ -29,10 +29,6 @@
   s
   yes
   
-  $ tjsim -b -s "sigma X \ pi p \ pi q \ q X => (p X :- (p 3 => (q X))) => p X."
-  
-  yes
-  
   $ tjcc queries
   $ tjlink queries
   $ tjsim queries -b -s "main X."

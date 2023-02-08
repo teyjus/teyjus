@@ -24,3 +24,9 @@
   
   The answer substitution:
   S = 4 :: 5 :: 6 :: nil
+  $ tjsim -b -s "pi p \ pi q \ (pi x \ q x x) => (pi x \ p x :- (sigma y \ (pi r \ r 3 => (q x y, r y)))) => p X."
+  
+  The answer substitution:
+  X = 3
+
+
