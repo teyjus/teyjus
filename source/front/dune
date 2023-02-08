@@ -1,0 +1,79 @@
+(library
+ (name front)
+ (modules parseargs query ccode_stubs readterm simerrors module front)
+ (foreign_stubs
+  (language c)
+  (names ccode_stubs_c front_c query_c))
+ (libraries compiler loader simulator builtins system linker include)
+ (wrapped false))
+
+(executable
+ (name compilerfront)
+ (modules compilerfront)
+ (libraries compiler front system))
+
+(rule
+ (copy ocaml_wrap.h ocaml_wrap_cpy.h))
+
+(rule
+ (copy ocaml_wrap.c ocaml_wrap_cpy.c))
+
+(rule
+ (copy readterm_c.h readterm_c_cpy.h))
+
+(rule
+ (copy readterm_c.c readterm_c_cpy.c))
+
+(executable
+ (name linkerfront)
+ (modules linkerfront)
+ (foreign_stubs
+  (language c)
+  (names readterm_c ocaml_wrap))
+ (libraries front))
+
+(executable
+ (name simulatorfront)
+ (modules simulatorfront)
+ (foreign_stubs
+  (language c)
+  (names readterm_c_cpy ocaml_wrap_cpy))
+ (libraries front))
+
+(executable
+ (name disassemblerfront)
+ (modules disassemblerfront)
+ (libraries front disassembly))
+
+(executable
+ (name dependfront)
+ (modules dependfront)
+ (libraries front))
+
+(executable
+ (name parsefront)
+ (modules parsefront)
+ (libraries front))
+
+(install
+ (section bin)
+ (package teyjus)
+ (files
+  (simulatorfront.exe as tjsim)
+  (linkerfront.exe as tjlink)
+  (compilerfront.exe as tjcc)
+  (disassemblerfront.exe as tjdis)
+  (dependfront.exe as tjdepend)
+  (parsefront.exe as tjparse)))
+
+
+(env
+ (dev
+  (flags (:standard -w
+           -27-50-38-32
+           ;; 27: unused variable
+           ;; 32: unused variable declaration
+           ;; 38: unused exception
+           ;; 50: unexpected docstring
+   )
+)))

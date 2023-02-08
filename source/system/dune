@@ -1,0 +1,6 @@
+(library
+ (name system)
+ (libraries simulator)
+ (foreign_stubs
+  (language c)
+  (names error memory message stream)))

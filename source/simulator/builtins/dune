@@ -1,0 +1,6 @@
+(library
+ (name builtins)
+ (libraries tables)
+ (foreign_stubs
+  (language c)
+  (names readterm builtins compexp evalexp io meta)))

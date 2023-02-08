@@ -424,6 +424,7 @@ void spitCPervasivesH(char * root)
     strcat(filename, "tables/pervasives.h");
 
     outFile = UTIL_fopenW(filename);
+    if (!outFile) return;
     cgenFixedH();
     fprintf(outFile, "%s\n", pervBegH); free(pervBegH);
     fprintf(outFile, "%s\n", kindH);    free(kindH);
@@ -442,6 +443,7 @@ void spitCPervasivesC(char * root)
     strcpy(filename, root);
     strcat(filename, "tables/pervasives.c");
     outFile = UTIL_fopenW(filename);
+    if (!outFile) return;
     cgenFixedC();
     fprintf(outFile, "%s\n", pervBegC); free(pervBegC);
     fprintf(outFile, "%s\n", kindC);    free(kindC);

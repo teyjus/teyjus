@@ -1,0 +1,24 @@
+(library
+ (name tables)
+ (libraries pervasives)
+ (foreign_stubs
+  (language c)
+  (names pervinit pervasives instructions)))
+
+(rule
+ (targets pervasives.h pervasives.c)
+ (deps ../tables_gen/pervasives/perv_gen)
+ (mode fallback)
+ (action
+  (chdir
+   ../tables_gen/pervasives/
+   (run ./perv_gen pervasives.in))))
+
+(rule
+ (targets instructions.h instructions.c)
+ (deps ../tables_gen/instrformats/instr_gen)
+ (mode fallback)
+ (action
+  (chdir
+   ../tables_gen/instrformats/
+   (run ./instr_gen))))

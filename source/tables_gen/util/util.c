@@ -120,7 +120,13 @@ FILE* UTIL_fopenR(char* filename)
 /* open file in write mode */
 FILE* UTIL_fopenW(char* filename)
 {
-    FILE* filePtr = fopen(filename, "w");
+    FILE* filePtr = fopen(filename, "r");
+    if (filePtr) {
+        // File already exists
+        fclose(filePtr);
+        return NULL;
+    }
+    filePtr = fopen(filename, "w");
     if (filePtr) return filePtr;
     
     printf("Error : cannot open output file %s\n", filename);

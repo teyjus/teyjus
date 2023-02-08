@@ -1,0 +1,19 @@
+(library
+ (name loader)
+ (wrapped false)
+ (libraries compiler)
+ (foreign_stubs
+  (language c)
+  (names
+   bvrtab
+   code
+   const
+   file
+   hashtab
+   implgoal
+   importtab
+   kind
+   loader
+   searchtab
+   strings
+   tyskel)))

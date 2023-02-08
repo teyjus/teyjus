@@ -1,0 +1,23 @@
+(library
+ (name linker)
+ (libraries tables)
+ (foreign_stubs
+  (language c)
+  (names
+   bvrtab
+   const
+   implgoal
+   linker_message
+   stringspace
+   vector
+   CallResolution
+   file
+   importtab
+   module
+   tree
+   VectorRW
+   code
+   hashtab
+   kind
+   rename
+   tyskel)))

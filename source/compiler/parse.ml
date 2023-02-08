@@ -727,7 +727,7 @@ and reduceToTerm parsingtoplevel fvs bdgs amodule stack =
           (getStackOpConstant (stackTop stack)))) in
 
       (Errormsg.error pos ("missing right argument for " ^
-        (String.lowercase fixity) ^ " operator");
+        (StringLabels.lowercase_ascii fixity) ^ " operator");
       (errorTerm, fvs, bdgs))
   | _ -> (reduce' stack)
 
@@ -917,7 +917,7 @@ and stackOperation parsingtoplevel o amodule stack =
         ("'" ^ name ^ "': conflict in operator precedences:" ^
         (Errormsg.info "precedence: " ^ (string_of_int prec)) ^ "." ^
         (Errormsg.info "fixity: " ^
-        (String.lowercase (Absyn.string_of_fixity fixity))) ^ ".")
+        (StringLabels.lowercase_ascii (Absyn.string_of_fixity fixity))) ^ ".")
     in
 
     (******************************************************************
@@ -934,7 +934,7 @@ and stackOperation parsingtoplevel o amodule stack =
         let pos = getStackItemPos (stackTop stack) in
         (Errormsg.error pos 
           ("missing left argument for " ^
-          (String.lowercase (Absyn.string_of_fixity fixity)) ^
+          (StringLabels.lowercase_ascii (Absyn.string_of_fixity fixity)) ^
           " operator");
         raise TermException)
     in
@@ -953,7 +953,7 @@ and stackOperation parsingtoplevel o amodule stack =
         let pos = getStackItemPos (stackTop stack) in
         (Errormsg.error pos 
           ("missing right argument for " ^
-          (String.lowercase (Absyn.string_of_fixity fixity)) ^
+          (StringLabels.lowercase_ascii (Absyn.string_of_fixity fixity)) ^
           " operator");
         raise TermException)
     in
@@ -1081,7 +1081,7 @@ and stackOperation parsingtoplevel o amodule stack =
         if not (Absyn.isFixityPrefix fixity) then
           (Errormsg.error pos
             ("missing left argument for " ^
-            (String.lowercase (Absyn.string_of_fixity fixity)) ^
+            (StringLabels.lowercase_ascii (Absyn.string_of_fixity fixity)) ^
             " operator");
           raise TermException)
         else

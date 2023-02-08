@@ -1,0 +1,30 @@
+(library
+ (name simulator)
+ (foreign_stubs
+  (language c)
+  (names
+   abstmachine
+   dataformats
+   hnorm
+   hnormlocal
+   hopu
+   io-datastructures
+   mcstring
+   printterm
+   simdispatch
+   siminit
+   siminstr
+   siminstrlocal
+   simulator
+   trail
+   types))
+ (libraries instr tables))
+
+(rule
+ (targets simdispatch.c)
+ (deps ../tables_gen/instrformats/instr_gen)
+ (mode fallback)
+ (action
+  (chdir
+   ../tables_gen/instrformats/
+   (run ./instr_gen))))

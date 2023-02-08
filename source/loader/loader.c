@@ -18,6 +18,7 @@
 // along with Teyjus.  If not, see <http://www.gnu.org/licenses/>.          //
 //////////////////////////////////////////////////////////////////////////////
 #include <stdio.h>
+#include "strings.h"
 #include <string.h>
 #include "ld_message.h"
 #include "file.h"
@@ -28,7 +29,6 @@
 #include "tyskel.h"
 #include "const.h"
 #include "code.h"
-#include "strings.h"
 #include "hashtab.h"
 #include "bvrtab.h"
 #include "implgoal.h"
