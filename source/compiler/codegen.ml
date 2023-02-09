@@ -608,7 +608,6 @@ let breakClauses cls =
 (************************************************************************)
 let genVarClausesCode cls isbeginning isend insts startLoc =
   let numArgs = Absyn.getClauseNumberOfArgs (List.hd cls) in
-  let clp = Absyn.getClausePred (List.hd cls) in
   (* generate instruction for a single clause clauses list*)
   let genSingleVarClause cl insts startLoc =
 	match isbeginning, isend with 
