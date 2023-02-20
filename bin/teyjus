@@ -1,0 +1,122 @@
+#!/bin/bash
+
+set -e
+
+SIM=false
+DIS=false
+QUIET=false
+FRESH=false
+CLEAN=false
+QUIETARG=
+
+MAKEFILE=Makefile
+HELP="Usage: teyjus file[.*] [-f -c -s -d -q -h]\n
+No Makefile must be present in the current directory\n
+f: fresh build\n
+c: clean\n
+s: simulate\n
+d: disassemble\n
+q: quiet\n
+h: help"
+
+
+if (test $# -lt 1); then
+    echo -e $HELP
+    exit 1
+fi
+if  [ "$1" = "-h" ]; then
+    echo -e $HELP
+	exit 0
+fi
+if [ "$1" = "-c" ]; then
+    echo "cleaning *.lp *.lpo *.wam"
+    rm -f *.lp
+    rm -f *.lpo
+    rm -f *.wam
+    exit 0
+fi
+
+FILE=${1%.*}
+shift
+
+while getopts "fscdqh" OPT; do
+	case $OPT in
+        f)
+            FRESH=true
+            ;;
+        c)
+            CLEAN=true
+            ;;
+        s)
+		    SIM=true
+			;;
+		d)
+		    DIS=true
+			;;
+		q)
+		    QUIET=true
+            QUIETARG=--silent
+			;;
+		h)
+            echo -e $HELP
+			exit 0
+			;;
+		\?)
+            echo -e $HELP
+			exit 1
+			;;
+	esac
+done
+
+if $CLEAN; then
+    if ! $QUIET; then
+        echo "cleaning *.lp *.lpo *.wam"
+    fi
+    rm -f *.lp
+    rm -f *.lpo
+    rm -f *.wam
+    exit 0
+fi
+
+if test -e $MAKEFILE; then
+    echo "Error: Makefile already exists in directory!"
+    exit 1
+fi
+
+echo -e "all: $FILE.lp
+%.lpo:
+\ttjcc \$@
+%.lp:
+\ttjlink \$@
+clean:
+\trm -f *.lp
+\trm -f *.lpo" > $MAKEFILE
+
+
+((tjdepend $FILE) >> $MAKEFILE) || {
+    echo "Error: tjdepend $FILE"
+    rm $MAKEFILE
+    exit 1
+    }
+
+if $FRESH; then
+    make $QUIETARG clean
+fi
+
+(make $QUIETARG) || {
+    rm $MAKEFILE
+    exit 1
+    }
+
+rm $MAKEFILE
+    
+if $DIS ; then
+	if ! $QUIET; then
+	   echo "tjdis $FILE.wam"
+	fi
+	tjdis $FILE.lpo > $FILE.wam
+fi
+
+if $SIM; then
+    tjsim $FILE
+fi
