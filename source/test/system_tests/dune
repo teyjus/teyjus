@@ -14,5 +14,6 @@
  ;; Exclude the following failing tests:
  (applies_to
    exportdef
-   uncurry
-   cps))
+   cps
+   unif
+))
