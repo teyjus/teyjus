@@ -1,5 +1,9 @@
 sig uncurry.
 
+%% This bug was reported by Litao Zhou
+%% https://github.com/teyjus/teyjus/issues/125
+
+
 kind label type.
 type uncurry, normal label.
 
