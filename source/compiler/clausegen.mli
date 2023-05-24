@@ -32,7 +32,8 @@ val initImpPointList : unit -> unit
 val getImpPointList  : unit -> Absyn.adefinitions list
 val getNumImpPoints  : unit -> int
 val addImpPointList  : Absyn.adefinitions -> unit 
-
+val initTotImpPoints : unit -> unit
+  
 (***************************************************************************)
 (*     REPRESENTATION AND MANIPULATION OF BACK PATCHING DATA               *)
 (*                                                                         *)

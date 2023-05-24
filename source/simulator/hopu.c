@@ -57,7 +57,7 @@ DF_TermPtr HOPU_lamBody(DF_TermPtr tmPtr)
 }
 
 /***************************************************************************/ 
-/* Globalize functions needed for HOPU_patternUnidyPair                    */
+/* Globalize functions needed for HOPU_patternUnifyPair                    */
 /***************************************************************************/
 
 /* Globalize a rigid term.                                                 */

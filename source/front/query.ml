@@ -70,12 +70,15 @@ let abortOnError () =
 
 let compileQuery query amod =
   (* Parse query to pre-abstract syntax *)
+
+  (* Reinitialize compiler *)
+  Clausegen.initTotImpPoints ();
+  
   let preTerm = Option.get @@ Compile.compileString query in
 
   (* Translate pre-abstract syntax to abstract syntax *)
   let term = Option.get @@ Parse.translateClause ~parsingtoplevel:true
                              preTerm amod in
-
   (** now compile query *)  
   (* Create a main clause for the query *)
   let (main_pred,query_term, fvars, tyfvars)  = Clauses.makeQueryClause term in

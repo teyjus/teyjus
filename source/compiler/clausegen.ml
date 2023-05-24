@@ -40,6 +40,8 @@ let getImpPointList  () = (!impPointList)
 let getNumImpPoints  () = (!numImpPoints)
 let getTotImpPoints  () = (!totImpPoints)
 
+let initTotImpPoints () = (totImpPoints := 0)
+
 let addImpPointList impPoint = 
   (impPointList := impPoint :: (!impPointList); 
    numImpPoints := !numImpPoints + 1)
