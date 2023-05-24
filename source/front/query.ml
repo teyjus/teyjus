@@ -20,9 +20,12 @@
 * along with Teyjus.  If not, see <http://www.gnu.org/licenses/>.
 ****************************************************************************)
 
-let abortOnError () =
+let abortOnError u =
   if !Errormsg.anyErrors then
-    exit 1
+    None
+  else
+    Some u
+
 
 (***************************************************************************)
 (*   parse a query and create relevant structures onto simulator heap      *)
@@ -69,16 +72,22 @@ let abortOnError () =
 (***************************************************************************)
 
 let compileQuery query amod =
-  (* Parse query to pre-abstract syntax *)
+  (* Syntactic sugar for error handling *)
+  let (let*) = Option.bind in
 
+  (* Reset errors, if any -- since previous query may have failed *)
+  Errormsg.anyErrors := false;
+       
   (* Reinitialize compiler *)
   Clausegen.initTotImpPoints ();
-  
-  let preTerm = Option.get @@ Compile.compileString query in
+
+  (* Parse query to pre-abstract syntax *)
+  let* preTerm = Compile.compileString query in
 
   (* Translate pre-abstract syntax to abstract syntax *)
-  let term = Option.get @@ Parse.translateClause ~parsingtoplevel:true
-                             preTerm amod in
+  let* term = Parse.translateClause ~parsingtoplevel:true
+                preTerm amod in
+  
   (** now compile query *)  
   (* Create a main clause for the query *)
   let (main_pred,query_term, fvars, tyfvars)  = Clauses.makeQueryClause term in
@@ -90,13 +99,14 @@ let compileQuery query amod =
   let ntyfvars = List.length(List.fold_right (fun a tyfvars ->
                                  Types.freeTypeVars a tyfvars) tyfvars [])
   in
-
   (* Normalize and deOrify the query *)
-  let (amod, clauses, newclauses, closeddefs) = Clauses.translateQuery query_term amod
+  let (amod, clauses, newclauses, closeddefs) =
+    Clauses.translateQuery query_term amod
   in
-  let _ = abortOnError () in
+  let* _ = abortOnError () in
 
-  (* We cannot call Typereduction.reduceSkeletons or Typereduction.reducePredicates here
+  (* We cannot call Typereduction.reduceSkeletons or
+   * Typereduction.reducePredicates here
    * because that would generate different neededness values.  
    * Neededness values are local to a module, so in an exported definition 
    * we must assume that every type variable is needed. *)
@@ -104,16 +114,16 @@ let compileQuery query amod =
 
   (* Translate Absyn.aterm clauses to Absyn.aclause *)
   let amod = Processclauses.processClauses amod clauses newclauses closeddefs in
-  let _ = abortOnError () in
+  let* _ = abortOnError () in
 
   (* Analyze variables (register allocation magic) *)
   let () = Annvariables.processClauses amod in
-  let _ = abortOnError () in
+  let* _ = abortOnError () in
 
   Codegen.set_main_pred (Absyn.getConstantName main_pred);
   let cg = Codegen.generateModuleCode amod in
   let startLoc = Codegen.get_main_pred_loc () in
-  abortOnError();
+  let* _ = abortOnError() in
 
   (** Write output to pipe for processing by C code *)
 
@@ -125,7 +135,8 @@ let compileQuery query amod =
   let _ = Bytecode.setOutChannel out_chan in
 
   let _ = Spitcode.writeQueryByteCode cg in
-  let _ = abortOnError () in
+  let* _ = abortOnError () in
+
   (* Loader assumes Pipe is still open *)
   let _ = flush(out_chan) in
 
@@ -139,7 +150,7 @@ let compileQuery query amod =
    *   front/query_c.c:QUERY_solveQuery
    *)
   let _ = Readterm.initVariables fvars ntyfvars in
-  (name,startLoc)
+  Some (name,startLoc)
   
       
 (***************************************************************************)

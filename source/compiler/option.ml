@@ -37,3 +37,5 @@ let string_of_option v p =
   match v with
     Some a -> p a
   | None -> "None"
+
+let bind = bind

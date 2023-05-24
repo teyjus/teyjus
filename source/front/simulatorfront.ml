@@ -68,9 +68,13 @@ let usageMsg =
 * Compile and load a query.
 ***********************************************************************)
 let compileAndLoadQuery query =
-  let modname,startLoc = Query.compileQuery query (Module.getCurrentModule ()) in
-  let _ = Ccode_stubs.loadQuery modname in
-  Ccode_stubs.setQueryEntryPoint startLoc
+  match (Query.compileQuery query (Module.getCurrentModule ())) with
+  | Some (modname,startLoc) ->
+     let _ = Ccode_stubs.loadQuery modname in
+     Ccode_stubs.setQueryEntryPoint startLoc;
+     true
+  | None ->
+     false
 
   
 (***********************************************************************
@@ -86,7 +90,6 @@ let solveQueries () =
       else
          numResults
     in
-
     if Query.queryHasVars () then
       let numResults = solveQueryBatchAux 0 in
       if numResults < !minSolutions then
@@ -114,7 +117,6 @@ let solveQueries () =
                            "Let's try it again:");
             moreAnswers ()
     in
-
     if (Query.solveQuery ()) then
       if (Query.queryHasVars ()) then
         (Query.showAnswers ();
@@ -130,12 +132,13 @@ let solveQueries () =
   
   (* solve one query *)
   let solveQuery query =
-    let _ = compileAndLoadQuery query in
-    if !batch then
-      solveQueryBatch ()
+    if (compileAndLoadQuery query) then
+      (if !batch then
+        solveQueryBatch ()
+      else
+        solveQueryInteract ())
     else
-      solveQueryInteract ();
-
+      prerr_endline "";
     Module.cleanModule (); 
     Front.simulatorReInit false ;
     Module.initModuleContext ()  

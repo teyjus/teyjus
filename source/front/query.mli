@@ -22,7 +22,7 @@
 (* NG: No longer in use, since queries are now compiled *)
 (* val buildQueryTerm : string -> Absyn.amodule -> bool *)
 
-val compileQuery : string -> Absyn.amodule -> string * int
+val compileQuery : string -> Absyn.amodule -> (string * int) option
 
 val solveQuery     : unit -> bool
 val showAnswers    : unit -> unit
