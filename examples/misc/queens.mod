@@ -23,13 +23,13 @@ queens N K [[X,Y]|Solns] :- X is (K - 1), queen N X Y, D1 is (X + Y), D2 is (N -
 
 
 type printn string -> int -> o.
-printn Str 0.
+printn Str 0 :- !.
 printn Str K :- print Str, K0 is (K - 1), printn Str K0.
 
 type printsoln int -> list (list int) -> o.
-printsoln N [].
+printsoln N [] :- print "\n".
 printsoln N [[X,Y]|Solns] :- printn " . " Y, print " X ", Y0 is (N - Y - 1),
 		  				  	 printn " . " Y0, print "\n",
-		  				  	 printsoln N Solns, print "\n".
+		  				  	 printsoln N Solns.
 
 queens' N Solns :- queens N N Solns, printsoln N Solns.

@@ -3,10 +3,16 @@
 Changes:
 * Queries are now compiled
 * Implications are now allowed in queries
-* Fix indexing of implication points
+* Fix indexing of nested implication points (see commit [2adba8a])
+* Rename absolute value symbol `abs` to `absv`
 
 Bug fixes:
 * test/system_tests/implications now passes
+
+Known bugs:
+* test/system_tests/exportdef fails
+* test/system_tests/unif fails    (formerly uncurry)
+* test/system_tests/cps fails
 
 # v2.1.1
 
@@ -14,7 +20,7 @@ Changes:
 * removed the Caml runtime 'front/caml' (no longer needed with OCaml >= 4.05.0)
 * replace Omake build dependency with Dune
 * replace Omake tests with Cram tests
-* replaced String.lowercase -> StringLabels.lowercase_ascii for compatibility with OCaml 4.05.0
+* replaced `String.lowercase` with `StringLabels.lowercase_ascii` for compatibility with OCaml 4.05.0
 
 Known bugs:
 * test/system_tests/exportdef fails
