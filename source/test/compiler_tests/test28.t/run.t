@@ -50,14 +50,14 @@
   Local kind table:
   
   Type skeleton table:
-  0: (i -> i) -> i
-  1: i -> o
+  0: i -> o
+  1: (i -> i) -> i
   2: i -> i -> i
   
   Global constant table: 
-  0: abs (No Fixity, precedence 0)
+  0: foo (No Fixity, precedence 0)
       Env Size: 0, Type Skeleton: #0
-  1: foo (No Fixity, precedence 0)
+  1: abs (No Fixity, precedence 0)
       Env Size: 0, Type Skeleton: #1
   2: app (No Fixity, precedence 0)
       Env Size: 0, Type Skeleton: #2
@@ -140,14 +140,14 @@
   Local kind table:
   
   Type skeleton table:
-  0: (i -> i) -> i
-  1: i -> o
+  0: i -> o
+  1: (i -> i) -> i
   2: i -> i -> i
   
   Global constant table: 
-  0: abs (No Fixity, precedence 0)
+  0: foo (No Fixity, precedence 0)
       Env Size: 0, Type Skeleton: #0
-  1: foo (No Fixity, precedence 0)
+  1: abs (No Fixity, precedence 0)
       Env Size: 0, Type Skeleton: #1
   2: app (No Fixity, precedence 0)
       Env Size: 0, Type Skeleton: #2
