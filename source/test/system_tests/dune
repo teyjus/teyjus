@@ -14,6 +14,6 @@
  ;; Exclude the following failing tests:
  (applies_to
    exportdef
-   cps
    unif
+   segfault
 ))

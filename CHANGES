@@ -11,8 +11,8 @@ Bug fixes:
 
 Known bugs:
 * test/system_tests/exportdef fails
-* test/system_tests/unif fails    (formerly uncurry)
-* test/system_tests/cps fails
+* test/system_tests/unif fails      (formerly uncurry)
+* test/system_tests/segfault fails  (formerly cps)
 
 # v2.1.1
 
