@@ -8,38 +8,23 @@ QUIET=false
 FRESH=false
 CLEAN=false
 QUIETARG=
+BATCH=false
+QUERY=
 
 MAKEFILE=Makefile
-HELP="Usage: teyjus file[.*] [-f -c -s -d -q -h]\n
+HELP="This script will automatically generate dependencies, compile,\n
+link, and optionally run teyjus programs.\n\n
+Usage: teyjus [-f -c -s -d -q -h] [file[.*]] [-b query]\n
 No Makefile must be present in the current directory\n
-f: fresh build\n
-c: clean\n
-s: simulate\n
-d: disassemble\n
-q: quiet\n
-h: help"
+f: fresh build\t\t-- clean before build\n
+c: clean directory\t-- clean *.lp *.lpo and *.dis\n
+s: simulate\t\t-- run tjsim\n
+d: disassemble\t\t-- run tjdis\n
+q: quiet\t\t\t-- suppress build output\n
+b: batch query\t\t-- run tjsim in batch mode on input query\n
+h: help\t\t\t-- output this text"
 
-
-if (test $# -lt 1); then
-    echo -e $HELP
-    exit 1
-fi
-if  [ "$1" = "-h" ]; then
-    echo -e $HELP
-	exit 0
-fi
-if [ "$1" = "-c" ]; then
-    echo "cleaning *.lp *.lpo *.wam"
-    rm -f *.lp
-    rm -f *.lpo
-    rm -f *.wam
-    exit 0
-fi
-
-FILE=${1%.*}
-shift
-
-while getopts "fscdqh" OPT; do
+while getopts "fscdqhb:" OPT; do
 	case $OPT in
         f)
             FRESH=true
@@ -61,6 +46,12 @@ while getopts "fscdqh" OPT; do
             echo -e $HELP
 			exit 0
 			;;
+        b)
+            BATCH=true
+            QUERY=$OPTARG
+            tjsim -b -s "$QUERY" -m 1
+            exit 0
+            ;;
 		\?)
             echo -e $HELP
 			exit 1
@@ -70,13 +61,35 @@ done
 
 if $CLEAN; then
     if ! $QUIET; then
-        echo "cleaning *.lp *.lpo *.wam"
+        echo "cleaning *.lp *.lpo *.dis"
     fi
     rm -f *.lp
     rm -f *.lpo
-    rm -f *.wam
+    rm -f *.dis
     exit 0
 fi
+
+shift $(($OPTIND -1))
+if (test $# -lt 1); then
+    tjsim
+    exit 0
+fi
+
+FILE=${1%.*}
+
+while getopts "b:" OPT; do
+	case $OPT in
+        b)
+            BATCH=true
+            SIM=true
+            QUERY=$OPTARG
+            ;;
+		\?)
+            echo -e $HELP
+			exit 1
+			;;
+	esac
+done
 
 if test -e $MAKEFILE; then
     echo "Error: Makefile already exists in directory!"
@@ -112,11 +125,15 @@ rm $MAKEFILE
     
 if $DIS ; then
 	if ! $QUIET; then
-	   echo "tjdis $FILE.wam"
+	   echo "tjdis $FILE.dis"
 	fi
-	tjdis $FILE.lpo > $FILE.wam
+	tjdis $FILE.lpo > $FILE.dis
 fi
 
 if $SIM; then
-    tjsim $FILE
+    if $BATCH; then
+        tjsim $FILE -b -s "$QUERY" -m 1
+    else
+        tjsim $FILE
+    fi
 fi

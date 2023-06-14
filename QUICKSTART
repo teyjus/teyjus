@@ -76,41 +76,27 @@ Microsoft Visual Studio 2008:
 
 I. Recommended installation is with Opam.
 
-1) Initialize Opam (if not already done)
-  opam init
+Make sure opam and dune are properly installed, then run
 
-2) Install Ocaml (if not already installed)
-  opam switch create default 4.14.1
-
-3) Setup opam environment
-  eval $(opam env)
-
-3) Install Dune (if not already installed)
-  opam update
-  opam install dune.3.1.2
-
-4) Install Teyjus
   make install
 
-5) Test
-  make test
+this will install the following executables in OPAM_SWITCH_PREFIX/bin
 
-II. Without opam, make sure OCaml and Dune are installed, then run
+  tjsim tjlink tjdepend tjparse tjdis tjcc teyjus
 
-  make all
+II. Without Opam
 
-this creates the executables
-  _build/default/source/front/simulatorfront.exe
-                          .../linkerfront.exe
-                          .../dependfront.exe
-                          .../parsefront.exe
-                          .../disassemblerfront.exe
-                          .../simulatorfront.exe
+Make sure ocaml and dune are properly installed, then run
+
+  dune build @install --release
+  dune install --release --prefix=PREFIX
+
+PREFIX/bin should be in your path, ie. PREFIX=$HOME/.local
 
 
              ---Windows: Microsoft Visual Studio 2008---
 
-  **Note:** These instructions have not been tested. Recommended
+  **Note:** These instructions may be outdated. Recommended
             install on Windows is through Cygwin or WSL2
 
   Installing dependencies:
@@ -140,113 +126,124 @@ this creates the executables
     /source/VisualStudio/clean.bat.  It removes O'Caml object files that Visual
     Studio doesn't know about.
 
-    Note that there is no support for building Teyjus using omake on Windows as
-    of yet.
+
+                           BUILD SCRIPT
+                           ============
+
+  build script (teyjus)
+  -----------------------------------------------
+This script will automatically generate dependencies, compile,
+ link, and optionally run teyjus programs.
+
+ Usage: teyjus [-f -c -s -d -q -h] [file[.*]] [-b query]
+ No Makefile must be present in the current directory
+ f: fresh build		-- clean before build
+ c: clean directory	-- clean *.lp *.lpo and *.dis
+ s: simulate		-- run tjsim
+ d: disassemble		-- run tjdis
+ q: quiet			-- suppress build output
+ b: batch query		-- run tjsim in batch mode on input query
+ h: help			-- output this text
+
 
                              SYSTEM USAGE
                              ============
 
-  1. compiler (teyjus/source/tjcc)
+  1. compiler (tjcc)
   --------------------------------
 
   Usage: tjcc <options> <module-names>
   options are:
-    -o         Specifies the name of the output bytecode file
-    --output   Specifies the name of the output bytecode file
-    -p         Add PATH to the search path.
-    --path     Add PATH to the search path.
-    --log      Enable logging information.
-    --log      Enable logging information.
-    -v         Return the system version
-    --version  Return the system version
-    -help      Display this list of options
-    --help     Display this list of options
+  -o         Specifies the name of the output bytecode file
+  --output   
+  -p         Add PATH to the search path.
+  --path     
+  -v         Return the system version
+  --version  
+  -help      Display this list of options
+  --help
 
 
-  2. simulator (teyjus/source/tjsim)
+  2. simulator (tjsim)
   ---------------------------------
 
   Usage: tjsim -b <options> <module-name>
   options are:
-    -p         Add PATH to the search path.
-    --path     Add PATH to the search path.
-    -s         Solve the given query on startup. Several queries may be specified
-    --solve    Solve the given query on startup. Several queries may be specified
-    -e         Expect at least this many solutions from each query;
-                  error if fewer. Valid only in batch mode
-    --expect   Expect at least this many solutions from each query;
-                  error if fewer. Valid only in batch mode
-    -m         Halt after this many solutions to the query have been found.
-                  Valid only in batch mode
-    --maximum  Halt after this many solutions to the query have been found.
-                  Valid only in batch mode
-    -q         Suppress all non-error output from the system,
-                  except variable bindings on query success
-    --quiet    Suppress all non-error output from the system,
-                  except variable bindings on query success
-    -b         Suppress system interaction; send all output without stopping
-    --batch    Suppress system interaction; send all output without stopping
-    -k         Allocate a heap of the given size (K)
-    --heap     Allocate a heap of the given size (K)
-    -v         Return the system version
-    --version  Return the system version
-    -help      Display this list of options
-    --help     Display this list of options
-
+    -p           Add PATH to the search path.
+  --path       
+  -s           Solve the given query on startup. Several queries may be specified
+  --solve      
+  -e           Expect at least this many solutions from each query;
+  --expect     error if fewer. Valid only in batch mode
+  -m           Halt after this many solutions to the query have been found.
+  --maximum    Valid only in batch mode
+  -q           Suppress all non-error output from the system,
+  --quiet      except variable bindings on query success
+  -b           Suppress system interaction; send all output without stopping
+  --batch      
+  -k           Allocate a heap of the given size (in KW, W=8B on 64 bit machine)
+  --heap       default: 512MB; min: 64KB; max: 32GB
+  -v           Return the system version
+  --version    
+  -help        Display this list of options
+  --help
 
   Note that the interactive interface is not implemented. The simulator only
   works in batch mode (with option -b specified).
 
-  3. disassembler (teyjus/source/tjdis)
+  3. disassembler (tjdis)
   -------------------------------------
 
   Usage: tjdis <options> <object-file>
   options are:
     -t         Only print tables
-    --table    Only print tables
+    --table
     -i         Only print instructions
-    --instr    Only print instructions
+    --instr
     -v         Return the system version
-    --version  Return the system version
+    --version
     -help      Display this list of options
-    --help     Display this list of options
+    --help
 
 
-  4. linker (teyjus/source/tjlink)
+  4. linker (tjlink)
   --------------------------------
 
   Usage: tjlink <module-name>
   -V         Produce verbose output - use multiple times to increase verbosity
-  --verbose  Produce verbose output - use multiple times to increase verbosity
+  --verbose
   -v         Return the system version
-  --version  Return the system version
+  --version
   -help      Display this list of options
-  --help     Display this list of options
+  --help
 
 
-  5. dependency analyzer (teyjus/source/tjdepend)
+  5. dependency analyzer (tjdepend)
   -----------------------------------------------
 
   Usage: tjdepend <options> <module-files>
   options are:
     -v         Return the system version
-    --version  Return the system version
+    --version
     -help      Display this list of options
     --help     Display this list of options
 
 
-  6. parser (teyjus/source/tjparse)
+  6. parser (tjparse)
   -----------------------------------------------
 
   Usage: tjparse [options] <file>
   options are:
-    -o         Specifies the name of the output module
-    --output   Specifies the name of the output module
-    -v         Return the system version
-    --version  Return the system version
-    -help      Display this list of options
-    --help     Display this list of options
-
+  -o             Specifies the name of the output module
+  --output       (default is input module name)
+  -i             Include an interpreter for explicit clauses
+  --interpreter  (only valid if option --explicit is set)
+  -v             Return the system version
+  --version      
+  --linearize    Linearize clause heads
+  --explicit     Make clauses explicit (EXPERIMENTAL)
+  -help          Display this list of options
+  --help
 
                          TESTING
                          =======
