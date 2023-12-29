@@ -16,4 +16,6 @@
    exportdef
    unif
    segfault
+   uncurry
+   univimp
 ))
