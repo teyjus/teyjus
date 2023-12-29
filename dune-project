@@ -39,5 +39,5 @@ unification.
 ")
  (depends
   dune
-  (ocaml (and (>= 4.05.0) (< 5.0.0)))
+  (ocaml (and (>= 4.05.0) (or (< 5.0.0) (>= 5.1.0))))
 ))
