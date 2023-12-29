@@ -9,22 +9,24 @@ FRESH=false
 CLEAN=false
 QUIETARG=
 BATCH=false
+LINK=true
 QUERY=
 
 MAKEFILE=Makefile
 HELP="This script will automatically generate dependencies, compile,\n
 link, and optionally run teyjus programs.\n\n
-Usage: teyjus [-f -c -s -d -q -h] [file[.*]] [-b query]\n
+Usage: teyjus [-f -c -s -d -l -q -h] [file[.*]] [-b query]\n
 No Makefile must be present in the current directory\n
 f: fresh build\t\t-- clean before build\n
 c: clean directory\t-- clean *.lp *.lpo and *.dis\n
 s: simulate\t\t-- run tjsim\n
 d: disassemble\t\t-- run tjdis\n
+l: library only\t-- skip linking\n
 q: quiet\t\t\t-- suppress build output\n
 b: batch query\t\t-- run tjsim in batch mode on input query\n
 h: help\t\t\t-- output this text"
 
-while getopts "fscdqhb:" OPT; do
+while getopts "fscdlqhb:" OPT; do
 	case $OPT in
         f)
             FRESH=true
@@ -38,6 +40,9 @@ while getopts "fscdqhb:" OPT; do
 		d)
 		    DIS=true
 			;;
+        l)
+            LINK=false
+            ;;
 		q)
 		    QUIET=true
             QUIETARG=--silent
@@ -96,7 +101,8 @@ if test -e $MAKEFILE; then
     exit 1
 fi
 
-echo -e "all: $FILE.lp
+if $LINK; then
+    echo -e "all: $FILE.lp
 %.lpo:
 \ttjcc \$@
 %.lp:
@@ -104,7 +110,15 @@ echo -e "all: $FILE.lp
 clean:
 \trm -f *.lp
 \trm -f *.lpo" > $MAKEFILE
-
+else
+    echo -e "all: $FILE.lp
+%.lpo:
+\ttjcc \$@
+%.lp:
+clean:
+\trm -f *.lp
+\trm -f *.lpo" > $MAKEFILE
+fi
 
 ((tjdepend $FILE) >> $MAKEFILE) || {
     echo "Error: tjdepend $FILE"
