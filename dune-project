@@ -8,7 +8,7 @@
 (homepage "http://teyjus.cs.umn.edu/")
 (documentation "https://github.com/teyjus/teyjus/wiki/TeyjusManual")
 (authors "Andrew Gacek, Nathan Guermond, Steven Holte, Gopalan Nadathur, Xiaochu Qi, Zach Snow")
-(maintainers "nguermond@proton.me")
+(maintainers "guerm001@umn.edu")
 (license "GPL-3.0-or-later")
 
 (package

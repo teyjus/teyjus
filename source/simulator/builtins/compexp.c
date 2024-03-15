@@ -84,7 +84,7 @@ void BICOMP_comp()
     }
     case BI_STR_LT:
     { success = (MCSTR_compareStrs(DF_strDataValue(BIEVAL_evalStr(lOp)),
-                                   DF_strDataValue(BIEVAL_evalStr(rOp))) >= 0);
+                                   DF_strDataValue(BIEVAL_evalStr(rOp))) < 0);
       break;
     }
     default:
