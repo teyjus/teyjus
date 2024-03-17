@@ -222,8 +222,10 @@ static void PRINT_writeHCName(WordPtr outStream, int constInd, int uc)
         lclist->next     = PRINT_clist;
         PRINT_clist      = lclist;
     }
-    
-    STREAM_printf(outStream, "<lc-%d-%d>", lclist->count, uc);
+
+    // NG - this is easier to read
+    /* STREAM_printf(outStream, "<lc-%d-%d>", lclist->count, uc); */
+    STREAM_printf(outStream, "c%d^%d", lclist->count, uc);
 }
 
 /* Writing out a constant, hidden or global. */
