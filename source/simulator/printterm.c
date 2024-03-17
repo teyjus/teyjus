@@ -721,7 +721,8 @@ static void PRINT_printSubsPair(WordPtr outStream, int ind)
         tmPtr = IO_freeVarTab[ind].rigdes;
         HN_lnorm(tmPtr);
         PRINT_writeTerm(outStream, tmPtr, OP_NONE, 0, OP_WHOLE_TERM);
-    }    
+        STREAM_printf(STREAM_stdout, "\n");
+    }
 }
 
 void PRINT_showAnswerSubs()
@@ -731,8 +732,7 @@ void PRINT_showAnswerSubs()
     PRINT_names = TRUE;
     
     for (i = 0; i < PRINT_numQueryVars; i++) {
-        PRINT_printSubsPair(STREAM_stdout, i);
-        STREAM_printf(STREAM_stdout, "\n");
+      PRINT_printSubsPair(STREAM_stdout, i);
     }
 }
 
