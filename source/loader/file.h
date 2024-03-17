@@ -1,6 +1,7 @@
 //////////////////////////////////////////////////////////////////////////////
 //Copyright 2008
-//  Andrew Gacek, Steven Holte, Gopalan Nadathur, Xiaochu Qi, Zach Snow
+//  Andrew Gacek, Nathan Guermond, Steven Holte, 
+//  Gopalan Nadathur, Xiaochu Qi, Zach Snow
 //////////////////////////////////////////////////////////////////////////////
 // This file is part of Teyjus.                                             //
 //                                                                          //
@@ -74,8 +75,9 @@ extern Byte LD_FILE_GET1();
 **/
 extern void LD_FILE_GetString(char* buffer,int length);
 
-//#ifdef DEBUG
 extern void LD_FILE_OpenPipe();
+extern int LD_FILE_GetPipeIn();
+//#ifdef DEBUG
 extern void LD_FILE_PipePUT1(Byte b);
 extern void LD_FILE_PipePUT2(TwoBytes s);
 extern void LD_FILE_PipePUTWORD(Word w);

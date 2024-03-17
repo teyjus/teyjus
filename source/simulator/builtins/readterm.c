@@ -1,6 +1,7 @@
 //////////////////////////////////////////////////////////////////////////////
 //Copyright 2008
-//  Andrew Gacek, Steven Holte, Gopalan Nadathur, Xiaochu Qi, Zach Snow
+//  Andrew Gacek, Nathan Guermond, Steven Holte, 
+//  Gopalan Nadathur, Xiaochu Qi, Zach Snow
 //////////////////////////////////////////////////////////////////////////////
 // This file is part of Teyjus.                                             //
 //                                                                          //
@@ -125,12 +126,37 @@ DF_TypePtr RT_getTypeStart()
 	return typeStartLoc;
 }
 
+// NG: No longer in use, since queries are now compiled
 /* initialize local free variable address table, free type variable address
    table, term address table and type address table; 
 */
-int RT_initLocalTabs(int numFvs,int numTyFvs,int numTermArgs,int numTypeArgs)
+/* int RT_initLocalTabs(int numFvs,int numTyFvs,int numTermArgs,int numTypeArgs) */
+/* { */
+/*     int     size   = numFvs + numTyFvs + numTermArgs + numTypeArgs; */
+/*     WordPtr tables; */
+    
+/*     EM_TRY{ */
+/*         tables = (WordPtr)EM_malloc(sizeof(DF_TermPtr) * size); */
+
+/*         if (IO_freeVarTabFull(numFvs)) EM_error(RT_ERROR_FULL_VAR); */
+/*         RT_freeVarTab  = (DF_TermPtr*)tables; */
+/*         RT_freeTypeVarTab = (DF_TypePtr*)(tables + numFvs); */
+/*         RT_termQueueInit((DF_TermPtr*)(RT_freeTypeVarTab + numTyFvs)); */
+/*         RT_typeQueueInit((DF_TypePtr*)(RT_termQueueBeg + numTermArgs)); */
+        
+/*         RT_termQueueEnqueue(termStartLoc); */
+/*         RT_typeQueueEnqueue(typeStartLoc); */
+/*     } EM_CATCH { */
+/*         return EM_CurrentExnType; */
+/*     } */
+/*     return EM_NO_ERR; */
+/* } */
+
+// For compiled queries, the only input are variables, so
+// no need to initialize term and type queues
+int RT_initLocalTabsQuery(int numFvs)
 {
-    int     size   = numFvs + numTyFvs + numTermArgs + numTypeArgs;
+    int     size   = numFvs;
     WordPtr tables;
     
     EM_TRY{
@@ -138,18 +164,11 @@ int RT_initLocalTabs(int numFvs,int numTyFvs,int numTermArgs,int numTypeArgs)
 
         if (IO_freeVarTabFull(numFvs)) EM_error(RT_ERROR_FULL_VAR);
         RT_freeVarTab  = (DF_TermPtr*)tables;
-        RT_freeTypeVarTab = (DF_TypePtr*)(tables + numFvs);
-        RT_termQueueInit((DF_TermPtr*)(RT_freeTypeVarTab + numTyFvs));
-        RT_typeQueueInit((DF_TypePtr*)(RT_termQueueBeg + numTermArgs));
-        
-        RT_termQueueEnqueue(termStartLoc);
-        RT_typeQueueEnqueue(typeStartLoc);
     } EM_CATCH {
         return EM_CurrentExnType;
     }
     return EM_NO_ERR;
 }
-    
 
 /* reclaim local tables */
 void RT_cleanLocalTabs()

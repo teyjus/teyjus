@@ -1,6 +1,7 @@
 //////////////////////////////////////////////////////////////////////////////
 //Copyright 2008
-//  Andrew Gacek, Steven Holte, Gopalan Nadathur, Xiaochu Qi, Zach Snow
+//  Andrew Gacek, Nathan Guermond, Steven Holte, 
+//  Gopalan Nadathur, Xiaochu Qi, Zach Snow
 //////////////////////////////////////////////////////////////////////////////
 // This file is part of Teyjus.                                             //
 //                                                                          //
@@ -25,5 +26,7 @@
 void LD_IMPORTTAB_LoadImportTabs(MEM_GmtEnt* ent);
 
 WordPtr LD_IMPORTTAB_GetImportTabAddr();
+
+void LD_IMPORTTAB_Cleanup();
 
 #endif //_IMPORTTAB_H_

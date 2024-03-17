@@ -1,6 +1,7 @@
 //////////////////////////////////////////////////////////////////////////////
 //Copyright 2008
-//  Andrew Gacek, Steven Holte, Gopalan Nadathur, Xiaochu Qi, Zach Snow
+//  Andrew Gacek, Nathan Guermond, Steven Holte, 
+//  Gopalan Nadathur, Xiaochu Qi, Zach Snow
 //////////////////////////////////////////////////////////////////////////////
 // This file is part of Teyjus.                                             //
 //                                                                          //
@@ -21,9 +22,12 @@
 #define _CONST_H_
 
 //!Load the const table of a file.  Sets the global const counter.
-extern int LD_CONST_LoadCst(MEM_GmtEnt* ent);
+extern int LD_CONST_LoadCst(MEM_GmtEnt* ent, int query);
 
 //!Read an index in multi-table form and return it in single table form.  Relies on global const counter.
 extern TwoBytes LD_CONST_GetConstInd();
+extern TwoBytes LD_CONST_GetConstIndQuery(int query);
+
+extern void LD_CONST_FreeCst(MEM_GmtEnt* ent);
 
 #endif //_KIND_H_

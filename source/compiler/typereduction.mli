@@ -1,6 +1,7 @@
 (****************************************************************************
 *Copyright 2008
-*  Andrew Gacek, Steven Holte, Gopalan Nadathur, Xiaochu Qi, Zach Snow
+*  Andrew Gacek, Nathan Guermond, Steven Holte, 
+*  Gopalan Nadathur, Xiaochu Qi, Zach Snow
 ****************************************************************************)
 (****************************************************************************
 * This file is part of Teyjus.
@@ -33,3 +34,8 @@ val reduceSkeletons : Absyn.amodule -> Absyn.amodule
 * This function has never been used (always commented in compilerfront.ml 
 **********************************************************************)
 val reducePredicates : Absyn.amodule -> Absyn.amodule
+
+
+
+val initConstantAndSkeletonNeedednessTopLevel : Absyn.amodule -> Absyn.amodule
+                                            

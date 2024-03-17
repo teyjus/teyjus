@@ -1,6 +1,7 @@
 //////////////////////////////////////////////////////////////////////////////
 //Copyright 2008
-//  Andrew Gacek, Steven Holte, Gopalan Nadathur, Xiaochu Qi, Zach Snow
+//  Andrew Gacek, Nathan Guermond, Steven Holte, 
+//  Gopalan Nadathur, Xiaochu Qi, Zach Snow
 //////////////////////////////////////////////////////////////////////////////
 // This file is part of Teyjus.                                             //
 //                                                                          //
@@ -26,7 +27,7 @@
 TwoBytes LD_HASHTAB_numHashTabs;
 WordPtr* LD_HASHTAB_HashTabs;
 
-void LD_HASHTAB_LoadHashTabs(MEM_GmtEnt* ent)
+void LD_HASHTAB_LoadHashTabs(MEM_GmtEnt* ent, int query)
 {
   int i;
   int ignore;///\note We do not check if the size given for a hash table matches the size used in code.
@@ -36,7 +37,7 @@ void LD_HASHTAB_LoadHashTabs(MEM_GmtEnt* ent)
   
   for(i=0;i<count;i++)
   {   
-    LD_HASHTAB_HashTabs[i]=LD_SEARCHTAB_LoadHashTab(ent,&ignore);
+    LD_HASHTAB_HashTabs[i]=LD_SEARCHTAB_LoadHashTab(ent,&ignore,query);
   }
   return;
 }
@@ -47,4 +48,13 @@ WordPtr LD_HASHTAB_GetHashTabAddr()
   if(0>i || i>LD_HASHTAB_numHashTabs)
     EM_THROW(LD_LoadError);
   return LD_HASHTAB_HashTabs[i];
+}
+
+
+void LD_HASHTAB_Cleanup()
+{
+  if(LD_HASHTAB_HashTabs){
+	free(LD_HASHTAB_HashTabs);
+    LD_HASHTAB_HashTabs=NULL;
+  }
 }

@@ -1,6 +1,7 @@
 (****************************************************************************
 *Copyright 2008
-*  Andrew Gacek, Steven Holte, Gopalan Nadathur, Xiaochu Qi, Zach Snow
+*  Andrew Gacek, Nathan Guermond, Steven Holte, 
+*  Gopalan Nadathur, Xiaochu Qi, Zach Snow
 ****************************************************************************)
 (****************************************************************************
 * This file is part of Teyjus.
@@ -127,7 +128,7 @@ let getCurrentModule ()     = !currentModule
 (* top module: nothing needs to be loaded *)
 let loadTopModule ()   = ()
 
-(* specified module *) 
+(* specified module *)
 let loadModule modName = 
   (* asking for a slot from the global module table *)
   let index = getModuleTableIndex modName in

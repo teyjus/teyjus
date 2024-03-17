@@ -1,5 +1,8 @@
 sig main.
 
-type main o.
 
-type main2 o.
+        
+
+type test0, test1, test2, test3, test5 o.
+               
+type test4 A -> o.

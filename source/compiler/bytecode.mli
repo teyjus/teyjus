@@ -1,6 +1,7 @@
 (****************************************************************************
 *Copyright 2008
-*  Andrew Gacek, Steven Holte, Gopalan Nadathur, Xiaochu Qi, Zach Snow
+*  Andrew Gacek, Nathan Guermond, Steven Holte, 
+*  Gopalan Nadathur, Xiaochu Qi, Zach Snow
 ****************************************************************************)
 (****************************************************************************
 * This file is part of Teyjus.
@@ -31,7 +32,7 @@ val makeByteCodeFileName  : string -> string
 
 val linkedByteCodeVersionNumber : int
 val makeLinkedByteCodeName : string -> string
-
+  
 (* type skeleton representation *)
 val typeMarkArrow         : int
 val typeMarkKind          : int
@@ -72,6 +73,7 @@ val getWordSize : unit -> int
 (* management of output channel                                   *)
 (******************************************************************)
 val openOutChannel  : string -> unit
+val setOutChannel : out_channel -> unit
 val closeOutChannel : unit   -> unit 
 
 (******************************************************************)

@@ -1,6 +1,7 @@
 //////////////////////////////////////////////////////////////////////////////
 //Copyright 2008
-//  Andrew Gacek, Steven Holte, Gopalan Nadathur, Xiaochu Qi, Zach Snow
+//  Andrew Gacek, Nathan Guermond, Steven Holte, 
+//  Gopalan Nadathur, Xiaochu Qi, Zach Snow
 //////////////////////////////////////////////////////////////////////////////
 // This file is part of Teyjus.                                             //
 //                                                                          //
@@ -34,9 +35,15 @@ void RT_setTermStart(MemPtr loc);
 DF_TermPtr RT_getTermStart();
 DF_TypePtr RT_getTypeStart();
 
+// NG: No longer in use, since queries are now compiled
 /* initialize local free variable address table, free type variable address
    table, term address table and type address table */
-int RT_initLocalTabs(int numFvs,int numTyFvs,int numTermArgs,int numTypeArgs);
+/* int RT_initLocalTabs(int numFvs,int numTyFvs,int numTermArgs,int numTypeArgs); */
+
+/* For compiled queries, the only input are variables, so
+   no need to initialize term and type queues */
+int RT_initLocalTabsQuery(int numFvs);
+
 /* reclaim local tables */
 void RT_cleanLocalTabs();
 

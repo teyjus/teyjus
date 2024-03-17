@@ -1,6 +1,7 @@
 //////////////////////////////////////////////////////////////////////////////
 //Copyright 2008
-//  Andrew Gacek, Steven Holte, Gopalan Nadathur, Xiaochu Qi, Zach Snow
+//  Andrew Gacek, Nathan Guermond, Steven Holte, 
+//  Gopalan Nadathur, Xiaochu Qi, Zach Snow
 //////////////////////////////////////////////////////////////////////////////
 // This file is part of Teyjus.                                             //
 //                                                                          //
@@ -22,6 +23,8 @@
 
 #include "../simulator/mctypes.h"
 
-extern int LD_TYSKEL_LoadTst(MEM_GmtEnt* ent);
+extern int LD_TYSKEL_LoadTst(MEM_GmtEnt* ent,int query);
+
+extern void LD_TYSKEL_FreeTst(MEM_GmtEnt* ent);
 
 #endif //_TYSKEL_H_

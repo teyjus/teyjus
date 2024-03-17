@@ -1,6 +1,7 @@
 (****************************************************************************
 *Copyright 2008
-*  Andrew Gacek, Steven Holte, Gopalan Nadathur, Xiaochu Qi, Zach Snow
+*  Andrew Gacek, Nathan Guermond, Steven Holte, 
+*  Gopalan Nadathur, Xiaochu Qi, Zach Snow
 ****************************************************************************)
 (****************************************************************************
 * This file is part of Teyjus.
@@ -23,9 +24,9 @@ open Parseargs
 let tablesOnly = ref false
 let instrOnly  = ref false
   
-let specList = dualArgs
-  [("-t", "--table", Arg.Set tablesOnly, " Only print tables") ;
-   ("-i", "--instr", Arg.Set instrOnly, " Only print instructions") ;
+let specList = multLine
+  [("-t", "--table", Arg.Set tablesOnly, " Only print tables", " \n") ;
+   ("-i", "--instr", Arg.Set instrOnly, " Only print instructions", " \n") ;
    versionspec]
 
 let usageMsg =

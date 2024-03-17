@@ -1,0 +1,53 @@
+Welcome to Teyjus
+Copyright (C) 2008 A. Gacek, N. Guermond, S. Holte, G. Nadathur, X. Qi, Z. Snow
+Teyjus comes with ABSOLUTELY NO WARRANTY
+This is free software, and you are welcome to redistribute it
+under certain conditions. Please view the accompanying file
+COPYING for more information
+[unif] ?- main.
+AM_preg cc73b1a1 opcode: 116:execute_name
+AM_preg de73ae71 opcode: 131:switch_on_reg
+AM_preg de73aeb1 opcode: 111:allocate
+AM_preg de73aeb9 opcode: 99:incr_universe
+AM_preg de73aec1 opcode: 101:set_univ_tag
+AM_preg de73aec9 opcode: 64:put_type_const
+AM_preg de73aed1 opcode: 6:put_m_const
+AM_preg de73aed9 opcode: 144:put_variable_te
+AM_preg de73aee1 opcode: 144:put_variable_te
+AM_preg de73aee9 opcode: 13:put_app
+AM_preg de73aef1 opcode: 21:globalize_pt
+AM_preg de73aef9 opcode: 19:set_value_t
+AM_preg de73af01 opcode: 13:put_app
+AM_preg de73af09 opcode: 19:set_value_t
+AM_preg de73af11 opcode: 13:put_app
+AM_preg de73af19 opcode: 19:set_value_t
+AM_preg de73af21 opcode: 6:put_m_const
+AM_preg de73af29 opcode: 144:put_variable_te
+AM_preg de73af31 opcode: 13:put_app
+AM_preg de73af39 opcode: 20:set_value_p
+AM_preg de73af41 opcode: 13:put_app
+AM_preg de73af49 opcode: 19:set_value_t
+AM_preg de73af51 opcode: 136:call_builtin
+AM_preg be73bdb5 opcode: 94:pattern_unify_t
+AM_preg be73bdbd opcode: 96:finish_unify
+AM_preg be73bdc5 opcode: 117:proceed
+AM_preg de73af61 opcode: 64:put_type_const
+AM_preg de73af69 opcode: 6:put_m_const
+AM_preg de73af71 opcode: 144:put_variable_te
+AM_preg de73af79 opcode: 144:put_variable_te
+AM_preg de73af81 opcode: 13:put_app
+AM_preg de73af89 opcode: 20:set_value_p
+AM_preg de73af91 opcode: 13:put_app
+AM_preg de73af99 opcode: 19:set_value_t
+AM_preg de73afa1 opcode: 13:put_app
+AM_preg de73afa9 opcode: 19:set_value_t
+AM_preg de73afb1 opcode: 6:put_m_const
+AM_preg de73afb9 opcode: 144:put_variable_te
+AM_preg de73afc1 opcode: 13:put_app
+AM_preg de73afc9 opcode: 20:set_value_p
+AM_preg de73afd1 opcode: 13:put_app
+AM_preg de73afd9 opcode: 19:set_value_t
+AM_preg de73afe1 opcode: 136:call_builtin
+AM_preg be73bdb5 opcode: 94:pattern_unify_t
+AM_preg be73bdbd opcode: 96:finish_unify
+Simulator: Heap overflow.

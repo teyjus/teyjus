@@ -4466,29 +4466,29 @@
   Local kind table:
   
   Type skeleton table:
-  0: tp -> (term -> term) -> term
-  1: o
-  2: term -> term -> term -> tp -> o
-  3: term
-  4: tp -> (tp -> term) -> term
-  5: tp
+  0: o
+  1: term -> term -> term -> tp -> o
+  2: term
+  3: tp -> (tp -> term) -> term
+  4: tp
+  5: tp -> (term -> term) -> term
   6: tp -> tp -> tp
   7: term -> term -> term
   8: term -> tp -> term
   9: tp -> (tp -> tp) -> tp
   
   Global constant table: 
-  0: abs (No Fixity, precedence 0)
+  0: test (No Fixity, precedence 0)
       Env Size: 0, Type Skeleton: #0
-  1: test (No Fixity, precedence 0)
+  1: pred (No Fixity, precedence 0)
       Env Size: 0, Type Skeleton: #1
-  2: pred (No Fixity, precedence 0)
+  2: filler (No Fixity, precedence 0)
       Env Size: 0, Type Skeleton: #2
-  3: filler (No Fixity, precedence 0)
+  3: tabs (No Fixity, precedence 0)
       Env Size: 0, Type Skeleton: #3
-  4: tabs (No Fixity, precedence 0)
+  4: top (No Fixity, precedence 0)
       Env Size: 0, Type Skeleton: #4
-  5: top (No Fixity, precedence 0)
+  5: abs (No Fixity, precedence 0)
       Env Size: 0, Type Skeleton: #5
   6: arrow (No Fixity, precedence 0)
       Env Size: 0, Type Skeleton: #6
@@ -8989,29 +8989,29 @@
   Local kind table:
   
   Type skeleton table:
-  0: tp -> (term -> term) -> term
-  1: o
-  2: term -> term -> term -> tp -> o
-  3: term
-  4: tp -> (tp -> term) -> term
-  5: tp
+  0: o
+  1: term -> term -> term -> tp -> o
+  2: term
+  3: tp -> (tp -> term) -> term
+  4: tp
+  5: tp -> (term -> term) -> term
   6: tp -> tp -> tp
   7: term -> term -> term
   8: term -> tp -> term
   9: tp -> (tp -> tp) -> tp
   
   Global constant table: 
-  0: abs (No Fixity, precedence 0)
+  0: test (No Fixity, precedence 0)
       Env Size: 0, Type Skeleton: #0
-  1: test (No Fixity, precedence 0)
+  1: pred (No Fixity, precedence 0)
       Env Size: 0, Type Skeleton: #1
-  2: pred (No Fixity, precedence 0)
+  2: filler (No Fixity, precedence 0)
       Env Size: 0, Type Skeleton: #2
-  3: filler (No Fixity, precedence 0)
+  3: tabs (No Fixity, precedence 0)
       Env Size: 0, Type Skeleton: #3
-  4: tabs (No Fixity, precedence 0)
+  4: top (No Fixity, precedence 0)
       Env Size: 0, Type Skeleton: #4
-  5: top (No Fixity, precedence 0)
+  5: abs (No Fixity, precedence 0)
       Env Size: 0, Type Skeleton: #5
   6: arrow (No Fixity, precedence 0)
       Env Size: 0, Type Skeleton: #6

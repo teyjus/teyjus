@@ -1,6 +1,7 @@
 (****************************************************************************
 *Copyright 2008
-*  Andrew Gacek, Steven Holte, Gopalan Nadathur, Xiaochu Qi, Zach Snow
+*  Andrew Gacek, Nathan Guermond, Steven Holte, 
+*  Gopalan Nadathur, Xiaochu Qi, Zach Snow
 ****************************************************************************)
 (****************************************************************************
 * This file is part of Teyjus.
@@ -173,7 +174,7 @@ let usageMsg =
   "Usage: tjdepend [options] <module-files>\n" ^
   "options are:"
 
-let specList = dualArgs [versionspec]
+let specList = multLine [versionspec]
 
 let inputNames = ref []
 

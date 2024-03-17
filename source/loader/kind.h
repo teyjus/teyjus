@@ -1,6 +1,7 @@
 //////////////////////////////////////////////////////////////////////////////
 //Copyright 2008
-//  Andrew Gacek, Steven Holte, Gopalan Nadathur, Xiaochu Qi, Zach Snow
+//  Andrew Gacek, Nathan Guermond, Steven Holte, 
+//  Gopalan Nadathur, Xiaochu Qi, Zach Snow
 //////////////////////////////////////////////////////////////////////////////
 // This file is part of Teyjus.                                             //
 //                                                                          //
@@ -28,5 +29,8 @@ extern int LD_KIND_LoadKst(MEM_GmtEnt* ent);
 
 //!Read an index in multi-table form and return it in single table form.  Relies on global kind counter.
 extern TwoBytes LD_KIND_GetKindInd();
+extern TwoBytes LD_KIND_GetKindIndQuery(int query);
+
+extern void LD_KIND_FreeKst(MEM_GmtEnt* ent);
 
 #endif //_KIND_H_

@@ -1,6 +1,7 @@
 (****************************************************************************
 *Copyright 2008
-*  Andrew Gacek, Steven Holte, Gopalan Nadathur, Xiaochu Qi, Zach Snow
+*  Andrew Gacek, Nathan Guermond, Steven Holte, 
+*  Gopalan Nadathur, Xiaochu Qi, Zach Snow
 ****************************************************************************)
 (****************************************************************************
 * This file is part of Teyjus.
@@ -276,16 +277,16 @@ let compile basename outbasename =
   
 let outputName = ref ""
 
-let specList = (dualArgs
+let specList = (multLine
   [("-o", "--output", Arg.Set_string outputName,
-    " Specifies the name of the output module  
-                 (default is input module name)") ;
+    " Specifies the name of the output module",
+    " (default is input module name)\n") ;
+   ("-i", "--interpreter", Arg.Set interp, 
+    " Include an interpreter for explicit clauses",
+    " (only valid if option --explicit is set)\n") ;
    versionspec]) @
-  ["--linearize", Arg.Set linearize, " Linearize clause heads"] @
-  ["--explicit", Arg.Set explicit, " Make clauses explicit (EXPERIMENTAL)"] @
-  ["--interpreter", Arg.Set interp, 
-   " Include an interpreter for explicit clauses 
-                 (only valid if option --explicit is set)"]
+  ["--linearize", Arg.Set linearize, " Linearize clause heads\n"] @
+  ["--explicit", Arg.Set explicit, " Make clauses explicit (EXPERIMENTAL)\n"]
 
 let usageMsg = 
   "Usage: tjparse [options] <module-file>\n" ^

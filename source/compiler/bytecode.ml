@@ -1,6 +1,7 @@
 (****************************************************************************
 *Copyright 2008
-*  Andrew Gacek, Steven Holte, Gopalan Nadathur, Xiaochu Qi, Zach Snow
+*  Andrew Gacek, Nathan Guermond, Steven Holte, 
+*  Gopalan Nadathur, Xiaochu Qi, Zach Snow
 ****************************************************************************)
 (****************************************************************************
 * This file is part of Teyjus.
@@ -31,10 +32,10 @@ let byteCodeSuffix = ".lpo"
 
 let linkedByteCodeVersionNumber = 3
 let linkedByteCodeSuffix = ".lp"
-
+                         
 let makeByteCodeFileName modName   = modName ^ byteCodeSuffix
 let makeLinkedByteCodeName modName = modName ^ linkedByteCodeSuffix
-
+                                   
 (* type skeleton representation *)
 let typeMarkArrow       = 0
 let typeMarkKind        = 1
@@ -385,7 +386,7 @@ let readint2 () = readTwoBytes ()
 let readint4 () = readNBytes (getInChannel ()) 4
 let readint8 () = readNBytes (getInChannel ()) 8
 
-(* read lable *)
+(* read label *)
 let getLabelFn : (int -> unit) option ref = ref None
 let setGetLabelFn func = getLabelFn := Some func
 

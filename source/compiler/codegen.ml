@@ -1,6 +1,7 @@
 (****************************************************************************
 *Copyright 2008
-*  Andrew Gacek, Steven Holte, Gopalan Nadathur, Xiaochu Qi, Zach Snow
+*  Andrew Gacek, Nathan Guermond, Steven Holte, 
+*  Gopalan Nadathur, Xiaochu Qi, Zach Snow
 ****************************************************************************)
 (****************************************************************************
 * This file is part of Teyjus.
@@ -28,13 +29,13 @@
 (* 2). Imported and accumulated module lists are mapped into lists and all *)
 (*     information needed for dumping out the renaming functions is stored *)
 (*     in these lists.                                                     *)
-(* 3). Predicate defintions are processed and transformed into instructions*)
+(* 3). Predicate definitions are processed and transformed into instructions*)
 (*     together with the size of code space. (The functions in this module *)
 (*     are in charge of generating switching and indexing code and in this *)
 (*     process, hash tables are formed and stored, ready for dumping.      *)
-(*     Clause code is gethered by invocation of functions from             *)
+(*     Clause code is gathered by invocation of functions from             *)
 (*     the module Clausegen. Back patching is performed over call and      *)
-(*     execute instructions after offsets of all clause defintions of this *)
+(*     execute instructions after offsets of all clause definitions of this*)
 (*     module become available.)                                           *)
 (* 4). Antecedents of implication goals are processed, definitions are     *)
 (*     translated and information for generating the dump for such tables  *)
@@ -159,6 +160,26 @@ type cgmodule =
 		cginstructions * cghashtabs * cgimpgoallist 
 		
 
+let main_pred = ref None
+
+let set_main_pred name : unit =
+  main_pred := Some (name, 0)
+
+let get_main_pred_loc () : int =
+  snd (Option.get !main_pred)
+              
+let getCGModuleName = function
+    Module(cgname,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_,_) -> cgname
+                                                    
+let getNumCGConsts = function
+    ConstantList(_,num) -> num
+
+let getNumCGTypeSkeletons = function
+    TypeSkeletonList(_,num) -> num
+
+let getNumCGPreds = function
+    PredList(_,num) -> num
+
 (*****************************************************************************)
 (*  HASH TABLE LIST:                                                         *)
 (*****************************************************************************)
@@ -205,17 +226,17 @@ let assignKindIndex gkinds lkinds =
   let numLKinds = assignKindIndexAux lkinds 0 in
   (KindList(gkinds, numGKinds), KindList(lkinds, numLKinds))
 
-(****************************************************************************)
-(*                         ASSIGN CONSTANT INDEXES                          *)
-(* 1. assign indexes (offsets) to global, local and hidden constants of the *)
-(*    module.                                                               *)
-(* 2. gather predicates have definitions in this module                     *)
-(*    gather non-exportdef global predicates have definitions in this module*)
-(*    gather exportdef (global) predicates have definitions in this module  *)
-(*    gather local predicates have definitions in this module               *)
-(* 3. gather predicates whose previous defintions may be extended by code   *)
-(*    in this module                                                        *)
-(****************************************************************************)
+(******************************************************************************)
+(*                         ASSIGN CONSTANT INDEXES                            *)
+(* 1. assign indexes (offsets) to global, local and hidden constants of the   *)
+(*    module.                                                                 *)
+(* 2. gather predicates having definitions in this module                     *)
+(*    gather non-exportdef global predicates having definitions in this module*)
+(*    gather exportdef (global) predicates having definitions in this module  *)
+(*    gather local predicates having definitions in this module               *)
+(* 3. gather predicates whose previous definitions may be extended by code    *)
+(*    in this module                                                          *)
+(******************************************************************************)
 let assignConstIndex gconsts lconsts hconsts =
 
   (* a). assignIndex for local consts;                                    *)
@@ -225,19 +246,19 @@ let assignConstIndex gconsts lconsts hconsts =
 	match consts with
 	  [] -> (index, defs, numDefs)  (*note defs are in reversed order *)
 	| (const :: rest) ->
-		Absyn.setConstantIndex const index; (*set index*)
-		let (newDefs, newNumDefs) =
-		  match (!(Absyn.getConstantCodeInfo const)) with
-			  None -> (defs, numDefs)         (* not have def in this module *)
-		  | Some(Absyn.Clauses(clauseBlock)) ->
-			    Absyn.setClauseBlockClose clauseBlock true;
-			    (const :: defs, numDefs + 1)
-		  | _ ->
-		      Errormsg.impossible Errormsg.none 
-			      ("Codegen.assignConstIndex: invalid constant codeInfo on constant '" ^
-			      (Absyn.getConstantName const) ^ "'")
-		in
-		assignLocalConstIndex rest (index + 1) newDefs newNumDefs
+	   Absyn.setConstantIndex const index; (*set index*)
+	   let (newDefs, newNumDefs) =
+		 match (!(Absyn.getConstantCodeInfo const)) with
+		   None -> (defs, numDefs)         (* not have def in this module *)
+		 | Some(Absyn.Clauses(clauseBlock)) ->
+			Absyn.setClauseBlockClose clauseBlock true;
+			(const :: defs, numDefs + 1)
+		 | _ ->
+		    Errormsg.impossible Errormsg.none 
+			  ("Codegen.assignConstIndex: invalid constant codeInfo on constant '" ^
+			     (Absyn.getConstantName const) ^ "'")
+	   in
+	   assignLocalConstIndex rest (index + 1) newDefs newNumDefs
   in
   
   (* assign indexes for hidden constants *)
@@ -290,7 +311,6 @@ let assignConstIndex gconsts lconsts hconsts =
 	assignGlobalConstIndex rest (index+1) newDefs newNumDefs newNonExpDefs
 	  newNumNonExpDefs newExpDefs newNumExpDefs
   in
-
   (* function body of assignConstIndex *)
   let (numLConsts, defs, numDefs) = 
 	assignLocalConstIndex lconsts 0 [] 0 
@@ -350,7 +370,7 @@ let assignSkelIndex skels hskels =
   TypeSkeletonList(newSkels, numTySkels)
 
 (****************************************************************************)
-(*                      ASSIGN TYPE SKELETON INDEXES                        *)
+(*                      ASSIGN STRING INDEXES                               *)
 (* assign indexes to strings in this module                                 *)
 (****************************************************************************)
 let assignStringIndex strs =
@@ -415,9 +435,9 @@ let collectAccs accs =
   in 
   collectAccsAux accs []
 
-(****************************************************************************)
-(*                    GENERATION INSTRUCTIONS                               *)
-(****************************************************************************)
+(**************************************************************************)
+(*                    GENERATE INSTRUCTIONS                               *)
+(**************************************************************************)
 (****************************************************************)
 (* location of the fail instruction: always as the first one    *)
 (****************************************************************)
@@ -587,8 +607,7 @@ let breakClauses cls =
 (* generating an indexed sequence of code for a list of variable clauses*)
 (************************************************************************)
 let genVarClausesCode cls isbeginning isend insts startLoc =
-  let numArgs = Absyn.getClauseNumberOfArgs (List.hd cls) in 
- 
+  let numArgs = Absyn.getClauseNumberOfArgs (List.hd cls) in
   (* generate instruction for a single clause clauses list*)
   let genSingleVarClause cl insts startLoc =
 	match isbeginning, isend with 
@@ -688,10 +707,10 @@ let genVarClausesCode cls isbeginning isend insts startLoc =
   match cls with (* assume: cls cannot be an empty list *)
 	[cl] -> genSingleVarClause cl insts startLoc 
   | _    -> 
-	  let (start, middle, last)  = breakClauses cls in
-	  let (startIns, midCodeLoc) = genVarClausesStart start insts startLoc in
-	  let (midIns,lastCodeLoc) = genVarClausesMid middle startIns midCodeLoc in
-	  genVarClausesLast last midIns lastCodeLoc 
+	 let (start, middle, last)  = breakClauses cls in
+	 let (startIns, midCodeLoc) = genVarClausesStart start insts startLoc in
+	 let (midIns,lastCodeLoc) = genVarClausesMid middle startIns midCodeLoc in
+	 genVarClausesLast last midIns lastCodeLoc 
   
 
 (***********************************************************************)
@@ -921,7 +940,6 @@ let genSwitchCode predIndexInfo insts startLoc =
 		in
 		genSwitchCodePartitions rest false newInsts newStartLoc
   in
-  
   match predIndexInfo with
     PredIndex([], [])                     -> (insts, startLoc) (* possible? *)
   | PredIndex([], partitions)             ->
@@ -955,19 +973,21 @@ let processDef clauseBlock insts startLoc =
   (* generate instructions *)
   let clauses       = Absyn.getClauseBlockClauses clauseBlock in
   let partitions    = calculateIndexing clauses               in
-  let (dummyTryMeElse, dummyTryMeElseSize) 
-      = genDummyTryMeElse clauses partitions 
+  let (dummyTryMeElse, dummyTryMeElseSize)
+      = genDummyTryMeElse clauses partitions
   in
-
+  (* Get location of main_pred in code *)
+  let pred = Absyn.getConstantName(Absyn.getClausePred (List.hd clauses)) in
+  if ((Option.isSome !main_pred)
+      && (pred = fst (Option.get !main_pred))) then
+    main_pred := Some (pred, startLoc);
   if (Absyn.getClauseBlockClose clauseBlock) then (* closed definition *)
     (Absyn.setClauseBlockOffset clauseBlock (startLoc + dummyTryMeElseSize);
      genSwitchCode partitions (insts @ dummyTryMeElse) (startLoc + dummyTryMeElseSize))
   else
-    (Absyn.setClauseBlockOffset clauseBlock startLoc; 
-     
+    (Absyn.setClauseBlockOffset clauseBlock startLoc;
      let numArgs       = Absyn.getClauseNumberOfArgs (List.hd clauses) in
      let nextClause    = Absyn.getClauseBlockNextClause clauseBlock in
- 
      let tryCodeLoc    = startLoc + Instr.getSize_switch_on_reg in
      let trustCodeLoc  = tryCodeLoc + Instr.getSize_try         in
      let swCodeLoc     = 
@@ -1000,8 +1020,8 @@ let processTopLevelDefs defs =
     match clauseBlocks with
       [] -> (insts, startLoc)
     | (clauseBlock :: rest) ->
-		let (newInsts, newStartLoc) = processDef clauseBlock insts startLoc in
-		processTopLevelDefsAux rest newInsts newStartLoc
+       let (newInsts, newStartLoc) = processDef clauseBlock insts startLoc in
+       processTopLevelDefsAux rest newInsts newStartLoc
   in
   
   let clauseBlocks = Absyn.getClauseInfoClauseBlocks defs in
@@ -1140,7 +1160,6 @@ let generateModuleCode amod =
       (* collect local constants appearing in acc modules for the use   *)
       (* generating instructions.                                       *)
       collectClosedConstsInAccs modaccs;
-      
       (* assign indexes to global and local kinds *)				   
       let (cgGKinds, cgLKinds) = assignKindIndex gkinds lkinds in
       (* 1) assign indexes to global, local and hidden constants;   *)

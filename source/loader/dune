@@ -16,4 +16,13 @@
    loader
    searchtab
    strings
-   tyskel)))
+   tyskel
+   loadquery)))
+
+(env
+ (dev
+  (flags (:standard -w
+           -27
+           ;; 27: unused variable
+   )
+)))

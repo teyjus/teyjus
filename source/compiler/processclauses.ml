@@ -1,6 +1,7 @@
 (****************************************************************************
 *Copyright 2008
-*  Andrew Gacek, Steven Holte, Gopalan Nadathur, Xiaochu Qi, Zach Snow
+*  Andrew Gacek, Nathan Guermond, Steven Holte, 
+*  Gopalan Nadathur, Xiaochu Qi, Zach Snow
 ****************************************************************************)
 (****************************************************************************
 * This file is part of Teyjus.
@@ -327,7 +328,7 @@ and transTermBoundVar var bvs =
         Absyn.BoundVarTerm(Absyn.DBIndex(dbInd), Errormsg.none)
       else 
         Absyn.FreeVarTerm(Absyn.FreeVar(transTermVar tysy, ref None), 
-              Errormsg.none)
+                          Errormsg.none)
   | _ -> Errormsg.impossible Errormsg.none "transTermBoundVar: invalid var rep"
     
 

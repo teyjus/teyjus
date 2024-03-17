@@ -14,5 +14,8 @@
  ;; Exclude the following failing tests:
  (applies_to
    exportdef
-   implications
-   uncurry))
+   unif
+   segfault
+   uncurry
+   regalloc
+))

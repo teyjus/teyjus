@@ -1,6 +1,7 @@
 //////////////////////////////////////////////////////////////////////////////
 //Copyright 2008
-//  Andrew Gacek, Steven Holte, Gopalan Nadathur, Xiaochu Qi, Zach Snow
+//  Andrew Gacek, Nathan Guermond, Steven Holte, 
+//  Gopalan Nadathur, Xiaochu Qi, Zach Snow
 //////////////////////////////////////////////////////////////////////////////
 // This file is part of Teyjus.                                             //
 //                                                                          //
@@ -22,8 +23,10 @@
 
 #include "../system/memory.h"
 
-extern void LD_HASHTAB_LoadHashTabs(MEM_GmtEnt* ent);
+extern void LD_HASHTAB_LoadHashTabs(MEM_GmtEnt* ent, int query);
 
 extern WordPtr LD_HASHTAB_GetHashTabAddr();
+
+extern void LD_HASHTAB_Cleanup();
 
 #endif //_HASHTAB_H_

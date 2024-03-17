@@ -1,6 +1,7 @@
 (****************************************************************************
 *Copyright 2008
-*  Andrew Gacek, Steven Holte, Gopalan Nadathur, Xiaochu Qi, Zach Snow
+*  Andrew Gacek, Nathan Guermond, Steven Holte, 
+*  Gopalan Nadathur, Xiaochu Qi, Zach Snow
 ****************************************************************************)
 (****************************************************************************
 * This file is part of Teyjus.
@@ -35,30 +36,47 @@ let addQuery str =
 let setPath p =
   path := p
 
-let specList = dualArgs
+
+let specList = multLine
   [("-p", "--path", Arg.String setPath, 
-        " Add PATH to the search path.") ;
+        " Add PATH to the search path.", " \n") ;
    ("-s", "--solve", Arg.String addQuery, 
-        " Solve the given query on startup. Several queries may be specified") ;
+        " Solve the given query on startup. Several queries may be specified", " \n") ;
    ("-e", "--expect", Arg.Set_int minSolutions,
-        " Expect at least this many solutions from each query;\n" ^
-      "\t\terror if fewer. Valid only in batch mode") ;
+        " Expect at least this many solutions from each query;",
+        "   error if fewer. Valid only in batch mode\n") ;
    ("-m", "--maximum", Arg.Set_int maxSolutions,
-        " Halt after this many solutions to the query have been found.\n" ^
-      "\t\tValid only in batch mode") ;
+        " Halt after this many solutions to the query have been found.",
+        "   Valid only in batch mode\n") ;
    ("-q", "--quiet", Arg.Set quiet, 
-        " Suppress all non-error output from the system,\n" ^
-      "\t\texcept variable bindings on query success") ;
+        " Suppress all non-error output from the system,",
+        "   except variable bindings on query success\n") ;
    ("-b", "--batch", Arg.Set batch,
-        " Suppress system interaction; send all output without stopping") ;
+        "   Suppress system interaction; send all output without stopping", " \n") ;
    ("-k", "--heap", Arg.Set_int heapSize,
-        " Allocate a heap of the given size (K)") ;
+        " Allocate a heap of the given size (in KW, W=8B on 64 bit machine)",
+        " default: 512MB; min: 64KB; max: 32GB\n") ;
    versionspec]
 
+             
 let usageMsg =
   "Usage: tjsim [options] <module-name>\n" ^
     "options are:"
 
+(***********************************************************************
+*compileAndLoadQuery:
+* Compile and load a query.
+***********************************************************************)
+let compileAndLoadQuery query =
+  match (Query.compileQuery query (Module.getCurrentModule ())) with
+  | Some (modname,startLoc) ->
+     let _ = Ccode_stubs.loadQuery modname in
+     Ccode_stubs.setQueryEntryPoint startLoc;
+     true
+  | None ->
+     false
+
+  
 (***********************************************************************
 *solveQueries:
 * Main interaction loop.
@@ -72,7 +90,6 @@ let solveQueries () =
       else
          numResults
     in
-
     if Query.queryHasVars () then
       let numResults = solveQueryBatchAux 0 in
       if numResults < !minSolutions then
@@ -82,11 +99,11 @@ let solveQueries () =
       if Query.solveQuery () then 
         if !minSolutions > 1 then 
           Parseargs.error "fewer answers than expected"
-        else ()
+        else (if not !quiet then print_endline "\nyes\n" else ())
       else 
         if !minSolutions > 0 then
           Parseargs.error "fewer answers than expected"
-        else ()
+        else (if not !quiet then print_endline "\nno (more) solutions\n" else ())
   in
 
   let rec solveQueryInteract () =
@@ -100,7 +117,6 @@ let solveQueries () =
                            "Let's try it again:");
             moreAnswers ()
     in
-
     if (Query.solveQuery ()) then
       if (Query.queryHasVars ()) then
         (Query.showAnswers ();
@@ -116,17 +132,16 @@ let solveQueries () =
   
   (* solve one query *)
   let solveQuery query =
-    if Query.buildQueryTerm query (Module.getCurrentModule ()) then 
-      if !batch then
+    if (compileAndLoadQuery query) then
+      (if !batch then
         solveQueryBatch ()
       else
-        solveQueryInteract ()
+        solveQueryInteract ())
     else
       prerr_endline "";
     Module.cleanModule (); 
     Front.simulatorReInit false ;
-    Module.initModuleContext ()
-      
+    Module.initModuleContext ()  
   in
 
   let interactSolveQuery queries modName =
@@ -143,8 +158,8 @@ let solveQueries () =
 
   let print_banner () =
        print_endline "Welcome to Teyjus";
-       print_endline "Copyright (C) 2008 A. Gacek, S. Holte, \
-                      G. Nadathur, X. Qi, Z. Snow";
+       print_endline "Copyright (C) 2008 A. Gacek, N. Guermond, \
+                      S. Holte, G. Nadathur, X. Qi, Z. Snow";
        print_endline "Teyjus comes with ABSOLUTELY NO WARRANTY";
        print_endline "This is free software, and you are \
                       welcome to redistribute it";
@@ -166,9 +181,10 @@ let solveQueries () =
 * Reads terms with respect to the current module; registered with
 * the simulator.
 **********************************************************************)
-let readTerm term =
-  Query.readTerm term (Module.getCurrentModule ())
-let _ = Callback.register "ocaml_read_term" readTerm
+(* NG: No longer in use, since queries are now compiled *)
+(* let readTerm term =
+ *   Query.readTerm term (Module.getCurrentModule ())
+ * let _ = Callback.register "ocaml_read_term" readTerm *)
   
 (**********************************************************************
 *main:

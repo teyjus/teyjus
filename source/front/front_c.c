@@ -1,6 +1,7 @@
 //////////////////////////////////////////////////////////////////////////////
 //Copyright 2008
-//  Andrew Gacek, Steven Holte, Gopalan Nadathur, Xiaochu Qi, Zach Snow
+//  Andrew Gacek, Nathan Guermond, Steven Holte, 
+//  Gopalan Nadathur, Xiaochu Qi, Zach Snow
 //////////////////////////////////////////////////////////////////////////////
 // This file is part of Teyjus.                                             //
 //                                                                          //
@@ -52,7 +53,7 @@ static MSG_Msg FRONT_ErrorMessages[FRONT_NUM_ERROR_MESSAGES] =
       EM_NEWLINE, EM_ABORT, 1 },
     { FRONT_ERROR_HEAP_TOO_SMALL,
       EM_ERROR_COLON,
-      "Specified heap size (%uK) is smaller than minimum of 10K.",
+      "Specified heap size (%uK) is smaller than minimum of 64KB.",
       EM_NEWLINE, EM_ABORT, 1 },
 };
 
@@ -62,7 +63,10 @@ static MSG_Msg FRONT_ErrorMessages[FRONT_NUM_ERROR_MESSAGES] =
 /***************************************************************************/
 // default heap size (in words)
 // this defaults to 256MB on 32bit machines, 512MB on 64bit machines.
-#define FRONT_DEFAULT_SYS_SIZE      64 * 1024 * 1024
+// Assume 64bit machine, then:
+//  max is 256Gb (32 GB)
+//  min is 64KB
+#define FRONT_DEFAULT_SYS_SIZE      64 * 1024 * 1024 // = 512 * 1024 * 1024 / 8
 
 // variables recording the sizes of the different system components 
 static int FRONT_heapSize;
@@ -79,18 +83,21 @@ static void FRONT_setMemorySizes(int memSize)
     FRONT_pdlSize   = memSize / 16 * 1;
 }
 
+
+// Input specified in Kw (kiloword)
 int FRONT_systemInit(int inSize) 
 {
     int memSize;
     EM_TRY {
         if (inSize == 0) memSize = FRONT_DEFAULT_SYS_SIZE;
         else{
-            /* make sure the heap is in range */
-            if (inSize > 265 * 1024) 
-                EM_error(FRONT_ERROR_HEAP_TOO_BIG, inSize);
-            else if (inSize <= 10)
-                EM_error(FRONT_ERROR_HEAP_TOO_SMALL, inSize);
-            memSize = inSize * 1024;
+		  /* make sure the heap is in range */
+		  if (inSize > 4 * 1024 * 1024) // = (256 / 8) * 1024 * 1024 / 8
+            EM_error(FRONT_ERROR_HEAP_TOO_BIG, inSize);
+		  else if (inSize < 8)
+			EM_error(FRONT_ERROR_HEAP_TOO_SMALL, inSize);
+
+		  memSize = inSize * 1024;
         }
         FRONT_setMemorySizes(memSize);
         /* initialize system memory */
@@ -100,7 +107,8 @@ int FRONT_systemInit(int inSize)
         /* initialize top module */
         MEM_topModuleInit();
     } EM_CATCH {
-        return EM_CurrentExnType;
+      // TODO: Process is killed before error is caught
+      return EM_CurrentExnType;
     }
     return EM_NO_ERR;
 }
@@ -115,12 +123,12 @@ int FRONT_simulatorInit()
         SINIT_preInit();
         //finalize simulator memory components
         AM_heapBeg  = (MemPtr)MEM_memTop;
-        AM_heapEnd  = AM_stackBeg = 
+        AM_heapEnd  = AM_stackBeg = /* Should this be (MEM_memEnd - MEM_memBot)? */
             ((MemPtr)MEM_memBeg) + (FRONT_heapSize -(MEM_memBot - MEM_memEnd));
         AM_stackEnd = AM_trailBeg = AM_stackBeg + FRONT_stackSize;
         AM_trailEnd = AM_pdlBeg   = AM_trailBeg + FRONT_trailSize;
         AM_pdlEnd   = AM_pdlBeg + (FRONT_pdlSize - 1);
-        
+
         //initialize simulator heap and registers
         SINIT_simInit();
         //initialize built-in error messages
@@ -164,7 +172,6 @@ int FRONT_link(char* modName)
 
 int FRONT_load(char* modName, int index)
 {
-    LD_verbosity = 0;
     EM_TRY{
         LD_LOADER_Load(modName, index);
     }EM_CATCH{
@@ -203,6 +210,7 @@ static void FRONT_resetRegs()
 } 
 
 /* record symbol table bases */
+/* Note that a query may realloc the symbol table bases -- NG */
 static void FRONT_initSymbolTableBases()
 {
     AM_kstBase = MEM_currentModule -> kstBase;

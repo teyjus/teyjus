@@ -1,6 +1,7 @@
 //////////////////////////////////////////////////////////////////////////////
 //Copyright 2008
-//  Andrew Gacek, Steven Holte, Gopalan Nadathur, Xiaochu Qi, Zach Snow
+//  Andrew Gacek, Nathan Guermond, Steven Holte, 
+//  Gopalan Nadathur, Xiaochu Qi, Zach Snow
 //////////////////////////////////////////////////////////////////////////////
 // This file is part of Teyjus.                                             //
 //                                                                          //
@@ -65,4 +66,12 @@ WordPtr LD_BVRTAB_GetBvrTabAddr()
   if(0>i || i>LD_BVRTAB_numBvrTabs)
     EM_THROW(LD_LoadError);
   return LD_BVRTAB_BvrTabs[i];
+}
+
+void LD_BVRTAB_Cleanup()
+{
+  if(LD_BVRTAB_BvrTabs){
+	free(LD_BVRTAB_BvrTabs);
+	LD_BVRTAB_BvrTabs=NULL;
+  }
 }

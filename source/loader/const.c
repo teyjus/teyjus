@@ -1,6 +1,7 @@
 //////////////////////////////////////////////////////////////////////////////
 //Copyright 2008
-//  Andrew Gacek, Steven Holte, Gopalan Nadathur, Xiaochu Qi, Zach Snow
+//  Andrew Gacek, Nathan Guermond, Steven Holte, 
+//  Gopalan Nadathur, Xiaochu Qi, Zach Snow
 //////////////////////////////////////////////////////////////////////////////
 // This file is part of Teyjus.                                             //
 //                                                                          //
@@ -25,8 +26,6 @@
 #include "../tables/pervinit.h"
 #include "../tables/pervasives.h"
 #include "ld_message.h"
-//PERV_CONST_NUM
-//#define PERV_CONST_NUM 10
 
 #define GLOBAL 0
 #define LOCAL 1
@@ -36,7 +35,7 @@
 TwoBytes LD_CONST_numGConsts;
 TwoBytes LD_CONST_numLConsts;
 
-int LD_CONST_LoadCst(MEM_GmtEnt* ent)
+int LD_CONST_LoadCst(MEM_GmtEnt* ent, int query)
 {
   int i;
   MEM_CstEnt* cst;
@@ -44,21 +43,32 @@ int LD_CONST_LoadCst(MEM_GmtEnt* ent)
   TwoBytes num_loc;
   TwoBytes num_hid;
 
-  TwoBytes cstsize=LD_FILE_GET2();
-  LD_detail("Loading %d consts\n",cstsize);
-  
-  /* MEM_CstEnt* cst=(MEM_CstEnt*)LD_LOADER_ExtendModSpace(ent,(cstsize+PERV_CONST_NUM)*sizeof(MEM_CstEnt)); -- XQ*/
-  cst=(MEM_CstEnt*)LD_LOADER_ExtendModSpace(ent,
-                                                        (cstsize+PERV_CONST_NUM) * 
-                                                        MEM_CST_ENTRY_SIZE);
-  ent->cstBase=(MEM_CstPtr)cst;
-  //Copy Pervasive constants.
-  PERVINIT_copyConstDataTab(cst);
-  cst+=PERV_CONST_NUM;
-  
+  TwoBytes cstSize=LD_FILE_GET2();
+  LD_detail("Loading %d consts\n",cstSize);
+
+  if(MEM_CST_ENTRY_SIZE*WORD_SIZE != sizeof(MEM_CstEnt)){
+	LD_error("Invalid const entry size");
+	EM_THROW(LD_LoadError);
+  }
+
+  if(query){
+	ent->cstBase = (MEM_CstEnt*)EM_realloc(ent->cstBase,(ent->cstSize + cstSize)
+										   * sizeof(MEM_CstEnt));
+	cst = ent->cstBase + ent->cstSize;
+	// We do not increase ent->cstSize here because we want
+	// this space overwritten for the next query
+  }else{
+	ent->cstBase = (MEM_CstEnt*)EM_malloc((cstSize+PERV_CONST_NUM)
+										  * sizeof(MEM_CstEnt));
+	cst = ent->cstBase;
+	//Copy Pervasive constants.
+	PERVINIT_copyConstDataTab((MEM_CstPtr)cst);
+	ent->cstSize = PERV_CONST_NUM + cstSize;
+	cst+=PERV_CONST_NUM;
+  }
   //Get the number of global constants
   num_glob=LD_CONST_numGConsts=LD_FILE_GET2();
-  if(num_glob>cstsize)
+  if(num_glob>cstSize)
       return -1;
   
   //Load the globals
@@ -70,13 +80,13 @@ int LD_CONST_LoadCst(MEM_GmtEnt* ent)
     cst[i].neededness=0;
     cst[i].univCount=0;
     cst[i].name=LD_STRING_LoadString(ent);
-    cst[i].tskTabIndex=LD_FILE_GET2();
+    cst[i].tskTabIndex=LD_FILE_GET2(); 
   }
   cst+=num_glob;
   
   //Get the number of local constants
   num_loc=LD_CONST_numLConsts=LD_FILE_GET2();
-  if(num_glob+num_loc>cstsize)
+  if(num_glob+num_loc>cstSize)
       return -1;
   
   //Load the locals
@@ -94,7 +104,7 @@ int LD_CONST_LoadCst(MEM_GmtEnt* ent)
   
   //Get the number of hidden constants
   num_hid=LD_FILE_GET2();
-  if(num_glob+num_loc+num_hid!=cstsize)
+  if(num_glob+num_loc+num_hid!=cstSize)
       return -1;
   
   //Load the hidden constants
@@ -107,9 +117,10 @@ int LD_CONST_LoadCst(MEM_GmtEnt* ent)
     cst[i].univCount=0;
     cst[i].name=NULL;
     cst[i].tskTabIndex=LD_FILE_GET2();
-  }
+  }  
   return 0;
 }
+
 
 TwoBytes LD_CONST_GetConstInd()
 {
@@ -131,4 +142,39 @@ TwoBytes LD_CONST_GetConstInd()
       EM_THROW(LD_LoadError);
       break;
   }
+}
+
+
+TwoBytes LD_CONST_GetConstIndQuery(int query)
+{
+  TwoBytes ind;
+  if(query){
+	// In the case of a query, a constant must either be global or hidden.
+	// In case of a global constant, the index is already absolute
+	// In case of a hidden constant, we must offset the index by the number
+	// of constants in the current module
+	Byte gl=LD_FILE_GET1();
+	switch(gl){
+	case HIDDEN:
+	  ind = LD_FILE_GET2() + MEM_currentModule->cstSize;
+	  break;
+	case GLOBAL:
+	case PERVASIVE:
+	  ind = LD_FILE_GET2();
+	  break;
+	default:
+	  LD_error("Invalid Const type %d in query\n", gl);
+	  EM_THROW(LD_LoadError);
+	  break;
+	}
+  }else{
+	ind=LD_CONST_GetConstInd();
+  }
+  return ind;
+}
+
+void LD_CONST_FreeCst(MEM_GmtEnt* ent)
+{
+  LD_detail("Freeing constant symbol table\n");
+  free(ent->cstBase);
 }

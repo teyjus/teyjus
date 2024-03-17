@@ -1,6 +1,7 @@
 (****************************************************************************
 *Copyright 2008
-*  Andrew Gacek, Steven Holte, Gopalan Nadathur, Xiaochu Qi, Zach Snow
+*  Andrew Gacek, Nathan Guermond, Steven Holte, 
+*  Gopalan Nadathur, Xiaochu Qi, Zach Snow
 ****************************************************************************)
 (****************************************************************************
 * This file is part of Teyjus.
@@ -732,4 +733,40 @@ let reducePredicates amod =
   (*  Run the fixed-point algorithm to compute neededness.  *)
   let _ = computeNeededness clauses in
 
+  amod
+
+(* This initializes constant and constant skeleton neededness 
+ * for queries. The expected behavior is that a query should
+ * only have external access to a module, as if it was importing
+ * the module. Since neededness values are only local to a module, 
+ * any call to a predicat or constant from outside the module 
+ * (and thus from a query) must assume maximal neededness.
+ *)
+let initConstantAndSkeletonNeedednessTopLevel amod =
+  (* Note: true must be passed to getConstantTypeEnvSize
+   * because we are in the toplevel *)
+  let makeConstantNeededness sym constant =
+    let neededness = Absyn.getConstantNeedednessRef constant in
+    if Option.isNone (!neededness) then
+      let size = (Absyn.getConstantTypeEnvSize true constant) in
+      let neededness' = 
+        Array.make size true in
+      neededness := Some(neededness')
+    else
+      ()
+  in
+  let makeConstantSkeletonNeededness sym constant =
+    (* prerr_endline (Format.sprintf "making skeleton neededness for const %s[%d]"
+     *                (Symbol.name sym) (Absyn.getConstantTypeEnvSize true constant)); *)
+    let neededness = Absyn.getConstantSkeletonNeedednessRef constant in
+    if Option.isNone (!neededness) then
+      let size = (Absyn.getConstantTypeEnvSize true constant) in
+      let neededness' =
+        Array.make size true in
+      neededness := Some(neededness')
+    else ()
+  in
+  let ctable = Absyn.getModuleConstantTable amod in
+  let _ = Table.iter makeConstantNeededness ctable in
+  let _ = Table.iter makeConstantSkeletonNeededness ctable in
   amod

@@ -1,6 +1,7 @@
 (****************************************************************************
 *Copyright 2008
-*  Andrew Gacek, Steven Holte, Gopalan Nadathur, Xiaochu Qi, Zach Snow
+*  Andrew Gacek, Nathan Guermond, Steven Holte, 
+*  Gopalan Nadathur, Xiaochu Qi, Zach Snow
 ****************************************************************************)
 (****************************************************************************
 * This file is part of Teyjus.
@@ -24,4 +25,13 @@
 (* of a module into in the required bytecode form into a specified byteode *)
 (* file.                                                                   *)
 (***************************************************************************)
+
+val writeCodeSize : int -> unit
+val writeConstInfo : Codegen.cgconsts -> Codegen.cgconsts -> Codegen.cgconsts -> unit
+val writeStrings : Codegen.cgstrings -> unit
+val writeImpGoalInfo : Codegen.cgimpgoallist -> unit
+val writeHashTabInfo : Codegen.cghashtabs -> unit
+val writeInstructions : Instr.instruction  list -> unit
+  
 val writeByteCode : Codegen.cgmodule -> unit
+val writeQueryByteCode : Codegen.cgmodule -> unit

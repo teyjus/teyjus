@@ -1022,13 +1022,13 @@ char* OC_mkGenericConstVar(char* varList)
   varList = UTIL_appendStr(text, "\n\n");       free(text);
 
   
-  constVar =  OC_mkConstVarText("abs", "ref Absyn.NoFixity", 
+  constVar =  OC_mkConstVarText("absv", "ref Absyn.NoFixity", 
 				"ref 0", "ref true", 
 				OVERLOADTYSKEL1,
 				"ref 0", "ref(Some(Array.make 0 true))", 
 				"ref None", "ref None",
 				"ref(Absyn.PervasiveConstant(true))",
-				OVERLOADABS, "0", "abs");
+				OVERLOADABS, "0", "absv");
 
   text = UTIL_appendStr(varList, constVar);   free(constVar);
   varList = UTIL_appendStr(text, "\n\n");       free(text);
@@ -1135,7 +1135,7 @@ char* OC_mkGenericConstTabEntry(char* entries)
   entries = text;
 
   
-  tabEntry = OC_mkTabEntry("abs", OVERLOADABS);
+  tabEntry = OC_mkTabEntry("absv", OVERLOADABS);
   text = UTIL_appendStr(entries, tabEntry);
   free(tabEntry); free(entries);
   entries = text;

@@ -1,6 +1,7 @@
 //////////////////////////////////////////////////////////////////////////////
 //Copyright 2008
-//  Andrew Gacek, Steven Holte, Gopalan Nadathur, Xiaochu Qi, Zach Snow
+//  Andrew Gacek, Nathan Guermond, Steven Holte, 
+//  Gopalan Nadathur, Xiaochu Qi, Zach Snow
 //////////////////////////////////////////////////////////////////////////////
 // This file is part of Teyjus.                                             //
 //                                                                          //
@@ -24,7 +25,11 @@
 /***************************************************************************/
 /* register the current heap top and the next cell as the positions of     */
 /* the type of query and the query; increase the heap top correspondingly  */
-void QUERY_setTypeAndTermLocation();
+// NG: No longer in use, since queries are now compiled
+/* void QUERY_setTypeAndTermLocation(); */
+
+/* load query */
+void QUERY_loadQuery();
 
 /* solve query */
 int QUERY_solveQuery();
@@ -34,3 +39,4 @@ int QUERY_showAnswers();
 void QUERY_setQueryFreeVariables();
 Boolean QUERY_queryHasVars();
 
+void QUERY_setQueryEntryPoint(int loc);

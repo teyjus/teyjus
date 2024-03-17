@@ -1,6 +1,7 @@
 (****************************************************************************
 *Copyright 2008
-*  Andrew Gacek, Steven Holte, Gopalan Nadathur, Xiaochu Qi, Zach Snow
+*  Andrew Gacek, Nathan Guermond, Steven Holte, 
+*  Gopalan Nadathur, Xiaochu Qi, Zach Snow
 ****************************************************************************)
 (****************************************************************************
 * This file is part of Teyjus.
@@ -61,6 +62,9 @@ let writeHeader modName codeSize =
   (* [module name] *)
   Bytecode.writeString modName;
   (* <code size in bytes> *)
+  Bytecode.writeWord codeSize
+
+let writeCodeSize codeSize =
   Bytecode.writeWord codeSize
 
 (****************************************************************************)
@@ -192,7 +196,7 @@ let writeImpGoalInfo implGoals =
 	let Codegen.ImpGoalCode(Codegen.PredList(extPreds, numExtPreds), 
 							impPredList, numDefs) =  impGoal
 	in
-	(* [next clause table]*)
+	(* [next clause table] *)
 	Bytecode.writeint2 numExtPreds;
 	map writeConstIndex extPreds; 
 	(* <find code function> *)
@@ -203,7 +207,7 @@ let writeImpGoalInfo implGoals =
   in 
 
   let Codegen.ImpGoalList(impGoalList, numImpGoals) = implGoals in
-  (* <number of implication goals>*)
+  (* <number of implication goals> *)
   Bytecode.writeint2 numImpGoals;
   (* [implication goal info] *)
   map writeImpGoal impGoalList
@@ -318,6 +322,17 @@ let writeRenamingInfo renamingList =
 let writeInstructions code =
   map Instr.writeInstruction code
 
+(* For debugging purposes *)
+let displayInstructions code : string =
+  String.concat "\n"
+    (List.map (fun u ->
+         let (s,i) = try Instr.displayInstruction u
+                     with Errormsg.InternalError ->
+                       ("=== Could not resolve label! ===", 0)
+         in
+         Format.sprintf "%d: %s" i s)
+       code)
+
 (************************************************************************)
 (*                        INTERFACE FUNCTION                            *)
 (************************************************************************)
@@ -356,10 +371,35 @@ let writeByteCode cgModule =
       writeInstructions code
 	   
 	   
-	   
-	   
+let writeQueryByteCode cgModule =
+  match cgModule with
+    Codegen.Module(modName, gkinds, lkinds, gconsts, lconsts, hconsts, defs, 
+				   nonExpDefs, expDefs, localDefs, tySkels, strs, impRenaming,
+				   accRenaming, instrs, hashTabs, implGoals) ->
+    let Codegen.Instructions(code,codeSize) = instrs in
+    (* [code size] *)
+    writeCodeSize codeSize;
+    (* [type skeletons] *)
+    writeTypeSkels tySkels;
+    (* [global constants] *)
+    (* [local constants] *)
+    (* [hidden constants] *)
+    assert(Codegen.getNumCGConsts gconsts = 0 && Codegen.getNumCGConsts lconsts = 0);
+    (* We need to write total number of new constants
+     * since loader is expecting linkcode. Note that in a query,
+     * the only new constants should be hidden. *)
+    Bytecode.writeint2 (Codegen.getNumCGConsts hconsts);
+    writeConstInfo gconsts lconsts hconsts;
+    (* [strings] *)
+    writeStrings strs;
+    (* [implication goal tables] *)
+    writeImpGoalInfo implGoals;
+    (* [hash tables] *)
+    writeHashTabInfo hashTabs;
+    (* [bound variable tables] *)
+    Bytecode.writeint2 0;
+    (* [instructions] *)
 
-
-
-
-
+    (* prerr_endline (displayInstructions code); *)
+    
+    writeInstructions code

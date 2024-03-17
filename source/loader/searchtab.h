@@ -1,6 +1,7 @@
 //////////////////////////////////////////////////////////////////////////////
 //Copyright 2008
-//  Andrew Gacek, Steven Holte, Gopalan Nadathur, Xiaochu Qi, Zach Snow
+//  Andrew Gacek, Nathan Guermond, Steven Holte, 
+//  Gopalan Nadathur, Xiaochu Qi, Zach Snow
 //////////////////////////////////////////////////////////////////////////////
 // This file is part of Teyjus.                                             //
 //                                                                          //
@@ -25,9 +26,9 @@
 #define SEARCHTAB_FCF_SEQNSEARCH 0
 #define SEARCHTAB_FCF_HASHSEARCH 1
 
-extern WordPtr LD_SEARCHTAB_LoadHashTab(MEM_GmtEnt* ent, int* size);
+extern WordPtr LD_SEARCHTAB_LoadHashTab(MEM_GmtEnt* ent, int* size, int query);
 
-extern WordPtr LD_SEARCHTAB_LoadSeqSTab(MEM_GmtEnt* ent, int* size);
+extern WordPtr LD_SEARCHTAB_LoadSeqSTab(MEM_GmtEnt* ent, int* size, int query);
 
 /**
 \brief Find code function for hash tables.

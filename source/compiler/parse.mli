@@ -1,6 +1,7 @@
 (****************************************************************************
 *Copyright 2008
-*  Andrew Gacek, Steven Holte, Gopalan Nadathur, Xiaochu Qi, Zach Snow
+*  Andrew Gacek, Nathan Guermond, Steven Holte, 
+*  Gopalan Nadathur, Xiaochu Qi, Zach Snow
 ****************************************************************************)
 (****************************************************************************
 * This file is part of Teyjus.
@@ -41,8 +42,9 @@ type symbol = Symbol.symbol
 *   a list of new free type variables in the type
 *
 **********************************************************************)
-val translateTermTopLevel : Preabsyn.pterm -> Absyn.amodule ->
-  (Absyn.aterm * Types.typemolecule * Absyn.atypesymbol list * Absyn.atype list) option
+(* NG: No longer in use, since queries are now compiled *)
+(* val translateTermTopLevel : Preabsyn.pterm -> Absyn.amodule -> *)
+(*   (Absyn.aterm * Types.typemolecule * Absyn.atypesymbol list * Absyn.atype list) option *)
   
 (**********************************************************************
 *translateClause:
@@ -61,7 +63,7 @@ val translateTermTopLevel : Preabsyn.pterm -> Absyn.amodule ->
 *   the translated absyn term
 *
 **********************************************************************)
-val translateClause : Preabsyn.pterm -> Absyn.amodule -> Absyn.aterm option
+val translateClause : ?parsingtoplevel:bool -> Preabsyn.pterm -> Absyn.amodule -> Absyn.aterm option
 
 (**********************************************************************
 *removeNestedAbstractions:

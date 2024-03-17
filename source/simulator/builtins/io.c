@@ -1,6 +1,7 @@
 //////////////////////////////////////////////////////////////////////////////
 //Copyright 2008
-//  Andrew Gacek, Steven Holte, Gopalan Nadathur, Xiaochu Qi, Zach Snow
+//  Andrew Gacek, Nathan Guermond, Steven Holte, 
+//  Gopalan Nadathur, Xiaochu Qi, Zach Snow
 //////////////////////////////////////////////////////////////////////////////
 // This file is part of Teyjus.                                             //
 //                                                                          //
@@ -418,7 +419,8 @@ void BIIO_printTerm()
     
     PRINT_names = FALSE;
     PRINT_fPrintTerm(stream, (DF_TermPtr)AM_reg(2));
-    PRINT_resetPrintState();
+    // NG - resetPrintState should only be called when a new query is made
+    /* PRINT_resetPrintState(); */
     
     AM_preg = AM_cpreg;
 }
@@ -556,7 +558,8 @@ void BIIO_termToStr()
     
     PRINT_names = FALSE;
     PRINT_fPrintTerm(stream, (DF_TermPtr)AM_reg(1));
-    PRINT_resetPrintState();
+    // NG - resetPrintState should only be called when a new query is made
+    /* PRINT_resetPrintState(); */
     
     /* if this fails, we depend upon the top level to close the
        stream..  The other option is to intercept failure after

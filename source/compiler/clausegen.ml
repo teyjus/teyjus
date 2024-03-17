@@ -1,6 +1,7 @@
 (****************************************************************************
 *Copyright 2008
-*  Andrew Gacek, Steven Holte, Gopalan Nadathur, Xiaochu Qi, Zach Snow
+*  Andrew Gacek, Nathan Guermond, Steven Holte, 
+*  Gopalan Nadathur, Xiaochu Qi, Zach Snow
 ****************************************************************************)
 (****************************************************************************
 * This file is part of Teyjus.
@@ -30,10 +31,16 @@
 (***************************************************************************) 
 let impPointList : (Absyn.adefinitions list) ref = ref []
 let numImpPoints : int ref = ref 0
+let totImpPoints : int ref = ref 0
 
-let initImpPointList () = (impPointList := []; numImpPoints := 0)
+let initImpPointList () = (impPointList := [];
+                           totImpPoints := !totImpPoints + !numImpPoints;
+                           numImpPoints := 0)
 let getImpPointList  () = (!impPointList)
 let getNumImpPoints  () = (!numImpPoints)
+let getTotImpPoints  () = (!totImpPoints)
+
+let initTotImpPoints () = (totImpPoints := 0)
 
 let addImpPointList impPoint = 
   (impPointList := impPoint :: (!impPointList); 
@@ -1616,7 +1623,7 @@ let genClauseHeadCode cl chunk insts startLoc isFact =
   let genUnifCode insts startLoc =
 	(* mark registers "perserved" for arguments passing *)
     Registers.markArgRegs numArgs; 
-											 
+
     (* unification code for type arguments *)
     let (tyArgsCode, tyArgsSize, regTypePairs) =
       genHeadTyVarsCode (Absyn.getClauseTypeArgs cl)
@@ -1686,7 +1693,8 @@ let setUpGoalArgs goal chunk last hasenv =
 
   (* pair up the type arguments with registers, resolving conflicts if   *)
   (* needed                                                              *)
-  let genRegTypePairs regNumStart regNumEnd tyargs neededness =
+  let genRegTypePairs regNumStart regNumEnd tyargs neededness
+      : ((int * Absyn.atype) list) * (Instr.instruction list) * int =
     let rec genRegTypePairsAux regNum tyargs index insts size regTyPairs =
       if (regNum > regNumEnd) then 
 	(List.rev regTyPairs, List.flatten (List.rev insts), size)
@@ -1722,6 +1730,7 @@ let setUpGoalArgs goal chunk last hasenv =
   in
 
   (* function body of setUpGoalArgs *)
+
   let numTermArgs = Absyn.getAtomicGoalNumberOfTermArgs goal in
   let neededness  = 
 	Absyn.getConstantNeedednessValue (Absyn.getAtomicGoalPredicate goal)
@@ -2099,7 +2108,7 @@ and genImpGoal goal cl goalNum last chunk chunks insts startLoc =
   let (bodyCode, bodyCodeNext, newChunk', newChunks', newGoalNum) =
     genGoal (Absyn.getImpGoalBody goal) cl goalNum false newChunk newChunks
 	  (insts @ (List.rev 
-				  (Instr.Ins_push_impl_point(envSize, (getNumImpPoints ()) -1) ::
+				  (Instr.Ins_push_impl_point(envSize, (getNumImpPoints () + getTotImpPoints ()) -1) ::
 				   (tyvarInitCode @ varInitCode))))
 	  (startLoc + varInitCodeSize + tyvarInitCodeSize + 
 		 Instr.getSize_push_impl_point)
@@ -2229,4 +2238,3 @@ let genClauseCode cl insts startLoc =
     let (instsCut,  instsCutNext)  = genClauseCut  instsHead instsHeadNext in
     let (instsBody, instsBodyNext) = genClauseBody instsCut instsCutNext   in
     (instsBody, instsBodyNext)
-

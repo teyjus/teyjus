@@ -1,6 +1,7 @@
 (****************************************************************************
 *Copyright 2008
-*  Andrew Gacek, Steven Holte, Gopalan Nadathur, Xiaochu Qi, Zach Snow
+*  Andrew Gacek, Nathan Guermond, Steven Holte, 
+*  Gopalan Nadathur, Xiaochu Qi, Zach Snow
 ****************************************************************************)
 (****************************************************************************
 * This file is part of Teyjus.
@@ -19,6 +20,7 @@
 * along with Teyjus.  If not, see <http://www.gnu.org/licenses/>.
 ****************************************************************************)
 
+open Option
 let isSome = function
     Some _ -> true
   | None -> false
@@ -35,3 +37,5 @@ let string_of_option v p =
   match v with
     Some a -> p a
   | None -> "None"
+
+let bind = bind

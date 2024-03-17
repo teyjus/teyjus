@@ -1,6 +1,7 @@
 //////////////////////////////////////////////////////////////////////////////
 //Copyright 2008
-//  Andrew Gacek, Steven Holte, Gopalan Nadathur, Xiaochu Qi, Zach Snow
+//  Andrew Gacek, Nathan Guermond, Steven Holte, 
+//  Gopalan Nadathur, Xiaochu Qi, Zach Snow
 //////////////////////////////////////////////////////////////////////////////
 // This file is part of Teyjus.                                             //
 //                                                                          //
@@ -40,7 +41,7 @@ int Hash(int ci,int size)
   return ci%size;
 }
 
-WordPtr LD_SEARCHTAB_LoadHashTab(MEM_GmtEnt* ent, int* size)
+WordPtr LD_SEARCHTAB_LoadHashTab(MEM_GmtEnt* ent, int* size,int query)
 {
   int i;
   int cst;
@@ -48,10 +49,8 @@ WordPtr LD_SEARCHTAB_LoadHashTab(MEM_GmtEnt* ent, int* size)
   struct HashTabEnt *tab;
   int numEntries=*size=LD_FILE_GET2();
   LD_debug("Hash table has %d entries\n",numEntries);
-  /*
-  struct HashTabEnt *tab=(struct HashTabEnt*)LD_LOADER_ExtendModSpace(ent,sizeof(struct HashTabEnt)*numEntries); --XQ
-  */
-  tab=(struct HashTabEnt*)LD_LOADER_ExtendModSpaceInByte(ent,sizeof(struct HashTabEnt)*numEntries);
+  tab=(struct HashTabEnt*)
+	LD_LOADER_ExtendModSpaceInByte(ent,sizeof(struct HashTabEnt)*numEntries);
   for(i=0;i<numEntries;i++)
   {
     tab[i].constInd=-1;
@@ -61,7 +60,7 @@ WordPtr LD_SEARCHTAB_LoadHashTab(MEM_GmtEnt* ent, int* size)
   tabEnt=NULL;
   for(i=0;i<numEntries;i++)
   {
-    cst=(int)LD_CONST_GetConstInd();
+	cst=(int)LD_CONST_GetConstIndQuery(query);
     tabEnt=&(tab[Hash(cst,numEntries)]);
     if(tabEnt->constInd==-1)
     {
@@ -70,11 +69,8 @@ WordPtr LD_SEARCHTAB_LoadHashTab(MEM_GmtEnt* ent, int* size)
     } else {
       while(tabEnt->next!=NULL)
         tabEnt=tabEnt->next;
-      /*
-      tabEnt=tabEnt->next=(struct HashTabEnt*)LD_LOADER_ExtendModSpace(ent,sizeof(struct HashTabEnt));
-      -- XQ */
       tabEnt=tabEnt->next=
-          (struct HashTabEnt*)LD_LOADER_ExtendModSpaceInByte(ent,sizeof(struct HashTabEnt));
+		(struct HashTabEnt*)LD_LOADER_ExtendModSpaceInByte(ent,sizeof(struct HashTabEnt));
       tabEnt->constInd=cst;
       tabEnt->codeAddr=LD_CODE_GetCodeInd();
       tabEnt->next=NULL;
@@ -109,16 +105,15 @@ typedef struct
   CSpacePtr codeAddr;
 } SeqSTabEnt;
 
-WordPtr LD_SEARCHTAB_LoadSeqSTab(MEM_GmtEnt* ent, int* size)
+WordPtr LD_SEARCHTAB_LoadSeqSTab(MEM_GmtEnt* ent, int* size, int query)
 {
   int numEntries=*size=LD_FILE_GET2();
   int i;
 
-  //SeqSTabEnt* tab=(SeqSTabEnt*)LD_LOADER_ExtendModSpace(ent,sizeof(SeqSTabEnt)*numEntries); -- XQ
   SeqSTabEnt* tab=(SeqSTabEnt*)LD_LOADER_ExtendModSpaceInByte(ent,sizeof(SeqSTabEnt)*numEntries);
   for(i=0;i<numEntries;i++)
   {
-    tab[i].constInd=(int)LD_CONST_GetConstInd();
+	tab[i].constInd=(int)LD_CONST_GetConstIndQuery(query);
     tab[i].codeAddr=LD_CODE_GetCodeInd();
   }
   

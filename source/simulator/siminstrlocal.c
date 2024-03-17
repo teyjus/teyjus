@@ -1,6 +1,7 @@
 //////////////////////////////////////////////////////////////////////////////
 //Copyright 2008
-//  Andrew Gacek, Steven Holte, Gopalan Nadathur, Xiaochu Qi, Zach Snow
+//  Andrew Gacek, Nathan Guermond, Steven Holte, 
+//  Gopalan Nadathur, Xiaochu Qi, Zach Snow
 //////////////////////////////////////////////////////////////////////////////
 // This file is part of Teyjus.                                             //
 //                                                                          //
@@ -417,7 +418,8 @@ void SINSTRL_unifyConst(DF_TermPtr tmPtr, int constInd)
 void SINSTRL_unifyInt(DF_TermPtr tmPtr, int intValue)
 {
     switch (DF_termTag(tmPtr)) {
-    case DF_TM_TAG_VAR: { SINSTRL_bindInt(tmPtr, intValue); return; }
+    case DF_TM_TAG_VAR: { 
+		SINSTRL_bindInt(tmPtr, intValue); return; }
     case DF_TM_TAG_INT: 
     { 
         if (intValue != DF_intValue(tmPtr)) EM_THROW(EM_FAIL);

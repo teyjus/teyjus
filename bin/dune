@@ -1,0 +1,3 @@
+(install
+ (section bin)
+ (files (teyjus as teyjus)))

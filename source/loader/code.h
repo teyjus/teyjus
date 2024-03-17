@@ -1,6 +1,7 @@
 //////////////////////////////////////////////////////////////////////////////
 //Copyright 2008
-//  Andrew Gacek, Steven Holte, Gopalan Nadathur, Xiaochu Qi, Zach Snow
+//  Andrew Gacek, Nathan Guermond, Steven Holte, 
+//  Gopalan Nadathur, Xiaochu Qi, Zach Snow
 //////////////////////////////////////////////////////////////////////////////
 // This file is part of Teyjus.                                             //
 //                                                                          //
@@ -24,7 +25,7 @@
 #include "../system/memory.h"
 
 //!Load the bytecode of the file.
-extern int LD_CODE_LoadCode(MEM_GmtEnt* ent);
+extern int LD_CODE_LoadCode(MEM_GmtEnt* ent, int query);
 
 //!Read a relative code address, return the absolute address.  Relies on code size.
 extern CSpacePtr LD_CODE_GetCodeInd();

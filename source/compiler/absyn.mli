@@ -1,6 +1,7 @@
 (****************************************************************************
 *Copyright 2008
-*  Andrew Gacek, Steven Holte, Gopalan Nadathur, Xiaochu Qi, Zach Snow
+*  Andrew Gacek, Nathan Guermond, Steven Holte, 
+*  Gopalan Nadathur, Xiaochu Qi, Zach Snow
 ****************************************************************************)
 (****************************************************************************
 * This file is part of Teyjus.
@@ -176,7 +177,7 @@ and afixity =
 
 and acodeinfo = 
     Builtin of int
-  | Clauses of aclausesblock
+  | Clauses of aclausesblock  
 
 (*****************************************************************************
 *Variables (name based):
@@ -271,6 +272,7 @@ and ahcvarassoc = HCVarAssocs of ((avar * aconstant) list)
 * term variable map, type variable map, logic variables, offset,  
 * [body, gesplist, cut var, hasenv,] 
 * imported modules)
+*Note: term/type variable maps are always empty for top-level clauses
 **********************************************************************)
 and aclause = 
     Fact of (aconstant * aterm list * atype list * int * int * 
@@ -668,3 +670,7 @@ val setClauseBlockOffset : aclausesblock -> int -> unit
 (* if the given clause has a body as CutFailGoal, then set the second   *)
 (* field true and add an empty list as the clauses list                 *)
 val makeNewClauseBlock : aclause -> bool -> aclausesblock
+
+
+                                              
+val string_of_constant_type : aconstanttype -> string

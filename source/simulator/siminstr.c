@@ -1,6 +1,7 @@
 //////////////////////////////////////////////////////////////////////////////
 //Copyright 2008
-//  Andrew Gacek, Steven Holte, Gopalan Nadathur, Xiaochu Qi, Zach Snow
+//  Andrew Gacek, Nathan Guermond, Steven Holte, 
+//  Gopalan Nadathur, Xiaochu Qi, Zach Snow
 //////////////////////////////////////////////////////////////////////////////
 // This file is part of Teyjus.                                             //
 //                                                                          //
@@ -43,6 +44,8 @@
 #include <stdio.h>  
 #include "printterm.h"
 #include "../system/stream.h"
+
+#include "io-datastructures.h"
 
 static AM_DataTypePtr regX, regA;
 static AM_DataTypePtr envY, clenvY;
@@ -1545,7 +1548,7 @@ void SINSTR_proceed()                   //proceed -- X
       when a query has a result.  We do this so that we don't have to
       return values from instruction functions, and we don't have to
       do any checks in the simulator loop.  We use the exception
-      mechanism to acheive our nonlocal exit. */
+      mechanism to achieve our nonlocal exit. */
     if (AM_noEnv()) EM_THROW(EM_QUERY_RESULT);
     else {
         AM_preg  = AM_cpreg;

@@ -1,6 +1,7 @@
 //////////////////////////////////////////////////////////////////////////////
 //Copyright 2008
-//  Andrew Gacek, Steven Holte, Gopalan Nadathur, Xiaochu Qi, Zach Snow
+//  Andrew Gacek, Nathan Guermond, Steven Holte, 
+//  Gopalan Nadathur, Xiaochu Qi, Zach Snow
 //////////////////////////////////////////////////////////////////////////////
 // This file is part of Teyjus.                                             //
 //                                                                          //
@@ -43,11 +44,7 @@ int LD_KIND_LoadKst(MEM_GmtEnt* ent)
   //Allocate space for the kind table.
   TwoBytes kstsize=LD_FILE_GET2();
   LD_detail("Loading %d kinds\n",kstsize);
-  /*  Use MEM_KST_ENTRY_SIZE instead which is the number of *WORDS* for each KST entry
-      -- XQ
-  */
-  kst= (MEM_KstPtr)LD_LOADER_ExtendModSpace(ent,(kstsize+PERV_KIND_NUM)*MEM_KST_ENTRY_SIZE);
- 
+  kst=(MEM_KstEnt*)EM_malloc((kstsize+PERV_KIND_NUM)*sizeof(MEM_KstEnt));
   ent->kstBase = kst;
   
   //Copy the pervasive kinds
@@ -56,7 +53,6 @@ int LD_KIND_LoadKst(MEM_GmtEnt* ent)
           
   //Get the number of global kinds
   num_glob=LD_KIND_numGKinds=LD_FILE_GET2();
-  //printf("GKind table size=%d\n",num_glob);
   if(num_glob>kstsize)
     return -1;
   
@@ -69,7 +65,6 @@ int LD_KIND_LoadKst(MEM_GmtEnt* ent)
   
   //Load the local kinds
   num_loc=LD_FILE_GET2();
-  //printf("LKind table size=%d\n",num_loc);
   if(num_glob+num_loc!=kstsize)
     return -1;
   kst+=num_glob;
@@ -86,7 +81,6 @@ TwoBytes LD_KIND_GetKindInd()
 {
   Byte gl=LD_FILE_GET1();
   TwoBytes ind=LD_FILE_GET2();
-  //printf("Read KIndex %d:%d\n",gl,ind);
   switch(gl)
   {
     case LOCAL:
@@ -99,4 +93,23 @@ TwoBytes LD_KIND_GetKindInd()
       LD_error("Invalid Kind type %d\n",gl);
       EM_THROW(LD_LoadError);
   }
+}
+TwoBytes LD_KIND_GetKindIndQuery(int query)
+{
+  TwoBytes ind;
+  if(query){
+	// In the case of a query, a kind must be global,
+	// and the index is already absolute
+	LD_FILE_GET1();
+	ind=LD_FILE_GET2();
+  }else{
+	ind=LD_KIND_GetKindInd();
+  }
+  return ind;
+}
+  
+void LD_KIND_FreeKst(MEM_GmtEnt* ent)
+{
+  LD_detail("Freeing kind symbol table\n");
+  free(ent->kstBase);
 }

@@ -1,0 +1,62 @@
+
+        BUILDING TESTS
+        ==============
+
+To build tests run
+
+  make test
+
+or equivalently,
+
+  dune runtest --release
+
+To run all tests, including these known to fail (see below), run
+
+  dune runtest
+
+
+        MAKING A TEST
+        =============
+
+Tests follow the 'cram format'
+
+(see https://dune.readthedocs.io/en/stable/tests.html?highlight=cram%20tests#cram-tests-1)
+
+A new test is added as follows:
+
+test.t/
+ > prog.mod
+ > prog.sig
+ > run.t
+
+where run.t has the form (ie.)
+
+  $ tjcc prog
+  $ tjlink prog
+  $ tjsim -b -s "..."
+
+When satisfied with the test results, run
+
+  dune promote
+
+to add the output of the tests to the run.t file.
+Use care while promoting as this will promote *all* tests in
+*all* directories, including failing tests if present.
+
+
+        DOCUMENTING BUGS
+        ================
+
+In the event a new bug is found, make a test directory for it and
+add the test to those skipped in release mode,
+ie. in system_tests/dune:
+
+  (cram
+    (enabled_if (<> %{profile} release))
+   ;; Exclude the following failing tests:
+   (applies_to
+     bug1
+     bug2
+     ...
+     ))
+

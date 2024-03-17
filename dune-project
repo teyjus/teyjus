@@ -1,6 +1,6 @@
 (lang dune 3.1)
 (name "teyjus")
-(version "2.1.1")
+(version "2.2.0")
 (cram enable)
 
 (generate_opam_files true)
@@ -8,7 +8,7 @@
 (homepage "http://teyjus.cs.umn.edu/")
 (documentation "https://github.com/teyjus/teyjus/wiki/TeyjusManual")
 (authors "Andrew Gacek, Nathan Guermond, Steven Holte, Gopalan Nadathur, Xiaochu Qi, Zach Snow")
-(maintainers "nguermond@proton.me")
+(maintainers "guerm001@umn.edu")
 (license "GPL-3.0-or-later")
 
 (package
@@ -39,5 +39,5 @@ unification.
 ")
  (depends
   dune
-  (ocaml (and (>= 4.05.0) (< 5.0.0)))
+  (ocaml (and (>= 4.05.0) (or (< 5.0.0) (>= 5.1.0))))
 ))

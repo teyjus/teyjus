@@ -1,6 +1,7 @@
 //////////////////////////////////////////////////////////////////////////////
 //Copyright 2008
-//  Andrew Gacek, Steven Holte, Gopalan Nadathur, Xiaochu Qi, Zach Snow
+//  Andrew Gacek, Nathan Guermond, Steven Holte, 
+//  Gopalan Nadathur, Xiaochu Qi, Zach Snow
 //////////////////////////////////////////////////////////////////////////////
 // This file is part of Teyjus.                                             //
 //                                                                          //
@@ -123,7 +124,7 @@ typedef struct
 typedef DF_Type *DF_TypePtr;      //type pointer
 
 //sizes of different type items
-#define DF_TY_ATOMIC_SIZE    2    //atomic size
+#define DF_TY_ATOMIC_SIZE    2    //atomic size (in words)
 
 //attributes of special type constructors
 #define DF_TY_ARROW_ARITY    2    //arity of type arrow

@@ -1,6 +1,7 @@
 (****************************************************************************
 *Copyright 2008
-*  Andrew Gacek, Steven Holte, Gopalan Nadathur, Xiaochu Qi, Zach Snow
+*  Andrew Gacek, Nathan Guermond, Steven Holte, 
+*  Gopalan Nadathur, Xiaochu Qi, Zach Snow
 ****************************************************************************)
 (****************************************************************************
 * This file is part of Teyjus.
@@ -32,14 +33,24 @@ external setPath           : string -> int  = "c_setPath"
 
 
 (* query *)
-external setTypeAndTermLocation : unit -> unit = "c_setTypeAndTermLocation"
+(* NG: No longer in use, since queries are now compiled *)
+(* external setTypeAndTermLocation : unit -> unit = "c_setTypeAndTermLocation" *)
 external solveQuery             : unit -> int  = "c_solveQuery"
 external showAnswers            : unit -> int  = "c_showAnswers"
-external setQueryFreeVariables  : unit -> unit = "c_setQueryFreeVariables"
+external setQueryFreeVariables  : int -> unit = "c_setQueryFreeVariables"
 external queryHasVars           : unit -> bool = "c_queryHasVars"
+external loadQuery              : string -> unit = "c_loadQuery"
+external setQueryEntryPoint     : int -> unit = "c_setQueryEntryPoint"
 
+(* pipes *)
+external openPipe  : unit -> unit = "c_openPipe"
+external getPipeIn : unit -> Unix.file_descr = "c_getPipeIn"
+                                         
+                                              
 (* read term *)
-external initLocalTabs  : int -> int -> int -> int -> int = "c_initLocalTabs"
+(* NG: No longer in use, since queries are now compiled *)
+(* external initLocalTabs  : int -> int -> int -> int -> int = "c_initLocalTabs" *)
+external initLocalTabsQuery : int -> int = "c_initLocalTabsQuery"
 external cleanLocalTabs : unit -> unit = "c_cleanLocalTabs" 
 
 external buildFreeVariable     : string -> int -> int = "c_buildFreeVariable"

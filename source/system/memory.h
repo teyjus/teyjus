@@ -1,6 +1,7 @@
 //////////////////////////////////////////////////////////////////////////////
 //Copyright 2008
-//  Andrew Gacek, Steven Holte, Gopalan Nadathur, Xiaochu Qi, Zach Snow
+//  Andrew Gacek, Nathan Guermond, Steven Holte, 
+//  Gopalan Nadathur, Xiaochu Qi, Zach Snow
 //////////////////////////////////////////////////////////////////////////////
 // This file is part of Teyjus.                                             //
 //                                                                          //
@@ -94,7 +95,7 @@ typedef MEM_TstEnt *MEM_TstPtr;
 #define MEM_TST_MAX_IND        USHRT_MAX 
 
 /*  size of each entry of this table (in word)                               */
-//Note this arithematic should in reality go into "config.h"
+//Note this arithmetic should in reality go into "config.h"
 #define MEM_TST_ENTRY_SIZE    (int)ceil((double)sizeof(MEM_TstEnt)/WORD_SIZE)
 
 /*****************************************************************************/
@@ -193,13 +194,16 @@ typedef struct
 {
     char        *modname;        //(top-level) module name 
     CSpacePtr   addtable;        //addr to the add code table of the top module
+    /* int         kstSize;        //number of entries in the kind table */
+    int         tstSize;         //number of entries in type skel table
+    int         cstSize;         //number of entries in constant table
     MEM_KstPtr  kstBase;         //starting addr of kind table
     MEM_TstPtr  tstBase;         //starting addr of type skel table
     MEM_CstPtr  cstBase;         //starting addr of constant table
     WordPtr     modSpaceBeg;     //starting addr of module space
     WordPtr     modSpaceEnd;     //ending addr of module space
-	WordPtr     codeSpaceBeg;    //starting addr of module space
-	WordPtr     codeSpaceEnd;    //ending addr of module space
+	WordPtr     codeSpaceBeg;    //starting addr of code space
+	WordPtr     codeSpaceEnd;    //ending addr of code space
 } MEM_GmtEnt;
 
 #define MEM_MAX_MODULES    255   //max number of modules (temp)

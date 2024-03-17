@@ -1,6 +1,7 @@
 //////////////////////////////////////////////////////////////////////////////
 //Copyright 2008
-//  Andrew Gacek, Steven Holte, Gopalan Nadathur, Xiaochu Qi, Zach Snow
+//  Andrew Gacek, Nathan Guermond, Steven Holte, 
+//  Gopalan Nadathur, Xiaochu Qi, Zach Snow
 //////////////////////////////////////////////////////////////////////////////
 // This file is part of Teyjus.                                             //
 //                                                                          //
@@ -39,9 +40,9 @@ void SIM_simulate()
   restart_loop:
     EM_TRY {       
         while(1) {
-            /*fprintf(stderr, "AM_preg %u opcode: %d\n", AM_preg, 
-             *((INSTR_OpCode *)AM_preg)); */
-            SDP_dispatchTable[*((INSTR_OpCode *)AM_preg)]();
+		  /* fprintf(stderr, "AM_preg %x opcode: %d:%s\n", AM_preg, */
+		  /* 		  *((INSTR_OpCode *)AM_preg), INSTR_instrName(*((INSTR_OpCode *)AM_preg))); */
+		  SDP_dispatchTable[*((INSTR_OpCode *)AM_preg)]();
         }
         /* it's expected that this statement not be reached: the only
            way out of this while loop is by an exception */        

@@ -1,6 +1,7 @@
 (****************************************************************************
 *Copyright 2008
-*  Andrew Gacek, Steven Holte, Gopalan Nadathur, Xiaochu Qi, Zach Snow
+*  Andrew Gacek, Nathan Guermond, Steven Holte, 
+*  Gopalan Nadathur, Xiaochu Qi, Zach Snow
 ****************************************************************************)
 (****************************************************************************
 * This file is part of Teyjus.
@@ -18,11 +19,17 @@
 * You should have received a copy of the GNU General Public License
 * along with Teyjus.  If not, see <http://www.gnu.org/licenses/>.
 ****************************************************************************)
-val buildQueryTerm : string -> Absyn.amodule -> bool
+(* NG: No longer in use, since queries are now compiled *)
+(* val buildQueryTerm : string -> Absyn.amodule -> bool *)
+
+val compileQuery : string -> Absyn.amodule -> (string * int) option
+
 val solveQuery     : unit -> bool
 val showAnswers    : unit -> unit
 
 
 val queryHasVars : unit -> bool
 
-val readTerm     : string -> Absyn.amodule -> int
+
+(* NG: No longer in use, since queries are now compiled *)
+(* val readTerm     : string -> Absyn.amodule -> int *)

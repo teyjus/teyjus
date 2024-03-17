@@ -1,6 +1,7 @@
 (****************************************************************************
 *Copyright 2008
-*  Andrew Gacek, Steven Holte, Gopalan Nadathur, Xiaochu Qi, Zach Snow
+*  Andrew Gacek, Nathan Guermond, Steven Holte, 
+*  Gopalan Nadathur, Xiaochu Qi, Zach Snow
 ****************************************************************************)
 (****************************************************************************
 * This file is part of Teyjus.
@@ -82,11 +83,11 @@ let outputName = ref ""
 let setPath path =
   print_string "not implemented\n"
 
-let specList = dualArgs
+let specList = multLine
   [("-o", "--output", Arg.Set_string outputName,
-    " Specifies the name of the output bytecode file") ;
+    " Specifies the name of the output bytecode file", " \n") ;
    ("-p", "--path", Arg.String setPath,
-    " Add PATH to the search path.") ;
+    " Add PATH to the search path.", " \n") ;
    versionspec]
 
 let usageMsg = 

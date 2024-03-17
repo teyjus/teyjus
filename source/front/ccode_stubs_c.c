@@ -1,6 +1,7 @@
 //////////////////////////////////////////////////////////////////////////////
 //Copyright 2008
-//  Andrew Gacek, Steven Holte, Gopalan Nadathur, Xiaochu Qi, Zach Snow
+//  Andrew Gacek, Nathan Guermond, Steven Holte, 
+//  Gopalan Nadathur, Xiaochu Qi, Zach Snow
 //////////////////////////////////////////////////////////////////////////////
 // This file is part of Teyjus.                                             //
 //                                                                          //
@@ -21,10 +22,13 @@
 #include "../simulator/builtins/readterm.h"
 #include "front_c.h"
 #include "query_c.h"
+#include "../loader/file.h"
+
 #include "caml/mlvalues.h"
 #include "caml/memory.h"
 #include "caml/alloc.h"
 #include "caml/custom.h"
+
 
 /***************************************************************************/
 /*                          front                                          */
@@ -94,12 +98,13 @@ int c_setPath(value v)
 /***************************************************************************/
 /*                               query                                     */
 /***************************************************************************/
-void c_setTypeAndTermLocation(value v)
-{
-    CAMLparam1 (v);
-    QUERY_setTypeAndTermLocation();
-    CAMLreturn0;
-}
+// NG: No longer in use, since queries are now compiled
+/* void c_setTypeAndTermLocation(value v) */
+/* { */
+/*     CAMLparam1 (v); */
+/*     QUERY_setTypeAndTermLocation(); */
+/*     CAMLreturn0; */
+/* } */
 
 int c_solveQuery(value v)
 {
@@ -118,9 +123,9 @@ int c_showAnswers(value v)
 
 void c_setQueryFreeVariables(value v)
 {
-    CAMLparam1 (v);
-    QUERY_setQueryFreeVariables();
-    CAMLreturn0;
+  CAMLparam1 (v);
+  QUERY_setQueryFreeVariables(Int_val(v));
+  CAMLreturn0;
 }
 
 Boolean c_queryHasVars(value v)
@@ -130,18 +135,62 @@ Boolean c_queryHasVars(value v)
     else CAMLreturn(Val_int(0));
 }
 
+void c_loadQuery(value modName)
+{
+  CAMLparam1 (modName);
+  QUERY_loadQuery(String_val(modName));
+  CAMLreturn0;
+}
+
+void c_setQueryEntryPoint(value loc)
+{
+  CAMLparam1 (loc);
+  QUERY_setQueryEntryPoint(Int_val(loc));
+  CAMLreturn0;
+}
+
+/***************************************************************************/
+/*                               pipes                                     */
+/***************************************************************************/
+void c_openPipe()
+{
+  CAMLparam0();
+  LD_FILE_OpenPipe();
+  CAMLreturn0;
+}
+
+int c_getPipeIn()
+{
+  CAMLparam0();
+  int fd = LD_FILE_GetPipeIn();
+  CAMLreturn(Val_int(fd));
+}
+
+/* void c_setInChannel(value chan) */
+/* { */
+/*   CAMLparam1(chan); */
+/*   LD_FILE_SetInChannel(Int_val(chan)); */
+/*   CAMLreturn0; */
+/* } */
 
 /***************************************************************************/
 /*                               read term                                 */
 /***************************************************************************/
+// NG: No longer in use, since queries are now compiled
+//     -> use initLocalTabsQuery instead
+/* int c_initLocalTabs(value numFvs, value numTyFvs, value numTermArgs, */
+/*                      value numTypeArgs) */
+/* { */
+/*     CAMLparam4 (numFvs, numTyFvs, numTermArgs, numTypeArgs); */
+/*     CAMLreturn(Val_int(RT_initLocalTabs(Int_val(numFvs), Int_val(numTyFvs), */
+/*                                         Int_val(numTermArgs), */
+/*                                         Int_val(numTypeArgs)))); */
+/* } */
 
-int c_initLocalTabs(value numFvs, value numTyFvs, value numTermArgs, 
-                     value numTypeArgs)
+int c_initLocalTabsQuery(value numFvs)
 {
-    CAMLparam4 (numFvs, numTyFvs, numTermArgs, numTypeArgs);
-    CAMLreturn(Val_int(RT_initLocalTabs(Int_val(numFvs), Int_val(numTyFvs),
-                                        Int_val(numTermArgs), 
-                                        Int_val(numTypeArgs))));
+    CAMLparam1 (numFvs);
+    CAMLreturn(Val_int(RT_initLocalTabsQuery(Int_val(numFvs))));
 }
 
 

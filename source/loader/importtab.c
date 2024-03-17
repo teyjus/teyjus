@@ -1,6 +1,7 @@
 //////////////////////////////////////////////////////////////////////////////
 //Copyright 2008
-//  Andrew Gacek, Steven Holte, Gopalan Nadathur, Xiaochu Qi, Zach Snow
+//  Andrew Gacek, Nathan Guermond, Steven Holte, 
+//  Gopalan Nadathur, Xiaochu Qi, Zach Snow
 //////////////////////////////////////////////////////////////////////////////
 // This file is part of Teyjus.                                             //
 //                                                                          //
@@ -58,6 +59,7 @@ void LD_IMPORTTAB_LoadImportTabs(MEM_GmtEnt* ent)
   return;
 }
 
+// Never called from a query
 WordPtr LD_IMPORTTAB_LoadImportTab(MEM_GmtEnt* ent)
 {
   WordPtr tab;
@@ -114,7 +116,7 @@ WordPtr LD_IMPORTTAB_LoadImportTab(MEM_GmtEnt* ent)
   {
     LD_debug(" Loading sequential search table\n");
     MEM_impPutFC(tab,(MEM_FindCodeFnPtr)&LD_SEARCHTAB_SeqnSrch);
-    LD_SEARCHTAB_LoadSeqSTab(ent,&psts);
+    LD_SEARCHTAB_LoadSeqSTab(ent,&psts,0);
     MEM_impPutPSTS(tab,psts);
     ///\todo do something with returned address.
   }
@@ -123,7 +125,7 @@ WordPtr LD_IMPORTTAB_LoadImportTab(MEM_GmtEnt* ent)
       
     LD_debug(" Loading hash table\n");
     MEM_impPutFC(tab,(MEM_FindCodeFnPtr)&LD_SEARCHTAB_HashSrch);
-    LD_SEARCHTAB_LoadHashTab(ent,&psts);
+    LD_SEARCHTAB_LoadHashTab(ent,&psts,0);
     MEM_impPutPSTS(tab,psts);
     ///\todo do something with returned address.
   } else {
@@ -140,4 +142,12 @@ WordPtr LD_IMPORTTAB_GetImportTabAddr()
   if(0>i || i>LD_IMPORTTAB_numImportTabs)
     EM_THROW(LD_LoadError);
   return LD_IMPORTTAB_ImportTabs[i];
+}
+
+void LD_IMPORTTAB_Cleanup()
+{
+  if(LD_IMPORTTAB_ImportTabs){
+	free(LD_IMPORTTAB_ImportTabs);
+    LD_IMPORTTAB_ImportTabs=NULL;
+  }
 }

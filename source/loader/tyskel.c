@@ -1,6 +1,7 @@
 //////////////////////////////////////////////////////////////////////////////
 //Copyright 2008
-//  Andrew Gacek, Steven Holte, Gopalan Nadathur, Xiaochu Qi, Zach Snow
+//  Andrew Gacek, Nathan Guermond, Steven Holte, 
+//  Gopalan Nadathur, Xiaochu Qi, Zach Snow
 //////////////////////////////////////////////////////////////////////////////
 // This file is part of Teyjus.                                             //
 //                                                                          //
@@ -29,54 +30,59 @@
 #include "tyskel.h"
 #include "kind.h"
 
-// #define ARROW 0
-// #define PERVASIVE 1
-// #define LOCAL 2
-// #define GLOBAL 3
-// #define VARIABLE 4
-
 typedef enum LD_TYSKEL_SymType{
   ARROW=0,
   KIND=1,
   VARIABLE=2
 }LD_TYSKEL_SymType;
 
-void LD_TYSKEL_LoadType(MEM_GmtEnt* ent,MemPtr loc);
+void LD_TYSKEL_LoadType(MEM_GmtEnt* ent, MemPtr loc,int query);
 
-int LD_TYSKEL_LoadTst(MEM_GmtEnt* ent)
+int LD_TYSKEL_LoadTst(MEM_GmtEnt* ent,int query)
 {
-  MemPtr* tst;
+  MEM_TstEnt* tst;
   int i;
   TwoBytes tstSize=LD_FILE_GET2();
+  
   LD_detail("Loading %d type skeletons\n",tstSize);
+
+  if(DF_TY_ATOMIC_SIZE*WORD_SIZE != sizeof(DF_Type)
+	 || MEM_TST_ENTRY_SIZE*WORD_SIZE != sizeof(MEM_TstEnt)){
+	LD_error("Invalid atomic type or tyskel entry size");
+	EM_THROW(LD_LoadError);
+  }
   
-  /* MemPtr* tst=
-     (MemPtr*)LD_LOADER_ExtendModSpace(ent,(tstSize+PERV_TY_SKEL_NUM)*sizeof(MemPtr)); 
-     -- XQ
-  */
-  tst =(MemPtr*)LD_LOADER_ExtendModSpace(ent,
-                                        (tstSize+PERV_TY_SKEL_NUM) *
-                                        MEM_TST_ENTRY_SIZE);
-  
-  ent->tstBase=(MEM_TstPtr)tst;
-  //Copy pervasives
-  PERVINIT_copyTySkelTab((MEM_TstPtr)tst);
-  tst+=PERV_TY_SKEL_NUM;
-  
-  for(i=0;i<tstSize;i++)
+  if(query){
+	ent->tstBase = (MEM_TstEnt*)EM_realloc(ent->tstBase, (ent->tstSize + tstSize)
+										   * sizeof(MEM_TstEnt));
+	tst = ent->tstBase + ent->tstSize;
+	// We do not increase ent->tstSize here because we want
+	// this space overwritten for the next query
+  }else{
+	ent->tstBase = (MEM_TstEnt*)EM_malloc((PERV_TY_SKEL_NUM + tstSize)
+										  * sizeof(MEM_TstEnt));
+	tst = ent->tstBase;
+	//Copy pervasives
+	PERVINIT_copyTySkelTab((MEM_TstPtr)tst);
+	tst+=PERV_TY_SKEL_NUM;
+	ent->tstSize = PERV_TY_SKEL_NUM + tstSize;
+  }
+
+  for(i=0; i<tstSize; i++)
   {
     LD_debug("Loading a type skeleton\n");
-    tst[i]=(MemPtr)LD_LOADER_ExtendModSpace(ent,DF_TY_ATOMIC_SIZE);
-    LD_TYSKEL_LoadType(ent,tst[i]);
+	tst[i]=(MemPtr)LD_LOADER_ExtendModSpace(ent,DF_TY_ATOMIC_SIZE);
+	LD_TYSKEL_LoadType(ent,tst[i],query);
   }
   return 0;
 }
+
 
 /**
 \brief Load a type skeleton
 \arg loc Where the head of the type skeleton is to be placed.
 **/
-void LD_TYSKEL_LoadType(MEM_GmtEnt* ent,MemPtr loc)
+void LD_TYSKEL_LoadType(MEM_GmtEnt* ent, MemPtr loc,int query)
 {
   int i,ind, arity;
   MemPtr args;
@@ -84,14 +90,14 @@ void LD_TYSKEL_LoadType(MEM_GmtEnt* ent,MemPtr loc)
   switch(type)
   {
     case ARROW:
-      args = (MemPtr)LD_LOADER_ExtendModSpace(ent,2*DF_TY_ATOMIC_SIZE);
-      DF_mkArrowType(loc,(DF_TypePtr)args);
-      LD_TYSKEL_LoadType(ent,args);
-      LD_TYSKEL_LoadType(ent,args+DF_TY_ATOMIC_SIZE);
+	  args = (MemPtr)LD_LOADER_ExtendModSpace(ent,2*DF_TY_ATOMIC_SIZE);
+	  DF_mkArrowType(loc,(DF_TypePtr)args);
+      LD_TYSKEL_LoadType(ent,args, query);
+      LD_TYSKEL_LoadType(ent,args+DF_TY_ATOMIC_SIZE, query);
       break;
     
     case KIND:
-      ind = LD_KIND_GetKindInd();
+      ind = LD_KIND_GetKindIndQuery(query);
       arity = LD_FILE_GET1();
       if(arity==0)
       {
@@ -99,11 +105,11 @@ void LD_TYSKEL_LoadType(MEM_GmtEnt* ent,MemPtr loc)
       }
       else
       {
-        args = (MemPtr)LD_LOADER_ExtendModSpace(ent,(1+arity)*DF_TY_ATOMIC_SIZE);
+		args = (MemPtr)LD_LOADER_ExtendModSpace(ent,(1+arity)*DF_TY_ATOMIC_SIZE);
         DF_mkStrType(loc,(DF_TypePtr)args);
-        DF_mkStrFuncType(loc, ind, arity);
+		DF_mkStrFuncType(args,ind,arity);
         for(i=1;i<=arity;i++)
-          LD_TYSKEL_LoadType(ent,args+i*DF_TY_ATOMIC_SIZE);
+          LD_TYSKEL_LoadType(ent,args+i*DF_TY_ATOMIC_SIZE, query);
       }
       break;
     
@@ -117,4 +123,7 @@ void LD_TYSKEL_LoadType(MEM_GmtEnt* ent,MemPtr loc)
   }
 }
 
-
+void LD_TYSKEL_FreeTst(MEM_GmtEnt* ent){
+  LD_detail("Freeing type skeleton table\n");
+  free(ent->tstBase);
+}

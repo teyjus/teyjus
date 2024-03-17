@@ -1,6 +1,7 @@
 (****************************************************************************
 *Copyright 2008
-*  Andrew Gacek, Steven Holte, Gopalan Nadathur, Xiaochu Qi, Zach Snow
+*  Andrew Gacek, Nathan Guermond, Steven Holte, 
+*  Gopalan Nadathur, Xiaochu Qi, Zach Snow
 ****************************************************************************)
 (****************************************************************************
 * This file is part of Teyjus.
@@ -2018,3 +2019,34 @@ let makeNewClauseBlock cl closed =
 	  else (ref [cl], ref closed, ref 0, ref None)
   | _ ->  (ref [cl], ref closed, ref 0, ref None)
 
+
+
+
+let getTableConstants ctab =
+  let lconsts = ref [] in
+  let gconsts = ref [] in
+  Table.iter (fun sym const ->
+      if (isGlobalConstant const) then
+        gconsts := (sym,const) :: !gconsts;
+      if (isLocalConstant const) then
+        lconsts := (sym,const) :: !lconsts)
+    ctab;
+  (!lconsts, !gconsts)
+  
+let getTableKinds ktab =
+  let lkinds = ref [] in
+  let gkinds = ref [] in
+  Table.iter (fun sym kd ->
+      if (isGlobalKind kd) then
+        gkinds := (sym,kd) :: !gkinds;
+      if (isLocalKind kd) then
+        lkinds := (sym,kd) :: !lkinds)
+    ktab;
+  (!lkinds,!gkinds)
+    
+let string_of_constant_type = function
+  | GlobalConstant -> "global"
+  | LocalConstant -> "local"
+  | PervasiveConstant _ -> "pervasive"
+  | HiddenConstant -> "hidden"
+  | AnonymousConstant -> "anonymous"

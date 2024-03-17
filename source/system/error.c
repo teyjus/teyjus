@@ -1,6 +1,7 @@
 //////////////////////////////////////////////////////////////////////////////
 //Copyright 2008
-//  Andrew Gacek, Steven Holte, Gopalan Nadathur, Xiaochu Qi, Zach Snow
+//  Andrew Gacek, Nathan Guermond, Steven Holte, 
+//  Gopalan Nadathur, Xiaochu Qi, Zach Snow
 //////////////////////////////////////////////////////////////////////////////
 // This file is part of Teyjus.                                             //
 //                                                                          //
@@ -107,7 +108,6 @@ void EM_error(int inIndex, ...)
     va_start(ap, inIndex);
     lExnType = MSG_vMessage(inIndex, &ap);
     va_end(ap);
-
     /* decide what to do next; EM_Throw will call exit(1) if necessary
      */
     if (lExnType == EM_NO_EXN) return;

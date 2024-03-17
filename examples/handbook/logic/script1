@@ -7,19 +7,9 @@
  *                                                                           *
  *****************************************************************************
 
-/* Setting up */
-
-% make hcinterp
-../../../source/tjdepend *.mod > depend
-../../../source/tjcc hcinterp_examples
-../../../source/tjcc hc_interp
-../../../source/tjcc lists
-../../../source/tjlink hcinterp_examples
-% alias tjsim ../../../source/tjsim
-
 /* trying out the Horn clause interpreter */
 
-% tjsim hcinterp_examples
+% teyjus -s hcinterp_examples
 Welcome to Teyjus
 Copyright (C) 2008 A. Gacek, S. Holte, G. Nadathur, X. Qi, Z. Snow
 Teyjus comes with ABSOLUTELY NO WARRANTY
@@ -46,4 +36,3 @@ More solutions (y/n)? y
 no (more) solutions
 
 [hcinterp_examples] ?- halt.
-% 

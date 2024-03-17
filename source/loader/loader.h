@@ -1,6 +1,7 @@
 //////////////////////////////////////////////////////////////////////////////
 //Copyright 2008
-//  Andrew Gacek, Steven Holte, Gopalan Nadathur, Xiaochu Qi, Zach Snow
+//  Andrew Gacek, Nathan Guermond, Steven Holte, 
+//  Gopalan Nadathur, Xiaochu Qi, Zach Snow
 //////////////////////////////////////////////////////////////////////////////
 // This file is part of Teyjus.                                             //
 //                                                                          //
@@ -31,6 +32,8 @@ typedef enum LD_Error{
   LD_FILE_LinkFailure,
   LD_FILE_ReadError
 } LD_Error;
+
+extern char* LD_LOADER_makePath(char* modname);
 
 extern int LD_LOADER_Load(char* modname, int index);
 /* Asking space of given number of WORDS from the system memory */

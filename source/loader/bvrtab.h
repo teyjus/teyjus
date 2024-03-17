@@ -1,6 +1,7 @@
 //////////////////////////////////////////////////////////////////////////////
 //Copyright 2008
-//  Andrew Gacek, Steven Holte, Gopalan Nadathur, Xiaochu Qi, Zach Snow
+//  Andrew Gacek, Nathan Guermond, Steven Holte, 
+//  Gopalan Nadathur, Xiaochu Qi, Zach Snow
 //////////////////////////////////////////////////////////////////////////////
 // This file is part of Teyjus.                                             //
 //                                                                          //
@@ -25,5 +26,7 @@
 extern void LD_BVRTAB_LoadBvrTabs(MEM_GmtEnt* ent);
 
 extern WordPtr LD_BVRTAB_GetBvrTabAddr();
+
+extern void LD_BVRTAB_Cleanup();
 
 #endif //_BVRTAB_H_

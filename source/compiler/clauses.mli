@@ -1,6 +1,7 @@
 (****************************************************************************
 *Copyright 2008
-*  Andrew Gacek, Steven Holte, Gopalan Nadathur, Xiaochu Qi, Zach Snow
+*  Andrew Gacek, Nathan Guermond, Steven Holte, 
+*  Gopalan Nadathur, Xiaochu Qi, Zach Snow
 ****************************************************************************)
 (****************************************************************************
 * This file is part of Teyjus.
@@ -20,8 +21,9 @@
 ****************************************************************************)
 (**********************************************************************
 *closeddefinition:
-* Represents a closed definition.  The constant is the definition's
-* name, the term is its clause.
+* Represents a closed definition. A closed definition is confined to a module, 
+* whereas a non-closed definition may be extended in a future module. 
+* The constant is the definition's name, the term is its clause.
 **********************************************************************)
 type closeddefinition = (Absyn.aconstant * Absyn.aterm)	
 
@@ -44,3 +46,21 @@ type closeddefinition = (Absyn.aconstant * Absyn.aterm)
 val translateClauses : Preabsyn.pmodule -> Absyn.amodule -> 
   (Absyn.amodule * Absyn.aterm list * Absyn.aterm list * closeddefinition list)
 val linearizeClause : Absyn.aterm -> Absyn.aterm
+
+(*********************************************************************
+ *makeQueryClause
+ * Given a query and the list of free variables X1 ... Xn in the query,
+ * construct a clause of the form
+ *   p X1 ... Xn :- {query X1 ... Xn}
+ *********************************************************************)
+val makeQueryClause : Absyn.aterm -> Absyn.aconstant * Absyn.aterm
+                                     * (Absyn.atypesymbol list) * (Absyn.atype list)
+  
+(*********************************************************************
+ *translateQuery:
+ * Given a query clause and module,
+ * normalize the query clause as above
+ *********************************************************************) 
+val translateQuery : Absyn.aterm -> Absyn.amodule ->
+                     Absyn.amodule * (Absyn.aterm list)
+                     * (Absyn.aterm list) * (closeddefinition list)

@@ -1,6 +1,7 @@
 //////////////////////////////////////////////////////////////////////////////
 //Copyright 2008
-//  Andrew Gacek, Steven Holte, Gopalan Nadathur, Xiaochu Qi, Zach Snow
+//  Andrew Gacek, Nathan Guermond, Steven Holte, 
+//  Gopalan Nadathur, Xiaochu Qi, Zach Snow
 //////////////////////////////////////////////////////////////////////////////
 // This file is part of Teyjus.                                             //
 //                                                                          //
@@ -22,8 +23,10 @@
 
 #include "../system/memory.h"
 
-void LD_IMPLGOAL_LoadImplGoals(MEM_GmtEnt* ent);
+void LD_IMPLGOAL_LoadImplGoals(MEM_GmtEnt* ent, int query);
 
 WordPtr LD_IMPLGOAL_GetImplGoalAddr();
+
+void LD_IMPLGOAL_Cleanup();
 
 #endif //_IMPLGOAL_H_

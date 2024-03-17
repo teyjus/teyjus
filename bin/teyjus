@@ -1,0 +1,153 @@
+#!/bin/bash
+
+set -e
+
+SIM=false
+DIS=false
+QUIET=false
+FRESH=false
+CLEAN=false
+QUIETARG=
+BATCH=false
+LINK=true
+QUERY=
+
+MAKEFILE=Makefile
+HELP="This script will automatically generate dependencies, compile,\n
+link, and optionally run teyjus programs.\n\n
+Usage: teyjus [-f -c -s -d -l -q -h] [file[.*]] [-b query]\n
+No Makefile must be present in the current directory\n
+f: fresh build\t\t-- clean before build\n
+c: clean directory\t-- clean *.lp *.lpo and *.dis\n
+s: simulate\t\t-- run tjsim\n
+d: disassemble\t\t-- run tjdis\n
+l: library only\t-- skip linking\n
+q: quiet\t\t\t-- suppress build output\n
+b: batch query\t\t-- run tjsim in batch mode on input query\n
+h: help\t\t\t-- output this text"
+
+while getopts "fscdlqhb:" OPT; do
+	case $OPT in
+        f)
+            FRESH=true
+            ;;
+        c)
+            CLEAN=true
+            ;;
+        s)
+		    SIM=true
+			;;
+		d)
+		    DIS=true
+			;;
+        l)
+            LINK=false
+            ;;
+		q)
+		    QUIET=true
+            QUIETARG=--silent
+			;;
+		h)
+            echo -e $HELP
+			exit 0
+			;;
+        b)
+            BATCH=true
+            QUERY=$OPTARG
+            tjsim -b -s "$QUERY" -m 1
+            exit 0
+            ;;
+		\?)
+            echo -e $HELP
+			exit 1
+			;;
+	esac
+done
+
+if $CLEAN; then
+    if ! $QUIET; then
+        echo "cleaning *.lp *.lpo *.dis"
+    fi
+    rm -f *.lp
+    rm -f *.lpo
+    rm -f *.dis
+    exit 0
+fi
+
+shift $(($OPTIND -1))
+if (test $# -lt 1); then
+    tjsim
+    exit 0
+fi
+
+FILE=${1%.*}
+
+while getopts "b:" OPT; do
+	case $OPT in
+        b)
+            BATCH=true
+            SIM=true
+            QUERY=$OPTARG
+            ;;
+		\?)
+            echo -e $HELP
+			exit 1
+			;;
+	esac
+done
+
+if test -e $MAKEFILE; then
+    echo "Error: Makefile already exists in directory!"
+    exit 1
+fi
+
+if $LINK; then
+    echo -e "all: $FILE.lp
+%.lpo:
+\ttjcc \$@
+%.lp:
+\ttjlink \$@
+clean:
+\trm -f *.lp
+\trm -f *.lpo" > $MAKEFILE
+else
+    echo -e "all: $FILE.lp
+%.lpo:
+\ttjcc \$@
+%.lp:
+clean:
+\trm -f *.lp
+\trm -f *.lpo" > $MAKEFILE
+fi
+
+((tjdepend $FILE) >> $MAKEFILE) || {
+    echo "Error: tjdepend $FILE"
+    rm $MAKEFILE
+    exit 1
+    }
+
+if $FRESH; then
+    make $QUIETARG clean
+fi
+
+(make $QUIETARG) || {
+    rm $MAKEFILE
+    exit 1
+    }
+
+rm $MAKEFILE
+    
+if $DIS ; then
+	if ! $QUIET; then
+	   echo "tjdis $FILE.dis"
+	fi
+	tjdis $FILE.lpo > $FILE.dis
+fi
+
+if $SIM; then
+    if $BATCH; then
+        tjsim $FILE -b -s "$QUERY" -m 1
+    else
+        tjsim $FILE
+    fi
+fi

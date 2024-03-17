@@ -1,6 +1,7 @@
 //////////////////////////////////////////////////////////////////////////////
 //Copyright 2008
-//  Andrew Gacek, Steven Holte, Gopalan Nadathur, Xiaochu Qi, Zach Snow
+//  Andrew Gacek, Nathan Guermond, Steven Holte, 
+//  Gopalan Nadathur, Xiaochu Qi, Zach Snow
 //////////////////////////////////////////////////////////////////////////////
 // This file is part of Teyjus.                                             //
 //                                                                          //
@@ -37,10 +38,9 @@ void LD_FILE_GetString(char* buffer,int length)
 }
 
 void LD_FILE_Open(char* modname, char* extension)
-{
+{  
   char* buf=(char *)EM_malloc(sizeof(char)*(strlen(modname)+strlen(extension)+1));
   sprintf(buf,"%s%s",modname,extension);
-  
   
   fd=open(buf,O_RDONLY|O_BINARY,0000);
   if(fd==-1)
@@ -145,7 +145,7 @@ Byte LD_FILE_GET1()
   return tmp;
 }
 
-//#ifdef DEBUG
+  
 int pfd;
 
 void LD_FILE_OpenPipe()
@@ -157,6 +157,11 @@ void LD_FILE_OpenPipe()
   pfd=m_pipe[1];
 }
 
+int LD_FILE_GetPipeIn(){
+  return pfd;
+}
+
+//#ifdef DEBUG
 void LD_FILE_PipePUT1(Byte b)
 {
   write(pfd,&b,sizeof(b));

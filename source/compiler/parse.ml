@@ -1,6 +1,7 @@
 (****************************************************************************
 *Copyright 2008
-*  Andrew Gacek, Steven Holte, Gopalan Nadathur, Xiaochu Qi, Zach Snow
+*  Andrew Gacek, Nathan Guermond, Steven Holte, 
+*  Gopalan Nadathur, Xiaochu Qi, Zach Snow
 ****************************************************************************)
 (****************************************************************************
 * This file is part of Teyjus.
@@ -231,14 +232,12 @@ let stackTop = function
                                           "Parse.stackTop: stack is empty.")
 
 
-let rec translateClause term amodule =
+let rec translateClause ?(parsingtoplevel=false) term amodule =
   let previous = !Errormsg.anyErrors in
   let _ = Errormsg.anyErrors := false in
-  
-  let (tty, _, _) = parseTerm false false term [] [] Table.empty amodule in
+  let (tty, _, _) = parseTerm parsingtoplevel false term [] [] Table.empty amodule in
   let term' = getTermTerm tty in
   let type' = getTermMolecule tty in
-  
   (*  Remove all overloaded operators.  *)
   let _ = Errormsg.log Errormsg.none 
             "Parse.translateClause: Removing overloads..." in
@@ -246,7 +245,6 @@ let rec translateClause term amodule =
   let _ = Errormsg.log Errormsg.none
     ("Parse.translateClause: Removed overloads: " ^ 
      (Absyn.string_of_term_ast term'')) in
-  
   (*  Ensure that the term is valid and is of the correct type. *)                        
   let _ = if term'' <> Absyn.errorTerm then
     (*  Make sure it is of type o.  *)
@@ -259,7 +257,6 @@ let rec translateClause term amodule =
     else
       ()
   in
-
   let term''' = (normalizeTerm term'') in
   let result =
     if !Errormsg.anyErrors then
@@ -270,6 +267,7 @@ let rec translateClause term amodule =
   (Errormsg.anyErrors := previous || (!Errormsg.anyErrors);
   result)
 
+  
 (**********************************************************************
 *translateTermTopLevel:
 * Given an abstract syntax representation of a module and a preabsyn
@@ -406,6 +404,7 @@ and parseTerm parsingtoplevel inlist term fvs bvs bdgs amodule =
 *   terms: the list of terms in preabstract syntax to parse.
 *   fvs: the set of free variables in the term so far.
 *   bvs: the set of variables with binders in the enclosing context.
+*   bdgs : a table containing the bindings for the annotated types.
 *   amodule: the abstract syntax module against whose definitions this
 *     term list is being parsed.
 *   stack: the current parse stack.
@@ -1305,9 +1304,9 @@ and removeOverloads term =
 * term in which abstractions are over lists of variables AND there are no 
 * abstractions nested immediately within other abstractions. The former kind of
 * abstraction has the form:
-*   Absyn.AbstractionTerm(Absyn.NestedAbstraction(...),...))
+*   Absyn.AbstractionTerm(Absyn.NestedAbstraction(...),...)
 * and the latter has the form:
-*   Absyn.AbstractionTerm(Absyn.UNestedAbstraction(...),...)).
+*   Absyn.AbstractionTerm(Absyn.UNestedAbstraction(...),...).
 * Notice that in the latter representation the deepest abstracted variable
 * appears earliest in the  list, i.e. (lam x lam y t) will have the list
 * of abstracted variables as [y,x] and NOT as [x,y].
@@ -1338,9 +1337,13 @@ and removeNestedAbstractions term =
           Absyn.AbstractionTerm(abst', p) -> 
             removeAbstraction abst' (tsym :: tsyms)
         | _ -> (List.rev (tsym :: tsyms), remove body))
-    | Absyn.UNestedAbstraction(_) ->
-        (Errormsg.impossible Errormsg.none
-          "Parse.removeNestedAbstractions: unexpected unnested abstraction")
+    (* This instance may occur while processing queries
+     * because queries are toplevel terms *)
+    (* | Absyn.UNestedAbstraction(tsyms,nabs,body) ->
+     *    (tsyms,body) *)
+  | Absyn.UNestedAbstraction(_) ->
+      (Errormsg.impossible Errormsg.none
+        "Parse.removeNestedAbstractions: unexpected unnested abstraction")
   in
   remove term									   
 
@@ -1553,7 +1556,7 @@ and fixTerm term =
       | Absyn.ConstantTerm(c,tenv,p) -> 
           (* collect type variables in (needed components of) type environment 
              and check constant is legal here *)
-          let _ = checkIllegalConstant c p in
+         let _ = checkIllegalConstant c p in
           let neededtenv = 
             trunclist tenv (Absyn.getConstantTypeEnvSize false c) in
             (Absyn.ConstantTerm(c,neededtenv,p),fvars,
